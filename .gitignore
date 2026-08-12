@@ -17,6 +17,9 @@ files (24)/
 !files (24)/README.md
 !files (24)/flolyt-spec.md
 
+# Local build/progress tracker
+docs/build-tracker.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
