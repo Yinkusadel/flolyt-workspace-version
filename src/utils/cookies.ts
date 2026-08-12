@@ -9,7 +9,7 @@ export const COOKIE_KEYS = {
 export const setCookie = (key: string, value: string, options?: Cookies.CookieAttributes) => {
   Cookies.set(key, value, {
     ...options,
-    secure: process.env.NODE_ENV === "production",
+    secure: import.meta.env.PROD,
     sameSite: "strict",
   });
 };
