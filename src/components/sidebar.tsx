@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import flolytLogo from "../../assets/logo.png";
 
 /**
  * Layout reference: files (24)/flolyt-figma-559-screens/frames/555-design-system-layout.svg
@@ -136,9 +138,7 @@ function Sidebar({
     >
       {/* Brand + workspace mode */}
       <div className="flex h-topbar shrink-0 items-center gap-2 border-b border-line px-4">
-        <span className="flex size-page shrink-0 items-center justify-center rounded-md bg-ultra text-xs font-bold text-white">
-          F
-        </span>
+        <img src={flolytLogo} alt="Flolyt" className="size-page shrink-0 object-contain" />
         <span className="text-sm font-semibold text-ink">Flolyt</span>
         <span className="ml-auto rounded-chip border border-ultra-border bg-ultra-bg px-2 py-1 text-[9.5px] font-semibold text-ultra">
           {workspaceMode}
@@ -147,16 +147,17 @@ function Sidebar({
 
       {/* Command bar entry */}
       <div className="shrink-0 px-4 pt-4">
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={onSearchClick}
-          className="flex w-full items-center justify-between rounded-panel border border-line bg-paper px-2.5 py-1.75 text-left text-[11px] text-ink-4 transition-colors hover:border-ink-4"
+          className="h-auto w-full justify-between rounded-panel px-2.5 py-1.75 text-left font-normal text-ink-4 hover:border-ink-4 hover:bg-paper hover:text-ink-4"
         >
-          <span>Ask anything…</span>
+          <span className="text-[11px]">Ask anything…</span>
           <kbd className="rounded-control border border-line bg-paper-2 px-1.5 py-0.5 font-mono text-[8.5px] text-ink-3">
             ⌘K
           </kbd>
-        </button>
+        </Button>
       </div>
 
       {/* Nav sections */}

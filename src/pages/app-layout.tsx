@@ -1,8 +1,8 @@
 import * as React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
-import { Sidebar } from "@/components/flolyt/sidebar";
-import { Topbar } from "@/components/flolyt/topbar";
+import { Sidebar } from "@/components/sidebar";
+import { Topbar } from "@/components/topbar";
 import { cn } from "@/lib/utils";
 
 /**
@@ -38,7 +38,7 @@ export const AppLayout = () => {
   }, [navOpen]);
 
   return (
-    <div className="flex min-h-dvh bg-paper">
+    <div className="flex h-dvh overflow-hidden bg-paper">
       <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
 
       <div
@@ -52,7 +52,7 @@ export const AppLayout = () => {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar breadcrumb="Home" onMenuClick={() => setNavOpen(true)} />
-        <main className="flex-1 p-page">
+        <main className="flex-1 overflow-y-auto p-page">
           <Outlet />
         </main>
       </div>

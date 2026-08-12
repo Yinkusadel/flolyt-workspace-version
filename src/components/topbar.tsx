@@ -2,7 +2,8 @@ import * as React from "react";
 import { Menu } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { PersonAvatar, type PersonAvatarProps } from "@/components/flolyt/person-avatar";
+import { Button } from "@/components/ui/button";
+import { PersonAvatar, type PersonAvatarProps } from "@/components/person-avatar";
 
 /**
  * Layout reference: files (24)/flolyt-figma-559-screens/frames/555-design-system-layout.svg
@@ -32,14 +33,16 @@ function Topbar({ breadcrumb, presence = [], actions, onMenuClick, className }: 
         className
       )}
     >
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon-sm"
         onClick={onMenuClick}
-        className="-ml-1.5 flex size-8 shrink-0 items-center justify-center rounded-control text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink lg:hidden"
+        className="-ml-1.5 text-ink-3 hover:text-ink lg:hidden"
         aria-label="Open navigation"
       >
-        <Menu className="size-[18px]" />
-      </button>
+        <Menu className="size-4.5" />
+      </Button>
 
       <div className="min-w-0 flex-1 truncate text-[11px] text-ink-3">{breadcrumb}</div>
 
