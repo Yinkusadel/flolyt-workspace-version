@@ -6,7 +6,7 @@ export const AuthLayout = () => {
 
 
   return (
-    <div >
+    <div className="text-green-700">
       <Outlet />
     </div>
   );
