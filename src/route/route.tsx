@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router";
-import { AuthLayout } from "../pages/auth-layout";
-import SignIn from "../pages/sign-in";
+import { AuthLayout } from "@/pages/auth-layout";
+import SignIn from "@/pages/sign-in";
 
 export const routes = createBrowserRouter([
   {

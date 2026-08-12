@@ -1,10 +1,10 @@
 
 import axios, { AxiosHeaders } from "axios";
 import { toast } from "sonner";
-import { API_BASE_URL } from "../config/apiConfig";
-import { COOKIE_KEYS, getCookie } from "../utils/cookies";
+import { API_BASE_URL } from "@/config/apiConfig";
+import { COOKIE_KEYS, getCookie } from "@/utils/cookies";
 import { refreshAccessToken } from "./api/auth/refresh-token";
-import { handleLogout } from "../utils/logout";
+import { handleLogout } from "@/utils/logout";
 
 export const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
