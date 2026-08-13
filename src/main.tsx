@@ -5,7 +5,7 @@ import App from "./app";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-// import { AuthProvider } from "./utils/auth-context";
+import { AuthProvider } from "./utils/auth-context";
 // import { ThemeProvider } from "./context/ThemeContext";
 import "./index.css";
 
@@ -24,11 +24,11 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        {/* <AuthProvider> */}
+        <AuthProvider>
           {/* <ThemeProvider> */}
             <App />
           {/* </ThemeProvider> */}
-        {/* </AuthProvider> */}
+        </AuthProvider>
         <Toaster position="top-right" />
         <ReactQueryDevtools initialIsOpen={false} />
       </ErrorBoundary>

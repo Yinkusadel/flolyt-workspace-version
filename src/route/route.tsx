@@ -4,6 +4,7 @@ import SignIn from "@/pages/sign-in";
 import { AppLayout } from "@/pages/app-layout";
 import Home from "@/pages/home";
 import { RouteError } from "@/route/route-error";
+import { ProtectedRoute } from "@/route/protected-route";
 
 export const routes = createBrowserRouter([
   {
@@ -23,15 +24,17 @@ export const routes = createBrowserRouter([
         ],
       },
       {
-        // TODO: the auth flow isn't built yet — once it is, gate this branch
-        // behind a session check (redirect to /auth/sign-in when unauthenticated)
-        // instead of mounting AppLayout directly at "/".
         path: "/",
-        Component: AppLayout,
+        Component: ProtectedRoute,
         children: [
           {
-            index: true,
-            Component: Home,
+            Component: AppLayout,
+            children: [
+              {
+                index: true,
+                Component: Home,
+              },
+            ],
           },
         ],
       },
