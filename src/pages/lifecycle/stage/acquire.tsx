@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { BarRow } from "@/pages/lifecycle-stage/bar";
-import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle-stage/layout";
-import { Rail, RailAgentNote, RailDecisionCard } from "@/pages/lifecycle-stage/rail";
+import { BarRow } from "@/pages/lifecycle/stage/bar";
+import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle/stage/layout";
+import { Rail, RailAgentNote, RailDecisionCard } from "@/pages/lifecycle/stage/rail";
 
 type Verdict = "scale it" | "hold" | "stop";
 
@@ -82,7 +82,7 @@ const StageAcquire = () => {
   return (
     <StageDetailLayout
       title="Acquire"
-      // subtitle="894,000 new customers a year · the question is not how many, but which ones"
+      subtitle="894,000 new customers a year · the question is not how many, but which ones"
       rail={
         <Rail heading="THE DECISION WAITING">
           <RailDecisionCard

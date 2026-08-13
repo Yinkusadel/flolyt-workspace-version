@@ -1,8 +1,8 @@
 import { ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle-stage/layout";
-import { Rail, RailCallout, RailInsight } from "@/pages/lifecycle-stage/rail";
+import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle/stage/layout";
+import { Rail, RailCallout, RailInsight } from "@/pages/lifecycle/stage/rail";
 
 const LOOP = [
   { label: "Retained customer", value: "1.1M", tone: "teal" as const },

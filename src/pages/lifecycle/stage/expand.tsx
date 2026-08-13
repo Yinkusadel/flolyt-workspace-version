@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle-stage/layout";
-import { Rail, RailDecisionCard, RailInsight } from "@/pages/lifecycle-stage/rail";
+import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle/stage/layout";
+import { Rail, RailDecisionCard, RailInsight } from "@/pages/lifecycle/stage/rail";
 
 type Readiness = "high" | "medium" | "low";
 

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle-stage/layout";
-import { Rail, RailInsight } from "@/pages/lifecycle-stage/rail";
+import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle/stage/layout";
+import { Rail, RailInsight } from "@/pages/lifecycle/stage/rail";
 
 const BANDS = [
   { label: "Will renew, nothing needed", count: "38,400", amount: "₦1.84B", note: "no action", tone: "teal" as const, share: 64 },

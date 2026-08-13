@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
  */
 export type StageDetailLayoutProps = {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   rail: ReactNode;
   children: ReactNode;
 };
@@ -18,7 +18,7 @@ export function StageDetailLayout({ title, subtitle, rail, children }: StageDeta
     <div className="space-y-6">
       <div>
         <h1 className="text-[17px] font-semibold text-ink">{title}</h1>
-        <p className="mt-1 text-[11.5px] text-ink-3">{subtitle}</p>
+        {subtitle && <p className="mt-1 text-[11.5px] text-ink-3">{subtitle}</p>}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px] lg:items-start">

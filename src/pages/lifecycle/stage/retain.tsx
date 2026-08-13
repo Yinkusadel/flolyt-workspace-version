@@ -1,9 +1,9 @@
 import { Fragment } from "react";
 
 import { cn } from "@/lib/utils";
-import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle-stage/layout";
-import { BarTrack } from "@/pages/lifecycle-stage/bar";
-import { Rail } from "@/pages/lifecycle-stage/rail";
+import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle/stage/layout";
+import { BarTrack } from "@/pages/lifecycle/stage/bar";
+import { Rail } from "@/pages/lifecycle/stage/rail";
 
 type Cell = { pct: number; color: string; textColor?: string; broken?: boolean } | null;
 

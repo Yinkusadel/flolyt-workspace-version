@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle-stage/layout";
-import { Rail, RailAgentNote } from "@/pages/lifecycle-stage/rail";
+import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle/stage/layout";
+import { Rail, RailAgentNote } from "@/pages/lifecycle/stage/rail";
 
 const FUNNEL = [
   { label: "Signed up", value: "74,500", percent: 100, tone: "ink" as const, trailing: null },

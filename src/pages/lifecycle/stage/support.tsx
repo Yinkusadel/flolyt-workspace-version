@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle-stage/layout";
-import { Rail, RailInsight } from "@/pages/lifecycle-stage/rail";
+import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle/stage/layout";
+import { Rail, RailInsight } from "@/pages/lifecycle/stage/rail";
 import { DEPARTMENT_COLORS, type Department } from "@/pages/lifecycle/data";
 
 const DRIVERS = [

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle-stage/layout";
-import { Rail, RailInsight } from "@/pages/lifecycle-stage/rail";
+import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle/stage/layout";
+import { Rail, RailInsight } from "@/pages/lifecycle/stage/rail";
 
 const PLANS = [
   { name: "Premium annual", customers: "84,000", price: "₦48,000", margin: "71%", discounted: "12%", discountedTone: "teal" as const, m6: "58%", net: "₦2.86B" },

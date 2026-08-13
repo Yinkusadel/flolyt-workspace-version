@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle-stage/layout";
-import { Rail, RailCallout, RailInsight } from "@/pages/lifecycle-stage/rail";
+import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle/stage/layout";
+import { Rail, RailCallout, RailInsight } from "@/pages/lifecycle/stage/rail";
 
 const TONE_DOT_CLASSES = {
   teal: "bg-teal",
