@@ -22,8 +22,7 @@ interface UseSignUpOptions {
 const useSignUp = (options?: UseSignUpOptions) => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
-  const { resendOtpAsync } = useResendOtpnpm install @hookform/resolvers zod
-  ();
+  const { resendOtpAsync } = useResendOtp();
 
   const form = useForm<SignUpSchemaType>({
     resolver: zodResolver(signUpSchema),
@@ -40,9 +39,7 @@ const useSignUp = (options?: UseSignUpOptions) => {
     onSuccess: async (data) => {
       if (data.succeeded) {
         setUserId(data.data);
-        toast.success("Please enter OTP to continue", {
-          style: { background: "#16a34a", color: "#fff" },
-        });
+        toast.success("Please enter OTP to continue");
         // navigate(`/auth/verify-otp/${data.data}`);
         const email = form.getValues("email");
 
@@ -51,9 +48,7 @@ const useSignUp = (options?: UseSignUpOptions) => {
         return;
       }
 
-      toast.error(data.messages?.[0] || "Registration failed", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
+      toast.error(data.messages?.[0] || "Registration failed");
     },
 
     onError: async (error: any) => {
@@ -71,27 +66,21 @@ const useSignUp = (options?: UseSignUpOptions) => {
           if (user.status !== "Confirmed") {
             // Resend OTP
             await resendOtpAsync({ email: user.email });
-            toast("OTP has been resent. Please complete registration.", {
-              style: { background: "#16a34a", color: "#fff" },
-            });
+            toast.success("OTP has been resent. Please complete registration.");
             navigate(`/auth/verify-otp/${user.id}`, { replace: true });
           } else {
-            toast("This email is already registered. Please log in.", {
-              style: { background: "#dc2626", color: "#fff" },
-            });
+            toast.error("This email is already registered. Please log in.");
             navigate("/auth/sign-in");
           }
         } catch (err: any) {
-          toast(err.message || "Failed to check existing user.", {
-            style: { background: "#dc2626", color: "#fff" },
-          });
+          toast.error(err.message || "Failed to check existing user.");
         }
 
         return; // Important: stop here
       }
 
       // Other errors
-      toast.error(msg, { style: { background: "#dc2626", color: "#fff" } });
+      toast.error(msg);
     },
   });
 

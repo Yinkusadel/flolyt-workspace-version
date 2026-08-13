@@ -104,32 +104,22 @@ const useSignIn = () => {
         setEmailForFetch(variables.email);
 
         if (requiresOnboarding) {
-          toast("Welcome! Let’s finish setting up your account 🚀", {
-            style: { background: "#2563eb", color: "#fff" },
-          });
+          toast.info("Welcome! Let’s finish setting up your account 🚀");
         } else {
-          toast.success("Login successful", {
-            style: { background: "#16a34a", color: "#fff" },
-          });
+          toast.success("Login successful");
         }
 
         return;
 
       } else if (!data.isAuthenticated && data.token === null) {
-        toast("Please complete registration by verifying your OTP", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
+        toast.error("Please complete registration by verifying your OTP");
         setEmailForFetch(variables.email);
       } else {
-        toast(data.authenticationError || "Login failed. Please try again.", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
+        toast.error(data.authenticationError || "Login failed. Please try again.");
       }
     },
     onError: (error: Error) => {
-      toast(error.message || "Login failed. Please try again.", {
-        style: { background: "#dc2626", color: "#ffffff" },
-      });
+      toast.error(error.message || "Login failed. Please try again.");
     },
   });
 

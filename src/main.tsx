@@ -29,7 +29,7 @@ root.render(
             <App />
           {/* </ThemeProvider> */}
         </AuthProvider>
-        <Toaster position="top-right" />
+        <Toaster position="top-right" richColors />
         <ReactQueryDevtools initialIsOpen={false} />
       </ErrorBoundary>
     </QueryClientProvider>
