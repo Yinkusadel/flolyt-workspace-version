@@ -28,7 +28,7 @@ export const RightSection = () => {
 
       <div className="mt-10 max-w-sm">
         {FEATURES.map((feature) => (
-          <div key={feature.title} className="border-t border-line py-4 first:pt-0">
+          <div key={feature.title} className="border-t border-line py-4">
             <p className="text-[12.5px] font-semibold text-ink">{feature.title}</p>
             <p className="mt-1 text-[11.5px] text-ink-3">{feature.description}</p>
           </div>

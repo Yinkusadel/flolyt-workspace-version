@@ -12,7 +12,7 @@ export const SignInForm = () => {
   } = form;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="mt-10 max-w-sm" noValidate>
+    <form onSubmit={handleSubmit(onSubmit)} className="mt-10" noValidate>
       <div>
         <label htmlFor="email" className="text-[10.5px] text-ink-3">
           Work email
