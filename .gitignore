@@ -13,9 +13,7 @@ dist-ssr
 *.local
 
 # Large design export bundle
-files (24)/
-!files (24)/README.md
-!files (24)/flolyt-spec.md
+flolyt-kit-122/
 
 # Local build/progress tracker
 docs/build-tracker.md

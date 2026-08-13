@@ -1,31 +1,59 @@
 import { NavLink } from "react-router-dom";
 import {
+  Activity,
   ArrowLeftRight,
+  Award,
+  BarChart3,
+  Bell,
   Bot,
+  BookOpen,
+  Boxes,
+  Code2,
+  CreditCard,
   Database,
+  Eye,
+  Filter,
+  Fingerprint,
   FlaskConical,
-  Home,
+  Frame,
+  Gem,
+  GitBranch,
+  Globe,
+  HeartPulse,
+  IdCard,
   Inbox,
+  Languages,
   Library,
   ListChecks,
+  Lock,
   Map,
   Megaphone,
   MessagesSquare,
+  Newspaper,
   PieChart,
   Plug,
-  Route,
-  Search,
-  Settings,
+  Reply,
+  ScrollText,
+  Share2,
   ShieldCheck,
+  Store,
+  Target,
   TrendingUp,
   Users,
-  UsersRound,
-  Waypoints,
+  Users2,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import flolytLogo from "../../assets/logo.png";
 
 /**
@@ -47,54 +75,95 @@ type NavSection = {
 
 const NAV_SECTIONS: NavSection[] = [
   {
-    label: "WORK",
+    label: "EVERY DAY",
     items: [
+      { label: "Lifecycle", href: "/lifecycle", icon: TrendingUp },
       { label: "Rooms", href: "/rooms", icon: MessagesSquare },
+      { label: "What to do today", href: "/what-to-do-today", icon: ListChecks },
+      { label: "Goals", href: "/goals", icon: Target },
+      { label: "Digest", href: "/digest", icon: Newspaper },
       { label: "Inbox", href: "/inbox", icon: Inbox },
-      { label: "My work", href: "/my-work", icon: ListChecks },
-      { label: "Search", href: "/search", icon: Search },
+      { label: "Handoff", href: "/handoff", icon: ArrowLeftRight },
     ],
   },
   {
     label: "REVENUE",
     items: [
-      { label: "Lifecycle", href: "/lifecycle", icon: TrendingUp },
       { label: "Leakage map", href: "/leakage-map", icon: Map },
-      { label: "Forecast", href: "/forecast", icon: PieChart },
-      { label: "Business memory", href: "/business-memory", icon: Library },
-      { label: "Customers", href: "/customers", icon: Users },
+      { label: "Funnel", href: "/funnel", icon: Filter },
+      { label: "Scenario", href: "/scenario", icon: GitBranch },
+      { label: "Attribution", href: "/attribution", icon: Share2 },
+      { label: "Value", href: "/value", icon: Gem },
+      { label: "Benchmarks", href: "/benchmarks", icon: BarChart3 },
     ],
   },
   {
-    label: "REACH",
+    label: "CUSTOMERS",
     items: [
       { label: "Segments", href: "/segments", icon: PieChart },
-      { label: "Audiences", href: "/audiences", icon: UsersRound },
+      { label: "Customer health", href: "/customer-health", icon: HeartPulse },
       { label: "Campaigns", href: "/campaigns", icon: Megaphone },
-      { label: "Journeys", href: "/journeys", icon: Route },
       { label: "Experiments", href: "/experiments", icon: FlaskConical },
+      { label: "Replies", href: "/replies", icon: Reply },
     ],
   },
   {
-    label: "TEAMS",
+    label: "KNOWLEDGE",
     items: [
-      { label: "Team homes", href: "/team-homes", icon: Home },
-      { label: "Handoffs", href: "/handoffs", icon: ArrowLeftRight },
-      { label: "Routing", href: "/routing", icon: Waypoints },
+      { label: "Business memory", href: "/business-memory", icon: Library },
+      { label: "Playbooks", href: "/playbooks", icon: BookOpen },
+      { label: "Community", href: "/community", icon: Users2 },
+      { label: "Recognition", href: "/recognition", icon: Award },
     ],
   },
   {
-    label: "SYSTEM",
+    label: "AGENTS",
     items: [
       { label: "AI teammates", href: "/ai-teammates", icon: Bot },
-      { label: "Data sources", href: "/data-sources", icon: Database },
-      { label: "Integrations", href: "/integrations", icon: Plug },
+      { label: "Agent detail", href: "/agent-detail", icon: Fingerprint },
+      { label: "Agent builder", href: "/agent-builder", icon: Wrench },
+      { label: "Marketplace", href: "/marketplace", icon: Store },
       { label: "Governance", href: "/governance", icon: ShieldCheck },
+    ],
+  },
+  {
+    label: "DATA",
+    items: [
+      { label: "Data sources", href: "/data-sources", icon: Database },
+      { label: "Data health", href: "/data-health", icon: Activity },
+      { label: "Schema", href: "/schema", icon: Boxes },
+      { label: "Identity", href: "/identity", icon: IdCard },
+    ],
+  },
+  {
+    label: "SETTINGS",
+    items: [
+      { label: "Members", href: "/members", icon: Users },
+      { label: "Security", href: "/security", icon: Lock },
+      { label: "Audit log", href: "/audit-log", icon: ScrollText },
+      { label: "Data and residency", href: "/data-and-residency", icon: Globe },
+      { label: "Notifications", href: "/notifications", icon: Bell },
+      { label: "Integrations", href: "/integrations", icon: Plug },
+      { label: "Plan and billing", href: "/plan-and-billing", icon: CreditCard },
+      { label: "Developers", href: "/developers", icon: Code2 },
+      { label: "Embedding", href: "/embedding", icon: Frame },
+      { label: "Your view", href: "/your-view", icon: Eye },
+      { label: "Language", href: "/language", icon: Languages },
     ],
   },
 ];
 
-const ADMIN_ITEM: NavItem = { label: "Admin", href: "/admin", icon: Settings };
+export const VIEWING_AS_OPTIONS = ["Everyone", "Marketing", "Sales", "Products"] as const;
+export type ViewingAs = (typeof VIEWING_AS_OPTIONS)[number];
+
+export type RosterEntry = { initials: string; team: 1 | 2 | 3 | 4 };
+
+const TEAM_BORDER_CLASSES = {
+  1: "border-team-1 text-team-1",
+  2: "border-team-2 text-team-2",
+  3: "border-team-3 text-team-3",
+  4: "border-team-4 text-team-4",
+} as const;
 
 export type SidebarProps = {
   /** Drawer visibility below the lg breakpoint. Ignored at lg+, where the sidebar is always visible. */
@@ -102,10 +171,16 @@ export type SidebarProps = {
   /** Called when the drawer should close — backdrop click, Escape, or a nav item was chosen. */
   onClose: () => void;
   workspaceMode?: "Consumer" | "Accounts" | "Hybrid";
-  user?: { name: string; role: string };
-  /** Agents currently staffed on this workspace. Omit/empty hides the section — never show a placeholder count. */
-  agentsOnCall?: { initials: string }[];
+  /** Who the home route's numbers/content are scoped to. Controlled from the app shell. */
+  viewingAs?: ViewingAs;
+  onViewingAsChange?: (value: ViewingAs) => void;
   onSearchClick?: () => void;
+  /** Total addressable customer base for the current viewing-as scope. Omit to hide the footer stat. */
+  customerBase?: string;
+  /** Currencies represented in that customer base. */
+  currencies?: string[];
+  /** Team members with visibility into the current scope. Omit/empty hides the roster row. */
+  roster?: RosterEntry[];
   className?: string;
 };
 
@@ -113,9 +188,12 @@ function Sidebar({
   open,
   onClose,
   workspaceMode = "Consumer",
-  user,
-  agentsOnCall = [],
+  viewingAs = "Everyone",
+  onViewingAsChange,
   onSearchClick,
+  customerBase,
+  currencies = [],
+  roster = [],
   className,
 }: SidebarProps) {
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -145,8 +223,33 @@ function Sidebar({
         </span>
       </div>
 
+      {/* Viewing-as scope */}
+      <div className="shrink-0 space-y-1.5 px-4 pt-4">
+        <p className="font-mono text-[8.6px] font-medium tracking-[0.85px] text-ink-4">
+          VIEWING AS
+        </p>
+        <Select
+          value={viewingAs}
+          onValueChange={(value) => onViewingAsChange?.(value as ViewingAs)}
+        >
+          <SelectTrigger>
+            <span className="flex items-center gap-2">
+              <span className="size-1.5 shrink-0 rounded-full bg-ink-3" aria-hidden />
+              <SelectValue />
+            </span>
+          </SelectTrigger>
+          <SelectContent>
+            {VIEWING_AS_OPTIONS.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Command bar entry */}
-      <div className="shrink-0 px-4 pt-4">
+      <div className="shrink-0 px-4 pt-3">
         <Button
           type="button"
           variant="outline"
@@ -187,38 +290,33 @@ function Sidebar({
             </div>
           </div>
         ))}
-
-        <div className="border-t border-line pt-2">
-          <NavLink to={ADMIN_ITEM.href} onClick={onClose} className={navLinkClass}>
-            <ADMIN_ITEM.icon className="size-3.75 shrink-0" />
-            <span className="truncate">{ADMIN_ITEM.label}</span>
-          </NavLink>
-        </div>
       </nav>
 
-      {/* Agents on call */}
-      {agentsOnCall.length > 0 && (
+      {/* Customer base + roster for the current viewing-as scope */}
+      {customerBase && (
         <div className="shrink-0 border-t border-line px-4 py-3">
-          <p className="pb-2 font-mono text-[9px] font-medium tracking-[0.85px] text-ultra">
-            {agentsOnCall.length} AGENT{agentsOnCall.length === 1 ? "" : "S"} ON CALL
+          <p className="pb-1 font-mono text-[8.6px] font-medium tracking-[0.85px] text-ink-4">
+            CUSTOMER BASE
           </p>
-          <div className="flex -space-x-1.5">
-            {agentsOnCall.map((agent, i) => (
-              <div
-                key={`${agent.initials}-${i}`}
-                className="flex size-4.5 items-center justify-center rounded-full border-[1.5px] border-dashed border-ultra-border bg-paper-2 font-mono text-[6.5px] font-semibold text-ultra"
-              >
-                {agent.initials}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Signed-in user */}
-      {user && (
-        <div className="shrink-0 border-t border-line px-4 py-3 text-[10px] text-ink-3">
-          {user.name} · {user.role}
+          <p className="text-lg font-semibold text-ink">{customerBase}</p>
+          {currencies.length > 0 && (
+            <p className="pt-0.5 font-mono text-[9px] text-ink-3">{currencies.join(" · ")}</p>
+          )}
+          {roster.length > 0 && (
+            <div className="flex -space-x-1.5 pt-2">
+              {roster.map((person, i) => (
+                <div
+                  key={`${person.initials}-${i}`}
+                  className={cn(
+                    "flex size-4.5 items-center justify-center rounded-full border-[1.5px] bg-paper-2 font-mono text-[6.5px] font-semibold ring-2 ring-paper-2",
+                    TEAM_BORDER_CLASSES[person.team]
+                  )}
+                >
+                  {person.initials}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </aside>

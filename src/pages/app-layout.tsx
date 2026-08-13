@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
-import { Sidebar } from "@/components/sidebar";
+import { Sidebar, type ViewingAs } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { cn } from "@/lib/utils";
 
@@ -13,8 +13,13 @@ import { cn } from "@/lib/utils";
  * unguarded at "/". Once sign-in/session checks exist, wrap this route in a
  * protected-route component instead of changing this file's structure.
  */
+
+/** Shared with every route via <Outlet context>, so a screen can scope its own content to the sidebar's "viewing as" selection. */
+export type AppOutletContext = { viewingAs: ViewingAs };
+
 export const AppLayout = () => {
   const [navOpen, setNavOpen] = React.useState(false);
+  const [viewingAs, setViewingAs] = React.useState<ViewingAs>("Everyone");
   const location = useLocation();
 
   // Close the drawer on route change and Escape; lock body scroll while open.
@@ -39,7 +44,21 @@ export const AppLayout = () => {
 
   return (
     <div className="flex h-dvh overflow-hidden bg-paper">
-      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
+      <Sidebar
+        open={navOpen}
+        onClose={() => setNavOpen(false)}
+        viewingAs={viewingAs}
+        onViewingAsChange={setViewingAs}
+        customerBase="4.2M"
+        currencies={["₦", "KES", "GHS", "£"]}
+        roster={[
+          { initials: "RD", team: 1 },
+          { initials: "AC", team: 2 },
+          { initials: "IC", team: 3 },
+          { initials: "PR", team: 4 },
+          { initials: "EX", team: 1 },
+        ]}
+      />
 
       <div
         aria-hidden
@@ -53,7 +72,7 @@ export const AppLayout = () => {
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar breadcrumb="Home" onMenuClick={() => setNavOpen(true)} />
         <main className="flex-1 overflow-y-auto p-page">
-          <Outlet />
+          <Outlet context={{ viewingAs } satisfies AppOutletContext} />
         </main>
       </div>
     </div>
