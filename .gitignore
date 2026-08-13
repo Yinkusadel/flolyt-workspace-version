@@ -15,9 +15,6 @@ dist-ssr
 # Large design export bundle
 flolyt-kit-122/
 
-# Local build/progress tracker
-docs/build-tracker.md
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
