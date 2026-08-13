@@ -155,7 +155,7 @@ const useSignIn = () => {
         );
 
       } else {
-        navigate("/home");
+        navigate("/");
       }
     }
   }, [user, jwtClaims, needsOnboarding, isPlatformAdmin, setUser, navigate]);
