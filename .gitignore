@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Env files
+.env
+.env.*
+!.env.example
+
 # Large design export bundle
 flolyt-kit-122/
 
