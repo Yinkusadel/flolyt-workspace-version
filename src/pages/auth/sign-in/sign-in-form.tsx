@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import useSignIn from "@/features/auth/use-sign-in";
 
 export const SignInForm = () => {
@@ -34,9 +35,8 @@ export const SignInForm = () => {
         <label htmlFor="password" className="text-[10.5px] text-ink-3">
           Password
         </label>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           placeholder="••••••••"
           autoComplete="current-password"
           aria-invalid={!!errors.password}
