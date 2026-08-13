@@ -18,7 +18,7 @@ correction (see Notes)
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
 | 01 | sign up | [ ] | | |
-| 02 | sign in | [ ] | | |
+| 02 | sign in | [x] | `services/api/auth/sign-in.ts`, `features/auth/use-sign-in.ts` | Built email+password (matches existing hook), not the SVG's magic-link/SSO flow — see user decision in session |
 | 03 | create workspace | [ ] | | |
 | 04 | business model | [ ] | | |
 | 05 | connect first source | [ ] | | |
