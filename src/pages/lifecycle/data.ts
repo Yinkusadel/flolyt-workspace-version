@@ -1,13 +1,21 @@
 /**
- * Mock content for screen 15 (lifecycle map) in flolyt-kit-122 — see
- * flolyt-kit-122/15-lifecycle-map.svg and docs/build-tracker.md.
+ * Mock content for screens 15-26 (lifecycle map + stage detail pages) in
+ * flolyt-kit-122 — see flolyt-kit-122/15-lifecycle-map.svg through
+ * 26-stage-release-impact.svg and docs/build-tracker.md.
  *
- * Department dots are a fixed 6-way categorical palette baked into the kit
- * (Marketing/Product/Finance/Sales/Support/Customer Success), distinct from
- * the 4-slot rotating team-1..4 tokens used for avatar presence.
+ * Department dots are a fixed categorical palette baked into the kit
+ * (Marketing/Product/Finance/Sales/Support/Customer Success/Engineering),
+ * distinct from the 4-slot rotating team-1..4 tokens used for avatar presence.
  */
 
-export type Department = "Marketing" | "Product" | "Finance" | "Sales" | "Support" | "Customer Success";
+export type Department =
+  | "Marketing"
+  | "Product"
+  | "Finance"
+  | "Sales"
+  | "Support"
+  | "Customer Success"
+  | "Engineering";
 
 export const DEPARTMENT_COLORS: Record<Department, string> = {
   Marketing: "#79883A",
@@ -16,10 +24,13 @@ export const DEPARTMENT_COLORS: Record<Department, string> = {
   Sales: "#B4568F",
   Support: "#C56A2E",
   "Customer Success": "#2E8B7F",
+  Engineering: "#4E7080",
 };
 
 export type Stage = {
   name: string;
+  /** Path segment under /lifecycle/ for this stage's detail page. */
+  slug: string;
   department: Department | null;
   metric: string;
   amount: string;
@@ -27,16 +38,16 @@ export type Stage = {
 };
 
 export const STAGES: Stage[] = [
-  { name: "Acquire", department: "Marketing", metric: "894k / yr", amount: "₦74M", amountLabel: "at stake" },
-  { name: "Activate", department: "Product", metric: "41% reach value", amount: "₦188M", amountLabel: "at stake" },
-  { name: "Price", department: "Finance", metric: "6 plans", amount: "₦46M", amountLabel: "at stake" },
-  { name: "Adopt", department: "Product", metric: "2.1 features avg", amount: "₦112M", amountLabel: "at stake" },
-  { name: "Retain", department: "Marketing", metric: "1.1M active", amount: "₦412M", amountLabel: "at stake" },
-  { name: "Expand", department: "Sales", metric: "18% eligible", amount: "₦96M", amountLabel: "at stake" },
-  { name: "Support", department: "Support", metric: "42k contacts", amount: "₦31M", amountLabel: "at stake" },
-  { name: "Renew", department: "Customer Success", metric: "61k renewals", amount: "₦88M", amountLabel: "at stake" },
-  { name: "Advocate", department: "Marketing", metric: "124k referrers", amount: "₦124M", amountLabel: "referred" },
-  { name: "Churn", department: null, metric: "602k lost", amount: "₦602M", amountLabel: "at stake" },
+  { name: "Acquire", slug: "acquire", department: "Marketing", metric: "894k / yr", amount: "₦74M", amountLabel: "at stake" },
+  { name: "Activate", slug: "activate", department: "Product", metric: "41% reach value", amount: "₦188M", amountLabel: "at stake" },
+  { name: "Price", slug: "price", department: "Finance", metric: "6 plans", amount: "₦46M", amountLabel: "at stake" },
+  { name: "Adopt", slug: "adopt", department: "Product", metric: "2.1 features avg", amount: "₦112M", amountLabel: "at stake" },
+  { name: "Retain", slug: "retain", department: "Marketing", metric: "1.1M active", amount: "₦412M", amountLabel: "at stake" },
+  { name: "Expand", slug: "expand", department: "Sales", metric: "18% eligible", amount: "₦96M", amountLabel: "at stake" },
+  { name: "Support", slug: "support", department: "Support", metric: "42k contacts", amount: "₦31M", amountLabel: "at stake" },
+  { name: "Renew", slug: "renew", department: "Customer Success", metric: "61k renewals", amount: "₦88M", amountLabel: "at stake" },
+  { name: "Advocate", slug: "advocate", department: "Marketing", metric: "124k referrers", amount: "₦124M", amountLabel: "referred" },
+  { name: "Churn", slug: "churn", department: null, metric: "602k lost", amount: "₦602M", amountLabel: "at stake" },
 ];
 
 export const ADVOCACY_LOOP_NOTE =

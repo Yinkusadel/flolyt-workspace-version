@@ -42,17 +42,17 @@ correction (see Notes)
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
 | 15 | lifecycle map | [x] | | Static mock data (`src/pages/lifecycle/data.ts`); no lifecycle-overview endpoint wired yet |
-| 16 | stage acquire | [ ] | | |
-| 17 | stage activate | [ ] | | |
-| 18 | stage price | [ ] | | |
-| 19 | stage adopt | [ ] | | |
-| 20 | stage retain cohorts | [ ] | | |
-| 21 | stage expand | [ ] | | |
-| 22 | stage support | [ ] | | |
-| 23 | stage renew | [ ] | | |
-| 24 | stage advocate | [ ] | | |
-| 25 | stage churn | [ ] | | |
-| 26 | stage release impact | [ ] | | |
+| 16 | stage acquire | [x] | | `/lifecycle/acquire`. Static mock data in `src/pages/lifecycle-stage/acquire.tsx` |
+| 17 | stage activate | [x] | | `/lifecycle/activate` |
+| 18 | stage price | [x] | | `/lifecycle/price` |
+| 19 | stage adopt | [x] | | `/lifecycle/adopt` |
+| 20 | stage retain cohorts | [x] | | `/lifecycle/retain` — SVG header reads "Cohort retention", kept as page title |
+| 21 | stage expand | [x] | | `/lifecycle/expand` |
+| 22 | stage support | [x] | | `/lifecycle/support` |
+| 23 | stage renew | [x] | | `/lifecycle/renew` |
+| 24 | stage advocate | [x] | | `/lifecycle/advocate` |
+| 25 | stage churn | [x] | | `/lifecycle/churn` |
+| 26 | stage release impact | [x] | | `/lifecycle/release-impact` — no card links here in the kit; reachable via a "View release history" link on the Churn page |
 
 ## 4. Rooms and decisions (27–35)
 

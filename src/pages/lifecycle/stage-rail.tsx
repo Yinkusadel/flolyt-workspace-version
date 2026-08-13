@@ -1,4 +1,5 @@
 import { ChevronRight, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
 import { ADVOCACY_LOOP_NOTE, DEPARTMENT_COLORS, EYEBROW_CLASS, type Stage } from "@/pages/lifecycle/data";
@@ -17,9 +18,10 @@ export function StageRail({ stages }: StageRailProps) {
       <div className="mt-3 flex snap-x gap-0.5 overflow-x-auto pb-2">
         {stages.map((stage, i) => (
           <div key={stage.name} className="flex shrink-0 items-center">
-            <div
+            <Link
+              to={`/lifecycle/${stage.slug}`}
               className={cn(
-                "w-32 shrink-0 snap-start rounded-card border border-line p-3",
+                "w-32 shrink-0 snap-start rounded-card border border-line p-3 transition-colors hover:border-ink-4",
                 stage.name === "Churn" ? "bg-rose-bg/60" : "bg-paper-2"
               )}
             >
@@ -40,7 +42,7 @@ export function StageRail({ stages }: StageRailProps) {
                 {stage.amount}
               </p>
               <p className="font-mono text-[9px] text-ink-4">{stage.amountLabel}</p>
-            </div>
+            </Link>
 
             {i < stages.length - 1 && (
               <ChevronRight className="mx-1 size-3.5 shrink-0 text-ink-4" aria-hidden />

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 
 import { Sidebar, type ViewingAs } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
@@ -17,10 +17,39 @@ import { cn } from "@/lib/utils";
 /** Shared with every route via <Outlet context>, so a screen can scope its own content to the sidebar's "viewing as" selection. */
 export type AppOutletContext = { viewingAs: ViewingAs };
 
-const BREADCRUMBS: Record<string, string> = {
-  "/": "Home",
-  "/lifecycle": "Lifecycle",
+const STAGE_LABELS: Record<string, string> = {
+  acquire: "Acquire",
+  activate: "Activate",
+  price: "Price",
+  adopt: "Adopt",
+  retain: "Cohort retention",
+  expand: "Expand",
+  support: "Support",
+  renew: "Renew",
+  advocate: "Advocate",
+  churn: "Churn",
+  "release-impact": "Release impact",
 };
+
+function getBreadcrumb(pathname: string): React.ReactNode {
+  if (pathname === "/lifecycle") return "Lifecycle";
+
+  const stageMatch = /^\/lifecycle\/([a-z-]+)$/.exec(pathname);
+  const stageLabel = stageMatch ? STAGE_LABELS[stageMatch[1]] : undefined;
+  if (stageLabel) {
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/lifecycle" className="hover:text-ink">
+          Lifecycle
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{stageLabel}</span>
+      </span>
+    );
+  }
+
+  return "Home";
+}
 
 export const AppLayout = () => {
   const [navOpen, setNavOpen] = React.useState(false);
@@ -76,7 +105,7 @@ export const AppLayout = () => {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar
-          breadcrumb={BREADCRUMBS[location.pathname] ?? "Home"}
+          breadcrumb={getBreadcrumb(location.pathname)}
           onMenuClick={() => setNavOpen(true)}
         />
         <main className="flex-1 overflow-y-auto p-page">
