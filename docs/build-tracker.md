@@ -41,7 +41,7 @@ correction (see Notes)
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 15 | lifecycle map | [ ] | | |
+| 15 | lifecycle map | [x] | | Static mock data (`src/pages/lifecycle/data.ts`); no lifecycle-overview endpoint wired yet |
 | 16 | stage acquire | [ ] | | |
 | 17 | stage activate | [ ] | | |
 | 18 | stage price | [ ] | | |

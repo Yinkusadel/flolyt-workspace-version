@@ -3,6 +3,7 @@ import { AuthLayout } from "@/pages/auth-layout";
 import SignIn from "@/pages/sign-in";
 import { AppLayout } from "@/pages/app-layout";
 import Home from "@/pages/home";
+import Lifecycle from "@/pages/lifecycle";
 import { RouteError } from "@/route/route-error";
 import { ProtectedRoute } from "@/route/protected-route";
 
@@ -33,6 +34,10 @@ export const routes = createBrowserRouter([
               {
                 index: true,
                 Component: Home,
+              },
+              {
+                path: "lifecycle",
+                Component: Lifecycle,
               },
             ],
           },

@@ -17,6 +17,11 @@ import { cn } from "@/lib/utils";
 /** Shared with every route via <Outlet context>, so a screen can scope its own content to the sidebar's "viewing as" selection. */
 export type AppOutletContext = { viewingAs: ViewingAs };
 
+const BREADCRUMBS: Record<string, string> = {
+  "/": "Home",
+  "/lifecycle": "Lifecycle",
+};
+
 export const AppLayout = () => {
   const [navOpen, setNavOpen] = React.useState(false);
   const [viewingAs, setViewingAs] = React.useState<ViewingAs>("Everyone");
@@ -70,7 +75,10 @@ export const AppLayout = () => {
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar breadcrumb="Home" onMenuClick={() => setNavOpen(true)} />
+        <Topbar
+          breadcrumb={BREADCRUMBS[location.pathname] ?? "Home"}
+          onMenuClick={() => setNavOpen(true)}
+        />
         <main className="flex-1 overflow-y-auto p-page">
           <Outlet context={{ viewingAs } satisfies AppOutletContext} />
         </main>
