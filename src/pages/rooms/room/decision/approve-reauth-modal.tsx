@@ -47,7 +47,7 @@ export function ApproveReauthModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 gap-6 px-7 py-6 sm:grid-cols-[1fr_260px]">
+        <div className="grid grid-cols-1 gap-6 px-5 py-5 sm:grid-cols-[1fr_260px] sm:px-7 sm:py-6">
           <dl className="divide-y divide-line border-t border-line">
             {proposal.rows.map((row) => (
               <div key={row.label} className="flex items-center justify-between gap-3 py-2">
@@ -89,7 +89,7 @@ export function ApproveReauthModal({
           </div>
         </div>
 
-        <div className="space-y-2 border-t border-line border-dashed px-7 py-4">
+        <div className="space-y-2 border-t border-line border-dashed px-5 py-4 sm:px-7">
           <p className="text-[11.5px] text-ink-2">
             Approving this does not close the objection. It stays on the room until someone answers it.
           </p>

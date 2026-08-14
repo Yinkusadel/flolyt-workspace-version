@@ -53,7 +53,7 @@ export function PauseAgentModal({
           </div>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 gap-6 px-7 py-6 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 px-5 py-5 sm:grid-cols-2 sm:px-7 sm:py-6">
           <div>
             <p className="font-mono text-[9px] font-medium tracking-[0.85px] text-rose uppercase">Stops</p>
             <ul className="mt-2.5 space-y-2 text-[11.5px] text-ink-2">
@@ -91,7 +91,7 @@ export function PauseAgentModal({
         </div>
 
         {context.highlightRoom && (
-          <div className="mx-7 mb-2 rounded-card border border-line bg-paper pl-3.5">
+          <div className="mx-5 mb-2 rounded-card border border-line bg-paper pl-3.5 sm:mx-7">
             <div className="border-l-[3px] border-amber py-3.5 pr-3.5 pl-2.5 -ml-3.5">
               <p className="font-mono text-[9px] font-medium tracking-[0.85px] text-ink-4 uppercase">
                 The {context.highlightRoom.amount} room stays open
