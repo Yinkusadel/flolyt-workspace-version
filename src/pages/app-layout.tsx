@@ -67,6 +67,8 @@ function getBreadcrumb(pathname: string): React.ReactNode {
 
   if (pathname === "/ai-teammates") return "AI teammates";
 
+  if (pathname === "/business-memory") return "Business memory";
+
   return "Home";
 }
 

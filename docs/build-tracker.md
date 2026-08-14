@@ -92,7 +92,7 @@ correction (see Notes)
 | 45 | leakage map accounts | [ ] | | |
 | 46 | involuntary churn/dunning | [ ] | | |
 | 47 | revenue forecast | [ ] | | |
-| 48 | business memory | [ ] | | |
+| 48 | business memory | [x] | | `/business-memory` — static mock data in `src/pages/business-memory/data.ts`; search + filter pills (Validated/Observed/Superseded/Account-scoped) are real client-side state, not just decorative |
 | 49 | customer profile consumer | [ ] | | |
 | 50 | customer profile account | [ ] | | |
 
