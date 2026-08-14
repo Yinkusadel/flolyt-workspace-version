@@ -58,15 +58,18 @@ correction (see Notes)
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 27 | room cohort war room | [ ] | | |
-| 28 | room account war room | [ ] | | |
-| 29 | room evidence tab | [ ] | | |
-| 30 | room log tab | [ ] | | |
-| 31 | room account persistent | [ ] | | |
-| 32 | room empty/recovering/archived | [ ] | | |
-| 33 | proposal review states | [ ] | | |
-| 34 | run status states | [ ] | | |
-| 35 | plays at scale | [ ] | | |
+| 27 | room cohort war room | [x] | | `/rooms/second-order-never-happened`. Static mock data in `src/pages/rooms/data.ts` |
+| 28 | room account war room | [x] | | `/rooms/northwind-retail` — not linked from the Rooms index (see note below) |
+| 29 | room evidence tab | [x] | | `/rooms/:roomId/evidence`, shared across war-room and persistent kinds |
+| 30 | room log tab | [x] | | `/rooms/:roomId/log` |
+| 31 | room account persistent | [x] | | `/rooms/northwind-retail-persistent` — not linked from the Rooms index |
+| 32 | room empty/recovering/archived | [x] | | Implemented as three real rooms' Decision-tab states, not a single spec sheet — see `lagos-delivery-failures` (empty), `cards-failing-on-renewal-night` (recovering), `discount-only-buyers` (archived) |
+| 33 | proposal review states | [x] | | Implemented as `ProposalCard`'s pending/editing/decided states inside the Decision-tab play board |
+| 34 | run status states | [x] | | Implemented as `RunStatusBar`'s state machine; only queued/running/cancelRequested/cancelled are reachable from the UI, failed/reconnect are defined but not demo-wired |
+| 35 | plays at scale | [x] | | Per user: this is the room's own Plays tab, not a separate cross-room surface — built as `PlaysTab`, `/rooms/:roomId/plays` |
+| — | Rooms index | [x] | | `/rooms` — screen supplied directly by the user (not in the 122-frame kit). Lists cohort war rooms only, per its own subtitle ("about a cohort, not a customer"); the two Northwind Retail rooms (account war room + persistent) are reachable by direct link only |
+| 115 | approve with re-auth | [x] | | `ApproveReauthModal`, opens from a play's Approve button when `reauthAmount` is set |
+| 121 | pause an agent | [x] | | `src/pages/ai-teammates/pause-agent-modal.tsx` — reachable from the room header's agent chip and from the new `/ai-teammates` stub page |
 
 ## 5. Audiences and campaigns (36–43)
 
@@ -117,7 +120,7 @@ correction (see Notes)
 | 63 | delivery mesh | [ ] | | |
 | 64 | data sources | [ ] | | |
 | 65 | markets and currency | [ ] | | |
-| 66 | ai teammates directory | [ ] | | |
+| 66 | ai teammates directory | [ ] | | `/ai-teammates` currently has only a minimal stub (agent list + Pause action) built to host screen 121 — the real directory screen isn't built |
 
 ## 9. Mobile (67–69)
 
