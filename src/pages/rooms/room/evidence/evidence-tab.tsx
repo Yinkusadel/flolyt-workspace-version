@@ -2,8 +2,8 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { EvidenceBadge } from "@/pages/rooms/evidence-badge";
-import { LifecycleGraphRail } from "@/pages/rooms/lifecycle-graph-rail";
+import { EvidenceBadge } from "@/pages/rooms/room/evidence-badge";
+import { LifecycleGraphRail } from "@/pages/rooms/room/evidence/lifecycle-graph-rail";
 import type { RoomDetail } from "@/pages/rooms/types";
 
 const HEAD_CLASS = "px-3 py-2.5 font-mono text-[9px] font-medium tracking-[0.85px] text-ink-4 uppercase";

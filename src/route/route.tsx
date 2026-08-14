@@ -21,7 +21,7 @@ import RoomLayout, {
   RoomEvidenceRoute,
   RoomLogRoute,
   RoomPlaysRoute,
-} from "@/pages/rooms/room";
+} from "@/pages/rooms/room/room-layout";
 import AiTeammates from "@/pages/ai-teammates";
 import { RouteError } from "@/route/route-error";
 import { ProtectedRoute } from "@/route/protected-route";

@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { AgentDot, PersonDot } from "@/pages/rooms/actor";
-import { EvidenceBadge } from "@/pages/rooms/evidence-badge";
+import { EvidenceBadge } from "@/pages/rooms/room/evidence-badge";
 import type { DecisionDocData } from "@/pages/rooms/types";
 
 const OWNER_STATUS_CLASS: Record<DecisionDocData["ownerStatus"], string> = {

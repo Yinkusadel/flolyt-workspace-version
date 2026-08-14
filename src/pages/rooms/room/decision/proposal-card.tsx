@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ApproveReauthModal, CURRENT_APPROVER } from "@/pages/rooms/approve-reauth-modal";
+import { ApproveReauthModal, CURRENT_APPROVER } from "@/pages/rooms/room/decision/approve-reauth-modal";
 import type { Proposal } from "@/pages/rooms/types";
 
 /** Screen 33 (proposal review states) — see flolyt-kit-122/33-proposal-review-states.svg. */

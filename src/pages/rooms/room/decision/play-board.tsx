@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { ProposalCard } from "@/pages/rooms/proposal-card";
+import { ProposalCard } from "@/pages/rooms/room/decision/proposal-card";
 import type { Play, Proposal } from "@/pages/rooms/types";
 
 const ACCENT_CLASS: Record<Play["status"], string> = {

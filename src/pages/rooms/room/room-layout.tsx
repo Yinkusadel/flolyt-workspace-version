@@ -1,11 +1,11 @@
 import { Link, Outlet, useOutletContext, useParams } from "react-router-dom";
 
 import { getRoom } from "@/pages/rooms/data";
-import { RoomHeader } from "@/pages/rooms/room-header";
-import { DecisionTab } from "@/pages/rooms/decision-tab";
-import { EvidenceTab } from "@/pages/rooms/evidence-tab";
-import { LogTab } from "@/pages/rooms/log-tab";
-import { PlaysTab } from "@/pages/rooms/plays-tab";
+import { RoomHeader } from "@/pages/rooms/room/room-header";
+import { DecisionTab } from "@/pages/rooms/room/decision/decision-tab";
+import { EvidenceTab } from "@/pages/rooms/room/evidence/evidence-tab";
+import { LogTab } from "@/pages/rooms/room/log/log-tab";
+import { PlaysTab } from "@/pages/rooms/room/plays/plays-tab";
 import type { RoomDetail } from "@/pages/rooms/types";
 
 type RoomOutletContext = { room: RoomDetail };
@@ -33,9 +33,9 @@ const RoomLayout = () => {
   }
 
   return (
-    <div className="flex h-[calc(100dvh-var(--spacing-topbar)-var(--spacing-page)*2)] flex-col overflow-hidden rounded-surface border border-line bg-paper">
+    <div className="flex flex-col overflow-hidden rounded-surface border border-line bg-paper lg:h-[calc(100dvh-var(--spacing-topbar)-var(--spacing-page)*2)]">
       <RoomHeader room={room} />
-      <div className="min-h-0 flex-1">
+      <div className="min-h-0 lg:flex-1">
         <Outlet context={{ room } satisfies RoomOutletContext} />
       </div>
     </div>

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import { ActorAvatar, actorName, actorRole } from "@/pages/rooms/actor";
-import { EvidenceBadge } from "@/pages/rooms/evidence-badge";
+import { EvidenceBadge } from "@/pages/rooms/room/evidence-badge";
 import type { ThreadEntry } from "@/pages/rooms/types";
 
 function ThreadMessageItem({ entry }: { entry: Extract<ThreadEntry, { kind: "message" }> }) {
