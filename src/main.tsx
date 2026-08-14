@@ -1,11 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-// import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ErrorBoundary } from "./components/error-boundary";
 import App from "./app";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-// import { AuthProvider } from "./utils/auth-context";
+import { AuthProvider } from "./utils/auth-context";
 // import { ThemeProvider } from "./context/ThemeContext";
 import "./index.css";
 
@@ -23,15 +23,15 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      {/* <ErrorBoundary> */}
-        {/* <AuthProvider> */}
+      <ErrorBoundary>
+        <AuthProvider>
           {/* <ThemeProvider> */}
             <App />
           {/* </ThemeProvider> */}
-        {/* </AuthProvider> */}
-        <Toaster position="top-right" />
+        </AuthProvider>
+        <Toaster position="top-right" richColors />
         <ReactQueryDevtools initialIsOpen={false} />
-      {/* </ErrorBoundary> */}
+      </ErrorBoundary>
     </QueryClientProvider>
   </React.StrictMode>
 );
