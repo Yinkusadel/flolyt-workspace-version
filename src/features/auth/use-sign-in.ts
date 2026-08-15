@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom";
 import useGetUserByEmail from "./use-get-user-by-email";
 const useSignIn = () => {
   const navigate = useNavigate();
-  const { refreshUser, setUser } = useAuth();
+  const { setUser } = useAuth();
   const [emailForFetch, setEmailForFetch] = useState<string | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
@@ -124,7 +124,7 @@ const useSignIn = () => {
   });
 
   // Fetch user info by email
-  const { user, isLoading: isFetchingUser } = useGetUserByEmail(emailForFetch ?? "");
+  const { user } = useGetUserByEmail(emailForFetch ?? "");
   console.log(user, "full user object");
 
   useEffect(() => {

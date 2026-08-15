@@ -27,7 +27,7 @@ import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
 import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
-import { ProtectedRoute } from "@/route/protected-route";
+// import { ProtectedRoute } from "@/route/protected-route";
 
 export const routes = createBrowserRouter([
   {

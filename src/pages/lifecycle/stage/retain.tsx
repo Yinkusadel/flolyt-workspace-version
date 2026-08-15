@@ -1,15 +1,16 @@
 import { Fragment } from "react";
 
 import { cn } from "@/lib/utils";
-import { Eyebrow, StageDetailLayout } from "@/pages/lifecycle/stage/layout";
+import { StageDetailLayout } from "@/pages/lifecycle/stage/layout";
 import { BarTrack } from "@/pages/lifecycle/stage/bar";
 import { Rail } from "@/pages/lifecycle/stage/rail";
 
-type Cell = { pct: number; color: string; textColor?: string; broken?: boolean } | null;
+type CellData = { pct: number; color: string; textColor?: string; broken?: boolean };
+type Cell = CellData | null;
 
 type CohortRow = { cohort: string; size: string; cells: Cell[] };
 
-const cell = (pct: number, color: string, broken = false): Cell => ({ pct, color, broken });
+const cell = (pct: number, color: string, broken = false): CellData => ({ pct, color, broken });
 const M0 = cell(100, "#1B8A83");
 M0.textColor = "#FFFFFF";
 
