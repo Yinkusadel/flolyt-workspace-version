@@ -75,7 +75,7 @@ correction (see Notes)
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 36 | segments | [ ] | | |
+| 36 | segments | [x] | | `/segments` — static mock data in `src/pages/segments/data.ts`. Segments table is a plain `<table>` in `overflow-x-auto` (matches log-tab.tsx's pattern); on mobile that scrolls Size/30-day change/Used by off-screen with no scroll affordance — flagged to user, not yet fixed |
 | 37 | audience builder | [ ] | | |
 | 38 | audience at scale | [ ] | | |
 | 39 | campaign studio | [ ] | | |

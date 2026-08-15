@@ -24,6 +24,7 @@ import RoomLayout, {
 } from "@/pages/rooms/room/room-layout";
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
+import Segments from "@/pages/segments";
 import { RouteError } from "@/route/route-error";
 import { ProtectedRoute } from "@/route/protected-route";
 
@@ -95,6 +96,10 @@ export const routes = createBrowserRouter([
               {
                 path: "business-memory",
                 Component: BusinessMemory,
+              },
+              {
+                path: "segments",
+                Component: Segments,
               },
             ],
           },
