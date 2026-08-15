@@ -113,7 +113,7 @@ correction (see Notes)
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 59 | agent autonomy | [ ] | | |
+| 59 | agent autonomy | [x] | | `/governance` — sidebar already had a stubbed "Governance" link under AGENTS (leftover from the old 559-screen nav); wired it to this page. Row toggles are local state only, "Save changes" just toasts |
 | 60 | frequency and fatigue | [ ] | | |
 | 61 | compliance consent | [ ] | | |
 | 62 | consent at scale | [ ] | | |

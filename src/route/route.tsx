@@ -25,6 +25,7 @@ import RoomLayout, {
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
+import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
 import { ProtectedRoute } from "@/route/protected-route";
 
@@ -100,6 +101,10 @@ export const routes = createBrowserRouter([
               {
                 path: "segments",
                 Component: Segments,
+              },
+              {
+                path: "governance",
+                Component: Governance,
               },
             ],
           },
