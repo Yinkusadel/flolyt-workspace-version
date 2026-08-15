@@ -4,6 +4,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { Sidebar, type ViewingAs } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { cn } from "@/lib/utils";
+import { getRoom } from "@/pages/rooms/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -47,6 +48,28 @@ function getBreadcrumb(pathname: string): React.ReactNode {
       </span>
     );
   }
+
+  if (pathname === "/rooms") return "Rooms";
+
+  const roomMatch = /^\/rooms\/([^/]+)/.exec(pathname);
+  if (roomMatch) {
+    const room = getRoom(roomMatch[1]);
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/rooms" className="hover:text-ink">
+          Rooms
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{room?.title ?? roomMatch[1]}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/ai-teammates") return "AI teammates";
+
+  if (pathname === "/business-memory") return "Business memory";
+
+  if (pathname === "/governance") return "Governance";
 
   return "Home";
 }

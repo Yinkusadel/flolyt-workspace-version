@@ -15,8 +15,19 @@ import StageRenew from "@/pages/lifecycle/stage/renew";
 import StageAdvocate from "@/pages/lifecycle/stage/advocate";
 import StageChurn from "@/pages/lifecycle/stage/churn";
 import ReleaseImpact from "@/pages/lifecycle/stage/release-impact";
+import Rooms from "@/pages/rooms";
+import RoomLayout, {
+  RoomDecisionRoute,
+  RoomEvidenceRoute,
+  RoomLogRoute,
+  RoomPlaysRoute,
+} from "@/pages/rooms/room/room-layout";
+import AiTeammates from "@/pages/ai-teammates";
+import BusinessMemory from "@/pages/business-memory";
+import Segments from "@/pages/segments";
+import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
-import { ProtectedRoute } from "@/route/protected-route";
+// import { ProtectedRoute } from "@/route/protected-route";
 
 export const routes = createBrowserRouter([
   {
@@ -37,7 +48,7 @@ export const routes = createBrowserRouter([
       },
       {
         path: "/",
-        Component: ProtectedRoute,
+        // Component: ProtectedRoute,
         children: [
           {
             Component: AppLayout,
@@ -62,6 +73,38 @@ export const routes = createBrowserRouter([
                   { path: "churn", Component: StageChurn },
                   { path: "release-impact", Component: ReleaseImpact },
                 ],
+              },
+              {
+                path: "rooms",
+                children: [
+                  { index: true, Component: Rooms },
+                  {
+                    path: ":roomId",
+                    Component: RoomLayout,
+                    children: [
+                      { index: true, Component: RoomDecisionRoute },
+                      { path: "evidence", Component: RoomEvidenceRoute },
+                      { path: "plays", Component: RoomPlaysRoute },
+                      { path: "log", Component: RoomLogRoute },
+                    ],
+                  },
+                ],
+              },
+              {
+                path: "ai-teammates",
+                Component: AiTeammates,
+              },
+              {
+                path: "business-memory",
+                Component: BusinessMemory,
+              },
+              {
+                path: "segments",
+                Component: Segments,
+              },
+              {
+                path: "governance",
+                Component: Governance,
               },
             ],
           },

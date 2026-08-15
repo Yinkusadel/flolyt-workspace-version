@@ -81,24 +81,29 @@ const StageActivate = () => {
         <Eyebrow>From signup to first value</Eyebrow>
         <div className="mt-4 space-y-3">
           {FUNNEL.map((step) => (
-            <div key={step.label} className="grid grid-cols-[140px_1fr_90px] items-center gap-3">
+            <div
+              key={step.label}
+              className="flex flex-col gap-1.5 sm:grid sm:grid-cols-[140px_1fr_90px] sm:items-center sm:gap-3"
+            >
               <span className="text-[12px] font-medium text-ink">{step.label}</span>
-              <div className="relative h-page rounded-control bg-paper">
-                <div
-                  className={cn("flex h-page items-center rounded-control px-2", TONE_BAR_CLASSES[step.tone])}
-                  style={{ width: `${step.percent}%` }}
-                >
-                  <span className="font-mono text-[11px] font-semibold text-white">{step.value}</span>
+              <div className="flex items-center gap-3 sm:contents">
+                <div className="relative h-page flex-1 rounded-control bg-paper">
+                  <div
+                    className={cn("flex h-page items-center rounded-control px-2", TONE_BAR_CLASSES[step.tone])}
+                    style={{ width: `${step.percent}%` }}
+                  >
+                    <span className="font-mono text-[11px] font-semibold text-white">{step.value}</span>
+                  </div>
                 </div>
+                <span
+                  className={cn(
+                    "shrink-0 text-right font-mono text-[11px]",
+                    step.tone === "amber" ? "text-amber" : "text-ink-4"
+                  )}
+                >
+                  {step.trailing}
+                </span>
               </div>
-              <span
-                className={cn(
-                  "text-right font-mono text-[11px]",
-                  step.tone === "amber" ? "text-amber" : "text-ink-4"
-                )}
-              >
-                {step.trailing}
-              </span>
             </div>
           ))}
         </div>
@@ -118,9 +123,14 @@ const StageActivate = () => {
         <Eyebrow>Time to first value · and what it predicts</Eyebrow>
         <div className="mt-4 space-y-3.5">
           {TIME_TO_VALUE.map((row) => (
-            <div key={row.label} className="grid grid-cols-[130px_36px_1fr_170px] items-center gap-3">
-              <span className="text-[12px] font-medium text-ink">{row.label}</span>
-              <span className="font-mono text-[12px] text-ink-2">{row.bucket}</span>
+            <div
+              key={row.label}
+              className="flex flex-col gap-1.5 sm:grid sm:grid-cols-[130px_36px_1fr_170px] sm:items-center sm:gap-3"
+            >
+              <div className="flex items-center justify-between gap-3 sm:contents">
+                <span className="text-[12px] font-medium text-ink">{row.label}</span>
+                <span className="font-mono text-[12px] text-ink-2">{row.bucket}</span>
+              </div>
               <div className="h-2.5 rounded-full bg-paper">
                 <div
                   className={cn("h-2.5 rounded-full", TONE_BAR_CLASSES[row.tone])}

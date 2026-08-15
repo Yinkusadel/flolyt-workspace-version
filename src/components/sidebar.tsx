@@ -47,6 +47,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { getRoomsNeedingApproval } from "@/pages/rooms/data";
 import {
   Select,
   SelectContent,
@@ -73,12 +74,14 @@ type NavSection = {
   items: NavItem[];
 };
 
+const ROOMS_NEEDING_APPROVAL = getRoomsNeedingApproval();
+
 const NAV_SECTIONS: NavSection[] = [
   {
     label: "EVERY DAY",
     items: [
       { label: "Lifecycle", href: "/lifecycle", icon: TrendingUp },
-      { label: "Rooms", href: "/rooms", icon: MessagesSquare },
+      { label: "Rooms", href: "/rooms", icon: MessagesSquare, badge: ROOMS_NEEDING_APPROVAL || undefined },
       { label: "What to do today", href: "/what-to-do-today", icon: ListChecks },
       { label: "Goals", href: "/goals", icon: Target },
       { label: "Digest", href: "/digest", icon: Newspaper },

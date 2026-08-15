@@ -61,7 +61,9 @@ const StageAdopt = () => {
     >
       <section>
         <Eyebrow>Adoption against retention · every dot is a feature</Eyebrow>
-        <div className="relative mt-3 aspect-[672/300] rounded-card border border-line bg-paper-2 p-6">
+
+        {/* Spatial quadrant chart — needs real width for the dots and labels to stay legible */}
+        <div className="relative mt-3 hidden aspect-[672/300] rounded-card border border-line bg-paper-2 p-6 sm:block">
           <div className="absolute top-6 right-6 bottom-6 left-6">
             <div className="absolute top-0 bottom-0 left-[7.4%] w-px bg-line" aria-hidden />
             <div className="absolute top-[93.3%] right-0 left-[7.4%] h-px bg-line" aria-hidden />
@@ -93,6 +95,20 @@ const StageAdopt = () => {
               <p className="mt-1 text-[10.5px] text-ink-3">29% use it. They retain at 94%.</p>
             </div>
           </div>
+        </div>
+
+        {/* Mobile fallback — the quadrant layout has no room to breathe below sm, so list the features instead */}
+        <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2.5 rounded-card border border-line bg-paper-2 p-4 sm:hidden">
+          {FEATURES.map((f) => (
+            <div key={f.name} className="flex items-center gap-1.5">
+              <span className={cn("size-2.5 shrink-0 rounded-full", TONE_DOT_CLASSES[f.tone])} />
+              <span className="truncate text-[11px] text-ink-2">{f.name}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 rounded-card border border-line bg-paper p-3 sm:hidden">
+          <p className="text-[11.5px] font-semibold text-ink">Subscriptions</p>
+          <p className="mt-1 text-[10.5px] text-ink-3">29% use it. They retain at 94%.</p>
         </div>
       </section>
 

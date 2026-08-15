@@ -1,0 +1,22 @@
+diff --git a/node_modules/@radix-ui/react-presence/dist/index.mjs b/node_modules/@radix-ui/react-presence/dist/index.mjs
+index f31e14d..29a3de5 100644
+--- a/node_modules/@radix-ui/react-presence/dist/index.mjs
++++ b/node_modules/@radix-ui/react-presence/dist/index.mjs
+@@ -77,7 +77,7 @@ function usePresence(present) {
+     }
+   }, [present, send]);
+   useLayoutEffect(() => {
+-    if (node) {
++    if (node && typeof Element !== "undefined" && node instanceof Element) {
+       let timeoutId;
+       const ownerWindow = node.ownerDocument.defaultView ?? window;
+       const handleAnimationEnd = /* @__PURE__ */ __name((event) => {
+@@ -117,7 +117,7 @@ function usePresence(present) {
+   return {
+     isPresent: ["mounted", "unmountSuspended"].includes(state),
+     ref: React2.useCallback((node2) => {
+-      if (node2) {
++      if (node2 && typeof Element !== "undefined" && node2 instanceof Element) {
+         const styles = getComputedStyle(node2);
+         stylesRef.current = styles;
+         mountAnimationNameRef.current = getAnimationName(styles);
