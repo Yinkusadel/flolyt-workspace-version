@@ -48,7 +48,7 @@ export const routes = createBrowserRouter([
       },
       {
         path: "/",
-        Component: ProtectedRoute,
+        // Component: ProtectedRoute,
         children: [
           {
             Component: AppLayout,
