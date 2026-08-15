@@ -55,7 +55,7 @@ const StageChurn = () => {
         <div className="mt-4 space-y-4">
           {ATTRIBUTION.map((row) => (
             <div key={row.stage}>
-              <div className="flex items-baseline gap-2">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                 <span className="text-[12.5px] font-semibold text-ink">{row.stage}</span>
                 <span
                   className="font-mono text-[10.5px]"
@@ -63,19 +63,16 @@ const StageChurn = () => {
                 >
                   {row.department}
                 </span>
+                <span className="font-mono text-[10.5px] text-ink-4">{row.count}</span>
               </div>
               <div className="mt-1.5 flex items-center gap-3">
-                <div className="h-5 flex-1 rounded-control bg-paper-2">
+                <div className="h-5 min-w-0 flex-1 rounded-control bg-paper-2">
                   <div
-                    className="flex h-5 items-center rounded-control bg-rose px-2"
+                    className="h-5 rounded-control bg-rose"
                     style={{ width: `${row.percent}%` }}
-                  >
-                    <span className="font-mono text-[10.5px] font-semibold text-white">
-                      {row.count}
-                    </span>
-                  </div>
+                  />
                 </div>
-                <div className="w-40 shrink-0 text-right">
+                <div className="w-32 shrink-0 text-right sm:w-40">
                   <span className="font-semibold text-rose">{row.amount}</span>
                   <p className="text-[10.5px] text-ink-4">{row.note}</p>
                 </div>
@@ -84,19 +81,18 @@ const StageChurn = () => {
           ))}
 
           <div>
-            <span className="text-[12.5px] font-semibold text-ink">Genuinely done</span>
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="text-[12.5px] font-semibold text-ink">Genuinely done</span>
+              <span className="font-mono text-[10.5px] text-ink-4">{GENUINELY_DONE.count}</span>
+            </div>
             <div className="mt-1.5 flex items-center gap-3">
-              <div className="h-5 flex-1 rounded-control bg-paper-2">
+              <div className="h-5 min-w-0 flex-1 rounded-control bg-paper-2">
                 <div
-                  className="flex h-5 items-center rounded-control bg-ink-4 px-2"
+                  className="h-5 rounded-control bg-ink-4"
                   style={{ width: `${GENUINELY_DONE.percent}%` }}
-                >
-                  <span className="font-mono text-[10.5px] font-semibold text-white">
-                    {GENUINELY_DONE.count}
-                  </span>
-                </div>
+                />
               </div>
-              <div className="w-40 shrink-0 text-right">
+              <div className="w-32 shrink-0 text-right sm:w-40">
                 <span className="font-semibold text-ink-3">{GENUINELY_DONE.amount}</span>
                 <p className="text-[10.5px] text-ink-4">{GENUINELY_DONE.note}</p>
               </div>
