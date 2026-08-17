@@ -4,6 +4,7 @@ import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import ActivateMarketsTab from "@/pages/lifecycle/stage/activate/markets-tab";
 import PriceMarketsTab from "@/pages/lifecycle/stage/price/markets-tab";
 import AdoptMarketsTab from "@/pages/lifecycle/stage/adopt/markets-tab";
+import RetainMarketsTab from "@/pages/lifecycle/stage/retain/markets-tab";
 import { ACQUIRE_MARKET_ROWS, ACQUIRE_MARKET_SPOTLIGHTS, type MarketRow } from "@/pages/lifecycle/stage/acquire/data";
 
 type MarketsData = {
@@ -65,6 +66,8 @@ export function MarketsTab() {
   if (stage.slug === "price") return <PriceMarketsTab />;
   // Adopt's AD08 uses eligible/2+features/top-second-feature columns, not spend/CAC.
   if (stage.slug === "adopt") return <AdoptMarketsTab />;
+  // Retain's RT08 uses repeat-rate/median-days/reactivable-now/fee-shipped columns, not spend/CAC.
+  if (stage.slug === "retain") return <RetainMarketsTab />;
 
   const data = MARKETS_DATA[stage.slug];
   if (!data) return null;

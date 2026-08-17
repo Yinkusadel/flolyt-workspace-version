@@ -29,6 +29,11 @@ import {
   ADOPT_THRESHOLD_PRESET,
   ADOPT_THRESHOLD_ROWS,
 } from "@/pages/lifecycle/stage/adopt/data";
+import {
+  RETAIN_AGENT_CARDS,
+  RETAIN_THRESHOLD_PRESET,
+  RETAIN_THRESHOLD_ROWS,
+} from "@/pages/lifecycle/stage/retain/data";
 
 type AgentsData = {
   eyebrow: string;
@@ -81,6 +86,16 @@ const AGENTS_DATA: Record<string, AgentsData> = {
       "“A shipped feature emits no events after 14 days” has been breached for 118 days. It has no owner because instrumentation sits between Product, who ships the feature, and Engineering, who owns the event. Seventh instance of the same routing gap.",
     threshold: ADOPT_THRESHOLD_PRESET,
   },
+  retain: {
+    eyebrow: "Agents watching this stage · 3 · the most of any stage",
+    cards: RETAIN_AGENT_CARDS,
+    tableEyebrow: "What would make an agent open a room here",
+    rows: RETAIN_THRESHOLD_ROWS,
+    insightTitle: "The fourth condition is the most valuable rule in the workspace and it has nowhere to route",
+    insightBody:
+      "“A release ships in a market that lost this before” is precisely the rule that would have caught Kenya in June and would catch Ghana next month. It has no owner because a release is Engineering's, a market is nobody's, and the stage is Marketing's. Eighth instance.",
+    threshold: RETAIN_THRESHOLD_PRESET,
+  },
 };
 
 const CARD_ACCENT_CLASS: Record<AgentCard["tone"], string> = {
@@ -89,6 +104,13 @@ const CARD_ACCENT_CLASS: Record<AgentCard["tone"], string> = {
   amber: "bg-amber",
   teal: "bg-teal",
   rose: "bg-rose",
+};
+const CARD_FOOTNOTE_TEXT_CLASS: Record<NonNullable<AgentCard["footnoteTone"]>, string> = {
+  ultra: "text-ultra",
+  neutral: "text-ink-4",
+  amber: "text-amber",
+  teal: "text-teal",
+  rose: "text-rose",
 };
 const CURRENTLY_TONE_CLASS: Record<ThresholdRow["currentlyTone"], string> = {
   teal: "text-teal",
@@ -175,7 +197,7 @@ export function AgentsTab() {
                 </div>
                 <h3 className="text-[13px] font-semibold text-ink">{card.name}</h3>
                 <p className="text-[10.5px] leading-relaxed text-ink-3">{card.body}</p>
-                <p className="border-t border-line pt-2.5 font-mono text-[10px] font-semibold text-ultra">
+                <p className={`border-t border-line pt-2.5 font-mono text-[10px] font-semibold ${CARD_FOOTNOTE_TEXT_CLASS[card.footnoteTone ?? "ultra"]}`}>
                   {card.footnote}
                 </p>
               </div>

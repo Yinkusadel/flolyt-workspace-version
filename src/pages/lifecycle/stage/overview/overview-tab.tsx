@@ -39,6 +39,12 @@ import {
   ADOPT_OVERVIEW_LEAK_ROWS,
   ADOPT_SHARE_EXPORT_PRESET,
 } from "@/pages/lifecycle/stage/adopt/data";
+import {
+  RETAIN_OPEN_ROOM_PRESET,
+  RETAIN_OVERVIEW_KPIS,
+  RETAIN_OVERVIEW_LEAK_ROWS,
+  RETAIN_SHARE_EXPORT_PRESET,
+} from "@/pages/lifecycle/stage/retain/data";
 
 type OverviewData = {
   kpis: Kpi[];
@@ -49,6 +55,8 @@ type OverviewData = {
   insightTone?: "ultra" | "amber" | "rose" | "teal" | "neutral";
   leakEyebrow: string;
   leakWhereHeader: string;
+  /** Overrides the leak table's 4th column header — defaults to "Trend" (e.g. Retain's "Still reachable"). */
+  leakTrendHeader?: string;
   leakColumnKind: "owner" | "cause";
   leakRows: LeakRow[];
   showStageRail?: boolean;
@@ -113,6 +121,21 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     openRoomPreset: ADOPT_OPEN_ROOM_PRESET,
     shareExportPreset: ADOPT_SHARE_EXPORT_PRESET,
   },
+  retain: {
+    kpis: RETAIN_OVERVIEW_KPIS,
+    insightTitle: "142,000 of these customers cannot be contacted by anybody, ever",
+    insightBody:
+      "No email, no consent, no push — they checked out as guests. They are inside the 148,000 in the reactivation room and will be silently dropped at send time. The only fix for them was upstream, in Activate, at the moment the account was offered and was not.",
+    insightTone: "rose",
+    leakEyebrow: "The 651,000 who never came back",
+    leakWhereHeader: "Group",
+    leakTrendHeader: "Still reachable",
+    leakColumnKind: "cause",
+    leakRows: RETAIN_OVERVIEW_LEAK_ROWS,
+    showStageRail: true,
+    openRoomPreset: RETAIN_OPEN_ROOM_PRESET,
+    shareExportPreset: RETAIN_SHARE_EXPORT_PRESET,
+  },
 };
 
 const LEAK_VALUE_TONE_CLASS: Record<LeakRow["valueTone"], string> = {
@@ -140,7 +163,18 @@ export function OverviewTab() {
   if (!data) return null;
 
   const columns: Column<LeakRow>[] = [
-    { key: "where", header: data.leakWhereHeader, render: (row) => <span className="font-semibold text-ink-2">{row.where}</span> },
+    {
+      key: "where",
+      header: data.leakWhereHeader,
+      render: (row) =>
+        row.detailHref ? (
+          <Link to={row.detailHref} className="font-semibold text-ultra hover:underline">
+            {row.where}
+          </Link>
+        ) : (
+          <span className="font-semibold text-ink-2">{row.where}</span>
+        ),
+    },
     {
       key: "customers",
       header: "Customers",
@@ -155,7 +189,7 @@ export function OverviewTab() {
     },
     {
       key: "trend",
-      header: "Trend",
+      header: data.leakTrendHeader ?? "Trend",
       align: "right",
       render: (row) => <span className={LEAK_TREND_TONE_CLASS[row.trendTone]}>{row.trend}</span>,
     },
@@ -193,7 +227,7 @@ export function OverviewTab() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-end gap-4">
-        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt") && (
+        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain") && (
           <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
             How this stage is defined
           </Link>

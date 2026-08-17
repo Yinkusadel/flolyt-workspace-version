@@ -32,6 +32,10 @@ import AdoptFeaturesTab from "@/pages/lifecycle/stage/adopt/features-tab";
 import AdoptFeatureDetailRoute from "@/pages/lifecycle/stage/adopt/feature-detail-route";
 import AdoptDepthTab from "@/pages/lifecycle/stage/adopt/depth-tab";
 import AdoptBlindSpotsTab from "@/pages/lifecycle/stage/adopt/blind-spots-tab";
+import RetainSegmentDetailRoute from "@/pages/lifecycle/stage/retain/segment-detail-route";
+import RetainRepeatCurveTab from "@/pages/lifecycle/stage/retain/repeat-curve-tab";
+import RetainSegmentsTab from "@/pages/lifecycle/stage/retain/segments-tab";
+import RetainReactivationTab from "@/pages/lifecycle/stage/retain/reactivation-tab";
 import Rooms from "@/pages/rooms";
 import RoomLayout, {
   RoomDecisionRoute,
@@ -91,6 +95,7 @@ export const routes = createBrowserRouter([
                       { path: "changes/:id", Component: ActivateReleaseImpactRoute },
                       { path: "plans/:id", Component: PricePlanDetailRoute },
                       { path: "features/:id", Component: AdoptFeatureDetailRoute },
+                      { path: "segments/:id", Component: RetainSegmentDetailRoute },
                       {
                         Component: StageTabsLayout,
                         children: [
@@ -106,6 +111,9 @@ export const routes = createBrowserRouter([
                           { path: "features", Component: AdoptFeaturesTab },
                           { path: "depth", Component: AdoptDepthTab },
                           { path: "blind-spots", Component: AdoptBlindSpotsTab },
+                          { path: "repeat-curve", Component: RetainRepeatCurveTab },
+                          { path: "segments", Component: RetainSegmentsTab },
+                          { path: "reactivation", Component: RetainReactivationTab },
                           { path: "cohorts", Component: CohortsTab },
                           { path: "markets", Component: MarketsTab },
                           { path: "changes", Component: ChangesTab },

@@ -7,15 +7,20 @@ import { ACQUIRE_GOAL_ROWS, ACQUIRE_TRIED_ROWS, type GoalRow, type TriedRow } fr
 import { ACTIVATE_GOAL_ROWS, ACTIVATE_TRIED_ROWS } from "@/pages/lifecycle/stage/activate/data";
 import { PRICE_GOAL_ROWS, PRICE_TRIED_ROWS } from "@/pages/lifecycle/stage/price/data";
 import { ADOPT_GOAL_ROWS, ADOPT_TRIED_ROWS } from "@/pages/lifecycle/stage/adopt/data";
+import { RETAIN_GOAL_ROWS, RETAIN_HISTORY_MID_INSIGHT, RETAIN_TRIED_ROWS } from "@/pages/lifecycle/stage/retain/data";
 
 type HistoryData = {
   goalEyebrow: string;
   goalRows: GoalRow[];
   triedEyebrow: string;
   triedRows: TriedRow[];
+  /** A callout between the goal table and the tried table (e.g. Retain's "two goals disagree" finding). */
+  midInsightTone?: "ultra" | "amber" | "rose" | "teal";
+  midInsightTitle?: string;
+  midInsightBody?: string;
   insightTitle: string;
   insightBody: string;
-  insightTone?: "ultra" | "amber" | "rose";
+  insightTone?: "ultra" | "amber" | "rose" | "teal";
 };
 
 const HISTORY_DATA: Record<string, HistoryData> = {
@@ -57,6 +62,19 @@ const HISTORY_DATA: Record<string, HistoryData> = {
       "Prompting a one-tap-reorder customer toward scheduled delivery is worth 38 points of retention on 71,000 customers. It is not deferred, not rejected and not blocked — it has simply never come up, because until this table existed nobody could see the lift.",
     insightTone: "rose",
   },
+  retain: {
+    goalEyebrow: "Goals that depend on this stage · 3",
+    goalRows: RETAIN_GOAL_ROWS,
+    midInsightTone: RETAIN_HISTORY_MID_INSIGHT.tone,
+    midInsightTitle: RETAIN_HISTORY_MID_INSIGHT.title,
+    midInsightBody: RETAIN_HISTORY_MID_INSIGHT.body,
+    triedEyebrow: "What has already been tried here",
+    triedRows: RETAIN_TRIED_ROWS,
+    insightTitle: "Four of five tests in this stage had a holdout, which is the best record in the lifecycle",
+    insightBody:
+      "Retain has been measured properly for years because it is the number the company reports. The result is that every claim on this table can be checked — and the one row still pending is the one that would settle whether price was ever the problem.",
+    insightTone: "teal",
+  },
 };
 
 const TODAY_TONE_CLASS: Record<GoalRow["todayTone"], string> = { teal: "text-teal", rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
@@ -78,6 +96,8 @@ const LEARNING_CHIP_TONE: Record<TriedRow["learningKept"], "teal" | "amber" | "n
   "validated · low lift": "neutral",
   "never promoted": "amber",
   "never proposed": "amber",
+  "works, aimed late": "amber",
+  "the open approval": "amber",
 };
 
 /** The shared History tab template (e.g. A14) — goals that depend on this stage, and what has already been tried. */
@@ -128,6 +148,12 @@ export function HistoryTab() {
         <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.goalEyebrow}</p>
         <DataTable columns={goalColumns} rows={data.goalRows} />
       </section>
+
+      {data.midInsightTitle && data.midInsightBody && (
+        <Callout tone={data.midInsightTone ?? "amber"} title={data.midInsightTitle}>
+          {data.midInsightBody}
+        </Callout>
+      )}
 
       <section className="space-y-3">
         <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.triedEyebrow}</p>

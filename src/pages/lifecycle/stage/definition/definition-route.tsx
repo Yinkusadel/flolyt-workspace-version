@@ -8,6 +8,7 @@ import { StageSubpageHeader } from "@/pages/lifecycle/stage/stage-subpage-header
 import { ACTIVATE_DEFINITION } from "@/pages/lifecycle/stage/activate/data";
 import PriceDefinitionRoute from "@/pages/lifecycle/stage/price/definition-route";
 import AdoptDefinitionRoute from "@/pages/lifecycle/stage/adopt/definition-route";
+import RetainDefinitionRoute from "@/pages/lifecycle/stage/retain/definition-route";
 
 export type DefinitionCandidate = {
   id: string;
@@ -70,6 +71,10 @@ const DefinitionRoute = () => {
   // Adopt's AD01 verdict table breaks down retention by feature count
   // (0-4+), not a candidate-signal comparison — a different table shape.
   if (stage.slug === "adopt") return <AdoptDefinitionRoute />;
+  // Retain's RT01 replaces the shared verdict-comparison table with a
+  // reachability-by-window table (0-30/31-60/.../121+ days) — a different
+  // table shape, not a candidate-signal comparison.
+  if (stage.slug === "retain") return <RetainDefinitionRoute />;
 
   const data = DEFINITION_DATA[stage.slug];
   if (!data) return null;

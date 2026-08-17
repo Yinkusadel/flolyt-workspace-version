@@ -5,6 +5,7 @@ import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import ActivateCohortsTab from "@/pages/lifecycle/stage/activate/cohorts-tab";
 import PriceCohortsTab from "@/pages/lifecycle/stage/price/cohorts-tab";
 import AdoptCohortsTab from "@/pages/lifecycle/stage/adopt/cohorts-tab";
+import RetainCohortsTab from "@/pages/lifecycle/stage/retain/cohorts-tab";
 import {
   ACQUIRE_COHORT_BREAK_ROWS,
   ACQUIRE_COHORT_ROWS,
@@ -77,6 +78,8 @@ export function CohortsTab() {
   if (stage.slug === "price") return <PriceCohortsTab />;
   // Adopt's AD07 uses eligible/2+features/scheduled-delivery columns, not CAC/day30-90.
   if (stage.slug === "adopt") return <AdoptCohortsTab />;
+  // Retain's RT07 uses 30/60/90-day repeat-rate + median-days columns, not CAC/day30-90.
+  if (stage.slug === "retain") return <RetainCohortsTab />;
 
   const data = COHORTS_DATA[stage.slug];
   if (!data) return null;

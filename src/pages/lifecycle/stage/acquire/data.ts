@@ -39,6 +39,8 @@ export type LeakRow = {
   /** Present on stages whose leak table has a "Cause known?" column instead (e.g. Activate). */
   causeKnown?: { label: string; tone: "ultra" | "amber" };
   room: RoomBadge;
+  /** When set, the row's "where" label links out (e.g. Retain's Overview row linking to its segments/:id drilldown). */
+  detailHref?: string;
 };
 
 export const ACQUIRE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
@@ -383,6 +385,8 @@ export type AgentCard = {
   body: string;
   footnote: string;
   tone: "ultra" | "neutral" | "amber" | "teal" | "rose";
+  /** Overrides the footnote text's color — defaults to "ultra" (the color every card used before Retain's third card needed amber). */
+  footnoteTone?: "ultra" | "neutral" | "amber" | "teal" | "rose";
 };
 
 export const ACQUIRE_AGENT_CARDS: AgentCard[] = [
@@ -477,7 +481,9 @@ export type TriedRow = {
     | "incomplete"
     | "validated · low lift"
     | "never promoted"
-    | "never proposed";
+    | "never proposed"
+    | "works, aimed late"
+    | "the open approval";
 };
 
 export const ACQUIRE_TRIED_ROWS: TriedRow[] = [

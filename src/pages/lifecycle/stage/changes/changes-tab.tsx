@@ -8,12 +8,15 @@ import { ACQUIRE_CHANGE_ROWS, ACQUIRE_CHANGE_SOURCE_ROWS, type ChangeRow } from 
 import { ACTIVATE_CHANGE_ROWS } from "@/pages/lifecycle/stage/activate/data";
 import { PRICE_CHANGE_ROWS } from "@/pages/lifecycle/stage/price/data";
 import { ADOPT_CHANGE_ROWS } from "@/pages/lifecycle/stage/adopt/data";
+import { RETAIN_CHANGE_ROWS } from "@/pages/lifecycle/stage/retain/data";
 
 type ChangesData = {
   eyebrow: string;
   rows: ChangeRow[];
   insightTitle: string;
   insightBody: string;
+  /** Overrides the primary closing callout's tone — defaults to "amber" (e.g. Retain's is "ultra"). */
+  insightTone?: "amber" | "rose" | "teal" | "ultra";
   /** A second closing callout, for stages with two distinct findings to flag (e.g. Price's undated Ghana price). */
   secondInsightTone?: "amber" | "rose" | "teal" | "ultra";
   secondInsightTitle?: string;
@@ -56,6 +59,18 @@ const CHANGES_DATA: Record<string, ChangesData> = {
     insightTitle: "The wallet is the only entry here that failed on its own terms",
     insightBody:
       "Everything else on this list was damaged by a decision made elsewhere or has no reading at all. The wallet shipped, worked, and then nothing was built to bring anyone back to it — no balance reminder, no auto-top-up, no follow-up. It is the cheapest fix in the stage and has been sitting untouched for nine months.",
+  },
+  retain: {
+    eyebrow: "Dated changes that moved something in this stage",
+    rows: RETAIN_CHANGE_ROWS,
+    insightTitle: "Every entry on this list has a measured effect, which is unusual",
+    insightBody:
+      "Retain is the most instrumented stage in the workspace because it is the one everyone has always been judged on. It has no blind spots and no unavailable rows — and it still took twenty weeks to find the cause, because the cause was not in this stage.",
+    insightTone: "ultra",
+    secondInsightTone: "amber",
+    secondInsightTitle: "The 7 August fix is being measured right now, against a holdout",
+    secondInsightBody:
+      "18,900 customers have seen the fee at basket rather than at checkout. It is too early for a reading and the screen says so rather than showing an encouraging early number that will move.",
   },
 };
 
@@ -119,7 +134,7 @@ export function ChangesTab() {
         ))}
       </div>
 
-      <Callout tone="amber" title={data.insightTitle}>
+      <Callout tone={data.insightTone ?? "amber"} title={data.insightTitle}>
         {data.insightBody}
       </Callout>
 

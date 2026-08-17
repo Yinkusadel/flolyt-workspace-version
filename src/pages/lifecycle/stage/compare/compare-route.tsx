@@ -10,6 +10,7 @@ import { ACQUIRE_COMPARE_BUILD_ROWS, ACQUIRE_COMPARE_ROWS, type CompareRow } fro
 import { ACTIVATE_COMPARE_ROWS } from "@/pages/lifecycle/stage/activate/data";
 import { PRICE_COMPARE_ROWS } from "@/pages/lifecycle/stage/price/data";
 import { ADOPT_COMPARE_ROWS } from "@/pages/lifecycle/stage/adopt/data";
+import { RETAIN_COMPARE_ROWS } from "@/pages/lifecycle/stage/retain/data";
 
 type CompareData = {
   headline: string;
@@ -60,6 +61,15 @@ const COMPARE_DATA: Record<string, CompareData> = {
     insightTitle: "One feature moved 26 points and one moved 0.4, and that is the finding",
     insightBody:
       "If the March change had made the whole product worse, saved addresses would have fallen too. It did not move at all. A single feature took the entire hit, and it was the one that meets the checkout most often — which is what makes this a specific, fixable cause rather than a vague decline.",
+  },
+  retain: {
+    headline: "Repeat rate −10.2 points · second orders −15.6% while acquisition rose 21%",
+    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
+    periodOptions: ["This quarter vs last", "Year on year", "Nigeria vs Kenya", "Custom"],
+    rows: RETAIN_COMPARE_ROWS,
+    insightTitle: "The last row is the one that looks like growth and is not",
+    insightBody:
+      "The reactivable population more than doubled. That is not a bigger opportunity, it is a bigger hole — 124,000 additional customers who bought once and stopped. Any dashboard that reports “reactivation audience” as a positive number is reporting the size of the failure.",
   },
 };
 

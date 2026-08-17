@@ -16,6 +16,9 @@ import PriceDiscountingTab from "@/pages/lifecycle/stage/price/discounting-tab";
 import AdoptFeaturesTab from "@/pages/lifecycle/stage/adopt/features-tab";
 import AdoptDepthTab from "@/pages/lifecycle/stage/adopt/depth-tab";
 import AdoptBlindSpotsTab from "@/pages/lifecycle/stage/adopt/blind-spots-tab";
+import RetainRepeatCurveTab from "@/pages/lifecycle/stage/retain/repeat-curve-tab";
+import RetainSegmentsTab from "@/pages/lifecycle/stage/retain/segments-tab";
+import RetainReactivationTab from "@/pages/lifecycle/stage/retain/reactivation-tab";
 
 export type StageTab = {
   /** Path segment appended to /lifecycle/:stage/ */
@@ -70,6 +73,16 @@ export const STAGE_TABS: Partial<Record<string, StageTab[]>> = {
     { path: "features", label: "Features", Component: AdoptFeaturesTab },
     { path: "depth", label: "Depth", Component: AdoptDepthTab },
     { path: "blind-spots", label: "Not instrumented", Component: AdoptBlindSpotsTab },
+    { path: "cohorts", label: "Cohorts", Component: CohortsTab },
+    { path: "markets", label: "Markets", Component: MarketsTab },
+    { path: "changes", label: "What changed", Component: ChangesTab },
+    { path: "agents", label: "Agents", Component: AgentsTab },
+    { path: "history", label: "History", Component: HistoryTab },
+  ],
+  retain: [
+    { path: "repeat-curve", label: "Repeat curve", Component: RetainRepeatCurveTab },
+    { path: "segments", label: "Segments", Component: RetainSegmentsTab },
+    { path: "reactivation", label: "Reactivation", Component: RetainReactivationTab },
     { path: "cohorts", label: "Cohorts", Component: CohortsTab },
     { path: "markets", label: "Markets", Component: MarketsTab },
     { path: "changes", label: "What changed", Component: ChangesTab },
