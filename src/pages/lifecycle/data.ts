@@ -55,12 +55,12 @@ export const STAGES: Stage[] = [
   { name: "Activate", slug: "activate", department: "Product", metric: "41% reach value", amount: "₦188M", amountLabel: "at stake", isDefined: true, headline: "41% reach value in twelve months · ₦188M at stake · owned by Product" },
   { name: "Price", slug: "price", department: "Finance", metric: "6 plans", amount: "₦46M", amountLabel: "at stake", isDefined: true, headline: "Six plans · ₦46M at stake · owned by Finance" },
   { name: "Adopt", slug: "adopt", department: "Product", metric: "2.1 features avg", amount: "₦112M", amountLabel: "at stake", isDefined: true, headline: "2.1 features adopted on average · ₦112M at stake · owned by Product" },
-  { name: "Retain", slug: "retain", department: "Marketing", metric: "1.1M active", amount: "₦412M", amountLabel: "at stake", isDefined: true, headline: "1.1M active in 90 days · ₦412M at stake · owned by Marketing" },
-  { name: "Expand", slug: "expand", department: "Sales", metric: "18% eligible", amount: "₦96M", amountLabel: "at stake", isDefined: true, headline: "18% of accounts eligible · ₦96M at stake · owned by Sales" },
-  { name: "Support", slug: "support", department: "Support", metric: "42k contacts", amount: "₦31M", amountLabel: "at stake", isDefined: true, headline: "42k contacts in ninety days · ₦31M at stake · owned by Support" },
-  { name: "Renew", slug: "renew", department: "Customer Success", metric: "61k renewals", amount: "₦88M", amountLabel: "at stake", isDefined: true, headline: "61k renewals this year · ₦88M at stake · owned by Customer Success" },
-  { name: "Advocate", slug: "advocate", department: "Marketing", metric: "124k referrers", amount: "₦124M", amountLabel: "referred", isDefined: true, headline: "124k referrers · ₦124M referred · owned by Marketing" },
-  { name: "Churn", slug: "churn", department: null, metric: "602k lost", amount: "₦602M", amountLabel: "at stake", isDefined: true, headline: "602k lost this year · ₦602M at stake · no owning team" },
+  { name: "Retain", slug: "retain", department: "Marketing", metric: "27% repeat", amount: "₦412M", amountLabel: "at stake", isDefined: true, headline: "27% repeat rate · ₦412M at stake · owned by Marketing" },
+  { name: "Expand", slug: "expand", department: "Sales", metric: "1.4× ARPU", amount: "₦61M", amountLabel: "at stake", isDefined: true, headline: "1.4× ARPU on expansion · ₦61M at stake · owned by Sales" },
+  { name: "Support", slug: "support", department: "Support", metric: "12.8k tickets", amount: "₦9M", amountLabel: "at stake", isDefined: true, headline: "12.8k tickets · ₦9M at stake · owned by Support" },
+  { name: "Renew", slug: "renew", department: "Customer Success", metric: "88.4% projected", amount: "₦88M", amountLabel: "at stake", isDefined: true, headline: "88.4% projected to renew · ₦88M at stake · owned by Customer Success" },
+  { name: "Advocate", slug: "advocate", department: "Marketing", metric: "124k referrers", amount: "₦0 CAC", amountLabel: "referred", isDefined: true, headline: "124k referrers · ₦0 CAC · owned by Marketing" },
+  { name: "Churn", slug: "churn", department: "Customer Success", metric: "3.1%/mo", amount: "₦124M", amountLabel: "at stake", isDefined: true, headline: "3.1% monthly churn · ₦124M at stake · owned by Customer Success" },
 ];
 
 export const ADVOCACY_LOOP_NOTE =
