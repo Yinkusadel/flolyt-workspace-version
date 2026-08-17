@@ -11,6 +11,7 @@ import { ACTIVATE_COMPARE_ROWS } from "@/pages/lifecycle/stage/activate/data";
 import { PRICE_COMPARE_ROWS } from "@/pages/lifecycle/stage/price/data";
 import { ADOPT_COMPARE_ROWS } from "@/pages/lifecycle/stage/adopt/data";
 import { RETAIN_COMPARE_ROWS } from "@/pages/lifecycle/stage/retain/data";
+import { EXPAND_COMPARE_ROWS } from "@/pages/lifecycle/stage/expand/data";
 
 type CompareData = {
   headline: string;
@@ -70,6 +71,15 @@ const COMPARE_DATA: Record<string, CompareData> = {
     insightTitle: "The last row is the one that looks like growth and is not",
     insightBody:
       "The reactivable population more than doubled. That is not a bigger opportunity, it is a bigger hole — 124,000 additional customers who bought once and stopped. Any dashboard that reports “reactivation audience” as a positive number is reporting the size of the failure.",
+  },
+  expand: {
+    headline: "Rate up 0.6 points · 10.6% fewer customers expanding · both are true",
+    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
+    periodOptions: ["This quarter vs last", "Year on year", "Consumer vs accounts", "Custom"],
+    rows: EXPAND_COMPARE_ROWS,
+    insightTitle: "A stage can hit every one of its own targets and be worth 10% less",
+    insightBody:
+      "The rate is up, the multiple is flat, and 500 fewer customers expand every month. Nobody in this stage did anything wrong and nobody in this stage can fix it. Expansion is downstream of survival, and this quarter there were fewer survivors.",
   },
 };
 

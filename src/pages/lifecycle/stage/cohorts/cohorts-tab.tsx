@@ -6,6 +6,7 @@ import ActivateCohortsTab from "@/pages/lifecycle/stage/activate/cohorts-tab";
 import PriceCohortsTab from "@/pages/lifecycle/stage/price/cohorts-tab";
 import AdoptCohortsTab from "@/pages/lifecycle/stage/adopt/cohorts-tab";
 import RetainCohortsTab from "@/pages/lifecycle/stage/retain/cohorts-tab";
+import ExpandCohortsTab from "@/pages/lifecycle/stage/expand/cohorts-tab";
 import {
   ACQUIRE_COHORT_BREAK_ROWS,
   ACQUIRE_COHORT_ROWS,
@@ -80,6 +81,8 @@ export function CohortsTab() {
   if (stage.slug === "adopt") return <AdoptCohortsTab />;
   // Retain's RT07 uses 30/60/90-day repeat-rate + median-days columns, not CAC/day30-90.
   if (stage.slug === "retain") return <RetainCohortsTab />;
+  // Expand's EX07 uses expansion-rate/ARPU-multiple/on-a-paid-plan columns, not CAC/day30-90.
+  if (stage.slug === "expand") return <ExpandCohortsTab />;
 
   const data = COHORTS_DATA[stage.slug];
   if (!data) return null;

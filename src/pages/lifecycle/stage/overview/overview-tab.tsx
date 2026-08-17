@@ -45,6 +45,12 @@ import {
   RETAIN_OVERVIEW_LEAK_ROWS,
   RETAIN_SHARE_EXPORT_PRESET,
 } from "@/pages/lifecycle/stage/retain/data";
+import {
+  EXPAND_OPEN_ROOM_PRESET,
+  EXPAND_OVERVIEW_KPIS,
+  EXPAND_OVERVIEW_LEAK_ROWS,
+  EXPAND_SHARE_EXPORT_PRESET,
+} from "@/pages/lifecycle/stage/expand/data";
 
 type OverviewData = {
   kpis: Kpi[];
@@ -135,6 +141,20 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     showStageRail: true,
     openRoomPreset: RETAIN_OPEN_ROOM_PRESET,
     shareExportPreset: RETAIN_SHARE_EXPORT_PRESET,
+  },
+  expand: {
+    kpis: EXPAND_OVERVIEW_KPIS,
+    insightTitle: "This is the only stage whose own numbers improved this quarter, and it means less than it looks",
+    insightBody:
+      "Expansion rate rose 0.7 points while the eligible population fell 11%. Expansion works on customers who stay, and Retain is producing fewer of them. A healthy rate applied to a shrinking base is how a stage can be doing its job and still be worth less every quarter.",
+    insightTone: "amber",
+    leakEyebrow: "Where the ₦61M is",
+    leakWhereHeader: "Where",
+    leakColumnKind: "cause",
+    leakRows: EXPAND_OVERVIEW_LEAK_ROWS,
+    showStageRail: true,
+    openRoomPreset: EXPAND_OPEN_ROOM_PRESET,
+    shareExportPreset: EXPAND_SHARE_EXPORT_PRESET,
   },
 };
 
@@ -227,7 +247,7 @@ export function OverviewTab() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-end gap-4">
-        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain") && (
+        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain" || stage.slug === "expand") && (
           <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
             How this stage is defined
           </Link>

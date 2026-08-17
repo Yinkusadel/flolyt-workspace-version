@@ -59,10 +59,10 @@ shared tabs/layout/modals and need only their own `data.ts` + 1-3 unique tabs ea
 |---|---|---|
 | `:stage`-param route tree (`route.tsx`) | [x] | Collapsed the old 11 flat routes into one parameterized subtree, mirroring `:roomId` |
 | `StageLayout` / `StageTabsLayout` / `StageSubpageHeader` | [x] | `src/pages/lifecycle/stage/{layout,stage-tabs-layout,stage-subpage-header}.tsx` |
-| Shared tab templates: Overview, Cohorts, Markets, What changed, Agents, History | [x] | One component each, resolve per-stage data via `stage.slug`, wired for Acquire + Activate + Price + Adopt + Retain. Cohorts/Markets dispatch to per-stage components (`stage/activate/{cohorts,markets}-tab.tsx`, `stage/price/{cohorts,markets}-tab.tsx`, `stage/adopt/{cohorts,markets}-tab.tsx`, `stage/retain/{cohorts,markets}-tab.tsx`) when a stage's own column set doesn't match the Acquire-shaped template — confirmed necessary by reading AC06/AC07/PR07/PR08/AD07/AD08/RT07/RT08 directly, not assumed. Agents/History/Changes/Overview templates gained small additive extensions (agent cards without an avatar, a "blocked" threshold status, a second closing callout, a per-stage closing-callout tone, a per-stage primary-callout tone, a mid-page History callout, a linkable Overview leak-table row, an overridable leak-table trend-column header) to fit Price/Adopt/Retain without forking them |
-| Shared Compare-periods route | [x] | `stage/compare/compare-route.tsx` — own header, no tab bar. `buildEyebrow`/`buildRows` are now optional (Activate's AC12, Price's PR12, Adopt's AD12, and Retain's RT12 have no "how this comparison is built" section) |
-| Shared Definition route/editor | [x] | `stage/definition/definition-route.tsx` — built for Activate (AC01), serves any future stage via a `Record<slug, DefinitionData>` lookup the same way Overview does. Price's PR01, Adopt's AD01, and Retain's RT01 each dispatch to their own `stage/<slug>/definition-route.tsx` instead — each has a second section that isn't the shared verdict-comparison table (a needs-vs-has checklist for Price, a feature-count breakdown for Adopt, a reachability-by-day-window breakdown for Retain) |
-| Generic `:id` detail-drilldown template | [x] | `stage/detail/detail-drilldown.tsx`, proven via Acquire's `channels/:id` and Price's `plans/:id`. Adopt's `features/:id` (AD04) and Retain's `segments/:id` (RT05) each dispatch to their own bespoke `stage/<slug>/*-detail-route.tsx` instead — friction/cost bar-charts and outcome tables, not a checked-rows table + action cards |
+| Shared tab templates: Overview, Cohorts, Markets, What changed, Agents, History | [x] | One component each, resolve per-stage data via `stage.slug`, wired for Acquire + Activate + Price + Adopt + Retain + Expand. Cohorts/Markets dispatch to per-stage components (`stage/activate/{cohorts,markets}-tab.tsx`, `stage/price/{cohorts,markets}-tab.tsx`, `stage/adopt/{cohorts,markets}-tab.tsx`, `stage/retain/{cohorts,markets}-tab.tsx`, `stage/expand/{cohorts,markets}-tab.tsx`) when a stage's own column set doesn't match the Acquire-shaped template — confirmed necessary by reading AC06/AC07/PR07/PR08/AD07/AD08/RT07/RT08/EX07/EX08 directly, not assumed. Agents/History/Changes/Overview templates gained small additive extensions (agent cards without an avatar, a "blocked" threshold status, a second closing callout, a per-stage closing-callout tone, a per-stage primary-callout tone, a mid-page History callout, a linkable Overview leak-table row, an overridable leak-table trend-column header) to fit Price/Adopt/Retain without forking them |
+| Shared Compare-periods route | [x] | `stage/compare/compare-route.tsx` — own header, no tab bar. `buildEyebrow`/`buildRows` are now optional (Activate's AC12, Price's PR12, Adopt's AD12, Retain's RT12, and Expand's EX12 have no "how this comparison is built" section) |
+| Shared Definition route/editor | [x] | `stage/definition/definition-route.tsx` — built for Activate (AC01), serves any future stage via a `Record<slug, DefinitionData>` lookup the same way Overview does. Price's PR01, Adopt's AD01, Retain's RT01, and Expand's EX01 each dispatch to their own `stage/<slug>/definition-route.tsx` instead — each has a second section that isn't the shared verdict-comparison table (a needs-vs-has checklist for Price, a feature-count breakdown for Adopt, a reachability-by-day-window breakdown for Retain, a basket/plan/account/category breakdown for Expand) |
+| Generic `:id` detail-drilldown template | [x] | `stage/detail/detail-drilldown.tsx`, proven via Acquire's `channels/:id` and Price's `plans/:id`. Adopt's `features/:id` (AD04), Retain's `segments/:id` (RT05), and Expand's `upgrade-paths/:id` (EX04) each dispatch to their own bespoke `stage/<slug>/*-detail-route.tsx` instead — friction/cost bar-charts and outcome tables, not a checked-rows table + action cards |
 | Shared modals: set-a-threshold, map-a-field, open-a-room, share-or-export | [x] | `stage/modals/` — stage-generic, take stage data as props |
 | Lifecycle map (`LC02`) | [x] | `lifecycle/index.tsx` — stage rail + root-cause table; ownership table moved to its own settings page |
 | Lifecycle map first-run empty state (`LC01`) / market filter (`LC05`) | [ ] | Not wired — no demo stage is currently undefined and `?market=` isn't read yet |
@@ -158,19 +158,38 @@ shared tabs/layout/modals and need only their own `data.ts` + 1-3 unique tabs ea
 | Compare periods | `/lifecycle/retain/compare` | [x] |
 | Build an audience (modal) | — | [x] | RT13, opens from the Reactivation tab's header CTA |
 
-### Remaining 6 stages — not started
+### Expand — complete
+
+| Screen | Route | Status |
+|---|---|---|
+| Definition | `/lifecycle/expand/definition` | [x] | stage-specific layout — EX01's table breaks the four kinds of expansion (basket/plan/account/category) down by value added, median lift, reversibility and owner, not a candidate-signal comparison, see `stage/expand/definition-route.tsx` |
+| Overview | `/lifecycle/expand` | [x] |
+| Upgrade paths | `/lifecycle/expand/upgrade-paths` | [x] | unique tab; reuses the shared `InsightCards` component (built for Activate) for its closing 3-card section |
+| One upgrade path | `/lifecycle/expand/upgrade-paths/:id` | [x] | bespoke drilldown (orders-per-month breakdown table + "what a prompt would be worth" 3-card section), not the generic DetailDrilldown template — only `pay-as-you-go-lagos-plus` has drilldown data, per EX04 |
+| Basket | `/lifecycle/expand/basket` | [x] | unique tab, mostly blocked on `order_lines` (same gap as Price's Margin); reuses the shared `RequestInstrumentationModal` (built for Adopt's AD13, already stage-generic) with Expand's own preset rather than a new modal |
+| Accounts | `/lifecycle/expand/accounts` | [x] | unique tab — the same stage read in "accounts mode" (1,204 named businesses) instead of consumer mode |
+| Cohorts | `/lifecycle/expand/cohorts` | [x] | stage-specific layout, see shared-architecture row above |
+| Markets | `/lifecycle/expand/markets` | [x] | stage-specific layout, see shared-architecture row above |
+| What changed | `/lifecycle/expand/changes` | [x] | uses the existing `insightTone`/`secondInsightTone` optional fields (rose primary, ultra second) |
+| Agents | `/lifecycle/expand/agents` | [x] | 3 cards under a "watching this stage · 2" eyebrow (the same agent appears twice, once per mode) — literal copy from EX10, not a bug; uses `AgentCard.footnoteTone` for the third card |
+| History | `/lifecycle/expand/history` | [x] | `TriedRow.learningKept` widened with four new literal values ("works at small scale", "never cross-sold", "net negative", "validated · a wash") |
+| Compare periods | `/lifecycle/expand/compare` | [x] |
+| Model an upgrade offer (modal) | — | [x] | EX13, opens from the Upgrade paths tab's header CTA |
+
+### Remaining 5 stages — not started
 
 Each needs: `stage/<slug>/data.ts`, its 1-3 unique tabs, its `:id` drilldown wiring where it
 has a list-style tab, and its one stage-specific modal where applicable. The shared tabs/
 layout/modals above are already done, so each stage is materially smaller than Acquire
 was. Verify each stage's Cohorts/Markets/Changes/Agents/History/Definition screens against
 their own SVGs before assuming the shared templates fit unmodified — Activate's Cohorts/
-Markets, Price's Definition, Adopt's Definition/one-feature drilldown, and Retain's
-Definition/Cohorts/Markets did not (see shared-architecture row above).
+Markets, Price's Definition, Adopt's Definition/one-feature drilldown, and Retain's and
+Expand's Definition/Cohorts/Markets did not (see shared-architecture row above). Also check
+whether a stage's action modal can reuse an existing stage-generic modal (Expand's Basket
+tab reused Adopt's `RequestInstrumentationModal` outright) before building a new one.
 
 | Stage | Status | Notes |
 |---|---|---|
-| Expand | [ ] | |
 | Support | [ ] | |
 | Renew | [ ] | |
 | Advocate | [ ] | |

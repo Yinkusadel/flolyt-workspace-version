@@ -36,6 +36,10 @@ import RetainSegmentDetailRoute from "@/pages/lifecycle/stage/retain/segment-det
 import RetainRepeatCurveTab from "@/pages/lifecycle/stage/retain/repeat-curve-tab";
 import RetainSegmentsTab from "@/pages/lifecycle/stage/retain/segments-tab";
 import RetainReactivationTab from "@/pages/lifecycle/stage/retain/reactivation-tab";
+import ExpandPathDetailRoute from "@/pages/lifecycle/stage/expand/path-detail-route";
+import ExpandUpgradePathsTab from "@/pages/lifecycle/stage/expand/upgrade-paths-tab";
+import ExpandBasketTab from "@/pages/lifecycle/stage/expand/basket-tab";
+import ExpandAccountsTab from "@/pages/lifecycle/stage/expand/accounts-tab";
 import Rooms from "@/pages/rooms";
 import RoomLayout, {
   RoomDecisionRoute,
@@ -96,6 +100,7 @@ export const routes = createBrowserRouter([
                       { path: "plans/:id", Component: PricePlanDetailRoute },
                       { path: "features/:id", Component: AdoptFeatureDetailRoute },
                       { path: "segments/:id", Component: RetainSegmentDetailRoute },
+                      { path: "upgrade-paths/:id", Component: ExpandPathDetailRoute },
                       {
                         Component: StageTabsLayout,
                         children: [
@@ -114,6 +119,9 @@ export const routes = createBrowserRouter([
                           { path: "repeat-curve", Component: RetainRepeatCurveTab },
                           { path: "segments", Component: RetainSegmentsTab },
                           { path: "reactivation", Component: RetainReactivationTab },
+                          { path: "upgrade-paths", Component: ExpandUpgradePathsTab },
+                          { path: "basket", Component: ExpandBasketTab },
+                          { path: "accounts", Component: ExpandAccountsTab },
                           { path: "cohorts", Component: CohortsTab },
                           { path: "markets", Component: MarketsTab },
                           { path: "changes", Component: ChangesTab },

@@ -34,6 +34,11 @@ import {
   RETAIN_THRESHOLD_PRESET,
   RETAIN_THRESHOLD_ROWS,
 } from "@/pages/lifecycle/stage/retain/data";
+import {
+  EXPAND_AGENT_CARDS,
+  EXPAND_THRESHOLD_PRESET,
+  EXPAND_THRESHOLD_ROWS,
+} from "@/pages/lifecycle/stage/expand/data";
 
 type AgentsData = {
   eyebrow: string;
@@ -95,6 +100,16 @@ const AGENTS_DATA: Record<string, AgentsData> = {
     insightBody:
       "“A release ships in a market that lost this before” is precisely the rule that would have caught Kenya in June and would catch Ghana next month. It has no owner because a release is Engineering's, a market is nobody's, and the stage is Marketing's. Eighth instance.",
     threshold: RETAIN_THRESHOLD_PRESET,
+  },
+  expand: {
+    eyebrow: "Agents watching this stage · 2",
+    cards: EXPAND_AGENT_CARDS,
+    tableEyebrow: "What would make an agent open a room here",
+    rows: EXPAND_THRESHOLD_ROWS,
+    insightTitle: "Three breached thresholds, three with no owner — and one of them is circular",
+    insightBody:
+      "An account renewing unowned cannot open a room, because a room needs an owner and the reason the condition fired is that there is no owner. Ninth instance of the routing gap, and the first one that cannot be fixed by assigning the rule better. It needs a fallback, not a destination.",
+    threshold: EXPAND_THRESHOLD_PRESET,
   },
 };
 

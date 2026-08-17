@@ -9,6 +9,7 @@ import { ACTIVATE_CHANGE_ROWS } from "@/pages/lifecycle/stage/activate/data";
 import { PRICE_CHANGE_ROWS } from "@/pages/lifecycle/stage/price/data";
 import { ADOPT_CHANGE_ROWS } from "@/pages/lifecycle/stage/adopt/data";
 import { RETAIN_CHANGE_ROWS } from "@/pages/lifecycle/stage/retain/data";
+import { EXPAND_CHANGE_ROWS } from "@/pages/lifecycle/stage/expand/data";
 
 type ChangesData = {
   eyebrow: string;
@@ -71,6 +72,18 @@ const CHANGES_DATA: Record<string, ChangesData> = {
     secondInsightTitle: "The 7 August fix is being measured right now, against a holdout",
     secondInsightBody:
       "18,900 customers have seen the fee at basket rather than at checkout. It is too early for a reading and the screen says so rather than showing an encouraging early number that will move.",
+  },
+  expand: {
+    eyebrow: "Dated changes that moved something in this stage",
+    rows: EXPAND_CHANGE_ROWS,
+    insightTitle: "The last row is not a change and it is on the list deliberately",
+    insightBody:
+      "A behavioural upgrade prompt has never been built, so it has no date, no team and no effect. It is the largest identified opportunity in the stage. Listing only what happened would make this screen a record of decisions taken and silent about the one that never was.",
+    insightTone: "rose",
+    secondInsightTone: "ultra",
+    secondInsightTitle: "The 4 March fee is the only stage in the lifecycle where it did nothing",
+    secondInsightBody:
+      "Expansion rate held at 19.7% through it. That is a real negative finding and it is worth as much as the positive ones — it tells you the fee damaged frequency and value-per-customer, and left the willingness to move up a tier untouched.",
   },
 };
 

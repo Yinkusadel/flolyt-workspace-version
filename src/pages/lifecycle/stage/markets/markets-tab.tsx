@@ -5,6 +5,7 @@ import ActivateMarketsTab from "@/pages/lifecycle/stage/activate/markets-tab";
 import PriceMarketsTab from "@/pages/lifecycle/stage/price/markets-tab";
 import AdoptMarketsTab from "@/pages/lifecycle/stage/adopt/markets-tab";
 import RetainMarketsTab from "@/pages/lifecycle/stage/retain/markets-tab";
+import ExpandMarketsTab from "@/pages/lifecycle/stage/expand/markets-tab";
 import { ACQUIRE_MARKET_ROWS, ACQUIRE_MARKET_SPOTLIGHTS, type MarketRow } from "@/pages/lifecycle/stage/acquire/data";
 
 type MarketsData = {
@@ -68,6 +69,8 @@ export function MarketsTab() {
   if (stage.slug === "adopt") return <AdoptMarketsTab />;
   // Retain's RT08 uses repeat-rate/median-days/reactivable-now/fee-shipped columns, not spend/CAC.
   if (stage.slug === "retain") return <RetainMarketsTab />;
+  // Expand's EX08 uses expansion-rate/ARPU-multiple/business-accounts columns, not spend/CAC.
+  if (stage.slug === "expand") return <ExpandMarketsTab />;
 
   const data = MARKETS_DATA[stage.slug];
   if (!data) return null;

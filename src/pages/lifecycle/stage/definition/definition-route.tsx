@@ -9,6 +9,7 @@ import { ACTIVATE_DEFINITION } from "@/pages/lifecycle/stage/activate/data";
 import PriceDefinitionRoute from "@/pages/lifecycle/stage/price/definition-route";
 import AdoptDefinitionRoute from "@/pages/lifecycle/stage/adopt/definition-route";
 import RetainDefinitionRoute from "@/pages/lifecycle/stage/retain/definition-route";
+import ExpandDefinitionRoute from "@/pages/lifecycle/stage/expand/definition-route";
 
 export type DefinitionCandidate = {
   id: string;
@@ -75,6 +76,10 @@ const DefinitionRoute = () => {
   // reachability-by-window table (0-30/31-60/.../121+ days) — a different
   // table shape, not a candidate-signal comparison.
   if (stage.slug === "retain") return <RetainDefinitionRoute />;
+  // Expand's EX01 replaces the shared verdict-comparison table with a
+  // basket/plan/account/category breakdown (value added, median lift,
+  // reversibility, owner) — a different table shape.
+  if (stage.slug === "expand") return <ExpandDefinitionRoute />;
 
   const data = DEFINITION_DATA[stage.slug];
   if (!data) return null;

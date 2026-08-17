@@ -8,6 +8,7 @@ import { ACTIVATE_GOAL_ROWS, ACTIVATE_TRIED_ROWS } from "@/pages/lifecycle/stage
 import { PRICE_GOAL_ROWS, PRICE_TRIED_ROWS } from "@/pages/lifecycle/stage/price/data";
 import { ADOPT_GOAL_ROWS, ADOPT_TRIED_ROWS } from "@/pages/lifecycle/stage/adopt/data";
 import { RETAIN_GOAL_ROWS, RETAIN_HISTORY_MID_INSIGHT, RETAIN_TRIED_ROWS } from "@/pages/lifecycle/stage/retain/data";
+import { EXPAND_GOAL_ROWS, EXPAND_TRIED_ROWS } from "@/pages/lifecycle/stage/expand/data";
 
 type HistoryData = {
   goalEyebrow: string;
@@ -75,6 +76,16 @@ const HISTORY_DATA: Record<string, HistoryData> = {
       "Retain has been measured properly for years because it is the number the company reports. The result is that every claim on this table can be checked — and the one row still pending is the one that would settle whether price was ever the problem.",
     insightTone: "teal",
   },
+  expand: {
+    goalEyebrow: "Goals that depend on this stage · 2",
+    goalRows: EXPAND_GOAL_ROWS,
+    triedEyebrow: "What has already been tried here",
+    triedRows: EXPAND_TRIED_ROWS,
+    insightTitle: "The one test in this stage that had a holdout is the only one anybody can still argue from",
+    insightBody:
+      "Annual billing was measured properly in 2024 and the answer — a wash — has held up for two years. The other four are stories with numbers attached. Expand is the least-tested stage in the lifecycle, which is a strange thing for the stage that owns upselling.",
+    insightTone: "amber",
+  },
 };
 
 const TODAY_TONE_CLASS: Record<GoalRow["todayTone"], string> = { teal: "text-teal", rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
@@ -98,6 +109,10 @@ const LEARNING_CHIP_TONE: Record<TriedRow["learningKept"], "teal" | "amber" | "n
   "never proposed": "amber",
   "works, aimed late": "amber",
   "the open approval": "amber",
+  "works at small scale": "teal",
+  "never cross-sold": "amber",
+  "net negative": "amber",
+  "validated · a wash": "neutral",
 };
 
 /** The shared History tab template (e.g. A14) — goals that depend on this stage, and what has already been tried. */

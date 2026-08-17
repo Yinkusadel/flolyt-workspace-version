@@ -19,6 +19,9 @@ import AdoptBlindSpotsTab from "@/pages/lifecycle/stage/adopt/blind-spots-tab";
 import RetainRepeatCurveTab from "@/pages/lifecycle/stage/retain/repeat-curve-tab";
 import RetainSegmentsTab from "@/pages/lifecycle/stage/retain/segments-tab";
 import RetainReactivationTab from "@/pages/lifecycle/stage/retain/reactivation-tab";
+import ExpandUpgradePathsTab from "@/pages/lifecycle/stage/expand/upgrade-paths-tab";
+import ExpandBasketTab from "@/pages/lifecycle/stage/expand/basket-tab";
+import ExpandAccountsTab from "@/pages/lifecycle/stage/expand/accounts-tab";
 
 export type StageTab = {
   /** Path segment appended to /lifecycle/:stage/ */
@@ -83,6 +86,16 @@ export const STAGE_TABS: Partial<Record<string, StageTab[]>> = {
     { path: "repeat-curve", label: "Repeat curve", Component: RetainRepeatCurveTab },
     { path: "segments", label: "Segments", Component: RetainSegmentsTab },
     { path: "reactivation", label: "Reactivation", Component: RetainReactivationTab },
+    { path: "cohorts", label: "Cohorts", Component: CohortsTab },
+    { path: "markets", label: "Markets", Component: MarketsTab },
+    { path: "changes", label: "What changed", Component: ChangesTab },
+    { path: "agents", label: "Agents", Component: AgentsTab },
+    { path: "history", label: "History", Component: HistoryTab },
+  ],
+  expand: [
+    { path: "upgrade-paths", label: "Upgrade paths", Component: ExpandUpgradePathsTab },
+    { path: "basket", label: "Basket", Component: ExpandBasketTab },
+    { path: "accounts", label: "Accounts", Component: ExpandAccountsTab },
     { path: "cohorts", label: "Cohorts", Component: CohortsTab },
     { path: "markets", label: "Markets", Component: MarketsTab },
     { path: "changes", label: "What changed", Component: ChangesTab },

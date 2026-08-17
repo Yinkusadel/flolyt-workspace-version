@@ -483,7 +483,11 @@ export type TriedRow = {
     | "never promoted"
     | "never proposed"
     | "works, aimed late"
-    | "the open approval";
+    | "the open approval"
+    | "works at small scale"
+    | "never cross-sold"
+    | "net negative"
+    | "validated · a wash";
 };
 
 export const ACQUIRE_TRIED_ROWS: TriedRow[] = [
