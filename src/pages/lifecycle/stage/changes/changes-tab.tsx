@@ -11,6 +11,7 @@ import { ADOPT_CHANGE_ROWS } from "@/pages/lifecycle/stage/adopt/data";
 import { RETAIN_CHANGE_ROWS } from "@/pages/lifecycle/stage/retain/data";
 import { EXPAND_CHANGE_ROWS } from "@/pages/lifecycle/stage/expand/data";
 import { SUPPORT_CHANGE_ROWS } from "@/pages/lifecycle/stage/support/data";
+import { RENEW_CHANGE_ROWS } from "@/pages/lifecycle/stage/renew/data";
 
 type ChangesData = {
   eyebrow: string;
@@ -97,6 +98,14 @@ const CHANGES_DATA: Record<string, ChangesData> = {
     secondInsightTitle: "The one that worked is the one that cost more",
     secondInsightBody:
       "Proactive outreach on failed deliveries adds handling cost and returns 31.4% retention against a holdout — the best measured intervention anywhere in the lifecycle. It exists because Amara ran it as an experiment, not because a system suggested it.",
+  },
+  renew: {
+    eyebrow: "Dated changes that moved something in this stage",
+    rows: RENEW_CHANGE_ROWS,
+    insightTitle: "Two entries here are the absence of an action, not an action",
+    insightBody:
+      "The Ghana rollout that did not happen and the re-forecast that has not started are both listed as dated changes, because in this stage a thing not done has exactly the same measurable effect as a thing done. A change log that only records deployments would show neither.",
+    insightTone: "rose",
   },
 };
 

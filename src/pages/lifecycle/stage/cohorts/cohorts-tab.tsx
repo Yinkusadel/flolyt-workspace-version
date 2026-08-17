@@ -8,6 +8,7 @@ import AdoptCohortsTab from "@/pages/lifecycle/stage/adopt/cohorts-tab";
 import RetainCohortsTab from "@/pages/lifecycle/stage/retain/cohorts-tab";
 import ExpandCohortsTab from "@/pages/lifecycle/stage/expand/cohorts-tab";
 import SupportCohortsTab from "@/pages/lifecycle/stage/support/cohorts-tab";
+import RenewCohortsTab from "@/pages/lifecycle/stage/renew/cohorts-tab";
 import {
   ACQUIRE_COHORT_BREAK_ROWS,
   ACQUIRE_COHORT_ROWS,
@@ -86,6 +87,8 @@ export function CohortsTab() {
   if (stage.slug === "expand") return <ExpandCohortsTab />;
   // Support's SU06 uses contact-rate/top-driver/repeat-after-contact columns, not CAC/day30-90.
   if (stage.slug === "support") return <SupportCohortsTab />;
+  // Renew's RN06 uses cancelled/paused/card-failed columns, not CAC/day30-90.
+  if (stage.slug === "renew") return <RenewCohortsTab />;
 
   const data = COHORTS_DATA[stage.slug];
   if (!data) return null;

@@ -10,6 +10,7 @@ import { ADOPT_GOAL_ROWS, ADOPT_TRIED_ROWS } from "@/pages/lifecycle/stage/adopt
 import { RETAIN_GOAL_ROWS, RETAIN_HISTORY_MID_INSIGHT, RETAIN_TRIED_ROWS } from "@/pages/lifecycle/stage/retain/data";
 import { EXPAND_GOAL_ROWS, EXPAND_TRIED_ROWS } from "@/pages/lifecycle/stage/expand/data";
 import { SUPPORT_GOAL_ROWS, SUPPORT_HISTORY_MID_INSIGHT, SUPPORT_TRIED_ROWS } from "@/pages/lifecycle/stage/support/data";
+import { RENEW_GOAL_ROWS, RENEW_HISTORY_INSIGHT, RENEW_TRIED_ROWS } from "@/pages/lifecycle/stage/renew/data";
 
 type HistoryData = {
   goalEyebrow: string;
@@ -100,13 +101,22 @@ const HISTORY_DATA: Record<string, HistoryData> = {
       "Proactive outreach on failed deliveries was measured properly and returns the best number in the lifecycle. The three that were not measured all turned out to be negative. That is not a coincidence about this team — it is what happens when cost savings are self-evident and revenue effects are not.",
     insightTone: "teal",
   },
+  renew: {
+    goalEyebrow: "Goals that depend on this stage · 2",
+    goalRows: RENEW_GOAL_ROWS,
+    triedEyebrow: "What has already been tried here",
+    triedRows: RENEW_TRIED_ROWS,
+    insightTitle: RENEW_HISTORY_INSIGHT.title,
+    insightBody: RENEW_HISTORY_INSIGHT.body,
+    insightTone: "teal",
+  },
 };
 
 const TODAY_TONE_CLASS: Record<GoalRow["todayTone"], string> = { teal: "text-teal", rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
 const PACE_CHIP_TONE: Record<GoalRow["paceTone"], "teal" | "rose" | "amber"> = { teal: "teal", rose: "rose", amber: "amber" };
-const PART_TONE_CLASS: Record<GoalRow["partTone"], string> = { amber: "text-amber", rose: "text-rose", neutral: "text-ink-4" };
+const PART_TONE_CLASS: Record<GoalRow["partTone"], string> = { amber: "text-amber", rose: "text-rose", neutral: "text-ink-4", teal: "text-teal" };
 const RESULT_TONE_CLASS: Record<TriedRow["resultTone"], string> = { teal: "text-teal", rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
-const WHEN_TONE_CLASS: Record<NonNullable<TriedRow["whenTone"]>, string> = { neutral: "text-ink-4", amber: "text-amber" };
+const WHEN_TONE_CLASS: Record<NonNullable<TriedRow["whenTone"]>, string> = { neutral: "text-ink-4", amber: "text-amber", rose: "text-rose" };
 
 const LEARNING_CHIP_TONE: Record<TriedRow["learningKept"], "teal" | "amber" | "neutral"> = {
   validated: "teal",
@@ -130,6 +140,8 @@ const LEARNING_CHIP_TONE: Record<TriedRow["learningKept"], "teal" | "amber" | "n
   "validated · best in lifecycle": "teal",
   "under review": "amber",
   "the obvious next test": "amber",
+  "4 hrs waiting": "amber",
+  "reverse it": "amber",
 };
 
 /** The shared History tab template (e.g. A14) — goals that depend on this stage, and what has already been tried. */
@@ -170,7 +182,7 @@ export function HistoryTab() {
       key: "learningKept",
       header: "Learning kept",
       align: "right",
-      render: (row) => <Chip tone={LEARNING_CHIP_TONE[row.learningKept]}>{row.learningKept}</Chip>,
+      render: (row) => <Chip tone={row.learningKeptTone ?? LEARNING_CHIP_TONE[row.learningKept]}>{row.learningKept}</Chip>,
     },
   ];
 

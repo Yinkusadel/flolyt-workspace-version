@@ -44,6 +44,10 @@ import SupportSilentFailuresRoute from "@/pages/lifecycle/stage/support/silent-f
 import SupportContactDriversTab from "@/pages/lifecycle/stage/support/contact-drivers-tab";
 import SupportResolutionTab from "@/pages/lifecycle/stage/support/resolution-tab";
 import SupportDeflectionTab from "@/pages/lifecycle/stage/support/deflection-tab";
+import RenewOneAccountRoute from "@/pages/lifecycle/stage/renew/one-account-route";
+import RenewRenewalBookTab from "@/pages/lifecycle/stage/renew/renewal-book-tab";
+import RenewDunningTab from "@/pages/lifecycle/stage/renew/dunning-tab";
+import RenewPausesTab from "@/pages/lifecycle/stage/renew/pauses-tab";
 import Rooms from "@/pages/rooms";
 import RoomLayout, {
   RoomDecisionRoute,
@@ -106,6 +110,7 @@ export const routes = createBrowserRouter([
                       { path: "segments/:id", Component: RetainSegmentDetailRoute },
                       { path: "upgrade-paths/:id", Component: ExpandPathDetailRoute },
                       { path: "silent", Component: SupportSilentFailuresRoute },
+                      { path: "book/:id", Component: RenewOneAccountRoute },
                       {
                         Component: StageTabsLayout,
                         children: [
@@ -130,6 +135,9 @@ export const routes = createBrowserRouter([
                           { path: "drivers", Component: SupportContactDriversTab },
                           { path: "resolution", Component: SupportResolutionTab },
                           { path: "deflection", Component: SupportDeflectionTab },
+                          { path: "book", Component: RenewRenewalBookTab },
+                          { path: "dunning", Component: RenewDunningTab },
+                          { path: "pauses", Component: RenewPausesTab },
                           { path: "cohorts", Component: CohortsTab },
                           { path: "markets", Component: MarketsTab },
                           { path: "changes", Component: ChangesTab },

@@ -57,6 +57,12 @@ import {
   SUPPORT_OVERVIEW_LEAK_ROWS,
   SUPPORT_SHARE_EXPORT_PRESET,
 } from "@/pages/lifecycle/stage/support/data";
+import {
+  RENEW_OPEN_ROOM_PRESET,
+  RENEW_OVERVIEW_KPIS,
+  RENEW_OVERVIEW_LEAK_ROWS,
+  RENEW_SHARE_EXPORT_PRESET,
+} from "@/pages/lifecycle/stage/renew/data";
 
 type OverviewData = {
   kpis: Kpi[];
@@ -176,6 +182,20 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     openRoomPreset: SUPPORT_OPEN_ROOM_PRESET,
     shareExportPreset: SUPPORT_SHARE_EXPORT_PRESET,
   },
+  renew: {
+    kpis: RENEW_OVERVIEW_KPIS,
+    insightTitle: "Nobody in the ₦88M decided to leave",
+    insightBody:
+      "61,400 cards failed on renewal night because they were presented at midnight, when balances are lowest. These customers wanted the service, were willing to pay for it, and were lost to an implementation detail. It is the only ₦88M in this lifecycle that needed no persuasion, no discount and no product change.",
+    insightTone: "teal",
+    leakEyebrow: "Where the ₦88M is, and why it is the cheapest money in the company",
+    leakWhereHeader: "Where",
+    leakColumnKind: "cause",
+    leakRows: RENEW_OVERVIEW_LEAK_ROWS,
+    showStageRail: true,
+    openRoomPreset: RENEW_OPEN_ROOM_PRESET,
+    shareExportPreset: RENEW_SHARE_EXPORT_PRESET,
+  },
 };
 
 const LEAK_VALUE_TONE_CLASS: Record<LeakRow["valueTone"], string> = {
@@ -267,7 +287,7 @@ export function OverviewTab() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-end gap-4">
-        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain" || stage.slug === "expand" || stage.slug === "support") && (
+        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain" || stage.slug === "expand" || stage.slug === "support" || stage.slug === "renew") && (
           <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
             How this stage is defined
           </Link>

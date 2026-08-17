@@ -44,6 +44,11 @@ import {
   SUPPORT_THRESHOLD_PRESET,
   SUPPORT_THRESHOLD_ROWS,
 } from "@/pages/lifecycle/stage/support/data";
+import {
+  RENEW_AGENT_CARDS,
+  RENEW_THRESHOLD_PRESET,
+  RENEW_THRESHOLD_ROWS,
+} from "@/pages/lifecycle/stage/renew/data";
 
 type AgentsData = {
   eyebrow: string;
@@ -125,6 +130,16 @@ const AGENTS_DATA: Record<string, AgentsData> = {
     insightBody:
       "“A contact driver is reclassified as revenue” was added on 2 August, the day room 8f2c connected five stages. Had it existed on 11 March, Amara would have had a room on her desk in week one and the ₦412M would have been ₦20M. Two more rules on this screen still have nowhere to route — tenth and eleventh instance.",
     threshold: SUPPORT_THRESHOLD_PRESET,
+  },
+  renew: {
+    eyebrow: "Agents watching this stage · 2",
+    cards: RENEW_AGENT_CARDS,
+    tableEyebrow: "What would make an agent open a room here",
+    rows: RENEW_THRESHOLD_ROWS,
+    insightTitle: "The second rule is the one that would have caught Ghana, and it is the twelfth unrouted condition",
+    insightBody:
+      "“A fix is not rolled out to every market within fourteen days” has been breached for 134 days. It has no owner because a rollout belongs to whoever deployed it, a market belongs to nobody, and the stage belongs to Customer Success. Same shape as the eleven before it, in the eighth stage running.",
+    threshold: RENEW_THRESHOLD_PRESET,
   },
 };
 

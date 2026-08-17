@@ -452,7 +452,7 @@ export type GoalRow = {
   paceLabel: string;
   paceTone: "teal" | "rose" | "amber";
   part: string;
-  partTone: "amber" | "rose" | "neutral";
+  partTone: "amber" | "rose" | "neutral" | "teal";
 };
 
 export const ACQUIRE_GOAL_ROWS: GoalRow[] = [
@@ -465,7 +465,7 @@ export type TriedRow = {
   id: string;
   what: string;
   when: string;
-  whenTone?: "neutral" | "amber";
+  whenTone?: "neutral" | "amber" | "rose";
   result: string;
   resultTone: "teal" | "rose" | "amber" | "neutral";
   measuredHow: string;
@@ -490,7 +490,11 @@ export type TriedRow = {
     | "validated · a wash"
     | "validated · best in lifecycle"
     | "under review"
-    | "the obvious next test";
+    | "the obvious next test"
+    | "4 hrs waiting"
+    | "reverse it";
+  /** Overrides the learning-kept chip's tone — defaults to the fixed lookup by text (e.g. Renew's "never proposed" is rose here, not the usual amber). */
+  learningKeptTone?: "teal" | "amber" | "neutral" | "rose";
 };
 
 export const ACQUIRE_TRIED_ROWS: TriedRow[] = [

@@ -13,6 +13,7 @@ import { ADOPT_COMPARE_ROWS } from "@/pages/lifecycle/stage/adopt/data";
 import { RETAIN_COMPARE_ROWS } from "@/pages/lifecycle/stage/retain/data";
 import { EXPAND_COMPARE_ROWS } from "@/pages/lifecycle/stage/expand/data";
 import { SUPPORT_COMPARE_ROWS } from "@/pages/lifecycle/stage/support/data";
+import { RENEW_COMPARE_ROWS } from "@/pages/lifecycle/stage/renew/data";
 
 type CompareData = {
   headline: string;
@@ -90,6 +91,15 @@ const COMPARE_DATA: Record<string, CompareData> = {
     insightTitle: "Every support metric improved and the stage got eight times more expensive",
     insightBody:
       "Faster, cheaper, better resolved, higher satisfaction — and ₦53M more revenue lost per cohort. This is the clearest case in the lifecycle of a stage being genuinely excellent at the thing it was asked to be excellent at, while the thing that mattered went unmeasured for twenty weeks.",
+  },
+  renew: {
+    headline: "Voluntary churn worse, involuntary dramatically better · one rate would hide both",
+    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
+    periodOptions: ["Before vs after the retry fix", "Year on year", "Voluntary vs involuntary", "Custom"],
+    rows: RENEW_COMPARE_ROWS,
+    insightTitle: "Two problems, one stage, opposite directions",
+    insightBody:
+      "Voluntary churn got worse because of something four stages upstream that this team does not control. Involuntary churn got dramatically better because of something this team does control and fixed in nine days. Reporting a single renewal rate would have averaged the two into a mild decline and hidden both stories.",
   },
 };
 
