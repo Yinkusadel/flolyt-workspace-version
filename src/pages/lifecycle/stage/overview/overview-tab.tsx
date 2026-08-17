@@ -74,6 +74,15 @@ import {
   ADVOCATE_OVERVIEW_LEAK_ROWS,
   ADVOCATE_SHARE_EXPORT_PRESET,
 } from "@/pages/lifecycle/stage/advocate/data";
+import {
+  CHURN_ASSIGN_OWNER_PRESET,
+  CHURN_OPEN_ROOM_PRESET,
+  CHURN_OVERVIEW_INSIGHT,
+  CHURN_OVERVIEW_KPIS,
+  CHURN_OVERVIEW_LEAD,
+  CHURN_OVERVIEW_LEAK_ROWS,
+  CHURN_SHARE_EXPORT_PRESET,
+} from "@/pages/lifecycle/stage/churn/data";
 
 type OverviewData = {
   kpis: Kpi[];
@@ -230,6 +239,22 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     shareExportPreset: ADVOCATE_SHARE_EXPORT_PRESET,
     assignOwnerPreset: ADVOCATE_ASSIGN_OWNER_PRESET,
   },
+  churn: {
+    kpis: CHURN_OVERVIEW_KPIS,
+    leadTitle: CHURN_OVERVIEW_LEAD.title,
+    leadBody: CHURN_OVERVIEW_LEAD.body,
+    leadTone: "amber",
+    insightTitle: CHURN_OVERVIEW_INSIGHT.title,
+    insightBody: CHURN_OVERVIEW_INSIGHT.body,
+    leakEyebrow: "Where the ₦124M is",
+    leakWhereHeader: "Where",
+    leakColumnKind: "cause",
+    leakRows: CHURN_OVERVIEW_LEAK_ROWS,
+    showStageRail: true,
+    openRoomPreset: CHURN_OPEN_ROOM_PRESET,
+    shareExportPreset: CHURN_SHARE_EXPORT_PRESET,
+    assignOwnerPreset: CHURN_ASSIGN_OWNER_PRESET,
+  },
 };
 
 const LEAK_VALUE_TONE_CLASS: Record<LeakRow["valueTone"], string> = {
@@ -322,7 +347,7 @@ export function OverviewTab() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-end gap-4">
-        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain" || stage.slug === "expand" || stage.slug === "support" || stage.slug === "renew" || stage.slug === "advocate") && (
+        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain" || stage.slug === "expand" || stage.slug === "support" || stage.slug === "renew" || stage.slug === "advocate" || stage.slug === "churn") && (
           <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
             How this stage is defined
           </Link>

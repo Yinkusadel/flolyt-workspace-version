@@ -52,6 +52,9 @@ import AdvocateOneReferrerGroupRoute from "@/pages/lifecycle/stage/advocate/one-
 import AdvocateReferrersTab from "@/pages/lifecycle/stage/advocate/referrers-tab";
 import AdvocateReferralQualityTab from "@/pages/lifecycle/stage/advocate/quality-tab";
 import AdvocateRewardsTab from "@/pages/lifecycle/stage/advocate/rewards-tab";
+import ChurnReasonsTab from "@/pages/lifecycle/stage/churn/reasons-tab";
+import ChurnPredictionTab from "@/pages/lifecycle/stage/churn/prediction-tab";
+import ChurnWinBackTab from "@/pages/lifecycle/stage/churn/win-back-tab";
 import Rooms from "@/pages/rooms";
 import RoomLayout, {
   RoomDecisionRoute,
@@ -146,6 +149,9 @@ export const routes = createBrowserRouter([
                           { path: "referrers", Component: AdvocateReferrersTab },
                           { path: "quality", Component: AdvocateReferralQualityTab },
                           { path: "rewards", Component: AdvocateRewardsTab },
+                          { path: "reasons", Component: ChurnReasonsTab },
+                          { path: "prediction", Component: ChurnPredictionTab },
+                          { path: "win-back", Component: ChurnWinBackTab },
                           { path: "cohorts", Component: CohortsTab },
                           { path: "markets", Component: MarketsTab },
                           { path: "changes", Component: ChangesTab },

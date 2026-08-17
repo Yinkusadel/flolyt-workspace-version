@@ -31,6 +31,9 @@ import RenewPausesTab from "@/pages/lifecycle/stage/renew/pauses-tab";
 import AdvocateReferrersTab from "@/pages/lifecycle/stage/advocate/referrers-tab";
 import AdvocateReferralQualityTab from "@/pages/lifecycle/stage/advocate/quality-tab";
 import AdvocateRewardsTab from "@/pages/lifecycle/stage/advocate/rewards-tab";
+import ChurnReasonsTab from "@/pages/lifecycle/stage/churn/reasons-tab";
+import ChurnPredictionTab from "@/pages/lifecycle/stage/churn/prediction-tab";
+import ChurnWinBackTab from "@/pages/lifecycle/stage/churn/win-back-tab";
 
 export type StageTab = {
   /** Path segment appended to /lifecycle/:stage/ */
@@ -135,6 +138,16 @@ export const STAGE_TABS: Partial<Record<string, StageTab[]>> = {
     { path: "referrers", label: "Referrers", Component: AdvocateReferrersTab },
     { path: "quality", label: "Referral quality", Component: AdvocateReferralQualityTab },
     { path: "rewards", label: "Rewards", Component: AdvocateRewardsTab },
+    { path: "cohorts", label: "Cohorts", Component: CohortsTab },
+    { path: "markets", label: "Markets", Component: MarketsTab },
+    { path: "changes", label: "What changed", Component: ChangesTab },
+    { path: "agents", label: "Agents", Component: AgentsTab },
+    { path: "history", label: "History", Component: HistoryTab },
+  ],
+  churn: [
+    { path: "reasons", label: "Reasons", Component: ChurnReasonsTab },
+    { path: "prediction", label: "Prediction", Component: ChurnPredictionTab },
+    { path: "win-back", label: "Win-back", Component: ChurnWinBackTab },
     { path: "cohorts", label: "Cohorts", Component: CohortsTab },
     { path: "markets", label: "Markets", Component: MarketsTab },
     { path: "changes", label: "What changed", Component: ChangesTab },

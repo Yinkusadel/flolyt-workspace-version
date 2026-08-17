@@ -493,7 +493,9 @@ export type TriedRow = {
     | "the obvious next test"
     | "4 hrs waiting"
     | "reverse it"
-    | "unresolved";
+    | "unresolved"
+    | "stop it"
+    | "built, unused";
   /** Overrides the learning-kept chip's tone — defaults to the fixed lookup by text (e.g. Renew's "never proposed" is rose here, not the usual amber). */
   learningKeptTone?: "teal" | "amber" | "neutral" | "rose";
 };
@@ -513,7 +515,8 @@ export type CompareRow = {
   before: string;
   after: string;
   change: string;
-  changeTone: "teal" | "rose" | "neutral";
+  /** "amber" added for Churn's CH11 "Reason known" row — a mild negative that isn't rose. */
+  changeTone: "teal" | "rose" | "amber" | "neutral";
   whatMovedIt: string;
 };
 

@@ -13,6 +13,7 @@ import { EXPAND_CHANGE_ROWS } from "@/pages/lifecycle/stage/expand/data";
 import { SUPPORT_CHANGE_ROWS } from "@/pages/lifecycle/stage/support/data";
 import { RENEW_CHANGE_ROWS } from "@/pages/lifecycle/stage/renew/data";
 import { ADVOCATE_CHANGE_ROWS, ADVOCATE_CHANGES_INSIGHT } from "@/pages/lifecycle/stage/advocate/data";
+import { CHURN_CHANGE_ROWS, CHURN_CHANGES_INSIGHT } from "@/pages/lifecycle/stage/churn/data";
 
 type ChangesData = {
   eyebrow: string;
@@ -113,6 +114,13 @@ const CHANGES_DATA: Record<string, ChangesData> = {
     rows: ADVOCATE_CHANGE_ROWS,
     insightTitle: ADVOCATE_CHANGES_INSIGHT.title,
     insightBody: ADVOCATE_CHANGES_INSIGHT.body,
+    insightTone: "rose",
+  },
+  churn: {
+    eyebrow: "Dated changes that moved something in this stage",
+    rows: CHURN_CHANGE_ROWS,
+    insightTitle: CHURN_CHANGES_INSIGHT.title,
+    insightBody: CHURN_CHANGES_INSIGHT.body,
     insightTone: "rose",
   },
 };

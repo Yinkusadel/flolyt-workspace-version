@@ -9,6 +9,7 @@ import ExpandMarketsTab from "@/pages/lifecycle/stage/expand/markets-tab";
 import SupportMarketsTab from "@/pages/lifecycle/stage/support/markets-tab";
 import RenewMarketsTab from "@/pages/lifecycle/stage/renew/markets-tab";
 import AdvocateMarketsTab from "@/pages/lifecycle/stage/advocate/markets-tab";
+import ChurnMarketsTab from "@/pages/lifecycle/stage/churn/markets-tab";
 import { ACQUIRE_MARKET_ROWS, ACQUIRE_MARKET_SPOTLIGHTS, type MarketRow } from "@/pages/lifecycle/stage/acquire/data";
 
 type MarketsData = {
@@ -80,6 +81,9 @@ export function MarketsTab() {
   if (stage.slug === "renew") return <RenewMarketsTab />;
   // Advocate's AV07 uses referrers/referral-rate/share-of-acquisition/reward columns, not spend/CAC.
   if (stage.slug === "advocate") return <AdvocateMarketsTab />;
+  // Churn's CH07 uses churned/reason-known/reachable/ever-contacted columns, not spend/CAC, plus a
+  // "Ghana across all ten stages" cross-stage table instead of the shared spotlight-card section.
+  if (stage.slug === "churn") return <ChurnMarketsTab />;
 
   const data = MARKETS_DATA[stage.slug];
   if (!data) return null;

@@ -13,6 +13,7 @@ import ExpandDefinitionRoute from "@/pages/lifecycle/stage/expand/definition-rou
 import SupportDefinitionRoute from "@/pages/lifecycle/stage/support/definition-route";
 import RenewDefinitionRoute from "@/pages/lifecycle/stage/renew/definition-route";
 import AdvocateDefinitionRoute from "@/pages/lifecycle/stage/advocate/definition-route";
+import ChurnDefinitionRoute from "@/pages/lifecycle/stage/churn/definition-route";
 
 export type DefinitionCandidate = {
   id: string;
@@ -97,6 +98,13 @@ const DefinitionRoute = () => {
   // VERDICT breakdown — a different table shape, and it also needs its own
   // "Assign an owner" header CTA (this is the one unowned stage).
   if (stage.slug === "advocate") return <AdvocateDefinitionRoute />;
+  // Churn's CH01 replaces the shared verdict-comparison table with a
+  // definition-window comparison (30/60/90/120/180 days no order, each
+  // scored on churned/yr, monthly rate, return-unaided and win-back
+  // response) — a different table shape, and it also needs its own
+  // "Assign an owner" header CTA (the second unowned stage, alongside
+  // Advocate).
+  if (stage.slug === "churn") return <ChurnDefinitionRoute />;
 
   const data = DEFINITION_DATA[stage.slug];
   if (!data) return null;

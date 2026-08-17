@@ -15,6 +15,7 @@ import { EXPAND_COMPARE_ROWS } from "@/pages/lifecycle/stage/expand/data";
 import { SUPPORT_COMPARE_ROWS } from "@/pages/lifecycle/stage/support/data";
 import { RENEW_COMPARE_ROWS } from "@/pages/lifecycle/stage/renew/data";
 import { ADVOCATE_COMPARE_INSIGHT, ADVOCATE_COMPARE_ROWS } from "@/pages/lifecycle/stage/advocate/data";
+import { CHURN_COMPARE_INSIGHT, CHURN_COMPARE_ROWS } from "@/pages/lifecycle/stage/churn/data";
 
 type CompareData = {
   headline: string;
@@ -23,6 +24,8 @@ type CompareData = {
   rows: CompareRow[];
   insightTitle: string;
   insightBody: string;
+  /** Overrides the closing callout's tone — defaults to "rose" (e.g. Churn's CH11 closing callout is ultra, not rose). */
+  insightTone?: "rose" | "ultra" | "amber" | "teal";
   buildEyebrow?: string;
   buildRows?: { label: string; value: string; tone: "neutral" | "amber" }[];
 };
@@ -110,9 +113,18 @@ const COMPARE_DATA: Record<string, CompareData> = {
     insightTitle: ADVOCATE_COMPARE_INSIGHT.title,
     insightBody: ADVOCATE_COMPARE_INSIGHT.body,
   },
+  churn: {
+    headline: "Churn +10.4 points · every row decided in another stage · it is the ledger, not the lever",
+    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
+    periodOptions: ["This quarter vs last", "Year on year", "Ghana vs Nigeria", "Custom"],
+    rows: CHURN_COMPARE_ROWS,
+    insightTitle: CHURN_COMPARE_INSIGHT.title,
+    insightBody: CHURN_COMPARE_INSIGHT.body,
+    insightTone: "ultra",
+  },
 };
 
-const CHANGE_TONE_CLASS: Record<CompareRow["changeTone"], string> = { teal: "text-teal", rose: "text-rose", neutral: "text-ink-4" };
+const CHANGE_TONE_CLASS: Record<CompareRow["changeTone"], string> = { teal: "text-teal", rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
 const BUILD_TONE_CLASS: Record<"neutral" | "amber", string> = { neutral: "text-ink-2", amber: "text-amber" };
 
 /** Screen A16 (and the shared Compare-periods template for every stage) — has its own header, never shows the tab bar. */
@@ -171,7 +183,7 @@ const CompareRoute = () => {
 
       <DataTable columns={columns} rows={data.rows} />
 
-      <Callout tone="rose" title={data.insightTitle}>
+      <Callout tone={data.insightTone ?? "rose"} title={data.insightTitle}>
         {data.insightBody}
       </Callout>
 

@@ -57,6 +57,13 @@ import {
   ADVOCATE_THRESHOLD_PRESET,
   ADVOCATE_THRESHOLD_ROWS,
 } from "@/pages/lifecycle/stage/advocate/data";
+import {
+  CHURN_AGENT_CARDS,
+  CHURN_AGENTS_INSIGHT,
+  CHURN_ASSIGN_OWNER_PRESET,
+  CHURN_THRESHOLD_PRESET,
+  CHURN_THRESHOLD_ROWS,
+} from "@/pages/lifecycle/stage/churn/data";
 
 type AgentsData = {
   eyebrow: string;
@@ -160,6 +167,16 @@ const AGENTS_DATA: Record<string, AgentsData> = {
     insightBody: ADVOCATE_AGENTS_INSIGHT.body,
     threshold: ADVOCATE_THRESHOLD_PRESET,
     assignOwnerPreset: ADVOCATE_ASSIGN_OWNER_PRESET,
+  },
+  churn: {
+    eyebrow: "Agents watching this stage · 1",
+    cards: CHURN_AGENT_CARDS,
+    tableEyebrow: "What would make an agent open a room here",
+    rows: CHURN_THRESHOLD_ROWS,
+    insightTitle: CHURN_AGENTS_INSIGHT.title,
+    insightBody: CHURN_AGENTS_INSIGHT.body,
+    threshold: CHURN_THRESHOLD_PRESET,
+    assignOwnerPreset: CHURN_ASSIGN_OWNER_PRESET,
   },
 };
 
