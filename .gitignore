@@ -18,7 +18,7 @@ dist-ssr
 !.env.example
 
 # Large design export bundle
-flolyt-kit-122/
+flolyt-figma-designs/
 
 # Editor directories and files
 .vscode/*
