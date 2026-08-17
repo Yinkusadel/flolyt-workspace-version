@@ -487,7 +487,10 @@ export type TriedRow = {
     | "works at small scale"
     | "never cross-sold"
     | "net negative"
-    | "validated · a wash";
+    | "validated · a wash"
+    | "validated · best in lifecycle"
+    | "under review"
+    | "the obvious next test";
 };
 
 export const ACQUIRE_TRIED_ROWS: TriedRow[] = [

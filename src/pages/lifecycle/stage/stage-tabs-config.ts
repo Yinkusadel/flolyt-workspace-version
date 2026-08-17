@@ -22,6 +22,9 @@ import RetainReactivationTab from "@/pages/lifecycle/stage/retain/reactivation-t
 import ExpandUpgradePathsTab from "@/pages/lifecycle/stage/expand/upgrade-paths-tab";
 import ExpandBasketTab from "@/pages/lifecycle/stage/expand/basket-tab";
 import ExpandAccountsTab from "@/pages/lifecycle/stage/expand/accounts-tab";
+import SupportContactDriversTab from "@/pages/lifecycle/stage/support/contact-drivers-tab";
+import SupportResolutionTab from "@/pages/lifecycle/stage/support/resolution-tab";
+import SupportDeflectionTab from "@/pages/lifecycle/stage/support/deflection-tab";
 
 export type StageTab = {
   /** Path segment appended to /lifecycle/:stage/ */
@@ -96,6 +99,16 @@ export const STAGE_TABS: Partial<Record<string, StageTab[]>> = {
     { path: "upgrade-paths", label: "Upgrade paths", Component: ExpandUpgradePathsTab },
     { path: "basket", label: "Basket", Component: ExpandBasketTab },
     { path: "accounts", label: "Accounts", Component: ExpandAccountsTab },
+    { path: "cohorts", label: "Cohorts", Component: CohortsTab },
+    { path: "markets", label: "Markets", Component: MarketsTab },
+    { path: "changes", label: "What changed", Component: ChangesTab },
+    { path: "agents", label: "Agents", Component: AgentsTab },
+    { path: "history", label: "History", Component: HistoryTab },
+  ],
+  support: [
+    { path: "drivers", label: "Contact drivers", Component: SupportContactDriversTab },
+    { path: "resolution", label: "Resolution", Component: SupportResolutionTab },
+    { path: "deflection", label: "Deflection", Component: SupportDeflectionTab },
     { path: "cohorts", label: "Cohorts", Component: CohortsTab },
     { path: "markets", label: "Markets", Component: MarketsTab },
     { path: "changes", label: "What changed", Component: ChangesTab },

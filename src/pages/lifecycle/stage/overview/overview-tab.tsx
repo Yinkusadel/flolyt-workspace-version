@@ -51,6 +51,12 @@ import {
   EXPAND_OVERVIEW_LEAK_ROWS,
   EXPAND_SHARE_EXPORT_PRESET,
 } from "@/pages/lifecycle/stage/expand/data";
+import {
+  SUPPORT_OPEN_ROOM_PRESET,
+  SUPPORT_OVERVIEW_KPIS,
+  SUPPORT_OVERVIEW_LEAK_ROWS,
+  SUPPORT_SHARE_EXPORT_PRESET,
+} from "@/pages/lifecycle/stage/support/data";
 
 type OverviewData = {
   kpis: Kpi[];
@@ -156,6 +162,20 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     openRoomPreset: EXPAND_OPEN_ROOM_PRESET,
     shareExportPreset: EXPAND_SHARE_EXPORT_PRESET,
   },
+  support: {
+    kpis: SUPPORT_OVERVIEW_KPIS,
+    insightTitle: "The ₦9M is what Support can fix. The ₦38M is what Support can only see.",
+    insightBody:
+      "This stage's own number is small because most of what it detects belongs to Delivery, Product or Engineering. Support is the earliest and cheapest sensor in the lifecycle and the one with the least ability to act on what it senses.",
+    insightTone: "amber",
+    leakEyebrow: "Where the ₦9M is",
+    leakWhereHeader: "Where",
+    leakColumnKind: "cause",
+    leakRows: SUPPORT_OVERVIEW_LEAK_ROWS,
+    showStageRail: true,
+    openRoomPreset: SUPPORT_OPEN_ROOM_PRESET,
+    shareExportPreset: SUPPORT_SHARE_EXPORT_PRESET,
+  },
 };
 
 const LEAK_VALUE_TONE_CLASS: Record<LeakRow["valueTone"], string> = {
@@ -247,7 +267,7 @@ export function OverviewTab() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-end gap-4">
-        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain" || stage.slug === "expand") && (
+        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain" || stage.slug === "expand" || stage.slug === "support") && (
           <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
             How this stage is defined
           </Link>

@@ -40,6 +40,10 @@ import ExpandPathDetailRoute from "@/pages/lifecycle/stage/expand/path-detail-ro
 import ExpandUpgradePathsTab from "@/pages/lifecycle/stage/expand/upgrade-paths-tab";
 import ExpandBasketTab from "@/pages/lifecycle/stage/expand/basket-tab";
 import ExpandAccountsTab from "@/pages/lifecycle/stage/expand/accounts-tab";
+import SupportSilentFailuresRoute from "@/pages/lifecycle/stage/support/silent-failures-route";
+import SupportContactDriversTab from "@/pages/lifecycle/stage/support/contact-drivers-tab";
+import SupportResolutionTab from "@/pages/lifecycle/stage/support/resolution-tab";
+import SupportDeflectionTab from "@/pages/lifecycle/stage/support/deflection-tab";
 import Rooms from "@/pages/rooms";
 import RoomLayout, {
   RoomDecisionRoute,
@@ -101,6 +105,7 @@ export const routes = createBrowserRouter([
                       { path: "features/:id", Component: AdoptFeatureDetailRoute },
                       { path: "segments/:id", Component: RetainSegmentDetailRoute },
                       { path: "upgrade-paths/:id", Component: ExpandPathDetailRoute },
+                      { path: "silent", Component: SupportSilentFailuresRoute },
                       {
                         Component: StageTabsLayout,
                         children: [
@@ -122,6 +127,9 @@ export const routes = createBrowserRouter([
                           { path: "upgrade-paths", Component: ExpandUpgradePathsTab },
                           { path: "basket", Component: ExpandBasketTab },
                           { path: "accounts", Component: ExpandAccountsTab },
+                          { path: "drivers", Component: SupportContactDriversTab },
+                          { path: "resolution", Component: SupportResolutionTab },
+                          { path: "deflection", Component: SupportDeflectionTab },
                           { path: "cohorts", Component: CohortsTab },
                           { path: "markets", Component: MarketsTab },
                           { path: "changes", Component: ChangesTab },

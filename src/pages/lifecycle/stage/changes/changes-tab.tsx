@@ -10,6 +10,7 @@ import { PRICE_CHANGE_ROWS } from "@/pages/lifecycle/stage/price/data";
 import { ADOPT_CHANGE_ROWS } from "@/pages/lifecycle/stage/adopt/data";
 import { RETAIN_CHANGE_ROWS } from "@/pages/lifecycle/stage/retain/data";
 import { EXPAND_CHANGE_ROWS } from "@/pages/lifecycle/stage/expand/data";
+import { SUPPORT_CHANGE_ROWS } from "@/pages/lifecycle/stage/support/data";
 
 type ChangesData = {
   eyebrow: string;
@@ -84,6 +85,18 @@ const CHANGES_DATA: Record<string, ChangesData> = {
     secondInsightTitle: "The 4 March fee is the only stage in the lifecycle where it did nothing",
     secondInsightBody:
       "Expansion rate held at 19.7% through it. That is a real negative finding and it is worth as much as the positive ones — it tells you the fee damaged frequency and value-per-customer, and left the willingness to move up a tier untouched.",
+  },
+  support: {
+    eyebrow: "Dated changes that moved something in this stage",
+    rows: SUPPORT_CHANGE_ROWS,
+    insightTitle: "Four of the six changes here were made by Support and three of them made revenue worse",
+    insightBody:
+      "Every one was a sensible cost decision. The chatbot, the article and the Ghana headcount cut all reduced handling cost and all reduced retention, because this stage has been optimised against a cost metric for years with no visibility of the revenue on the other side of it.",
+    insightTone: "rose",
+    secondInsightTone: "teal",
+    secondInsightTitle: "The one that worked is the one that cost more",
+    secondInsightBody:
+      "Proactive outreach on failed deliveries adds handling cost and returns 31.4% retention against a holdout — the best measured intervention anywhere in the lifecycle. It exists because Amara ran it as an experiment, not because a system suggested it.",
   },
 };
 

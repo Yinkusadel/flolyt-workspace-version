@@ -39,6 +39,11 @@ import {
   EXPAND_THRESHOLD_PRESET,
   EXPAND_THRESHOLD_ROWS,
 } from "@/pages/lifecycle/stage/expand/data";
+import {
+  SUPPORT_AGENT_CARDS,
+  SUPPORT_THRESHOLD_PRESET,
+  SUPPORT_THRESHOLD_ROWS,
+} from "@/pages/lifecycle/stage/support/data";
 
 type AgentsData = {
   eyebrow: string;
@@ -110,6 +115,16 @@ const AGENTS_DATA: Record<string, AgentsData> = {
     insightBody:
       "An account renewing unowned cannot open a room, because a room needs an owner and the reason the condition fired is that there is no owner. Ninth instance of the routing gap, and the first one that cannot be fixed by assigning the rule better. It needs a fallback, not a destination.",
     threshold: EXPAND_THRESHOLD_PRESET,
+  },
+  support: {
+    eyebrow: "Agents watching this stage · 1",
+    cards: SUPPORT_AGENT_CARDS,
+    tableEyebrow: "What would make an agent open a room here",
+    rows: SUPPORT_THRESHOLD_ROWS,
+    insightTitle: "The first rule now exists because of what it cost when it did not",
+    insightBody:
+      "“A contact driver is reclassified as revenue” was added on 2 August, the day room 8f2c connected five stages. Had it existed on 11 March, Amara would have had a room on her desk in week one and the ₦412M would have been ₦20M. Two more rules on this screen still have nowhere to route — tenth and eleventh instance.",
+    threshold: SUPPORT_THRESHOLD_PRESET,
   },
 };
 

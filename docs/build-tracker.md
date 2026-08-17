@@ -59,10 +59,10 @@ shared tabs/layout/modals and need only their own `data.ts` + 1-3 unique tabs ea
 |---|---|---|
 | `:stage`-param route tree (`route.tsx`) | [x] | Collapsed the old 11 flat routes into one parameterized subtree, mirroring `:roomId` |
 | `StageLayout` / `StageTabsLayout` / `StageSubpageHeader` | [x] | `src/pages/lifecycle/stage/{layout,stage-tabs-layout,stage-subpage-header}.tsx` |
-| Shared tab templates: Overview, Cohorts, Markets, What changed, Agents, History | [x] | One component each, resolve per-stage data via `stage.slug`, wired for Acquire + Activate + Price + Adopt + Retain + Expand. Cohorts/Markets dispatch to per-stage components (`stage/activate/{cohorts,markets}-tab.tsx`, `stage/price/{cohorts,markets}-tab.tsx`, `stage/adopt/{cohorts,markets}-tab.tsx`, `stage/retain/{cohorts,markets}-tab.tsx`, `stage/expand/{cohorts,markets}-tab.tsx`) when a stage's own column set doesn't match the Acquire-shaped template — confirmed necessary by reading AC06/AC07/PR07/PR08/AD07/AD08/RT07/RT08/EX07/EX08 directly, not assumed. Agents/History/Changes/Overview templates gained small additive extensions (agent cards without an avatar, a "blocked" threshold status, a second closing callout, a per-stage closing-callout tone, a per-stage primary-callout tone, a mid-page History callout, a linkable Overview leak-table row, an overridable leak-table trend-column header) to fit Price/Adopt/Retain without forking them |
-| Shared Compare-periods route | [x] | `stage/compare/compare-route.tsx` — own header, no tab bar. `buildEyebrow`/`buildRows` are now optional (Activate's AC12, Price's PR12, Adopt's AD12, Retain's RT12, and Expand's EX12 have no "how this comparison is built" section) |
-| Shared Definition route/editor | [x] | `stage/definition/definition-route.tsx` — built for Activate (AC01), serves any future stage via a `Record<slug, DefinitionData>` lookup the same way Overview does. Price's PR01, Adopt's AD01, Retain's RT01, and Expand's EX01 each dispatch to their own `stage/<slug>/definition-route.tsx` instead — each has a second section that isn't the shared verdict-comparison table (a needs-vs-has checklist for Price, a feature-count breakdown for Adopt, a reachability-by-day-window breakdown for Retain, a basket/plan/account/category breakdown for Expand) |
-| Generic `:id` detail-drilldown template | [x] | `stage/detail/detail-drilldown.tsx`, proven via Acquire's `channels/:id` and Price's `plans/:id`. Adopt's `features/:id` (AD04), Retain's `segments/:id` (RT05), and Expand's `upgrade-paths/:id` (EX04) each dispatch to their own bespoke `stage/<slug>/*-detail-route.tsx` instead — friction/cost bar-charts and outcome tables, not a checked-rows table + action cards |
+| Shared tab templates: Overview, Cohorts, Markets, What changed, Agents, History | [x] | One component each, resolve per-stage data via `stage.slug`, wired for Acquire + Activate + Price + Adopt + Retain + Expand + Support. Cohorts/Markets dispatch to per-stage components (`stage/activate/{cohorts,markets}-tab.tsx`, `stage/price/{cohorts,markets}-tab.tsx`, `stage/adopt/{cohorts,markets}-tab.tsx`, `stage/retain/{cohorts,markets}-tab.tsx`, `stage/expand/{cohorts,markets}-tab.tsx`, `stage/support/{cohorts,markets}-tab.tsx`) when a stage's own column set doesn't match the Acquire-shaped template — confirmed necessary by reading AC06/AC07/PR07/PR08/AD07/AD08/RT07/RT08/EX07/EX08/SU06/SU07 directly, not assumed. Agents/History/Changes/Overview templates gained small additive extensions (agent cards without an avatar, a "blocked" threshold status, a second closing callout, a per-stage closing-callout tone, a per-stage primary-callout tone, a mid-page History callout, a linkable Overview leak-table row, an overridable leak-table trend-column header, a linkable KPI card) to fit Price/Adopt/Retain/Support without forking them |
+| Shared Compare-periods route | [x] | `stage/compare/compare-route.tsx` — own header, no tab bar. `buildEyebrow`/`buildRows` are now optional (Activate's AC12, Price's PR12, Adopt's AD12, Retain's RT12, Expand's EX12, and Support's SU11 have no "how this comparison is built" section) |
+| Shared Definition route/editor | [x] | `stage/definition/definition-route.tsx` — built for Activate (AC01), serves any future stage via a `Record<slug, DefinitionData>` lookup the same way Overview does. Price's PR01, Adopt's AD01, Retain's RT01, Expand's EX01, and Support's SU01 each dispatch to their own `stage/<slug>/definition-route.tsx` instead — each has a second section that isn't the shared verdict-comparison table (a needs-vs-has checklist for Price, a feature-count breakdown for Adopt, a reachability-by-day-window breakdown for Retain, a basket/plan/account/category breakdown for Expand, a silent-failure outcome breakdown for Support) |
+| Generic `:id` detail-drilldown template | [x] | `stage/detail/detail-drilldown.tsx`, proven via Acquire's `channels/:id` and Price's `plans/:id`. Adopt's `features/:id` (AD04), Retain's `segments/:id` (RT05), and Expand's `upgrade-paths/:id` (EX04) each dispatch to their own bespoke `stage/<slug>/*-detail-route.tsx` instead — friction/cost bar-charts and outcome tables, not a checked-rows table + action cards. Support's Silent failures (SU13) is a further variant: same "own header, no tab bar" shape but reached from an Overview KPI card instead of a `:id` param, since it isn't really a drilldown of a list row |
 | Shared modals: set-a-threshold, map-a-field, open-a-room, share-or-export | [x] | `stage/modals/` — stage-generic, take stage data as props |
 | Lifecycle map (`LC02`) | [x] | `lifecycle/index.tsx` — stage rail + root-cause table; ownership table moved to its own settings page |
 | Lifecycle map first-run empty state (`LC01`) / market filter (`LC05`) | [ ] | Not wired — no demo stage is currently undefined and `?market=` isn't read yet |
@@ -176,21 +176,40 @@ shared tabs/layout/modals and need only their own `data.ts` + 1-3 unique tabs ea
 | Compare periods | `/lifecycle/expand/compare` | [x] |
 | Model an upgrade offer (modal) | — | [x] | EX13, opens from the Upgrade paths tab's header CTA |
 
-### Remaining 5 stages — not started
+### Support — complete
+
+| Screen | Route | Status |
+|---|---|---|
+| Definition | `/lifecycle/support/definition` | [x] | stage-specific layout — SU01's table breaks the 39,600 silent failures down by outcome and repeat rate, not a candidate-signal comparison, see `stage/support/definition-route.tsx` |
+| Overview | `/lifecycle/support` | [x] |
+| Contact drivers | `/lifecycle/support/drivers` | [x] | unique tab; route path is `drivers` per SU03's own footer even though the tab label reads "Contact drivers"; reuses the shared `InsightCards` component for its 3-card reclassification timeline |
+| Resolution | `/lifecycle/support/resolution` | [x] | unique tab |
+| Deflection | `/lifecycle/support/deflection` | [x] | unique tab |
+| Silent failures | `/lifecycle/support/silent` | [x] | own header, no tab bar — reached from the Overview's "Revenue behind silent failures" KPI card, not a tab or a leak-table row; its own numbers match that KPI card exactly, per SU13. Added an optional `Kpi.href` field to the shared `KpiCards` component for this (same "small optional field" pattern as Retain's `LeakRow.detailHref`) |
+| Cohorts | `/lifecycle/support/cohorts` | [x] | stage-specific layout, see shared-architecture row above |
+| Markets | `/lifecycle/support/markets` | [x] | stage-specific layout, see shared-architecture row above |
+| What changed | `/lifecycle/support/changes` | [x] | uses the existing `insightTone`/`secondInsightTone` optional fields (rose primary, teal second) |
+| Agents | `/lifecycle/support/agents` | [x] | 3 cards under a "watching this stage · 1" eyebrow (all three are the same agent, "Support Signal", read three ways) — literal copy from SU09, same pattern as Expand's Agents; uses `AgentCard.footnoteTone` for cards two and three |
+| History | `/lifecycle/support/history` | [x] | `TriedRow.learningKept` widened with three new literal values ("validated · best in lifecycle", "under review", "the obvious next test") |
+| Compare periods | `/lifecycle/support/compare` | [x] |
+| Reclassify a driver (modal) | — | [x] | SU12, opens from the Contact drivers tab's header CTA |
+
+### Remaining 3 stages — not started
 
 Each needs: `stage/<slug>/data.ts`, its 1-3 unique tabs, its `:id` drilldown wiring where it
 has a list-style tab, and its one stage-specific modal where applicable. The shared tabs/
 layout/modals above are already done, so each stage is materially smaller than Acquire
 was. Verify each stage's Cohorts/Markets/Changes/Agents/History/Definition screens against
 their own SVGs before assuming the shared templates fit unmodified — Activate's Cohorts/
-Markets, Price's Definition, Adopt's Definition/one-feature drilldown, and Retain's and
-Expand's Definition/Cohorts/Markets did not (see shared-architecture row above). Also check
-whether a stage's action modal can reuse an existing stage-generic modal (Expand's Basket
-tab reused Adopt's `RequestInstrumentationModal` outright) before building a new one.
+Markets, Price's Definition, Adopt's Definition/one-feature drilldown, and Retain's,
+Expand's and Support's Definition/Cohorts/Markets did not (see shared-architecture row
+above). Also check whether a stage's action modal can reuse an existing stage-generic modal
+(Expand's Basket tab reused Adopt's `RequestInstrumentationModal` outright) before building
+a new one, and whether a screen is reached from an Overview KPI card rather than a tab
+(Support's Silent failures) before assuming every extra screen needs a tab-list entry.
 
 | Stage | Status | Notes |
 |---|---|---|
-| Support | [ ] | |
 | Renew | [ ] | |
 | Advocate | [ ] | |
 | Churn | [ ] | Also owns `/lifecycle/churn/chain` (CH13, already built above) |

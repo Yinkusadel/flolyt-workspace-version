@@ -10,6 +10,7 @@ import PriceDefinitionRoute from "@/pages/lifecycle/stage/price/definition-route
 import AdoptDefinitionRoute from "@/pages/lifecycle/stage/adopt/definition-route";
 import RetainDefinitionRoute from "@/pages/lifecycle/stage/retain/definition-route";
 import ExpandDefinitionRoute from "@/pages/lifecycle/stage/expand/definition-route";
+import SupportDefinitionRoute from "@/pages/lifecycle/stage/support/definition-route";
 
 export type DefinitionCandidate = {
   id: string;
@@ -80,6 +81,10 @@ const DefinitionRoute = () => {
   // basket/plan/account/category breakdown (value added, median lift,
   // reversibility, owner) — a different table shape.
   if (stage.slug === "expand") return <ExpandDefinitionRoute />;
+  // Support's SU01 replaces the shared verdict-comparison table with a
+  // silent-failure outcome breakdown (contacted us vs stayed silent, by
+  // what happened) — a different table shape.
+  if (stage.slug === "support") return <SupportDefinitionRoute />;
 
   const data = DEFINITION_DATA[stage.slug];
   if (!data) return null;

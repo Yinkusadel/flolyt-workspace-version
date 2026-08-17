@@ -12,6 +12,7 @@ import { PRICE_COMPARE_ROWS } from "@/pages/lifecycle/stage/price/data";
 import { ADOPT_COMPARE_ROWS } from "@/pages/lifecycle/stage/adopt/data";
 import { RETAIN_COMPARE_ROWS } from "@/pages/lifecycle/stage/retain/data";
 import { EXPAND_COMPARE_ROWS } from "@/pages/lifecycle/stage/expand/data";
+import { SUPPORT_COMPARE_ROWS } from "@/pages/lifecycle/stage/support/data";
 
 type CompareData = {
   headline: string;
@@ -80,6 +81,15 @@ const COMPARE_DATA: Record<string, CompareData> = {
     insightTitle: "A stage can hit every one of its own targets and be worth 10% less",
     insightBody:
       "The rate is up, the multiple is flat, and 500 fewer customers expand every month. Nobody in this stage did anything wrong and nobody in this stage can fix it. Expansion is downstream of survival, and this quarter there were fewer survivors.",
+  },
+  support: {
+    headline: "Every support metric improved · revenue lost after contact rose 663%",
+    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
+    periodOptions: ["This quarter vs last", "Year on year", "Cost vs revenue view", "Custom"],
+    rows: SUPPORT_COMPARE_ROWS,
+    insightTitle: "Every support metric improved and the stage got eight times more expensive",
+    insightBody:
+      "Faster, cheaper, better resolved, higher satisfaction — and ₦53M more revenue lost per cohort. This is the clearest case in the lifecycle of a stage being genuinely excellent at the thing it was asked to be excellent at, while the thing that mattered went unmeasured for twenty weeks.",
   },
 };
 

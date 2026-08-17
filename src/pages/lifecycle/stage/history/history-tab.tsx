@@ -9,6 +9,7 @@ import { PRICE_GOAL_ROWS, PRICE_TRIED_ROWS } from "@/pages/lifecycle/stage/price
 import { ADOPT_GOAL_ROWS, ADOPT_TRIED_ROWS } from "@/pages/lifecycle/stage/adopt/data";
 import { RETAIN_GOAL_ROWS, RETAIN_HISTORY_MID_INSIGHT, RETAIN_TRIED_ROWS } from "@/pages/lifecycle/stage/retain/data";
 import { EXPAND_GOAL_ROWS, EXPAND_TRIED_ROWS } from "@/pages/lifecycle/stage/expand/data";
+import { SUPPORT_GOAL_ROWS, SUPPORT_HISTORY_MID_INSIGHT, SUPPORT_TRIED_ROWS } from "@/pages/lifecycle/stage/support/data";
 
 type HistoryData = {
   goalEyebrow: string;
@@ -86,6 +87,19 @@ const HISTORY_DATA: Record<string, HistoryData> = {
       "Annual billing was measured properly in 2024 and the answer — a wash — has held up for two years. The other four are stories with numbers attached. Expand is the least-tested stage in the lifecycle, which is a strange thing for the stage that owns upselling.",
     insightTone: "amber",
   },
+  support: {
+    goalEyebrow: "Goals that depend on this stage · 2",
+    goalRows: SUPPORT_GOAL_ROWS,
+    midInsightTone: SUPPORT_HISTORY_MID_INSIGHT.tone,
+    midInsightTitle: SUPPORT_HISTORY_MID_INSIGHT.title,
+    midInsightBody: SUPPORT_HISTORY_MID_INSIGHT.body,
+    triedEyebrow: "What has already been tried here",
+    triedRows: SUPPORT_TRIED_ROWS,
+    insightTitle: "The one intervention with a holdout is the one that worked",
+    insightBody:
+      "Proactive outreach on failed deliveries was measured properly and returns the best number in the lifecycle. The three that were not measured all turned out to be negative. That is not a coincidence about this team — it is what happens when cost savings are self-evident and revenue effects are not.",
+    insightTone: "teal",
+  },
 };
 
 const TODAY_TONE_CLASS: Record<GoalRow["todayTone"], string> = { teal: "text-teal", rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
@@ -113,6 +127,9 @@ const LEARNING_CHIP_TONE: Record<TriedRow["learningKept"], "teal" | "amber" | "n
   "never cross-sold": "amber",
   "net negative": "amber",
   "validated · a wash": "neutral",
+  "validated · best in lifecycle": "teal",
+  "under review": "amber",
+  "the obvious next test": "amber",
 };
 
 /** The shared History tab template (e.g. A14) — goals that depend on this stage, and what has already been tried. */
