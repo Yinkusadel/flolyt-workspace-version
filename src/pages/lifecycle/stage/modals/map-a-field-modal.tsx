@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -54,7 +55,7 @@ export function MapAFieldModal({
           <DialogDescription>{metricLabel} needs cost of goods · here is what Flolyt found</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 px-5 py-5 sm:px-7 sm:py-6">
+        <DialogBody className="space-y-4 px-5 py-5 sm:px-7 sm:py-6">
           <div className="rounded-panel border border-amber-border bg-amber-bg px-3.5 py-2.5">
             <p className="text-[12px] font-semibold text-ink">{preset.needTitle}</p>
             <p className="mt-0.5 text-[9px] text-amber">{preset.needNote}</p>
@@ -110,7 +111,7 @@ export function MapAFieldModal({
               <p className="mt-1.5 text-[10.5px] leading-relaxed text-ink-2">{preset.warningBody}</p>
             </div>
           </div>
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <div className="flex items-center gap-4">

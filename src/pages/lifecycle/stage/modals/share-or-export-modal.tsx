@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -49,7 +50,7 @@ export function ShareOrExportModal({
           <DialogDescription>{preset.viewLabel}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 px-5 py-5 sm:px-7 sm:py-6">
+        <DialogBody className="space-y-4 px-5 py-5 sm:px-7 sm:py-6">
           <div>
             <p className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">
               What you are sharing
@@ -110,7 +111,7 @@ export function ShareOrExportModal({
               <p className="mt-1.5 text-[10.5px] leading-relaxed text-ink-2">{preset.caveatBody}</p>
             </div>
           </div>
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <div className="flex items-center gap-4">

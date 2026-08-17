@@ -45,7 +45,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 gap-0 overflow-y-auto rounded-surface border border-line bg-paper shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          "fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 flex-col gap-0 overflow-hidden rounded-surface border border-line bg-paper shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           className
         )}
         {...props}
@@ -67,7 +67,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-header"
       className={cn(
-        "flex flex-col gap-1 border-b border-line px-5 pt-6 pr-10 pb-4 sm:px-7 sm:pt-7 sm:pr-12 sm:pb-5",
+        "flex shrink-0 flex-col gap-1 border-b border-line px-5 pt-6 pr-10 pb-4 sm:px-7 sm:pt-7 sm:pr-12 sm:pb-5",
         className
       )}
       {...props}
@@ -75,12 +75,17 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/** The scrolling region between a fixed `DialogHeader` and a fixed `DialogFooter` — pass the body's own padding (e.g. `px-5 py-5 sm:px-7 sm:py-6`) via className. */
+function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
+  return <div data-slot="dialog-body" className={cn("min-h-0 flex-1 overflow-y-auto", className)} {...props} />
+}
+
 function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-4 sm:px-7 sm:py-5",
+        "flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-4 sm:px-7 sm:py-5",
         className
       )}
       {...props}
@@ -113,6 +118,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,

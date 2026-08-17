@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -47,7 +48,7 @@ export function OpenARoomModal({
           <DialogDescription>Everything below was carried in from the stage — change any of it</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 px-5 py-5 sm:px-7 sm:py-6">
+        <DialogBody className="space-y-4 px-5 py-5 sm:px-7 sm:py-6">
           <div>
             <p className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">
               The condition
@@ -95,7 +96,7 @@ export function OpenARoomModal({
               <p className="text-[9.5px] text-ink-3">{preset.participantsNote}</p>
             </div>
           </div>
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <div className="flex items-center gap-4">

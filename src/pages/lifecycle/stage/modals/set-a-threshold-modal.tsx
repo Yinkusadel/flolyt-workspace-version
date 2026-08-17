@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -58,7 +59,7 @@ export function SetThresholdModal({
           <DialogDescription>What should make an agent open a room in {stageName}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 px-5 py-5 sm:px-7 sm:py-6">
+        <DialogBody className="space-y-4 px-5 py-5 sm:px-7 sm:py-6">
           <Field field={preset.condition} />
           <Field field={preset.byMoreThan} />
           <Field field={preset.sustainedFor} />
@@ -81,7 +82,7 @@ export function SetThresholdModal({
               <p className="mt-1.5 text-[10.5px] leading-relaxed text-ink-2">{preset.simulation.body}</p>
             </div>
           </div>
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <div className="flex items-center gap-4">
