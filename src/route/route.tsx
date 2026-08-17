@@ -4,17 +4,21 @@ import SignIn from "@/pages/sign-in";
 import { AppLayout } from "@/pages/app-layout";
 import Home from "@/pages/home";
 import Lifecycle from "@/pages/lifecycle";
-import StageAcquire from "@/pages/lifecycle/stage/acquire";
-import StageActivate from "@/pages/lifecycle/stage/activate";
-import StagePrice from "@/pages/lifecycle/stage/price";
-import StageAdopt from "@/pages/lifecycle/stage/adopt";
-import StageRetain from "@/pages/lifecycle/stage/retain";
-import StageExpand from "@/pages/lifecycle/stage/expand";
-import StageSupport from "@/pages/lifecycle/stage/support";
-import StageRenew from "@/pages/lifecycle/stage/renew";
-import StageAdvocate from "@/pages/lifecycle/stage/advocate";
-import StageChurn from "@/pages/lifecycle/stage/churn";
-import ReleaseImpact from "@/pages/lifecycle/stage/release-impact";
+import LifecycleSettings from "@/pages/lifecycle/settings";
+import StageLayout from "@/pages/lifecycle/stage/layout";
+import StageTabsLayout from "@/pages/lifecycle/stage/stage-tabs-layout";
+import { OverviewTab } from "@/pages/lifecycle/stage/overview/overview-tab";
+import { CohortsTab } from "@/pages/lifecycle/stage/cohorts/cohorts-tab";
+import { MarketsTab } from "@/pages/lifecycle/stage/markets/markets-tab";
+import { ChangesTab } from "@/pages/lifecycle/stage/changes/changes-tab";
+import { AgentsTab } from "@/pages/lifecycle/stage/agents/agents-tab";
+import { HistoryTab } from "@/pages/lifecycle/stage/history/history-tab";
+import CompareRoute from "@/pages/lifecycle/stage/compare/compare-route";
+import ChainRoute from "@/pages/lifecycle/stage/chain/chain-route";
+import AcquireFunnelTab from "@/pages/lifecycle/stage/acquire/funnel-tab";
+import AcquireChannelsTab from "@/pages/lifecycle/stage/acquire/channels-tab";
+import AcquireChannelDetailRoute from "@/pages/lifecycle/stage/acquire/channel-detail-route";
+import AcquireUnitEconomicsTab from "@/pages/lifecycle/stage/acquire/unit-economics-tab";
 import Rooms from "@/pages/rooms";
 import RoomLayout, {
   RoomDecisionRoute,
@@ -61,17 +65,30 @@ export const routes = createBrowserRouter([
                 path: "lifecycle",
                 children: [
                   { index: true, Component: Lifecycle },
-                  { path: "acquire", Component: StageAcquire },
-                  { path: "activate", Component: StageActivate },
-                  { path: "price", Component: StagePrice },
-                  { path: "adopt", Component: StageAdopt },
-                  { path: "retain", Component: StageRetain },
-                  { path: "expand", Component: StageExpand },
-                  { path: "support", Component: StageSupport },
-                  { path: "renew", Component: StageRenew },
-                  { path: "advocate", Component: StageAdvocate },
-                  { path: "churn", Component: StageChurn },
-                  { path: "release-impact", Component: ReleaseImpact },
+                  { path: "settings", Component: LifecycleSettings },
+                  {
+                    path: ":stage",
+                    Component: StageLayout,
+                    children: [
+                      { path: "compare", Component: CompareRoute },
+                      { path: "chain", Component: ChainRoute },
+                      { path: "channels/:id", Component: AcquireChannelDetailRoute },
+                      {
+                        Component: StageTabsLayout,
+                        children: [
+                          { index: true, Component: OverviewTab },
+                          { path: "funnel", Component: AcquireFunnelTab },
+                          { path: "channels", Component: AcquireChannelsTab },
+                          { path: "unit-economics", Component: AcquireUnitEconomicsTab },
+                          { path: "cohorts", Component: CohortsTab },
+                          { path: "markets", Component: MarketsTab },
+                          { path: "changes", Component: ChangesTab },
+                          { path: "agents", Component: AgentsTab },
+                          { path: "history", Component: HistoryTab },
+                        ],
+                      },
+                    ],
+                  },
                 ],
               },
               {

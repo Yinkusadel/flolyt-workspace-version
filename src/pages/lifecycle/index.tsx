@@ -1,12 +1,14 @@
+import { Link } from "react-router-dom";
+
 import { Button } from "@/components/ui/button";
-import { OwnershipTable } from "@/pages/lifecycle/ownership-table";
 import { RootCauseSpotlight } from "@/pages/lifecycle/root-cause-spotlight";
 import { StageRail } from "@/pages/lifecycle/stage-rail";
-import { OWNERSHIP_ROWS, ROOT_CAUSE_ROWS, STAGES } from "@/pages/lifecycle/data";
+import { ROOT_CAUSE_ROWS, STAGES } from "@/pages/lifecycle/data";
 
 /**
- * Screen 15 (lifecycle map) in flolyt-kit-122 — see
- * flolyt-kit-122/15-lifecycle-map.svg and docs/build-tracker.md.
+ * The lifecycle map (LC02, plus LC01's first-run empty state and LC05's
+ * ?market= filter — those aren't wired in yet, see docs/build-tracker.md).
+ * See flolyt-figma-designs/flolyt-lifecycle/LC02-lifecycle-map.svg.
  */
 const Lifecycle = () => {
   return (
@@ -25,7 +27,14 @@ const Lifecycle = () => {
 
       <StageRail stages={STAGES} />
       <RootCauseSpotlight rows={ROOT_CAUSE_ROWS} />
-      <OwnershipTable rows={OWNERSHIP_ROWS} />
+
+      <p className="text-[11px] text-ink-4">
+        Owner, lead agent and review cadence per stage now live on{" "}
+        <Link to="/lifecycle/settings" className="font-semibold text-ultra hover:underline">
+          stage ownership
+        </Link>
+        .
+      </p>
     </div>
   );
 };

@@ -2,7 +2,9 @@
 
 Source of truth for design: `flolyt-kit-122/README.md` (kit overview + section table) and
 `flolyt-kit-122/{nn}-{slug}.svg` (one SVG per screen, numbered to match the `#` column
-below).
+below) — **except section 3 (the lifecycle)**, which was rebuilt from the newer
+`flolyt-figma-designs/flolyt-lifecycle/` export; see that section's own header for its
+source-of-truth note.
 
 Update this file as we go: flip `Status` when a screen's implementation starts/lands, fill
 `Endpoint(s)` with the service/hook file(s) built for it, and use `Notes` for corrections
@@ -37,22 +39,69 @@ correction (see Notes)
 | 13 | inbox | [ ] | | |
 | 14 | search | [ ] | | |
 
-## 3. The lifecycle (15–26)
+## 3. The lifecycle
 
-| # | Screen | Status | Endpoint(s) | Notes |
-|---|---|---|---|---|
-| 15 | lifecycle map | [x] | | Static mock data (`src/pages/lifecycle/data.ts`); no lifecycle-overview endpoint wired yet |
-| 16 | stage acquire | [x] | | `/lifecycle/acquire`. Static mock data in `src/pages/lifecycle-stage/acquire.tsx` |
-| 17 | stage activate | [x] | | `/lifecycle/activate` |
-| 18 | stage price | [x] | | `/lifecycle/price` |
-| 19 | stage adopt | [x] | | `/lifecycle/adopt` |
-| 20 | stage retain cohorts | [x] | | `/lifecycle/retain` — SVG header reads "Cohort retention", kept as page title |
-| 21 | stage expand | [x] | | `/lifecycle/expand` |
-| 22 | stage support | [x] | | `/lifecycle/support` |
-| 23 | stage renew | [x] | | `/lifecycle/renew` |
-| 24 | stage advocate | [x] | | `/lifecycle/advocate` |
-| 25 | stage churn | [x] | | `/lifecycle/churn` |
-| 26 | stage release impact | [x] | | `/lifecycle/release-impact` — no card links here in the kit; reachable via a "View release history" link on the Churn page |
+**Rebuilt from `flolyt-figma-designs/flolyt-lifecycle/`** (139 SVGs), replacing the old
+kit-122-based section entirely — each stage went from one flat overview page to a
+multi-tab mini-app. Every SVG's footer states its own route (e.g.
+`A14 · Acquire · history` → `/lifecycle/:stage/history`), which is what the rows below are
+keyed to. See the rebuild plan for the full architecture (shared `StageLayout` +
+`StageTabsLayout`, one `data.ts` per stage, generic `:id` drilldown template, 12 action
+modals). Acquire is the completed reference stage; the remaining 10 stages reuse its
+shared tabs/layout/modals and need only their own `data.ts` + 1-3 unique tabs each.
+
+### Shared architecture (all stages route through this)
+
+| Piece | Status | Notes |
+|---|---|---|
+| `:stage`-param route tree (`route.tsx`) | [x] | Collapsed the old 11 flat routes into one parameterized subtree, mirroring `:roomId` |
+| `StageLayout` / `StageTabsLayout` / `StageSubpageHeader` | [x] | `src/pages/lifecycle/stage/{layout,stage-tabs-layout,stage-subpage-header}.tsx` |
+| Shared tab templates: Overview, Cohorts, Markets, What changed, Agents, History | [x] | One component each, resolve per-stage data via `stage.slug` — currently only wired for Acquire |
+| Shared Compare-periods route | [x] | `stage/compare/compare-route.tsx` — own header, no tab bar |
+| Shared Definition route/editor | [ ] | Acquire doesn't need one (A01's "not defined" empty state lives inside Overview instead) — build when the first stage needing `/definition` (e.g. Activate/AC01) is tackled |
+| Generic `:id` detail-drilldown template | [x] | `stage/detail/detail-drilldown.tsx`, proven via Acquire's `channels/:id` |
+| Shared modals: set-a-threshold, map-a-field, open-a-room, share-or-export | [x] | `stage/modals/` — stage-generic, take stage data as props |
+| Lifecycle map (`LC02`) | [x] | `lifecycle/index.tsx` — stage rail + root-cause table; ownership table moved to its own settings page |
+| Lifecycle map first-run empty state (`LC01`) / market filter (`LC05`) | [ ] | Not wired — no demo stage is currently undefined and `?market=` isn't read yet |
+| Stage ownership settings page (`LC04`) | [x] | `/lifecycle/settings` — relocated `OwnershipTable`, content unchanged |
+| "Whole chain" screen (`CH13`) | [x] | `/lifecycle/churn/chain`, linked from the map's root-cause callout |
+
+### Acquire — complete (reference stage)
+
+| Screen | Route | Status |
+|---|---|---|
+| Overview (+ not-defined empty state) | `/lifecycle/acquire` | [x] |
+| Funnel | `/lifecycle/acquire/funnel` | [x] |
+| Channels | `/lifecycle/acquire/channels` | [x] |
+| One channel | `/lifecycle/acquire/channels/:id` | [x] |
+| Cohorts | `/lifecycle/acquire/cohorts` | [x] |
+| Unit economics | `/lifecycle/acquire/unit-economics` | [x] |
+| Markets | `/lifecycle/acquire/markets` | [x] |
+| What changed | `/lifecycle/acquire/changes` | [x] |
+| Agents | `/lifecycle/acquire/agents` | [x] |
+| History | `/lifecycle/acquire/history` | [x] |
+| Compare periods | `/lifecycle/acquire/compare` | [x] |
+| Set a threshold / Map a field / Open a room / Share or export (modals) | — | [x] |
+
+### Remaining 10 stages — not started
+
+Each needs: `stage/<slug>/data.ts`, its 1-3 unique tabs (per the route map in the rebuild
+plan — e.g. Activate: time-to-value + paths; Price: plans + margin + discounting), its
+`:id` drilldown wiring where it has a list-style tab, and its one stage-specific modal
+where applicable (e.g. Price's connect-a-cogs-source). The shared tabs/layout/modals
+above are already done, so each stage is materially smaller than Acquire was.
+
+| Stage | Status | Notes |
+|---|---|---|
+| Activate | [ ] | Has a `/definition` route (AC01) — build the shared Definition template here |
+| Price | [ ] | |
+| Adopt | [ ] | |
+| Retain | [ ] | |
+| Expand | [ ] | |
+| Support | [ ] | |
+| Renew | [ ] | |
+| Advocate | [ ] | |
+| Churn | [ ] | Also owns `/lifecycle/churn/chain` (CH13, already built above) |
 
 ## 4. Rooms and decisions (27–35)
 

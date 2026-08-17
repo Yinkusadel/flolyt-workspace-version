@@ -1,40 +1,38 @@
-import type { ReactNode } from "react";
+import { Link, Outlet, useOutletContext, useParams } from "react-router-dom";
+
+import { STAGES, type Stage } from "@/pages/lifecycle/data";
+
+export type StageOutletContext = { stage: Stage };
 
 /**
- * Shared shell for screens 16-26 (stage detail pages) in flolyt-kit-122 —
- * page header full-width, then a two-column body: analysis on the left,
- * a persistent "rail" of context/decisions on the right. See
- * flolyt-kit-122/16-stage-acquire.svg through 26-stage-release-impact.svg.
+ * Resolves :stage to a Stage record and provides it via context to every
+ * nested route (the tab bar layout, definition, compare, and :id
+ * drilldowns alike) — no header markup here, see stage-tabs-layout.tsx and
+ * stage-subpage-header.tsx for the two header shapes those routes use.
  */
-export type StageDetailLayoutProps = {
-  title: string;
-  subtitle?: string;
-  rail: ReactNode;
-  children: ReactNode;
+const StageLayout = () => {
+  const { stage: slug } = useParams();
+  const stage = STAGES.find((s) => s.slug === slug);
+
+  if (!stage) {
+    return (
+      <div className="rounded-card border border-dashed border-line bg-paper p-10 text-center">
+        <p className="text-[13px] font-semibold text-ink">Stage not found</p>
+        <p className="mt-1.5 text-[11.5px] text-ink-3">
+          Check the lifecycle map for the right stage.
+        </p>
+        <Link to="/lifecycle" className="mt-4 inline-block text-[11.5px] font-semibold text-ultra hover:underline">
+          Back to the lifecycle map
+        </Link>
+      </div>
+    );
+  }
+
+  return <Outlet context={{ stage } satisfies StageOutletContext} />;
 };
 
-export function StageDetailLayout({ title, subtitle, rail, children }: StageDetailLayoutProps) {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-[17px] font-semibold text-ink">{title}</h1>
-        {subtitle && <p className="mt-1 text-[11.5px] text-ink-3">{subtitle}</p>}
-      </div>
+export default StageLayout;
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
-        <div className="min-w-0 space-y-8">{children}</div>
-        <aside className="overflow-hidden rounded-card border border-line bg-paper-2 lg:sticky lg:top-0">
-          {rail}
-        </aside>
-      </div>
-    </div>
-  );
-}
-
-export function Eyebrow({ children }: { children: ReactNode }) {
-  return (
-    <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-      {children}
-    </p>
-  );
+export function useStageContext() {
+  return useOutletContext<StageOutletContext>();
 }
