@@ -2,6 +2,7 @@ import { WideBarRow } from "@/pages/lifecycle/stage/bar";
 import { Callout } from "@/pages/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { useStageContext } from "@/pages/lifecycle/stage/layout";
+import ActivateCohortsTab from "@/pages/lifecycle/stage/activate/cohorts-tab";
 import {
   ACQUIRE_COHORT_BREAK_ROWS,
   ACQUIRE_COHORT_ROWS,
@@ -65,6 +66,12 @@ const COLUMNS: Column<CohortRow>[] = [
 /** Screen 06 in the export naming (e.g. A06) — the shared Cohorts tab template for every stage. */
 export function CohortsTab() {
   const { stage } = useStageContext();
+
+  // Activate's Cohorts screen (AC06) uses a different column set (activation
+  // rate/guest share, not CAC/day30-90) — routed to its own component rather
+  // than forcing this template's Acquire-shaped columns onto it.
+  if (stage.slug === "activate") return <ActivateCohortsTab />;
+
   const data = COHORTS_DATA[stage.slug];
   if (!data) return null;
 

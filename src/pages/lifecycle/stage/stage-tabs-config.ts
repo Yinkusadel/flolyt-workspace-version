@@ -8,6 +8,8 @@ import { MarketsTab } from "@/pages/lifecycle/stage/markets/markets-tab";
 import { ChangesTab } from "@/pages/lifecycle/stage/changes/changes-tab";
 import { AgentsTab } from "@/pages/lifecycle/stage/agents/agents-tab";
 import { HistoryTab } from "@/pages/lifecycle/stage/history/history-tab";
+import ActivateTimeToValueTab from "@/pages/lifecycle/stage/activate/time-to-value-tab";
+import ActivatePathsTab from "@/pages/lifecycle/stage/activate/paths-tab";
 
 export type StageTab = {
   /** Path segment appended to /lifecycle/:stage/ */
@@ -34,6 +36,15 @@ export const STAGE_TABS: Partial<Record<string, StageTab[]>> = {
     { path: "channels", label: "Channels", Component: AcquireChannelsTab },
     { path: "cohorts", label: "Cohorts", Component: CohortsTab },
     { path: "unit-economics", label: "Unit economics", Component: AcquireUnitEconomicsTab },
+    { path: "markets", label: "Markets", Component: MarketsTab },
+    { path: "changes", label: "What changed", Component: ChangesTab },
+    { path: "agents", label: "Agents", Component: AgentsTab },
+    { path: "history", label: "History", Component: HistoryTab },
+  ],
+  activate: [
+    { path: "time-to-value", label: "Time to value", Component: ActivateTimeToValueTab },
+    { path: "paths", label: "Paths", Component: ActivatePathsTab },
+    { path: "cohorts", label: "Cohorts", Component: CohortsTab },
     { path: "markets", label: "Markets", Component: MarketsTab },
     { path: "changes", label: "What changed", Component: ChangesTab },
     { path: "agents", label: "Agents", Component: AgentsTab },

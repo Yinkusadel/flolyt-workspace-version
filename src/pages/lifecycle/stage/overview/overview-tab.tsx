@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { PersonAvatar } from "@/components/person-avatar";
 import { WideBarRow, type BarTone } from "@/pages/lifecycle/stage/bar";
@@ -8,8 +9,10 @@ import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { KpiCards, type Kpi } from "@/pages/lifecycle/stage/kpi-cards";
 import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { StageEmptyState } from "@/pages/lifecycle/stage/overview/empty-state";
-import { OpenARoomModal } from "@/pages/lifecycle/stage/modals/open-a-room-modal";
-import { ShareOrExportModal } from "@/pages/lifecycle/stage/modals/share-or-export-modal";
+import { OverviewStageRail } from "@/pages/lifecycle/stage/overview/mini-stage-rail";
+import { OpenARoomModal, type OpenRoomPreset } from "@/pages/lifecycle/stage/modals/open-a-room-modal";
+import { ShareOrExportModal, type ShareOrExportPreset } from "@/pages/lifecycle/stage/modals/share-or-export-modal";
+import { STAGES } from "@/pages/lifecycle/data";
 import {
   ACQUIRE_OPEN_ROOM_PRESET,
   ACQUIRE_OVERVIEW_BAR_ROWS,
@@ -18,15 +21,27 @@ import {
   ACQUIRE_SHARE_EXPORT_PRESET,
   type LeakRow,
 } from "@/pages/lifecycle/stage/acquire/data";
+import {
+  ACTIVATE_OPEN_ROOM_PRESET,
+  ACTIVATE_OVERVIEW_KPIS,
+  ACTIVATE_OVERVIEW_LEAK_ROWS,
+  ACTIVATE_SHARE_EXPORT_PRESET,
+} from "@/pages/lifecycle/stage/activate/data";
 
 type OverviewData = {
   kpis: Kpi[];
-  barEyebrow: string;
-  barRows: { label: string; value: string; percent: number; tone: BarTone }[];
+  barEyebrow?: string;
+  barRows?: { label: string; value: string; percent: number; tone: BarTone }[];
   insightTitle: string;
   insightBody: string;
+  insightTone?: "ultra" | "amber" | "rose" | "teal" | "neutral";
   leakEyebrow: string;
+  leakWhereHeader: string;
+  leakColumnKind: "owner" | "cause";
   leakRows: LeakRow[];
+  showStageRail?: boolean;
+  openRoomPreset: OpenRoomPreset;
+  shareExportPreset: ShareOrExportPreset;
 };
 
 const OVERVIEW_DATA: Record<string, OverviewData> = {
@@ -38,7 +53,25 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightBody:
       "Acquisition rose 212,000 while second orders fell 17,000. Read either alone and you get the opposite answer about whether this stage is working — which is why the headline figure on this screen is a rate, not a count.",
     leakEyebrow: "What is leaking, in order",
+    leakWhereHeader: "Where",
+    leakColumnKind: "owner",
     leakRows: ACQUIRE_OVERVIEW_LEAK_ROWS,
+    openRoomPreset: ACQUIRE_OPEN_ROOM_PRESET,
+    shareExportPreset: ACQUIRE_SHARE_EXPORT_PRESET,
+  },
+  activate: {
+    kpis: ACTIVATE_OVERVIEW_KPIS,
+    insightTitle: "116,000 customers had a perfectly good first order and never came back, and nobody knows why",
+    insightBody:
+      "It is the third-largest group in the stage and the only one with no reading behind it. Everything Flolyt can see about them looks normal. That is a real answer and it is stated as one — a plausible story would be worse than an admitted gap.",
+    insightTone: "amber",
+    leakEyebrow: "Where the 528,000 who never activate are lost",
+    leakWhereHeader: "Where they stop",
+    leakColumnKind: "cause",
+    leakRows: ACTIVATE_OVERVIEW_LEAK_ROWS,
+    showStageRail: true,
+    openRoomPreset: ACTIVATE_OPEN_ROOM_PRESET,
+    shareExportPreset: ACTIVATE_SHARE_EXPORT_PRESET,
   },
 };
 
@@ -67,7 +100,7 @@ export function OverviewTab() {
   if (!data) return null;
 
   const columns: Column<LeakRow>[] = [
-    { key: "where", header: "Where", render: (row) => <span className="font-semibold text-ink-2">{row.where}</span> },
+    { key: "where", header: data.leakWhereHeader, render: (row) => <span className="font-semibold text-ink-2">{row.where}</span> },
     {
       key: "customers",
       header: "Customers",
@@ -86,32 +119,32 @@ export function OverviewTab() {
       align: "right",
       render: (row) => <span className={LEAK_TREND_TONE_CLASS[row.trendTone]}>{row.trend}</span>,
     },
-    {
-      key: "owner",
-      header: "Owner",
-      render: (row) =>
-        row.owner ? (
-          <span className="flex items-center gap-2 whitespace-nowrap text-ink-2">
-            <PersonAvatar kind="human" initials={row.owner.initials} size="sm" />
-            {row.owner.name}
-          </span>
-        ) : (
-          <Chip tone="amber">No owner</Chip>
-        ),
-    },
+    data.leakColumnKind === "owner"
+      ? {
+          key: "owner",
+          header: "Owner",
+          render: (row) =>
+            row.owner ? (
+              <span className="flex items-center gap-2 whitespace-nowrap text-ink-2">
+                <PersonAvatar kind="human" initials={row.owner.initials} size="sm" />
+                {row.owner.name}
+              </span>
+            ) : (
+              <Chip tone="amber">No owner</Chip>
+            ),
+        }
+      : {
+          key: "causeKnown",
+          header: "Cause known?",
+          render: (row) => (row.causeKnown ? <Chip tone={row.causeKnown.tone}>{row.causeKnown.label}</Chip> : null),
+        },
     {
       key: "room",
       header: "Room",
       align: "right",
       render: (row) => (
         <button type="button" onClick={() => setOpenRoomFor(row.id)}>
-          {row.room === "open" ? (
-            <Chip tone="ultra">open one</Chip>
-          ) : row.room === "open-unowned" ? (
-            <Chip tone="amber">open · unowned</Chip>
-          ) : (
-            <Chip tone="amber">No owner</Chip>
-          )}
+          <Chip tone={row.room.tone}>{row.room.label}</Chip>
         </button>
       ),
     },
@@ -119,7 +152,12 @@ export function OverviewTab() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-end gap-4">
+        {stage.slug === "activate" && (
+          <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
+            How this stage is defined
+          </Link>
+        )}
         <button type="button" onClick={() => setShareOpen(true)} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
           Share or export
         </button>
@@ -127,34 +165,49 @@ export function OverviewTab() {
 
       <KpiCards items={data.kpis} />
 
-      <section className="space-y-4">
-        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-          {data.barEyebrow}
-        </p>
-        <div className="space-y-5">
-          {data.barRows.map((row) => (
-            <WideBarRow key={row.label} label={row.label} value={row.value} percent={row.percent} tone={row.tone} />
-          ))}
-        </div>
-      </section>
+      {data.barEyebrow && data.barRows && (
+        <section className="space-y-4">
+          <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
+            {data.barEyebrow}
+          </p>
+          <div className="space-y-5">
+            {data.barRows.map((row) => (
+              <WideBarRow key={row.label} label={row.label} value={row.value} percent={row.percent} tone={row.tone} />
+            ))}
+          </div>
+        </section>
+      )}
 
-      <Callout tone="ultra" title={data.insightTitle}>
+      {!data.barRows && (
+        <section className="space-y-3">
+          <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
+            {data.leakEyebrow}
+          </p>
+          <DataTable columns={columns} rows={data.leakRows} />
+        </section>
+      )}
+
+      <Callout tone={data.insightTone ?? "ultra"} title={data.insightTitle}>
         {data.insightBody}
       </Callout>
 
-      <section className="space-y-3">
-        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-          {data.leakEyebrow}
-        </p>
-        <DataTable columns={columns} rows={data.leakRows} />
-      </section>
+      {data.barRows && (
+        <section className="space-y-3">
+          <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
+            {data.leakEyebrow}
+          </p>
+          <DataTable columns={columns} rows={data.leakRows} />
+        </section>
+      )}
+
+      {data.showStageRail && <OverviewStageRail stages={STAGES} activeSlug={stage.slug} />}
 
       <OpenARoomModal
-        preset={ACQUIRE_OPEN_ROOM_PRESET}
+        preset={data.openRoomPreset}
         open={openRoomFor !== null}
         onOpenChange={(open) => setOpenRoomFor(open ? openRoomFor : null)}
       />
-      <ShareOrExportModal preset={ACQUIRE_SHARE_EXPORT_PRESET} open={shareOpen} onOpenChange={setShareOpen} />
+      <ShareOrExportModal preset={data.shareExportPreset} open={shareOpen} onOpenChange={setShareOpen} />
     </div>
   );
 }

@@ -56,9 +56,9 @@ shared tabs/layout/modals and need only their own `data.ts` + 1-3 unique tabs ea
 |---|---|---|
 | `:stage`-param route tree (`route.tsx`) | [x] | Collapsed the old 11 flat routes into one parameterized subtree, mirroring `:roomId` |
 | `StageLayout` / `StageTabsLayout` / `StageSubpageHeader` | [x] | `src/pages/lifecycle/stage/{layout,stage-tabs-layout,stage-subpage-header}.tsx` |
-| Shared tab templates: Overview, Cohorts, Markets, What changed, Agents, History | [x] | One component each, resolve per-stage data via `stage.slug` — currently only wired for Acquire |
-| Shared Compare-periods route | [x] | `stage/compare/compare-route.tsx` — own header, no tab bar |
-| Shared Definition route/editor | [ ] | Acquire doesn't need one (A01's "not defined" empty state lives inside Overview instead) — build when the first stage needing `/definition` (e.g. Activate/AC01) is tackled |
+| Shared tab templates: Overview, Cohorts, Markets, What changed, Agents, History | [x] | One component each, resolve per-stage data via `stage.slug`, wired for Acquire + Activate. Cohorts/Markets dispatch to Activate-only components (`stage/activate/{cohorts,markets}-tab.tsx`) when a stage's own column set doesn't match the Acquire-shaped template — confirmed necessary by reading AC06/AC07 directly, not assumed |
+| Shared Compare-periods route | [x] | `stage/compare/compare-route.tsx` — own header, no tab bar. `buildEyebrow`/`buildRows` are now optional (Activate's AC12 has no "how this comparison is built" section) |
+| Shared Definition route/editor | [x] | `stage/definition/definition-route.tsx` — built for Activate (AC01), serves any future stage via a `Record<slug, DefinitionData>` lookup the same way Overview does |
 | Generic `:id` detail-drilldown template | [x] | `stage/detail/detail-drilldown.tsx`, proven via Acquire's `channels/:id` |
 | Shared modals: set-a-threshold, map-a-field, open-a-room, share-or-export | [x] | `stage/modals/` — stage-generic, take stage data as props |
 | Lifecycle map (`LC02`) | [x] | `lifecycle/index.tsx` — stage rail + root-cause table; ownership table moved to its own settings page |
@@ -83,17 +83,36 @@ shared tabs/layout/modals and need only their own `data.ts` + 1-3 unique tabs ea
 | Compare periods | `/lifecycle/acquire/compare` | [x] |
 | Set a threshold / Map a field / Open a room / Share or export (modals) | — | [x] |
 
-### Remaining 10 stages — not started
+### Activate — complete
+
+| Screen | Route | Status |
+|---|---|---|
+| Definition | `/lifecycle/activate/definition` | [x] |
+| Overview | `/lifecycle/activate` | [x] |
+| Time to value | `/lifecycle/activate/time-to-value` | [x] |
+| Paths | `/lifecycle/activate/paths` | [x] |
+| One path | `/lifecycle/activate/paths/:id` | [x] |
+| Cohorts | `/lifecycle/activate/cohorts` | [x] | stage-specific layout, see shared-architecture row above |
+| Markets | `/lifecycle/activate/markets` | [x] | stage-specific layout, see shared-architecture row above |
+| What changed | `/lifecycle/activate/changes` | [x] |
+| Release impact (one change) | `/lifecycle/activate/changes/:id` | [x] | custom layout (before/after window + cross-stage impact table), not the generic `:id` drilldown template — AC09's shape didn't fit it |
+| Agents | `/lifecycle/activate/agents` | [x] |
+| History | `/lifecycle/activate/history` | [x] |
+| Compare periods | `/lifecycle/activate/compare` | [x] |
+| Open a war room (modal) | — | [x] | AC13, scoped to the guest-checkout path detail |
+
+### Remaining 9 stages — not started
 
 Each needs: `stage/<slug>/data.ts`, its 1-3 unique tabs (per the route map in the rebuild
-plan — e.g. Activate: time-to-value + paths; Price: plans + margin + discounting), its
-`:id` drilldown wiring where it has a list-style tab, and its one stage-specific modal
-where applicable (e.g. Price's connect-a-cogs-source). The shared tabs/layout/modals
-above are already done, so each stage is materially smaller than Acquire was.
+plan — e.g. Price: plans + margin + discounting), its `:id` drilldown wiring where it has
+a list-style tab, and its one stage-specific modal where applicable (e.g. Price's
+connect-a-cogs-source). The shared tabs/layout/modals above are already done, so each
+stage is materially smaller than Acquire was. Verify each stage's Cohorts/Markets/Changes/
+Agents/History screens against their own SVGs before assuming the shared templates fit
+unmodified — Activate's did not (see shared-architecture row above).
 
 | Stage | Status | Notes |
 |---|---|---|
-| Activate | [ ] | Has a `/definition` route (AC01) — build the shared Definition template here |
 | Price | [ ] | |
 | Adopt | [ ] | |
 | Retain | [ ] | |

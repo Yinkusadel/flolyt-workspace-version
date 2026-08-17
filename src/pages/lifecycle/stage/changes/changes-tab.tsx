@@ -1,16 +1,19 @@
+import { Link } from "react-router-dom";
+
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/pages/lifecycle/stage/rail";
 import { Chip, type ChipTone } from "@/pages/lifecycle/stage/chip";
 import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { ACQUIRE_CHANGE_ROWS, ACQUIRE_CHANGE_SOURCE_ROWS, type ChangeRow } from "@/pages/lifecycle/stage/acquire/data";
+import { ACTIVATE_CHANGE_ROWS } from "@/pages/lifecycle/stage/activate/data";
 
 type ChangesData = {
   eyebrow: string;
   rows: ChangeRow[];
   insightTitle: string;
   insightBody: string;
-  sourceEyebrow: string;
-  sourceRows: { label: string; value: string; tone: "teal" | "amber" | "ultra" | "neutral" }[];
+  sourceEyebrow?: string;
+  sourceRows?: { label: string; value: string; tone: "teal" | "amber" | "ultra" | "neutral" }[];
 };
 
 const CHANGES_DATA: Record<string, ChangesData> = {
@@ -23,6 +26,13 @@ const CHANGES_DATA: Record<string, ChangesData> = {
     sourceEyebrow: "How a change gets onto this list",
     sourceRows: ACQUIRE_CHANGE_SOURCE_ROWS,
   },
+  activate: {
+    eyebrow: "Dated changes that moved something in this stage",
+    rows: ACTIVATE_CHANGE_ROWS,
+    insightTitle: "Two of these were shipped by teams who will never see this screen",
+    insightBody:
+      "Engineering has no reason to open Activate and Marketing has no reason to look past Acquire. The two changes with the largest effect on this stage were made by people whose own dashboards showed nothing wrong. Everything else in Flolyt follows from that fact.",
+  },
 };
 
 const EFFECT_TONE_CLASS: Record<ChangeRow["effectTone"], string> = {
@@ -30,6 +40,7 @@ const EFFECT_TONE_CLASS: Record<ChangeRow["effectTone"], string> = {
   rose: "text-rose",
   amber: "text-amber",
   neutral: "text-ink-4",
+  ultra: "text-ultra",
 };
 
 const BADGE_TONE: Record<ChangeRow["badgeTone"], ChipTone> = { ultra: "ultra", neutral: "neutral", amber: "amber" };
@@ -46,6 +57,7 @@ export function ChangesTab() {
   const { stage } = useStageContext();
   const data = CHANGES_DATA[stage.slug];
   if (!data) return null;
+  const rowHref = (row: ChangeRow) => `/lifecycle/${stage.slug}/changes/${row.id}`;
 
   return (
     <div className="space-y-8">
@@ -69,7 +81,13 @@ export function ChangesTab() {
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-semibold text-ink">{row.title}</p>
+              {row.hasDetail ? (
+                <Link to={rowHref(row)} className="text-[12px] font-semibold text-ultra hover:underline">
+                  {row.title}
+                </Link>
+              ) : (
+                <p className="text-[12px] font-semibold text-ink">{row.title}</p>
+              )}
               <p className={`text-[10px] ${EFFECT_TONE_CLASS[row.effectTone]}`}>{row.effect}</p>
             </div>
             <Chip tone={BADGE_TONE[row.badgeTone]}>{row.badge}</Chip>
@@ -81,19 +99,21 @@ export function ChangesTab() {
         {data.insightBody}
       </Callout>
 
-      <section className="space-y-1">
-        <p className="pb-2 font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-          {data.sourceEyebrow}
-        </p>
-        <div className="divide-y divide-line rounded-card border border-line bg-paper">
-          {data.sourceRows.map((row) => (
-            <div key={row.label} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-              <span className="text-[11.5px] text-ink-2">{row.label}</span>
-              <span className={`font-mono text-[11px] ${SOURCE_TONE_CLASS[row.tone]}`}>{row.value}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      {data.sourceEyebrow && data.sourceRows && (
+        <section className="space-y-1">
+          <p className="pb-2 font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
+            {data.sourceEyebrow}
+          </p>
+          <div className="divide-y divide-line rounded-card border border-line bg-paper">
+            {data.sourceRows.map((row) => (
+              <div key={row.label} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                <span className="text-[11.5px] text-ink-2">{row.label}</span>
+                <span className={`font-mono text-[11px] ${SOURCE_TONE_CLASS[row.tone]}`}>{row.value}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

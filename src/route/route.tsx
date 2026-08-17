@@ -15,10 +15,15 @@ import { AgentsTab } from "@/pages/lifecycle/stage/agents/agents-tab";
 import { HistoryTab } from "@/pages/lifecycle/stage/history/history-tab";
 import CompareRoute from "@/pages/lifecycle/stage/compare/compare-route";
 import ChainRoute from "@/pages/lifecycle/stage/chain/chain-route";
+import DefinitionRoute from "@/pages/lifecycle/stage/definition/definition-route";
 import AcquireFunnelTab from "@/pages/lifecycle/stage/acquire/funnel-tab";
 import AcquireChannelsTab from "@/pages/lifecycle/stage/acquire/channels-tab";
 import AcquireChannelDetailRoute from "@/pages/lifecycle/stage/acquire/channel-detail-route";
 import AcquireUnitEconomicsTab from "@/pages/lifecycle/stage/acquire/unit-economics-tab";
+import ActivateTimeToValueTab from "@/pages/lifecycle/stage/activate/time-to-value-tab";
+import ActivatePathsTab from "@/pages/lifecycle/stage/activate/paths-tab";
+import ActivatePathDetailRoute from "@/pages/lifecycle/stage/activate/path-detail-route";
+import ActivateReleaseImpactRoute from "@/pages/lifecycle/stage/activate/release-impact-route";
 import Rooms from "@/pages/rooms";
 import RoomLayout, {
   RoomDecisionRoute,
@@ -70,9 +75,12 @@ export const routes = createBrowserRouter([
                     path: ":stage",
                     Component: StageLayout,
                     children: [
+                      { path: "definition", Component: DefinitionRoute },
                       { path: "compare", Component: CompareRoute },
                       { path: "chain", Component: ChainRoute },
                       { path: "channels/:id", Component: AcquireChannelDetailRoute },
+                      { path: "paths/:id", Component: ActivatePathDetailRoute },
+                      { path: "changes/:id", Component: ActivateReleaseImpactRoute },
                       {
                         Component: StageTabsLayout,
                         children: [
@@ -80,6 +88,8 @@ export const routes = createBrowserRouter([
                           { path: "funnel", Component: AcquireFunnelTab },
                           { path: "channels", Component: AcquireChannelsTab },
                           { path: "unit-economics", Component: AcquireUnitEconomicsTab },
+                          { path: "time-to-value", Component: ActivateTimeToValueTab },
+                          { path: "paths", Component: ActivatePathsTab },
                           { path: "cohorts", Component: CohortsTab },
                           { path: "markets", Component: MarketsTab },
                           { path: "changes", Component: ChangesTab },

@@ -14,6 +14,11 @@ import {
   type AgentCard,
   type ThresholdRow,
 } from "@/pages/lifecycle/stage/acquire/data";
+import {
+  ACTIVATE_AGENT_CARDS,
+  ACTIVATE_THRESHOLD_PRESET,
+  ACTIVATE_THRESHOLD_ROWS,
+} from "@/pages/lifecycle/stage/activate/data";
 
 type AgentsData = {
   eyebrow: string;
@@ -36,12 +41,23 @@ const AGENTS_DATA: Record<string, AgentsData> = {
       "The MTN verification drop crossed its threshold on 2 April. It did not open a room because the rule routes to a stage owner and that condition has no owner assigned — so it queued, silently, for 134 days. This is the screen where that becomes visible.",
     threshold: ACQUIRE_THRESHOLD_PRESET,
   },
+  activate: {
+    eyebrow: "Agents watching this stage · 2",
+    cards: ACTIVATE_AGENT_CARDS,
+    tableEyebrow: "What would make an agent open a room here",
+    rows: ACTIVATE_THRESHOLD_ROWS,
+    insightTitle: "Two conditions have been breached for months with nowhere to route",
+    insightBody:
+      "Guest share and path floor both cross the Acquire/Activate boundary — the cause is in acquisition channel mix and the symptom is in activation. Neither stage owner considers it theirs, so the rule has no destination and the room never opens. This is the third instance of the same routing gap in two stages.",
+    threshold: ACTIVATE_THRESHOLD_PRESET,
+  },
 };
 
-const CARD_ACCENT_CLASS: Record<AgentCard["tone"], string> = { ultra: "bg-ultra", neutral: "bg-ink-4" };
+const CARD_ACCENT_CLASS: Record<AgentCard["tone"], string> = { ultra: "bg-ultra", neutral: "bg-ink-4", amber: "bg-amber" };
 const CURRENTLY_TONE_CLASS: Record<ThresholdRow["currentlyTone"], string> = {
   teal: "text-teal",
   rose: "text-rose",
+  amber: "text-amber",
   neutral: "text-ink-4",
 };
 
@@ -71,6 +87,8 @@ export function AgentsTab() {
           <Chip tone="amber">already open</Chip>
         ) : row.status === "not-opened" ? (
           <Chip tone="rose">not opened</Chip>
+        ) : row.status === "opens-automatically" ? (
+          <Chip tone="ultra">opens automatically</Chip>
         ) : (
           <Chip tone="neutral">no</Chip>
         ),

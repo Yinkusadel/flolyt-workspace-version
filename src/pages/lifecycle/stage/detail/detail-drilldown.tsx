@@ -7,12 +7,22 @@ import { KpiCards, type Kpi } from "@/pages/lifecycle/stage/kpi-cards";
 import type { Crumb } from "@/pages/lifecycle/stage/stage-subpage-header";
 import { StageSubpageHeader } from "@/pages/lifecycle/stage/stage-subpage-header";
 
-export type CheckedRow = { id: string; question: string; finding: string; verdict: string; verdictTone: ChipTone };
+export type CheckedRow = {
+  id: string;
+  question: string;
+  finding: string;
+  /** An extra data point shown before the verdict chip, e.g. an affected-customer count. */
+  extra?: string;
+  extraTone?: "ink" | "teal";
+  verdict: string;
+  verdictTone: ChipTone;
+};
 
-export type ActionCard = { id: string; eyebrow: string; tone: "teal" | "amber" | "neutral"; title: string; body: string; footnote: string };
+export type ActionCard = { id: string; eyebrow: string; tone: "teal" | "amber" | "neutral" | "rose"; title: string; body: string; footnote: string };
 
-const ACTION_ACCENT_CLASS: Record<ActionCard["tone"], string> = { teal: "bg-teal", amber: "bg-amber", neutral: "bg-ink-4" };
-const ACTION_EYEBROW_CLASS: Record<ActionCard["tone"], string> = { teal: "text-teal", amber: "text-amber", neutral: "text-ink-4" };
+const ACTION_ACCENT_CLASS: Record<ActionCard["tone"], string> = { teal: "bg-teal", amber: "bg-amber", neutral: "bg-ink-4", rose: "bg-rose" };
+const ACTION_EYEBROW_CLASS: Record<ActionCard["tone"], string> = { teal: "text-teal", amber: "text-amber", neutral: "text-ink-4", rose: "text-rose" };
+const EXTRA_TONE_CLASS: Record<NonNullable<CheckedRow["extraTone"]>, string> = { ink: "text-ink", teal: "text-teal" };
 
 /**
  * Generic template for every stage's "one item" drilldown (channels/:id,
@@ -33,6 +43,7 @@ export function DetailDrilldown({
   causeBody,
   actionsEyebrow,
   actionCards,
+  onOpenRoom,
 }: {
   crumbs: Crumb[];
   title: string;
@@ -45,6 +56,7 @@ export function DetailDrilldown({
   causeBody: ReactNode;
   actionsEyebrow: string;
   actionCards: ActionCard[];
+  onOpenRoom?: () => void;
 }) {
   return (
     <div className="space-y-8">
@@ -53,7 +65,7 @@ export function DetailDrilldown({
         title={title}
         subtitle={subtitle}
         action={
-          <Button type="button" size="sm">
+          <Button type="button" size="sm" onClick={onOpenRoom}>
             Open a war room
           </Button>
         }
@@ -70,7 +82,12 @@ export function DetailDrilldown({
                 <p className="text-[11.5px] font-semibold text-ink-2">{row.question}</p>
                 <p className="mt-0.5 text-[11px] text-ink-3">{row.finding}</p>
               </div>
-              <Chip tone={row.verdictTone}>{row.verdict}</Chip>
+              <div className="flex shrink-0 items-center gap-2.5">
+                {row.extra && (
+                  <span className={`font-mono text-[11px] ${EXTRA_TONE_CLASS[row.extraTone ?? "ink"]}`}>{row.extra}</span>
+                )}
+                <Chip tone={row.verdictTone}>{row.verdict}</Chip>
+              </div>
             </div>
           ))}
         </div>

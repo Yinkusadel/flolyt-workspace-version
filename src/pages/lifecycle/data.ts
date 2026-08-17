@@ -52,7 +52,7 @@ export const STAGES: Stage[] = [
     isDefined: true,
     headline: "894,000 acquired in twelve months · ₦74M at stake · owned by Marketing",
   },
-  { name: "Activate", slug: "activate", department: "Product", metric: "41% reach value", amount: "₦188M", amountLabel: "at stake", isDefined: true, headline: "41% reach value in twelve months · ₦188M at stake · owned by Product" },
+  { name: "Activate", slug: "activate", department: "Product", metric: "41% reach value", amount: "₦188M", amountLabel: "at stake", isDefined: true, headline: "894,000 enter · 366,000 reach value · ₦188M at stake · owned by Product" },
   { name: "Price", slug: "price", department: "Finance", metric: "6 plans", amount: "₦46M", amountLabel: "at stake", isDefined: true, headline: "Six plans · ₦46M at stake · owned by Finance" },
   { name: "Adopt", slug: "adopt", department: "Product", metric: "2.1 features avg", amount: "₦112M", amountLabel: "at stake", isDefined: true, headline: "2.1 features adopted on average · ₦112M at stake · owned by Product" },
   { name: "Retain", slug: "retain", department: "Marketing", metric: "27% repeat", amount: "₦412M", amountLabel: "at stake", isDefined: true, headline: "27% repeat rate · ₦412M at stake · owned by Marketing" },

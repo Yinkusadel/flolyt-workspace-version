@@ -24,6 +24,8 @@ export const ACQUIRE_OVERVIEW_BAR_ROWS: { label: string; value: string; percent:
   { label: "Second orders · this year", value: "243,000", percent: 24, tone: "rose" },
 ];
 
+export type RoomBadge = { label: string; tone: "teal" | "amber" | "rose" | "neutral" | "ultra" };
+
 export type LeakRow = {
   id: string;
   where: string;
@@ -32,8 +34,11 @@ export type LeakRow = {
   valueTone: "rose" | "amber" | "ink";
   trend: string;
   trendTone: "rose" | "amber" | "teal" | "neutral";
+  /** Present on stages whose leak table has an Owner column (e.g. Acquire). */
   owner?: { name: string; initials: string };
-  room: "open" | "open-unowned" | "no-owner";
+  /** Present on stages whose leak table has a "Cause known?" column instead (e.g. Activate). */
+  causeKnown?: { label: string; tone: "ultra" | "amber" };
+  room: RoomBadge;
 };
 
 export const ACQUIRE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
@@ -46,7 +51,7 @@ export const ACQUIRE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
     trend: "worsening",
     trendTone: "rose",
     owner: { name: "Tunde", initials: "TB" },
-    room: "open",
+    room: { label: "open one", tone: "ultra" },
   },
   {
     id: "verified-never-ordered",
@@ -57,7 +62,7 @@ export const ACQUIRE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
     trend: "flat",
     trendTone: "neutral",
     owner: { name: "Tunde", initials: "TB" },
-    room: "open",
+    room: { label: "open one", tone: "ultra" },
   },
   {
     id: "accra-campaign",
@@ -67,7 +72,7 @@ export const ACQUIRE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
     valueTone: "amber",
     trend: "worsening",
     trendTone: "rose",
-    room: "open-unowned",
+    room: { label: "open · unowned", tone: "amber" },
   },
 ];
 
@@ -343,9 +348,11 @@ export type ChangeRow = {
   teamColor: string;
   title: string;
   effect: string;
-  effectTone: "teal" | "rose" | "amber" | "neutral";
-  badge: "causal finding" | "no effect" | "not instrumented";
+  effectTone: "teal" | "rose" | "amber" | "neutral" | "ultra";
+  badge: "causal finding" | "no effect" | "not instrumented" | "measuring";
   badgeTone: "ultra" | "neutral" | "amber";
+  /** When set, the row's title links to /lifecycle/:stage/changes/:id (a release-impact drilldown). */
+  hasDetail?: boolean;
 };
 
 export const ACQUIRE_CHANGE_ROWS: ChangeRow[] = [
@@ -374,7 +381,7 @@ export type AgentCard = {
   name: string;
   body: string;
   footnote: string;
-  tone: "ultra" | "neutral";
+  tone: "ultra" | "neutral" | "amber";
 };
 
 export const ACQUIRE_AGENT_CARDS: AgentCard[] = [
@@ -412,8 +419,8 @@ export type ThresholdRow = {
   condition: string;
   threshold: string;
   currently: string;
-  currentlyTone: "teal" | "rose" | "neutral";
-  status: "already-open" | "not-opened" | "no";
+  currentlyTone: "teal" | "rose" | "amber" | "neutral";
+  status: "already-open" | "not-opened" | "no" | "opens-automatically";
   owner?: { name: string; initials: string; color: string };
   noOwner?: boolean;
 };
@@ -434,26 +441,28 @@ export type GoalRow = {
   owner: { name: string; initials: string; color: string };
   target: string;
   today: string;
-  todayTone: "teal" | "rose" | "neutral";
-  status: "ahead" | "behind" | "no-baseline";
+  todayTone: "teal" | "rose" | "amber" | "neutral";
+  paceLabel: string;
+  paceTone: "teal" | "rose" | "amber";
   part: string;
   partTone: "amber" | "rose" | "neutral";
 };
 
 export const ACQUIRE_GOAL_ROWS: GoalRow[] = [
-  { id: "second-orders", goal: "Second orders", owner: { name: "Tunde", initials: "TB", color: "#B4568F" }, target: "184,000", today: "ahead", todayTone: "teal", status: "ahead", part: "volume is doing the work", partTone: "amber" },
-  { id: "repeat-rate", goal: "90-day repeat rate", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" }, target: "36.4%", today: "29.2%", todayTone: "rose", status: "behind", part: "acquisition quality is the drag", partTone: "rose" },
-  { id: "contribution-margin", goal: "Contribution margin", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" }, target: "Unavailable", today: "Unavailable", todayTone: "neutral", status: "no-baseline", part: "blocked on COGS", partTone: "amber" },
+  { id: "second-orders", goal: "Second orders", owner: { name: "Tunde", initials: "TB", color: "#B4568F" }, target: "184,000", today: "ahead", todayTone: "teal", paceLabel: "ahead", paceTone: "teal", part: "volume is doing the work", partTone: "amber" },
+  { id: "repeat-rate", goal: "90-day repeat rate", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" }, target: "36.4%", today: "29.2%", todayTone: "rose", paceLabel: "behind", paceTone: "rose", part: "acquisition quality is the drag", partTone: "rose" },
+  { id: "contribution-margin", goal: "Contribution margin", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" }, target: "Unavailable", today: "Unavailable", todayTone: "neutral", paceLabel: "no baseline", paceTone: "amber", part: "blocked on COGS", partTone: "amber" },
 ];
 
 export type TriedRow = {
   id: string;
   what: string;
   when: string;
+  whenTone?: "neutral" | "amber";
   result: string;
-  resultTone: "teal" | "rose" | "neutral";
+  resultTone: "teal" | "rose" | "amber" | "neutral";
   measuredHow: string;
-  learningKept: "validated" | "room open" | "superseded";
+  learningKept: "validated" | "room open" | "superseded" | "validated · no effect" | "suggested twice";
 };
 
 export const ACQUIRE_TRIED_ROWS: TriedRow[] = [

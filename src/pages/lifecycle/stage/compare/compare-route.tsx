@@ -7,6 +7,7 @@ import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { StageSubpageHeader } from "@/pages/lifecycle/stage/stage-subpage-header";
 import { ACQUIRE_COMPARE_BUILD_ROWS, ACQUIRE_COMPARE_ROWS, type CompareRow } from "@/pages/lifecycle/stage/acquire/data";
+import { ACTIVATE_COMPARE_ROWS } from "@/pages/lifecycle/stage/activate/data";
 
 type CompareData = {
   headline: string;
@@ -15,8 +16,8 @@ type CompareData = {
   rows: CompareRow[];
   insightTitle: string;
   insightBody: string;
-  buildEyebrow: string;
-  buildRows: { label: string; value: string; tone: "neutral" | "amber" }[];
+  buildEyebrow?: string;
+  buildRows?: { label: string; value: string; tone: "neutral" | "amber" }[];
 };
 
 const COMPARE_DATA: Record<string, CompareData> = {
@@ -30,6 +31,15 @@ const COMPARE_DATA: Record<string, CompareData> = {
       "Volume is up 21% and every quality measure is down. The acquisition team hit its goal every month of this period. That is not a people problem — it is what happens when a stage is measured on its output and damaged by something four stages away.",
     buildEyebrow: "How this comparison is built",
     buildRows: ACQUIRE_COMPARE_BUILD_ROWS,
+  },
+  activate: {
+    headline: "Before and after 4 March · 21% more in, 4% fewer through",
+    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
+    periodOptions: ["This quarter vs last", "Year on year", "Nigeria vs Kenya", "Custom"],
+    rows: ACTIVATE_COMPARE_ROWS,
+    insightTitle: "21% more customers entered this stage and 4% fewer came out of it",
+    insightBody:
+      "That is the whole quarter in one line. Acquisition delivered exactly what it was asked for, activation was damaged by a release nobody held against revenue, and the two facts sat in separate dashboards owned by separate teams for twenty weeks.",
   },
 };
 
@@ -96,17 +106,19 @@ const CompareRoute = () => {
         {data.insightBody}
       </Callout>
 
-      <section className="space-y-1">
-        <p className="pb-2 font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.buildEyebrow}</p>
-        <div className="divide-y divide-line rounded-card border border-line bg-paper">
-          {data.buildRows.map((row) => (
-            <div key={row.label} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-              <span className="text-[11.5px] text-ink-2">{row.label}</span>
-              <span className={cn("font-mono text-[11px]", BUILD_TONE_CLASS[row.tone])}>{row.value}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      {data.buildEyebrow && data.buildRows && (
+        <section className="space-y-1">
+          <p className="pb-2 font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.buildEyebrow}</p>
+          <div className="divide-y divide-line rounded-card border border-line bg-paper">
+            {data.buildRows.map((row) => (
+              <div key={row.label} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                <span className="text-[11.5px] text-ink-2">{row.label}</span>
+                <span className={cn("font-mono text-[11px]", BUILD_TONE_CLASS[row.tone])}>{row.value}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

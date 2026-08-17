@@ -1,6 +1,7 @@
 import { Callout } from "@/pages/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { useStageContext } from "@/pages/lifecycle/stage/layout";
+import ActivateMarketsTab from "@/pages/lifecycle/stage/activate/markets-tab";
 import { ACQUIRE_MARKET_ROWS, ACQUIRE_MARKET_SPOTLIGHTS, type MarketRow } from "@/pages/lifecycle/stage/acquire/data";
 
 type MarketsData = {
@@ -53,6 +54,12 @@ const COLUMNS: Column<MarketRow>[] = [
 /** The shared Markets tab template (e.g. A08) — every stage's per-market breakout, no combined total by design. */
 export function MarketsTab() {
   const { stage } = useStageContext();
+
+  // Activate's Markets screen (AC07) uses a different column set (activation
+  // rate/guest share, not spend/CAC) — routed to its own component rather
+  // than forcing this template's Acquire-shaped columns onto it.
+  if (stage.slug === "activate") return <ActivateMarketsTab />;
+
   const data = MARKETS_DATA[stage.slug];
   if (!data) return null;
 
