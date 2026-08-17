@@ -473,7 +473,11 @@ export type TriedRow = {
     | "suggested twice"
     | "room needed"
     | "contested"
-    | "blocked in 2024";
+    | "blocked in 2024"
+    | "incomplete"
+    | "validated · low lift"
+    | "never promoted"
+    | "never proposed";
 };
 
 export const ACQUIRE_TRIED_ROWS: TriedRow[] = [

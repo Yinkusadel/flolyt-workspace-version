@@ -7,6 +7,7 @@ import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { StageSubpageHeader } from "@/pages/lifecycle/stage/stage-subpage-header";
 import { ACTIVATE_DEFINITION } from "@/pages/lifecycle/stage/activate/data";
 import PriceDefinitionRoute from "@/pages/lifecycle/stage/price/definition-route";
+import AdoptDefinitionRoute from "@/pages/lifecycle/stage/adopt/definition-route";
 
 export type DefinitionCandidate = {
   id: string;
@@ -66,6 +67,9 @@ const DefinitionRoute = () => {
   // copy — so it gets its own component rather than forcing this
   // template's shape onto it. See price/definition-route.tsx.
   if (stage.slug === "price") return <PriceDefinitionRoute />;
+  // Adopt's AD01 verdict table breaks down retention by feature count
+  // (0-4+), not a candidate-signal comparison — a different table shape.
+  if (stage.slug === "adopt") return <AdoptDefinitionRoute />;
 
   const data = DEFINITION_DATA[stage.slug];
   if (!data) return null;

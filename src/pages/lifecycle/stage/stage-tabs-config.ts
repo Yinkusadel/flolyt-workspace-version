@@ -13,6 +13,9 @@ import ActivatePathsTab from "@/pages/lifecycle/stage/activate/paths-tab";
 import PricePlansTab from "@/pages/lifecycle/stage/price/plans-tab";
 import PriceMarginTab from "@/pages/lifecycle/stage/price/margin-tab";
 import PriceDiscountingTab from "@/pages/lifecycle/stage/price/discounting-tab";
+import AdoptFeaturesTab from "@/pages/lifecycle/stage/adopt/features-tab";
+import AdoptDepthTab from "@/pages/lifecycle/stage/adopt/depth-tab";
+import AdoptBlindSpotsTab from "@/pages/lifecycle/stage/adopt/blind-spots-tab";
 
 export type StageTab = {
   /** Path segment appended to /lifecycle/:stage/ */
@@ -57,6 +60,16 @@ export const STAGE_TABS: Partial<Record<string, StageTab[]>> = {
     { path: "plans", label: "Plans", Component: PricePlansTab },
     { path: "margin", label: "Margin", Component: PriceMarginTab },
     { path: "discounting", label: "Discounting", Component: PriceDiscountingTab },
+    { path: "cohorts", label: "Cohorts", Component: CohortsTab },
+    { path: "markets", label: "Markets", Component: MarketsTab },
+    { path: "changes", label: "What changed", Component: ChangesTab },
+    { path: "agents", label: "Agents", Component: AgentsTab },
+    { path: "history", label: "History", Component: HistoryTab },
+  ],
+  adopt: [
+    { path: "features", label: "Features", Component: AdoptFeaturesTab },
+    { path: "depth", label: "Depth", Component: AdoptDepthTab },
+    { path: "blind-spots", label: "Not instrumented", Component: AdoptBlindSpotsTab },
     { path: "cohorts", label: "Cohorts", Component: CohortsTab },
     { path: "markets", label: "Markets", Component: MarketsTab },
     { path: "changes", label: "What changed", Component: ChangesTab },

@@ -6,6 +6,7 @@ import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { ACQUIRE_GOAL_ROWS, ACQUIRE_TRIED_ROWS, type GoalRow, type TriedRow } from "@/pages/lifecycle/stage/acquire/data";
 import { ACTIVATE_GOAL_ROWS, ACTIVATE_TRIED_ROWS } from "@/pages/lifecycle/stage/activate/data";
 import { PRICE_GOAL_ROWS, PRICE_TRIED_ROWS } from "@/pages/lifecycle/stage/price/data";
+import { ADOPT_GOAL_ROWS, ADOPT_TRIED_ROWS } from "@/pages/lifecycle/stage/adopt/data";
 
 type HistoryData = {
   goalEyebrow: string;
@@ -14,6 +15,7 @@ type HistoryData = {
   triedRows: TriedRow[];
   insightTitle: string;
   insightBody: string;
+  insightTone?: "ultra" | "amber" | "rose";
 };
 
 const HISTORY_DATA: Record<string, HistoryData> = {
@@ -43,6 +45,17 @@ const HISTORY_DATA: Record<string, HistoryData> = {
     insightTitle: "Three of five things tried in this stage had no holdout",
     insightBody:
       "Price is the stage where a holdout is cheapest — you can charge two groups differently for four weeks and learn something permanent. It is also the stage with the fewest of them, which is why three of these rows will be argued about again next quarter.",
+    insightTone: "amber",
+  },
+  adopt: {
+    goalEyebrow: "Goals that depend on this stage · 1",
+    goalRows: ADOPT_GOAL_ROWS,
+    triedEyebrow: "What has already been tried here",
+    triedRows: ADOPT_TRIED_ROWS,
+    insightTitle: "The highest-lift action available in this stage has never been proposed by anyone",
+    insightBody:
+      "Prompting a one-tap-reorder customer toward scheduled delivery is worth 38 points of retention on 71,000 customers. It is not deferred, not rejected and not blocked — it has simply never come up, because until this table existed nobody could see the lift.",
+    insightTone: "rose",
   },
 };
 
@@ -61,6 +74,10 @@ const LEARNING_CHIP_TONE: Record<TriedRow["learningKept"], "teal" | "amber" | "n
   "room needed": "amber",
   contested: "amber",
   "blocked in 2024": "amber",
+  incomplete: "amber",
+  "validated · low lift": "neutral",
+  "never promoted": "amber",
+  "never proposed": "amber",
 };
 
 /** The shared History tab template (e.g. A14) — goals that depend on this stage, and what has already been tried. */
@@ -117,7 +134,7 @@ export function HistoryTab() {
         <DataTable columns={triedColumns} rows={data.triedRows} />
       </section>
 
-      <Callout tone="ultra" title={data.insightTitle}>
+      <Callout tone={data.insightTone ?? "ultra"} title={data.insightTitle}>
         {data.insightBody}
       </Callout>
     </div>

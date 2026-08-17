@@ -7,6 +7,7 @@ import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { ACQUIRE_CHANGE_ROWS, ACQUIRE_CHANGE_SOURCE_ROWS, type ChangeRow } from "@/pages/lifecycle/stage/acquire/data";
 import { ACTIVATE_CHANGE_ROWS } from "@/pages/lifecycle/stage/activate/data";
 import { PRICE_CHANGE_ROWS } from "@/pages/lifecycle/stage/price/data";
+import { ADOPT_CHANGE_ROWS } from "@/pages/lifecycle/stage/adopt/data";
 
 type ChangesData = {
   eyebrow: string;
@@ -48,6 +49,13 @@ const CHANGES_DATA: Record<string, ChangesData> = {
     secondInsightTitle: "One change on this list has no owner and no date",
     secondInsightBody:
       "Ghana's price was set in August 2024 by someone who has since left, with no review cadence attached. Flolyt cannot tell you why it was never revisited — only that it has not been, for 22 months, and that it costs 410,000 customers a 22% premium.",
+  },
+  adopt: {
+    eyebrow: "Dated changes that moved something in this stage",
+    rows: ADOPT_CHANGE_ROWS,
+    insightTitle: "The wallet is the only entry here that failed on its own terms",
+    insightBody:
+      "Everything else on this list was damaged by a decision made elsewhere or has no reading at all. The wallet shipped, worked, and then nothing was built to bring anyone back to it — no balance reminder, no auto-top-up, no follow-up. It is the cheapest fix in the stage and has been sitting untouched for nine months.",
   },
 };
 

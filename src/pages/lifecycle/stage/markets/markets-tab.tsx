@@ -3,6 +3,7 @@ import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import ActivateMarketsTab from "@/pages/lifecycle/stage/activate/markets-tab";
 import PriceMarketsTab from "@/pages/lifecycle/stage/price/markets-tab";
+import AdoptMarketsTab from "@/pages/lifecycle/stage/adopt/markets-tab";
 import { ACQUIRE_MARKET_ROWS, ACQUIRE_MARKET_SPOTLIGHTS, type MarketRow } from "@/pages/lifecycle/stage/acquire/data";
 
 type MarketsData = {
@@ -62,6 +63,8 @@ export function MarketsTab() {
   if (stage.slug === "activate") return <ActivateMarketsTab />;
   // Price's PR08 uses FX-drift/repricing columns, not Acquire's spend/CAC.
   if (stage.slug === "price") return <PriceMarketsTab />;
+  // Adopt's AD08 uses eligible/2+features/top-second-feature columns, not spend/CAC.
+  if (stage.slug === "adopt") return <AdoptMarketsTab />;
 
   const data = MARKETS_DATA[stage.slug];
   if (!data) return null;

@@ -9,6 +9,7 @@ import { StageSubpageHeader } from "@/pages/lifecycle/stage/stage-subpage-header
 import { ACQUIRE_COMPARE_BUILD_ROWS, ACQUIRE_COMPARE_ROWS, type CompareRow } from "@/pages/lifecycle/stage/acquire/data";
 import { ACTIVATE_COMPARE_ROWS } from "@/pages/lifecycle/stage/activate/data";
 import { PRICE_COMPARE_ROWS } from "@/pages/lifecycle/stage/price/data";
+import { ADOPT_COMPARE_ROWS } from "@/pages/lifecycle/stage/adopt/data";
 
 type CompareData = {
   headline: string;
@@ -50,6 +51,15 @@ const COMPARE_DATA: Record<string, CompareData> = {
     insightTitle: "The effective price rose 16% in a quarter in which nobody in Finance changed a price",
     insightBody:
       "A delivery fee shipped by Engineering, a discount depth raised by Marketing, and a plan launched without verification. Three teams, three reasonable decisions, one price nobody set. That is what this stage exists to make visible, and it took twenty weeks.",
+  },
+  adopt: {
+    headline: "One feature fell 26 points · another moved 0.4 · that contrast is the finding",
+    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
+    periodOptions: ["This quarter vs last", "Year on year", "Kenya vs Nigeria", "Custom"],
+    rows: ADOPT_COMPARE_ROWS,
+    insightTitle: "One feature moved 26 points and one moved 0.4, and that is the finding",
+    insightBody:
+      "If the March change had made the whole product worse, saved addresses would have fallen too. It did not move at all. A single feature took the entire hit, and it was the one that meets the checkout most often — which is what makes this a specific, fixable cause rather than a vague decline.",
   },
 };
 

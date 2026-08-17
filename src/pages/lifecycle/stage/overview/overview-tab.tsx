@@ -33,6 +33,12 @@ import {
   PRICE_OVERVIEW_LEAK_ROWS,
   PRICE_SHARE_EXPORT_PRESET,
 } from "@/pages/lifecycle/stage/price/data";
+import {
+  ADOPT_OPEN_ROOM_PRESET,
+  ADOPT_OVERVIEW_KPIS,
+  ADOPT_OVERVIEW_LEAK_ROWS,
+  ADOPT_SHARE_EXPORT_PRESET,
+} from "@/pages/lifecycle/stage/adopt/data";
 
 type OverviewData = {
   kpis: Kpi[];
@@ -92,6 +98,20 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     showStageRail: true,
     openRoomPreset: PRICE_OPEN_ROOM_PRESET,
     shareExportPreset: PRICE_SHARE_EXPORT_PRESET,
+  },
+  adopt: {
+    kpis: ADOPT_OVERVIEW_KPIS,
+    insightTitle: "An entire feature is invisible to this stage",
+    insightBody:
+      "Loyalty tiers were renamed in April and have never emitted an event. Flolyt cannot say how many customers use them, whether the rename helped or hurt, or whether the feature does anything at all. It is listed as unavailable rather than left off the table.",
+    insightTone: "rose",
+    leakEyebrow: "Where the 781,000 who use nothing are",
+    leakWhereHeader: "Group",
+    leakColumnKind: "cause",
+    leakRows: ADOPT_OVERVIEW_LEAK_ROWS,
+    showStageRail: true,
+    openRoomPreset: ADOPT_OPEN_ROOM_PRESET,
+    shareExportPreset: ADOPT_SHARE_EXPORT_PRESET,
   },
 };
 
@@ -173,7 +193,7 @@ export function OverviewTab() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-end gap-4">
-        {(stage.slug === "activate" || stage.slug === "price") && (
+        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt") && (
           <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
             How this stage is defined
           </Link>

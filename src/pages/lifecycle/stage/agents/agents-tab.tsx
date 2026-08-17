@@ -24,6 +24,11 @@ import {
   PRICE_THRESHOLD_PRESET,
   PRICE_THRESHOLD_ROWS,
 } from "@/pages/lifecycle/stage/price/data";
+import {
+  ADOPT_AGENT_CARDS,
+  ADOPT_THRESHOLD_PRESET,
+  ADOPT_THRESHOLD_ROWS,
+} from "@/pages/lifecycle/stage/adopt/data";
 
 type AgentsData = {
   eyebrow: string;
@@ -65,6 +70,16 @@ const AGENTS_DATA: Record<string, AgentsData> = {
     insightBody:
       "Plan downgrades and FX drift both breached months ago. Both route to “Price stage owner” for the condition but to Marketing and a departed employee for the cause. This is now consistent enough across Acquire, Activate and Price to be a product problem rather than three configuration mistakes.",
     threshold: PRICE_THRESHOLD_PRESET,
+  },
+  adopt: {
+    eyebrow: "Agents watching this stage · 1",
+    cards: ADOPT_AGENT_CARDS,
+    tableEyebrow: "What would make an agent open a room here",
+    rows: ADOPT_THRESHOLD_ROWS,
+    insightTitle: "The third row is the one that would have caught the loyalty rename in two weeks instead of four months",
+    insightBody:
+      "“A shipped feature emits no events after 14 days” has been breached for 118 days. It has no owner because instrumentation sits between Product, who ships the feature, and Engineering, who owns the event. Seventh instance of the same routing gap.",
+    threshold: ADOPT_THRESHOLD_PRESET,
   },
 };
 

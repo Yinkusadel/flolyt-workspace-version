@@ -28,6 +28,10 @@ import PricePlansTab from "@/pages/lifecycle/stage/price/plans-tab";
 import PricePlanDetailRoute from "@/pages/lifecycle/stage/price/plan-detail-route";
 import PriceMarginTab from "@/pages/lifecycle/stage/price/margin-tab";
 import PriceDiscountingTab from "@/pages/lifecycle/stage/price/discounting-tab";
+import AdoptFeaturesTab from "@/pages/lifecycle/stage/adopt/features-tab";
+import AdoptFeatureDetailRoute from "@/pages/lifecycle/stage/adopt/feature-detail-route";
+import AdoptDepthTab from "@/pages/lifecycle/stage/adopt/depth-tab";
+import AdoptBlindSpotsTab from "@/pages/lifecycle/stage/adopt/blind-spots-tab";
 import Rooms from "@/pages/rooms";
 import RoomLayout, {
   RoomDecisionRoute,
@@ -86,6 +90,7 @@ export const routes = createBrowserRouter([
                       { path: "paths/:id", Component: ActivatePathDetailRoute },
                       { path: "changes/:id", Component: ActivateReleaseImpactRoute },
                       { path: "plans/:id", Component: PricePlanDetailRoute },
+                      { path: "features/:id", Component: AdoptFeatureDetailRoute },
                       {
                         Component: StageTabsLayout,
                         children: [
@@ -98,6 +103,9 @@ export const routes = createBrowserRouter([
                           { path: "plans", Component: PricePlansTab },
                           { path: "margin", Component: PriceMarginTab },
                           { path: "discounting", Component: PriceDiscountingTab },
+                          { path: "features", Component: AdoptFeaturesTab },
+                          { path: "depth", Component: AdoptDepthTab },
+                          { path: "blind-spots", Component: AdoptBlindSpotsTab },
                           { path: "cohorts", Component: CohortsTab },
                           { path: "markets", Component: MarketsTab },
                           { path: "changes", Component: ChangesTab },
