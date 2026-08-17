@@ -28,6 +28,9 @@ import SupportDeflectionTab from "@/pages/lifecycle/stage/support/deflection-tab
 import RenewRenewalBookTab from "@/pages/lifecycle/stage/renew/renewal-book-tab";
 import RenewDunningTab from "@/pages/lifecycle/stage/renew/dunning-tab";
 import RenewPausesTab from "@/pages/lifecycle/stage/renew/pauses-tab";
+import AdvocateReferrersTab from "@/pages/lifecycle/stage/advocate/referrers-tab";
+import AdvocateReferralQualityTab from "@/pages/lifecycle/stage/advocate/quality-tab";
+import AdvocateRewardsTab from "@/pages/lifecycle/stage/advocate/rewards-tab";
 
 export type StageTab = {
   /** Path segment appended to /lifecycle/:stage/ */
@@ -122,6 +125,16 @@ export const STAGE_TABS: Partial<Record<string, StageTab[]>> = {
     { path: "book", label: "Renewal book", Component: RenewRenewalBookTab },
     { path: "dunning", label: "Dunning", Component: RenewDunningTab },
     { path: "pauses", label: "Pauses", Component: RenewPausesTab },
+    { path: "cohorts", label: "Cohorts", Component: CohortsTab },
+    { path: "markets", label: "Markets", Component: MarketsTab },
+    { path: "changes", label: "What changed", Component: ChangesTab },
+    { path: "agents", label: "Agents", Component: AgentsTab },
+    { path: "history", label: "History", Component: HistoryTab },
+  ],
+  advocate: [
+    { path: "referrers", label: "Referrers", Component: AdvocateReferrersTab },
+    { path: "quality", label: "Referral quality", Component: AdvocateReferralQualityTab },
+    { path: "rewards", label: "Rewards", Component: AdvocateRewardsTab },
     { path: "cohorts", label: "Cohorts", Component: CohortsTab },
     { path: "markets", label: "Markets", Component: MarketsTab },
     { path: "changes", label: "What changed", Component: ChangesTab },

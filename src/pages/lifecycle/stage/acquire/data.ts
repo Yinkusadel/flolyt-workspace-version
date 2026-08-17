@@ -492,7 +492,8 @@ export type TriedRow = {
     | "under review"
     | "the obvious next test"
     | "4 hrs waiting"
-    | "reverse it";
+    | "reverse it"
+    | "unresolved";
   /** Overrides the learning-kept chip's tone — defaults to the fixed lookup by text (e.g. Renew's "never proposed" is rose here, not the usual amber). */
   learningKeptTone?: "teal" | "amber" | "neutral" | "rose";
 };

@@ -11,6 +11,7 @@ import { RETAIN_GOAL_ROWS, RETAIN_HISTORY_MID_INSIGHT, RETAIN_TRIED_ROWS } from 
 import { EXPAND_GOAL_ROWS, EXPAND_TRIED_ROWS } from "@/pages/lifecycle/stage/expand/data";
 import { SUPPORT_GOAL_ROWS, SUPPORT_HISTORY_MID_INSIGHT, SUPPORT_TRIED_ROWS } from "@/pages/lifecycle/stage/support/data";
 import { RENEW_GOAL_ROWS, RENEW_HISTORY_INSIGHT, RENEW_TRIED_ROWS } from "@/pages/lifecycle/stage/renew/data";
+import { ADVOCATE_GOAL_ROWS, ADVOCATE_HISTORY_INSIGHT, ADVOCATE_HISTORY_MID_INSIGHT, ADVOCATE_TRIED_ROWS } from "@/pages/lifecycle/stage/advocate/data";
 
 type HistoryData = {
   goalEyebrow: string;
@@ -110,6 +111,18 @@ const HISTORY_DATA: Record<string, HistoryData> = {
     insightBody: RENEW_HISTORY_INSIGHT.body,
     insightTone: "teal",
   },
+  advocate: {
+    goalEyebrow: "Goals that depend on this stage · 1",
+    goalRows: ADVOCATE_GOAL_ROWS,
+    midInsightTone: ADVOCATE_HISTORY_MID_INSIGHT.tone,
+    midInsightTitle: ADVOCATE_HISTORY_MID_INSIGHT.title,
+    midInsightBody: ADVOCATE_HISTORY_MID_INSIGHT.body,
+    triedEyebrow: "What has already been tried here",
+    triedRows: ADVOCATE_TRIED_ROWS,
+    insightTitle: ADVOCATE_HISTORY_INSIGHT.title,
+    insightBody: ADVOCATE_HISTORY_INSIGHT.body,
+    insightTone: "amber",
+  },
 };
 
 const TODAY_TONE_CLASS: Record<GoalRow["todayTone"], string> = { teal: "text-teal", rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
@@ -142,6 +155,7 @@ const LEARNING_CHIP_TONE: Record<TriedRow["learningKept"], "teal" | "amber" | "n
   "the obvious next test": "amber",
   "4 hrs waiting": "amber",
   "reverse it": "amber",
+  unresolved: "amber",
 };
 
 /** The shared History tab template (e.g. A14) — goals that depend on this stage, and what has already been tried. */

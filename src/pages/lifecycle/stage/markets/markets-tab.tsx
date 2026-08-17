@@ -8,6 +8,7 @@ import RetainMarketsTab from "@/pages/lifecycle/stage/retain/markets-tab";
 import ExpandMarketsTab from "@/pages/lifecycle/stage/expand/markets-tab";
 import SupportMarketsTab from "@/pages/lifecycle/stage/support/markets-tab";
 import RenewMarketsTab from "@/pages/lifecycle/stage/renew/markets-tab";
+import AdvocateMarketsTab from "@/pages/lifecycle/stage/advocate/markets-tab";
 import { ACQUIRE_MARKET_ROWS, ACQUIRE_MARKET_SPOTLIGHTS, type MarketRow } from "@/pages/lifecycle/stage/acquire/data";
 
 type MarketsData = {
@@ -77,6 +78,8 @@ export function MarketsTab() {
   if (stage.slug === "support") return <SupportMarketsTab />;
   // Renew's RN07 uses rate/card-failure/retry-window/paused columns, not spend/CAC.
   if (stage.slug === "renew") return <RenewMarketsTab />;
+  // Advocate's AV07 uses referrers/referral-rate/share-of-acquisition/reward columns, not spend/CAC.
+  if (stage.slug === "advocate") return <AdvocateMarketsTab />;
 
   const data = MARKETS_DATA[stage.slug];
   if (!data) return null;

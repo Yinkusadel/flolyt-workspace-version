@@ -48,6 +48,10 @@ import RenewOneAccountRoute from "@/pages/lifecycle/stage/renew/one-account-rout
 import RenewRenewalBookTab from "@/pages/lifecycle/stage/renew/renewal-book-tab";
 import RenewDunningTab from "@/pages/lifecycle/stage/renew/dunning-tab";
 import RenewPausesTab from "@/pages/lifecycle/stage/renew/pauses-tab";
+import AdvocateOneReferrerGroupRoute from "@/pages/lifecycle/stage/advocate/one-referrer-group-route";
+import AdvocateReferrersTab from "@/pages/lifecycle/stage/advocate/referrers-tab";
+import AdvocateReferralQualityTab from "@/pages/lifecycle/stage/advocate/quality-tab";
+import AdvocateRewardsTab from "@/pages/lifecycle/stage/advocate/rewards-tab";
 import Rooms from "@/pages/rooms";
 import RoomLayout, {
   RoomDecisionRoute,
@@ -111,6 +115,7 @@ export const routes = createBrowserRouter([
                       { path: "upgrade-paths/:id", Component: ExpandPathDetailRoute },
                       { path: "silent", Component: SupportSilentFailuresRoute },
                       { path: "book/:id", Component: RenewOneAccountRoute },
+                      { path: "referrers/:id", Component: AdvocateOneReferrerGroupRoute },
                       {
                         Component: StageTabsLayout,
                         children: [
@@ -138,6 +143,9 @@ export const routes = createBrowserRouter([
                           { path: "book", Component: RenewRenewalBookTab },
                           { path: "dunning", Component: RenewDunningTab },
                           { path: "pauses", Component: RenewPausesTab },
+                          { path: "referrers", Component: AdvocateReferrersTab },
+                          { path: "quality", Component: AdvocateReferralQualityTab },
+                          { path: "rewards", Component: AdvocateRewardsTab },
                           { path: "cohorts", Component: CohortsTab },
                           { path: "markets", Component: MarketsTab },
                           { path: "changes", Component: ChangesTab },

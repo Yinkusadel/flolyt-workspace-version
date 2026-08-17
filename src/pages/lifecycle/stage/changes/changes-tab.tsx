@@ -12,6 +12,7 @@ import { RETAIN_CHANGE_ROWS } from "@/pages/lifecycle/stage/retain/data";
 import { EXPAND_CHANGE_ROWS } from "@/pages/lifecycle/stage/expand/data";
 import { SUPPORT_CHANGE_ROWS } from "@/pages/lifecycle/stage/support/data";
 import { RENEW_CHANGE_ROWS } from "@/pages/lifecycle/stage/renew/data";
+import { ADVOCATE_CHANGE_ROWS, ADVOCATE_CHANGES_INSIGHT } from "@/pages/lifecycle/stage/advocate/data";
 
 type ChangesData = {
   eyebrow: string;
@@ -105,6 +106,13 @@ const CHANGES_DATA: Record<string, ChangesData> = {
     insightTitle: "Two entries here are the absence of an action, not an action",
     insightBody:
       "The Ghana rollout that did not happen and the re-forecast that has not started are both listed as dated changes, because in this stage a thing not done has exactly the same measurable effect as a thing done. A change log that only records deployments would show neither.",
+    insightTone: "rose",
+  },
+  advocate: {
+    eyebrow: "Dated changes that moved something in this stage",
+    rows: ADVOCATE_CHANGE_ROWS,
+    insightTitle: ADVOCATE_CHANGES_INSIGHT.title,
+    insightBody: ADVOCATE_CHANGES_INSIGHT.body,
     insightTone: "rose",
   },
 };

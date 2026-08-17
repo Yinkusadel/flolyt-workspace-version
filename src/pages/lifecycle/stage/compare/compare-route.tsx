@@ -14,6 +14,7 @@ import { RETAIN_COMPARE_ROWS } from "@/pages/lifecycle/stage/retain/data";
 import { EXPAND_COMPARE_ROWS } from "@/pages/lifecycle/stage/expand/data";
 import { SUPPORT_COMPARE_ROWS } from "@/pages/lifecycle/stage/support/data";
 import { RENEW_COMPARE_ROWS } from "@/pages/lifecycle/stage/renew/data";
+import { ADVOCATE_COMPARE_INSIGHT, ADVOCATE_COMPARE_ROWS } from "@/pages/lifecycle/stage/advocate/data";
 
 type CompareData = {
   headline: string;
@@ -100,6 +101,14 @@ const COMPARE_DATA: Record<string, CompareData> = {
     insightTitle: "Two problems, one stage, opposite directions",
     insightBody:
       "Voluntary churn got worse because of something four stages upstream that this team does not control. Involuntary churn got dramatically better because of something this team does control and fixed in nine days. Reporting a single renewal rate would have averaged the two into a mild decline and hidden both stories.",
+  },
+  advocate: {
+    headline: "Referred customers per month −51% · cost per one +100% · same six months",
+    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
+    periodOptions: ["Before vs after the reward rise", "Year on year", "Kenya vs Nigeria", "Custom"],
+    rows: ADVOCATE_COMPARE_ROWS,
+    insightTitle: ADVOCATE_COMPARE_INSIGHT.title,
+    insightBody: ADVOCATE_COMPARE_INSIGHT.body,
   },
 };
 

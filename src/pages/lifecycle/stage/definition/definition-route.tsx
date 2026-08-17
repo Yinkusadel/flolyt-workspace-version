@@ -12,6 +12,7 @@ import RetainDefinitionRoute from "@/pages/lifecycle/stage/retain/definition-rou
 import ExpandDefinitionRoute from "@/pages/lifecycle/stage/expand/definition-route";
 import SupportDefinitionRoute from "@/pages/lifecycle/stage/support/definition-route";
 import RenewDefinitionRoute from "@/pages/lifecycle/stage/renew/definition-route";
+import AdvocateDefinitionRoute from "@/pages/lifecycle/stage/advocate/definition-route";
 
 export type DefinitionCandidate = {
   id: string;
@@ -91,6 +92,11 @@ const DefinitionRoute = () => {
   // silently) by whether the customer chose it and how recoverable it is —
   // a different table shape.
   if (stage.slug === "renew") return <RenewDefinitionRoute />;
+  // Advocate's AV01 replaces the shared verdict-comparison table with a
+  // "what this stage is worth, conservatively" MEASURE/FIGURE/AGAINST/
+  // VERDICT breakdown — a different table shape, and it also needs its own
+  // "Assign an owner" header CTA (this is the one unowned stage).
+  if (stage.slug === "advocate") return <AdvocateDefinitionRoute />;
 
   const data = DEFINITION_DATA[stage.slug];
   if (!data) return null;

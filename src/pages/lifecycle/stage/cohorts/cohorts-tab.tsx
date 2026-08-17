@@ -9,6 +9,7 @@ import RetainCohortsTab from "@/pages/lifecycle/stage/retain/cohorts-tab";
 import ExpandCohortsTab from "@/pages/lifecycle/stage/expand/cohorts-tab";
 import SupportCohortsTab from "@/pages/lifecycle/stage/support/cohorts-tab";
 import RenewCohortsTab from "@/pages/lifecycle/stage/renew/cohorts-tab";
+import AdvocateCohortsTab from "@/pages/lifecycle/stage/advocate/cohorts-tab";
 import {
   ACQUIRE_COHORT_BREAK_ROWS,
   ACQUIRE_COHORT_ROWS,
@@ -89,6 +90,8 @@ export function CohortsTab() {
   if (stage.slug === "support") return <SupportCohortsTab />;
   // Renew's RN06 uses cancelled/paused/card-failed columns, not CAC/day30-90.
   if (stage.slug === "renew") return <RenewCohortsTab />;
+  // Advocate's AV06 uses reached-180-days/referred-anyone/referrals-each columns, not CAC/day30-90.
+  if (stage.slug === "advocate") return <AdvocateCohortsTab />;
 
   const data = COHORTS_DATA[stage.slug];
   if (!data) return null;

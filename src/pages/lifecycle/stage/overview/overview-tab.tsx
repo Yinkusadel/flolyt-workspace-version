@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+import { Button } from "@/components/ui/button";
 import { PersonAvatar } from "@/components/person-avatar";
 import { WideBarRow, type BarTone } from "@/pages/lifecycle/stage/bar";
 import { Callout } from "@/pages/lifecycle/stage/rail";
@@ -12,6 +13,7 @@ import { StageEmptyState } from "@/pages/lifecycle/stage/overview/empty-state";
 import { OverviewStageRail } from "@/pages/lifecycle/stage/overview/mini-stage-rail";
 import { OpenARoomModal, type OpenRoomPreset } from "@/pages/lifecycle/stage/modals/open-a-room-modal";
 import { ShareOrExportModal, type ShareOrExportPreset } from "@/pages/lifecycle/stage/modals/share-or-export-modal";
+import { AssignAnOwnerModal, type AssignOwnerPreset } from "@/pages/lifecycle/stage/modals/assign-an-owner-modal";
 import { STAGES } from "@/pages/lifecycle/data";
 import {
   ACQUIRE_OPEN_ROOM_PRESET,
@@ -63,9 +65,22 @@ import {
   RENEW_OVERVIEW_LEAK_ROWS,
   RENEW_SHARE_EXPORT_PRESET,
 } from "@/pages/lifecycle/stage/renew/data";
+import {
+  ADVOCATE_ASSIGN_OWNER_PRESET,
+  ADVOCATE_OPEN_ROOM_PRESET,
+  ADVOCATE_OVERVIEW_INSIGHT,
+  ADVOCATE_OVERVIEW_KPIS,
+  ADVOCATE_OVERVIEW_LEAD,
+  ADVOCATE_OVERVIEW_LEAK_ROWS,
+  ADVOCATE_SHARE_EXPORT_PRESET,
+} from "@/pages/lifecycle/stage/advocate/data";
 
 type OverviewData = {
   kpis: Kpi[];
+  /** A callout shown before the KPI cards, for a finding urgent enough to lead the page (e.g. Advocate's "no owner" banner). */
+  leadTitle?: string;
+  leadBody?: string;
+  leadTone?: "ultra" | "amber" | "rose" | "teal" | "neutral";
   barEyebrow?: string;
   barRows?: { label: string; value: string; percent: number; tone: BarTone }[];
   insightTitle: string;
@@ -80,6 +95,8 @@ type OverviewData = {
   showStageRail?: boolean;
   openRoomPreset: OpenRoomPreset;
   shareExportPreset: ShareOrExportPreset;
+  /** Renders an "Assign an owner" header button, for a stage with no owner (Advocate only). */
+  assignOwnerPreset?: AssignOwnerPreset;
 };
 
 const OVERVIEW_DATA: Record<string, OverviewData> = {
@@ -196,6 +213,23 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     openRoomPreset: RENEW_OPEN_ROOM_PRESET,
     shareExportPreset: RENEW_SHARE_EXPORT_PRESET,
   },
+  advocate: {
+    kpis: ADVOCATE_OVERVIEW_KPIS,
+    leadTitle: ADVOCATE_OVERVIEW_LEAD.title,
+    leadBody: ADVOCATE_OVERVIEW_LEAD.body,
+    leadTone: "amber",
+    insightTitle: ADVOCATE_OVERVIEW_INSIGHT.title,
+    insightBody: ADVOCATE_OVERVIEW_INSIGHT.body,
+    insightTone: "rose",
+    leakEyebrow: "Where the value is, and where it is going",
+    leakWhereHeader: "Where",
+    leakColumnKind: "cause",
+    leakRows: ADVOCATE_OVERVIEW_LEAK_ROWS,
+    showStageRail: true,
+    openRoomPreset: ADVOCATE_OPEN_ROOM_PRESET,
+    shareExportPreset: ADVOCATE_SHARE_EXPORT_PRESET,
+    assignOwnerPreset: ADVOCATE_ASSIGN_OWNER_PRESET,
+  },
 };
 
 const LEAK_VALUE_TONE_CLASS: Record<LeakRow["valueTone"], string> = {
@@ -216,6 +250,7 @@ export function OverviewTab() {
   const { stage } = useStageContext();
   const [openRoomFor, setOpenRoomFor] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
+  const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
 
   if (!stage.isDefined) return <StageEmptyState stageName={stage.name} />;
 
@@ -287,7 +322,7 @@ export function OverviewTab() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-end gap-4">
-        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain" || stage.slug === "expand" || stage.slug === "support" || stage.slug === "renew") && (
+        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain" || stage.slug === "expand" || stage.slug === "support" || stage.slug === "renew" || stage.slug === "advocate") && (
           <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
             How this stage is defined
           </Link>
@@ -295,7 +330,18 @@ export function OverviewTab() {
         <button type="button" onClick={() => setShareOpen(true)} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
           Share or export
         </button>
+        {data.assignOwnerPreset && (
+          <Button type="button" size="sm" onClick={() => setAssignOwnerOpen(true)}>
+            Assign an owner
+          </Button>
+        )}
       </div>
+
+      {data.leadTitle && data.leadBody && (
+        <Callout tone={data.leadTone ?? "amber"} title={data.leadTitle}>
+          {data.leadBody}
+        </Callout>
+      )}
 
       <KpiCards items={data.kpis} />
 
@@ -342,6 +388,9 @@ export function OverviewTab() {
         onOpenChange={(open) => setOpenRoomFor(open ? openRoomFor : null)}
       />
       <ShareOrExportModal preset={data.shareExportPreset} open={shareOpen} onOpenChange={setShareOpen} />
+      {data.assignOwnerPreset && (
+        <AssignAnOwnerModal preset={data.assignOwnerPreset} open={assignOwnerOpen} onOpenChange={setAssignOwnerOpen} />
+      )}
     </div>
   );
 }

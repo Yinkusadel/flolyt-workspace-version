@@ -7,6 +7,7 @@ import { Chip } from "@/pages/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { SetThresholdModal, type ThresholdPreset } from "@/pages/lifecycle/stage/modals/set-a-threshold-modal";
+import { AssignAnOwnerModal, type AssignOwnerPreset } from "@/pages/lifecycle/stage/modals/assign-an-owner-modal";
 import {
   ACQUIRE_AGENT_CARDS,
   ACQUIRE_THRESHOLD_PRESET,
@@ -49,6 +50,13 @@ import {
   RENEW_THRESHOLD_PRESET,
   RENEW_THRESHOLD_ROWS,
 } from "@/pages/lifecycle/stage/renew/data";
+import {
+  ADVOCATE_AGENT_CARDS,
+  ADVOCATE_AGENTS_INSIGHT,
+  ADVOCATE_ASSIGN_OWNER_PRESET,
+  ADVOCATE_THRESHOLD_PRESET,
+  ADVOCATE_THRESHOLD_ROWS,
+} from "@/pages/lifecycle/stage/advocate/data";
 
 type AgentsData = {
   eyebrow: string;
@@ -58,6 +66,8 @@ type AgentsData = {
   insightTitle: string;
   insightBody: string;
   threshold: ThresholdPreset;
+  /** Renders an "Assign an owner" header button, for a stage with no owner (Advocate only). */
+  assignOwnerPreset?: AssignOwnerPreset;
 };
 
 const AGENTS_DATA: Record<string, AgentsData> = {
@@ -141,6 +151,16 @@ const AGENTS_DATA: Record<string, AgentsData> = {
       "“A fix is not rolled out to every market within fourteen days” has been breached for 134 days. It has no owner because a rollout belongs to whoever deployed it, a market belongs to nobody, and the stage belongs to Customer Success. Same shape as the eleven before it, in the eighth stage running.",
     threshold: RENEW_THRESHOLD_PRESET,
   },
+  advocate: {
+    eyebrow: "Agents watching this stage · 1 · with nowhere to send anything",
+    cards: ADVOCATE_AGENT_CARDS,
+    tableEyebrow: "What would make an agent open a room here",
+    rows: ADVOCATE_THRESHOLD_ROWS,
+    insightTitle: ADVOCATE_AGENTS_INSIGHT.title,
+    insightBody: ADVOCATE_AGENTS_INSIGHT.body,
+    threshold: ADVOCATE_THRESHOLD_PRESET,
+    assignOwnerPreset: ADVOCATE_ASSIGN_OWNER_PRESET,
+  },
 };
 
 const CARD_ACCENT_CLASS: Record<AgentCard["tone"], string> = {
@@ -169,6 +189,7 @@ export function AgentsTab() {
   const { stage } = useStageContext();
   const data = AGENTS_DATA[stage.slug];
   const [thresholdOpen, setThresholdOpen] = useState(false);
+  const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
 
   if (!data) return null;
 
@@ -229,6 +250,14 @@ export function AgentsTab() {
 
   return (
     <div className="space-y-8">
+      {data.assignOwnerPreset && (
+        <div className="flex justify-end">
+          <Button type="button" size="sm" onClick={() => setAssignOwnerOpen(true)}>
+            Assign an owner
+          </Button>
+        </div>
+      )}
+
       <section className="space-y-3">
         <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.eyebrow}</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -273,6 +302,9 @@ export function AgentsTab() {
         open={thresholdOpen}
         onOpenChange={setThresholdOpen}
       />
+      {data.assignOwnerPreset && (
+        <AssignAnOwnerModal preset={data.assignOwnerPreset} open={assignOwnerOpen} onOpenChange={setAssignOwnerOpen} />
+      )}
     </div>
   );
 }
