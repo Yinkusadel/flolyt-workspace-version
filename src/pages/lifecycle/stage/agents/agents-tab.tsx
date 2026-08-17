@@ -19,6 +19,11 @@ import {
   ACTIVATE_THRESHOLD_PRESET,
   ACTIVATE_THRESHOLD_ROWS,
 } from "@/pages/lifecycle/stage/activate/data";
+import {
+  PRICE_AGENT_CARDS,
+  PRICE_THRESHOLD_PRESET,
+  PRICE_THRESHOLD_ROWS,
+} from "@/pages/lifecycle/stage/price/data";
 
 type AgentsData = {
   eyebrow: string;
@@ -51,9 +56,25 @@ const AGENTS_DATA: Record<string, AgentsData> = {
       "Guest share and path floor both cross the Acquire/Activate boundary — the cause is in acquisition channel mix and the symptom is in activation. Neither stage owner considers it theirs, so the rule has no destination and the room never opens. This is the third instance of the same routing gap in two stages.",
     threshold: ACTIVATE_THRESHOLD_PRESET,
   },
+  price: {
+    eyebrow: "Agents watching this stage · 1, and it is partially blind",
+    cards: PRICE_AGENT_CARDS,
+    tableEyebrow: "What would make an agent open a room here",
+    rows: PRICE_THRESHOLD_ROWS,
+    insightTitle: "Two more breached thresholds with no owner — the same routing gap, fourth and fifth instance",
+    insightBody:
+      "Plan downgrades and FX drift both breached months ago. Both route to “Price stage owner” for the condition but to Marketing and a departed employee for the cause. This is now consistent enough across Acquire, Activate and Price to be a product problem rather than three configuration mistakes.",
+    threshold: PRICE_THRESHOLD_PRESET,
+  },
 };
 
-const CARD_ACCENT_CLASS: Record<AgentCard["tone"], string> = { ultra: "bg-ultra", neutral: "bg-ink-4", amber: "bg-amber" };
+const CARD_ACCENT_CLASS: Record<AgentCard["tone"], string> = {
+  ultra: "bg-ultra",
+  neutral: "bg-ink-4",
+  amber: "bg-amber",
+  teal: "bg-teal",
+  rose: "bg-rose",
+};
 const CURRENTLY_TONE_CLASS: Record<ThresholdRow["currentlyTone"], string> = {
   teal: "text-teal",
   rose: "text-rose",
@@ -84,13 +105,15 @@ export function AgentsTab() {
       align: "right",
       render: (row) =>
         row.status === "already-open" ? (
-          <Chip tone="amber">already open</Chip>
+          <Chip tone="amber">{row.statusLabel ?? "already open"}</Chip>
         ) : row.status === "not-opened" ? (
-          <Chip tone="rose">not opened</Chip>
+          <Chip tone="rose">{row.statusLabel ?? "not opened"}</Chip>
+        ) : row.status === "blocked" ? (
+          <Chip tone="amber">{row.statusLabel ?? "blocked"}</Chip>
         ) : row.status === "opens-automatically" ? (
-          <Chip tone="ultra">opens automatically</Chip>
+          <Chip tone="ultra">{row.statusLabel ?? "opens automatically"}</Chip>
         ) : (
-          <Chip tone="neutral">no</Chip>
+          <Chip tone="neutral">{row.statusLabel ?? "no"}</Chip>
         ),
     },
     {
@@ -132,7 +155,7 @@ export function AgentsTab() {
               <span className={`absolute inset-y-0 left-0 w-[3px] ${CARD_ACCENT_CLASS[card.tone]}`} aria-hidden />
               <div className="space-y-2.5 p-4 pl-1">
                 <div className="flex items-center gap-2">
-                  <PersonAvatar kind="agent" initials={card.initials} size="sm" />
+                  {card.initials && <PersonAvatar kind="agent" initials={card.initials} size="sm" />}
                   <p className="font-mono text-[9.5px] font-medium text-ink-4">{card.status}</p>
                 </div>
                 <h3 className="text-[13px] font-semibold text-ink">{card.name}</h3>

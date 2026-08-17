@@ -2,6 +2,7 @@ import { Callout } from "@/pages/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import ActivateMarketsTab from "@/pages/lifecycle/stage/activate/markets-tab";
+import PriceMarketsTab from "@/pages/lifecycle/stage/price/markets-tab";
 import { ACQUIRE_MARKET_ROWS, ACQUIRE_MARKET_SPOTLIGHTS, type MarketRow } from "@/pages/lifecycle/stage/acquire/data";
 
 type MarketsData = {
@@ -59,6 +60,8 @@ export function MarketsTab() {
   // rate/guest share, not spend/CAC) — routed to its own component rather
   // than forcing this template's Acquire-shaped columns onto it.
   if (stage.slug === "activate") return <ActivateMarketsTab />;
+  // Price's PR08 uses FX-drift/repricing columns, not Acquire's spend/CAC.
+  if (stage.slug === "price") return <PriceMarketsTab />;
 
   const data = MARKETS_DATA[stage.slug];
   if (!data) return null;

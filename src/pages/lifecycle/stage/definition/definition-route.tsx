@@ -6,6 +6,7 @@ import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { StageSubpageHeader } from "@/pages/lifecycle/stage/stage-subpage-header";
 import { ACTIVATE_DEFINITION } from "@/pages/lifecycle/stage/activate/data";
+import PriceDefinitionRoute from "@/pages/lifecycle/stage/price/definition-route";
 
 export type DefinitionCandidate = {
   id: string;
@@ -59,6 +60,13 @@ const REACH_TONE_CLASS: Record<DefinitionVerdictRow["reachTone"], string> = {
 /** Screen AC01 (and the shared Definition template — /lifecycle/:stage/definition) — own header, never shows the tab bar. */
 const DefinitionRoute = () => {
   const { stage } = useStageContext();
+
+  // Price's PR01 replaces the shared verdict-comparison table with a
+  // needs-vs-has checklist — a different structure, not just different
+  // copy — so it gets its own component rather than forcing this
+  // template's shape onto it. See price/definition-route.tsx.
+  if (stage.slug === "price") return <PriceDefinitionRoute />;
+
   const data = DEFINITION_DATA[stage.slug];
   if (!data) return null;
 

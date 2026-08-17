@@ -24,6 +24,10 @@ import ActivateTimeToValueTab from "@/pages/lifecycle/stage/activate/time-to-val
 import ActivatePathsTab from "@/pages/lifecycle/stage/activate/paths-tab";
 import ActivatePathDetailRoute from "@/pages/lifecycle/stage/activate/path-detail-route";
 import ActivateReleaseImpactRoute from "@/pages/lifecycle/stage/activate/release-impact-route";
+import PricePlansTab from "@/pages/lifecycle/stage/price/plans-tab";
+import PricePlanDetailRoute from "@/pages/lifecycle/stage/price/plan-detail-route";
+import PriceMarginTab from "@/pages/lifecycle/stage/price/margin-tab";
+import PriceDiscountingTab from "@/pages/lifecycle/stage/price/discounting-tab";
 import Rooms from "@/pages/rooms";
 import RoomLayout, {
   RoomDecisionRoute,
@@ -81,6 +85,7 @@ export const routes = createBrowserRouter([
                       { path: "channels/:id", Component: AcquireChannelDetailRoute },
                       { path: "paths/:id", Component: ActivatePathDetailRoute },
                       { path: "changes/:id", Component: ActivateReleaseImpactRoute },
+                      { path: "plans/:id", Component: PricePlanDetailRoute },
                       {
                         Component: StageTabsLayout,
                         children: [
@@ -90,6 +95,9 @@ export const routes = createBrowserRouter([
                           { path: "unit-economics", Component: AcquireUnitEconomicsTab },
                           { path: "time-to-value", Component: ActivateTimeToValueTab },
                           { path: "paths", Component: ActivatePathsTab },
+                          { path: "plans", Component: PricePlansTab },
+                          { path: "margin", Component: PriceMarginTab },
+                          { path: "discounting", Component: PriceDiscountingTab },
                           { path: "cohorts", Component: CohortsTab },
                           { path: "markets", Component: MarketsTab },
                           { path: "changes", Component: ChangesTab },

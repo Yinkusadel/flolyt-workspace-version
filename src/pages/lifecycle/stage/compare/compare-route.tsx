@@ -8,6 +8,7 @@ import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { StageSubpageHeader } from "@/pages/lifecycle/stage/stage-subpage-header";
 import { ACQUIRE_COMPARE_BUILD_ROWS, ACQUIRE_COMPARE_ROWS, type CompareRow } from "@/pages/lifecycle/stage/acquire/data";
 import { ACTIVATE_COMPARE_ROWS } from "@/pages/lifecycle/stage/activate/data";
+import { PRICE_COMPARE_ROWS } from "@/pages/lifecycle/stage/price/data";
 
 type CompareData = {
   headline: string;
@@ -40,6 +41,15 @@ const COMPARE_DATA: Record<string, CompareData> = {
     insightTitle: "21% more customers entered this stage and 4% fewer came out of it",
     insightBody:
       "That is the whole quarter in one line. Acquisition delivered exactly what it was asked for, activation was damaged by a release nobody held against revenue, and the two facts sat in separate dashboards owned by separate teams for twenty weeks.",
+  },
+  price: {
+    headline: "Effective price up 16.4% · basket size unchanged · nobody in Finance changed a price",
+    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
+    periodOptions: ["This quarter vs last", "Year on year", "Ghana vs Nigeria", "Custom"],
+    rows: PRICE_COMPARE_ROWS,
+    insightTitle: "The effective price rose 16% in a quarter in which nobody in Finance changed a price",
+    insightBody:
+      "A delivery fee shipped by Engineering, a discount depth raised by Marketing, and a plan launched without verification. Three teams, three reasonable decisions, one price nobody set. That is what this stage exists to make visible, and it took twenty weeks.",
   },
 };
 

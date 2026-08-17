@@ -3,6 +3,7 @@ import { Callout } from "@/pages/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import ActivateCohortsTab from "@/pages/lifecycle/stage/activate/cohorts-tab";
+import PriceCohortsTab from "@/pages/lifecycle/stage/price/cohorts-tab";
 import {
   ACQUIRE_COHORT_BREAK_ROWS,
   ACQUIRE_COHORT_ROWS,
@@ -71,6 +72,8 @@ export function CohortsTab() {
   // rate/guest share, not CAC/day30-90) — routed to its own component rather
   // than forcing this template's Acquire-shaped columns onto it.
   if (stage.slug === "activate") return <ActivateCohortsTab />;
+  // Price's PR07 uses revenue/discount/plan-mix columns, not CAC/day30-90.
+  if (stage.slug === "price") return <PriceCohortsTab />;
 
   const data = COHORTS_DATA[stage.slug];
   if (!data) return null;

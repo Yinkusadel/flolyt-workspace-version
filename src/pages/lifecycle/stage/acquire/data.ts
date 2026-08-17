@@ -376,12 +376,13 @@ export const ACQUIRE_CHANGE_SOURCE_ROWS: { label: string; value: string; tone: "
 
 export type AgentCard = {
   id: string;
+  /** Empty string omits the avatar — some stages' cards are a capability/gap note rather than a named agent. */
   initials: string;
   status: string;
   name: string;
   body: string;
   footnote: string;
-  tone: "ultra" | "neutral" | "amber";
+  tone: "ultra" | "neutral" | "amber" | "teal" | "rose";
 };
 
 export const ACQUIRE_AGENT_CARDS: AgentCard[] = [
@@ -420,7 +421,9 @@ export type ThresholdRow = {
   threshold: string;
   currently: string;
   currentlyTone: "teal" | "rose" | "amber" | "neutral";
-  status: "already-open" | "not-opened" | "no" | "opens-automatically";
+  status: "already-open" | "not-opened" | "no" | "opens-automatically" | "blocked";
+  /** Overrides the default chip text for `status` (e.g. "would open now" instead of "opens automatically") — tone still follows `status`. */
+  statusLabel?: string;
   owner?: { name: string; initials: string; color: string };
   noOwner?: boolean;
 };
@@ -462,7 +465,15 @@ export type TriedRow = {
   result: string;
   resultTone: "teal" | "rose" | "amber" | "neutral";
   measuredHow: string;
-  learningKept: "validated" | "room open" | "superseded" | "validated · no effect" | "suggested twice";
+  learningKept:
+    | "validated"
+    | "room open"
+    | "superseded"
+    | "validated · no effect"
+    | "suggested twice"
+    | "room needed"
+    | "contested"
+    | "blocked in 2024";
 };
 
 export const ACQUIRE_TRIED_ROWS: TriedRow[] = [

@@ -27,6 +27,12 @@ import {
   ACTIVATE_OVERVIEW_LEAK_ROWS,
   ACTIVATE_SHARE_EXPORT_PRESET,
 } from "@/pages/lifecycle/stage/activate/data";
+import {
+  PRICE_OPEN_ROOM_PRESET,
+  PRICE_OVERVIEW_KPIS,
+  PRICE_OVERVIEW_LEAK_ROWS,
+  PRICE_SHARE_EXPORT_PRESET,
+} from "@/pages/lifecycle/stage/price/data";
 
 type OverviewData = {
   kpis: Kpi[];
@@ -72,6 +78,20 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     showStageRail: true,
     openRoomPreset: ACTIVATE_OPEN_ROOM_PRESET,
     shareExportPreset: ACTIVATE_SHARE_EXPORT_PRESET,
+  },
+  price: {
+    kpis: PRICE_OVERVIEW_KPIS,
+    insightTitle: "Two of the five largest items on this screen cannot be valued at all",
+    insightBody:
+      "Legacy Unlimited and absorbed delivery fees are almost certainly losing money — 3,100 customers on a 2022 price and 41,000 subscriptions eating a fee introduced in 2026. Neither can be priced without cost of goods, so neither is in the ₦46M, and neither has a room.",
+    insightTone: "rose",
+    leakEyebrow: "What is leaking, in order",
+    leakWhereHeader: "Where",
+    leakColumnKind: "cause",
+    leakRows: PRICE_OVERVIEW_LEAK_ROWS,
+    showStageRail: true,
+    openRoomPreset: PRICE_OPEN_ROOM_PRESET,
+    shareExportPreset: PRICE_SHARE_EXPORT_PRESET,
   },
 };
 
@@ -153,7 +173,7 @@ export function OverviewTab() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-end gap-4">
-        {stage.slug === "activate" && (
+        {(stage.slug === "activate" || stage.slug === "price") && (
           <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
             How this stage is defined
           </Link>

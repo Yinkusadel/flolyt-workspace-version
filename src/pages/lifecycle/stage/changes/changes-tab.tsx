@@ -6,12 +6,17 @@ import { Chip, type ChipTone } from "@/pages/lifecycle/stage/chip";
 import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { ACQUIRE_CHANGE_ROWS, ACQUIRE_CHANGE_SOURCE_ROWS, type ChangeRow } from "@/pages/lifecycle/stage/acquire/data";
 import { ACTIVATE_CHANGE_ROWS } from "@/pages/lifecycle/stage/activate/data";
+import { PRICE_CHANGE_ROWS } from "@/pages/lifecycle/stage/price/data";
 
 type ChangesData = {
   eyebrow: string;
   rows: ChangeRow[];
   insightTitle: string;
   insightBody: string;
+  /** A second closing callout, for stages with two distinct findings to flag (e.g. Price's undated Ghana price). */
+  secondInsightTone?: "amber" | "rose" | "teal" | "ultra";
+  secondInsightTitle?: string;
+  secondInsightBody?: string;
   sourceEyebrow?: string;
   sourceRows?: { label: string; value: string; tone: "teal" | "amber" | "ultra" | "neutral" }[];
 };
@@ -32,6 +37,17 @@ const CHANGES_DATA: Record<string, ChangesData> = {
     insightTitle: "Two of these were shipped by teams who will never see this screen",
     insightBody:
       "Engineering has no reason to open Activate and Marketing has no reason to look past Acquire. The two changes with the largest effect on this stage were made by people whose own dashboards showed nothing wrong. Everything else in Flolyt follows from that fact.",
+  },
+  price: {
+    eyebrow: "Dated changes that moved something in this stage",
+    rows: PRICE_CHANGE_ROWS,
+    insightTitle: "The 4 March delivery fee is a pricing change and it was never reviewed as one",
+    insightBody:
+      "It raised the effective price of 61% of orders by ₦350 without appearing in any price list, any plan, or any Finance review. It shipped as an engineering change. Ravi owns Price and found out about it in August, in a war room, five stages downstream.",
+    secondInsightTone: "amber",
+    secondInsightTitle: "One change on this list has no owner and no date",
+    secondInsightBody:
+      "Ghana's price was set in August 2024 by someone who has since left, with no review cadence attached. Flolyt cannot tell you why it was never revisited — only that it has not been, for 22 months, and that it costs 410,000 customers a 22% premium.",
   },
 };
 
@@ -98,6 +114,12 @@ export function ChangesTab() {
       <Callout tone="amber" title={data.insightTitle}>
         {data.insightBody}
       </Callout>
+
+      {data.secondInsightTitle && data.secondInsightBody && (
+        <Callout tone={data.secondInsightTone ?? "amber"} title={data.secondInsightTitle}>
+          {data.secondInsightBody}
+        </Callout>
+      )}
 
       {data.sourceEyebrow && data.sourceRows && (
         <section className="space-y-1">

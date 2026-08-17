@@ -5,6 +5,7 @@ import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { ACQUIRE_GOAL_ROWS, ACQUIRE_TRIED_ROWS, type GoalRow, type TriedRow } from "@/pages/lifecycle/stage/acquire/data";
 import { ACTIVATE_GOAL_ROWS, ACTIVATE_TRIED_ROWS } from "@/pages/lifecycle/stage/activate/data";
+import { PRICE_GOAL_ROWS, PRICE_TRIED_ROWS } from "@/pages/lifecycle/stage/price/data";
 
 type HistoryData = {
   goalEyebrow: string;
@@ -34,6 +35,15 @@ const HISTORY_DATA: Record<string, HistoryData> = {
     insightBody:
       "Product Reason proposed offering the account at the confirmation screen in March and again in June. Both times it was deferred rather than rejected, with no dissent recorded either time. ₦74M sits behind the guest-checkout path and the cheapest test of it has never been scheduled.",
   },
+  price: {
+    goalEyebrow: "Goals that depend on this stage · 2",
+    goalRows: PRICE_GOAL_ROWS,
+    triedEyebrow: "What has already been tried here",
+    triedRows: PRICE_TRIED_ROWS,
+    insightTitle: "Three of five things tried in this stage had no holdout",
+    insightBody:
+      "Price is the stage where a holdout is cheapest — you can charge two groups differently for four weeks and learn something permanent. It is also the stage with the fewest of them, which is why three of these rows will be argued about again next quarter.",
+  },
 };
 
 const TODAY_TONE_CLASS: Record<GoalRow["todayTone"], string> = { teal: "text-teal", rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
@@ -48,6 +58,9 @@ const LEARNING_CHIP_TONE: Record<TriedRow["learningKept"], "teal" | "amber" | "n
   superseded: "neutral",
   "validated · no effect": "neutral",
   "suggested twice": "amber",
+  "room needed": "amber",
+  contested: "amber",
+  "blocked in 2024": "amber",
 };
 
 /** The shared History tab template (e.g. A14) — goals that depend on this stage, and what has already been tried. */
