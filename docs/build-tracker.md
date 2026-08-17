@@ -3,8 +3,11 @@
 Source of truth for design: `flolyt-kit-122/README.md` (kit overview + section table) and
 `flolyt-kit-122/{nn}-{slug}.svg` (one SVG per screen, numbered to match the `#` column
 below) — **except section 3 (the lifecycle)**, which was rebuilt from the newer
-`flolyt-figma-designs/flolyt-lifecycle/` export; see that section's own header for its
-source-of-truth note.
+`flolyt-figma-designs/Everyday Screens/flolyt-lifecycle/` export (path moved under a new
+`Everyday Screens/` parent on 2026-08-17); see that section's own header for its
+source-of-truth note. A `flolyt-figma-designs/Everyday Screens/flow-diagrams/` folder also
+exists now with architecture-level route maps — use it as a sanity check before building a
+new stage, but each screen's own SVG footer still wins on the specific route.
 
 Update this file as we go: flip `Status` when a screen's implementation starts/lands, fill
 `Endpoint(s)` with the service/hook file(s) built for it, and use `Notes` for corrections
@@ -41,7 +44,7 @@ correction (see Notes)
 
 ## 3. The lifecycle
 
-**Rebuilt from `flolyt-figma-designs/flolyt-lifecycle/`** (139 SVGs), replacing the old
+**Rebuilt from `flolyt-figma-designs/Everyday Screens/flolyt-lifecycle/`** (139 SVGs), replacing the old
 kit-122-based section entirely — each stage went from one flat overview page to a
 multi-tab mini-app. Every SVG's footer states its own route (e.g.
 `A14 · Acquire · history` → `/lifecycle/:stage/history`), which is what the rows below are
