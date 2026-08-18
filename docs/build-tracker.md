@@ -262,22 +262,70 @@ action modals, the lifecycle map, and the ownership settings page. See the plan 
 sections above are now the complete record of what shipped and where each stage diverged
 from the shared templates.
 
-## 4. Rooms and decisions (27–35)
+## 4. Rooms and decisions
 
-| # | Screen | Status | Endpoint(s) | Notes |
-|---|---|---|---|---|
-| 27 | room cohort war room | [x] | | `/rooms/second-order-never-happened`. Static mock data in `src/pages/rooms/data.ts` |
-| 28 | room account war room | [x] | | `/rooms/northwind-retail` — not linked from the Rooms index (see note below) |
-| 29 | room evidence tab | [x] | | `/rooms/:roomId/evidence`, shared across war-room and persistent kinds |
-| 30 | room log tab | [x] | | `/rooms/:roomId/log` |
-| 31 | room account persistent | [x] | | `/rooms/northwind-retail-persistent` — not linked from the Rooms index |
-| 32 | room empty/recovering/archived | [x] | | Implemented as three real rooms' Decision-tab states, not a single spec sheet — see `lagos-delivery-failures` (empty), `cards-failing-on-renewal-night` (recovering), `discount-only-buyers` (archived) |
-| 33 | proposal review states | [x] | | Implemented as `ProposalCard`'s pending/editing/decided states inside the Decision-tab play board |
-| 34 | run status states | [x] | | Implemented as `RunStatusBar`'s state machine; only queued/running/cancelRequested/cancelled are reachable from the UI, failed/reconnect are defined but not demo-wired |
-| 35 | plays at scale | [x] | | Per user: this is the room's own Plays tab, not a separate cross-room surface — built as `PlaysTab`, `/rooms/:roomId/plays` |
-| — | Rooms index | [x] | | `/rooms` — screen supplied directly by the user (not in the 122-frame kit). Lists cohort war rooms only, per its own subtitle ("about a cohort, not a customer"); the two Northwind Retail rooms (account war room + persistent) are reachable by direct link only |
-| 115 | approve with re-auth | [x] | | `ApproveReauthModal`, opens from a play's Approve button when `reauthAmount` is set |
-| 121 | pause an agent | [x] | | `src/pages/ai-teammates/pause-agent-modal.tsx` — reachable from the room header's agent chip and from the new `/ai-teammates` stub page |
+**Rebuilt from scratch on 2026-08-18** from `flolyt-figma-designs/Everyday Screens/flolyt-rooms/`
+(42 screens, R01–R42), replacing the old kit-122-based section entirely (screens 27–35
+below, plus the user-supplied Rooms index) — same "old design source superseded, don't
+resurrect the old shape" situation as the lifecycle rebuild. Every SVG's own footer states
+its route, which is what the rows below are keyed to. Extraction was done by three parallel
+research agents (one per the export's own BATCH 1/2/3 grouping), each producing a verbatim
+structured spec before any code was written — same "SVG wins, transcribe verbatim" discipline
+as the lifecycle rebuild.
+
+**Architecture:** `/rooms` (index) branches on data shape + `?q=`/`?state=` for all five index
+states (R01–R05); `/rooms/new` is a 5-step client-local wizard (no `?step=` param — none of
+R06–R11's footers show one); `/rooms/:roomId` (`RoomLayout` + `useRoomContext`, mirrors
+lifecycle's `StageLayout`) resolves a room and its **own `status`** (`open`/`closed`/
+`recovering`/`restricted`) branches the room's home route between the 3-pane workspace,
+`ClosedRoom` (templated by a 5-value `outcome` enum), `ReopenedRoom`, and `RestrictedRoom`.
+Every other open-room subpage (plays board, one-proposal, conflict, dissent, guardrails,
+runs, people, cohort, collision, close-form, merge) reuses `StageSubpageHeader` straight from
+`@/pages/lifecycle/stage/` — confirmed generic enough to not need a rooms-specific fork.
+`/plays` (plays-at-scale) and `/rooms/subscriptions` are top-level cross-room surfaces,
+siblings of `/rooms`, not nested under a room. R42 (mobile) was treated as a responsive-design
+constraint on the same routes, not a separate page, consistent with the lifecycle rebuild's
+"mobile/tablet/desktop designed together" rule.
+
+**Steering (R28) is a local UI toggle, not a route** — its own footer reports the same
+`/rooms/:id` route as the default workspace view, so `Workspace` swaps its center panel via
+component state (a "Steer this agent →" link, shown only when a run is `working`) rather than
+a URL change.
+
+**One data-model simplification, deliberate:** R12/R13/R14 are three time-lapse snapshots of
+the *same* room (just-created → first findings → live) all sharing the route `/rooms/:id` —
+rather than modelling temporal state transitions with no real backend to drive them, only the
+richest ("live", R14/R15's content) state was built, matching how the lifecycle rebuild always
+picked one canonical state per reference screen rather than every mockup's point-in-time
+variant.
+
+**Only `second-order-never-happened` is a fully "open" reference room** (workspace, evidence
+finding detail, plays board + one-proposal + 3 modals, conflict, dissent, guardrails, runs,
+people + invite modal, cohort, collision, close-form, merge) — mirrors the lifecycle rebuild's
+"Acquire is the reference stage" pattern. Four more rooms exist purely to demo the other
+statuses their shared templates branch on: `weekend-push-fatigue` (recovering/reopened,
+carries R37's first-opening content as history), `uk-checkout-latency` (closed ·
+no_action_needed), `second-order-recovered` (closed · money_recovered, carries R35's own
+content under a distinct id since the reference room itself stays "open" for the workspace
+demo), `q3-pricing-review` (restricted). `superseded`/`disproven` outcomes have no dedicated
+closed-state mockup in the export (R34's close-out form offers all 5 as radio options; only 3
+had their own closed-view screens built) — `ClosedRoom`'s outcome-tone map still defines
+colors for all 5 so adding a demo room later needs no template change.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Rooms index — empty / first-room / main / search / stale-recovering-archived | [x] | `src/pages/rooms/index.tsx` — one route, branches on `getRoomIndex().length` and `?q=`/`?state=`. R01 (empty) and R02 (first-room banner) are wired but unreachable with the current mock dataset (always >1 room), same "not wired, no demo state currently triggers it" situation as the lifecycle map's LC01 |
+| New-room wizard | [x] | `src/pages/rooms/new/` — 5 steps + conditional R10 duplicate-detection interstitial before the R11 review, all client-local `useState`, not URL params |
+| Room layout / status dispatch | [x] | `src/pages/rooms/room/room-layout.tsx`, `room-home-route.tsx` |
+| 3-pane workspace (Decision/Evidence/Log tabs + Steering) | [x] | `src/pages/rooms/room/workspace/workspace.tsx` |
+| Room states: closed (3 outcomes) / reopened / restricted | [x] | `src/pages/rooms/room/states/` |
+| Evidence finding detail | [x] | `evidence-finding-route.tsx`, `/rooms/:id/evidence/:findingId` |
+| Plays board + one-proposal + approve/edit/reject modals | [x] | `src/pages/rooms/room/plays/`, `src/pages/rooms/room/modals/` |
+| Conflict / dissent / guardrails / runs | [x] | `conflict-route.tsx`, `dissent-route.tsx`, `guardrails-route.tsx`, `runs-route.tsx` |
+| People + invite modal / cohort / collision | [x] | `people-route.tsx` + `modals/invite-people-modal.tsx`, `cohort-route.tsx`, `collision-route.tsx` |
+| Close-out form + merge | [x] | `close-out-route.tsx`, `merge-route.tsx` |
+| Subscriptions + plays-at-scale (top-level) | [x] | `src/pages/rooms/subscriptions.tsx` (`/rooms/subscriptions`), `src/pages/rooms/plays-at-scale/index.tsx` (`/plays`) |
+| `tsc -b` clean + Playwright console-error sweep across all new routes | [x] | Verified 2026-08-18 |
 
 ## 5. Audiences and campaigns (36–43)
 

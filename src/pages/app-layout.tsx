@@ -4,7 +4,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { Sidebar, type ViewingAs } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { cn } from "@/lib/utils";
-import { getRoom } from "@/pages/rooms/data";
+import { getRoom } from "@/pages/rooms/room/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -53,6 +53,9 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   }
 
   if (pathname === "/rooms") return "Rooms";
+  if (pathname === "/rooms/new") return "Rooms / New room";
+  if (pathname === "/rooms/subscriptions") return "Rooms / What you watch";
+  if (pathname === "/plays") return "Plays";
 
   const roomMatch = /^\/rooms\/([^/]+)/.exec(pathname);
   if (roomMatch) {
