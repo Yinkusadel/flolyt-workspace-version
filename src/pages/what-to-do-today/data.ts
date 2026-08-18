@@ -480,14 +480,14 @@ export const ORG_STUCK: StuckRow[] = [
   { what: "19 agent-opened rooms never assigned", where: "All markets", behind: "₦96M", behindTone: "amber", stuckFor: "4–41 days", stuckForTone: "amber", needs: "team leads, not you", needsYou: false },
 ];
 
-export type SavedView = { label: string; note: string; active?: boolean };
+export type SavedView = { slug: string; label: string; note: string; active?: boolean };
 
 export const SAVED_VIEWS_TODAY: SavedView[] = [
-  { label: "Before standup", note: "under 2 min each", active: true },
-  { label: "Above ₦25M", note: "6 items" },
-  { label: "Blocking a goal", note: "5 items" },
-  { label: "Overdue anywhere", note: "3 items" },
-  { label: "Unowned in my stages", note: "2 items" },
+  { slug: "before-standup", label: "Before standup", note: "under 2 min each", active: true },
+  { slug: "above-25m", label: "Above ₦25M", note: "6 items" },
+  { slug: "blocking-a-goal", label: "Blocking a goal", note: "5 items" },
+  { slug: "overdue-anywhere", label: "Overdue anywhere", note: "3 items" },
+  { slug: "unowned-in-my-stages", label: "Unowned in my stages", note: "2 items" },
 ];
 
 export type QuickWinRow = { rank: number; title: string; atStake: string; atStakeTone?: Tone; effort: number; time: string; unblocks: string };

@@ -1,14 +1,44 @@
+import { useSearchParams } from "react-router-dom";
+
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Chip } from "@/pages/lifecycle/stage/chip";
+import { Chip, CHIP_INTERACTIVE_CLASS } from "@/pages/lifecycle/stage/chip";
 import { Callout } from "@/pages/lifecycle/stage/rail";
 import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
 import { BEFORE_STANDUP, FILTER_URL_RULES, SAVED_VIEWS_TODAY } from "@/pages/what-to-do-today/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 
+const FILTER_CHIPS = [
+  { key: "effort", onValue: "1", offValue: "0", defaultOn: true, label: "Quick wins" },
+  { key: "min", onValue: "25m", offValue: undefined, defaultOn: false, label: "Above ₦25M" },
+  { key: "overdue", onValue: "1", offValue: undefined, defaultOn: false, label: "Overdue" },
+  { key: "owner", onValue: "none", offValue: "any", defaultOn: true, label: "No owner" },
+] as const;
+
 /** T12 — filters + saved views applied, reached via any of ?effort=, ?owner=, ?filter=, ?view=. */
 export function FiltersState() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeView = searchParams.get("view") ?? "before-standup";
+
+  function toggleChip(chip: (typeof FILTER_CHIPS)[number]) {
+    const isOn = searchParams.get(chip.key) === chip.onValue || (!searchParams.has(chip.key) && chip.defaultOn);
+    const next = new URLSearchParams(searchParams);
+    if (isOn) {
+      if (chip.offValue) next.set(chip.key, chip.offValue);
+      else next.delete(chip.key);
+    } else {
+      next.set(chip.key, chip.onValue);
+    }
+    setSearchParams(next, { replace: true });
+  }
+
+  function selectView(slug: string) {
+    const next = new URLSearchParams(searchParams);
+    next.set("view", slug);
+    setSearchParams(next, { replace: true });
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -25,18 +55,16 @@ export function FiltersState() {
         <div className="flex min-w-[200px] flex-1 items-center rounded-control border-2 border-line bg-paper px-3.5 py-2">
           <span className="text-[11.5px] text-ink-4">Search your list</span>
         </div>
-        <Chip tone="ultra" className="cursor-default">
-          Quick wins
-        </Chip>
-        <Chip tone="neutral" className="cursor-default">
-          Above ₦25M
-        </Chip>
-        <Chip tone="neutral" className="cursor-default">
-          Overdue
-        </Chip>
-        <Chip tone="ultra" className="cursor-default">
-          No owner
-        </Chip>
+        {FILTER_CHIPS.map((chip) => {
+          const isOn = searchParams.get(chip.key) === chip.onValue || (!searchParams.has(chip.key) && chip.defaultOn);
+          return (
+            <button key={chip.key} type="button" onClick={() => toggleChip(chip)}>
+              <Chip tone={isOn ? "ultra" : "neutral"} className={CHIP_INTERACTIVE_CLASS}>
+                {chip.label}
+              </Chip>
+            </button>
+          );
+        })}
         <Chip tone="neutral" className="cursor-default">
           + Filter
         </Chip>
@@ -47,11 +75,12 @@ export function FiltersState() {
         <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {SAVED_VIEWS_TODAY.map((view) => (
             <button
-              key={view.label}
+              key={view.slug}
               type="button"
+              onClick={() => selectView(view.slug)}
               className={cn(
-                "rounded-card border p-3.5 text-left",
-                view.active ? "border-2 border-ultra-border bg-paper" : "border-line bg-paper"
+                "rounded-card border p-3.5 text-left transition-colors",
+                activeView === view.slug ? "border-2 border-ultra-border bg-paper" : "border-line bg-paper hover:border-ink-4"
               )}
             >
               <p className="text-[11.5px] font-semibold text-ink">{view.label}</p>

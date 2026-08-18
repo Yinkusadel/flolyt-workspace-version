@@ -14,7 +14,7 @@ const WhatToDoToday = () => {
   const [searchParams] = useSearchParams();
   const scope = searchParams.get("scope");
   const showAll = searchParams.get("show") === "all";
-  const hasFilter = searchParams.has("effort") || searchParams.has("owner") || searchParams.has("view") || searchParams.get("filter") === "quick-wins";
+  const hasFilter = searchParams.has("effort") || searchParams.has("owner") || searchParams.has("view") || searchParams.has("filter");
 
   if (scope === "team") return <TeamScopeState />;
   if (scope === "org") return <OrgScopeState />;
