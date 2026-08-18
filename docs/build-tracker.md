@@ -2,12 +2,13 @@
 
 Source of truth for design: `flolyt-kit-122/README.md` (kit overview + section table) and
 `flolyt-kit-122/{nn}-{slug}.svg` (one SVG per screen, numbered to match the `#` column
-below) — **except section 3 (the lifecycle)**, which was rebuilt from the newer
-`flolyt-figma-designs/Everyday Screens/flolyt-lifecycle/` export (path moved under a new
-`Everyday Screens/` parent on 2026-08-17); see that section's own header for its
-source-of-truth note. A `flolyt-figma-designs/Everyday Screens/flow-diagrams/` folder also
-exists now with architecture-level route maps — use it as a sanity check before building a
-new stage, but each screen's own SVG footer still wins on the specific route.
+below) — **except section 2a (what to do today), section 3 (the lifecycle), and section 4
+(rooms and decisions)**, each rebuilt from its own newer `flolyt-figma-designs/Everyday
+Screens/` export (`flolyt-today/`, `flolyt-lifecycle/`, `flolyt-rooms/` respectively; the
+whole `Everyday Screens/` parent folder appeared on 2026-08-17); see each section's own header
+for its source-of-truth note. A `flolyt-figma-designs/Everyday Screens/flow-diagrams/` folder
+also exists now with architecture-level route maps — use it as a sanity check before building
+a new section, but each screen's own SVG footer still wins on the specific route.
 
 Update this file as we go: flip `Status` when a screen's implementation starts/lands, fill
 `Endpoint(s)` with the service/hook file(s) built for it, and use `Notes` for corrections
@@ -262,22 +263,106 @@ action modals, the lifecycle map, and the ownership settings page. See the plan 
 sections above are now the complete record of what shipped and where each stage diverged
 from the shared templates.
 
-## 4. Rooms and decisions (27–35)
+## 2a. What to do today
 
-| # | Screen | Status | Endpoint(s) | Notes |
-|---|---|---|---|---|
-| 27 | room cohort war room | [x] | | `/rooms/second-order-never-happened`. Static mock data in `src/pages/rooms/data.ts` |
-| 28 | room account war room | [x] | | `/rooms/northwind-retail` — not linked from the Rooms index (see note below) |
-| 29 | room evidence tab | [x] | | `/rooms/:roomId/evidence`, shared across war-room and persistent kinds |
-| 30 | room log tab | [x] | | `/rooms/:roomId/log` |
-| 31 | room account persistent | [x] | | `/rooms/northwind-retail-persistent` — not linked from the Rooms index |
-| 32 | room empty/recovering/archived | [x] | | Implemented as three real rooms' Decision-tab states, not a single spec sheet — see `lagos-delivery-failures` (empty), `cards-failing-on-renewal-night` (recovering), `discount-only-buyers` (archived) |
-| 33 | proposal review states | [x] | | Implemented as `ProposalCard`'s pending/editing/decided states inside the Decision-tab play board |
-| 34 | run status states | [x] | | Implemented as `RunStatusBar`'s state machine; only queued/running/cancelRequested/cancelled are reachable from the UI, failed/reconnect are defined but not demo-wired |
-| 35 | plays at scale | [x] | | Per user: this is the room's own Plays tab, not a separate cross-room surface — built as `PlaysTab`, `/rooms/:roomId/plays` |
-| — | Rooms index | [x] | | `/rooms` — screen supplied directly by the user (not in the 122-frame kit). Lists cohort war rooms only, per its own subtitle ("about a cohort, not a customer"); the two Northwind Retail rooms (account war room + persistent) are reachable by direct link only |
-| 115 | approve with re-auth | [x] | | `ApproveReauthModal`, opens from a play's Approve button when `reauthAmount` is set |
-| 121 | pause an agent | [x] | | `src/pages/ai-teammates/pause-agent-modal.tsx` — reachable from the room header's agent chip and from the new `/ai-teammates` stub page |
+**Rebuilt from scratch on 2026-08-18** from `flolyt-figma-designs/Everyday Screens/flolyt-today/`
+(17 screens, T00–T16), superseding kit-122's frame 77 ("recommendations feed" — see section 11's
+note) — same "old design source superseded, don't resurrect the old shape" situation as the
+lifecycle and rooms rebuilds. Every SVG's own footer states its route (translated 1:1 from the
+export's `/today/*` onto this repo's existing sidebar href `/what-to-do-today/*`, the same kind
+of deliberate route rename the lifecycle rebuild did for `#/stage/:id`). Extraction was done by
+two parallel research agents (T00–T08 / T09–T16), each producing a verbatim structured spec
+before any code was written.
+
+**Architecture:** `/what-to-do-today` (index) is ONE route covering T01 (empty), T02 ("day
+four" onboarding, a distinct dataset from the steady-state list), T03 (default ranked list),
+T05 (`?show=all`), T10 (`?scope=team`), T11 (`?scope=org`), and T12 (any of `?effort=`/`?owner=`/
+`?view=`) — branches on `TODAY_ITEMS.length`/`WORKSPACE_AGE_DAYS` and query params, mirroring
+Rooms' index branching. T04 (`/ranking`), T09 (`/snoozed`), T13 (`/waiting-on-data`), T14
+(`/done`) and T06 (`/:id`) are dedicated routes — each has its own breadcrumb/header and no tab
+bar, reusing `StageSubpageHeader`/`Callout`/`Chip`/`KpiCards` straight from
+`@/pages/lifecycle/stage/` exactly as the Rooms rebuild did (confirmed generic enough, no fork
+needed). T15 mounts at `/settings/today` per its own literal footer, not nested under
+`/what-to-do-today`. T07 (assign an owner) and T08 (snooze or dismiss) are modals opened from
+specific rows in the ranked table — only the rows they were actually shown against in the export
+(the Ghana signup room's "no owner" row, the growth-vs-finance "needs you" row) are wired, same
+"only one row has real data" pattern as Price's `plans/:id`. T16 (mobile) was treated as a
+responsive-design constraint on the same routes via Tailwind breakpoints, not a separate page.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — empty / first-list / ranked / below-line / team-scope / org-scope / filters | [x] | `src/pages/what-to-do-today/index.tsx`. T01/T02 are wired but unreachable with the current mock (`TODAY_ITEMS` always has 4 items, `WORKSPACE_AGE_DAYS` is 41) — same "not wired, no demo state currently triggers it" situation as Rooms' R01/R02 |
+| How this is ranked | [x] | `ranking-route.tsx`, `/what-to-do-today/ranking` |
+| One recommendation (`:id`) | [x] | `item-detail-route.tsx` — only `r-8f2c` (the #1 item) has a built page, same "one reference row" pattern as Price's `plans/:id`; every other id falls back to a not-found state |
+| Snoozed / Waiting on data / Done | [x] | `snoozed-route.tsx`, `waiting-on-data-route.tsx`, `done-route.tsx` |
+| Settings | [x] | `settings-today-route.tsx`, mounted at `/settings/today` (sibling of `/what-to-do-today`, per T15's own footer) |
+| Assign an owner / Snooze or dismiss modals | [x] | `modals/assign-an-owner-modal.tsx`, `modals/snooze-or-dismiss-modal.tsx` — wired only on the two rows the export shows them opened from |
+| `tsc -b` clean + Playwright console-error sweep (12 routes) + modal click-test | [x] | Verified 2026-08-18 |
+
+## 4. Rooms and decisions
+
+**Rebuilt from scratch on 2026-08-18** from `flolyt-figma-designs/Everyday Screens/flolyt-rooms/`
+(42 screens, R01–R42), replacing the old kit-122-based section entirely (screens 27–35
+below, plus the user-supplied Rooms index) — same "old design source superseded, don't
+resurrect the old shape" situation as the lifecycle rebuild. Every SVG's own footer states
+its route, which is what the rows below are keyed to. Extraction was done by three parallel
+research agents (one per the export's own BATCH 1/2/3 grouping), each producing a verbatim
+structured spec before any code was written — same "SVG wins, transcribe verbatim" discipline
+as the lifecycle rebuild.
+
+**Architecture:** `/rooms` (index) branches on data shape + `?q=`/`?state=` for all five index
+states (R01–R05); `/rooms/new` is a 5-step client-local wizard (no `?step=` param — none of
+R06–R11's footers show one); `/rooms/:roomId` (`RoomLayout` + `useRoomContext`, mirrors
+lifecycle's `StageLayout`) resolves a room and its **own `status`** (`open`/`closed`/
+`recovering`/`restricted`) branches the room's home route between the 3-pane workspace,
+`ClosedRoom` (templated by a 5-value `outcome` enum), `ReopenedRoom`, and `RestrictedRoom`.
+Every other open-room subpage (plays board, one-proposal, conflict, dissent, guardrails,
+runs, people, cohort, collision, close-form, merge) reuses `StageSubpageHeader` straight from
+`@/pages/lifecycle/stage/` — confirmed generic enough to not need a rooms-specific fork.
+`/plays` (plays-at-scale) and `/rooms/subscriptions` are top-level cross-room surfaces,
+siblings of `/rooms`, not nested under a room. R42 (mobile) was treated as a responsive-design
+constraint on the same routes, not a separate page, consistent with the lifecycle rebuild's
+"mobile/tablet/desktop designed together" rule.
+
+**Steering (R28) is a local UI toggle, not a route** — its own footer reports the same
+`/rooms/:id` route as the default workspace view, so `Workspace` swaps its center panel via
+component state (a "Steer this agent →" link, shown only when a run is `working`) rather than
+a URL change.
+
+**One data-model simplification, deliberate:** R12/R13/R14 are three time-lapse snapshots of
+the *same* room (just-created → first findings → live) all sharing the route `/rooms/:id` —
+rather than modelling temporal state transitions with no real backend to drive them, only the
+richest ("live", R14/R15's content) state was built, matching how the lifecycle rebuild always
+picked one canonical state per reference screen rather than every mockup's point-in-time
+variant.
+
+**Only `second-order-never-happened` is a fully "open" reference room** (workspace, evidence
+finding detail, plays board + one-proposal + 3 modals, conflict, dissent, guardrails, runs,
+people + invite modal, cohort, collision, close-form, merge) — mirrors the lifecycle rebuild's
+"Acquire is the reference stage" pattern. Four more rooms exist purely to demo the other
+statuses their shared templates branch on: `weekend-push-fatigue` (recovering/reopened,
+carries R37's first-opening content as history), `uk-checkout-latency` (closed ·
+no_action_needed), `second-order-recovered` (closed · money_recovered, carries R35's own
+content under a distinct id since the reference room itself stays "open" for the workspace
+demo), `q3-pricing-review` (restricted). `superseded`/`disproven` outcomes have no dedicated
+closed-state mockup in the export (R34's close-out form offers all 5 as radio options; only 3
+had their own closed-view screens built) — `ClosedRoom`'s outcome-tone map still defines
+colors for all 5 so adding a demo room later needs no template change.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Rooms index — empty / first-room / main / search / stale-recovering-archived | [x] | `src/pages/rooms/index.tsx` — one route, branches on `getRoomIndex().length` and `?q=`/`?state=`. R01 (empty) and R02 (first-room banner) are wired but unreachable with the current mock dataset (always >1 room), same "not wired, no demo state currently triggers it" situation as the lifecycle map's LC01 |
+| New-room wizard | [x] | `src/pages/rooms/new/` — 5 steps + conditional R10 duplicate-detection interstitial before the R11 review, all client-local `useState`, not URL params |
+| Room layout / status dispatch | [x] | `src/pages/rooms/room/room-layout.tsx`, `room-home-route.tsx` |
+| 3-pane workspace (Decision/Evidence/Log tabs + Steering) | [x] | `src/pages/rooms/room/workspace/workspace.tsx` |
+| Room states: closed (3 outcomes) / reopened / restricted | [x] | `src/pages/rooms/room/states/` |
+| Evidence finding detail | [x] | `evidence-finding-route.tsx`, `/rooms/:id/evidence/:findingId` |
+| Plays board + one-proposal + approve/edit/reject modals | [x] | `src/pages/rooms/room/plays/`, `src/pages/rooms/room/modals/` |
+| Conflict / dissent / guardrails / runs | [x] | `conflict-route.tsx`, `dissent-route.tsx`, `guardrails-route.tsx`, `runs-route.tsx` |
+| People + invite modal / cohort / collision | [x] | `people-route.tsx` + `modals/invite-people-modal.tsx`, `cohort-route.tsx`, `collision-route.tsx` |
+| Close-out form + merge | [x] | `close-out-route.tsx`, `merge-route.tsx` |
+| Subscriptions + plays-at-scale (top-level) | [x] | `src/pages/rooms/subscriptions.tsx` (`/rooms/subscriptions`), `src/pages/rooms/plays-at-scale/index.tsx` (`/plays`) |
+| `tsc -b` clean + Playwright console-error sweep across all new routes | [x] | Verified 2026-08-18 |
 
 ## 5. Audiences and campaigns (36–43)
 
@@ -354,7 +439,7 @@ from the shared templates.
 |---|---|---|---|---|
 | 75 | set goals | [ ] | | |
 | 76 | goal tracker | [ ] | | |
-| 77 | recommendations feed | [ ] | | |
+| 77 | recommendations feed | [x] | | Superseded — rebuilt as `/what-to-do-today` from the newer `flolyt-today` export, see section 2a |
 | 78 | value and roi | [ ] | | |
 | 79 | daily digest | [ ] | | |
 

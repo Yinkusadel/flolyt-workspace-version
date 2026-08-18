@@ -1,4 +1,4 @@
-import { ChevronRight, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
@@ -15,39 +15,34 @@ export function StageRail({ stages }: StageRailProps) {
         Revenue at each stage, and what is leaking out of it
       </p>
 
-      <div className="mt-3 flex snap-x gap-0.5 overflow-x-auto pb-2">
-        {stages.map((stage, i) => (
-          <div key={stage.name} className="flex shrink-0 items-center">
-            <Link
-              to={`/lifecycle/${stage.slug}`}
+      <div className="mt-3 flex snap-x gap-1.5 overflow-x-auto pb-2">
+        {stages.map((stage) => (
+          <Link
+            key={stage.name}
+            to={`/lifecycle/${stage.slug}`}
+            className={cn(
+              "w-32 shrink-0 snap-start rounded-card border border-line p-3 transition-colors hover:border-ink-4",
+              stage.name === "Churn" ? "bg-rose-bg/60" : "bg-paper-2"
+            )}
+          >
+            <span
+              className="inline-block size-2 shrink-0 rounded-full"
+              style={{ backgroundColor: stage.department ? DEPARTMENT_COLORS[stage.department] : "var(--color-ink-4)" }}
+              aria-hidden
+            />
+            <p className="mt-1.5 text-[13px] font-semibold text-ink">{stage.name}</p>
+            <p className="mt-0.5 truncate font-mono text-[9.5px] text-ink-4">{stage.metric}</p>
+            <div className="my-2.5 border-t border-dashed border-line" />
+            <p
               className={cn(
-                "w-32 shrink-0 snap-start rounded-card border border-line p-3 transition-colors hover:border-ink-4",
-                stage.name === "Churn" ? "bg-rose-bg/60" : "bg-paper-2"
+                "text-[15px] font-semibold",
+                stage.amountLabel === "referred" ? "text-teal" : "text-rose"
               )}
             >
-              <span
-                className="inline-block size-2 shrink-0 rounded-full"
-                style={{ backgroundColor: stage.department ? DEPARTMENT_COLORS[stage.department] : "var(--color-ink-4)" }}
-                aria-hidden
-              />
-              <p className="mt-1.5 text-[13px] font-semibold text-ink">{stage.name}</p>
-              <p className="mt-0.5 truncate font-mono text-[9.5px] text-ink-4">{stage.metric}</p>
-              <div className="my-2.5 border-t border-dashed border-line" />
-              <p
-                className={cn(
-                  "text-[15px] font-semibold",
-                  stage.amountLabel === "referred" ? "text-teal" : "text-rose"
-                )}
-              >
-                {stage.amount}
-              </p>
-              <p className="font-mono text-[9px] text-ink-4">{stage.amountLabel}</p>
-            </Link>
-
-            {i < stages.length - 1 && (
-              <ChevronRight className="mx-1 size-3.5 shrink-0 text-ink-4" aria-hidden />
-            )}
-          </div>
+              {stage.amount}
+            </p>
+            <p className="font-mono text-[9px] text-ink-4">{stage.amountLabel}</p>
+          </Link>
         ))}
       </div>
 
