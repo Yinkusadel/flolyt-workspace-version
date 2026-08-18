@@ -85,9 +85,9 @@ export function InvitePeopleModal({ open, onOpenChange }: { open: boolean; onOpe
                 { label: "Share a view", value: "read-only, no customer data, expires in 7 days" },
                 { label: "@-mention them", value: "adds them to this room · same as adding", warn: true },
               ].map((row) => (
-                <div key={row.label} className="flex items-center justify-between px-3.5 py-2.5 text-[11.5px]">
-                  <span className="text-ink-2">{row.label}</span>
-                  <span className={row.warn ? "text-amber" : "text-ink-3"}>{row.value}</span>
+                <div key={row.label} className="flex items-start justify-between gap-3 px-3.5 py-2.5 text-[11.5px]">
+                  <span className="shrink-0 text-ink-2">{row.label}</span>
+                  <span className={cn("text-right", row.warn ? "text-amber" : "text-ink-3")}>{row.value}</span>
                 </div>
               ))}
             </div>

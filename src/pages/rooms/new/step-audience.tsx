@@ -8,15 +8,17 @@ export function StepAudience() {
     <div className="space-y-5">
       <div>
         <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">Who is in it</p>
-        <div className="mt-2 divide-y divide-line rounded-card border border-line bg-paper">
-          {AUDIENCE_FILTERS.map((row) => (
-            <div key={row.field} className="flex items-center gap-3 px-4 py-3 text-[12px]">
-              <span className="font-semibold text-ink">{row.field}</span>
-              <span className="font-mono text-ink-4">{row.operator}</span>
-              <span className="ml-auto font-mono font-semibold text-ink-2">{row.value}</span>
-            </div>
-          ))}
-          <div className="px-4 py-3 text-[12px] font-semibold text-ultra">+ Add a condition</div>
+        <div className="mt-2 overflow-x-auto rounded-card border border-line bg-paper">
+          <div className="min-w-[480px] divide-y divide-line">
+            {AUDIENCE_FILTERS.map((row) => (
+              <div key={row.field} className="flex items-center gap-3 px-4 py-3 text-[12px]">
+                <span className="font-semibold text-ink">{row.field}</span>
+                <span className="font-mono text-ink-4">{row.operator}</span>
+                <span className="ml-auto font-mono font-semibold text-ink-2">{row.value}</span>
+              </div>
+            ))}
+            <div className="px-4 py-3 text-[12px] font-semibold text-ultra">+ Add a condition</div>
+          </div>
         </div>
       </div>
 
@@ -30,16 +32,18 @@ export function StepAudience() {
         <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
           Who drops out, and why · shown now rather than at send
         </p>
-        <div className="mt-2 divide-y divide-line rounded-card border border-line bg-paper">
-          {DROPOUT_ROWS.map((row) => (
-            <div key={row.label} className="flex items-center gap-3 px-4 py-3 text-[12px]">
-              <span className="text-ink-2">{row.label}</span>
-              <span className={cn("ml-auto font-mono font-semibold", TONE_TEXT_CLASS[row.tone])}>
-                {row.customers}
-              </span>
-              {row.why && <span className={cn("w-64 shrink-0 text-right font-mono text-[10.5px]", TONE_TEXT_CLASS[row.whyTone])}>{row.why}</span>}
-            </div>
-          ))}
+        <div className="mt-2 overflow-x-auto rounded-card border border-line bg-paper">
+          <div className="min-w-[560px] divide-y divide-line">
+            {DROPOUT_ROWS.map((row) => (
+              <div key={row.label} className="flex items-center gap-3 px-4 py-3 text-[12px]">
+                <span className="text-ink-2">{row.label}</span>
+                <span className={cn("ml-auto font-mono font-semibold whitespace-nowrap", TONE_TEXT_CLASS[row.tone])}>
+                  {row.customers}
+                </span>
+                {row.why && <span className={cn("w-64 shrink-0 text-right font-mono text-[10.5px]", TONE_TEXT_CLASS[row.whyTone])}>{row.why}</span>}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

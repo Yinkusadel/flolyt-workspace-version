@@ -44,6 +44,21 @@ const NewRoom = () => {
     navigate("/rooms/second-order-never-happened");
   };
 
+  const goToStep = (target: number) => {
+    setShowDuplicate(false);
+    setStep(target);
+  };
+
+  const handleBack = () => {
+    if (showDuplicate) {
+      goToStep(4);
+      return;
+    }
+    if (step > 1) goToStep(step - 1);
+  };
+
+  const canGoBack = step > 1 || showDuplicate;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -51,9 +66,14 @@ const NewRoom = () => {
           <h1 className="text-[17px] font-semibold text-ink">Open a war room</h1>
           <p className="mt-1 text-[11.5px] text-ink-3">{meta.eyebrow}</p>
         </div>
-        <Button className="shrink-0" onClick={handlePrimary}>
-          {meta.cta}
-        </Button>
+        <div className="flex shrink-0 gap-2.5">
+          {canGoBack && (
+            <Button variant="outline" onClick={handleBack}>
+              Back
+            </Button>
+          )}
+          <Button onClick={handlePrimary}>{meta.cta}</Button>
+        </div>
       </div>
 
       <p className="font-mono text-[10.5px] text-ink-4">
@@ -74,7 +94,7 @@ const NewRoom = () => {
         )}
       </p>
 
-      <StepRail active={step} />
+      <StepRail active={step} onStepClick={goToStep} />
 
       {step === 1 && <StepCondition />}
       {step === 2 && <StepAudience />}

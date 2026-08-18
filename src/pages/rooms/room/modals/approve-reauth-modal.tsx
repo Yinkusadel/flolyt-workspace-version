@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -58,9 +59,9 @@ export function ApproveReauthModal({
                 { label: "Can be stopped", value: "up to the send, and held mid-flight", tone: "text-teal" },
                 { label: "Cannot be", value: "recalled after delivery", tone: "text-rose" },
               ].map((row) => (
-                <div key={row.label} className="flex items-center justify-between px-3.5 py-2 text-[11.5px]">
-                  <span className="text-ink-3">{row.label}</span>
-                  <span className={row.tone ?? "text-ink-2"}>{row.value}</span>
+                <div key={row.label} className="flex items-start justify-between gap-3 px-3.5 py-2 text-[11.5px]">
+                  <span className="shrink-0 text-ink-3">{row.label}</span>
+                  <span className={cn("text-right", row.tone ?? "text-ink-2")}>{row.value}</span>
                 </div>
               ))}
             </div>

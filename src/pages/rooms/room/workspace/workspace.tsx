@@ -308,21 +308,21 @@ function CenterPanel({
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-1 border-b border-line px-3 py-2">
-          <Link to={`/rooms/${room.id}`} className={TAB_CLASS(activeTab === "decision")}>
+        <div className="flex items-center gap-1 overflow-x-auto border-b border-line px-3 py-2">
+          <Link to={`/rooms/${room.id}`} className={cn(TAB_CLASS(activeTab === "decision"), "shrink-0")}>
             Decision
           </Link>
-          <Link to={`/rooms/${room.id}/evidence`} className={TAB_CLASS(activeTab === "evidence")}>
+          <Link to={`/rooms/${room.id}/evidence`} className={cn(TAB_CLASS(activeTab === "evidence"), "shrink-0")}>
             Evidence
           </Link>
-          <Link to={`/rooms/${room.id}/log`} className={TAB_CLASS(activeTab === "log")}>
+          <Link to={`/rooms/${room.id}/log`} className={cn(TAB_CLASS(activeTab === "log"), "shrink-0")}>
             Log
           </Link>
           {room.steering && room.runStatus?.state === "working" && (
             <button
               type="button"
               onClick={() => onSteer?.(true)}
-              className="ml-auto text-[10.5px] font-semibold text-ultra hover:underline"
+              className="ml-auto shrink-0 pl-3 text-[10.5px] font-semibold whitespace-nowrap text-ultra hover:underline"
             >
               Steer this agent →
             </button>

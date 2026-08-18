@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/pages/lifecycle/stage/rail";
-import { Chip } from "@/pages/lifecycle/stage/chip";
+import { CHIP_INTERACTIVE_CLASS, Chip } from "@/pages/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { OpenARoomModal } from "@/pages/lifecycle/stage/modals/open-a-room-modal";
 import { SendReasonUpstreamModal } from "@/pages/lifecycle/stage/modals/send-reason-upstream-modal";
@@ -51,7 +51,9 @@ const ChurnReasonsTab = () => {
       render: (row) =>
         row.sendUpstreamPreset ? (
           <button type="button" onClick={() => setUpstreamRow(row)}>
-            <Chip tone={row.actionableTone}>{row.actionable}</Chip>
+            <Chip tone={row.actionableTone} className={CHIP_INTERACTIVE_CLASS}>
+              {row.actionable}
+            </Chip>
           </button>
         ) : (
           <Chip tone={row.actionableTone}>{row.actionable}</Chip>

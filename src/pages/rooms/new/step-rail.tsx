@@ -4,26 +4,26 @@ import { cn } from "@/lib/utils";
 
 const STEPS = ["The condition", "Who is in it", "Who is in the room", "What would settle it", "Review"];
 
-/** The 5-pill wizard rail shared by every `/rooms/new` step (R06–R11). */
-export function StepRail({ active }: { active: number }) {
+/** The 5-pill wizard rail shared by every `/rooms/new` step (R06–R11). Completed pills are clickable to go back. */
+export function StepRail({ active, onStepClick }: { active: number; onStepClick?: (step: number) => void }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex gap-2 overflow-x-auto">
       {STEPS.map((label, i) => {
         const stepNum = i + 1;
         const done = stepNum < active;
         const isActive = stepNum === active;
-        return (
-          <div
-            key={label}
-            className={cn(
-              "flex min-w-[150px] flex-1 items-center gap-2 rounded-panel border px-3 py-2.5",
-              isActive
-                ? "border-2 border-ultra-border bg-paper"
-                : done
-                  ? "border-line bg-paper"
-                  : "border-line bg-paper-2"
-            )}
-          >
+        const clickable = done && !!onStepClick;
+        const pillClass = cn(
+          "flex min-w-[150px] flex-1 shrink-0 items-center gap-2 rounded-panel border px-3 py-2.5",
+          isActive
+            ? "border-2 border-ultra-border bg-paper"
+            : done
+              ? "border-line bg-paper"
+              : "border-line bg-paper-2",
+          clickable && "cursor-pointer hover:bg-paper-2"
+        );
+        const content = (
+          <>
             {done ? (
               <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-teal text-white">
                 <Check className="size-3" />
@@ -46,6 +46,15 @@ export function StepRail({ active }: { active: number }) {
             >
               {label}
             </span>
+          </>
+        );
+        return clickable ? (
+          <button key={label} type="button" onClick={() => onStepClick!(stepNum)} className={pillClass}>
+            {content}
+          </button>
+        ) : (
+          <div key={label} className={pillClass}>
+            {content}
           </div>
         );
       })}

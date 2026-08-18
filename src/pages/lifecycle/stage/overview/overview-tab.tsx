@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PersonAvatar } from "@/components/person-avatar";
 import { WideBarRow, type BarTone } from "@/pages/lifecycle/stage/bar";
 import { Callout } from "@/pages/lifecycle/stage/rail";
-import { Chip } from "@/pages/lifecycle/stage/chip";
+import { CHIP_INTERACTIVE_CLASS, Chip } from "@/pages/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { KpiCards, type Kpi } from "@/pages/lifecycle/stage/kpi-cards";
 import { useStageContext } from "@/pages/lifecycle/stage/layout";
@@ -339,7 +339,9 @@ export function OverviewTab() {
       align: "right",
       render: (row) => (
         <button type="button" onClick={() => setOpenRoomFor(row.id)}>
-          <Chip tone={row.room.tone}>{row.room.label}</Chip>
+          <Chip tone={row.room.tone} className={CHIP_INTERACTIVE_CLASS}>
+            {row.room.label}
+          </Chip>
         </button>
       ),
     },

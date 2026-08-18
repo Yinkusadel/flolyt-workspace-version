@@ -141,21 +141,23 @@ function StateTabs({ counts, active }: { counts: Record<RoomListState, number>; 
     { key: "archived", label: "Archived" },
   ];
   return (
-    <div className="flex flex-wrap items-center gap-1 border-b border-line">
-      {tabs.map((tab) => (
-        <Link
-          key={tab.key}
-          to={tab.key === "open" ? "/rooms" : `/rooms?state=${tab.key}`}
-          className={cn(
-            "rounded-t-panel border-b-2 px-3 py-2.5 text-[11.5px] whitespace-nowrap",
-            active === tab.key
-              ? "border-ink font-semibold text-ink"
-              : "border-transparent font-normal text-ink-3 hover:text-ink-2"
-          )}
-        >
-          {tab.label} · {counts[tab.key]}
-        </Link>
-      ))}
+    <div className="-mx-4 overflow-x-auto border-b border-line px-4 sm:mx-0 sm:px-0">
+      <div className="flex items-center gap-1">
+        {tabs.map((tab) => (
+          <Link
+            key={tab.key}
+            to={tab.key === "open" ? "/rooms" : `/rooms?state=${tab.key}`}
+            className={cn(
+              "shrink-0 rounded-t-panel border-b-2 px-3 py-2.5 text-[11.5px] whitespace-nowrap",
+              active === tab.key
+                ? "border-ink font-semibold text-ink"
+                : "border-transparent font-normal text-ink-3 hover:text-ink-2"
+            )}
+          >
+            {tab.label} · {counts[tab.key]}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
