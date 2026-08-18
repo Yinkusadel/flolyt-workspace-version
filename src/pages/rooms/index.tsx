@@ -166,7 +166,7 @@ function RoomTableRow({ room }: { room: RoomListRow }) {
   return (
     <tr key={room.id} className="border-b border-line last:border-0 hover:bg-paper-2">
       <td className="px-4 py-3.5">
-        <Link to={`/rooms/${room.id}`} className="font-semibold whitespace-nowrap text-ink-2 hover:text-ink">
+        <Link to={`/rooms/${room.id}`} className="font-semibold whitespace-nowrap text-ultra hover:underline">
           {room.title}
         </Link>
       </td>
@@ -260,7 +260,7 @@ function StaleTable({ rooms }: { rooms: RoomListRow[] }) {
           {rooms.map((room) => (
             <tr key={room.id} className="border-b border-line last:border-0 hover:bg-paper-2">
               <td className="px-4 py-3.5">
-                <Link to={`/rooms/${room.id}`} className="font-semibold whitespace-nowrap text-ink-2 hover:text-ink">
+                <Link to={`/rooms/${room.id}`} className="font-semibold whitespace-nowrap text-ultra hover:underline">
                   {room.title}
                 </Link>
               </td>
@@ -384,7 +384,7 @@ function SearchView({ q, rooms }: { q: string; rooms: RoomListRow[] }) {
               {filtered.map((room) => (
                 <tr key={room.id} className="border-b border-line last:border-0 hover:bg-paper-2">
                   <td className="px-4 py-3.5">
-                    <Link to={`/rooms/${room.id}`} className="font-semibold whitespace-nowrap text-ink-2 hover:text-ink">
+                    <Link to={`/rooms/${room.id}`} className="font-semibold whitespace-nowrap text-ultra hover:underline">
                       {room.title}
                     </Link>
                   </td>

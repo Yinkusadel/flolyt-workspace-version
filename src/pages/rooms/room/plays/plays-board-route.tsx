@@ -60,7 +60,7 @@ export const PlaysBoardRoute = () => {
             {plays.map((play) => (
               <tr key={play.id} className="border-b border-line last:border-0 hover:bg-paper-2">
                 <td className="px-4 py-3.5">
-                  <Link to={`/rooms/${room.id}/plays/${play.id}`} className="font-semibold text-ink-2 hover:text-ink">
+                  <Link to={`/rooms/${room.id}/plays/${play.id}`} className="font-semibold text-ultra hover:underline">
                     {play.title}
                   </Link>
                 </td>

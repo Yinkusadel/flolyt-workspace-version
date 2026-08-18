@@ -76,7 +76,7 @@ const RoomSubscriptions = () => {
               {ROWS.map((row) => (
                 <tr key={row.roomId} className="border-b border-line last:border-0 hover:bg-paper-2">
                   <td className="px-4 py-3.5">
-                    <Link to={`/rooms/${row.roomId}`} className="font-semibold text-ink-2 hover:text-ink">
+                    <Link to={`/rooms/${row.roomId}`} className="font-semibold text-ultra hover:underline">
                       {row.room}
                     </Link>
                   </td>

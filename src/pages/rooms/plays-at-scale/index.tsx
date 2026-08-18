@@ -94,12 +94,12 @@ const PlaysAtScale = () => {
                 {ROWS.map((row) => (
                   <tr key={row.play} className="border-b border-line last:border-0 hover:bg-paper-2">
                     <td className="px-4 py-3">
-                      <Link to={`/rooms/${row.roomId}/plays`} className="font-semibold text-ink-2 hover:text-ink">
+                      <Link to={`/rooms/${row.roomId}/plays`} className="font-semibold text-ultra hover:underline">
                         {row.play}
                       </Link>
                     </td>
                     <td className="px-4 py-3">
-                      <Link to={`/rooms/${row.roomId}`} className="text-ink-3 hover:text-ink-2">
+                      <Link to={`/rooms/${row.roomId}`} className="text-ink-3 hover:text-ultra hover:underline">
                         {row.room}
                       </Link>
                     </td>
