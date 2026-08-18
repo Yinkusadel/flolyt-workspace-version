@@ -23,19 +23,22 @@ const STAGE_LABELS: Record<string, string> = {
   activate: "Activate",
   price: "Price",
   adopt: "Adopt",
-  retain: "Cohort retention",
+  retain: "Retain",
   expand: "Expand",
   support: "Support",
   renew: "Renew",
   advocate: "Advocate",
   churn: "Churn",
-  "release-impact": "Release impact",
 };
 
 function getBreadcrumb(pathname: string): React.ReactNode {
   if (pathname === "/lifecycle") return "Lifecycle";
+  if (pathname === "/lifecycle/settings") return "Lifecycle / Settings";
 
-  const stageMatch = /^\/lifecycle\/([a-z-]+)$/.exec(pathname);
+  // Matches the bare stage route and every sub-route under it (tabs,
+  // compare, definition, :id drilldowns) — the stage-level layouts render
+  // their own more specific breadcrumb/tab bar below this topbar one.
+  const stageMatch = /^\/lifecycle\/([a-z-]+)(?:\/|$)/.exec(pathname);
   const stageLabel = stageMatch ? STAGE_LABELS[stageMatch[1]] : undefined;
   if (stageLabel) {
     return (

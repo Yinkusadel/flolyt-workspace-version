@@ -59,3 +59,22 @@ export function BarRow({
     </div>
   );
 }
+
+/**
+ * The "label + value line, full-width bar below" pattern used across the
+ * new lifecycle screens — Overview's acquired/second-order comparison,
+ * Channels' spend breakdown, Cohorts' before/after break. Distinct from
+ * BarRow above, which keeps the label and bar on one line at a fixed
+ * label width.
+ */
+export function WideBarRow({ label, value, percent, tone }: { label: string; value: string; percent: number; tone: BarTone }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <span className="text-[12px] font-semibold text-ink">{label}</span>
+        <span className="font-mono text-[10.5px] text-ink-3">{value}</span>
+      </div>
+      <BarTrack percent={percent} tone={tone} />
+    </div>
+  );
+}

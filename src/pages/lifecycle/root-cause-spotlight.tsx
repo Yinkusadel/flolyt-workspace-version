@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { DEPARTMENT_COLORS, EYEBROW_CLASS, ROOT_CAUSE_HEADLINE, type RootCauseRow } from "@/pages/lifecycle/data";
 
 export type RootCauseSpotlightProps = {
@@ -38,9 +40,9 @@ export function RootCauseSpotlight({ rows }: RootCauseSpotlightProps) {
             Each team saw its own symptom and none of them owned the cause. Twenty weeks passed
             before anyone connected the fee release to the retention break.
           </p>
-          <p className="mt-3 text-[11px] font-semibold text-amber">
-            Exactly the failure Flolyt prevents.
-          </p>
+          <Link to="/lifecycle/churn/chain" className="mt-3 inline-block text-[11px] font-semibold text-amber hover:underline">
+            See the whole chain →
+          </Link>
         </div>
       </div>
     </section>

@@ -4,17 +4,57 @@ import SignIn from "@/pages/sign-in";
 import { AppLayout } from "@/pages/app-layout";
 import Home from "@/pages/home";
 import Lifecycle from "@/pages/lifecycle";
-import StageAcquire from "@/pages/lifecycle/stage/acquire";
-import StageActivate from "@/pages/lifecycle/stage/activate";
-import StagePrice from "@/pages/lifecycle/stage/price";
-import StageAdopt from "@/pages/lifecycle/stage/adopt";
-import StageRetain from "@/pages/lifecycle/stage/retain";
-import StageExpand from "@/pages/lifecycle/stage/expand";
-import StageSupport from "@/pages/lifecycle/stage/support";
-import StageRenew from "@/pages/lifecycle/stage/renew";
-import StageAdvocate from "@/pages/lifecycle/stage/advocate";
-import StageChurn from "@/pages/lifecycle/stage/churn";
-import ReleaseImpact from "@/pages/lifecycle/stage/release-impact";
+import LifecycleSettings from "@/pages/lifecycle/settings";
+import StageLayout from "@/pages/lifecycle/stage/layout";
+import StageTabsLayout from "@/pages/lifecycle/stage/stage-tabs-layout";
+import { OverviewTab } from "@/pages/lifecycle/stage/overview/overview-tab";
+import { CohortsTab } from "@/pages/lifecycle/stage/cohorts/cohorts-tab";
+import { MarketsTab } from "@/pages/lifecycle/stage/markets/markets-tab";
+import { ChangesTab } from "@/pages/lifecycle/stage/changes/changes-tab";
+import { AgentsTab } from "@/pages/lifecycle/stage/agents/agents-tab";
+import { HistoryTab } from "@/pages/lifecycle/stage/history/history-tab";
+import CompareRoute from "@/pages/lifecycle/stage/compare/compare-route";
+import ChainRoute from "@/pages/lifecycle/stage/chain/chain-route";
+import DefinitionRoute from "@/pages/lifecycle/stage/definition/definition-route";
+import AcquireFunnelTab from "@/pages/lifecycle/stage/acquire/funnel-tab";
+import AcquireChannelsTab from "@/pages/lifecycle/stage/acquire/channels-tab";
+import AcquireChannelDetailRoute from "@/pages/lifecycle/stage/acquire/channel-detail-route";
+import AcquireUnitEconomicsTab from "@/pages/lifecycle/stage/acquire/unit-economics-tab";
+import ActivateTimeToValueTab from "@/pages/lifecycle/stage/activate/time-to-value-tab";
+import ActivatePathsTab from "@/pages/lifecycle/stage/activate/paths-tab";
+import ActivatePathDetailRoute from "@/pages/lifecycle/stage/activate/path-detail-route";
+import ActivateReleaseImpactRoute from "@/pages/lifecycle/stage/activate/release-impact-route";
+import PricePlansTab from "@/pages/lifecycle/stage/price/plans-tab";
+import PricePlanDetailRoute from "@/pages/lifecycle/stage/price/plan-detail-route";
+import PriceMarginTab from "@/pages/lifecycle/stage/price/margin-tab";
+import PriceDiscountingTab from "@/pages/lifecycle/stage/price/discounting-tab";
+import AdoptFeaturesTab from "@/pages/lifecycle/stage/adopt/features-tab";
+import AdoptFeatureDetailRoute from "@/pages/lifecycle/stage/adopt/feature-detail-route";
+import AdoptDepthTab from "@/pages/lifecycle/stage/adopt/depth-tab";
+import AdoptBlindSpotsTab from "@/pages/lifecycle/stage/adopt/blind-spots-tab";
+import RetainSegmentDetailRoute from "@/pages/lifecycle/stage/retain/segment-detail-route";
+import RetainRepeatCurveTab from "@/pages/lifecycle/stage/retain/repeat-curve-tab";
+import RetainSegmentsTab from "@/pages/lifecycle/stage/retain/segments-tab";
+import RetainReactivationTab from "@/pages/lifecycle/stage/retain/reactivation-tab";
+import ExpandPathDetailRoute from "@/pages/lifecycle/stage/expand/path-detail-route";
+import ExpandUpgradePathsTab from "@/pages/lifecycle/stage/expand/upgrade-paths-tab";
+import ExpandBasketTab from "@/pages/lifecycle/stage/expand/basket-tab";
+import ExpandAccountsTab from "@/pages/lifecycle/stage/expand/accounts-tab";
+import SupportSilentFailuresRoute from "@/pages/lifecycle/stage/support/silent-failures-route";
+import SupportContactDriversTab from "@/pages/lifecycle/stage/support/contact-drivers-tab";
+import SupportResolutionTab from "@/pages/lifecycle/stage/support/resolution-tab";
+import SupportDeflectionTab from "@/pages/lifecycle/stage/support/deflection-tab";
+import RenewOneAccountRoute from "@/pages/lifecycle/stage/renew/one-account-route";
+import RenewRenewalBookTab from "@/pages/lifecycle/stage/renew/renewal-book-tab";
+import RenewDunningTab from "@/pages/lifecycle/stage/renew/dunning-tab";
+import RenewPausesTab from "@/pages/lifecycle/stage/renew/pauses-tab";
+import AdvocateOneReferrerGroupRoute from "@/pages/lifecycle/stage/advocate/one-referrer-group-route";
+import AdvocateReferrersTab from "@/pages/lifecycle/stage/advocate/referrers-tab";
+import AdvocateReferralQualityTab from "@/pages/lifecycle/stage/advocate/quality-tab";
+import AdvocateRewardsTab from "@/pages/lifecycle/stage/advocate/rewards-tab";
+import ChurnReasonsTab from "@/pages/lifecycle/stage/churn/reasons-tab";
+import ChurnPredictionTab from "@/pages/lifecycle/stage/churn/prediction-tab";
+import ChurnWinBackTab from "@/pages/lifecycle/stage/churn/win-back-tab";
 import Rooms from "@/pages/rooms";
 import RoomLayout, {
   RoomDecisionRoute,
@@ -61,17 +101,66 @@ export const routes = createBrowserRouter([
                 path: "lifecycle",
                 children: [
                   { index: true, Component: Lifecycle },
-                  { path: "acquire", Component: StageAcquire },
-                  { path: "activate", Component: StageActivate },
-                  { path: "price", Component: StagePrice },
-                  { path: "adopt", Component: StageAdopt },
-                  { path: "retain", Component: StageRetain },
-                  { path: "expand", Component: StageExpand },
-                  { path: "support", Component: StageSupport },
-                  { path: "renew", Component: StageRenew },
-                  { path: "advocate", Component: StageAdvocate },
-                  { path: "churn", Component: StageChurn },
-                  { path: "release-impact", Component: ReleaseImpact },
+                  { path: "settings", Component: LifecycleSettings },
+                  {
+                    path: ":stage",
+                    Component: StageLayout,
+                    children: [
+                      { path: "definition", Component: DefinitionRoute },
+                      { path: "compare", Component: CompareRoute },
+                      { path: "chain", Component: ChainRoute },
+                      { path: "channels/:id", Component: AcquireChannelDetailRoute },
+                      { path: "paths/:id", Component: ActivatePathDetailRoute },
+                      { path: "changes/:id", Component: ActivateReleaseImpactRoute },
+                      { path: "plans/:id", Component: PricePlanDetailRoute },
+                      { path: "features/:id", Component: AdoptFeatureDetailRoute },
+                      { path: "segments/:id", Component: RetainSegmentDetailRoute },
+                      { path: "upgrade-paths/:id", Component: ExpandPathDetailRoute },
+                      { path: "silent", Component: SupportSilentFailuresRoute },
+                      { path: "book/:id", Component: RenewOneAccountRoute },
+                      { path: "referrers/:id", Component: AdvocateOneReferrerGroupRoute },
+                      {
+                        Component: StageTabsLayout,
+                        children: [
+                          { index: true, Component: OverviewTab },
+                          { path: "funnel", Component: AcquireFunnelTab },
+                          { path: "channels", Component: AcquireChannelsTab },
+                          { path: "unit-economics", Component: AcquireUnitEconomicsTab },
+                          { path: "time-to-value", Component: ActivateTimeToValueTab },
+                          { path: "paths", Component: ActivatePathsTab },
+                          { path: "plans", Component: PricePlansTab },
+                          { path: "margin", Component: PriceMarginTab },
+                          { path: "discounting", Component: PriceDiscountingTab },
+                          { path: "features", Component: AdoptFeaturesTab },
+                          { path: "depth", Component: AdoptDepthTab },
+                          { path: "blind-spots", Component: AdoptBlindSpotsTab },
+                          { path: "repeat-curve", Component: RetainRepeatCurveTab },
+                          { path: "segments", Component: RetainSegmentsTab },
+                          { path: "reactivation", Component: RetainReactivationTab },
+                          { path: "upgrade-paths", Component: ExpandUpgradePathsTab },
+                          { path: "basket", Component: ExpandBasketTab },
+                          { path: "accounts", Component: ExpandAccountsTab },
+                          { path: "drivers", Component: SupportContactDriversTab },
+                          { path: "resolution", Component: SupportResolutionTab },
+                          { path: "deflection", Component: SupportDeflectionTab },
+                          { path: "book", Component: RenewRenewalBookTab },
+                          { path: "dunning", Component: RenewDunningTab },
+                          { path: "pauses", Component: RenewPausesTab },
+                          { path: "referrers", Component: AdvocateReferrersTab },
+                          { path: "quality", Component: AdvocateReferralQualityTab },
+                          { path: "rewards", Component: AdvocateRewardsTab },
+                          { path: "reasons", Component: ChurnReasonsTab },
+                          { path: "prediction", Component: ChurnPredictionTab },
+                          { path: "win-back", Component: ChurnWinBackTab },
+                          { path: "cohorts", Component: CohortsTab },
+                          { path: "markets", Component: MarketsTab },
+                          { path: "changes", Component: ChangesTab },
+                          { path: "agents", Component: AgentsTab },
+                          { path: "history", Component: HistoryTab },
+                        ],
+                      },
+                    ],
+                  },
                 ],
               },
               {
