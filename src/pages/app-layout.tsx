@@ -5,6 +5,7 @@ import { Sidebar, type ViewingAs } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { cn } from "@/lib/utils";
 import { getRoom } from "@/pages/rooms/room/data";
+import { TODAY_ITEMS } from "@/pages/what-to-do-today/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -67,6 +68,27 @@ function getBreadcrumb(pathname: string): React.ReactNode {
         </Link>
         <span className="text-ink-4">/</span>
         <span className="text-ink">{room?.title ?? roomMatch[1]}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/what-to-do-today") return "What to do today";
+  if (pathname === "/what-to-do-today/ranking") return "What to do today / How this is ranked";
+  if (pathname === "/what-to-do-today/snoozed") return "What to do today / Snoozed";
+  if (pathname === "/what-to-do-today/waiting-on-data") return "What to do today / Waiting on data";
+  if (pathname === "/what-to-do-today/done") return "What to do today / Done";
+  if (pathname === "/settings/today") return "What to do today / Settings";
+
+  const todayItemMatch = /^\/what-to-do-today\/([^/]+)/.exec(pathname);
+  if (todayItemMatch) {
+    const item = TODAY_ITEMS.find((i) => i.id === todayItemMatch[1]);
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/what-to-do-today" className="hover:text-ink">
+          What to do today
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{item?.title ?? todayItemMatch[1]}</span>
       </span>
     );
   }

@@ -2,12 +2,13 @@
 
 Source of truth for design: `flolyt-kit-122/README.md` (kit overview + section table) and
 `flolyt-kit-122/{nn}-{slug}.svg` (one SVG per screen, numbered to match the `#` column
-below) — **except section 3 (the lifecycle)**, which was rebuilt from the newer
-`flolyt-figma-designs/Everyday Screens/flolyt-lifecycle/` export (path moved under a new
-`Everyday Screens/` parent on 2026-08-17); see that section's own header for its
-source-of-truth note. A `flolyt-figma-designs/Everyday Screens/flow-diagrams/` folder also
-exists now with architecture-level route maps — use it as a sanity check before building a
-new stage, but each screen's own SVG footer still wins on the specific route.
+below) — **except section 2a (what to do today), section 3 (the lifecycle), and section 4
+(rooms and decisions)**, each rebuilt from its own newer `flolyt-figma-designs/Everyday
+Screens/` export (`flolyt-today/`, `flolyt-lifecycle/`, `flolyt-rooms/` respectively; the
+whole `Everyday Screens/` parent folder appeared on 2026-08-17); see each section's own header
+for its source-of-truth note. A `flolyt-figma-designs/Everyday Screens/flow-diagrams/` folder
+also exists now with architecture-level route maps — use it as a sanity check before building
+a new section, but each screen's own SVG footer still wins on the specific route.
 
 Update this file as we go: flip `Status` when a screen's implementation starts/lands, fill
 `Endpoint(s)` with the service/hook file(s) built for it, and use `Notes` for corrections
@@ -262,6 +263,42 @@ action modals, the lifecycle map, and the ownership settings page. See the plan 
 sections above are now the complete record of what shipped and where each stage diverged
 from the shared templates.
 
+## 2a. What to do today
+
+**Rebuilt from scratch on 2026-08-18** from `flolyt-figma-designs/Everyday Screens/flolyt-today/`
+(17 screens, T00–T16), superseding kit-122's frame 77 ("recommendations feed" — see section 11's
+note) — same "old design source superseded, don't resurrect the old shape" situation as the
+lifecycle and rooms rebuilds. Every SVG's own footer states its route (translated 1:1 from the
+export's `/today/*` onto this repo's existing sidebar href `/what-to-do-today/*`, the same kind
+of deliberate route rename the lifecycle rebuild did for `#/stage/:id`). Extraction was done by
+two parallel research agents (T00–T08 / T09–T16), each producing a verbatim structured spec
+before any code was written.
+
+**Architecture:** `/what-to-do-today` (index) is ONE route covering T01 (empty), T02 ("day
+four" onboarding, a distinct dataset from the steady-state list), T03 (default ranked list),
+T05 (`?show=all`), T10 (`?scope=team`), T11 (`?scope=org`), and T12 (any of `?effort=`/`?owner=`/
+`?view=`) — branches on `TODAY_ITEMS.length`/`WORKSPACE_AGE_DAYS` and query params, mirroring
+Rooms' index branching. T04 (`/ranking`), T09 (`/snoozed`), T13 (`/waiting-on-data`), T14
+(`/done`) and T06 (`/:id`) are dedicated routes — each has its own breadcrumb/header and no tab
+bar, reusing `StageSubpageHeader`/`Callout`/`Chip`/`KpiCards` straight from
+`@/pages/lifecycle/stage/` exactly as the Rooms rebuild did (confirmed generic enough, no fork
+needed). T15 mounts at `/settings/today` per its own literal footer, not nested under
+`/what-to-do-today`. T07 (assign an owner) and T08 (snooze or dismiss) are modals opened from
+specific rows in the ranked table — only the rows they were actually shown against in the export
+(the Ghana signup room's "no owner" row, the growth-vs-finance "needs you" row) are wired, same
+"only one row has real data" pattern as Price's `plans/:id`. T16 (mobile) was treated as a
+responsive-design constraint on the same routes via Tailwind breakpoints, not a separate page.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — empty / first-list / ranked / below-line / team-scope / org-scope / filters | [x] | `src/pages/what-to-do-today/index.tsx`. T01/T02 are wired but unreachable with the current mock (`TODAY_ITEMS` always has 4 items, `WORKSPACE_AGE_DAYS` is 41) — same "not wired, no demo state currently triggers it" situation as Rooms' R01/R02 |
+| How this is ranked | [x] | `ranking-route.tsx`, `/what-to-do-today/ranking` |
+| One recommendation (`:id`) | [x] | `item-detail-route.tsx` — only `r-8f2c` (the #1 item) has a built page, same "one reference row" pattern as Price's `plans/:id`; every other id falls back to a not-found state |
+| Snoozed / Waiting on data / Done | [x] | `snoozed-route.tsx`, `waiting-on-data-route.tsx`, `done-route.tsx` |
+| Settings | [x] | `settings-today-route.tsx`, mounted at `/settings/today` (sibling of `/what-to-do-today`, per T15's own footer) |
+| Assign an owner / Snooze or dismiss modals | [x] | `modals/assign-an-owner-modal.tsx`, `modals/snooze-or-dismiss-modal.tsx` — wired only on the two rows the export shows them opened from |
+| `tsc -b` clean + Playwright console-error sweep (12 routes) + modal click-test | [x] | Verified 2026-08-18 |
+
 ## 4. Rooms and decisions
 
 **Rebuilt from scratch on 2026-08-18** from `flolyt-figma-designs/Everyday Screens/flolyt-rooms/`
@@ -402,7 +439,7 @@ colors for all 5 so adding a demo room later needs no template change.
 |---|---|---|---|---|
 | 75 | set goals | [ ] | | |
 | 76 | goal tracker | [ ] | | |
-| 77 | recommendations feed | [ ] | | |
+| 77 | recommendations feed | [x] | | Superseded — rebuilt as `/what-to-do-today` from the newer `flolyt-today` export, see section 2a |
 | 78 | value and roi | [ ] | | |
 | 79 | daily digest | [ ] | | |
 

@@ -73,6 +73,13 @@ import { CollisionRoute } from "@/pages/rooms/room/collision-route";
 import { CohortRoute } from "@/pages/rooms/room/cohort-route";
 import { CloseOutRoute } from "@/pages/rooms/room/close-out-route";
 import { MergeRoute } from "@/pages/rooms/room/merge-route";
+import WhatToDoToday from "@/pages/what-to-do-today";
+import TodayRankingRoute from "@/pages/what-to-do-today/ranking-route";
+import TodayItemDetailRoute from "@/pages/what-to-do-today/item-detail-route";
+import TodaySnoozedRoute from "@/pages/what-to-do-today/snoozed-route";
+import TodayWaitingOnDataRoute from "@/pages/what-to-do-today/waiting-on-data-route";
+import TodayDoneRoute from "@/pages/what-to-do-today/done-route";
+import SettingsTodayRoute from "@/pages/what-to-do-today/settings-today-route";
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
@@ -206,6 +213,21 @@ export const routes = createBrowserRouter([
               {
                 path: "plays",
                 Component: PlaysAtScale,
+              },
+              {
+                path: "what-to-do-today",
+                children: [
+                  { index: true, Component: WhatToDoToday },
+                  { path: "ranking", Component: TodayRankingRoute },
+                  { path: "snoozed", Component: TodaySnoozedRoute },
+                  { path: "waiting-on-data", Component: TodayWaitingOnDataRoute },
+                  { path: "done", Component: TodayDoneRoute },
+                  { path: ":id", Component: TodayItemDetailRoute },
+                ],
+              },
+              {
+                path: "settings/today",
+                Component: SettingsTodayRoute,
               },
               {
                 path: "ai-teammates",
