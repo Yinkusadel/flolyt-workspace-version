@@ -10,7 +10,6 @@ const PRICE_TONE_CLASS: Record<PlanRow["priceTone"], string> = { ink: "text-ink"
 const REVENUE_TONE_CLASS: Record<PlanRow["revenueTone"], string> = { teal: "text-teal", amber: "text-amber", ink: "text-ink" };
 const ORDERS_TONE_CLASS: Record<PlanRow["ordersTone"], string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose", ink: "text-ink" };
 
-const CARD_ACCENT_CLASS: Record<"teal" | "amber" | "rose", string> = { teal: "bg-teal", amber: "bg-amber", rose: "bg-rose" };
 const CARD_FOOTNOTE_CLASS: Record<"teal" | "amber" | "rose", string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose" };
 
 const COLUMNS: Column<PlanRow>[] = [
@@ -44,9 +43,8 @@ const PricePlansTab = () => {
         <p className={EYEBROW_CLASS}>Two plans that need a decision, and one that does not</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {PRICE_PLAN_DECISION_CARDS.map((card) => (
-            <div key={card.id} className="relative overflow-hidden rounded-card border border-line bg-paper pl-4">
-              <span className={`absolute inset-y-0 left-0 w-[3px] ${CARD_ACCENT_CLASS[card.tone]}`} aria-hidden />
-              <div className="flex h-full flex-col gap-2.5 p-4 pl-1">
+            <div key={card.id} className="rounded-card border border-line bg-paper">
+              <div className="flex h-full flex-col gap-2.5 p-4">
                 <div className="flex items-center gap-2">
                   {card.agentTag && <PersonAvatar kind="agent" initials={card.agentTag} size="sm" />}
                   <p className="font-mono text-[9px] font-medium text-ink-4">{card.meta}</p>

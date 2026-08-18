@@ -180,13 +180,6 @@ const AGENTS_DATA: Record<string, AgentsData> = {
   },
 };
 
-const CARD_ACCENT_CLASS: Record<AgentCard["tone"], string> = {
-  ultra: "bg-ultra",
-  neutral: "bg-ink-4",
-  amber: "bg-amber",
-  teal: "bg-teal",
-  rose: "bg-rose",
-};
 const CARD_FOOTNOTE_TEXT_CLASS: Record<NonNullable<AgentCard["footnoteTone"]>, string> = {
   ultra: "text-ultra",
   neutral: "text-ink-4",
@@ -279,9 +272,8 @@ export function AgentsTab() {
         <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.eyebrow}</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {data.cards.map((card) => (
-            <div key={card.id} className="relative overflow-hidden rounded-card border border-line bg-paper pl-4">
-              <span className={`absolute inset-y-0 left-0 w-[3px] ${CARD_ACCENT_CLASS[card.tone]}`} aria-hidden />
-              <div className="space-y-2.5 p-4 pl-1">
+            <div key={card.id} className="rounded-card border border-line bg-paper">
+              <div className="space-y-2.5 p-4">
                 <div className="flex items-center gap-2">
                   {card.initials && <PersonAvatar kind="agent" initials={card.initials} size="sm" />}
                   <p className="font-mono text-[9.5px] font-medium text-ink-4">{card.status}</p>

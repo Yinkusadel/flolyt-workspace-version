@@ -21,7 +21,6 @@ const OFFER_TONE_CLASS: Record<RetainCampaignRow["offerTone"], string> = { teal:
 const RECOVERED_TONE_CLASS: Record<RetainCampaignRow["recoveredTone"], string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose" };
 const VS_HOLDOUT_TONE_CLASS: Record<RetainCampaignRow["vsHoldoutTone"], string> = { teal: "text-teal", amber: "text-amber" };
 
-const CARD_ACCENT_CLASS: Record<RetainReactivationCard["tone"], string> = { teal: "bg-teal", amber: "bg-amber", ultra: "bg-ultra" };
 const CARD_FOOTNOTE_CLASS: Record<RetainReactivationCard["tone"], string> = { teal: "text-teal", amber: "text-amber", ultra: "text-ultra" };
 
 const COLUMNS: Column<RetainCampaignRow>[] = [
@@ -57,9 +56,8 @@ const RetainReactivationTab = () => {
         <p className={EYEBROW_CLASS}>The two results that disagree with the company&apos;s habit</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {RETAIN_REACTIVATION_CARDS.map((card) => (
-            <div key={card.id} className="relative overflow-hidden rounded-card border border-line bg-paper pl-4">
-              <span className={`absolute inset-y-0 left-0 w-[3px] ${CARD_ACCENT_CLASS[card.tone]}`} aria-hidden />
-              <div className="flex h-full flex-col gap-2.5 p-4 pl-1">
+            <div key={card.id} className="rounded-card border border-line bg-paper">
+              <div className="flex h-full flex-col gap-2.5 p-4">
                 <div className="flex items-center gap-2">
                   <PersonAvatar kind="agent" initials={card.agentTag} size="sm" />
                   <p className="font-mono text-[9px] font-medium text-ink-4">{card.meta}</p>

@@ -2,7 +2,11 @@ import { Link, Outlet, useOutletContext, useParams } from "react-router-dom";
 
 import { STAGES, type Stage } from "@/pages/lifecycle/data";
 
-export type StageOutletContext = { stage: Stage };
+export type StageOutletContext = {
+  stage: Stage;
+  /** Portal target for a tab's header-right actions (e.g. Overview's Share or export row) — set by stage-tabs-layout.tsx, absent on the Definition/Compare/:id siblings that render their own header via StageSubpageHeader instead. */
+  headerActionsEl?: HTMLDivElement | null;
+};
 
 /**
  * Resolves :stage to a Stage record and provides it via context to every

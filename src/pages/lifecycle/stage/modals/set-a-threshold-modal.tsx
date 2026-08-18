@@ -75,9 +75,8 @@ export function SetThresholdModal({
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-card border border-ultra-border bg-ultra-bg pl-4">
-            <span className="absolute inset-y-0 left-0 w-[3px] bg-ultra" aria-hidden />
-            <div className="p-3.5 pl-1">
+          <div className="rounded-card border border-ultra-border bg-ultra-bg">
+            <div className="p-3.5">
               <p className="text-[12px] font-semibold text-ink">{preset.simulation.title}</p>
               <p className="mt-1.5 text-[10.5px] leading-relaxed text-ink-2">{preset.simulation.body}</p>
             </div>

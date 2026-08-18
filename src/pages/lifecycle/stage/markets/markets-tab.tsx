@@ -42,7 +42,6 @@ const TREND_CLASS: Record<MarketRow["trend"], string> = {
 const CAC_TONE_CLASS: Record<"teal" | "rose", string> = { teal: "text-teal", rose: "text-rose" };
 const STAKE_TONE_CLASS: Record<MarketRow["atStakeTone"], string> = { rose: "text-rose", neutral: "text-ink-4" };
 
-const SPOTLIGHT_ACCENT_CLASS: Record<"teal" | "rose", string> = { teal: "bg-teal", rose: "bg-rose" };
 
 const COLUMNS: Column<MarketRow>[] = [
   { key: "market", header: "Market", render: (row) => <span className="font-semibold text-ink-2">{row.market}</span> },
@@ -105,9 +104,8 @@ export function MarketsTab() {
         </p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {data.spotlights.map((spot) => (
-            <div key={spot.id} className="relative overflow-hidden rounded-card border border-line bg-paper pl-4">
-              <span className={`absolute inset-y-0 left-0 w-[3px] ${SPOTLIGHT_ACCENT_CLASS[spot.tone]}`} aria-hidden />
-              <div className="space-y-2.5 p-4 pl-1">
+            <div key={spot.id} className="rounded-card border border-line bg-paper">
+              <div className="space-y-2.5 p-4">
                 <p className="font-mono text-[9px] font-medium tracking-[0.85px] text-ink-4 uppercase">{spot.eyebrow}</p>
                 <h3 className="text-[13px] font-semibold text-ink">{spot.title}</h3>
                 <p className="text-[10.5px] leading-relaxed text-ink-3">{spot.body}</p>

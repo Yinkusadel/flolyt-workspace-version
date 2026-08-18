@@ -15,7 +15,6 @@ import {
 
 const WHY_INVISIBLE_TONE_CLASS: Record<BlindSpotRow["whyInvisibleTone"], string> = { rose: "text-rose", amber: "text-amber" };
 const REQUESTED_TONE_CLASS: Record<BlindSpotRow["requestedTone"], string> = { neutral: "text-ink-4", amber: "text-amber" };
-const CARD_ACCENT_CLASS: Record<"teal" | "amber" | "neutral" | "rose", string> = { teal: "bg-teal", amber: "bg-amber", neutral: "bg-ink-4", rose: "bg-rose" };
 const CARD_EYEBROW_CLASS: Record<"teal" | "amber" | "neutral" | "rose", string> = { teal: "text-teal", amber: "text-amber", neutral: "text-ink-4", rose: "text-rose" };
 
 const COLUMNS: Column<BlindSpotRow>[] = [
@@ -67,9 +66,8 @@ const AdoptBlindSpotsTab = () => {
         <p className={EYEBROW_CLASS}>What each blind spot costs, as far as anyone can tell</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {ADOPT_BLIND_SPOT_COST_CARDS.map((card) => (
-            <div key={card.id} className="relative overflow-hidden rounded-card border border-line bg-paper pl-4">
-              <span className={`absolute inset-y-0 left-0 w-[3px] ${CARD_ACCENT_CLASS[card.tone]}`} aria-hidden />
-              <div className="flex h-full flex-col gap-2.5 p-4 pl-1">
+            <div key={card.id} className="rounded-card border border-line bg-paper">
+              <div className="flex h-full flex-col gap-2.5 p-4">
                 <p className={`font-mono text-[9px] font-medium tracking-[0.85px] uppercase ${CARD_EYEBROW_CLASS[card.tone]}`}>{card.eyebrow}</p>
                 <h3 className="text-[13px] font-semibold text-ink">{card.title}</h3>
                 <p className="flex-1 text-[10.5px] leading-relaxed text-ink-3">{card.body}</p>

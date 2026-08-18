@@ -13,7 +13,6 @@ import {
 } from "@/pages/lifecycle/stage/support/data";
 
 const TONE_CLASS: Record<"teal" | "amber" | "rose", string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose" };
-const CARD_ACCENT_CLASS: Record<"teal" | "amber" | "neutral" | "rose", string> = { teal: "bg-teal", amber: "bg-amber", neutral: "bg-ink-4", rose: "bg-rose" };
 const CARD_EYEBROW_CLASS: Record<"teal" | "amber" | "neutral" | "rose", string> = { teal: "text-teal", amber: "text-amber", neutral: "text-ink-4", rose: "text-rose" };
 
 const COLUMNS: Column<SilentFailureRow>[] = [
@@ -71,9 +70,8 @@ const SupportSilentFailuresRoute = () => {
         <p className={EYEBROW_CLASS}>The intervention that already exists and is only pointed at one row</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {SUPPORT_SILENT_CLOSING_CARDS.map((card) => (
-            <div key={card.id} className="relative overflow-hidden rounded-card border border-line bg-paper pl-4">
-              <span className={`absolute inset-y-0 left-0 w-[3px] ${CARD_ACCENT_CLASS[card.tone]}`} aria-hidden />
-              <div className="flex h-full flex-col gap-2.5 p-4 pl-1">
+            <div key={card.id} className="rounded-card border border-line bg-paper">
+              <div className="flex h-full flex-col gap-2.5 p-4">
                 <p className={`font-mono text-[9px] font-medium tracking-[0.85px] uppercase ${CARD_EYEBROW_CLASS[card.tone]}`}>
                   {card.eyebrow}
                 </p>
