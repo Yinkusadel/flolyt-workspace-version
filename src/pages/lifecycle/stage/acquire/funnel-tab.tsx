@@ -3,7 +3,6 @@ import { BarTrack } from "@/pages/lifecycle/stage/bar";
 import { ACQUIRE_FUNNEL_ACTION_CARDS, ACQUIRE_FUNNEL_STEPS } from "@/pages/lifecycle/stage/acquire/data";
 
 const DELTA_TONE_CLASS = { rose: "text-rose", amber: "text-amber", teal: "text-teal" } as const;
-const CARD_ACCENT_CLASS = { rose: "bg-rose", neutral: "bg-ink-4" } as const;
 
 /** A03 — Acquire's unique Funnel tab (visit to first order). */
 const AcquireFunnelTab = () => {
@@ -42,9 +41,8 @@ const AcquireFunnelTab = () => {
         </p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {ACQUIRE_FUNNEL_ACTION_CARDS.map((card) => (
-            <div key={card.id} className="relative overflow-hidden rounded-card border border-line bg-paper pl-4">
-              <span className={`absolute inset-y-0 left-0 w-[3px] ${CARD_ACCENT_CLASS[card.tone]}`} aria-hidden />
-              <div className="flex h-full flex-col gap-2.5 p-4 pl-1">
+            <div key={card.id} className="rounded-card border border-line bg-paper">
+              <div className="flex h-full flex-col gap-2.5 p-4">
                 <div className="flex items-center gap-2">
                   {card.agentTag && <PersonAvatar kind="agent" initials={card.agentTag} size="sm" />}
                   <p className="font-mono text-[9px] font-medium text-ink-4">{card.meta}</p>

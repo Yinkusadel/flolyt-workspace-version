@@ -8,7 +8,6 @@ import { PRICE_CONNECT_COGS_PRESET, PRICE_MARGIN_BLOCKED_ROWS, PRICE_MARGIN_CARD
 
 const CURRENTLY_TONE_CLASS: Record<MarginBlockedRow["currentlyTone"], string> = { amber: "text-amber", neutral: "text-ink-4" };
 const VALUE_TONE_CLASS: Record<MarginBlockedRow["valueTone"], string> = { amber: "text-amber", rose: "text-rose" };
-const CARD_ACCENT_CLASS: Record<"teal" | "amber" | "neutral" | "rose", string> = { teal: "bg-teal", amber: "bg-amber", neutral: "bg-ink-4", rose: "bg-rose" };
 const CARD_EYEBROW_CLASS: Record<"teal" | "amber" | "neutral" | "rose", string> = { teal: "text-teal", amber: "text-amber", neutral: "text-ink-4", rose: "text-rose" };
 
 const COLUMNS: Column<MarginBlockedRow>[] = [
@@ -31,9 +30,8 @@ const PriceMarginTab = () => {
         </Button>
       </div>
 
-      <div className="relative overflow-hidden rounded-panel border-2 border-amber-border bg-amber-bg pl-5">
-        <span className="absolute inset-y-0 left-0 w-1 bg-amber" aria-hidden />
-        <div className="space-y-3 p-5 pl-2">
+      <div className="rounded-panel border-2 border-amber-border bg-amber-bg">
+        <div className="space-y-3 p-5">
           <h2 className="text-[15px] font-semibold text-ink">Contribution margin is unavailable, everywhere in Flolyt</h2>
           <p className="text-[11px] leading-relaxed text-ink-2">
             No connected source provides cost of goods. Flolyt could estimate it from a category benchmark and will not —
@@ -54,9 +52,8 @@ const PriceMarginTab = () => {
         <p className={EYEBROW_CLASS}>What Flolyt will show instead, and what it refuses to</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {PRICE_MARGIN_CARDS.map((card) => (
-            <div key={card.id} className="relative overflow-hidden rounded-card border border-line bg-paper pl-4">
-              <span className={`absolute inset-y-0 left-0 w-[3px] ${CARD_ACCENT_CLASS[card.tone]}`} aria-hidden />
-              <div className="flex h-full flex-col gap-2.5 p-4 pl-1">
+            <div key={card.id} className="rounded-card border border-line bg-paper">
+              <div className="flex h-full flex-col gap-2.5 p-4">
                 <p className={`font-mono text-[9px] font-medium tracking-[0.85px] uppercase ${CARD_EYEBROW_CLASS[card.tone]}`}>{card.eyebrow}</p>
                 <h3 className="text-[13px] font-semibold text-ink">{card.title}</h3>
                 <p className="flex-1 text-[10.5px] leading-relaxed text-ink-3">{card.body}</p>

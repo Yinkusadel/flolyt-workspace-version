@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -272,7 +273,7 @@ const LEAK_TREND_TONE_CLASS: Record<LeakRow["trendTone"], string> = {
 
 /** Screen A02 (and the shared template for every stage's Overview tab). */
 export function OverviewTab() {
-  const { stage } = useStageContext();
+  const { stage, headerActionsEl } = useStageContext();
   const [openRoomFor, setOpenRoomFor] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
@@ -346,21 +347,25 @@ export function OverviewTab() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-end gap-4">
-        {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain" || stage.slug === "expand" || stage.slug === "support" || stage.slug === "renew" || stage.slug === "advocate" || stage.slug === "churn") && (
-          <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
-            How this stage is defined
-          </Link>
+      {headerActionsEl &&
+        createPortal(
+          <>
+            {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain" || stage.slug === "expand" || stage.slug === "support" || stage.slug === "renew" || stage.slug === "advocate" || stage.slug === "churn") && (
+              <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
+                How this stage is defined
+              </Link>
+            )}
+            <button type="button" onClick={() => setShareOpen(true)} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
+              Share or export
+            </button>
+            {data.assignOwnerPreset && (
+              <Button type="button" size="sm" onClick={() => setAssignOwnerOpen(true)}>
+                Assign an owner
+              </Button>
+            )}
+          </>,
+          headerActionsEl
         )}
-        <button type="button" onClick={() => setShareOpen(true)} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
-          Share or export
-        </button>
-        {data.assignOwnerPreset && (
-          <Button type="button" size="sm" onClick={() => setAssignOwnerOpen(true)}>
-            Assign an owner
-          </Button>
-        )}
-      </div>
 
       {data.leadTitle && data.leadBody && (
         <Callout tone={data.leadTone ?? "amber"} title={data.leadTitle}>
@@ -371,11 +376,11 @@ export function OverviewTab() {
       <KpiCards items={data.kpis} />
 
       {data.barEyebrow && data.barRows && (
-        <section className="space-y-4">
+        <section className="space-y-3">
           <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
             {data.barEyebrow}
           </p>
-          <div className="space-y-5">
+          <div className="space-y-3">
             {data.barRows.map((row) => (
               <WideBarRow key={row.label} label={row.label} value={row.value} percent={row.percent} tone={row.tone} />
             ))}

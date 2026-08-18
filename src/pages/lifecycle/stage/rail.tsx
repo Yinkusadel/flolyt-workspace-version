@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Info } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -67,20 +68,22 @@ const CALLOUT_ACCENT_CLASSES = {
   neutral: "border-line bg-paper-2",
 } as const;
 
-const CALLOUT_BAR_CLASSES = {
-  amber: "bg-amber",
-  teal: "bg-teal",
-  rose: "bg-rose",
-  ultra: "bg-ultra",
-  neutral: "bg-ink-4",
+const CALLOUT_ICON_CLASSES = {
+  amber: "text-amber",
+  teal: "text-teal",
+  rose: "text-rose",
+  ultra: "text-ultra",
+  neutral: "text-ink-4",
 } as const;
 
 /**
- * Full-width insight callout with a left accent bar — the "uncomfortable
- * finding" boxes that close out nearly every new lifecycle screen (e.g.
- * A02's "more customers, fewer second orders" box, A06's CAC-vs-value box).
- * Distinct from RailCallout above, which has no accent bar and is sized for
- * the (now-removed) sidebar aside rather than full-width tab content.
+ * Full-width insight callout — the "uncomfortable finding" boxes that close
+ * out nearly every new lifecycle screen (e.g. A02's "more customers, fewer
+ * second orders" box, A06's CAC-vs-value box). No left accent strand (design
+ * cleanup: strands were removed from every card/callout across lifecycle);
+ * the leading info icon signals "this is a finding" instead. Distinct from
+ * RailCallout above, which is sized for the (now-removed) sidebar aside
+ * rather than full-width tab content.
  */
 export function Callout({
   tone = "amber",
@@ -92,11 +95,13 @@ export function Callout({
   children: ReactNode;
 }) {
   return (
-    <div className={cn("relative overflow-hidden rounded-card border pl-4", CALLOUT_ACCENT_CLASSES[tone])}>
-      <span className={cn("absolute inset-y-0 left-0 w-[3px]", CALLOUT_BAR_CLASSES[tone])} aria-hidden />
-      <div className="p-4 pl-1">
-        <h3 className="text-[12px] font-semibold text-ink">{title}</h3>
-        <p className="mt-1.5 text-[10.5px] leading-relaxed text-ink-2">{children}</p>
+    <div className={cn("rounded-card border p-4", CALLOUT_ACCENT_CLASSES[tone])}>
+      <div className="flex gap-2.5">
+        <Info className={cn("mt-0.5 size-4 shrink-0", CALLOUT_ICON_CLASSES[tone])} aria-hidden />
+        <div>
+          <h3 className="text-[12px] font-semibold text-ink">{title}</h3>
+          <p className="mt-1.5 text-[10.5px] leading-relaxed text-ink-2">{children}</p>
+        </div>
       </div>
     </div>
   );
@@ -119,9 +124,8 @@ export function RailDecisionCard({
   footnoteTone?: "ink" | "teal";
 }) {
   return (
-    <div className="relative overflow-hidden rounded-card border border-line bg-paper pl-4">
-      <span className="absolute inset-y-0 left-0 w-[3px] rounded-l-card bg-amber" aria-hidden />
-      <div className="p-4 pl-1">
+    <div className="rounded-card border border-line bg-paper">
+      <div className="p-4">
         <span className="font-mono text-[9px] font-semibold tracking-[0.9px] text-amber">
           {badge}
         </span>

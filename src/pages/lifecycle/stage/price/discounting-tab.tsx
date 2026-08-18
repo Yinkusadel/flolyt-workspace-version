@@ -9,7 +9,6 @@ const DISCOUNTED_TONE_CLASS: Record<DiscountGroupRow["discountedTone"], string> 
 const FULL_PRICE_TONE_CLASS: Record<DiscountGroupRow["fullPriceTone"], string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose" };
 const AT_STAKE_TONE_CLASS: Record<DiscountGroupRow["atStakeTone"], string> = { rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
 
-const CARD_ACCENT_CLASS: Record<PriceMemoryCard["tone"], string> = { ultra: "bg-ultra", amber: "bg-amber", rose: "bg-rose" };
 const CARD_EYEBROW_CLASS: Record<PriceMemoryCard["tone"], string> = { ultra: "text-ultra", amber: "text-amber", rose: "text-rose" };
 
 const COLUMNS: Column<DiscountGroupRow>[] = [
@@ -42,9 +41,8 @@ const PriceDiscountingTab = () => {
         <p className={EYEBROW_CLASS}>What business memory already knows about this</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {PRICE_DISCOUNT_MEMORY_CARDS.map((card) => (
-            <div key={card.id} className="relative overflow-hidden rounded-card border border-line bg-paper pl-4">
-              <span className={`absolute inset-y-0 left-0 w-[3px] ${CARD_ACCENT_CLASS[card.tone]}`} aria-hidden />
-              <div className="flex h-full flex-col gap-2.5 p-4 pl-1">
+            <div key={card.id} className="rounded-card border border-line bg-paper">
+              <div className="flex h-full flex-col gap-2.5 p-4">
                 <p className={`font-mono text-[9px] font-medium tracking-[0.85px] uppercase ${CARD_EYEBROW_CLASS[card.tone]}`}>{card.eyebrow}</p>
                 <h3 className="text-[13px] font-semibold text-ink">{card.title}</h3>
                 <p className="flex-1 text-[10.5px] leading-relaxed text-ink-3">{card.body}</p>

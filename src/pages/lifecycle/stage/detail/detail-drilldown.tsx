@@ -20,7 +20,6 @@ export type CheckedRow = {
 
 export type ActionCard = { id: string; eyebrow: string; tone: "teal" | "amber" | "neutral" | "rose"; title: string; body: string; footnote: string };
 
-const ACTION_ACCENT_CLASS: Record<ActionCard["tone"], string> = { teal: "bg-teal", amber: "bg-amber", neutral: "bg-ink-4", rose: "bg-rose" };
 const ACTION_EYEBROW_CLASS: Record<ActionCard["tone"], string> = { teal: "text-teal", amber: "text-amber", neutral: "text-ink-4", rose: "text-rose" };
 const EXTRA_TONE_CLASS: Record<NonNullable<CheckedRow["extraTone"]>, string> = { ink: "text-ink", teal: "text-teal" };
 
@@ -101,9 +100,8 @@ export function DetailDrilldown({
         <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{actionsEyebrow}</p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {actionCards.map((card) => (
-            <div key={card.id} className="relative overflow-hidden rounded-card border border-line bg-paper pl-4">
-              <span className={`absolute inset-y-0 left-0 w-[3px] ${ACTION_ACCENT_CLASS[card.tone]}`} aria-hidden />
-              <div className="flex h-full flex-col gap-2.5 p-4 pl-1">
+            <div key={card.id} className="rounded-card border border-line bg-paper">
+              <div className="flex h-full flex-col gap-2.5 p-4">
                 <p className={`font-mono text-[9px] font-medium tracking-[0.85px] uppercase ${ACTION_EYEBROW_CLASS[card.tone]}`}>
                   {card.eyebrow}
                 </p>
