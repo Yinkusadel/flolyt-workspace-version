@@ -18,18 +18,18 @@ export function StepMetric() {
             <div
               key={option.id}
               className={cn(
-                "flex items-center gap-3 px-4 py-3.5",
+                "flex items-start gap-3 px-4 py-3.5 sm:items-center",
                 option.blocked ? "bg-paper-2" : option.selected && "bg-ultra-bg"
               )}
             >
               {option.blocked ? (
-                <span className="flex size-4 shrink-0 items-center justify-center rounded-full border border-rose-border text-rose">
+                <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border border-rose-border text-rose sm:mt-0">
                   <X className="size-2.5" />
                 </span>
               ) : (
                 <span
                   className={cn(
-                    "flex size-4 shrink-0 items-center justify-center rounded-full border-2",
+                    "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2 sm:mt-0",
                     option.selected ? "border-ultra bg-ultra" : "border-line"
                   )}
                 >
@@ -41,8 +41,11 @@ export function StepMetric() {
                   {option.name}
                 </p>
                 <p className="mt-0.5 text-[11px] text-ink-3">{option.description}</p>
+                <Chip tone="neutral" className="mt-2 sm:hidden">
+                  {option.tag}
+                </Chip>
               </div>
-              <Chip tone="neutral" className="shrink-0">
+              <Chip tone="neutral" className="hidden shrink-0 sm:inline-flex">
                 {option.tag}
               </Chip>
             </div>
