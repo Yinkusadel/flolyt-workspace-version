@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
+import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { ConnectACogsSourceModal } from "@/pages/lifecycle/stage/modals/connect-a-cogs-source-modal";
 import { EYEBROW_CLASS } from "@/pages/lifecycle/data";
 import { PRICE_CONNECT_COGS_PRESET, PRICE_MARGIN_BLOCKED_ROWS, PRICE_MARGIN_CARDS, type MarginBlockedRow } from "@/pages/lifecycle/stage/price/data";
@@ -20,15 +22,18 @@ const COLUMNS: Column<MarginBlockedRow>[] = [
 
 /** PR05 — Price's Margin tab, entirely blocked on a cost-of-goods source. */
 const PriceMarginTab = () => {
+  const { headerActionsEl } = useStageContext();
   const [cogsOpen, setCogsOpen] = useState(false);
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
-        <Button type="button" size="sm" onClick={() => setCogsOpen(true)}>
-          Connect a COGS source
-        </Button>
-      </div>
+      {headerActionsEl &&
+        createPortal(
+          <Button type="button" size="sm" onClick={() => setCogsOpen(true)}>
+            Connect a COGS source
+          </Button>,
+          headerActionsEl
+        )}
 
       <div className="rounded-panel border-2 border-amber-border bg-amber-bg">
         <div className="space-y-3 p-5">

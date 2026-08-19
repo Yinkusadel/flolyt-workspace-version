@@ -73,6 +73,16 @@ import { CollisionRoute } from "@/pages/rooms/room/collision-route";
 import { CohortRoute } from "@/pages/rooms/room/cohort-route";
 import { CloseOutRoute } from "@/pages/rooms/room/close-out-route";
 import { MergeRoute } from "@/pages/rooms/room/merge-route";
+import Goals from "@/pages/goals";
+import NewGoal from "@/pages/goals/new";
+import GoalLayout from "@/pages/goals/goal/layout";
+import { GoalHomeRoute } from "@/pages/goals/goal/home-route";
+import { GoalOffTrackRoute } from "@/pages/goals/goal/off-track-route";
+import { GoalContributionsRoute } from "@/pages/goals/goal/contributions-route";
+import { GoalCascadeRoute } from "@/pages/goals/cascade-route";
+import { GoalsInTensionRoute } from "@/pages/goals/conflicts-route";
+import { QuarterCloseRoute } from "@/pages/goals/quarter-close-route";
+import Value from "@/pages/value";
 import WhatToDoToday from "@/pages/what-to-do-today";
 import TodayRankingRoute from "@/pages/what-to-do-today/ranking-route";
 import TodayItemDetailRoute from "@/pages/what-to-do-today/item-detail-route";
@@ -228,6 +238,29 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/today",
                 Component: SettingsTodayRoute,
+              },
+              {
+                path: "goals",
+                children: [
+                  { index: true, Component: Goals },
+                  { path: "new", Component: NewGoal },
+                  { path: "tree", Component: GoalCascadeRoute },
+                  { path: "conflicts", Component: GoalsInTensionRoute },
+                  { path: ":quarter/close", Component: QuarterCloseRoute },
+                  {
+                    path: ":goalId",
+                    Component: GoalLayout,
+                    children: [
+                      { index: true, Component: GoalHomeRoute },
+                      { path: "off-track", Component: GoalOffTrackRoute },
+                      { path: "contributions", Component: GoalContributionsRoute },
+                    ],
+                  },
+                ],
+              },
+              {
+                path: "value",
+                Component: Value,
               },
               {
                 path: "ai-teammates",

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { PersonAvatar } from "@/components/person-avatar";
@@ -196,7 +197,7 @@ const CURRENTLY_TONE_CLASS: Record<ThresholdRow["currentlyTone"], string> = {
 
 /** The shared Agents tab template (e.g. A10) — which agents watch this stage, and what would make one open a room. */
 export function AgentsTab() {
-  const { stage } = useStageContext();
+  const { stage, headerActionsEl } = useStageContext();
   const data = AGENTS_DATA[stage.slug];
   const [thresholdOpen, setThresholdOpen] = useState(false);
   const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
@@ -260,13 +261,14 @@ export function AgentsTab() {
 
   return (
     <div className="space-y-8">
-      {data.assignOwnerPreset && (
-        <div className="flex justify-end">
+      {data.assignOwnerPreset &&
+        headerActionsEl &&
+        createPortal(
           <Button type="button" size="sm" onClick={() => setAssignOwnerOpen(true)}>
             Assign an owner
-          </Button>
-        </div>
-      )}
+          </Button>,
+          headerActionsEl
+        )}
 
       <section className="space-y-3">
         <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.eyebrow}</p>

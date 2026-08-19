@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Chip } from "@/pages/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { KpiCards } from "@/pages/lifecycle/stage/kpi-cards";
+import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { BuildAnAudienceModal } from "@/pages/lifecycle/stage/modals/build-an-audience-modal";
 import { EYEBROW_CLASS } from "@/pages/lifecycle/data";
 import {
@@ -35,15 +37,18 @@ const COLUMNS: Column<RetainCampaignRow>[] = [
 
 /** RT06 — Retain's unique Reactivation tab. */
 const RetainReactivationTab = () => {
+  const { headerActionsEl } = useStageContext();
   const [buildOpen, setBuildOpen] = useState(false);
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
-        <Button type="button" size="sm" onClick={() => setBuildOpen(true)}>
-          Build an audience
-        </Button>
-      </div>
+      {headerActionsEl &&
+        createPortal(
+          <Button type="button" size="sm" onClick={() => setBuildOpen(true)}>
+            Build an audience
+          </Button>,
+          headerActionsEl
+        )}
 
       <KpiCards items={RETAIN_REACTIVATION_KPIS} />
 

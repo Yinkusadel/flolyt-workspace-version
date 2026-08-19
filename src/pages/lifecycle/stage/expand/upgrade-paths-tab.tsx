@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/pages/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
+import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { InsightCards } from "@/pages/lifecycle/stage/activate/insight-cards";
 import { ModelAnUpgradeModal } from "@/pages/lifecycle/stage/modals/model-an-upgrade-modal";
 import { EYEBROW_CLASS } from "@/pages/lifecycle/data";
@@ -41,15 +43,18 @@ const COLUMNS: Column<UpgradePathRow>[] = [
 
 /** EX03 — Expand's unique Upgrade paths tab. */
 const ExpandUpgradePathsTab = () => {
+  const { headerActionsEl } = useStageContext();
   const [modelOpen, setModelOpen] = useState(false);
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
-        <Button type="button" size="sm" onClick={() => setModelOpen(true)}>
-          Model an upgrade offer
-        </Button>
-      </div>
+      {headerActionsEl &&
+        createPortal(
+          <Button type="button" size="sm" onClick={() => setModelOpen(true)}>
+            Model an upgrade offer
+          </Button>,
+          headerActionsEl
+        )}
 
       <section className="space-y-3">
         <DataTable columns={COLUMNS} rows={EXPAND_UPGRADE_PATH_ROWS} />

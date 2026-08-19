@@ -2,13 +2,14 @@
 
 Source of truth for design: `flolyt-kit-122/README.md` (kit overview + section table) and
 `flolyt-kit-122/{nn}-{slug}.svg` (one SVG per screen, numbered to match the `#` column
-below) — **except section 2a (what to do today), section 3 (the lifecycle), and section 4
-(rooms and decisions)**, each rebuilt from its own newer `flolyt-figma-designs/Everyday
-Screens/` export (`flolyt-today/`, `flolyt-lifecycle/`, `flolyt-rooms/` respectively; the
-whole `Everyday Screens/` parent folder appeared on 2026-08-17); see each section's own header
-for its source-of-truth note. A `flolyt-figma-designs/Everyday Screens/flow-diagrams/` folder
-also exists now with architecture-level route maps — use it as a sanity check before building
-a new section, but each screen's own SVG footer still wins on the specific route.
+below) — **except section 2a (what to do today), section 2b (goals), section 3 (the
+lifecycle), and section 4 (rooms and decisions)**, each rebuilt from its own newer
+`flolyt-figma-designs/Everyday Screens/` export (`flolyt-today/`, `flolyt-goals/`,
+`flolyt-lifecycle/`, `flolyt-rooms/` respectively; the whole `Everyday Screens/` parent folder
+appeared on 2026-08-17); see each section's own header for its source-of-truth note. A
+`flolyt-figma-designs/Everyday Screens/flow-diagrams/` folder also exists now with
+architecture-level route maps — use it as a sanity check before building a new section, but
+each screen's own SVG footer still wins on the specific route.
 
 Update this file as we go: flip `Status` when a screen's implementation starts/lands, fill
 `Endpoint(s)` with the service/hook file(s) built for it, and use `Notes` for corrections
@@ -299,6 +300,59 @@ responsive-design constraint on the same routes via Tailwind breakpoints, not a 
 | Assign an owner / Snooze or dismiss modals | [x] | `modals/assign-an-owner-modal.tsx`, `modals/snooze-or-dismiss-modal.tsx` — wired only on the two rows the export shows them opened from |
 | `tsc -b` clean + Playwright console-error sweep (12 routes) + modal click-test | [x] | Verified 2026-08-18 |
 
+## 2b. Goals
+
+**Built from scratch on 2026-08-18** from `flolyt-figma-designs/Everyday Screens/flolyt-goals/`
+(17 screens, G00–G16), superseding kit-122's frames 75/76/78 ("set goals" / "goal tracker" /
+"value and roi" — see section 11's note) — same "old design source superseded" situation as
+today/lifecycle/rooms. Every SVG's own footer states its route. Extraction was done by two
+parallel research agents (G01–G08 / G09–G16), each producing a verbatim structured spec before
+any code was written.
+
+**Architecture:** `/goals` (index, `src/pages/goals/index.tsx`) is ONE route covering G01
+(empty — no goals set) and G07 (the populated tracker table) — branches on `GOAL_ROWS.length`,
+mirroring Rooms/Today's index branching; G01 is wired but unreachable with the current mock
+(`GOAL_ROWS` always has 5 rows), same "not wired, no demo state currently triggers it" situation
+as Rooms' R01/Today's T01. `/goals/new` (G02–G06) is a 5-step client-local wizard — no `?step=`
+param in any of G02–G06's own footers (the `G00` overview screen's summary listed step query
+params, but the individual screens' own footers all just say `/goals/new`, so the per-screen
+footer won per the established "SVG wins" rule) — built the same way as Rooms' `/rooms/new`.
+`/goals/:goalId` (`GoalLayout` + `useGoalContext`, mirrors `RoomLayout`) resolves a goal; only
+`repeat-90` (the 90-day repeat rate goal) is a fully-built detail page (G08 home + G09
+`/off-track` + G13 `/contributions`), same "one reference row built in full" pattern as Today's
+`r-8f2c` and Price's `plans/:id` — every other tracker row (net-revenue, second-orders,
+involuntary-churn, contribution-margin) exists only as an index row, `GoalLayout`'s not-found
+fallback catches any other `:goalId`. `/goals/tree` (G10, cascade) and `/goals/conflicts` (G11,
+tension) are standalone routes reusing a hand-rolled recursive row renderer and 3-card tension
+layout respectively. `/goals/:quarter/close` (G15, `quarter-close-route.tsx`) and `/value` (G14,
+`src/pages/value/index.tsx`) are both standalone — `/value` is a **top-level sibling of
+`/goals`, not nested under it**, per its own literal footer route and per
+`EVERYDAY-routes.md`'s note that it's the shared ledger written by both Goals and room close-out.
+G12 (change-the-target) is a modal opened from the goal detail page's "Edit this goal" button
+(`goal/change-target-modal.tsx`), not a routed page, following the same "modals are local state,
+not routes" pattern as every other shared modal in the app — even though its own footer names
+`/goals/:id/edit`, opening it as an overlay on whatever page triggered it matched the rest of
+the app better than adding a background-route pairing just for one modal. G16 (mobile) was
+treated as a responsive-design constraint on the same routes via Tailwind breakpoints — the
+tracker table becomes a stacked card list with thin progress bars below the `sm` breakpoint,
+matching G16's own "bars, not sparklines" / "all five goals, none dropped" annotations.
+
+People reused as-is from `@/pages/rooms/data.ts` (IFEOMA, TUNDE, AMARA, RAVI, ZAINAB, ADA,
+KUNLE) — every one of the goals export's named owners matched an existing `PersonRef` constant
+and `DEPARTMENT_COLORS` hex, confirmed by reading both before reusing rather than assumed.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — no goals set / tracker + agent findings | [x] | `src/pages/goals/index.tsx`, `data.ts`. Includes the G16 mobile stacked-card layout |
+| Set a goal wizard (metric / baseline / target+owner / levers / review) | [x] | `src/pages/goals/new/` — `index.tsx` + one `step-*.tsx` per screen + `data.ts` |
+| One goal (`:goalId`) | [x] | `goal/layout.tsx`, `goal/home-route.tsx`, `goal/data.ts` — only `repeat-90` built, matches the tracker's row 2 |
+| Off track / Contributions | [x] | `goal/off-track-route.tsx`, `goal/contributions-route.tsx` |
+| Change the target modal | [x] | `goal/change-target-modal.tsx`, opened from the goal detail page |
+| Goal cascade / Goals in tension | [x] | `cascade-route.tsx` + `cascade-data.ts`, `conflicts-route.tsx` + `conflicts-data.ts` |
+| Quarter close | [x] | `quarter-close-route.tsx` + `quarter-close-data.ts`, `/goals/:quarter/close` |
+| Value and ROI | [x] | `src/pages/value/index.tsx` + `data.ts`, top-level `/value` |
+| `tsc -b` clean + Playwright console-error sweep (9 routes × 3 breakpoints) + wizard click-through + modal click-test | [x] | Verified 2026-08-18 |
+
 ## 4. Rooms and decisions
 
 **Rebuilt from scratch on 2026-08-18** from `flolyt-figma-designs/Everyday Screens/flolyt-rooms/`
@@ -437,10 +491,10 @@ colors for all 5 so adding a demo room later needs no template change.
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 75 | set goals | [ ] | | |
-| 76 | goal tracker | [ ] | | |
+| 75 | set goals | [x] | | Superseded — rebuilt as `/goals/new` from the newer `flolyt-goals` export, see section 2b |
+| 76 | goal tracker | [x] | | Superseded — rebuilt as `/goals` from the newer `flolyt-goals` export, see section 2b |
 | 77 | recommendations feed | [x] | | Superseded — rebuilt as `/what-to-do-today` from the newer `flolyt-today` export, see section 2a |
-| 78 | value and roi | [ ] | | |
+| 78 | value and roi | [x] | | Superseded — rebuilt as `/value` from the newer `flolyt-goals` export, see section 2b |
 | 79 | daily digest | [ ] | | |
 
 ## 12. Analysis surfaces (80–84)

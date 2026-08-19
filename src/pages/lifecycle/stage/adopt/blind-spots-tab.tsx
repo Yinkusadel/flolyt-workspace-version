@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/pages/lifecycle/stage/rail";
 import { Chip } from "@/pages/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
+import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { RequestInstrumentationModal } from "@/pages/lifecycle/stage/modals/request-instrumentation-modal";
 import { EYEBROW_CLASS } from "@/pages/lifecycle/data";
 import {
@@ -41,15 +43,18 @@ const COLUMNS: Column<BlindSpotRow>[] = [
 
 /** AD06 — Adopt's "Not instrumented" tab (route path blind-spots per the SVG footer). */
 const AdoptBlindSpotsTab = () => {
+  const { headerActionsEl } = useStageContext();
   const [requestOpen, setRequestOpen] = useState(false);
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
-        <Button type="button" size="sm" onClick={() => setRequestOpen(true)}>
-          Request instrumentation
-        </Button>
-      </div>
+      {headerActionsEl &&
+        createPortal(
+          <Button type="button" size="sm" onClick={() => setRequestOpen(true)}>
+            Request instrumentation
+          </Button>,
+          headerActionsEl
+        )}
 
       <Callout tone="amber" title="What Flolyt cannot see, listed rather than left out">
         Every row below is a real part of the product with no event behind it. None of them appear as zero anywhere

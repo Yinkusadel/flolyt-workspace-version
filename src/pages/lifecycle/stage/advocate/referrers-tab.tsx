@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/pages/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
+import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { OpenARoomModal } from "@/pages/lifecycle/stage/modals/open-a-room-modal";
 import { InsightCards } from "@/pages/lifecycle/stage/activate/insight-cards";
 import { EYEBROW_CLASS } from "@/pages/lifecycle/data";
@@ -42,15 +44,18 @@ const COLUMNS: Column<AdvocateReferrerRow>[] = [
 
 /** AV03 — Advocate's unique Referrers tab (route path "referrers", matches its tab label). */
 const AdvocateReferrersTab = () => {
+  const { headerActionsEl } = useStageContext();
   const [openRoom, setOpenRoom] = useState(false);
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
-        <Button type="button" size="sm" onClick={() => setOpenRoom(true)}>
-          Open a war room
-        </Button>
-      </div>
+      {headerActionsEl &&
+        createPortal(
+          <Button type="button" size="sm" onClick={() => setOpenRoom(true)}>
+            Open a war room
+          </Button>,
+          headerActionsEl
+        )}
 
       <DataTable columns={COLUMNS} rows={ADVOCATE_REFERRER_ROWS} />
 
