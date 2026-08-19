@@ -549,13 +549,97 @@ colors for all 5 so adding a demo room later needs no template change.
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 44 | leakage map consumer | [ ] | | |
-| 45 | leakage map accounts | [ ] | | |
+| 44 | leakage map consumer | [x] | | Superseded — rebuilt as `/revenue/leaks` from the newer `flolyt-leakage-map` export, see section 6a |
+| 45 | leakage map accounts | [x] | | Superseded — same rebuild, see section 6a; the export has no separate "accounts mode", unlike Expand's own account view |
 | 46 | involuntary churn/dunning | [ ] | | |
 | 47 | revenue forecast | [ ] | | |
 | 48 | business memory | [x] | | `/business-memory` — static mock data in `src/pages/business-memory/data.ts`; search + filter pills (Validated/Observed/Superseded/Account-scoped) are real client-side state, not just decorative |
 | 49 | customer profile consumer | [ ] | | |
 | 50 | customer profile account | [ ] | | |
+
+## 6a. Leakage map
+
+**Built from scratch on 2026-08-19** from
+`flolyt-figma-designs/Revenue Screens/flolyt-leakage-map/` (19 frames, LK01–LK19), superseding
+kit-122's frames 44/45 ("leakage map consumer" / "leakage map accounts" — see section 6's note).
+This is the first section of a new **Revenue** group, sibling to Every day, sourced from its own
+`flolyt-figma-designs/Revenue Screens/` export — six more sections (Funnel, Scenario, Forecast,
+Attribution, Value, Benchmarks) are documented there but not yet built. LK00 is an index/route-map
+frame, not a product screen. Content was transcribed from the export's own `lk.py` generator
+source (which holds every frame's exact copy as literal Python string arguments) rather than
+parsed off the rendered SVG text nodes — confirmed more reliable than re-deriving copy from SVG
+`<text>` elements, and it also resolved `Section.save()`'s auto-numbering (several frames are
+saved under a provisional id in the source and land on their final `LKxx` number only once
+sequenced — the on-disk filenames are what the routing below is keyed to).
+
+**Architecture — index-branching on query params first, then a mock flag:**
+- `/revenue/leaks` (`src/pages/revenue/leaks/index.tsx`) is ONE route covering LK01 (nothing
+  measured yet — before the 1 January baseline locks), LK02 (the first finding, 27 days since 4
+  March), LK03 (the default populated map), LK05 (`?by=market`), LK06 (`?by=claim`), LK07
+  (`?view=`, saved views — shown with "The map" tab still active, per its own footer), LK08
+  (`?q=`, search — the one state with no tab bar at all), and LK11 (`?as=owner`, the "My stage"
+  lens). `by`/`as`/`view`/`q` are checked in that order, then `LEAKAGE_MAP_STATE` (a 3-value mock
+  flag defaulting to `"full"`) branches LK01/LK02/LK03 — LK01/LK02 are wired but unreachable with
+  that default, same "not wired, no demo state currently triggers it" situation as every prior
+  rebuild's empty/edge states.
+- `/revenue/leaks/changed` (LK09), `/revenue/leaks/unmeasurable` (LK12), and
+  `/revenue/leaks/detection` (LK13) are standalone sibling routes that share the same 6-tab bar
+  (`tabs.tsx`) as the index states — spanning both the query-param states and these three routes,
+  same "shared tab bar, not one route subtree" pattern as Digest's `settings/tabs.tsx`.
+- `/revenue/leaks/:id` (`leak-detail-route.tsx`) only has two built reference rows: LK04
+  (`delivery-fee-checkout`, the cross-stage "one leak, all ten stages" finding) and LK10
+  (`adopt-depth`, the unowned Adopt line) — every other id falls back to a not-found state, same
+  "one/two reference rows" pattern as Price's `plans/:id` and Today's `r-8f2c`. Reachable in-app
+  from the map's own Adopt stage-name cell, the map's callout body, and the search result's
+  release row.
+- `/revenue/leaks/export` (LK17) and `/settings/revenue/leaks` (LK18) are standalone routes — the
+  settings route sits outside the `/revenue/leaks` tree, matching the `/settings/digest` and
+  `/settings/authority` precedent.
+- **LK14/LK15/LK16 are three bespoke modals**, each hardcoded to the one row the export shows it
+  opened against — `open-a-room-from-line-modal.tsx` (Adopt · feature depth, opened from its
+  "none" room chip and the page-level "Open a room" button), `dispute-a-line-modal.tsx` (Price's
+  ₦31M discount-only-buyers finding, opened from its room chip), and
+  `reclassify-a-claim-modal.tsx` (Support's Lagos delivery failures finding, opened from its room
+  chip) — same "hardcoded to one reference row, not generic" pattern as every other stage-specific
+  modal in the app, since none of the three matched the shared `OpenARoomModal`'s own shape
+  closely enough to reuse without forking it beyond recognition.
+- LK19 (mobile) was treated as a responsive-design constraint on the main map table via Tailwind
+  breakpoints (`hidden md:block` table / `md:hidden` stacked cards), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** all eight named people in this
+export (Ifeoma Nwosu, Tunde Bakare, Amara Okeke, Ravi Mehta, Zainab Yusuf, Sam Iyer, Ada Obi,
+Kunle) are exact matches for `IFEOMA`/`TUNDE`/`AMARA`/`RAVI`/`ZAINAB`/`SAM`/`ADA`/`KUNLE` in
+`rooms/data.ts` — reused directly, zero new `PersonRef`s needed. Four of ten agents also matched
+existing `AgentRef`s (`REPEAT_DECAY`, `PRICE_MARGIN`, `INVOLUNTARY_CHURN`, `EXPANSION`); two new
+ones this export introduces (`PRODUCT_REASON`, `CHURN_REASON`) were added locally to
+`revenue/leaks/data.ts`. Two of the map's ten room names are exact matches for already-built rooms
+— "Second order never happened" and "Cards failing on renewal night" — and link straight to
+`/rooms/second-order-never-happened` and `/rooms/cards-failing-on-renewal-night`; the other eight
+room names (e.g. "Fee shown before value") don't match any built room and render as plain text
+rather than a fabricated link. `Chip`, `Callout`, `KpiCards`, `WideBarRow`, `StageSubpageHeader`,
+and the shared `AssignAnOwnerModal` (reused as-is with a new Adopt-specific preset, LK10's own
+"Zainab is the obvious candidate" framing) were all reused from `lifecycle/stage/` with zero
+forking. A local `LeaksKvList` (`kv-list.tsx`) was written instead of reusing digest's `KvList`
+because this section's tone vocabulary needed a sixth `muted`/ink-4 value on top of the app-wide
+5-value `Tone` (for the export's own "—" / "Unavailable" / "always" rows) — `LkTone` is a superset
+of `Tone`, not a fork of it.
+
+**New UI this section introduces:** `lens-bar.tsx`'s `LensBar` — LK11's per-person "viewing as"
+override (Ifeoma Nwosu, scoped to Retain), distinct from the sidebar's own Marketing/Sales/
+Products/Everyone selector. Nothing else in the app has a named-person lens yet; if Value's `VL13`
+("My rooms", Kunle) is built later from the Revenue export, this is the component to reuse.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing measured / first leak / the map / by market / by claim / saved views / search / my stage | [x] | `src/pages/revenue/leaks/index.tsx` + `states/*.tsx`. LK01/LK02 wired but unreachable with `LEAKAGE_MAP_STATE`'s current default |
+| What changed / Unmeasurable / Detection | [x] | `changed-route.tsx`, `unmeasurable-route.tsx`, `detection-route.tsx` |
+| One leak (`:id`) | [x] | `leak-detail-route.tsx` — only `delivery-fee-checkout` and `adopt-depth` built, every other id falls back to not-found |
+| Share and export | [x] | `export-route.tsx`, `/revenue/leaks/export` |
+| Settings | [x] | `settings/leaks-settings-route.tsx`, `/settings/revenue/leaks` |
+| Open a room from a line / Dispute a line / Reclassify a claim (modals) | [x] | `modals/*.tsx`, each hardcoded to the one row the export shows it against |
+| Sidebar "Leakage map" link | [x] | pre-existing stub pointed at `/leakage-map`, corrected to `/revenue/leaks` — same pre-existing-dangling-link situation as Handoff's nav item before its own section was built |
+| `tsc -b` clean + dev server + 14-route × 3-breakpoint (390/834/1440) Playwright console/page-error sweep (including a not-found `:id`) + 3-modal click-test + a real-room cross-link click-test | [x] | Verified 2026-08-19 |
 
 ## 7. Teams (51–58)
 

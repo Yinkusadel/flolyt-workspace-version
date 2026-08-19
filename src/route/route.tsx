@@ -120,6 +120,13 @@ import OneObligationRoute from "@/pages/everyday/handoff/obligation/one-obligati
 import HandoffEscalationRoute from "@/pages/everyday/handoff/settings/escalation-route";
 import DeparturesRoute from "@/pages/everyday/handoff/settings/departures-route";
 import HandoffSettingsRoute from "@/pages/everyday/handoff/settings/handoff-settings-route";
+import LeakageMap from "@/pages/revenue/leaks";
+import LeaksChangedRoute from "@/pages/revenue/leaks/changed-route";
+import LeaksUnmeasurableRoute from "@/pages/revenue/leaks/unmeasurable-route";
+import LeaksDetectionRoute from "@/pages/revenue/leaks/detection-route";
+import LeaksExportRoute from "@/pages/revenue/leaks/export-route";
+import LeakDetailRoute from "@/pages/revenue/leaks/leak-detail-route";
+import LeaksSettingsRoute from "@/pages/revenue/leaks/settings/leaks-settings-route";
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
@@ -366,6 +373,21 @@ export const routes = createBrowserRouter([
               {
                 path: "value",
                 Component: Value,
+              },
+              {
+                path: "revenue/leaks",
+                children: [
+                  { index: true, Component: LeakageMap },
+                  { path: "changed", Component: LeaksChangedRoute },
+                  { path: "unmeasurable", Component: LeaksUnmeasurableRoute },
+                  { path: "detection", Component: LeaksDetectionRoute },
+                  { path: "export", Component: LeaksExportRoute },
+                  { path: ":id", Component: LeakDetailRoute },
+                ],
+              },
+              {
+                path: "settings/revenue/leaks",
+                Component: LeaksSettingsRoute,
               },
               {
                 path: "ai-teammates",

@@ -93,7 +93,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: "REVENUE",
     items: [
-      { label: "Leakage map", href: "/leakage-map", icon: Map },
+      { label: "Leakage map", href: "/revenue/leaks", icon: Map },
       { label: "Funnel", href: "/funnel", icon: Filter },
       { label: "Scenario", href: "/scenario", icon: GitBranch },
       { label: "Attribution", href: "/attribution", icon: Share2 },

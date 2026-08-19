@@ -21,6 +21,11 @@ import { INBOX_ITEM_DETAILS } from "@/pages/everyday/inbox/data";
 /** Shared with every route via <Outlet context>, so a screen can scope its own content to the sidebar's "viewing as" selection. */
 export type AppOutletContext = { viewingAs: ViewingAs };
 
+const LEAK_DETAIL_TITLES: Record<string, string> = {
+  "delivery-fee-checkout": "The delivery fee moved to checkout",
+  "adopt-depth": "Adopt · feature depth",
+};
+
 const STAGE_LABELS: Record<string, string> = {
   acquire: "Acquire",
   activate: "Activate",
@@ -202,6 +207,32 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   if (pathname === "/handoff") return "Handoff";
 
   if (pathname === "/goals") return "Goals";
+
+  if (pathname === "/revenue/leaks") return "Leakage map";
+  if (pathname === "/revenue/leaks/changed")
+    return renderCrumbs([{ label: "Leakage map", to: "/revenue/leaks" }, { label: "What changed" }]);
+  if (pathname === "/revenue/leaks/unmeasurable")
+    return renderCrumbs([{ label: "Leakage map", to: "/revenue/leaks" }, { label: "Unmeasurable" }]);
+  if (pathname === "/revenue/leaks/detection")
+    return renderCrumbs([{ label: "Leakage map", to: "/revenue/leaks" }, { label: "Detection" }]);
+  if (pathname === "/revenue/leaks/export")
+    return renderCrumbs([{ label: "Leakage map", to: "/revenue/leaks" }, { label: "Export" }]);
+  if (pathname === "/settings/revenue/leaks")
+    return renderCrumbs([{ label: "Leakage map", to: "/revenue/leaks" }, { label: "Settings" }]);
+
+  const leakDetailMatch = /^\/revenue\/leaks\/([^/]+)$/.exec(pathname);
+  if (leakDetailMatch) {
+    const title = LEAK_DETAIL_TITLES[leakDetailMatch[1]] ?? leakDetailMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/revenue/leaks" className="hover:text-ink">
+          Leakage map
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
 
   if (pathname === "/ai-teammates") return "AI teammates";
 
