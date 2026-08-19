@@ -6,6 +6,7 @@ import { StageSubpageHeader } from "@/pages/lifecycle/stage/stage-subpage-header
 import { Chip } from "@/pages/lifecycle/stage/chip";
 import { PersonDot } from "@/pages/rooms/actor";
 import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { InboxTabs } from "@/pages/inbox/quick-links";
 import { DELEGATION_BANNER, DELEGATION_CARDS, DELEGATION_CLOSING_CALLOUT, DELEGATION_ROWS } from "@/pages/inbox/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
@@ -28,6 +29,8 @@ const DelegationRoute = () => {
         subtitle="15–22 August · nine things would wait · ₦186M behind them"
         action={<Button onClick={() => toast.success("Cover creation isn't wired up in this preview")}>Set the cover</Button>}
       />
+
+      <InboxTabs />
 
       <div className="rounded-card border border-amber-border bg-amber-bg p-4">
         <h3 className="text-[13px] font-semibold text-ink">{DELEGATION_BANNER.title}</h3>

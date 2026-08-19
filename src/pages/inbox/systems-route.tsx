@@ -3,6 +3,7 @@ import { StageSubpageHeader } from "@/pages/lifecycle/stage/stage-subpage-header
 import { Chip } from "@/pages/lifecycle/stage/chip";
 import { PersonDot } from "@/pages/rooms/actor";
 import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { InboxTabs } from "@/pages/inbox/quick-links";
 import { SYSTEMS_CLOSING_CALLOUT, SYSTEMS_INFO_CARDS, SYSTEMS_ROWS } from "@/pages/inbox/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
@@ -24,6 +25,8 @@ const SystemsRoute = () => {
         title="Systems"
         subtitle="Five items · nothing dropped · what each one blocks is the column that matters"
       />
+
+      <InboxTabs />
 
       <div className="overflow-x-auto rounded-card border border-line bg-paper">
         <table className="w-full min-w-[960px] text-left text-[11.5px]">

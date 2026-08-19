@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
 import { TeamDot } from "@/pages/inbox/team-dot";
+import { InboxTabs } from "@/pages/inbox/quick-links";
 import { FALLBACK_OPTIONS, UNROUTABLE_LAST_ROW_CALLOUT, UNROUTABLE_ROWS } from "@/pages/inbox/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
@@ -38,6 +39,8 @@ const UnroutableRoute = () => {
           Set a fallback rule
         </Button>
       </div>
+
+      <InboxTabs />
 
       <div className="flex items-center gap-1 overflow-x-auto">
         {TABS.map((tab) => (

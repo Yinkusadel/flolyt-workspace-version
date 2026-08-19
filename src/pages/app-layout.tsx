@@ -36,7 +36,8 @@ const STAGE_LABELS: Record<string, string> = {
 
 function getBreadcrumb(pathname: string): React.ReactNode {
   if (pathname === "/lifecycle") return "Lifecycle";
-  if (pathname === "/lifecycle/settings") return "Lifecycle / Settings";
+  if (pathname === "/lifecycle/settings")
+    return renderCrumbs([{ label: "Lifecycle", to: "/lifecycle" }, { label: "Settings" }]);
 
   // Matches the bare stage route and every sub-route under it (tabs,
   // compare, definition, :id drilldowns) — the stage-level layouts render
@@ -56,8 +57,10 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   }
 
   if (pathname === "/rooms") return "Rooms";
-  if (pathname === "/rooms/new") return "Rooms / New room";
-  if (pathname === "/rooms/subscriptions") return "Rooms / What you watch";
+  if (pathname === "/rooms/new")
+    return renderCrumbs([{ label: "Rooms", to: "/rooms" }, { label: "New room" }]);
+  if (pathname === "/rooms/subscriptions")
+    return renderCrumbs([{ label: "Rooms", to: "/rooms" }, { label: "What you watch" }]);
   if (pathname === "/plays") return "Plays";
 
   const roomMatch = /^\/rooms\/([^/]+)/.exec(pathname);
@@ -75,20 +78,44 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   }
 
   if (pathname === "/what-to-do-today") return "What to do today";
-  if (pathname === "/what-to-do-today/ranking") return "What to do today / How this is ranked";
-  if (pathname === "/what-to-do-today/snoozed") return "What to do today / Snoozed";
-  if (pathname === "/what-to-do-today/waiting-on-data") return "What to do today / Waiting on data";
-  if (pathname === "/what-to-do-today/done") return "What to do today / Done";
-  if (pathname === "/settings/today") return "What to do today / Settings";
+  if (pathname === "/what-to-do-today/ranking")
+    return renderCrumbs([{ label: "What to do today", to: "/what-to-do-today" }, { label: "How this is ranked" }]);
+  if (pathname === "/what-to-do-today/snoozed")
+    return renderCrumbs([{ label: "What to do today", to: "/what-to-do-today" }, { label: "Snoozed" }]);
+  if (pathname === "/what-to-do-today/waiting-on-data")
+    return renderCrumbs([{ label: "What to do today", to: "/what-to-do-today" }, { label: "Waiting on data" }]);
+  if (pathname === "/what-to-do-today/done")
+    return renderCrumbs([{ label: "What to do today", to: "/what-to-do-today" }, { label: "Done" }]);
+  if (pathname === "/settings/today")
+    return renderCrumbs([{ label: "What to do today", to: "/what-to-do-today" }, { label: "Settings" }]);
 
   if (pathname === "/digest") return "Digest";
-  if (pathname === "/digest/archive") return "Digest / Archive";
-  if (pathname === "/digest/weekly") return "Digest / Weekly roll-up";
-  if (pathname === "/digest/excluded") return "Digest / Not in this digest";
-  if (pathname === "/settings/digest") return "Digest / Settings";
-  if (pathname === "/settings/digest/channels") return "Digest / Settings / Channels";
-  if (pathname === "/settings/digest/quiet-hours") return "Digest / Settings / Quiet hours";
-  if (pathname === "/settings/notifications") return "Digest / Settings / Notification rules";
+  if (pathname === "/digest/archive")
+    return renderCrumbs([{ label: "Digest", to: "/digest" }, { label: "Archive" }]);
+  if (pathname === "/digest/weekly")
+    return renderCrumbs([{ label: "Digest", to: "/digest" }, { label: "Weekly roll-up" }]);
+  if (pathname === "/digest/excluded")
+    return renderCrumbs([{ label: "Digest", to: "/digest" }, { label: "Not in this digest" }]);
+  if (pathname === "/settings/digest")
+    return renderCrumbs([{ label: "Digest", to: "/digest" }, { label: "Settings" }]);
+  if (pathname === "/settings/digest/channels")
+    return renderCrumbs([
+      { label: "Digest", to: "/digest" },
+      { label: "Settings", to: "/settings/digest" },
+      { label: "Channels" },
+    ]);
+  if (pathname === "/settings/digest/quiet-hours")
+    return renderCrumbs([
+      { label: "Digest", to: "/digest" },
+      { label: "Settings", to: "/settings/digest" },
+      { label: "Quiet hours" },
+    ]);
+  if (pathname === "/settings/notifications")
+    return renderCrumbs([
+      { label: "Digest", to: "/digest" },
+      { label: "Settings", to: "/settings/digest" },
+      { label: "Notification rules" },
+    ]);
 
   const digestDateMatch = /^\/digest\/([^/]+)/.exec(pathname);
   if (digestDateMatch) {
@@ -118,15 +145,32 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   }
 
   if (pathname === "/inbox") return "Inbox";
-  if (pathname === "/inbox/replies") return "Inbox / Replies";
-  if (pathname === "/inbox/routing") return "Inbox / Routing";
-  if (pathname === "/inbox/routing/unroutable") return "Inbox / Routing / Unroutable";
-  if (pathname === "/inbox/snoozed") return "Inbox / Snoozed";
-  if (pathname === "/inbox/delegation") return "Inbox / Delegation";
-  if (pathname === "/inbox/systems") return "Inbox / Systems";
-  if (pathname === "/settings/authority") return "Inbox / Approval authority";
-  if (pathname === "/settings/authority/standing") return "Inbox / Approval authority / Standing authority";
-  if (pathname === "/settings/inbox") return "Inbox / Settings";
+  if (pathname === "/inbox/replies")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Replies" }]);
+  if (pathname === "/inbox/routing")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Routing" }]);
+  if (pathname === "/inbox/routing/unroutable")
+    return renderCrumbs([
+      { label: "Inbox", to: "/inbox" },
+      { label: "Routing", to: "/inbox/routing" },
+      { label: "Unroutable" },
+    ]);
+  if (pathname === "/inbox/snoozed")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Snoozed" }]);
+  if (pathname === "/inbox/delegation")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Delegation" }]);
+  if (pathname === "/inbox/systems")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Systems" }]);
+  if (pathname === "/settings/authority")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Approval authority" }]);
+  if (pathname === "/settings/authority/standing")
+    return renderCrumbs([
+      { label: "Inbox", to: "/inbox" },
+      { label: "Approval authority", to: "/settings/authority" },
+      { label: "Standing authority" },
+    ]);
+  if (pathname === "/settings/inbox")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Settings" }]);
 
   const inboxReplyMatch = /^\/inbox\/replies\/([^/]+)/.exec(pathname);
   if (inboxReplyMatch) {

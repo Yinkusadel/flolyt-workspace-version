@@ -1,34 +1,57 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Settings } from "lucide-react";
 
-/** Cross-links into the rest of the Inbox section, shown at the top of every /inbox state — otherwise
- * replies/routing/snoozed/systems/delegation/settings have no in-app path leading to them. */
-export function InboxQuickLinks() {
+import { cn } from "@/lib/utils";
+
+const INBOX_TABS = [
+  { label: "Overview", to: "/inbox", exact: true },
+  { label: "Replies", to: "/inbox/replies", exact: false },
+  { label: "Routing", to: "/inbox/routing", exact: false },
+  { label: "Snoozed", to: "/inbox/snoozed", exact: false },
+  { label: "Systems", to: "/inbox/systems", exact: false },
+  { label: "While away", to: "/inbox/delegation", exact: false },
+];
+
+/** The Inbox section's own tab bar, shown below the header on every /inbox page — otherwise
+ * replies/routing/snoozed/systems/delegation have no in-app path leading to each other. Active tab is
+ * derived from the current path, same as ScopeTabs on What to do today; Overview covers the root
+ * page so there is always exactly one active tab. */
+export function InboxTabs() {
+  const { pathname } = useLocation();
+
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-line pb-3 text-[11px] text-ink-3">
-      <Link to="/inbox/replies" className="hover:text-ink">
-        Replies
-      </Link>
-      <span className="text-ink-4">·</span>
-      <Link to="/inbox/routing" className="hover:text-ink">
-        Routing
-      </Link>
-      <span className="text-ink-4">·</span>
-      <Link to="/inbox/snoozed" className="hover:text-ink">
-        Snoozed
-      </Link>
-      <span className="text-ink-4">·</span>
-      <Link to="/inbox/systems" className="hover:text-ink">
-        Systems
-      </Link>
-      <span className="text-ink-4">·</span>
-      <Link to="/inbox/delegation" className="hover:text-ink">
-        While away
-      </Link>
-      <Link to="/settings/inbox" className="ml-auto flex items-center gap-1 hover:text-ink" aria-label="Inbox settings">
-        <Settings className="size-3" aria-hidden />
-        Settings
-      </Link>
+    <div className="-mx-4 overflow-x-auto border-b border-line px-4 sm:mx-0 sm:px-0">
+      <div className="flex items-center gap-1">
+        {INBOX_TABS.map((tab) => {
+          const active = tab.exact ? pathname === tab.to : pathname === tab.to || pathname.startsWith(`${tab.to}/`);
+          return (
+            <Link
+              key={tab.to}
+              to={tab.to}
+              className={cn(
+                "shrink-0 rounded-t-panel border-b-2 px-3 py-2.5 text-[11.5px] whitespace-nowrap",
+                active ? "border-ink font-semibold text-ink" : "border-transparent font-normal text-ink-3 hover:text-ink-2"
+              )}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </div>
     </div>
+  );
+}
+
+/** Link into /settings/inbox, styled to sit alongside a state's other header actions. */
+export function InboxSettingsLink() {
+  return (
+    <Link
+      to="/settings/inbox"
+      aria-label="Inbox settings"
+      className="flex shrink-0 items-center gap-1 rounded-panel border border-line bg-paper px-3 py-1.5 text-[11.5px] font-medium text-ink-2 hover:border-ink-4"
+    >
+      <Settings className="size-3" aria-hidden />
+      Settings
+    </Link>
   );
 }

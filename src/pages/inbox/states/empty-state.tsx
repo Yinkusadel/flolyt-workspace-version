@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { AgentDot } from "@/pages/rooms/actor";
 import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
-import { InboxQuickLinks } from "@/pages/inbox/quick-links";
+import { InboxSettingsLink, InboxTabs } from "@/pages/inbox/quick-links";
 import { WORKING_AGENTS } from "@/pages/inbox/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
@@ -10,12 +10,15 @@ const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8
 export function EmptyState() {
   return (
     <div className="space-y-6">
-      <InboxQuickLinks />
-
-      <div>
-        <h1 className="text-[17px] font-semibold text-ink">Your inbox</h1>
-        <p className="mt-1 text-[11.5px] text-ink-3">Nothing needs a decision · six agents still working</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-[17px] font-semibold text-ink">Your inbox</h1>
+          <p className="mt-1 text-[11.5px] text-ink-3">Nothing needs a decision · six agents still working</p>
+        </div>
+        <InboxSettingsLink />
       </div>
+
+      <InboxTabs />
 
       <div className="rounded-card border border-dashed border-line bg-paper p-10 text-center">
         <p className="text-[14px] font-semibold text-ink">Nothing is waiting on you</p>

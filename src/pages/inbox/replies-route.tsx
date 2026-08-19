@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { AgentDot } from "@/pages/rooms/actor";
 import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
 import { Chip } from "@/pages/lifecycle/stage/chip";
+import { InboxTabs } from "@/pages/inbox/quick-links";
 import {
   REPLIES_CLOSING_CALLOUT,
   REPLIES_TABS,
@@ -34,6 +35,8 @@ const RepliesRoute = () => {
           Five need a human · 1,904 answered themselves · two changed a decision doc
         </p>
       </div>
+
+      <InboxTabs />
 
       <div className="flex items-center gap-1 overflow-x-auto">
         {REPLIES_TABS.map((tab) => (

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { AgentDot, PersonDot } from "@/pages/rooms/actor";
 import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
 import { BulkSelectionPanel } from "@/pages/inbox/bulk-selection-panel";
-import { InboxQuickLinks } from "@/pages/inbox/quick-links";
+import { InboxSettingsLink, InboxTabs } from "@/pages/inbox/quick-links";
 import { DECISION_CARDS, MENTIONS, NEVER_APPEAR_CALLOUT, SYSTEMS_CALLOUT } from "@/pages/inbox/data";
 
 const ROOM_LINKS: Record<string, string> = {
@@ -39,8 +39,6 @@ export function NormalState() {
 
   return (
     <div className="space-y-6">
-      <InboxQuickLinks />
-
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-[17px] font-semibold text-ink">Your inbox</h1>
@@ -66,8 +64,11 @@ export function NormalState() {
           >
             Mark all read
           </button>
+          <InboxSettingsLink />
         </div>
       </div>
+
+      <InboxTabs />
 
       <div>
         <p className="mb-2 font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">

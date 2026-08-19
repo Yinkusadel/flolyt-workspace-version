@@ -7,6 +7,7 @@ import { Chip } from "@/pages/lifecycle/stage/chip";
 import { KpiCards } from "@/pages/lifecycle/stage/kpi-cards";
 import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
 import { TeamDot } from "@/pages/inbox/team-dot";
+import { InboxTabs } from "@/pages/inbox/quick-links";
 import { ROUTING_CLOSING_CALLOUT, ROUTING_RULES, ROUTING_STATS } from "@/pages/inbox/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
@@ -35,6 +36,8 @@ const RoutingRulesRoute = () => {
           New rule
         </Button>
       </div>
+
+      <InboxTabs />
 
       <div className="flex items-center gap-1 overflow-x-auto">
         {TABS.map((tab) => (

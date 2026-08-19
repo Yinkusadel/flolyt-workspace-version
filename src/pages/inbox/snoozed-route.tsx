@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { StageSubpageHeader } from "@/pages/lifecycle/stage/stage-subpage-header";
 import { KvList } from "@/pages/digest/kv-list";
 import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { InboxTabs } from "@/pages/inbox/quick-links";
 import { SNOOZED_CALLOUT, SNOOZED_ROWS, SNOOZE_RULES } from "@/pages/inbox/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
@@ -15,6 +16,8 @@ const SnoozedRoute = () => {
         title="Snoozed"
         subtitle="Five items · one snoozed twice and escalated · ₦31M sitting behind it"
       />
+
+      <InboxTabs />
 
       <div className="overflow-x-auto rounded-card border border-line bg-paper">
         <table className="w-full min-w-[960px] text-left text-[11.5px]">

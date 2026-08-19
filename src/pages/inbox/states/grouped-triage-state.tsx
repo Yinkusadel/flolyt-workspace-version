@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Chip } from "@/pages/lifecycle/stage/chip";
 import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
-import { InboxQuickLinks } from "@/pages/inbox/quick-links";
+import { InboxSettingsLink, InboxTabs } from "@/pages/inbox/quick-links";
 import { GROUPED_CLOSING_CALLOUT, GROUPED_ROWS, GROUP_CARDS, GROUP_FILTER_TABS } from "@/pages/inbox/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
@@ -12,14 +12,17 @@ const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8
 export function GroupedTriageState({ activeGroup }: { activeGroup: string }) {
   return (
     <div className="space-y-6">
-      <InboxQuickLinks />
-
-      <div>
-        <h1 className="text-[17px] font-semibold text-ink">Your inbox</h1>
-        <p className="mt-1 text-[11.5px] text-ink-3">
-          Eleven decisions · grouped by what one more day of waiting costs
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-[17px] font-semibold text-ink">Your inbox</h1>
+          <p className="mt-1 text-[11.5px] text-ink-3">
+            Eleven decisions · grouped by what one more day of waiting costs
+          </p>
+        </div>
+        <InboxSettingsLink />
       </div>
+
+      <InboxTabs />
 
       <div className="flex items-center gap-1 overflow-x-auto">
         {GROUP_FILTER_TABS.map((tab) => (
