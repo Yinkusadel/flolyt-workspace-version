@@ -32,13 +32,13 @@ const DigestArchiveRoute = () => {
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="flex items-center gap-1 overflow-x-auto">
         {FILTER_TABS.map((tab) => (
           <Link
             key={tab.key}
             to={tab.key === "daily" ? "/digest/archive" : `/digest/archive?filter=${tab.key}`}
             className={cn(
-              "rounded-panel px-3 py-1.5 text-[11px]",
+              "shrink-0 rounded-panel px-3 py-1.5 text-[11px] whitespace-nowrap",
               active === tab.key
                 ? "border border-line bg-paper font-semibold text-ink"
                 : "font-normal text-ink-3 hover:text-ink-2"

@@ -20,13 +20,13 @@ const TABS: { key: DigestSettingsTab; label: string; href: string }[] = [
 
 export function DigestSettingsTabs({ active }: { active: DigestSettingsTab }) {
   return (
-    <div className="flex flex-wrap items-center gap-1">
+    <div className="flex items-center gap-1 overflow-x-auto">
       {TABS.map((tab) => (
         <Link
           key={tab.key}
           to={tab.href}
           className={cn(
-            "rounded-panel px-3 py-1.5 text-[11.5px]",
+            "shrink-0 rounded-panel px-3 py-1.5 text-[11.5px] whitespace-nowrap",
             active === tab.key
               ? "border border-line bg-paper font-semibold text-ink"
               : "font-normal text-ink-3 hover:text-ink-2"

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Settings } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/pages/lifecycle/stage/rail";
@@ -17,14 +18,19 @@ export function TodayState() {
             Wednesday 13 August · built at 06:00 Lagos · about ninety seconds to read
           </p>
         </div>
-        <div className="flex shrink-0 gap-2.5">
+        <div className="flex flex-wrap gap-2.5 sm:shrink-0 sm:justify-end">
           <Button asChild variant="outline">
             <Link to="/digest/weekly">Weekly roll-up</Link>
           </Button>
           <Button asChild variant="outline">
             <Link to="/digest/archive">Archive</Link>
           </Button>
-          <Button asChild>
+          <Button asChild size="icon" className="sm:hidden" aria-label="Digest settings">
+            <Link to="/settings/digest">
+              <Settings />
+            </Link>
+          </Button>
+          <Button asChild className="hidden sm:inline-flex">
             <Link to="/settings/digest">Digest settings</Link>
           </Button>
         </div>
