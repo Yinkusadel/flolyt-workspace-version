@@ -111,6 +111,15 @@ import InboxSystemsRoute from "@/pages/inbox/systems-route";
 import AuthorityThresholdsRoute from "@/pages/inbox/settings/authority-thresholds-route";
 import AuthorityStandingRoute from "@/pages/inbox/settings/authority-standing-route";
 import InboxSettingsRoute from "@/pages/inbox/settings/inbox-settings-route";
+import Handoff from "@/pages/handoff";
+import HandoffLoadRoute from "@/pages/handoff/load-route";
+import ChainLayout from "@/pages/handoff/chain/chain-layout";
+import ChainHomeRoute from "@/pages/handoff/chain/chain-home-route";
+import ObligationsRoute from "@/pages/handoff/chain/obligations-route";
+import OneObligationRoute from "@/pages/handoff/obligation/one-obligation-route";
+import HandoffEscalationRoute from "@/pages/handoff/settings/escalation-route";
+import DeparturesRoute from "@/pages/handoff/settings/departures-route";
+import HandoffSettingsRoute from "@/pages/handoff/settings/handoff-settings-route";
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
@@ -306,6 +315,34 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/inbox",
                 Component: InboxSettingsRoute,
+              },
+              {
+                path: "handoff",
+                children: [
+                  { index: true, Component: Handoff },
+                  { path: "load", Component: HandoffLoadRoute },
+                  {
+                    path: ":id",
+                    Component: ChainLayout,
+                    children: [
+                      { index: true, Component: ChainHomeRoute },
+                      { path: "obligations", Component: ObligationsRoute },
+                      { path: "o/:oid", Component: OneObligationRoute },
+                    ],
+                  },
+                ],
+              },
+              {
+                path: "settings/handoff-escalation",
+                Component: HandoffEscalationRoute,
+              },
+              {
+                path: "settings/departures",
+                Component: DeparturesRoute,
+              },
+              {
+                path: "settings/handoff",
+                Component: HandoffSettingsRoute,
               },
               {
                 path: "goals",

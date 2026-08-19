@@ -199,6 +199,8 @@ function getBreadcrumb(pathname: string): React.ReactNode {
     );
   }
 
+  if (pathname === "/handoff") return "Handoff";
+
   if (pathname === "/goals") return "Goals";
 
   if (pathname === "/ai-teammates") return "AI teammates";

@@ -567,8 +567,106 @@ colors for all 5 so adding a demo room later needs no template change.
 | 54 | team customer success | [ ] | | |
 | 55 | team engineering | [ ] | | |
 | 56 | executive unit economics | [ ] | | |
-| 57 | cross-functional handoff | [ ] | | |
+| 57 | cross-functional handoff | [x] | | Superseded — rebuilt as `/handoff` from the newer `flolyt-handoff` export, see section 7a |
 | 58 | routing | [ ] | | |
+
+## 7a. Handoff
+
+**Built from scratch on 2026-08-19** from `flolyt-figma-designs/Everyday Screens/flolyt-handoff/`
+(17 screens, H00–H16), superseding kit-122's frame 57 ("cross-functional handoff" — see section 7's
+note) — same "old design source superseded, don't resurrect the old shape" situation as
+today/goals/digest/inbox/lifecycle/rooms. H00 is an index/route-map frame, not a product screen.
+Extraction was done by two parallel research agents (H00–H08 / H09–H16), each producing a verbatim
+structured spec before any code was written. A `flolyt-figma-designs/Everyday Screens/flow-diagrams/
+07-handoff.svg` route map was also read first as an architecture sanity check, per
+[[flolyt_flow_diagrams]] — it confirmed "Overdue" is a state filter on the index (`?state=overdue`),
+not its own route, and that H02 (index)/H06 (one obligation)/H07 (accept-or-dispute) were the
+diagram's own "missing — recommended" additions that make the section a working surface rather than
+just H04's one illustrative chain.
+
+**Architecture — index-branching on query params first, then a mock flag:**
+- `/handoff` (`src/pages/handoff/index.tsx`) is ONE route covering H01 (no handoffs yet — empty
+  state), H02 (default populated chains index), H03 (`?owner=me`) and H10 (`?state=overdue`) —
+  `owner`/`state` query params are checked first, then the `HANDOFF_EMPTY` mock flag. H01 is wired
+  but unreachable with the current default, same "not wired, no demo state currently triggers it"
+  situation as every prior rebuild's empty state. "Owed by me" and "Owed to me" tabs both point at
+  `/handoff?owner=me` — that one built page (H03) already shows both directions, and no separate
+  screen exists for an owed-to-me-only view.
+- `/handoff/:id` (`chain/chain-layout.tsx` + `chain-home-route.tsx`) resolves a chain and branches on
+  its own `status`, mirroring Rooms' `RoomLayout`/`RoomHomeRoute` split — `closed` renders
+  `closed-chain-route.tsx` (H14, own header, no tab bar), everything else renders
+  `live-chain-route.tsx` (H04, timeline + insights) under a 2-tab bar (`chain-tabs.tsx`: The chain /
+  Obligations). H05's own tab bar shows a third "Timeline" tab, but no screen in this export backs a
+  separate timeline view — H04 already is one — so it was left out rather than built as dangling nav,
+  same call as Inbox's `authority-tabs.tsx` dropping Escalation/Recent. Only two chains have a full
+  build: `delivery-fee` (live, the flagship "one cause, five teams" example threaded through nearly
+  every screen) and `card-retry` (closed, H14's own reference). The other four chains in H02's index
+  table (`lagos-delivery-failures`, `discount-leakage`, `ghana-signup-drop`, `weekend-push-fatigue`)
+  exist only as index rows; `ChainLayout`'s not-found fallback catches any other `:id`.
+- `/handoff/:id/obligations` (`obligations-route.tsx`, H05) — only meaningful for the live
+  `delivery-fee` chain. The "Hold releases against revenue 14 days" row (the one unaccepted
+  obligation) gets a "Review" action opening the Accept-or-dispute modal with H07's own exact
+  content; the overdue row (`renewal-reforecast`) links to its own detail page.
+- `/handoff/:id/o/:oid` (`obligation/one-obligation-route.tsx`, H06) — only `renewal-reforecast`
+  ("Re-forecast the August renewal book") has a full build, same "one reference row" pattern as
+  Today's `r-8f2c`, Price's `plans/:id`, Digest's `2026-08-11`, Inbox's `i-8f2c`. This is the
+  section's canonical demo obligation, threaded through H06/H09/H10/H16 with consistent numbers
+  (₦88M, due 9 Aug, Kunle → Joy Nduta).
+- **H07 (Accept or dispute) is a generic modal** (`obligation/accept-dispute-modal.tsx`) — the four
+  options and their descriptions are shared product copy, so only the summary chip/subtitle/default
+  selection vary per call site (unlike every other modal in this app, which is hardcoded to one
+  obligation). Opened from `renewal-reforecast`'s own page and from the "Hold releases" row's
+  "Review" action. Selecting "Pass it on" hands off to the Reassign modal via an `onPassItOn`
+  callback rather than duplicating that flow.
+- **H09 (Reassign)** (`obligation/reassign-modal.tsx`) is hardcoded to `renewal-reforecast` (Kunle →
+  Joy Nduta/Ravi Mehta/Peter Kariuki), matching every other modal's "one reference row" precedent.
+  Opened from the one-obligation page's "Reassign" button and from Accept-or-dispute's "Pass it on".
+- **H08 (Create handoffs from a decision)** is wired into Rooms, not `/handoff` — its own route is
+  `modal · /rooms/:id/decision`, and its dimmed backdrop (a room decided 08:02 by Ifeoma Nwosu,
+  ₦412M at risk, 148,000 customers) is an exact match for the existing reference room
+  `second-order-never-happened`'s own `decisionDoc` (`rooms/room/data.ts`). Added a "Create
+  handoffs" button to that room's Decision panel (`rooms/room/workspace/workspace.tsx`,
+  `DecisionPanelBody`), gated on `room.id === "second-order-never-happened"`, opening
+  `handoff/create-from-decision-modal.tsx` — the 4 drafted obligations it creates are exactly the
+  ones populating the `delivery-fee` chain's own obligations table.
+- `/handoff/load` (`load-route.tsx`, H12) — "By team" tab is fully built (team load bars +
+  Engineering's own detail table); "By person" reuses H10's own "four of six sit with one person"
+  copy verbatim rather than fabricating an org-wide per-person breakdown the source doesn't have.
+- `/settings/handoff-escalation` (H11), `/settings/departures` (H13, built for the one reference
+  departure the export shows, Peter Kariuki) and `/settings/handoff` (H15) are standalone routes,
+  outside the `/handoff` tree — matching the `/settings/digest` vs `/settings/notifications` and
+  `/settings/authority` vs `/inbox` precedents.
+- H16 (mobile) was treated as a responsive-design constraint on `/handoff` via Tailwind
+  breakpoints, not a separate page — it carries the `H16 · Mobile handoff` footer pair but its route
+  annotation is `mobile · /handoff`, not a real route, same signal used to rule out T16/G16/D16/I16/
+  rooms' mobile frames as non-routes in every prior rebuild.
+
+**Proactive unreachable-route fix, per [[flag_unreachable_routes]]:** the sidebar's "Handoff" nav
+item already existed and pointed at `/handoff` before this session (added ahead of the route being
+built — a pre-existing dangling link, now resolved by this build). Separately, `/handoff/load`,
+`/settings/handoff-escalation`, `/settings/departures` and `/settings/handoff` had no in-app link
+pointing to them once built. Fixed the same way as Inbox's `InboxQuickLinks`: added
+`HandoffQuickLinks` (`src/pages/handoff/quick-links.tsx`), a thin nav strip mounted on all four
+`/handoff` states (empty/index/owed-by-me/overdue) linking to all four.
+
+**Reuse:** `Chip`, `Callout`, `KpiCards`, `StageSubpageHeader`, `WideBarRow`/`BarTrack` from
+`@/pages/lifecycle/stage/` and `TeamDot` from `@/pages/inbox/` reused with zero forking (confirmed
+generic enough yet again). `ActorAvatar`/`PersonDot` and the `rooms/data.ts` roster (ADA, RAVI,
+KUNLE, SAM, AMARA, ZAINAB, IFEOMA) reused as-is — Sam Iyer, Ravi Mehta, Amara Okeke, Zainab Yusuf
+and Ifeoma Nwosu are exact initials/department matches for this export's own names. H06 calls Kunle
+"Kunle Ade" (a surname the existing `KUNLE` record doesn't have); kept the existing record rather
+than forking identity over one screen's fuller name, same "SVG wins on content, roster wins on
+identity" call as Today's Ravi Mehta/Ravi Menon note. Peter Kariuki, Joy Nduta and David (Otieno)
+were **not** new people — they're exact matches (name, initials, Customer Success department) for
+`PETER`/`JOY`/`DAVID` already added to `digest/data.ts` for the East Africa CS team; reused directly
+from there instead of re-adding them.
+
+**Verification pattern, same as prior rebuilds:** `npx tsc -b` clean, dev server + a 13-route ×
+3-breakpoint (390/834/1440) Playwright console/page-error sweep (including a not-found `:id` and
+the Rooms decision panel this section now touches), and a click-test of all three modals
+(accept-or-dispute → dispute selection, reassign → candidate selection, create-from-decision →
+uncheck a row → create) — all passed clean. Screenshot review at 1440px and 390px confirmed fidelity
+against the transcribed specs for the index, reassign modal and create-handoffs modal.
 
 ## 8. Governance and infrastructure (59–66)
 

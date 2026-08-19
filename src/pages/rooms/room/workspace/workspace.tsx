@@ -8,6 +8,7 @@ import { ActorAvatar, actorName } from "@/pages/rooms/actor";
 import { WorkspaceHeader } from "@/pages/rooms/room/room-header";
 import { TONE_BG_CLASS, TONE_TEXT_CLASS } from "@/pages/rooms/tone";
 import type { RoomDetail } from "@/pages/rooms/room/types";
+import { CreateFromDecisionModal } from "@/pages/handoff/create-from-decision-modal";
 
 type WorkspaceTab = "decision" | "evidence" | "log" | "steering";
 
@@ -98,6 +99,8 @@ function ThreadPanel({ room }: { room: RoomDetail }) {
 
 function DecisionPanelBody({ room }: { room: RoomDetail }) {
   const doc = room.decisionDoc;
+  const [handoffOpen, setHandoffOpen] = React.useState(false);
+  const showCreateHandoffs = room.id === "second-order-never-happened" && Boolean(doc?.decidedBy);
   if (!doc) {
     return (
       <div className="rounded-card border border-dashed border-line p-6 text-center">
@@ -132,6 +135,20 @@ function DecisionPanelBody({ room }: { room: RoomDetail }) {
         )}
         <Chip tone={doc.statusChip.tone}>{doc.statusChip.label}</Chip>
       </div>
+
+      {showCreateHandoffs && (
+        <div className="rounded-card border border-ultra-border bg-ultra-bg p-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11.5px] font-semibold text-ink">This decision obliges four other teams</p>
+              <p className="mt-0.5 text-[10px] text-ink-3">Repeat &amp; Decay drafted them from the decision doc</p>
+            </div>
+            <Button type="button" size="sm" onClick={() => setHandoffOpen(true)}>
+              Create handoffs
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="border-t border-line pt-3">
         <p className="font-mono text-[9px] font-medium tracking-[0.85px] text-ink-4 uppercase">Guardrails</p>
@@ -174,6 +191,10 @@ function DecisionPanelBody({ room }: { room: RoomDetail }) {
           ))}
         </div>
       </div>
+
+      {showCreateHandoffs && (
+        <CreateFromDecisionModal open={handoffOpen} onOpenChange={setHandoffOpen} />
+      )}
     </div>
   );
 }
