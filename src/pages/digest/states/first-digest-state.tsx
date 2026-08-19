@@ -16,9 +16,14 @@ export function FirstDigestState() {
             Day one · built at 06:00 Lagos · two rooms opened, nothing needs you yet
           </p>
         </div>
-        <Button asChild className="shrink-0">
-          <Link to="/settings/digest">Digest settings</Link>
-        </Button>
+        <div className="flex shrink-0 gap-2.5">
+          <Button asChild variant="outline">
+            <Link to="/digest/archive">Archive</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/settings/digest">Digest settings</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">

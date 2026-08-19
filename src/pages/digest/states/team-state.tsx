@@ -30,9 +30,14 @@ export function TeamState({ team }: { team: string }) {
           <h1 className="text-[17px] font-semibold text-ink">East Africa CS · morning digest</h1>
           <p className="mt-1 text-[11.5px] text-ink-3">Wednesday 13 August · built at 06:00 Nairobi · nine people · 17 open items</p>
         </div>
-        <Button asChild className="shrink-0">
-          <Link to="/settings/digest">Digest settings</Link>
-        </Button>
+        <div className="flex shrink-0 gap-2.5">
+          <Button asChild variant="outline">
+            <Link to="/digest/archive">Archive</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/settings/digest">Digest settings</Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">

@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/pages/lifecycle/stage/chip";
@@ -67,6 +69,10 @@ const WhatGetsInRoute = () => {
       </Callout>
 
       <KvList label="The threshold, and what it currently hides" rows={WHAT_GETS_IN_THRESHOLD} />
+
+      <Link to="/digest/excluded" className="inline-block text-[11.5px] font-semibold text-ultra hover:underline">
+        See everything that didn't make it into a digest →
+      </Link>
     </div>
   );
 };
