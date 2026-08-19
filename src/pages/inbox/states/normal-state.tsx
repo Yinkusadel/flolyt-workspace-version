@@ -71,9 +71,14 @@ export function NormalState() {
       <InboxTabs />
 
       <div>
-        <p className="mb-2 font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-          Needs a decision from you · {DECISION_CARDS.length}
-        </p>
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
+            Needs a decision from you · {DECISION_CARDS.length}
+          </p>
+          <Link to="/inbox?group=cost" className="shrink-0 text-[11px] font-medium text-ultra hover:underline">
+            Group by cost →
+          </Link>
+        </div>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {DECISION_CARDS.map((card) => (
             <div key={card.itemId} className="relative rounded-card border border-amber-border bg-paper p-4">
