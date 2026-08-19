@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { getRoom } from "@/pages/everyday/rooms/room/data";
 import { TODAY_ITEMS } from "@/pages/everyday/what-to-do-today/data";
 import { INBOX_ITEM_DETAILS } from "@/pages/everyday/inbox/data";
+import { FUNNEL_STEP_TITLES } from "@/pages/revenue/funnel/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -227,6 +228,30 @@ function getBreadcrumb(pathname: string): React.ReactNode {
       <span className="flex items-center gap-1.5">
         <Link to="/leakage-map" className="hover:text-ink">
           Leakage map
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/funnel") return "Funnel";
+  if (pathname === "/funnel/gaps")
+    return renderCrumbs([{ label: "Funnel", to: "/funnel" }, { label: "Not instrumented" }]);
+  if (pathname === "/funnel/compare")
+    return renderCrumbs([{ label: "Funnel", to: "/funnel" }, { label: "Compare" }]);
+  if (pathname === "/funnel/history")
+    return renderCrumbs([{ label: "Funnel", to: "/funnel" }, { label: "History" }]);
+  if (pathname === "/settings/funnel")
+    return renderCrumbs([{ label: "Funnel", to: "/funnel" }, { label: "Settings" }]);
+
+  const funnelStepMatch = /^\/funnel\/([^/]+)$/.exec(pathname);
+  if (funnelStepMatch) {
+    const title = FUNNEL_STEP_TITLES[funnelStepMatch[1]] ?? funnelStepMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/funnel" className="hover:text-ink">
+          Funnel
         </Link>
         <span className="text-ink-4">/</span>
         <span className="text-ink">{title}</span>

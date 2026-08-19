@@ -564,7 +564,8 @@ colors for all 5 so adding a demo room later needs no template change.
 kit-122's frames 44/45 ("leakage map consumer" / "leakage map accounts" — see section 6's note).
 This is the first section of a new **Revenue** group, sibling to Every day, sourced from its own
 `flolyt-figma-designs/Revenue Screens/` export — six more sections (Funnel, Scenario, Forecast,
-Attribution, Value, Benchmarks) are documented there but not yet built. LK00 is an index/route-map
+Attribution, Value, Benchmarks) are documented there; Funnel was built next, same day, see
+section 6b below. LK00 is an index/route-map
 frame, not a product screen. Content was transcribed from the export's own `lk.py` generator
 source (which holds every frame's exact copy as literal Python string arguments) rather than
 parsed off the rendered SVG text nodes — confirmed more reliable than re-deriving copy from SVG
@@ -655,6 +656,75 @@ Products/Everyone selector. Nothing else in the app has a named-person lens yet;
 | Open a room from a line / Dispute a line / Reclassify a claim (modals) | [x] | `modals/*.tsx`, each hardcoded to the one row the export shows it against |
 | Sidebar "Leakage map" link | [x] | pre-existing stub already correctly pointed at `/leakage-map` — briefly mis-pointed at `/revenue/leaks` mid-build, then reverted; see the route-naming note above |
 | `tsc -b` clean + dev server + 14-route Playwright console/page-error sweep (including a not-found `:id`) + 3-modal click-test + a real-room cross-link click-test, re-run after the route rename | [x] | Verified 2026-08-19 |
+
+## 6b. Funnel
+
+**Built from scratch on 2026-08-19** from `flolyt-figma-designs/Revenue Screens/flolyt-funnel/`
+(15 frames, FN01–FN15), superseding kit-122's frame 80 ("funnel explorer" — see section 12's
+note). Second section of the Revenue group after Leakage map, same "read the export's own `.py`
+generator source, not the rendered SVGs" approach — `fn.py` imports the same shared `rev.py`
+chrome (`revnav`, `subtabs`, `steps`, `hero`, `empty`, `mobile`, `Section`) as `lk.py` did. FN00
+is the index/route-map frame, not a product screen. On-disk filenames are the routing ground
+truth (`Section.save()` auto-numbers past whatever literal id the script passes) — confirmed
+against `fn.py`'s own `S.save()` call order.
+
+**Route stays flat** per the rule established during Leakage map's build (see 6a above and
+[[flolyt_flat_url_pattern]]): `/funnel`, not `/revenue/funnel`, even though the export's own frame
+footers say `/revenue/funnel` throughout. Settings at `/settings/funnel`, not
+`/settings/revenue/funnel`. The sidebar's "Funnel" link was already a pre-existing stub correctly
+pointed at `/funnel` — no correction needed this time.
+
+**Architecture — same index-branching shape as Leakage map:**
+- `/funnel` (`src/pages/revenue/funnel/index.tsx`) is ONE route covering FN01 (not instrumented
+  yet — 3 of 8 steps), FN02 (the first-run state, one step arrived overnight), FN03 (the default
+  populated funnel, 8 steps with one Unavailable), FN06 (`?by=market`), FN07 (`?by=cohort`), and
+  FN14 (the checkout stream degraded, two steps read Unavailable). `by` is checked first, then
+  `FUNNEL_STATE` (a 4-value mock flag defaulting to `"full"`) branches FN01/FN02/FN14 — all three
+  are wired but unreachable with that default, same "not wired, no demo state currently triggers
+  it" situation as every prior rebuild's empty/edge states (verified by temporarily flipping the
+  flag and sweeping each one).
+- `/funnel/gaps` (FN08), `/funnel/compare` (FN05, "Where it bent"), and `/funnel/history` (FN12)
+  are standalone sibling routes sharing the same 6-tab bar (`tabs.tsx`) as the index states —
+  same "shared tab bar, not one route subtree" pattern as Leakage map's `tabs.tsx`.
+- `/funnel/:step` (`step-detail-route.tsx`) only has one built reference row —
+  `checkout-to-order` (FN04, "Reached checkout → placed a first order") — every other id falls
+  back to a not-found state, same "one/two reference rows" pattern as Leakage map's `:id`.
+- `/funnel/steps/new` (`new-step/`) is the "Define a step" wizard (FN09/FN10) — no `?step=` param
+  in the source footer for either frame (both save to the same route), so step state is
+  client-local, same pattern as Goals' `/goals/new`.
+- FN11 ("Request instrumentation") is one bespoke modal, hardcoded to `checkout.fee_shown`,
+  opened from `/funnel/gaps`'s page-level button — same "hardcoded to the one row the export
+  shows it against" pattern as Leakage map's three modals.
+- `/settings/funnel` (FN13, "What counts as a step") is a standalone route outside the `/funnel`
+  tree, matching the `/settings/leakage-map` precedent.
+- FN15 (mobile) was treated as a responsive-design constraint (the step-bar list is already a
+  vertical stack, naturally mobile-friendly without a separate layout; every wide table gets
+  `overflow-x-auto`), not a separate page — same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** all named people (Sam Iyer, Zainab
+Yusuf, Ifeoma Nwosu, Ravi Mehta) are exact matches for `SAM`/`ZAINAB`/`IFEOMA`/`RAVI` in
+`rooms/data.ts`; three of four agents (`REPEAT_DECAY`, `ACQUISITION_QUALITY`, `PRICE_MARGIN`)
+matched existing `AgentRef`s and the fourth (`PRODUCT_REASON`) was already defined in Leakage
+map's own `data.ts` and reused directly rather than redefined — the first cross-*Revenue-section*
+reuse in the group. `Chip`, `Callout`, `KpiCards`, `BarRow`/`BarTrack`, `StageSubpageHeader`, and
+`usePageBreadcrumb` were all reused from `lifecycle/stage/` and the shared breadcrumb context with
+zero forking. A local `FunnelKvList` (`kv-list.tsx`) was written instead of reusing Leakage map's
+`LeaksKvList`, same reasoning as before — this section's tone vocabulary (`FnTone`: `ok`/`warn`/
+`risk`/`ai`/`muted`/`neutral`/`num`) doesn't match `LkTone`'s value set closely enough to share the
+type. A local `FunnelStepBars` (`step-bars.tsx`) renders the horizontal funnel-with-drop-off rows
+(FN03/FN14) — no existing shared component matched that shape (label + count, a bar, and a
+drop-off line below), so it was purpose-built rather than forked from `BarRow`/`WideBarRow`.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — not instrumented yet / first step / the funnel / by market / by cohort / degraded | [x] | `src/pages/revenue/funnel/index.tsx` + `states/*.tsx`. FN01/FN02/FN14 wired but unreachable with `FUNNEL_STATE`'s current default |
+| Not instrumented / Compare / History (siblings) | [x] | `gaps-route.tsx`, `compare-route.tsx`, `history-route.tsx` |
+| One step (`:step`) | [x] | `step-detail-route.tsx` — only `checkout-to-order` built, every other id falls back to not-found |
+| Define a step (wizard) | [x] | `new-step/index.tsx` + `step-what.tsx`/`step-event.tsx`/`step-rail.tsx`, `/funnel/steps/new` |
+| Request instrumentation (modal) | [x] | `modals/request-instrumentation-modal.tsx`, hardcoded to `checkout.fee_shown`, opened from `/funnel/gaps` |
+| Settings | [x] | `settings/funnel-settings-route.tsx`, `/settings/funnel` |
+| Sidebar "Funnel" link | [x] | pre-existing stub already correctly pointed at `/funnel` |
+| `tsc -b` clean + dev server + 10-route Playwright console/page-error sweep (including a not-found `:step`) + modal open/close click-test + wizard step-1→2 click-test + all 3 unreachable mock states swept individually | [x] | Verified 2026-08-19 |
 
 ## 7. Teams (51–58)
 
@@ -812,7 +882,7 @@ against the transcribed specs for the index, reassign modal and create-handoffs 
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 80 | funnel explorer | [ ] | | |
+| 80 | funnel explorer | [x] | | Superseded — rebuilt as `/funnel` from the newer `flolyt-funnel` export, see section 6b |
 | 81 | scenario simulator | [ ] | | |
 | 82 | attribution | [ ] | | |
 | 83 | benchmarking | [ ] | | |

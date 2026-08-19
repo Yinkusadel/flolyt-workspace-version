@@ -127,6 +127,13 @@ import LeaksDetectionRoute from "@/pages/revenue/leakage-map/detection-route";
 import LeaksExportRoute from "@/pages/revenue/leakage-map/export-route";
 import LeakDetailRoute from "@/pages/revenue/leakage-map/leak-detail-route";
 import LeaksSettingsRoute from "@/pages/revenue/leakage-map/settings/leakage-map-settings-route";
+import Funnel from "@/pages/revenue/funnel";
+import FunnelGapsRoute from "@/pages/revenue/funnel/gaps-route";
+import FunnelCompareRoute from "@/pages/revenue/funnel/compare-route";
+import FunnelHistoryRoute from "@/pages/revenue/funnel/history-route";
+import FunnelStepDetailRoute from "@/pages/revenue/funnel/step-detail-route";
+import NewFunnelStep from "@/pages/revenue/funnel/new-step";
+import FunnelSettingsRoute from "@/pages/revenue/funnel/settings/funnel-settings-route";
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
@@ -388,6 +395,21 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/leakage-map",
                 Component: LeaksSettingsRoute,
+              },
+              {
+                path: "funnel",
+                children: [
+                  { index: true, Component: Funnel },
+                  { path: "gaps", Component: FunnelGapsRoute },
+                  { path: "compare", Component: FunnelCompareRoute },
+                  { path: "history", Component: FunnelHistoryRoute },
+                  { path: "steps/new", Component: NewFunnelStep },
+                  { path: ":step", Component: FunnelStepDetailRoute },
+                ],
+              },
+              {
+                path: "settings/funnel",
+                Component: FunnelSettingsRoute,
               },
               {
                 path: "ai-teammates",
