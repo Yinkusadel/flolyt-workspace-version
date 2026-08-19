@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/pages/lifecycle/stage/rail";
 import { WideBarRow } from "@/pages/lifecycle/stage/bar";
 import { KpiCards } from "@/pages/lifecycle/stage/kpi-cards";
+import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { RequestInstrumentationModal } from "@/pages/lifecycle/stage/modals/request-instrumentation-modal";
 import { EYEBROW_CLASS } from "@/pages/lifecycle/data";
 import {
@@ -22,15 +24,18 @@ const INSIDE_TONE_CLASS: Record<"teal" | "rose" | "amber", string> = { teal: "te
  * AD13) with Expand's own preset rather than building a new modal.
  */
 const ExpandBasketTab = () => {
+  const { headerActionsEl } = useStageContext();
   const [requestOpen, setRequestOpen] = useState(false);
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
-        <Button type="button" size="sm" onClick={() => setRequestOpen(true)}>
-          Request instrumentation
-        </Button>
-      </div>
+      {headerActionsEl &&
+        createPortal(
+          <Button type="button" size="sm" onClick={() => setRequestOpen(true)}>
+            Request instrumentation
+          </Button>,
+          headerActionsEl
+        )}
 
       <KpiCards items={EXPAND_BASKET_KPIS} />
 

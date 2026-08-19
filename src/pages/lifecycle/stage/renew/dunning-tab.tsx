@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { WideBarRow } from "@/pages/lifecycle/stage/bar";
@@ -6,6 +7,7 @@ import { Callout } from "@/pages/lifecycle/stage/rail";
 import { Chip } from "@/pages/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { KpiCards } from "@/pages/lifecycle/stage/kpi-cards";
+import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { OpenARoomModal } from "@/pages/lifecycle/stage/modals/open-a-room-modal";
 import { EYEBROW_CLASS } from "@/pages/lifecycle/data";
 import {
@@ -30,15 +32,18 @@ const COLUMNS: Column<RenewDunningRow>[] = [
 
 /** RN04 — Renew's unique Dunning tab. */
 const RenewDunningTab = () => {
+  const { headerActionsEl } = useStageContext();
   const [openRoom, setOpenRoom] = useState(false);
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
-        <Button type="button" size="sm" onClick={() => setOpenRoom(true)}>
-          Open a war room
-        </Button>
-      </div>
+      {headerActionsEl &&
+        createPortal(
+          <Button type="button" size="sm" onClick={() => setOpenRoom(true)}>
+            Open a war room
+          </Button>,
+          headerActionsEl
+        )}
 
       <KpiCards items={RENEW_DUNNING_KPIS} />
 

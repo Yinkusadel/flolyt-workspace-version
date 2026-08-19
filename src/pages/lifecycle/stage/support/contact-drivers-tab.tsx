@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/pages/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
+import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { Callout } from "@/pages/lifecycle/stage/rail";
 import { InsightCards } from "@/pages/lifecycle/stage/activate/insight-cards";
 import { ReclassifyADriverModal } from "@/pages/lifecycle/stage/modals/reclassify-a-driver-modal";
@@ -31,15 +33,18 @@ const COLUMNS: Column<ContactDriverRow>[] = [
 
 /** SU03 — Support's unique Contact drivers tab (route path "drivers" per SU03's own footer). */
 const SupportContactDriversTab = () => {
+  const { headerActionsEl } = useStageContext();
   const [reclassifyOpen, setReclassifyOpen] = useState(false);
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
-        <Button type="button" size="sm" onClick={() => setReclassifyOpen(true)}>
-          Reclassify a driver
-        </Button>
-      </div>
+      {headerActionsEl &&
+        createPortal(
+          <Button type="button" size="sm" onClick={() => setReclassifyOpen(true)}>
+            Reclassify a driver
+          </Button>,
+          headerActionsEl
+        )}
 
       <section className="space-y-3">
         <DataTable columns={COLUMNS} rows={SUPPORT_CONTACT_DRIVER_ROWS} />

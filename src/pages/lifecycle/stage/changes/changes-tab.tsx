@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -144,19 +145,22 @@ const SOURCE_TONE_CLASS: Record<"teal" | "amber" | "ultra" | "neutral", string> 
 
 /** The shared "What changed" tab template (e.g. A09) — dated changes with a measured effect where one exists. */
 export function ChangesTab() {
-  const { stage } = useStageContext();
+  const { stage, headerActionsEl } = useStageContext();
   const data = CHANGES_DATA[stage.slug];
   if (!data) return null;
   const rowHref = (row: ChangeRow) => `/lifecycle/${stage.slug}/changes/${row.id}`;
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between gap-3">
-        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.eyebrow}</p>
-        <Button type="button" size="sm" className="shrink-0">
-          Add a change
-        </Button>
-      </div>
+      {headerActionsEl &&
+        createPortal(
+          <Button type="button" size="sm">
+            Add a change
+          </Button>,
+          headerActionsEl
+        )}
+
+      <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.eyebrow}</p>
 
       <div className="divide-y divide-line overflow-hidden rounded-card border border-line bg-paper">
         {data.rows.map((row) => (

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Callout } from "@/pages/lifecycle/stage/rail";
 import { Chip } from "@/pages/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/lifecycle/stage/data-table";
 import { KpiCards } from "@/pages/lifecycle/stage/kpi-cards";
+import { useStageContext } from "@/pages/lifecycle/stage/layout";
 import { ReForecastTheBookModal } from "@/pages/lifecycle/stage/modals/re-forecast-the-book-modal";
 import { EYEBROW_CLASS } from "@/pages/lifecycle/data";
 import {
@@ -57,15 +59,18 @@ const COLUMNS: Column<RenewBookRow>[] = [
 
 /** RN03 — Renew's unique Renewal book tab (route path "book" per its own footer). */
 const RenewRenewalBookTab = () => {
+  const { headerActionsEl } = useStageContext();
   const [reforecastOpen, setReforecastOpen] = useState(false);
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
-        <Button type="button" size="sm" onClick={() => setReforecastOpen(true)}>
-          Chase the re-forecast
-        </Button>
-      </div>
+      {headerActionsEl &&
+        createPortal(
+          <Button type="button" size="sm" onClick={() => setReforecastOpen(true)}>
+            Chase the re-forecast
+          </Button>,
+          headerActionsEl
+        )}
 
       <KpiCards items={RENEW_BOOK_KPIS} />
 
