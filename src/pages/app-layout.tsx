@@ -3,9 +3,12 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 
 import { Sidebar, type ViewingAs } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
+import { BreadcrumbContext, type Crumb } from "@/components/breadcrumb-context";
 import { cn } from "@/lib/utils";
-import { getRoom } from "@/pages/rooms/room/data";
-import { TODAY_ITEMS } from "@/pages/what-to-do-today/data";
+import { getRoom } from "@/pages/everyday/rooms/room/data";
+import { TODAY_ITEMS } from "@/pages/everyday/what-to-do-today/data";
+import { INBOX_ITEM_DETAILS } from "@/pages/everyday/inbox/data";
+import { FUNNEL_STEP_TITLES } from "@/pages/revenue/funnel/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -18,6 +21,11 @@ import { TODAY_ITEMS } from "@/pages/what-to-do-today/data";
 
 /** Shared with every route via <Outlet context>, so a screen can scope its own content to the sidebar's "viewing as" selection. */
 export type AppOutletContext = { viewingAs: ViewingAs };
+
+const LEAK_DETAIL_TITLES: Record<string, string> = {
+  "delivery-fee-checkout": "The delivery fee moved to checkout",
+  "adopt-depth": "Adopt · feature depth",
+};
 
 const STAGE_LABELS: Record<string, string> = {
   acquire: "Acquire",
@@ -34,7 +42,8 @@ const STAGE_LABELS: Record<string, string> = {
 
 function getBreadcrumb(pathname: string): React.ReactNode {
   if (pathname === "/lifecycle") return "Lifecycle";
-  if (pathname === "/lifecycle/settings") return "Lifecycle / Settings";
+  if (pathname === "/lifecycle/settings")
+    return renderCrumbs([{ label: "Lifecycle", to: "/lifecycle" }, { label: "Settings" }]);
 
   // Matches the bare stage route and every sub-route under it (tabs,
   // compare, definition, :id drilldowns) — the stage-level layouts render
@@ -54,8 +63,10 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   }
 
   if (pathname === "/rooms") return "Rooms";
-  if (pathname === "/rooms/new") return "Rooms / New room";
-  if (pathname === "/rooms/subscriptions") return "Rooms / What you watch";
+  if (pathname === "/rooms/new")
+    return renderCrumbs([{ label: "Rooms", to: "/rooms" }, { label: "New room" }]);
+  if (pathname === "/rooms/subscriptions")
+    return renderCrumbs([{ label: "Rooms", to: "/rooms" }, { label: "What you watch" }]);
   if (pathname === "/plays") return "Plays";
 
   const roomMatch = /^\/rooms\/([^/]+)/.exec(pathname);
@@ -73,11 +84,57 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   }
 
   if (pathname === "/what-to-do-today") return "What to do today";
-  if (pathname === "/what-to-do-today/ranking") return "What to do today / How this is ranked";
-  if (pathname === "/what-to-do-today/snoozed") return "What to do today / Snoozed";
-  if (pathname === "/what-to-do-today/waiting-on-data") return "What to do today / Waiting on data";
-  if (pathname === "/what-to-do-today/done") return "What to do today / Done";
-  if (pathname === "/settings/today") return "What to do today / Settings";
+  if (pathname === "/what-to-do-today/ranking")
+    return renderCrumbs([{ label: "What to do today", to: "/what-to-do-today" }, { label: "How this is ranked" }]);
+  if (pathname === "/what-to-do-today/snoozed")
+    return renderCrumbs([{ label: "What to do today", to: "/what-to-do-today" }, { label: "Snoozed" }]);
+  if (pathname === "/what-to-do-today/waiting-on-data")
+    return renderCrumbs([{ label: "What to do today", to: "/what-to-do-today" }, { label: "Waiting on data" }]);
+  if (pathname === "/what-to-do-today/done")
+    return renderCrumbs([{ label: "What to do today", to: "/what-to-do-today" }, { label: "Done" }]);
+  if (pathname === "/settings/today")
+    return renderCrumbs([{ label: "What to do today", to: "/what-to-do-today" }, { label: "Settings" }]);
+
+  if (pathname === "/digest") return "Digest";
+  if (pathname === "/digest/archive")
+    return renderCrumbs([{ label: "Digest", to: "/digest" }, { label: "Archive" }]);
+  if (pathname === "/digest/weekly")
+    return renderCrumbs([{ label: "Digest", to: "/digest" }, { label: "Weekly roll-up" }]);
+  if (pathname === "/digest/excluded")
+    return renderCrumbs([{ label: "Digest", to: "/digest" }, { label: "Not in this digest" }]);
+  if (pathname === "/settings/digest")
+    return renderCrumbs([{ label: "Digest", to: "/digest" }, { label: "Settings" }]);
+  if (pathname === "/settings/digest/channels")
+    return renderCrumbs([
+      { label: "Digest", to: "/digest" },
+      { label: "Settings", to: "/settings/digest" },
+      { label: "Channels" },
+    ]);
+  if (pathname === "/settings/digest/quiet-hours")
+    return renderCrumbs([
+      { label: "Digest", to: "/digest" },
+      { label: "Settings", to: "/settings/digest" },
+      { label: "Quiet hours" },
+    ]);
+  if (pathname === "/settings/notifications")
+    return renderCrumbs([
+      { label: "Digest", to: "/digest" },
+      { label: "Settings", to: "/settings/digest" },
+      { label: "Notification rules" },
+    ]);
+
+  const digestDateMatch = /^\/digest\/([^/]+)/.exec(pathname);
+  if (digestDateMatch) {
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/digest" className="hover:text-ink">
+          Digest
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{digestDateMatch[1]}</span>
+      </span>
+    );
+  }
 
   const todayItemMatch = /^\/what-to-do-today\/([^/]+)/.exec(pathname);
   if (todayItemMatch) {
@@ -93,6 +150,115 @@ function getBreadcrumb(pathname: string): React.ReactNode {
     );
   }
 
+  if (pathname === "/inbox") return "Inbox";
+  if (pathname === "/inbox/replies")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Replies" }]);
+  if (pathname === "/inbox/routing")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Routing" }]);
+  if (pathname === "/inbox/routing/unroutable")
+    return renderCrumbs([
+      { label: "Inbox", to: "/inbox" },
+      { label: "Routing", to: "/inbox/routing" },
+      { label: "Unroutable" },
+    ]);
+  if (pathname === "/inbox/snoozed")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Snoozed" }]);
+  if (pathname === "/inbox/delegation")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Delegation" }]);
+  if (pathname === "/inbox/systems")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Systems" }]);
+  if (pathname === "/settings/authority")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Approval authority" }]);
+  if (pathname === "/settings/authority/standing")
+    return renderCrumbs([
+      { label: "Inbox", to: "/inbox" },
+      { label: "Approval authority", to: "/settings/authority" },
+      { label: "Standing authority" },
+    ]);
+  if (pathname === "/settings/inbox")
+    return renderCrumbs([{ label: "Inbox", to: "/inbox" }, { label: "Settings" }]);
+
+  const inboxReplyMatch = /^\/inbox\/replies\/([^/]+)/.exec(pathname);
+  if (inboxReplyMatch) {
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/inbox/replies" className="hover:text-ink">
+          Replies
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{inboxReplyMatch[1]}</span>
+      </span>
+    );
+  }
+
+  const inboxItemMatch = /^\/inbox\/([^/]+)$/.exec(pathname);
+  if (inboxItemMatch) {
+    const detail = INBOX_ITEM_DETAILS[inboxItemMatch[1]];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/inbox" className="hover:text-ink">
+          Inbox
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{detail?.title ?? inboxItemMatch[1]}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/handoff") return "Handoff";
+
+  if (pathname === "/goals") return "Goals";
+
+  if (pathname === "/leakage-map") return "Leakage map";
+  if (pathname === "/leakage-map/changed")
+    return renderCrumbs([{ label: "Leakage map", to: "/leakage-map" }, { label: "What changed" }]);
+  if (pathname === "/leakage-map/unmeasurable")
+    return renderCrumbs([{ label: "Leakage map", to: "/leakage-map" }, { label: "Unmeasurable" }]);
+  if (pathname === "/leakage-map/detection")
+    return renderCrumbs([{ label: "Leakage map", to: "/leakage-map" }, { label: "Detection" }]);
+  if (pathname === "/leakage-map/export")
+    return renderCrumbs([{ label: "Leakage map", to: "/leakage-map" }, { label: "Export" }]);
+  if (pathname === "/settings/leakage-map")
+    return renderCrumbs([{ label: "Leakage map", to: "/leakage-map" }, { label: "Settings" }]);
+
+  const leakDetailMatch = /^\/leakage-map\/([^/]+)$/.exec(pathname);
+  if (leakDetailMatch) {
+    const title = LEAK_DETAIL_TITLES[leakDetailMatch[1]] ?? leakDetailMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/leakage-map" className="hover:text-ink">
+          Leakage map
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/funnel") return "Funnel";
+  if (pathname === "/funnel/gaps")
+    return renderCrumbs([{ label: "Funnel", to: "/funnel" }, { label: "Not instrumented" }]);
+  if (pathname === "/funnel/compare")
+    return renderCrumbs([{ label: "Funnel", to: "/funnel" }, { label: "Compare" }]);
+  if (pathname === "/funnel/history")
+    return renderCrumbs([{ label: "Funnel", to: "/funnel" }, { label: "History" }]);
+  if (pathname === "/settings/funnel")
+    return renderCrumbs([{ label: "Funnel", to: "/funnel" }, { label: "Settings" }]);
+
+  const funnelStepMatch = /^\/funnel\/([^/]+)$/.exec(pathname);
+  if (funnelStepMatch) {
+    const title = FUNNEL_STEP_TITLES[funnelStepMatch[1]] ?? funnelStepMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/funnel" className="hover:text-ink">
+          Funnel
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
   if (pathname === "/ai-teammates") return "AI teammates";
 
   if (pathname === "/business-memory") return "Business memory";
@@ -102,10 +268,35 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   return "Home";
 }
 
+/** Renders a page-supplied crumb trail in the same style as `getBreadcrumb`'s own JSX branches. */
+function renderCrumbs(crumbs: Crumb[]): React.ReactNode {
+  return (
+    <span className="flex flex-wrap items-center gap-1.5">
+      {crumbs.map((crumb, i) => (
+        <span key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
+          {i > 0 && <span className="text-ink-4">/</span>}
+          {crumb.to ? (
+            <Link to={crumb.to} className="hover:text-ink">
+              {crumb.label}
+            </Link>
+          ) : (
+            <span className="text-ink">{crumb.label}</span>
+          )}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export const AppLayout = () => {
   const [navOpen, setNavOpen] = React.useState(false);
   const [viewingAs, setViewingAs] = React.useState<ViewingAs>("Everyone");
+  const [breadcrumbOverride, setBreadcrumbOverride] = React.useState<Crumb[] | null>(null);
   const location = useLocation();
+  const breadcrumbContextValue = React.useMemo(
+    () => ({ setOverride: setBreadcrumbOverride }),
+    []
+  );
 
   // Close the drawer on route change and Escape; lock body scroll while open.
   React.useEffect(() => {
@@ -156,11 +347,13 @@ export const AppLayout = () => {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar
-          breadcrumb={getBreadcrumb(location.pathname)}
+          breadcrumb={breadcrumbOverride ? renderCrumbs(breadcrumbOverride) : getBreadcrumb(location.pathname)}
           onMenuClick={() => setNavOpen(true)}
         />
         <main className="flex-1 overflow-y-auto p-page">
-          <Outlet context={{ viewingAs } satisfies AppOutletContext} />
+          <BreadcrumbContext.Provider value={breadcrumbContextValue}>
+            <Outlet context={{ viewingAs } satisfies AppOutletContext} />
+          </BreadcrumbContext.Provider>
         </main>
       </div>
     </div>

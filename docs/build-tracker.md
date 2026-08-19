@@ -2,11 +2,12 @@
 
 Source of truth for design: `flolyt-kit-122/README.md` (kit overview + section table) and
 `flolyt-kit-122/{nn}-{slug}.svg` (one SVG per screen, numbered to match the `#` column
-below) — **except section 2a (what to do today), section 2b (goals), section 3 (the
-lifecycle), and section 4 (rooms and decisions)**, each rebuilt from its own newer
-`flolyt-figma-designs/Everyday Screens/` export (`flolyt-today/`, `flolyt-goals/`,
-`flolyt-lifecycle/`, `flolyt-rooms/` respectively; the whole `Everyday Screens/` parent folder
-appeared on 2026-08-17); see each section's own header for its source-of-truth note. A
+below) — **except section 2a (what to do today), section 2b (goals), section 2c (digest),
+section 3 (the lifecycle), and section 4 (rooms and decisions)**, each rebuilt from its own
+newer `flolyt-figma-designs/Everyday Screens/` export (`flolyt-today/`, `flolyt-goals/`,
+`flolyt-digest/`, `flolyt-lifecycle/`, `flolyt-rooms/` respectively; the whole
+`Everyday Screens/` parent folder appeared on 2026-08-17); see each section's own header for
+its source-of-truth note. A
 `flolyt-figma-designs/Everyday Screens/flow-diagrams/` folder also exists now with
 architecture-level route maps — use it as a sanity check before building a new section, but
 each screen's own SVG footer still wins on the specific route.
@@ -41,7 +42,7 @@ correction (see Notes)
 | 10 | command bar | [ ] | | |
 | 11 | workspace home consumer | [ ] | | |
 | 12 | workspace home accounts | [ ] | | |
-| 13 | inbox | [ ] | | |
+| 13 | inbox | [x] | `/inbox` | Superseded by section 2d, built from `flolyt-inbox/` — see below |
 | 14 | search | [ ] | | |
 
 ## 3. The lifecycle
@@ -353,6 +354,119 @@ and `DEPARTMENT_COLORS` hex, confirmed by reading both before reusing rather tha
 | Value and ROI | [x] | `src/pages/value/index.tsx` + `data.ts`, top-level `/value` |
 | `tsc -b` clean + Playwright console-error sweep (9 routes × 3 breakpoints) + wizard click-through + modal click-test | [x] | Verified 2026-08-18 |
 
+## 2c. Digest
+
+**Built from scratch on 2026-08-19** from `flolyt-figma-designs/Everyday Screens/flolyt-digest/`
+(17 screens, D00–D16), superseding kit-122's frame 79 ("daily digest" — see section 11's note)
+— same "old design source superseded, don't resurrect the old shape" situation as
+today/goals/lifecycle/rooms. Every SVG's own footer states its route. Extraction was done by
+two parallel research agents (D00–D08 / D09–D16), each producing a verbatim structured spec
+before any code was written.
+
+**Architecture:** `/digest` (index, `src/pages/digest/index.tsx`) is ONE route covering D01
+(first digest, day one), D02 (default steady-state digest), D03 (a quiet day), D07
+(`?team=ea-cs`), D08 (`?scope=org`), and D15 (degraded/incomplete) — branches on query params
+first, then on `WORKSPACE_AGE_DAYS`/`QUIET_DAY_ACTIVE`/`DIGEST_DEGRADED` mock flags in `data.ts`.
+D01/D03/D15 are wired but unreachable with the current mock defaults, same "not wired, no demo
+state currently triggers it" situation as every prior rebuild's empty/edge states. D07 only has
+real content for `team=ea-cs` (East Africa CS); any other team value falls back to a not-found
+state, matching the "one reference row" pattern used everywhere else in this app (Today's
+`r-8f2c`, Price's `plans/:id`, Goals' `repeat-90`). D04 (`/digest/archive`), D06
+(`/digest/weekly`) and D14 (`/digest/excluded`) are standalone routes. D05 (`/digest/:date`) only
+has real content for `2026-08-11`; every other date falls back to a not-found state, same
+pattern. D09–D11 (`/settings/digest`, `/settings/digest/channels`, `/settings/digest/quiet-hours`)
+share a 4-tab bar (`settings/tabs.tsx`) with D12, but **D12 (`/settings/notifications`) is its
+own top-level sibling route, not nested under `/settings/digest`** — confirmed by its own
+literal footer even though it's reached via the same visual tab bar; the tabs component just
+links across both route trees. D13 (edit a notification rule) is a modal opened from the one row
+D12's own export shows it opened against (`A room opens above ₦25M`), same "shared modals are
+local state, not routes" pattern as every other modal in the app. D16 (mobile) was treated as a
+responsive-design constraint on `/digest` via Tailwind breakpoints, not a separate page — its own
+inline tag reads `mobile · /digest` and it lacks the `Dxx · title` footer pair every routed
+screen has.
+
+New people introduced by this export and not on the existing `rooms/data.ts` roster: Grace
+Mwangi, Peter Kariuki, Joy Nduta, David Otieno (all Customer Success, East Africa CS team) —
+added to `src/pages/digest/data.ts`. Ada Obi, Ravi Mehta and Kunle were reused as-is from
+`rooms/data.ts`, confirmed by reading both before reusing. The five tone colours this export
+uses (amber/teal/rose/indigo/gray) mapped exactly onto the app's existing `Tone` type
+(amber/teal/rose/ultra/neutral) — no new tone was needed.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — first digest / today / quiet day / team / exec / degraded | [x] | `src/pages/digest/index.tsx` + `states/*.tsx`. D01/D03/D15 wired but unreachable with current mock defaults |
+| Archive | [x] | `archive-route.tsx`, `/digest/archive` |
+| One past digest (`:date`) | [x] | `one-digest-route.tsx` — only `2026-08-11` built, every other date falls back to not-found |
+| Weekly roll-up | [x] | `weekly-route.tsx`, `/digest/weekly` |
+| Not in this digest | [x] | `excluded-route.tsx`, `/digest/excluded` |
+| Settings — What gets in / Channels / Quiet hours | [x] | `settings/what-gets-in-route.tsx`, `settings/channels-route.tsx`, `settings/quiet-hours-route.tsx`, all under `/settings/digest` |
+| Settings — Notification rules | [x] | `settings/notification-rules-route.tsx`, `/settings/notifications` (sibling of `/settings/digest`, per D12's own footer) |
+| Edit a notification rule modal | [x] | `settings/edit-rule-modal.tsx`, opened from the one rule the export shows it against |
+| `tsc -b` clean + Playwright console-error sweep (14 routes × 3 breakpoints) + modal click-test | [x] | Verified 2026-08-19 |
+
+## 2d. Inbox
+
+**Built from scratch on 2026-08-19** from `flolyt-figma-designs/Everyday Screens/flolyt-inbox/`
+(17 screens, I00–I16), superseding kit-122's frame 13 ("inbox") and frame 94 ("reply inbox") —
+same "old design source superseded" situation as today/goals/lifecycle/rooms/digest. I00 is an
+index/route-map frame, not a product screen. Extraction was done by two parallel research agents
+(I00–I08 / I09–I16), each producing a verbatim structured spec before any code was written.
+
+**Architecture:** `/inbox` (index, `src/pages/inbox/index.tsx`) is ONE route covering I01 (nothing
+waiting — the empty state), I02 (the default populated state) and I03 (`?group=`, grouped
+triage) — branches on the `group` query param first, then on the `INBOX_EMPTY` mock flag in
+`data.ts`. I01 is wired but unreachable with the current mock default, same "not wired, no demo
+state currently triggers it" situation as every prior rebuild's empty/edge states. I14 ("no bulk
+approve") is not a separate route — its own footer is a query-param variant of `/inbox`
+(`/inbox?select=`) — so it's built as a client-side selection-mode state of `/inbox` itself
+(check any item's checkbox via the header's "Select" toggle) rather than a page. I16 (mobile) is a
+responsive-design note, not a route — it lacks the `Ixx · Title` footer pair every routed screen
+has and is annotated `mobile · /inbox` instead; its guidance (Face ID re-auth, equal-weight
+reject, visible exclusion counts) informs the responsive/mobile treatment of `/inbox` and
+`/inbox/:id` rather than a separate page.
+
+I04 (`/inbox/:id`) only has real content for `i-8f2c` (the reactivation approval); every other id
+falls back to a not-found state, matching the "one reference row" pattern used everywhere else in
+this app (Today's `r-8f2c`, Price's `plans/:id`, Digest's `2026-08-11`). I06
+(`/inbox/replies/:id`) is the same pattern, built only for `r-4b19` (Amina B.'s erasure request).
+I05 (`/inbox/replies`), I07 (`/inbox/routing`), I08 (`/inbox/routing/unroutable`), I09
+(`/inbox/snoozed`), I10 (`/inbox/delegation`) and I13 (`/inbox/systems`) are standalone routes.
+I11/I12 route under `/settings/authority` (not `/inbox`) per their own footers — a 2-tab bar
+(`settings/authority-tabs.tsx`, Thresholds / Standing authority); the export's own tab bar also
+shows "Escalation" and "Recent" tabs but neither has a screen in this design source, so they were
+left out rather than built as dangling nav. I15 routes under `/settings/inbox`, also outside the
+`/inbox` tree.
+
+Since none of the built screens linked forward into replies/routing/snoozed/systems/delegation/
+settings, an `InboxQuickLinks` strip (`src/pages/inbox/quick-links.tsx`) was added to the top of
+all three `/inbox` states, and an "Approval authority" button was added to `/settings/inbox` —
+same "flag and fix a dangling route on the spot" pattern as the digest-archive fix.
+
+Team-dot colours in the routing tables (I07/I08) are an exact match for the existing
+`DEPARTMENT_COLORS` palette (`lifecycle/data.ts`) — reused directly via a new `TeamDot`
+component (`team-dot.tsx`) rather than inventing a parallel palette. `Chip`, `Callout`, `KpiCards`,
+`KvList`, `StageSubpageHeader`, `ActorAvatar`/`PersonDot`/`AgentDot` were all reused as-is from
+`lifecycle/stage/`, `digest/` and `rooms/` with zero forking. New customer identities this export
+introduces (Chidi O., Amina B., Kwame A., Grace M., Tobi A. — all external customers replying to
+campaigns) were modelled as a plain `Customer` type (name + location), not `PersonRef`, since they
+aren't workspace staff and have no department.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing waiting / your inbox / grouped triage / bulk-selection | [x] | `src/pages/inbox/index.tsx` + `states/*.tsx` + `bulk-selection-panel.tsx`. I01 wired but unreachable with current mock default |
+| One inbox item (`:id`) | [x] | `item-detail-route.tsx` — only `i-8f2c` built, every other id falls back to not-found |
+| Replies | [x] | `replies-route.tsx`, `/inbox/replies` |
+| One reply (`:id`) | [x] | `one-reply-route.tsx` — only `r-4b19` built, every other id falls back to not-found |
+| Routing rules | [x] | `routing/routing-rules-route.tsx`, `/inbox/routing` |
+| Unroutable conditions | [x] | `routing/unroutable-route.tsx`, `/inbox/routing/unroutable` |
+| Snoozed | [x] | `snoozed-route.tsx`, `/inbox/snoozed` |
+| Delegate while away | [x] | `delegation-route.tsx`, `/inbox/delegation` |
+| Systems | [x] | `systems-route.tsx`, `/inbox/systems` |
+| Settings — Approval authority (thresholds / standing) | [x] | `settings/authority-thresholds-route.tsx`, `settings/authority-standing-route.tsx`, both under `/settings/authority` |
+| Settings — Inbox settings | [x] | `settings/inbox-settings-route.tsx`, `/settings/inbox` |
+| Sidebar badge (pending count) | [x] | `INBOX_PENDING_COUNT` wired into `components/sidebar.tsx`'s Inbox nav item |
+| `tsc -b` clean + Playwright console-error sweep (15 routes × 3 breakpoints) + selection click-test | [x] | Verified 2026-08-19 |
+
 ## 4. Rooms and decisions
 
 **Rebuilt from scratch on 2026-08-18** from `flolyt-figma-designs/Everyday Screens/flolyt-rooms/`
@@ -411,7 +525,7 @@ colors for all 5 so adding a demo room later needs no template change.
 | 3-pane workspace (Decision/Evidence/Log tabs + Steering) | [x] | `src/pages/rooms/room/workspace/workspace.tsx` |
 | Room states: closed (3 outcomes) / reopened / restricted | [x] | `src/pages/rooms/room/states/` |
 | Evidence finding detail | [x] | `evidence-finding-route.tsx`, `/rooms/:id/evidence/:findingId` |
-| Plays board + one-proposal + approve/edit/reject modals | [x] | `src/pages/rooms/room/plays/`, `src/pages/rooms/room/modals/` |
+| Plays board + one-proposal + approve/edit/reject modals | [x] | `src/pages/rooms/room/plays/`, `src/pages/rooms/room/modals/`. Board (`/rooms/:id/plays`) had no in-app link from the room workspace itself until 2026-08-19 — fixed by making the workspace's right-pane "Plays" panel header a link, see [[flag_unreachable_routes]] |
 | Conflict / dissent / guardrails / runs | [x] | `conflict-route.tsx`, `dissent-route.tsx`, `guardrails-route.tsx`, `runs-route.tsx` |
 | People + invite modal / cohort / collision | [x] | `people-route.tsx` + `modals/invite-people-modal.tsx`, `cohort-route.tsx`, `collision-route.tsx` |
 | Close-out form + merge | [x] | `close-out-route.tsx`, `merge-route.tsx` |
@@ -435,13 +549,182 @@ colors for all 5 so adding a demo room later needs no template change.
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 44 | leakage map consumer | [ ] | | |
-| 45 | leakage map accounts | [ ] | | |
+| 44 | leakage map consumer | [x] | | Superseded — rebuilt as `/leakage-map` from the newer `flolyt-leakage-map` export, see section 6a |
+| 45 | leakage map accounts | [x] | | Superseded — same rebuild, see section 6a; the export has no separate "accounts mode", unlike Expand's own account view |
 | 46 | involuntary churn/dunning | [ ] | | |
 | 47 | revenue forecast | [ ] | | |
 | 48 | business memory | [x] | | `/business-memory` — static mock data in `src/pages/business-memory/data.ts`; search + filter pills (Validated/Observed/Superseded/Account-scoped) are real client-side state, not just decorative |
 | 49 | customer profile consumer | [ ] | | |
 | 50 | customer profile account | [ ] | | |
+
+## 6a. Leakage map
+
+**Built from scratch on 2026-08-19** from
+`flolyt-figma-designs/Revenue Screens/flolyt-leakage-map/` (19 frames, LK01–LK19), superseding
+kit-122's frames 44/45 ("leakage map consumer" / "leakage map accounts" — see section 6's note).
+This is the first section of a new **Revenue** group, sibling to Every day, sourced from its own
+`flolyt-figma-designs/Revenue Screens/` export — six more sections (Funnel, Scenario, Forecast,
+Attribution, Value, Benchmarks) are documented there; Funnel was built next, same day, see
+section 6b below. LK00 is an index/route-map
+frame, not a product screen. Content was transcribed from the export's own `lk.py` generator
+source (which holds every frame's exact copy as literal Python string arguments) rather than
+parsed off the rendered SVG text nodes — confirmed more reliable than re-deriving copy from SVG
+`<text>` elements, and it also resolved `Section.save()`'s auto-numbering (several frames are
+saved under a provisional id in the source and land on their final `LKxx` number only once
+sequenced — the on-disk filenames are what the routing below is keyed to).
+
+**Route naming corrected 2026-08-19, after the first pass.** The export's own frame footers and
+`REVENUE-GROUP.md` state the route as `/revenue/leaks` (`/settings/revenue/leaks` for settings),
+and the section first shipped that way — but every other section in this app (Lifecycle, Rooms,
+Digest, Inbox, Handoff, Goals, Value…) mounts at a flat top-level path that matches its sidebar
+label, regardless of which folder group it lives in under `src/pages/`; nothing mounts under an
+`/everyday/*` prefix even though those pages live in `pages/everyday/`. The user corrected this:
+the **folder** nests under `src/pages/revenue/` purely for organization (matching the sidebar's
+REVENUE group), but the **route** does not carry a `/revenue` prefix — same split as
+`pages/everyday/lifecycle` → `/lifecycle`. Corrected to `/leakage-map` (sidebar label → kebab-case,
+matching `business-memory`/`what-to-do-today`/`ai-teammates`) and `/settings/leakage-map`.
+**Apply this same flat-URL rule to every future Revenue section** (Funnel → `/funnel`, not
+`/revenue/funnel`; Scenario → `/scenario`; etc.) regardless of what the export's own footers say —
+this is the one place in this app where "SVG/export wins on the route" is deliberately overridden
+by the user's own architecture decision.
+
+**Architecture — index-branching on query params first, then a mock flag:**
+- `/leakage-map` (`src/pages/revenue/leakage-map/index.tsx`) is ONE route covering LK01 (nothing
+  measured yet — before the 1 January baseline locks), LK02 (the first finding, 27 days since 4
+  March), LK03 (the default populated map), LK05 (`?by=market`), LK06 (`?by=claim`), LK07
+  (`?view=`, saved views — shown with "The map" tab still active, per its own footer), LK08
+  (`?q=`, search — the one state with no tab bar at all), and LK11 (`?as=owner`, the "My stage"
+  lens). `by`/`as`/`view`/`q` are checked in that order, then `LEAKAGE_MAP_STATE` (a 3-value mock
+  flag defaulting to `"full"`) branches LK01/LK02/LK03 — LK01/LK02 are wired but unreachable with
+  that default, same "not wired, no demo state currently triggers it" situation as every prior
+  rebuild's empty/edge states.
+- `/leakage-map/changed` (LK09), `/leakage-map/unmeasurable` (LK12), and
+  `/leakage-map/detection` (LK13) are standalone sibling routes that share the same 6-tab bar
+  (`tabs.tsx`) as the index states — spanning both the query-param states and these three routes,
+  same "shared tab bar, not one route subtree" pattern as Digest's `settings/tabs.tsx`.
+- `/leakage-map/:id` (`leak-detail-route.tsx`) only has two built reference rows: LK04
+  (`delivery-fee-checkout`, the cross-stage "one leak, all ten stages" finding) and LK10
+  (`adopt-depth`, the unowned Adopt line) — every other id falls back to a not-found state, same
+  "one/two reference rows" pattern as Price's `plans/:id` and Today's `r-8f2c`. Reachable in-app
+  from the map's own Adopt stage-name cell, the map's callout body, and the search result's
+  release row.
+- `/leakage-map/export` (LK17) and `/settings/leakage-map` (LK18) are standalone routes — the
+  settings route sits outside the `/leakage-map` tree, matching the `/settings/digest` and
+  `/settings/authority` precedent.
+- **LK14/LK15/LK16 are three bespoke modals**, each hardcoded to the one row the export shows it
+  opened against — `open-a-room-from-line-modal.tsx` (Adopt · feature depth, opened from its
+  "none" room chip and the page-level "Open a room" button), `dispute-a-line-modal.tsx` (Price's
+  ₦31M discount-only-buyers finding, opened from its room chip), and
+  `reclassify-a-claim-modal.tsx` (Support's Lagos delivery failures finding, opened from its room
+  chip) — same "hardcoded to one reference row, not generic" pattern as every other stage-specific
+  modal in the app, since none of the three matched the shared `OpenARoomModal`'s own shape
+  closely enough to reuse without forking it beyond recognition.
+- LK19 (mobile) was treated as a responsive-design constraint on the main map table via Tailwind
+  breakpoints (`hidden md:block` table / `md:hidden` stacked cards), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** all eight named people in this
+export (Ifeoma Nwosu, Tunde Bakare, Amara Okeke, Ravi Mehta, Zainab Yusuf, Sam Iyer, Ada Obi,
+Kunle) are exact matches for `IFEOMA`/`TUNDE`/`AMARA`/`RAVI`/`ZAINAB`/`SAM`/`ADA`/`KUNLE` in
+`rooms/data.ts` — reused directly, zero new `PersonRef`s needed. Four of ten agents also matched
+existing `AgentRef`s (`REPEAT_DECAY`, `PRICE_MARGIN`, `INVOLUNTARY_CHURN`, `EXPANSION`); two new
+ones this export introduces (`PRODUCT_REASON`, `CHURN_REASON`) were added locally to
+`revenue/leakage-map/data.ts`. Two of the map's ten room names are exact matches for already-built rooms
+— "Second order never happened" and "Cards failing on renewal night" — and link straight to
+`/rooms/second-order-never-happened` and `/rooms/cards-failing-on-renewal-night`; the other eight
+room names (e.g. "Fee shown before value") don't match any built room and render as plain text
+rather than a fabricated link. `Chip`, `Callout`, `KpiCards`, `WideBarRow`, `StageSubpageHeader`,
+and the shared `AssignAnOwnerModal` (reused as-is with a new Adopt-specific preset, LK10's own
+"Zainab is the obvious candidate" framing) were all reused from `lifecycle/stage/` with zero
+forking. A local `LeaksKvList` (`kv-list.tsx`) was written instead of reusing digest's `KvList`
+because this section's tone vocabulary needed a sixth `muted`/ink-4 value on top of the app-wide
+5-value `Tone` (for the export's own "—" / "Unavailable" / "always" rows) — `LkTone` is a superset
+of `Tone`, not a fork of it.
+
+**New UI this section introduces:** `lens-bar.tsx`'s `LensBar` — LK11's per-person "viewing as"
+override (Ifeoma Nwosu, scoped to Retain), distinct from the sidebar's own Marketing/Sales/
+Products/Everyone selector. Nothing else in the app has a named-person lens yet; if Value's `VL13`
+("My rooms", Kunle) is built later from the Revenue export, this is the component to reuse.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing measured / first leak / the map / by market / by claim / saved views / search / my stage | [x] | `src/pages/revenue/leakage-map/index.tsx` + `states/*.tsx`. LK01/LK02 wired but unreachable with `LEAKAGE_MAP_STATE`'s current default |
+| What changed / Unmeasurable / Detection | [x] | `changed-route.tsx`, `unmeasurable-route.tsx`, `detection-route.tsx` |
+| One leak (`:id`) | [x] | `leak-detail-route.tsx` — only `delivery-fee-checkout` and `adopt-depth` built, every other id falls back to not-found |
+| Share and export | [x] | `export-route.tsx`, `/leakage-map/export` |
+| Settings | [x] | `settings/leakage-map-settings-route.tsx`, `/settings/leakage-map` |
+| Open a room from a line / Dispute a line / Reclassify a claim (modals) | [x] | `modals/*.tsx`, each hardcoded to the one row the export shows it against |
+| Sidebar "Leakage map" link | [x] | pre-existing stub already correctly pointed at `/leakage-map` — briefly mis-pointed at `/revenue/leaks` mid-build, then reverted; see the route-naming note above |
+| `tsc -b` clean + dev server + 14-route Playwright console/page-error sweep (including a not-found `:id`) + 3-modal click-test + a real-room cross-link click-test, re-run after the route rename | [x] | Verified 2026-08-19 |
+
+## 6b. Funnel
+
+**Built from scratch on 2026-08-19** from `flolyt-figma-designs/Revenue Screens/flolyt-funnel/`
+(15 frames, FN01–FN15), superseding kit-122's frame 80 ("funnel explorer" — see section 12's
+note). Second section of the Revenue group after Leakage map, same "read the export's own `.py`
+generator source, not the rendered SVGs" approach — `fn.py` imports the same shared `rev.py`
+chrome (`revnav`, `subtabs`, `steps`, `hero`, `empty`, `mobile`, `Section`) as `lk.py` did. FN00
+is the index/route-map frame, not a product screen. On-disk filenames are the routing ground
+truth (`Section.save()` auto-numbers past whatever literal id the script passes) — confirmed
+against `fn.py`'s own `S.save()` call order.
+
+**Route stays flat** per the rule established during Leakage map's build (see 6a above and
+[[flolyt_flat_url_pattern]]): `/funnel`, not `/revenue/funnel`, even though the export's own frame
+footers say `/revenue/funnel` throughout. Settings at `/settings/funnel`, not
+`/settings/revenue/funnel`. The sidebar's "Funnel" link was already a pre-existing stub correctly
+pointed at `/funnel` — no correction needed this time.
+
+**Architecture — same index-branching shape as Leakage map:**
+- `/funnel` (`src/pages/revenue/funnel/index.tsx`) is ONE route covering FN01 (not instrumented
+  yet — 3 of 8 steps), FN02 (the first-run state, one step arrived overnight), FN03 (the default
+  populated funnel, 8 steps with one Unavailable), FN06 (`?by=market`), FN07 (`?by=cohort`), and
+  FN14 (the checkout stream degraded, two steps read Unavailable). `by` is checked first, then
+  `FUNNEL_STATE` (a 4-value mock flag defaulting to `"full"`) branches FN01/FN02/FN14 — all three
+  are wired but unreachable with that default, same "not wired, no demo state currently triggers
+  it" situation as every prior rebuild's empty/edge states (verified by temporarily flipping the
+  flag and sweeping each one).
+- `/funnel/gaps` (FN08), `/funnel/compare` (FN05, "Where it bent"), and `/funnel/history` (FN12)
+  are standalone sibling routes sharing the same 6-tab bar (`tabs.tsx`) as the index states —
+  same "shared tab bar, not one route subtree" pattern as Leakage map's `tabs.tsx`.
+- `/funnel/:step` (`step-detail-route.tsx`) only has one built reference row —
+  `checkout-to-order` (FN04, "Reached checkout → placed a first order") — every other id falls
+  back to a not-found state, same "one/two reference rows" pattern as Leakage map's `:id`.
+- `/funnel/steps/new` (`new-step/`) is the "Define a step" wizard (FN09/FN10) — no `?step=` param
+  in the source footer for either frame (both save to the same route), so step state is
+  client-local, same pattern as Goals' `/goals/new`.
+- FN11 ("Request instrumentation") is one bespoke modal, hardcoded to `checkout.fee_shown`,
+  opened from `/funnel/gaps`'s page-level button — same "hardcoded to the one row the export
+  shows it against" pattern as Leakage map's three modals.
+- `/settings/funnel` (FN13, "What counts as a step") is a standalone route outside the `/funnel`
+  tree, matching the `/settings/leakage-map` precedent.
+- FN15 (mobile) was treated as a responsive-design constraint (the step-bar list is already a
+  vertical stack, naturally mobile-friendly without a separate layout; every wide table gets
+  `overflow-x-auto`), not a separate page — same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** all named people (Sam Iyer, Zainab
+Yusuf, Ifeoma Nwosu, Ravi Mehta) are exact matches for `SAM`/`ZAINAB`/`IFEOMA`/`RAVI` in
+`rooms/data.ts`; three of four agents (`REPEAT_DECAY`, `ACQUISITION_QUALITY`, `PRICE_MARGIN`)
+matched existing `AgentRef`s and the fourth (`PRODUCT_REASON`) was already defined in Leakage
+map's own `data.ts` and reused directly rather than redefined — the first cross-*Revenue-section*
+reuse in the group. `Chip`, `Callout`, `KpiCards`, `BarRow`/`BarTrack`, `StageSubpageHeader`, and
+`usePageBreadcrumb` were all reused from `lifecycle/stage/` and the shared breadcrumb context with
+zero forking. A local `FunnelKvList` (`kv-list.tsx`) was written instead of reusing Leakage map's
+`LeaksKvList`, same reasoning as before — this section's tone vocabulary (`FnTone`: `ok`/`warn`/
+`risk`/`ai`/`muted`/`neutral`/`num`) doesn't match `LkTone`'s value set closely enough to share the
+type. A local `FunnelStepBars` (`step-bars.tsx`) renders the horizontal funnel-with-drop-off rows
+(FN03/FN14) — no existing shared component matched that shape (label + count, a bar, and a
+drop-off line below), so it was purpose-built rather than forked from `BarRow`/`WideBarRow`.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — not instrumented yet / first step / the funnel / by market / by cohort / degraded | [x] | `src/pages/revenue/funnel/index.tsx` + `states/*.tsx`. FN01/FN02/FN14 wired but unreachable with `FUNNEL_STATE`'s current default |
+| Not instrumented / Compare / History (siblings) | [x] | `gaps-route.tsx`, `compare-route.tsx`, `history-route.tsx` |
+| One step (`:step`) | [x] | `step-detail-route.tsx` — only `checkout-to-order` built, every other id falls back to not-found |
+| Define a step (wizard) | [x] | `new-step/index.tsx` + `step-what.tsx`/`step-event.tsx`/`step-rail.tsx`, `/funnel/steps/new` |
+| Request instrumentation (modal) | [x] | `modals/request-instrumentation-modal.tsx`, hardcoded to `checkout.fee_shown`, opened from `/funnel/gaps` |
+| Settings | [x] | `settings/funnel-settings-route.tsx`, `/settings/funnel` |
+| Sidebar "Funnel" link | [x] | pre-existing stub already correctly pointed at `/funnel` |
+| `tsc -b` clean + dev server + 10-route Playwright console/page-error sweep (including a not-found `:step`) + modal open/close click-test + wizard step-1→2 click-test + all 3 unreachable mock states swept individually | [x] | Verified 2026-08-19 |
 
 ## 7. Teams (51–58)
 
@@ -453,8 +736,106 @@ colors for all 5 so adding a demo room later needs no template change.
 | 54 | team customer success | [ ] | | |
 | 55 | team engineering | [ ] | | |
 | 56 | executive unit economics | [ ] | | |
-| 57 | cross-functional handoff | [ ] | | |
+| 57 | cross-functional handoff | [x] | | Superseded — rebuilt as `/handoff` from the newer `flolyt-handoff` export, see section 7a |
 | 58 | routing | [ ] | | |
+
+## 7a. Handoff
+
+**Built from scratch on 2026-08-19** from `flolyt-figma-designs/Everyday Screens/flolyt-handoff/`
+(17 screens, H00–H16), superseding kit-122's frame 57 ("cross-functional handoff" — see section 7's
+note) — same "old design source superseded, don't resurrect the old shape" situation as
+today/goals/digest/inbox/lifecycle/rooms. H00 is an index/route-map frame, not a product screen.
+Extraction was done by two parallel research agents (H00–H08 / H09–H16), each producing a verbatim
+structured spec before any code was written. A `flolyt-figma-designs/Everyday Screens/flow-diagrams/
+07-handoff.svg` route map was also read first as an architecture sanity check, per
+[[flolyt_flow_diagrams]] — it confirmed "Overdue" is a state filter on the index (`?state=overdue`),
+not its own route, and that H02 (index)/H06 (one obligation)/H07 (accept-or-dispute) were the
+diagram's own "missing — recommended" additions that make the section a working surface rather than
+just H04's one illustrative chain.
+
+**Architecture — index-branching on query params first, then a mock flag:**
+- `/handoff` (`src/pages/handoff/index.tsx`) is ONE route covering H01 (no handoffs yet — empty
+  state), H02 (default populated chains index), H03 (`?owner=me`) and H10 (`?state=overdue`) —
+  `owner`/`state` query params are checked first, then the `HANDOFF_EMPTY` mock flag. H01 is wired
+  but unreachable with the current default, same "not wired, no demo state currently triggers it"
+  situation as every prior rebuild's empty state. "Owed by me" and "Owed to me" tabs both point at
+  `/handoff?owner=me` — that one built page (H03) already shows both directions, and no separate
+  screen exists for an owed-to-me-only view.
+- `/handoff/:id` (`chain/chain-layout.tsx` + `chain-home-route.tsx`) resolves a chain and branches on
+  its own `status`, mirroring Rooms' `RoomLayout`/`RoomHomeRoute` split — `closed` renders
+  `closed-chain-route.tsx` (H14, own header, no tab bar), everything else renders
+  `live-chain-route.tsx` (H04, timeline + insights) under a 2-tab bar (`chain-tabs.tsx`: The chain /
+  Obligations). H05's own tab bar shows a third "Timeline" tab, but no screen in this export backs a
+  separate timeline view — H04 already is one — so it was left out rather than built as dangling nav,
+  same call as Inbox's `authority-tabs.tsx` dropping Escalation/Recent. Only two chains have a full
+  build: `delivery-fee` (live, the flagship "one cause, five teams" example threaded through nearly
+  every screen) and `card-retry` (closed, H14's own reference). The other four chains in H02's index
+  table (`lagos-delivery-failures`, `discount-leakage`, `ghana-signup-drop`, `weekend-push-fatigue`)
+  exist only as index rows; `ChainLayout`'s not-found fallback catches any other `:id`.
+- `/handoff/:id/obligations` (`obligations-route.tsx`, H05) — only meaningful for the live
+  `delivery-fee` chain. The "Hold releases against revenue 14 days" row (the one unaccepted
+  obligation) gets a "Review" action opening the Accept-or-dispute modal with H07's own exact
+  content; the overdue row (`renewal-reforecast`) links to its own detail page.
+- `/handoff/:id/o/:oid` (`obligation/one-obligation-route.tsx`, H06) — only `renewal-reforecast`
+  ("Re-forecast the August renewal book") has a full build, same "one reference row" pattern as
+  Today's `r-8f2c`, Price's `plans/:id`, Digest's `2026-08-11`, Inbox's `i-8f2c`. This is the
+  section's canonical demo obligation, threaded through H06/H09/H10/H16 with consistent numbers
+  (₦88M, due 9 Aug, Kunle → Joy Nduta).
+- **H07 (Accept or dispute) is a generic modal** (`obligation/accept-dispute-modal.tsx`) — the four
+  options and their descriptions are shared product copy, so only the summary chip/subtitle/default
+  selection vary per call site (unlike every other modal in this app, which is hardcoded to one
+  obligation). Opened from `renewal-reforecast`'s own page and from the "Hold releases" row's
+  "Review" action. Selecting "Pass it on" hands off to the Reassign modal via an `onPassItOn`
+  callback rather than duplicating that flow.
+- **H09 (Reassign)** (`obligation/reassign-modal.tsx`) is hardcoded to `renewal-reforecast` (Kunle →
+  Joy Nduta/Ravi Mehta/Peter Kariuki), matching every other modal's "one reference row" precedent.
+  Opened from the one-obligation page's "Reassign" button and from Accept-or-dispute's "Pass it on".
+- **H08 (Create handoffs from a decision)** is wired into Rooms, not `/handoff` — its own route is
+  `modal · /rooms/:id/decision`, and its dimmed backdrop (a room decided 08:02 by Ifeoma Nwosu,
+  ₦412M at risk, 148,000 customers) is an exact match for the existing reference room
+  `second-order-never-happened`'s own `decisionDoc` (`rooms/room/data.ts`). Added a "Create
+  handoffs" button to that room's Decision panel (`rooms/room/workspace/workspace.tsx`,
+  `DecisionPanelBody`), gated on `room.id === "second-order-never-happened"`, opening
+  `handoff/create-from-decision-modal.tsx` — the 4 drafted obligations it creates are exactly the
+  ones populating the `delivery-fee` chain's own obligations table.
+- `/handoff/load` (`load-route.tsx`, H12) — "By team" tab is fully built (team load bars +
+  Engineering's own detail table); "By person" reuses H10's own "four of six sit with one person"
+  copy verbatim rather than fabricating an org-wide per-person breakdown the source doesn't have.
+- `/settings/handoff-escalation` (H11), `/settings/departures` (H13, built for the one reference
+  departure the export shows, Peter Kariuki) and `/settings/handoff` (H15) are standalone routes,
+  outside the `/handoff` tree — matching the `/settings/digest` vs `/settings/notifications` and
+  `/settings/authority` vs `/inbox` precedents.
+- H16 (mobile) was treated as a responsive-design constraint on `/handoff` via Tailwind
+  breakpoints, not a separate page — it carries the `H16 · Mobile handoff` footer pair but its route
+  annotation is `mobile · /handoff`, not a real route, same signal used to rule out T16/G16/D16/I16/
+  rooms' mobile frames as non-routes in every prior rebuild.
+
+**Proactive unreachable-route fix, per [[flag_unreachable_routes]]:** the sidebar's "Handoff" nav
+item already existed and pointed at `/handoff` before this session (added ahead of the route being
+built — a pre-existing dangling link, now resolved by this build). Separately, `/handoff/load`,
+`/settings/handoff-escalation`, `/settings/departures` and `/settings/handoff` had no in-app link
+pointing to them once built. Fixed the same way as Inbox's `InboxQuickLinks`: added
+`HandoffQuickLinks` (`src/pages/handoff/quick-links.tsx`), a thin nav strip mounted on all four
+`/handoff` states (empty/index/owed-by-me/overdue) linking to all four.
+
+**Reuse:** `Chip`, `Callout`, `KpiCards`, `StageSubpageHeader`, `WideBarRow`/`BarTrack` from
+`@/pages/lifecycle/stage/` and `TeamDot` from `@/pages/inbox/` reused with zero forking (confirmed
+generic enough yet again). `ActorAvatar`/`PersonDot` and the `rooms/data.ts` roster (ADA, RAVI,
+KUNLE, SAM, AMARA, ZAINAB, IFEOMA) reused as-is — Sam Iyer, Ravi Mehta, Amara Okeke, Zainab Yusuf
+and Ifeoma Nwosu are exact initials/department matches for this export's own names. H06 calls Kunle
+"Kunle Ade" (a surname the existing `KUNLE` record doesn't have); kept the existing record rather
+than forking identity over one screen's fuller name, same "SVG wins on content, roster wins on
+identity" call as Today's Ravi Mehta/Ravi Menon note. Peter Kariuki, Joy Nduta and David (Otieno)
+were **not** new people — they're exact matches (name, initials, Customer Success department) for
+`PETER`/`JOY`/`DAVID` already added to `digest/data.ts` for the East Africa CS team; reused directly
+from there instead of re-adding them.
+
+**Verification pattern, same as prior rebuilds:** `npx tsc -b` clean, dev server + a 13-route ×
+3-breakpoint (390/834/1440) Playwright console/page-error sweep (including a not-found `:id` and
+the Rooms decision panel this section now touches), and a click-test of all three modals
+(accept-or-dispute → dispute selection, reassign → candidate selection, create-from-decision →
+uncheck a row → create) — all passed clean. Screenshot review at 1440px and 390px confirmed fidelity
+against the transcribed specs for the index, reassign modal and create-handoffs modal.
 
 ## 8. Governance and infrastructure (59–66)
 
@@ -495,13 +876,13 @@ colors for all 5 so adding a demo room later needs no template change.
 | 76 | goal tracker | [x] | | Superseded — rebuilt as `/goals` from the newer `flolyt-goals` export, see section 2b |
 | 77 | recommendations feed | [x] | | Superseded — rebuilt as `/what-to-do-today` from the newer `flolyt-today` export, see section 2a |
 | 78 | value and roi | [x] | | Superseded — rebuilt as `/value` from the newer `flolyt-goals` export, see section 2b |
-| 79 | daily digest | [ ] | | |
+| 79 | daily digest | [x] | | Superseded — rebuilt as `/digest` from the newer `flolyt-digest` export, see section 2c |
 
 ## 12. Analysis surfaces (80–84)
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 80 | funnel explorer | [ ] | | |
+| 80 | funnel explorer | [x] | | Superseded — rebuilt as `/funnel` from the newer `flolyt-funnel` export, see section 6b |
 | 81 | scenario simulator | [ ] | | |
 | 82 | attribution | [ ] | | |
 | 83 | benchmarking | [ ] | | |
@@ -525,7 +906,7 @@ colors for all 5 so adding a demo room later needs no template change.
 | 91 | data health | [ ] | | |
 | 92 | entity resolution | [ ] | | |
 | 93 | schema mapping | [ ] | | |
-| 94 | reply inbox | [ ] | | |
+| 94 | reply inbox | [x] | `/inbox/replies` | Superseded by section 2d, built from `flolyt-inbox/` — see below |
 
 ## 15. Admin and security (95–101)
 
