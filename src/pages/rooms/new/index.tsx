@@ -1,7 +1,8 @@
 import * as React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
+import { usePageBreadcrumb } from "@/components/breadcrumb-context";
 import { StepRail } from "@/pages/rooms/new/step-rail";
 import { StepCondition } from "@/pages/rooms/new/step-condition";
 import { StepAudience } from "@/pages/rooms/new/step-audience";
@@ -59,6 +60,12 @@ const NewRoom = () => {
 
   const canGoBack = step > 1 || showDuplicate;
 
+  usePageBreadcrumb(
+    meta.crumb
+      ? [{ label: "Rooms", to: "/rooms" }, { label: "New room" }, { label: meta.crumb }]
+      : [{ label: "Rooms", to: "/rooms" }, { label: "New room" }]
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -75,24 +82,6 @@ const NewRoom = () => {
           <Button onClick={handlePrimary}>{meta.cta}</Button>
         </div>
       </div>
-
-      <p className="font-mono text-[10.5px] text-ink-4">
-        <Link to="/rooms" className="hover:text-ink-3">
-          Rooms
-        </Link>
-        <span className="mx-1.5">›</span>
-        {meta.crumb ? (
-          <>
-            <Link to="/rooms/new" onClick={() => setStep(1)} className="hover:text-ink-3">
-              New room
-            </Link>
-            <span className="mx-1.5">›</span>
-            <span className="text-ink-3">{meta.crumb}</span>
-          </>
-        ) : (
-          <span className="text-ink-3">New room</span>
-        )}
-      </p>
 
       <StepRail active={step} onStepClick={goToStep} />
 

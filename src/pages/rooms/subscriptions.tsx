@@ -43,14 +43,7 @@ const RoomSubscriptions = () => {
   return (
     <div className="space-y-6">
       <div>
-        <p className="font-mono text-[10.5px] text-ink-4">
-          <Link to="/rooms" className="hover:text-ink-3">
-            Rooms
-          </Link>
-          <span className="mx-1.5">›</span>
-          <span className="text-ink-3">What you watch</span>
-        </p>
-        <h1 className="mt-2 text-[17px] font-semibold text-ink">What you watch</h1>
+        <h1 className="text-[17px] font-semibold text-ink">What you watch</h1>
         <p className="mt-1 text-[11.5px] text-ink-3">22 rooms · six reach your digest · three muted and still visible</p>
       </div>
 

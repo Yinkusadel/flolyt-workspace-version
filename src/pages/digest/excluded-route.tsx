@@ -1,5 +1,3 @@
-import { Link } from "react-router-dom";
-
 import { cn } from "@/lib/utils";
 import { KpiCards } from "@/pages/lifecycle/stage/kpi-cards";
 import { Chip } from "@/pages/lifecycle/stage/chip";
@@ -12,14 +10,6 @@ const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8
 const DigestExcludedRoute = () => {
   return (
     <div className="space-y-6">
-      <p className="flex items-center gap-1.5 font-mono text-[10.5px] text-ink-4">
-        <Link to="/digest" className="hover:text-ink-3">
-          Digest
-        </Link>
-        <span aria-hidden>›</span>
-        <span className="text-ink-3">Not in this digest</span>
-      </p>
-
       <div>
         <h1 className="text-[17px] font-semibold text-ink">Not in this digest</h1>
         <p className="mt-1 text-[11.5px] text-ink-3">437 things happened overnight · three reached you · here is every rule that decided that</p>

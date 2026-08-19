@@ -1,6 +1,5 @@
-import { Link } from "react-router-dom";
-
 import { Button } from "@/components/ui/button";
+import { usePageBreadcrumb } from "@/components/breadcrumb-context";
 import { cn } from "@/lib/utils";
 import { Callout } from "@/pages/lifecycle/stage/rail";
 import { KpiCards } from "@/pages/lifecycle/stage/kpi-cards";
@@ -12,16 +11,10 @@ const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8
 
 /** D08 — Exec digest, reached at /digest?scope=org. */
 export function ExecState() {
+  usePageBreadcrumb([{ label: "Digest", to: "/digest" }, { label: "Where the org is stuck" }]);
+
   return (
     <div className="space-y-6">
-      <p className="flex items-center gap-1.5 font-mono text-[10.5px] text-ink-4">
-        <Link to="/digest" className="hover:text-ink-3">
-          Digest
-        </Link>
-        <span aria-hidden>›</span>
-        <span className="text-ink-3">Where the org is stuck</span>
-      </p>
-
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-[17px] font-semibold text-ink">Where the org is stuck</h1>

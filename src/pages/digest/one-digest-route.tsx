@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { usePageBreadcrumb } from "@/components/breadcrumb-context";
 import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
 import { KvList } from "@/pages/digest/kv-list";
 import { ONE_DIGEST_CHANGED_AFTER, ONE_DIGEST_DATE, ONE_DIGEST_LABEL, ONE_DIGEST_ROWS } from "@/pages/digest/data";
@@ -11,6 +12,12 @@ const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8
 /** D05 — One past digest, /digest/:date. Only ONE_DIGEST_DATE ("2026-08-11") has real content, same "one reference row" pattern as every prior rebuild. */
 const OneDigestRoute = () => {
   const { date } = useParams();
+
+  usePageBreadcrumb(
+    date === ONE_DIGEST_DATE
+      ? [{ label: "Digest", to: "/digest" }, { label: "Archive", to: "/digest/archive" }, { label: ONE_DIGEST_LABEL }]
+      : [{ label: "Digest", to: "/digest" }, { label: date ?? "" }]
+  );
 
   if (date !== ONE_DIGEST_DATE) {
     return (
@@ -26,18 +33,6 @@ const OneDigestRoute = () => {
 
   return (
     <div className="space-y-6">
-      <p className="flex items-center gap-1.5 font-mono text-[10.5px] text-ink-4">
-        <Link to="/digest" className="hover:text-ink-3">
-          Digest
-        </Link>
-        <span aria-hidden>›</span>
-        <Link to="/digest/archive" className="hover:text-ink-3">
-          Archive
-        </Link>
-        <span aria-hidden>›</span>
-        <span className="text-ink-3">{ONE_DIGEST_LABEL}</span>
-      </p>
-
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-[17px] font-semibold text-ink">{ONE_DIGEST_LABEL}</h1>

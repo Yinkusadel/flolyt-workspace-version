@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 
 import { Sidebar, type ViewingAs } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
+import { BreadcrumbContext, type Crumb } from "@/components/breadcrumb-context";
 import { cn } from "@/lib/utils";
 import { getRoom } from "@/pages/rooms/room/data";
 import { TODAY_ITEMS } from "@/pages/what-to-do-today/data";
@@ -115,6 +116,8 @@ function getBreadcrumb(pathname: string): React.ReactNode {
     );
   }
 
+  if (pathname === "/goals") return "Goals";
+
   if (pathname === "/ai-teammates") return "AI teammates";
 
   if (pathname === "/business-memory") return "Business memory";
@@ -124,10 +127,35 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   return "Home";
 }
 
+/** Renders a page-supplied crumb trail in the same style as `getBreadcrumb`'s own JSX branches. */
+function renderCrumbs(crumbs: Crumb[]): React.ReactNode {
+  return (
+    <span className="flex flex-wrap items-center gap-1.5">
+      {crumbs.map((crumb, i) => (
+        <span key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
+          {i > 0 && <span className="text-ink-4">/</span>}
+          {crumb.to ? (
+            <Link to={crumb.to} className="hover:text-ink">
+              {crumb.label}
+            </Link>
+          ) : (
+            <span className="text-ink">{crumb.label}</span>
+          )}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export const AppLayout = () => {
   const [navOpen, setNavOpen] = React.useState(false);
   const [viewingAs, setViewingAs] = React.useState<ViewingAs>("Everyone");
+  const [breadcrumbOverride, setBreadcrumbOverride] = React.useState<Crumb[] | null>(null);
   const location = useLocation();
+  const breadcrumbContextValue = React.useMemo(
+    () => ({ setOverride: setBreadcrumbOverride }),
+    []
+  );
 
   // Close the drawer on route change and Escape; lock body scroll while open.
   React.useEffect(() => {
@@ -178,11 +206,13 @@ export const AppLayout = () => {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar
-          breadcrumb={getBreadcrumb(location.pathname)}
+          breadcrumb={breadcrumbOverride ? renderCrumbs(breadcrumbOverride) : getBreadcrumb(location.pathname)}
           onMenuClick={() => setNavOpen(true)}
         />
         <main className="flex-1 overflow-y-auto p-page">
-          <Outlet context={{ viewingAs } satisfies AppOutletContext} />
+          <BreadcrumbContext.Provider value={breadcrumbContextValue}>
+            <Outlet context={{ viewingAs } satisfies AppOutletContext} />
+          </BreadcrumbContext.Provider>
         </main>
       </div>
     </div>

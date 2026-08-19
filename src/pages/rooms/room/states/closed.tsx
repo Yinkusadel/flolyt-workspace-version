@@ -34,14 +34,7 @@ export function ClosedRoom({ room }: { room: RoomDetail }) {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="font-mono text-[10.5px] text-ink-4">
-            <Link to="/rooms" className="hover:text-ink-3">
-              Rooms
-            </Link>
-            <span className="mx-1.5">›</span>
-            <span className="text-ink-3">{room.title}</span>
-          </p>
-          <h1 className="mt-2 text-[17px] font-semibold text-ink">{room.title}</h1>
+          <h1 className="text-[17px] font-semibold text-ink">{room.title}</h1>
           <p className="mt-1 text-[11.5px] text-ink-3">{room.subtitle}</p>
         </div>
         <Button asChild variant="outline" className="shrink-0">

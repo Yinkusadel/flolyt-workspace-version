@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
 import { useStageContext, type StageOutletContext } from "@/pages/lifecycle/stage/layout";
@@ -27,14 +27,7 @@ const StageTabsLayout = () => {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="font-mono text-[10.5px] text-ink-4">
-            <Link to="/lifecycle" className="hover:text-ink-3">
-              Lifecycle
-            </Link>
-            <span className="mx-1.5">›</span>
-            <span className="text-ink-3">{stage.name}</span>
-          </p>
-          <h1 className="mt-2 text-[17px] font-semibold text-ink">{stage.name}</h1>
+          <h1 className="text-[17px] font-semibold text-ink">{stage.name}</h1>
           <p className="mt-1 text-[11.5px] text-ink-3">{stage.headline}</p>
         </div>
         {/* Portal target for a tab's header-right actions — e.g. Overview's Share or export row. */}

@@ -12,14 +12,6 @@ const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8
 const DigestWeeklyRoute = () => {
   return (
     <div className="space-y-6">
-      <p className="flex items-center gap-1.5 font-mono text-[10.5px] text-ink-4">
-        <Link to="/digest" className="hover:text-ink-3">
-          Digest
-        </Link>
-        <span aria-hidden>›</span>
-        <span className="text-ink-3">Weekly roll-up</span>
-      </p>
-
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-[17px] font-semibold text-ink">Weekly roll-up</h1>

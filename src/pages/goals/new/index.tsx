@@ -1,7 +1,8 @@
 import * as React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
+import { usePageBreadcrumb } from "@/components/breadcrumb-context";
 import { StepRail } from "@/pages/goals/new/step-rail";
 import { StepMetric } from "@/pages/goals/new/step-metric";
 import { StepBaseline } from "@/pages/goals/new/step-baseline";
@@ -53,6 +54,12 @@ const NewGoal = () => {
     if (step > 1) goToStep(step - 1);
   };
 
+  usePageBreadcrumb(
+    meta.crumb
+      ? [{ label: "Goals", to: "/goals" }, { label: "New goal" }, { label: meta.crumb }]
+      : [{ label: "Goals", to: "/goals" }, { label: "New goal" }]
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -69,24 +76,6 @@ const NewGoal = () => {
           <Button onClick={handlePrimary}>{meta.cta}</Button>
         </div>
       </div>
-
-      <p className="font-mono text-[10.5px] text-ink-4">
-        <Link to="/goals" className="hover:text-ink-3">
-          Goals
-        </Link>
-        <span className="mx-1.5">›</span>
-        {meta.crumb ? (
-          <>
-            <Link to="/goals/new" onClick={() => setStep(1)} className="hover:text-ink-3">
-              New goal
-            </Link>
-            <span className="mx-1.5">›</span>
-            <span className="text-ink-3">{meta.crumb}</span>
-          </>
-        ) : (
-          <span className="text-ink-3">New goal</span>
-        )}
-      </p>
 
       <StepRail active={step} onStepClick={goToStep} />
 
