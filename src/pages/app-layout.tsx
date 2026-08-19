@@ -79,6 +79,28 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   if (pathname === "/what-to-do-today/done") return "What to do today / Done";
   if (pathname === "/settings/today") return "What to do today / Settings";
 
+  if (pathname === "/digest") return "Digest";
+  if (pathname === "/digest/archive") return "Digest / Archive";
+  if (pathname === "/digest/weekly") return "Digest / Weekly roll-up";
+  if (pathname === "/digest/excluded") return "Digest / Not in this digest";
+  if (pathname === "/settings/digest") return "Digest / Settings";
+  if (pathname === "/settings/digest/channels") return "Digest / Settings / Channels";
+  if (pathname === "/settings/digest/quiet-hours") return "Digest / Settings / Quiet hours";
+  if (pathname === "/settings/notifications") return "Digest / Settings / Notification rules";
+
+  const digestDateMatch = /^\/digest\/([^/]+)/.exec(pathname);
+  if (digestDateMatch) {
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/digest" className="hover:text-ink">
+          Digest
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{digestDateMatch[1]}</span>
+      </span>
+    );
+  }
+
   const todayItemMatch = /^\/what-to-do-today\/([^/]+)/.exec(pathname);
   if (todayItemMatch) {
     const item = TODAY_ITEMS.find((i) => i.id === todayItemMatch[1]);

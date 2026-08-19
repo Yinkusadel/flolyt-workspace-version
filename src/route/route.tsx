@@ -90,6 +90,15 @@ import TodaySnoozedRoute from "@/pages/what-to-do-today/snoozed-route";
 import TodayWaitingOnDataRoute from "@/pages/what-to-do-today/waiting-on-data-route";
 import TodayDoneRoute from "@/pages/what-to-do-today/done-route";
 import SettingsTodayRoute from "@/pages/what-to-do-today/settings-today-route";
+import Digest from "@/pages/digest";
+import DigestArchiveRoute from "@/pages/digest/archive-route";
+import OneDigestRoute from "@/pages/digest/one-digest-route";
+import DigestWeeklyRoute from "@/pages/digest/weekly-route";
+import DigestExcludedRoute from "@/pages/digest/excluded-route";
+import WhatGetsInRoute from "@/pages/digest/settings/what-gets-in-route";
+import ChannelsRoute from "@/pages/digest/settings/channels-route";
+import QuietHoursRoute from "@/pages/digest/settings/quiet-hours-route";
+import NotificationRulesRoute from "@/pages/digest/settings/notification-rules-route";
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
@@ -238,6 +247,28 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/today",
                 Component: SettingsTodayRoute,
+              },
+              {
+                path: "digest",
+                children: [
+                  { index: true, Component: Digest },
+                  { path: "archive", Component: DigestArchiveRoute },
+                  { path: "weekly", Component: DigestWeeklyRoute },
+                  { path: "excluded", Component: DigestExcludedRoute },
+                  { path: ":date", Component: OneDigestRoute },
+                ],
+              },
+              {
+                path: "settings/digest",
+                children: [
+                  { index: true, Component: WhatGetsInRoute },
+                  { path: "channels", Component: ChannelsRoute },
+                  { path: "quiet-hours", Component: QuietHoursRoute },
+                ],
+              },
+              {
+                path: "settings/notifications",
+                Component: NotificationRulesRoute,
               },
               {
                 path: "goals",

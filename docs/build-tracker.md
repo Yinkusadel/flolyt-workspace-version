@@ -2,11 +2,12 @@
 
 Source of truth for design: `flolyt-kit-122/README.md` (kit overview + section table) and
 `flolyt-kit-122/{nn}-{slug}.svg` (one SVG per screen, numbered to match the `#` column
-below) — **except section 2a (what to do today), section 2b (goals), section 3 (the
-lifecycle), and section 4 (rooms and decisions)**, each rebuilt from its own newer
-`flolyt-figma-designs/Everyday Screens/` export (`flolyt-today/`, `flolyt-goals/`,
-`flolyt-lifecycle/`, `flolyt-rooms/` respectively; the whole `Everyday Screens/` parent folder
-appeared on 2026-08-17); see each section's own header for its source-of-truth note. A
+below) — **except section 2a (what to do today), section 2b (goals), section 2c (digest),
+section 3 (the lifecycle), and section 4 (rooms and decisions)**, each rebuilt from its own
+newer `flolyt-figma-designs/Everyday Screens/` export (`flolyt-today/`, `flolyt-goals/`,
+`flolyt-digest/`, `flolyt-lifecycle/`, `flolyt-rooms/` respectively; the whole
+`Everyday Screens/` parent folder appeared on 2026-08-17); see each section's own header for
+its source-of-truth note. A
 `flolyt-figma-designs/Everyday Screens/flow-diagrams/` folder also exists now with
 architecture-level route maps — use it as a sanity check before building a new section, but
 each screen's own SVG footer still wins on the specific route.
@@ -353,6 +354,56 @@ and `DEPARTMENT_COLORS` hex, confirmed by reading both before reusing rather tha
 | Value and ROI | [x] | `src/pages/value/index.tsx` + `data.ts`, top-level `/value` |
 | `tsc -b` clean + Playwright console-error sweep (9 routes × 3 breakpoints) + wizard click-through + modal click-test | [x] | Verified 2026-08-18 |
 
+## 2c. Digest
+
+**Built from scratch on 2026-08-19** from `flolyt-figma-designs/Everyday Screens/flolyt-digest/`
+(17 screens, D00–D16), superseding kit-122's frame 79 ("daily digest" — see section 11's note)
+— same "old design source superseded, don't resurrect the old shape" situation as
+today/goals/lifecycle/rooms. Every SVG's own footer states its route. Extraction was done by
+two parallel research agents (D00–D08 / D09–D16), each producing a verbatim structured spec
+before any code was written.
+
+**Architecture:** `/digest` (index, `src/pages/digest/index.tsx`) is ONE route covering D01
+(first digest, day one), D02 (default steady-state digest), D03 (a quiet day), D07
+(`?team=ea-cs`), D08 (`?scope=org`), and D15 (degraded/incomplete) — branches on query params
+first, then on `WORKSPACE_AGE_DAYS`/`QUIET_DAY_ACTIVE`/`DIGEST_DEGRADED` mock flags in `data.ts`.
+D01/D03/D15 are wired but unreachable with the current mock defaults, same "not wired, no demo
+state currently triggers it" situation as every prior rebuild's empty/edge states. D07 only has
+real content for `team=ea-cs` (East Africa CS); any other team value falls back to a not-found
+state, matching the "one reference row" pattern used everywhere else in this app (Today's
+`r-8f2c`, Price's `plans/:id`, Goals' `repeat-90`). D04 (`/digest/archive`), D06
+(`/digest/weekly`) and D14 (`/digest/excluded`) are standalone routes. D05 (`/digest/:date`) only
+has real content for `2026-08-11`; every other date falls back to a not-found state, same
+pattern. D09–D11 (`/settings/digest`, `/settings/digest/channels`, `/settings/digest/quiet-hours`)
+share a 4-tab bar (`settings/tabs.tsx`) with D12, but **D12 (`/settings/notifications`) is its
+own top-level sibling route, not nested under `/settings/digest`** — confirmed by its own
+literal footer even though it's reached via the same visual tab bar; the tabs component just
+links across both route trees. D13 (edit a notification rule) is a modal opened from the one row
+D12's own export shows it opened against (`A room opens above ₦25M`), same "shared modals are
+local state, not routes" pattern as every other modal in the app. D16 (mobile) was treated as a
+responsive-design constraint on `/digest` via Tailwind breakpoints, not a separate page — its own
+inline tag reads `mobile · /digest` and it lacks the `Dxx · title` footer pair every routed
+screen has.
+
+New people introduced by this export and not on the existing `rooms/data.ts` roster: Grace
+Mwangi, Peter Kariuki, Joy Nduta, David Otieno (all Customer Success, East Africa CS team) —
+added to `src/pages/digest/data.ts`. Ada Obi, Ravi Mehta and Kunle were reused as-is from
+`rooms/data.ts`, confirmed by reading both before reusing. The five tone colours this export
+uses (amber/teal/rose/indigo/gray) mapped exactly onto the app's existing `Tone` type
+(amber/teal/rose/ultra/neutral) — no new tone was needed.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — first digest / today / quiet day / team / exec / degraded | [x] | `src/pages/digest/index.tsx` + `states/*.tsx`. D01/D03/D15 wired but unreachable with current mock defaults |
+| Archive | [x] | `archive-route.tsx`, `/digest/archive` |
+| One past digest (`:date`) | [x] | `one-digest-route.tsx` — only `2026-08-11` built, every other date falls back to not-found |
+| Weekly roll-up | [x] | `weekly-route.tsx`, `/digest/weekly` |
+| Not in this digest | [x] | `excluded-route.tsx`, `/digest/excluded` |
+| Settings — What gets in / Channels / Quiet hours | [x] | `settings/what-gets-in-route.tsx`, `settings/channels-route.tsx`, `settings/quiet-hours-route.tsx`, all under `/settings/digest` |
+| Settings — Notification rules | [x] | `settings/notification-rules-route.tsx`, `/settings/notifications` (sibling of `/settings/digest`, per D12's own footer) |
+| Edit a notification rule modal | [x] | `settings/edit-rule-modal.tsx`, opened from the one rule the export shows it against |
+| `tsc -b` clean + Playwright console-error sweep (14 routes × 3 breakpoints) + modal click-test | [x] | Verified 2026-08-19 |
+
 ## 4. Rooms and decisions
 
 **Rebuilt from scratch on 2026-08-18** from `flolyt-figma-designs/Everyday Screens/flolyt-rooms/`
@@ -495,7 +546,7 @@ colors for all 5 so adding a demo room later needs no template change.
 | 76 | goal tracker | [x] | | Superseded — rebuilt as `/goals` from the newer `flolyt-goals` export, see section 2b |
 | 77 | recommendations feed | [x] | | Superseded — rebuilt as `/what-to-do-today` from the newer `flolyt-today` export, see section 2a |
 | 78 | value and roi | [x] | | Superseded — rebuilt as `/value` from the newer `flolyt-goals` export, see section 2b |
-| 79 | daily digest | [ ] | | |
+| 79 | daily digest | [x] | | Superseded — rebuilt as `/digest` from the newer `flolyt-digest` export, see section 2c |
 
 ## 12. Analysis surfaces (80–84)
 
