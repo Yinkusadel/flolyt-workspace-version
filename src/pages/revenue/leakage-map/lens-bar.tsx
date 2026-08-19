@@ -24,7 +24,7 @@ export function LensBar({ person, holds, body }: { person: PersonRef; holds: str
             <p className="mt-1 max-w-2xl text-[10.5px] leading-relaxed text-ultra">{body}</p>
           </div>
         </div>
-        <Link to="/revenue/leaks" className="shrink-0 text-[11px] font-semibold text-ultra hover:underline">
+        <Link to="/leakage-map" className="shrink-0 text-[11px] font-semibold text-ultra hover:underline">
           See everything
         </Link>
       </div>

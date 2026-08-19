@@ -5,17 +5,17 @@ import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
 import { StageSubpageHeader } from "@/pages/everyday/lifecycle/stage/stage-subpage-header";
-import { LeaksKvList } from "@/pages/revenue/leaks/kv-list";
-import { LK18_RULE_ROWS, LK18_SOURCE_ROWS, LK_CHIP_TONE } from "@/pages/revenue/leaks/data";
+import { LeaksKvList } from "@/pages/revenue/leakage-map/kv-list";
+import { LK18_RULE_ROWS, LK18_SOURCE_ROWS, LK_CHIP_TONE } from "@/pages/revenue/leakage-map/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 
-/** LK18 — /settings/revenue/leaks, outside the /revenue/leaks tree, matching the /settings/digest and /settings/authority precedent. */
+/** LK18 — /settings/leakage-map, outside the /leakage-map tree, matching the /settings/digest and /settings/authority precedent. */
 const LeaksSettingsRoute = () => {
   return (
     <div className="space-y-8">
       <StageSubpageHeader
-        crumbs={[{ label: "Revenue" }, { label: "Leakage map", to: "/revenue/leaks" }, { label: "Settings" }]}
+        crumbs={[{ label: "Leakage map", to: "/leakage-map" }, { label: "Settings" }]}
         title="Leakage map settings"
         subtitle="Eight rules · two are yours, three cannot be turned off, three cannot be turned on"
         action={

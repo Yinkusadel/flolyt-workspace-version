@@ -1,12 +1,12 @@
 import { PersonAvatar } from "@/components/person-avatar";
 import { DEPARTMENT_COLORS, EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { LeaksTabs } from "@/pages/revenue/leaks/tabs";
-import { LK09_MOVEMENT_ROWS, LK09_REVISION_ROWS, LK_TONE_CLASS } from "@/pages/revenue/leaks/data";
+import { LeaksTabs } from "@/pages/revenue/leakage-map/tabs";
+import { LK09_MOVEMENT_ROWS, LK09_REVISION_ROWS, LK_TONE_CLASS } from "@/pages/revenue/leakage-map/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 
-/** LK09 — /revenue/leaks/changed. */
+/** LK09 — /leakage-map/changed. */
 const ChangedRoute = () => {
   return (
     <div className="space-y-8">

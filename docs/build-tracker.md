@@ -549,7 +549,7 @@ colors for all 5 so adding a demo room later needs no template change.
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 44 | leakage map consumer | [x] | | Superseded — rebuilt as `/revenue/leaks` from the newer `flolyt-leakage-map` export, see section 6a |
+| 44 | leakage map consumer | [x] | | Superseded — rebuilt as `/leakage-map` from the newer `flolyt-leakage-map` export, see section 6a |
 | 45 | leakage map accounts | [x] | | Superseded — same rebuild, see section 6a; the export has no separate "accounts mode", unlike Expand's own account view |
 | 46 | involuntary churn/dunning | [ ] | | |
 | 47 | revenue forecast | [ ] | | |
@@ -572,8 +572,23 @@ parsed off the rendered SVG text nodes — confirmed more reliable than re-deriv
 saved under a provisional id in the source and land on their final `LKxx` number only once
 sequenced — the on-disk filenames are what the routing below is keyed to).
 
+**Route naming corrected 2026-08-19, after the first pass.** The export's own frame footers and
+`REVENUE-GROUP.md` state the route as `/revenue/leaks` (`/settings/revenue/leaks` for settings),
+and the section first shipped that way — but every other section in this app (Lifecycle, Rooms,
+Digest, Inbox, Handoff, Goals, Value…) mounts at a flat top-level path that matches its sidebar
+label, regardless of which folder group it lives in under `src/pages/`; nothing mounts under an
+`/everyday/*` prefix even though those pages live in `pages/everyday/`. The user corrected this:
+the **folder** nests under `src/pages/revenue/` purely for organization (matching the sidebar's
+REVENUE group), but the **route** does not carry a `/revenue` prefix — same split as
+`pages/everyday/lifecycle` → `/lifecycle`. Corrected to `/leakage-map` (sidebar label → kebab-case,
+matching `business-memory`/`what-to-do-today`/`ai-teammates`) and `/settings/leakage-map`.
+**Apply this same flat-URL rule to every future Revenue section** (Funnel → `/funnel`, not
+`/revenue/funnel`; Scenario → `/scenario`; etc.) regardless of what the export's own footers say —
+this is the one place in this app where "SVG/export wins on the route" is deliberately overridden
+by the user's own architecture decision.
+
 **Architecture — index-branching on query params first, then a mock flag:**
-- `/revenue/leaks` (`src/pages/revenue/leaks/index.tsx`) is ONE route covering LK01 (nothing
+- `/leakage-map` (`src/pages/revenue/leakage-map/index.tsx`) is ONE route covering LK01 (nothing
   measured yet — before the 1 January baseline locks), LK02 (the first finding, 27 days since 4
   March), LK03 (the default populated map), LK05 (`?by=market`), LK06 (`?by=claim`), LK07
   (`?view=`, saved views — shown with "The map" tab still active, per its own footer), LK08
@@ -582,18 +597,18 @@ sequenced — the on-disk filenames are what the routing below is keyed to).
   flag defaulting to `"full"`) branches LK01/LK02/LK03 — LK01/LK02 are wired but unreachable with
   that default, same "not wired, no demo state currently triggers it" situation as every prior
   rebuild's empty/edge states.
-- `/revenue/leaks/changed` (LK09), `/revenue/leaks/unmeasurable` (LK12), and
-  `/revenue/leaks/detection` (LK13) are standalone sibling routes that share the same 6-tab bar
+- `/leakage-map/changed` (LK09), `/leakage-map/unmeasurable` (LK12), and
+  `/leakage-map/detection` (LK13) are standalone sibling routes that share the same 6-tab bar
   (`tabs.tsx`) as the index states — spanning both the query-param states and these three routes,
   same "shared tab bar, not one route subtree" pattern as Digest's `settings/tabs.tsx`.
-- `/revenue/leaks/:id` (`leak-detail-route.tsx`) only has two built reference rows: LK04
+- `/leakage-map/:id` (`leak-detail-route.tsx`) only has two built reference rows: LK04
   (`delivery-fee-checkout`, the cross-stage "one leak, all ten stages" finding) and LK10
   (`adopt-depth`, the unowned Adopt line) — every other id falls back to a not-found state, same
   "one/two reference rows" pattern as Price's `plans/:id` and Today's `r-8f2c`. Reachable in-app
   from the map's own Adopt stage-name cell, the map's callout body, and the search result's
   release row.
-- `/revenue/leaks/export` (LK17) and `/settings/revenue/leaks` (LK18) are standalone routes — the
-  settings route sits outside the `/revenue/leaks` tree, matching the `/settings/digest` and
+- `/leakage-map/export` (LK17) and `/settings/leakage-map` (LK18) are standalone routes — the
+  settings route sits outside the `/leakage-map` tree, matching the `/settings/digest` and
   `/settings/authority` precedent.
 - **LK14/LK15/LK16 are three bespoke modals**, each hardcoded to the one row the export shows it
   opened against — `open-a-room-from-line-modal.tsx` (Adopt · feature depth, opened from its
@@ -613,7 +628,7 @@ Kunle) are exact matches for `IFEOMA`/`TUNDE`/`AMARA`/`RAVI`/`ZAINAB`/`SAM`/`ADA
 `rooms/data.ts` — reused directly, zero new `PersonRef`s needed. Four of ten agents also matched
 existing `AgentRef`s (`REPEAT_DECAY`, `PRICE_MARGIN`, `INVOLUNTARY_CHURN`, `EXPANSION`); two new
 ones this export introduces (`PRODUCT_REASON`, `CHURN_REASON`) were added locally to
-`revenue/leaks/data.ts`. Two of the map's ten room names are exact matches for already-built rooms
+`revenue/leakage-map/data.ts`. Two of the map's ten room names are exact matches for already-built rooms
 — "Second order never happened" and "Cards failing on renewal night" — and link straight to
 `/rooms/second-order-never-happened` and `/rooms/cards-failing-on-renewal-night`; the other eight
 room names (e.g. "Fee shown before value") don't match any built room and render as plain text
@@ -632,14 +647,14 @@ Products/Everyone selector. Nothing else in the app has a named-person lens yet;
 
 | Piece | Status | Notes |
 |---|---|---|
-| Index — nothing measured / first leak / the map / by market / by claim / saved views / search / my stage | [x] | `src/pages/revenue/leaks/index.tsx` + `states/*.tsx`. LK01/LK02 wired but unreachable with `LEAKAGE_MAP_STATE`'s current default |
+| Index — nothing measured / first leak / the map / by market / by claim / saved views / search / my stage | [x] | `src/pages/revenue/leakage-map/index.tsx` + `states/*.tsx`. LK01/LK02 wired but unreachable with `LEAKAGE_MAP_STATE`'s current default |
 | What changed / Unmeasurable / Detection | [x] | `changed-route.tsx`, `unmeasurable-route.tsx`, `detection-route.tsx` |
 | One leak (`:id`) | [x] | `leak-detail-route.tsx` — only `delivery-fee-checkout` and `adopt-depth` built, every other id falls back to not-found |
-| Share and export | [x] | `export-route.tsx`, `/revenue/leaks/export` |
-| Settings | [x] | `settings/leaks-settings-route.tsx`, `/settings/revenue/leaks` |
+| Share and export | [x] | `export-route.tsx`, `/leakage-map/export` |
+| Settings | [x] | `settings/leakage-map-settings-route.tsx`, `/settings/leakage-map` |
 | Open a room from a line / Dispute a line / Reclassify a claim (modals) | [x] | `modals/*.tsx`, each hardcoded to the one row the export shows it against |
-| Sidebar "Leakage map" link | [x] | pre-existing stub pointed at `/leakage-map`, corrected to `/revenue/leaks` — same pre-existing-dangling-link situation as Handoff's nav item before its own section was built |
-| `tsc -b` clean + dev server + 14-route × 3-breakpoint (390/834/1440) Playwright console/page-error sweep (including a not-found `:id`) + 3-modal click-test + a real-room cross-link click-test | [x] | Verified 2026-08-19 |
+| Sidebar "Leakage map" link | [x] | pre-existing stub already correctly pointed at `/leakage-map` — briefly mis-pointed at `/revenue/leaks` mid-build, then reverted; see the route-naming note above |
+| `tsc -b` clean + dev server + 14-route Playwright console/page-error sweep (including a not-found `:id`) + 3-modal click-test + a real-room cross-link click-test, re-run after the route rename | [x] | Verified 2026-08-19 |
 
 ## 7. Teams (51–58)
 

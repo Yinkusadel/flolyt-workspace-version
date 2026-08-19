@@ -120,13 +120,13 @@ import OneObligationRoute from "@/pages/everyday/handoff/obligation/one-obligati
 import HandoffEscalationRoute from "@/pages/everyday/handoff/settings/escalation-route";
 import DeparturesRoute from "@/pages/everyday/handoff/settings/departures-route";
 import HandoffSettingsRoute from "@/pages/everyday/handoff/settings/handoff-settings-route";
-import LeakageMap from "@/pages/revenue/leaks";
-import LeaksChangedRoute from "@/pages/revenue/leaks/changed-route";
-import LeaksUnmeasurableRoute from "@/pages/revenue/leaks/unmeasurable-route";
-import LeaksDetectionRoute from "@/pages/revenue/leaks/detection-route";
-import LeaksExportRoute from "@/pages/revenue/leaks/export-route";
-import LeakDetailRoute from "@/pages/revenue/leaks/leak-detail-route";
-import LeaksSettingsRoute from "@/pages/revenue/leaks/settings/leaks-settings-route";
+import LeakageMap from "@/pages/revenue/leakage-map";
+import LeaksChangedRoute from "@/pages/revenue/leakage-map/changed-route";
+import LeaksUnmeasurableRoute from "@/pages/revenue/leakage-map/unmeasurable-route";
+import LeaksDetectionRoute from "@/pages/revenue/leakage-map/detection-route";
+import LeaksExportRoute from "@/pages/revenue/leakage-map/export-route";
+import LeakDetailRoute from "@/pages/revenue/leakage-map/leak-detail-route";
+import LeaksSettingsRoute from "@/pages/revenue/leakage-map/settings/leakage-map-settings-route";
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
@@ -375,7 +375,7 @@ export const routes = createBrowserRouter([
                 Component: Value,
               },
               {
-                path: "revenue/leaks",
+                path: "leakage-map",
                 children: [
                   { index: true, Component: LeakageMap },
                   { path: "changed", Component: LeaksChangedRoute },
@@ -386,7 +386,7 @@ export const routes = createBrowserRouter([
                 ],
               },
               {
-                path: "settings/revenue/leaks",
+                path: "settings/leakage-map",
                 Component: LeaksSettingsRoute,
               },
               {

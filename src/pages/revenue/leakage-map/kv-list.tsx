@@ -1,4 +1,4 @@
-import { LK_TONE_CLASS, type LkTone } from "@/pages/revenue/leaks/data";
+import { LK_TONE_CLASS, type LkTone } from "@/pages/revenue/leakage-map/data";
 
 /**
  * Label-left / value-right list, same shape as digest's KvList but keyed to

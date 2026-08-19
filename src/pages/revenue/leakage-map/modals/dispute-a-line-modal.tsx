@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { LK15_DISPUTE_PRESET } from "@/pages/revenue/leaks/data";
+import { LK15_DISPUTE_PRESET } from "@/pages/revenue/leakage-map/data";
 
 /** LK15 — "Dispute a line", hardcoded to Price's ₦31M discount-only-buyers finding, opened from the map's Price row. */
 export function DisputeALineModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {

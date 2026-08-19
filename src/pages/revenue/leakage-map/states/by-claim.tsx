@@ -2,13 +2,13 @@ import { PersonAvatar } from "@/components/person-avatar";
 import { DEPARTMENT_COLORS, EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
-import { LeaksTabs } from "@/pages/revenue/leaks/tabs";
-import { CLAIM_CHIP_TONE, CLAIM_LABEL, LK06_CARDS, LK06_UPGRADE_ROWS } from "@/pages/revenue/leaks/data";
+import { LeaksTabs } from "@/pages/revenue/leakage-map/tabs";
+import { CLAIM_CHIP_TONE, CLAIM_LABEL, LK06_CARDS, LK06_UPGRADE_ROWS } from "@/pages/revenue/leakage-map/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 const CARD_EYEBROW_CLASS: Record<string, string> = { ultra: "text-ultra", amber: "text-amber", muted: "text-ink-4" };
 
-/** LK06 — /revenue/leaks?by=claim. */
+/** LK06 — /leakage-map?by=claim. */
 export function ByClaimState() {
   return (
     <div className="space-y-8">

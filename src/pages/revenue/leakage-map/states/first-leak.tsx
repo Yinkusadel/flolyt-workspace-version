@@ -4,8 +4,8 @@ import { DEPARTMENT_COLORS, EYEBROW_CLASS } from "@/pages/everyday/lifecycle/dat
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { REPEAT_DECAY } from "@/pages/everyday/rooms/data";
-import { LeaksKvList } from "@/pages/revenue/leaks/kv-list";
-import { LK02_MISSING_ROWS, LK02_WHAT_NEXT_ROWS } from "@/pages/revenue/leaks/data";
+import { LeaksKvList } from "@/pages/revenue/leakage-map/kv-list";
+import { LK02_MISSING_ROWS, LK02_WHAT_NEXT_ROWS } from "@/pages/revenue/leakage-map/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 

@@ -208,24 +208,24 @@ function getBreadcrumb(pathname: string): React.ReactNode {
 
   if (pathname === "/goals") return "Goals";
 
-  if (pathname === "/revenue/leaks") return "Leakage map";
-  if (pathname === "/revenue/leaks/changed")
-    return renderCrumbs([{ label: "Leakage map", to: "/revenue/leaks" }, { label: "What changed" }]);
-  if (pathname === "/revenue/leaks/unmeasurable")
-    return renderCrumbs([{ label: "Leakage map", to: "/revenue/leaks" }, { label: "Unmeasurable" }]);
-  if (pathname === "/revenue/leaks/detection")
-    return renderCrumbs([{ label: "Leakage map", to: "/revenue/leaks" }, { label: "Detection" }]);
-  if (pathname === "/revenue/leaks/export")
-    return renderCrumbs([{ label: "Leakage map", to: "/revenue/leaks" }, { label: "Export" }]);
-  if (pathname === "/settings/revenue/leaks")
-    return renderCrumbs([{ label: "Leakage map", to: "/revenue/leaks" }, { label: "Settings" }]);
+  if (pathname === "/leakage-map") return "Leakage map";
+  if (pathname === "/leakage-map/changed")
+    return renderCrumbs([{ label: "Leakage map", to: "/leakage-map" }, { label: "What changed" }]);
+  if (pathname === "/leakage-map/unmeasurable")
+    return renderCrumbs([{ label: "Leakage map", to: "/leakage-map" }, { label: "Unmeasurable" }]);
+  if (pathname === "/leakage-map/detection")
+    return renderCrumbs([{ label: "Leakage map", to: "/leakage-map" }, { label: "Detection" }]);
+  if (pathname === "/leakage-map/export")
+    return renderCrumbs([{ label: "Leakage map", to: "/leakage-map" }, { label: "Export" }]);
+  if (pathname === "/settings/leakage-map")
+    return renderCrumbs([{ label: "Leakage map", to: "/leakage-map" }, { label: "Settings" }]);
 
-  const leakDetailMatch = /^\/revenue\/leaks\/([^/]+)$/.exec(pathname);
+  const leakDetailMatch = /^\/leakage-map\/([^/]+)$/.exec(pathname);
   if (leakDetailMatch) {
     const title = LEAK_DETAIL_TITLES[leakDetailMatch[1]] ?? leakDetailMatch[1];
     return (
       <span className="flex items-center gap-1.5">
-        <Link to="/revenue/leaks" className="hover:text-ink">
+        <Link to="/leakage-map" className="hover:text-ink">
           Leakage map
         </Link>
         <span className="text-ink-4">/</span>

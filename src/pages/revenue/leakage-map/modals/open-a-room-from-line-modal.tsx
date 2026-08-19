@@ -14,7 +14,7 @@ import {
 import { PersonAvatar } from "@/components/person-avatar";
 import { cn } from "@/lib/utils";
 import { DEPARTMENT_COLORS } from "@/pages/everyday/lifecycle/data";
-import { LK14_OPEN_ROOM_PRESET } from "@/pages/revenue/leaks/data";
+import { LK14_OPEN_ROOM_PRESET } from "@/pages/revenue/leakage-map/data";
 
 /** LK14 — "Open a room from a line", hardcoded to the Adopt · feature depth reference row (the map's own "none" room). */
 export function OpenARoomFromLineModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {

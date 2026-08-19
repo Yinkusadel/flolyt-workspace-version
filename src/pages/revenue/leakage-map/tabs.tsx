@@ -1,18 +1,18 @@
 import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
-import { LK_TABS, type LkTab } from "@/pages/revenue/leaks/data";
+import { LK_TABS, type LkTab } from "@/pages/revenue/leakage-map/data";
 
 const TAB_HREF: Record<LkTab, string> = {
-  "The map": "/revenue/leaks",
-  "By market": "/revenue/leaks?by=market",
-  "By claim": "/revenue/leaks?by=claim",
-  "What changed": "/revenue/leaks/changed",
-  Unmeasurable: "/revenue/leaks/unmeasurable",
-  Detection: "/revenue/leaks/detection",
+  "The map": "/leakage-map",
+  "By market": "/leakage-map?by=market",
+  "By claim": "/leakage-map?by=claim",
+  "What changed": "/leakage-map/changed",
+  Unmeasurable: "/leakage-map/unmeasurable",
+  Detection: "/leakage-map/detection",
 };
 
-/** Shared 6-tab bar across LK03/05/06/07/09/11/12/13 — spans both the /revenue/leaks index's query-param states and its three standalone sibling routes. */
+/** Shared 6-tab bar across LK03/05/06/07/09/11/12/13 — spans both the /leakage-map index's query-param states and its three standalone sibling routes. */
 export function LeaksTabs({ active }: { active: LkTab }) {
   return (
     <div className="flex items-center gap-1 overflow-x-auto">

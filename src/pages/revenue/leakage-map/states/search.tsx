@@ -3,17 +3,17 @@ import { Link } from "react-router-dom";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
-import { LeaksKvList } from "@/pages/revenue/leaks/kv-list";
-import { LK08_NOT_SHOWN_ROWS, LK08_RESULT_ROWS, LK_CHIP_TONE, LK_TONE_CLASS } from "@/pages/revenue/leaks/data";
+import { LeaksKvList } from "@/pages/revenue/leakage-map/kv-list";
+import { LK08_NOT_SHOWN_ROWS, LK08_RESULT_ROWS, LK_CHIP_TONE, LK_TONE_CLASS } from "@/pages/revenue/leakage-map/data";
 
 /** Only the release result resolves to a built `:id` reference page — every other result renders as plain text. */
 const RESULT_HREF: Partial<Record<string, string>> = {
-  "The delivery fee moved to checkout": "/revenue/leaks/delivery-fee-checkout",
+  "The delivery fee moved to checkout": "/leakage-map/delivery-fee-checkout",
 };
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 
-/** LK08 — /revenue/leaks?q= — the export's own footer shows no tab bar here, unlike every other index state. */
+/** LK08 — /leakage-map?q= — the export's own footer shows no tab bar here, unlike every other index state. */
 export function SearchState({ query }: { query: string }) {
   return (
     <div className="space-y-8">

@@ -5,17 +5,17 @@ import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
 import { StageSubpageHeader } from "@/pages/everyday/lifecycle/stage/stage-subpage-header";
-import { LeaksKvList } from "@/pages/revenue/leaks/kv-list";
-import { LK17_INCLUDED_ROWS, LK17_WENT_ROWS, LK_CHIP_TONE } from "@/pages/revenue/leaks/data";
+import { LeaksKvList } from "@/pages/revenue/leakage-map/kv-list";
+import { LK17_INCLUDED_ROWS, LK17_WENT_ROWS, LK_CHIP_TONE } from "@/pages/revenue/leakage-map/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 
-/** LK17 — /revenue/leaks/export. */
+/** LK17 — /leakage-map/export. */
 const ExportRoute = () => {
   return (
     <div className="space-y-8">
       <StageSubpageHeader
-        crumbs={[{ label: "Revenue" }, { label: "Leakage map", to: "/revenue/leaks" }, { label: "Export" }]}
+        crumbs={[{ label: "Leakage map", to: "/leakage-map" }, { label: "Export" }]}
         title="Export the map"
         subtitle="Four things travel whether you want them to or not · one number does not exist"
         action={

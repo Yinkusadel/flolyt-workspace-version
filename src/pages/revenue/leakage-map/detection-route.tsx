@@ -2,11 +2,11 @@ import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { WideBarRow } from "@/pages/everyday/lifecycle/stage/bar";
-import { LeaksTabs } from "@/pages/revenue/leaks/tabs";
-import { LeaksKvList } from "@/pages/revenue/leaks/kv-list";
-import { LK13_STAGE_BARS, LK13_WOULD_HELP_ROWS } from "@/pages/revenue/leaks/data";
+import { LeaksTabs } from "@/pages/revenue/leakage-map/tabs";
+import { LeaksKvList } from "@/pages/revenue/leakage-map/kv-list";
+import { LK13_STAGE_BARS, LK13_WOULD_HELP_ROWS } from "@/pages/revenue/leakage-map/data";
 
-/** LK13 — /revenue/leaks/detection. */
+/** LK13 — /leakage-map/detection. */
 const DetectionRoute = () => {
   return (
     <div className="space-y-8">

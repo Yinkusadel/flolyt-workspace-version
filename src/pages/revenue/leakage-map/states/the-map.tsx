@@ -9,11 +9,11 @@ import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
 import { CHIP_INTERACTIVE_CLASS } from "@/pages/everyday/lifecycle/stage/chip";
 import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
-import { LeaksKvList } from "@/pages/revenue/leaks/kv-list";
-import { LeaksTabs } from "@/pages/revenue/leaks/tabs";
-import { OpenARoomFromLineModal } from "@/pages/revenue/leaks/modals/open-a-room-from-line-modal";
-import { DisputeALineModal } from "@/pages/revenue/leaks/modals/dispute-a-line-modal";
-import { ReclassifyAClaimModal } from "@/pages/revenue/leaks/modals/reclassify-a-claim-modal";
+import { LeaksKvList } from "@/pages/revenue/leakage-map/kv-list";
+import { LeaksTabs } from "@/pages/revenue/leakage-map/tabs";
+import { OpenARoomFromLineModal } from "@/pages/revenue/leakage-map/modals/open-a-room-from-line-modal";
+import { DisputeALineModal } from "@/pages/revenue/leakage-map/modals/dispute-a-line-modal";
+import { ReclassifyAClaimModal } from "@/pages/revenue/leakage-map/modals/reclassify-a-claim-modal";
 import {
   CLAIM_CHIP_TONE,
   CLAIM_LABEL,
@@ -21,13 +21,13 @@ import {
   LK03_NOT_ON_MAP_ROWS,
   LK_TONE_CLASS,
   type LeakMapRow,
-} from "@/pages/revenue/leaks/data";
+} from "@/pages/revenue/leakage-map/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 
 /** Only these two rows have a built `:id` reference page — every other stage name renders as plain text. */
 const STAGE_DETAIL_HREF: Partial<Record<string, string>> = {
-  Adopt: "/revenue/leaks/adopt-depth",
+  Adopt: "/leakage-map/adopt-depth",
 };
 
 function RoomCell({ row, onAction }: { row: LeakMapRow; onAction: (action: "open-room" | "dispute" | "reclassify") => void }) {
@@ -164,7 +164,7 @@ export function TheMapState() {
 
       <Callout tone="amber" title="₦1.08B of ₦1.11B traces to one release, and that should worry you as much as it explains">
         Eight of ten stages date their loss to the same week in March — see{" "}
-        <Link to="/revenue/leaks/delivery-fee-checkout" className="font-semibold text-ultra hover:underline">
+        <Link to="/leakage-map/delivery-fee-checkout" className="font-semibold text-ultra hover:underline">
           how the same release prices out at every stage it touched
         </Link>
         . That is either a catastrophic release or a set of agents anchored on the first cause anyone found — and

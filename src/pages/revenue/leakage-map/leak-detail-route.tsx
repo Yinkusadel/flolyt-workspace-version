@@ -7,7 +7,7 @@ import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { StageSubpageHeader } from "@/pages/everyday/lifecycle/stage/stage-subpage-header";
 import { AssignAnOwnerModal } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
-import { LeaksKvList } from "@/pages/revenue/leaks/kv-list";
+import { LeaksKvList } from "@/pages/revenue/leakage-map/kv-list";
 import {
   LK04_CARDS,
   LK04_STAGE_ROWS,
@@ -16,7 +16,7 @@ import {
   LK10_ENDS_ROWS,
   LK10_FINDING_ROWS,
   LK_TONE_CLASS,
-} from "@/pages/revenue/leaks/data";
+} from "@/pages/revenue/leakage-map/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 
@@ -27,8 +27,7 @@ function DeliveryFeeDetail() {
     <div className="space-y-8">
       <StageSubpageHeader
         crumbs={[
-          { label: "Revenue" },
-          { label: "Leakage map", to: "/revenue/leaks" },
+          { label: "Leakage map", to: "/leakage-map" },
           { label: "The delivery fee moved to checkout" },
         ]}
         title="The delivery fee moved to checkout"
@@ -102,7 +101,7 @@ function AdoptDepthDetail() {
   return (
     <div className="space-y-8">
       <StageSubpageHeader
-        crumbs={[{ label: "Revenue" }, { label: "Leakage map", to: "/revenue/leaks" }, { label: "Adopt · feature depth" }]}
+        crumbs={[{ label: "Leakage map", to: "/leakage-map" }, { label: "Adopt · feature depth" }]}
         title="Adopt · feature depth"
         subtitle="₦134M · 19 findings · 9 breached thresholds · 0 rooms · 214 days"
         action={
@@ -185,7 +184,7 @@ function LeakNotFound() {
   return (
     <div className="rounded-card border border-dashed border-line bg-paper p-10 text-center">
       <p className="text-[13px] font-semibold text-ink">Line not found</p>
-      <Link to="/revenue/leaks" className="mt-4 inline-block text-[11.5px] font-semibold text-ultra hover:underline">
+      <Link to="/leakage-map" className="mt-4 inline-block text-[11.5px] font-semibold text-ultra hover:underline">
         Back to the map
       </Link>
     </div>

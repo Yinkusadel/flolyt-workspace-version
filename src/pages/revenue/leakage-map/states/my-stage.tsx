@@ -3,13 +3,13 @@ import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
 import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { IFEOMA } from "@/pages/everyday/rooms/data";
-import { LensBar } from "@/pages/revenue/leaks/lens-bar";
-import { LeaksTabs } from "@/pages/revenue/leaks/tabs";
-import { CLAIM_CHIP_TONE, CLAIM_LABEL, LK11_BELOW_LINE_ROWS, LK11_HERS_ROWS, LK_TONE_CLASS } from "@/pages/revenue/leaks/data";
+import { LensBar } from "@/pages/revenue/leakage-map/lens-bar";
+import { LeaksTabs } from "@/pages/revenue/leakage-map/tabs";
+import { CLAIM_CHIP_TONE, CLAIM_LABEL, LK11_BELOW_LINE_ROWS, LK11_HERS_ROWS, LK_TONE_CLASS } from "@/pages/revenue/leakage-map/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 
-/** LK11 — /revenue/leaks?as=owner, the "My stage" lens for Ifeoma Nwosu (Retain). */
+/** LK11 — /leakage-map?as=owner, the "My stage" lens for Ifeoma Nwosu (Retain). */
 export function MyStageState() {
   return (
     <div className="space-y-8">

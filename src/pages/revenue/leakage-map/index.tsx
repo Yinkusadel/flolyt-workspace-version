@@ -1,17 +1,17 @@
 import { useSearchParams } from "react-router-dom";
 
-import { LEAKAGE_MAP_STATE } from "@/pages/revenue/leaks/data";
-import { ByClaimState } from "@/pages/revenue/leaks/states/by-claim";
-import { ByMarketState } from "@/pages/revenue/leaks/states/by-market";
-import { FirstLeakState } from "@/pages/revenue/leaks/states/first-leak";
-import { MyStageState } from "@/pages/revenue/leaks/states/my-stage";
-import { NothingMeasuredState } from "@/pages/revenue/leaks/states/nothing-measured";
-import { SavedViewsState } from "@/pages/revenue/leaks/states/saved-views";
-import { SearchState } from "@/pages/revenue/leaks/states/search";
-import { TheMapState } from "@/pages/revenue/leaks/states/the-map";
+import { LEAKAGE_MAP_STATE } from "@/pages/revenue/leakage-map/data";
+import { ByClaimState } from "@/pages/revenue/leakage-map/states/by-claim";
+import { ByMarketState } from "@/pages/revenue/leakage-map/states/by-market";
+import { FirstLeakState } from "@/pages/revenue/leakage-map/states/first-leak";
+import { MyStageState } from "@/pages/revenue/leakage-map/states/my-stage";
+import { NothingMeasuredState } from "@/pages/revenue/leakage-map/states/nothing-measured";
+import { SavedViewsState } from "@/pages/revenue/leakage-map/states/saved-views";
+import { SearchState } from "@/pages/revenue/leakage-map/states/search";
+import { TheMapState } from "@/pages/revenue/leakage-map/states/the-map";
 
 /**
- * LK01/02/03/05/06/07/08/11 — all share /revenue/leaks, branching on query
+ * LK01/02/03/05/06/07/08/11 — all share /leakage-map, branching on query
  * params first (`by`, `view`, `q`, `as`), then on LEAKAGE_MAP_STATE. LK01/
  * LK02 are wired but unreachable with the default "full" state, same
  * "not wired, no demo state currently triggers it" situation as every prior

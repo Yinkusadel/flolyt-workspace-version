@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { PersonAvatar } from "@/components/person-avatar";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { LK01_AGENT_ROWS, LK_TONE_CLASS } from "@/pages/revenue/leaks/data";
+import { LK01_AGENT_ROWS, LK_TONE_CLASS } from "@/pages/revenue/leakage-map/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 

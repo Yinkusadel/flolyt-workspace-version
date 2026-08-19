@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { LK16_RECLASSIFY_PRESET } from "@/pages/revenue/leaks/data";
+import { LK16_RECLASSIFY_PRESET } from "@/pages/revenue/leakage-map/data";
 
 /** LK16 — "Reclassify a claim", hardcoded to Support's Lagos delivery failures finding, opened from the map's Support row. */
 export function ReclassifyAClaimModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
