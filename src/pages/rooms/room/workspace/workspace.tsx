@@ -347,7 +347,9 @@ function PlaysPanel({ room, blocked }: { room: RoomDetail; blocked?: boolean }) 
   return (
     <div className="flex h-full flex-col rounded-card border border-line bg-paper">
       <div className="flex items-center justify-between border-b border-line px-4 py-3">
-        <p className="text-[12px] font-semibold text-ink">Plays</p>
+        <Link to={`/rooms/${room.id}/plays`} className="text-[12px] font-semibold text-ultra hover:underline">
+          Plays
+        </Link>
         <p className="font-mono text-[10px] text-ink-4">{room.playsCountLabel}</p>
       </div>
       <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto p-3">

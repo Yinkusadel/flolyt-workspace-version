@@ -525,7 +525,7 @@ colors for all 5 so adding a demo room later needs no template change.
 | 3-pane workspace (Decision/Evidence/Log tabs + Steering) | [x] | `src/pages/rooms/room/workspace/workspace.tsx` |
 | Room states: closed (3 outcomes) / reopened / restricted | [x] | `src/pages/rooms/room/states/` |
 | Evidence finding detail | [x] | `evidence-finding-route.tsx`, `/rooms/:id/evidence/:findingId` |
-| Plays board + one-proposal + approve/edit/reject modals | [x] | `src/pages/rooms/room/plays/`, `src/pages/rooms/room/modals/` |
+| Plays board + one-proposal + approve/edit/reject modals | [x] | `src/pages/rooms/room/plays/`, `src/pages/rooms/room/modals/`. Board (`/rooms/:id/plays`) had no in-app link from the room workspace itself until 2026-08-19 — fixed by making the workspace's right-pane "Plays" panel header a link, see [[flag_unreachable_routes]] |
 | Conflict / dissent / guardrails / runs | [x] | `conflict-route.tsx`, `dissent-route.tsx`, `guardrails-route.tsx`, `runs-route.tsx` |
 | People + invite modal / cohort / collision | [x] | `people-route.tsx` + `modals/invite-people-modal.tsx`, `cohort-route.tsx`, `collision-route.tsx` |
 | Close-out form + merge | [x] | `close-out-route.tsx`, `merge-route.tsx` |
