@@ -42,7 +42,7 @@ correction (see Notes)
 | 10 | command bar | [ ] | | |
 | 11 | workspace home consumer | [ ] | | |
 | 12 | workspace home accounts | [ ] | | |
-| 13 | inbox | [ ] | | |
+| 13 | inbox | [x] | `/inbox` | Superseded by section 2d, built from `flolyt-inbox/` — see below |
 | 14 | search | [ ] | | |
 
 ## 3. The lifecycle
@@ -404,6 +404,69 @@ uses (amber/teal/rose/indigo/gray) mapped exactly onto the app's existing `Tone`
 | Edit a notification rule modal | [x] | `settings/edit-rule-modal.tsx`, opened from the one rule the export shows it against |
 | `tsc -b` clean + Playwright console-error sweep (14 routes × 3 breakpoints) + modal click-test | [x] | Verified 2026-08-19 |
 
+## 2d. Inbox
+
+**Built from scratch on 2026-08-19** from `flolyt-figma-designs/Everyday Screens/flolyt-inbox/`
+(17 screens, I00–I16), superseding kit-122's frame 13 ("inbox") and frame 94 ("reply inbox") —
+same "old design source superseded" situation as today/goals/lifecycle/rooms/digest. I00 is an
+index/route-map frame, not a product screen. Extraction was done by two parallel research agents
+(I00–I08 / I09–I16), each producing a verbatim structured spec before any code was written.
+
+**Architecture:** `/inbox` (index, `src/pages/inbox/index.tsx`) is ONE route covering I01 (nothing
+waiting — the empty state), I02 (the default populated state) and I03 (`?group=`, grouped
+triage) — branches on the `group` query param first, then on the `INBOX_EMPTY` mock flag in
+`data.ts`. I01 is wired but unreachable with the current mock default, same "not wired, no demo
+state currently triggers it" situation as every prior rebuild's empty/edge states. I14 ("no bulk
+approve") is not a separate route — its own footer is a query-param variant of `/inbox`
+(`/inbox?select=`) — so it's built as a client-side selection-mode state of `/inbox` itself
+(check any item's checkbox via the header's "Select" toggle) rather than a page. I16 (mobile) is a
+responsive-design note, not a route — it lacks the `Ixx · Title` footer pair every routed screen
+has and is annotated `mobile · /inbox` instead; its guidance (Face ID re-auth, equal-weight
+reject, visible exclusion counts) informs the responsive/mobile treatment of `/inbox` and
+`/inbox/:id` rather than a separate page.
+
+I04 (`/inbox/:id`) only has real content for `i-8f2c` (the reactivation approval); every other id
+falls back to a not-found state, matching the "one reference row" pattern used everywhere else in
+this app (Today's `r-8f2c`, Price's `plans/:id`, Digest's `2026-08-11`). I06
+(`/inbox/replies/:id`) is the same pattern, built only for `r-4b19` (Amina B.'s erasure request).
+I05 (`/inbox/replies`), I07 (`/inbox/routing`), I08 (`/inbox/routing/unroutable`), I09
+(`/inbox/snoozed`), I10 (`/inbox/delegation`) and I13 (`/inbox/systems`) are standalone routes.
+I11/I12 route under `/settings/authority` (not `/inbox`) per their own footers — a 2-tab bar
+(`settings/authority-tabs.tsx`, Thresholds / Standing authority); the export's own tab bar also
+shows "Escalation" and "Recent" tabs but neither has a screen in this design source, so they were
+left out rather than built as dangling nav. I15 routes under `/settings/inbox`, also outside the
+`/inbox` tree.
+
+Since none of the built screens linked forward into replies/routing/snoozed/systems/delegation/
+settings, an `InboxQuickLinks` strip (`src/pages/inbox/quick-links.tsx`) was added to the top of
+all three `/inbox` states, and an "Approval authority" button was added to `/settings/inbox` —
+same "flag and fix a dangling route on the spot" pattern as the digest-archive fix.
+
+Team-dot colours in the routing tables (I07/I08) are an exact match for the existing
+`DEPARTMENT_COLORS` palette (`lifecycle/data.ts`) — reused directly via a new `TeamDot`
+component (`team-dot.tsx`) rather than inventing a parallel palette. `Chip`, `Callout`, `KpiCards`,
+`KvList`, `StageSubpageHeader`, `ActorAvatar`/`PersonDot`/`AgentDot` were all reused as-is from
+`lifecycle/stage/`, `digest/` and `rooms/` with zero forking. New customer identities this export
+introduces (Chidi O., Amina B., Kwame A., Grace M., Tobi A. — all external customers replying to
+campaigns) were modelled as a plain `Customer` type (name + location), not `PersonRef`, since they
+aren't workspace staff and have no department.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing waiting / your inbox / grouped triage / bulk-selection | [x] | `src/pages/inbox/index.tsx` + `states/*.tsx` + `bulk-selection-panel.tsx`. I01 wired but unreachable with current mock default |
+| One inbox item (`:id`) | [x] | `item-detail-route.tsx` — only `i-8f2c` built, every other id falls back to not-found |
+| Replies | [x] | `replies-route.tsx`, `/inbox/replies` |
+| One reply (`:id`) | [x] | `one-reply-route.tsx` — only `r-4b19` built, every other id falls back to not-found |
+| Routing rules | [x] | `routing/routing-rules-route.tsx`, `/inbox/routing` |
+| Unroutable conditions | [x] | `routing/unroutable-route.tsx`, `/inbox/routing/unroutable` |
+| Snoozed | [x] | `snoozed-route.tsx`, `/inbox/snoozed` |
+| Delegate while away | [x] | `delegation-route.tsx`, `/inbox/delegation` |
+| Systems | [x] | `systems-route.tsx`, `/inbox/systems` |
+| Settings — Approval authority (thresholds / standing) | [x] | `settings/authority-thresholds-route.tsx`, `settings/authority-standing-route.tsx`, both under `/settings/authority` |
+| Settings — Inbox settings | [x] | `settings/inbox-settings-route.tsx`, `/settings/inbox` |
+| Sidebar badge (pending count) | [x] | `INBOX_PENDING_COUNT` wired into `components/sidebar.tsx`'s Inbox nav item |
+| `tsc -b` clean + Playwright console-error sweep (15 routes × 3 breakpoints) + selection click-test | [x] | Verified 2026-08-19 |
+
 ## 4. Rooms and decisions
 
 **Rebuilt from scratch on 2026-08-18** from `flolyt-figma-designs/Everyday Screens/flolyt-rooms/`
@@ -576,7 +639,7 @@ colors for all 5 so adding a demo room later needs no template change.
 | 91 | data health | [ ] | | |
 | 92 | entity resolution | [ ] | | |
 | 93 | schema mapping | [ ] | | |
-| 94 | reply inbox | [ ] | | |
+| 94 | reply inbox | [x] | `/inbox/replies` | Superseded by section 2d, built from `flolyt-inbox/` — see below |
 
 ## 15. Admin and security (95–101)
 

@@ -99,6 +99,18 @@ import WhatGetsInRoute from "@/pages/digest/settings/what-gets-in-route";
 import ChannelsRoute from "@/pages/digest/settings/channels-route";
 import QuietHoursRoute from "@/pages/digest/settings/quiet-hours-route";
 import NotificationRulesRoute from "@/pages/digest/settings/notification-rules-route";
+import Inbox from "@/pages/inbox";
+import InboxItemDetailRoute from "@/pages/inbox/item-detail-route";
+import InboxRepliesRoute from "@/pages/inbox/replies-route";
+import InboxOneReplyRoute from "@/pages/inbox/one-reply-route";
+import InboxRoutingRulesRoute from "@/pages/inbox/routing/routing-rules-route";
+import InboxUnroutableRoute from "@/pages/inbox/routing/unroutable-route";
+import InboxSnoozedRoute from "@/pages/inbox/snoozed-route";
+import InboxDelegationRoute from "@/pages/inbox/delegation-route";
+import InboxSystemsRoute from "@/pages/inbox/systems-route";
+import AuthorityThresholdsRoute from "@/pages/inbox/settings/authority-thresholds-route";
+import AuthorityStandingRoute from "@/pages/inbox/settings/authority-standing-route";
+import InboxSettingsRoute from "@/pages/inbox/settings/inbox-settings-route";
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
@@ -269,6 +281,31 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/notifications",
                 Component: NotificationRulesRoute,
+              },
+              {
+                path: "inbox",
+                children: [
+                  { index: true, Component: Inbox },
+                  { path: "replies", Component: InboxRepliesRoute },
+                  { path: "replies/:id", Component: InboxOneReplyRoute },
+                  { path: "routing", Component: InboxRoutingRulesRoute },
+                  { path: "routing/unroutable", Component: InboxUnroutableRoute },
+                  { path: "snoozed", Component: InboxSnoozedRoute },
+                  { path: "delegation", Component: InboxDelegationRoute },
+                  { path: "systems", Component: InboxSystemsRoute },
+                  { path: ":id", Component: InboxItemDetailRoute },
+                ],
+              },
+              {
+                path: "settings/authority",
+                children: [
+                  { index: true, Component: AuthorityThresholdsRoute },
+                  { path: "standing", Component: AuthorityStandingRoute },
+                ],
+              },
+              {
+                path: "settings/inbox",
+                Component: InboxSettingsRoute,
               },
               {
                 path: "goals",

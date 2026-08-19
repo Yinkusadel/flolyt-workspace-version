@@ -7,6 +7,7 @@ import { BreadcrumbContext, type Crumb } from "@/components/breadcrumb-context";
 import { cn } from "@/lib/utils";
 import { getRoom } from "@/pages/rooms/room/data";
 import { TODAY_ITEMS } from "@/pages/what-to-do-today/data";
+import { INBOX_ITEM_DETAILS } from "@/pages/inbox/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -112,6 +113,44 @@ function getBreadcrumb(pathname: string): React.ReactNode {
         </Link>
         <span className="text-ink-4">/</span>
         <span className="text-ink">{item?.title ?? todayItemMatch[1]}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/inbox") return "Inbox";
+  if (pathname === "/inbox/replies") return "Inbox / Replies";
+  if (pathname === "/inbox/routing") return "Inbox / Routing";
+  if (pathname === "/inbox/routing/unroutable") return "Inbox / Routing / Unroutable";
+  if (pathname === "/inbox/snoozed") return "Inbox / Snoozed";
+  if (pathname === "/inbox/delegation") return "Inbox / Delegation";
+  if (pathname === "/inbox/systems") return "Inbox / Systems";
+  if (pathname === "/settings/authority") return "Inbox / Approval authority";
+  if (pathname === "/settings/authority/standing") return "Inbox / Approval authority / Standing authority";
+  if (pathname === "/settings/inbox") return "Inbox / Settings";
+
+  const inboxReplyMatch = /^\/inbox\/replies\/([^/]+)/.exec(pathname);
+  if (inboxReplyMatch) {
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/inbox/replies" className="hover:text-ink">
+          Replies
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{inboxReplyMatch[1]}</span>
+      </span>
+    );
+  }
+
+  const inboxItemMatch = /^\/inbox\/([^/]+)$/.exec(pathname);
+  if (inboxItemMatch) {
+    const detail = INBOX_ITEM_DETAILS[inboxItemMatch[1]];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/inbox" className="hover:text-ink">
+          Inbox
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{detail?.title ?? inboxItemMatch[1]}</span>
       </span>
     );
   }

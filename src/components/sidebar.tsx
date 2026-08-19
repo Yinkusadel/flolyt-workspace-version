@@ -48,6 +48,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { getRoomsNeedingApproval } from "@/pages/rooms/data";
+import { INBOX_PENDING_COUNT } from "@/pages/inbox/data";
 import {
   Select,
   SelectContent,
@@ -85,7 +86,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "What to do today", href: "/what-to-do-today", icon: ListChecks },
       { label: "Goals", href: "/goals", icon: Target },
       { label: "Digest", href: "/digest", icon: Newspaper },
-      { label: "Inbox", href: "/inbox", icon: Inbox },
+      { label: "Inbox", href: "/inbox", icon: Inbox, badge: INBOX_PENDING_COUNT || undefined },
       { label: "Handoff", href: "/handoff", icon: ArrowLeftRight },
     ],
   },
