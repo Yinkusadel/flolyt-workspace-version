@@ -2,8 +2,8 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Callout } from "@/pages/lifecycle/stage/rail";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
+import { TONE_TEXT_CLASS } from "@/pages/everyday/rooms/tone";
 import { LEDGER } from "@/pages/value/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";

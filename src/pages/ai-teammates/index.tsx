@@ -3,7 +3,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { AI_TEAMMATES, type TeammateAgent } from "@/pages/ai-teammates/data";
 import { PauseAgentModal } from "@/pages/ai-teammates/pause-agent-modal";
-import { AgentDot } from "@/pages/rooms/actor";
+import { AgentDot } from "@/pages/everyday/rooms/actor";
 
 /**
  * Screen 66 (AI teammates directory) in flolyt-kit-122 isn't built yet —

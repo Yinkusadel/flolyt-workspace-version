@@ -47,8 +47,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { getRoomsNeedingApproval } from "@/pages/rooms/data";
-import { INBOX_PENDING_COUNT } from "@/pages/inbox/data";
+import { getRoomsNeedingApproval } from "@/pages/everyday/rooms/data";
+import { INBOX_PENDING_COUNT } from "@/pages/everyday/inbox/data";
 import {
   Select,
   SelectContent,

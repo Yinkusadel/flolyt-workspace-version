@@ -1,4 +1,4 @@
-import type { Tone } from "@/pages/rooms/types";
+import type { Tone } from "@/pages/everyday/rooms/types";
 
 export type LedgerRow = {
   room: string;

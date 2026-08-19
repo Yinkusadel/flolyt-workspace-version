@@ -5,9 +5,9 @@ import { Sidebar, type ViewingAs } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { BreadcrumbContext, type Crumb } from "@/components/breadcrumb-context";
 import { cn } from "@/lib/utils";
-import { getRoom } from "@/pages/rooms/room/data";
-import { TODAY_ITEMS } from "@/pages/what-to-do-today/data";
-import { INBOX_ITEM_DETAILS } from "@/pages/inbox/data";
+import { getRoom } from "@/pages/everyday/rooms/room/data";
+import { TODAY_ITEMS } from "@/pages/everyday/what-to-do-today/data";
+import { INBOX_ITEM_DETAILS } from "@/pages/everyday/inbox/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per

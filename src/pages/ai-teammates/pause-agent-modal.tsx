@@ -10,8 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AgentDot } from "@/pages/rooms/actor";
-import type { AgentRef } from "@/pages/rooms/types";
+import { AgentDot } from "@/pages/everyday/rooms/actor";
+import type { AgentRef } from "@/pages/everyday/rooms/types";
 
 export type PauseAgentContext = {
   openRooms: number;
