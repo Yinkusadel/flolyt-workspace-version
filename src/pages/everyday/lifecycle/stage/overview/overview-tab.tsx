@@ -357,6 +357,9 @@ export function OverviewTab() {
                 How this stage is defined
               </Link>
             )}
+            <Link to={`/lifecycle/${stage.slug}/compare`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
+              Compare periods
+            </Link>
             <button type="button" onClick={() => setShareOpen(true)} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
               Share or export
             </button>
