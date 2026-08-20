@@ -134,6 +134,13 @@ import FunnelHistoryRoute from "@/pages/revenue/funnel/history-route";
 import FunnelStepDetailRoute from "@/pages/revenue/funnel/step-detail-route";
 import NewFunnelStep from "@/pages/revenue/funnel/new-step";
 import FunnelSettingsRoute from "@/pages/revenue/funnel/settings/funnel-settings-route";
+import Scenario from "@/pages/revenue/scenario";
+import ScenarioActualsRoute from "@/pages/revenue/scenario/actuals-route";
+import ScenarioBlockedRoute from "@/pages/revenue/scenario/blocked-route";
+import ScenarioHistoryRoute from "@/pages/revenue/scenario/history-route";
+import ScenarioDetailRoute from "@/pages/revenue/scenario/scenario-detail-route";
+import NewScenario from "@/pages/revenue/scenario/new";
+import ScenarioSettingsRoute from "@/pages/revenue/scenario/settings/scenario-settings-route";
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
@@ -410,6 +417,21 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/funnel",
                 Component: FunnelSettingsRoute,
+              },
+              {
+                path: "scenario",
+                children: [
+                  { index: true, Component: Scenario },
+                  { path: "new", Component: NewScenario },
+                  { path: "actuals", Component: ScenarioActualsRoute },
+                  { path: "blocked", Component: ScenarioBlockedRoute },
+                  { path: "history", Component: ScenarioHistoryRoute },
+                  { path: ":id", Component: ScenarioDetailRoute },
+                ],
+              },
+              {
+                path: "settings/scenario",
+                Component: ScenarioSettingsRoute,
               },
               {
                 path: "ai-teammates",
