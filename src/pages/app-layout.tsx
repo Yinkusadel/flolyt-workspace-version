@@ -11,6 +11,7 @@ import { INBOX_ITEM_DETAILS } from "@/pages/everyday/inbox/data";
 import { FUNNEL_STEP_TITLES } from "@/pages/revenue/funnel/data";
 import { SC_DETAIL_TITLES } from "@/pages/revenue/scenario/data";
 import { ATTRIBUTION_DETAIL_TITLES } from "@/pages/revenue/attribution/data";
+import { BM_DETAIL_TITLES } from "@/pages/revenue/benchmarks/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -306,6 +307,32 @@ function getBreadcrumb(pathname: string): React.ReactNode {
       <span className="flex items-center gap-1.5">
         <Link to="/attribution" className="hover:text-ink">
           Attribution
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/benchmarks") return "Benchmarks";
+  if (pathname === "/benchmarks/holdouts")
+    return renderCrumbs([{ label: "Benchmarks", to: "/benchmarks" }, { label: "Against a holdout" }]);
+  if (pathname === "/benchmarks/refused")
+    return renderCrumbs([{ label: "Benchmarks", to: "/benchmarks" }, { label: "Not compared" }]);
+  if (pathname === "/benchmarks/limits")
+    return renderCrumbs([{ label: "Benchmarks", to: "/benchmarks" }, { label: "Where comparison breaks" }]);
+  if (pathname === "/benchmarks/like-for-like")
+    return renderCrumbs([{ label: "Benchmarks", to: "/benchmarks" }, { label: "Like for like" }]);
+  if (pathname === "/settings/benchmarks")
+    return renderCrumbs([{ label: "Benchmarks", to: "/benchmarks" }, { label: "Settings" }]);
+
+  const benchmarkDetailMatch = /^\/benchmarks\/([^/]+)$/.exec(pathname);
+  if (benchmarkDetailMatch) {
+    const title = BM_DETAIL_TITLES[benchmarkDetailMatch[1]] ?? benchmarkDetailMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/benchmarks" className="hover:text-ink">
+          Benchmarks
         </Link>
         <span className="text-ink-4">/</span>
         <span className="text-ink">{title}</span>
