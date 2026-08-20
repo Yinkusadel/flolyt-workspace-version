@@ -141,6 +141,15 @@ import ScenarioHistoryRoute from "@/pages/revenue/scenario/history-route";
 import ScenarioDetailRoute from "@/pages/revenue/scenario/scenario-detail-route";
 import NewScenario from "@/pages/revenue/scenario/new";
 import ScenarioSettingsRoute from "@/pages/revenue/scenario/settings/scenario-settings-route";
+import Attribution from "@/pages/revenue/attribution";
+import AttributionHoldoutsRoute from "@/pages/revenue/attribution/holdouts-route";
+import AttributionOverlapRoute from "@/pages/revenue/attribution/overlap-route";
+import AttributionUnattributableRoute from "@/pages/revenue/attribution/unattributable-route";
+import AttributionMethodsRoute from "@/pages/revenue/attribution/methods-route";
+import AttributionInterventionDetailRoute from "@/pages/revenue/attribution/intervention-detail-route";
+import AttributionDisputeDetailRoute from "@/pages/revenue/attribution/dispute-detail-route";
+import NewHoldout from "@/pages/revenue/attribution/new-holdout";
+import AttributionSettingsRoute from "@/pages/revenue/attribution/settings/attribution-settings-route";
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
@@ -432,6 +441,23 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/scenario",
                 Component: ScenarioSettingsRoute,
+              },
+              {
+                path: "attribution",
+                children: [
+                  { index: true, Component: Attribution },
+                  { path: "holdouts", Component: AttributionHoldoutsRoute },
+                  { path: "holdouts/new", Component: NewHoldout },
+                  { path: "overlap", Component: AttributionOverlapRoute },
+                  { path: "unattributable", Component: AttributionUnattributableRoute },
+                  { path: "methods", Component: AttributionMethodsRoute },
+                  { path: "disputes/:id", Component: AttributionDisputeDetailRoute },
+                  { path: ":id", Component: AttributionInterventionDetailRoute },
+                ],
+              },
+              {
+                path: "settings/attribution",
+                Component: AttributionSettingsRoute,
               },
               {
                 path: "ai-teammates",

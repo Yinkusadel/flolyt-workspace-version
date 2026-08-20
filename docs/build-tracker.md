@@ -804,6 +804,85 @@ rather than forked.
 | Sidebar "Scenario" link | [x] | pre-existing stub already correctly pointed at `/scenario` |
 | `tsc -b` clean + dev server route sweep + all 3 modals click-tested + wizard step-1→4 click-tested + both unreachable mock states swept individually | [x] | Verified 2026-08-20 |
 
+## 6d. Attribution
+
+**Built from scratch on 2026-08-20** from
+`flolyt-figma-designs/Revenue Screens/flolyt-attribution/flolyt-attribution/` (16 frames,
+AT01–AT16), fourth section of the Revenue group after Leakage map/Funnel/Scenario, superseding
+kit-122's frame 82 ("attribution" — see section 6's note). Same "read the export's own `.py`
+generator source, not the rendered SVGs" approach — `at.py` imports the same shared `rev.py`
+chrome as `lk.py`/`fn.py`/`sc.py` did. AT00 is the index/route-map frame, not a product screen.
+On-disk filenames are the routing ground truth (`Section.save()` auto-numbers past whatever
+literal id the script passes — several frames are saved under a provisional id and land on their
+final `ATxx` number only once sequenced).
+
+**Route stays flat** per [[flolyt_flat_url_pattern]]: `/attribution`, not `/revenue/attribution`,
+even though the export's own frame footers say `/revenue/attribution` throughout. Settings at
+`/settings/attribution`, not `/settings/revenue/attribution`. The sidebar's "Attribution" link was
+already a pre-existing stub correctly pointed at `/attribution` — no correction needed.
+
+**Architecture — same index-branching shape as Leakage map/Funnel/Scenario:**
+- `/attribution` (`index.tsx`) is ONE route covering AT01 (nothing attributed yet), AT02 (the
+  first holdout closes), and AT03 (the default populated "Attributed" board with the 5-tab bar). A
+  3-value `ATTRIBUTION_STATE` mock flag (`empty`/`first`/`full`, defaulting to `"full"`) branches
+  these — `empty`/`first` are wired but unreachable with that default, same "not wired" situation
+  as every prior rebuild's empty/edge states.
+- `/attribution/holdouts` (`holdouts-route.tsx`) is a second branching route: AT05 (four holdouts
+  running, clean) versus AT14 (one holdout contaminated by a resend that bypassed the hold list),
+  on its own 2-value `HOLDOUT_STATE` flag (`clean`/`contaminated`, defaulting to `"clean"`) — a new
+  pattern for this app, a mock flag scoped to one tab route rather than the section index.
+- `/attribution/overlap`, `/attribution/unattributable`, and `/attribution/methods` are standalone
+  sibling routes sharing the same 5-tab bar (`tabs.tsx`) as the index's Attributed state — same
+  "shared tab bar, not one route subtree" pattern as prior sections.
+- `/attribution/holdouts/new` (`new-holdout/`) is the "Design a holdout" wizard (AT11–AT12 — size
+  and duration, then who is excluded). No `?step=` param in the source footer, so step state is
+  client-local, same pattern as Funnel's/Scenario's wizards. Step 2 reuses the exact same exclusion
+  list as `/attribution/holdouts`' own "who is never held back" table (`AT_EXCLUDED_ROWS` in
+  `data.ts`) — identical content in the export, so shared rather than duplicated.
+- `/attribution/:id` (`intervention-detail-route.tsx`) has one built reference row — `retry-0900`
+  (AT04, "Retry cards at 09:00 local") — every other id falls back to a not-found state, same
+  "one/two reference rows" pattern as every prior section's `:id`/`:step`.
+- `/attribution/disputes/:id` (`dispute-detail-route.tsx`) has one built reference row — `1`
+  (AT13, "₦16M claimed twice") — a new secondary detail-route shape for this app (a dispute is not
+  an intervention, so it gets its own `/disputes/` sub-path rather than overloading `/attribution/:id`).
+- Two bespoke modals (`modals/*.tsx`), each hardcoded to the one row the export shows it opened
+  against — same "hardcoded, not generalized" pattern as every prior section's modals:
+  - AT09 "Credit a recovery" — opens from the Kenya retry window row on `/attribution/holdouts`
+    (the one holdout closing "today"), fixed to its own preset.
+  - AT10 "Mark it unattributable" — opens from the Accra reactivation row on
+    `/attribution/unattributable`, fixed to its own preset.
+- `/settings/attribution` (AT15) is a standalone route outside the `/attribution` tree, matching
+  the `/settings/scenario` precedent.
+- AT16 (mobile) was treated as a responsive-design constraint (tables scroll, cards stack), not a
+  separate page — same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** all named people (Ravi Mehta, Ifeoma
+Nwosu, Zainab Yusuf, Tunde Bakare, Amara Okeke, Sam Iyer, Ada Obi, Kunle) are exact matches for
+`RAVI`/`IFEOMA`/`ZAINAB`/`TUNDE`/`AMARA`/`SAM`/`ADA`/`KUNLE` in `rooms/data.ts` — zero new people
+needed, the first section where all eight named people already existed. One new agent was needed:
+`ATTRIBUTION_SIGNAL` ("Attribution Signal"), the agent that reads the Tunde/Ravi overlap dispute
+and refuses to pick a side — none of the seven existing `rooms/data.ts` agents fit, so it was
+defined locally in `attribution/data.ts`, same "defined locally, available for reuse" precedent as
+Funnel's `PRODUCT_REASON`. `Chip`, `Callout`, `KpiCards`, `PersonAvatar`, `StageSubpageHeader`, and
+`usePageBreadcrumb` were all reused from `lifecycle/stage/` and the shared breadcrumb context with
+zero forking. A local `AttributionKvList` and `AttributionBars` were written fresh rather than
+reusing Scenario's `ScenarioKvList`/`RangeBars` — this section's tone vocabulary (`AtTone`) is
+identical in shape but kept as its own type per the established "each section owns its tone type"
+convention.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing attributed yet / first holdout closes / the board | [x] | `index.tsx` + `states/*.tsx`. `empty`/`first` wired but unreachable with `ATTRIBUTION_STATE`'s current default |
+| Holdouts (clean / contaminated) | [x] | `holdouts-route.tsx` + `states/the-holdouts.tsx`/`states/contaminated-holdout.tsx`. `contaminated` wired but unreachable with `HOLDOUT_STATE`'s current default |
+| Overlap / Unattributable / Methods (siblings) | [x] | `overlap-route.tsx`, `unattributable-route.tsx`, `methods-route.tsx` |
+| One intervention (`:id`) | [x] | `intervention-detail-route.tsx` — `retry-0900` built, every other id falls back to not-found |
+| One dispute (`disputes/:id`) | [x] | `dispute-detail-route.tsx` — `1` built, every other id falls back to not-found |
+| Design a holdout (wizard) | [x] | `new-holdout/index.tsx` + `step-size.tsx`/`step-exclusions.tsx`/`step-rail.tsx`, `/attribution/holdouts/new` |
+| Credit a recovery / Mark it unattributable (modals) | [x] | `modals/*.tsx`, hardcoded to Kenya retry window / Accra reactivation respectively |
+| Settings | [x] | `settings/attribution-settings-route.tsx`, `/settings/attribution` |
+| Sidebar "Attribution" link | [x] | pre-existing stub already correctly pointed at `/attribution` |
+| `tsc -b` clean + dev server route sweep + both modals click-tested + wizard step-1→2 click-tested + both unreachable mock states swept individually | [x] | Verified 2026-08-20 |
+
 ## 7. Teams (51–58)
 
 | # | Screen | Status | Endpoint(s) | Notes |
@@ -962,7 +1041,7 @@ against the transcribed specs for the index, reassign modal and create-handoffs 
 |---|---|---|---|---|
 | 80 | funnel explorer | [x] | | Superseded — rebuilt as `/funnel` from the newer `flolyt-funnel` export, see section 6b |
 | 81 | scenario simulator | [ ] | | |
-| 82 | attribution | [ ] | | |
+| 82 | attribution | [x] | | Superseded — rebuilt as `/attribution` from the newer `flolyt-attribution` export, see section 6d |
 | 83 | benchmarking | [ ] | | |
 | 84 | health scoring | [ ] | | |
 
