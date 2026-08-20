@@ -82,7 +82,6 @@ import { GoalContributionsRoute } from "@/pages/everyday/goals/goal/contribution
 import { GoalCascadeRoute } from "@/pages/everyday/goals/cascade-route";
 import { GoalsInTensionRoute } from "@/pages/everyday/goals/conflicts-route";
 import { QuarterCloseRoute } from "@/pages/everyday/goals/quarter-close-route";
-import Value from "@/pages/value";
 import WhatToDoToday from "@/pages/everyday/what-to-do-today";
 import TodayRankingRoute from "@/pages/everyday/what-to-do-today/ranking-route";
 import TodayItemDetailRoute from "@/pages/everyday/what-to-do-today/item-detail-route";
@@ -141,6 +140,15 @@ import ScenarioHistoryRoute from "@/pages/revenue/scenario/history-route";
 import ScenarioDetailRoute from "@/pages/revenue/scenario/scenario-detail-route";
 import NewScenario from "@/pages/revenue/scenario/new";
 import ScenarioSettingsRoute from "@/pages/revenue/scenario/settings/scenario-settings-route";
+import Value from "@/pages/revenue/value";
+import ValueRoomDetailRoute from "@/pages/revenue/value/room-detail-route";
+import ValueCostRoute from "@/pages/revenue/value/cost-route";
+import ValueUnmeasurableRoute from "@/pages/revenue/value/unmeasurable-route";
+import ValueOverTimeRoute from "@/pages/revenue/value/over-time-route";
+import ValueReconciliationRoute from "@/pages/revenue/value/reconciliation-route";
+import ValueBoardRoute from "@/pages/revenue/value/board-route";
+import ValueRatesRoute from "@/pages/revenue/value/rates-route";
+import ValueSettingsRoute from "@/pages/revenue/value/settings/value-settings-route";
 import Attribution from "@/pages/revenue/attribution";
 import AttributionHoldoutsRoute from "@/pages/revenue/attribution/holdouts-route";
 import AttributionOverlapRoute from "@/pages/revenue/attribution/overlap-route";
@@ -395,7 +403,20 @@ export const routes = createBrowserRouter([
               },
               {
                 path: "value",
-                Component: Value,
+                children: [
+                  { index: true, Component: Value },
+                  { path: "rooms/:id", Component: ValueRoomDetailRoute },
+                  { path: "cost", Component: ValueCostRoute },
+                  { path: "unmeasurable", Component: ValueUnmeasurableRoute },
+                  { path: "over-time", Component: ValueOverTimeRoute },
+                  { path: "reconciliation", Component: ValueReconciliationRoute },
+                  { path: "board", Component: ValueBoardRoute },
+                  { path: "rates", Component: ValueRatesRoute },
+                ],
+              },
+              {
+                path: "settings/value",
+                Component: ValueSettingsRoute,
               },
               {
                 path: "leakage-map",
