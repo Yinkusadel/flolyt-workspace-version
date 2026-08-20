@@ -10,6 +10,7 @@ import { TODAY_ITEMS } from "@/pages/everyday/what-to-do-today/data";
 import { INBOX_ITEM_DETAILS } from "@/pages/everyday/inbox/data";
 import { FUNNEL_STEP_TITLES } from "@/pages/revenue/funnel/data";
 import { SC_DETAIL_TITLES } from "@/pages/revenue/scenario/data";
+import { ATTRIBUTION_DETAIL_TITLES } from "@/pages/revenue/attribution/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -279,6 +280,32 @@ function getBreadcrumb(pathname: string): React.ReactNode {
       <span className="flex items-center gap-1.5">
         <Link to="/scenario" className="hover:text-ink">
           Scenario
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/attribution") return "Attribution";
+  if (pathname === "/attribution/holdouts")
+    return renderCrumbs([{ label: "Attribution", to: "/attribution" }, { label: "Holdouts" }]);
+  if (pathname === "/attribution/overlap")
+    return renderCrumbs([{ label: "Attribution", to: "/attribution" }, { label: "Overlap" }]);
+  if (pathname === "/attribution/unattributable")
+    return renderCrumbs([{ label: "Attribution", to: "/attribution" }, { label: "Unattributable" }]);
+  if (pathname === "/attribution/methods")
+    return renderCrumbs([{ label: "Attribution", to: "/attribution" }, { label: "Methods" }]);
+  if (pathname === "/settings/attribution")
+    return renderCrumbs([{ label: "Attribution", to: "/attribution" }, { label: "Settings" }]);
+
+  const attributionDetailMatch = /^\/attribution\/([^/]+)$/.exec(pathname);
+  if (attributionDetailMatch) {
+    const title = ATTRIBUTION_DETAIL_TITLES[attributionDetailMatch[1]] ?? attributionDetailMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/attribution" className="hover:text-ink">
+          Attribution
         </Link>
         <span className="text-ink-4">/</span>
         <span className="text-ink">{title}</span>
