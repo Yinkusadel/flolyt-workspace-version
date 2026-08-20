@@ -883,6 +883,92 @@ convention.
 | Sidebar "Attribution" link | [x] | pre-existing stub already correctly pointed at `/attribution` |
 | `tsc -b` clean + dev server route sweep + both modals click-tested + wizard step-1→2 click-tested + both unreachable mock states swept individually | [x] | Verified 2026-08-20 |
 
+## 6e. Benchmarks
+
+**Built from scratch on 2026-08-20** from
+`flolyt-figma-designs/Revenue Screens/flolyt-benchmarks/flolyt-benchmarks/` (16 files on disk,
+BM00–BM15), fifth section of the Revenue group after Leakage map/Funnel/Scenario/Attribution. Same
+"read the export's own `.py` generator source, not the rendered SVGs" approach — `bm.py` imports
+the same shared `rev.py` chrome. BM00 is the index/route-map frame, not a product screen. Note:
+`bm.py`'s own internal `S.save("BM02", ...)` id is reused once (both "the first comparison" and
+"against our own past" save under the literal id `"BM02"`) — the on-disk SVG filenames are treated
+as the routing ground truth, same "on-disk wins over the script's own internal id" precedent as
+Attribution.
+
+**Route stays flat** per [[flolyt_flat_url_pattern]]: `/benchmarks`, not `/revenue/benchmarks`,
+even though the export's own frame footers say `/revenue/benchmarks` throughout. Settings at
+`/settings/benchmarks`, not `/settings/revenue/benchmarks`. The sidebar's "Benchmarks" link was
+already a pre-existing stub correctly pointed at `/benchmarks` — no correction needed.
+
+**Architecture — same index-branching shape as Leakage map/Funnel/Scenario/Attribution, plus a new
+query-param-tab wrinkle:**
+- `/benchmarks` (`index.tsx`) is ONE route covering BM01 (nothing to compare yet), BM02-disk (the
+  baseline locks overnight, a first unreadable zero), and BM03-disk (the default populated "Our own
+  past" state with the 5-tab bar). A 3-value `BENCHMARK_STATE` mock flag (`empty`/`first`/`full`,
+  defaulting to `"full"`) branches these — `empty`/`first` are wired but unreachable with that
+  default, same "not wired" situation as every prior rebuild's empty/edge states.
+- **New pattern this section adds:** two of the five tabs — "Market vs market" and "Stage vs
+  stage" — are NOT sibling routes but `?by=market`/`?by=stage` query params read inside the same
+  `/benchmarks` `index.tsx` (same query-param-tab shape as the Digest rebuild), independent of
+  `BENCHMARK_STATE`. The other two non-index tabs ("Against a holdout", "Not compared") are
+  ordinary sibling routes, same as every prior section's tab bar.
+- `/benchmarks/holdouts` (`holdouts-route.tsx`, BM06-disk) — the causal comparisons. Its "Design a
+  holdout" action reuses Attribution's already-built `/attribution/holdouts/new` wizard rather than
+  duplicating a second holdout designer — the first cross-section reuse of a full built flow in the
+  Revenue group (previous cross-links, like Scenario's room link, only reused a destination page,
+  not another section's wizard).
+- `/benchmarks/refused` (`refused-route.tsx`, BM08-disk) is the "Not compared" tab landing;
+  `/benchmarks/limits` (`limits-route.tsx`, BM09-disk) is a secondary page linked from it — the
+  export gives both frames the same `subtabs(p, "Not compared", ...)` call but two different routes
+  in their own footers, so both are built as siblings under one tab, cross-linked to each other.
+- `/benchmarks/like-for-like` (`like-for-like-route.tsx`, BM10-disk) is linked from the "Our own
+  past" tab's own table (a "What has to match…" footer link), same "secondary page off a tab, not
+  in the tab bar itself" shape as `limits`.
+- `/benchmarks/new` (`new/`) is the "Build a comparison" wizard (BM11–BM12 — what against what,
+  then what has to match). No `?step=` param in the source footer, so step state is client-local,
+  same pattern as every prior section's wizard. Saving navigates to `/benchmarks/repeat-rate`,
+  since the wizard's own preset (Nigeria vs UK repeat rate) is exactly that page's subject.
+- `/benchmarks/:id` (`repeat-rate-detail-route.tsx`) has one built reference row — `repeat-rate`
+  (BM07-disk, "One comparison in full") — every other id falls back to a not-found state, same
+  "one/two reference rows" pattern as every prior section's `:id`/`:step`. Linked from the "Our own
+  past" table's first row.
+- One bespoke modal (`modals/add-an-external-benchmark-modal.tsx`, BM12-disk/BM13-disk) — "Add an
+  external benchmark", opened from `/benchmarks/refused`'s header action, hardcoded to its own
+  preset (a 34% food-delivery figure) with no form that actually adds anything — same
+  "hardcoded, not generalized, the refusal is the feature" pattern as every prior section's modals.
+- `/settings/benchmarks` (BM13-disk/BM14-disk) is a standalone route outside the `/benchmarks`
+  tree, matching the `/settings/attribution` precedent. Like every other Revenue section's settings
+  page (`/settings/funnel`, `/settings/scenario`, `/settings/attribution`, `/settings/value`), it
+  has no in-app link pointing to it yet — a pre-existing gap across the whole settings family, not
+  new to this section, flagged here per [[flag_unreachable_routes]] rather than fixed unilaterally
+  since it would need a decision about where a cross-section settings entry point belongs.
+- BM15-disk (mobile) was treated as a responsive-design constraint (tables scroll, cards stack),
+  not a separate page — same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** the "RD" agent avatar on BM02-disk's
+first-comparison card is an exact match for `REPEAT_DECAY` ("Repeat & Decay") in `rooms/data.ts` —
+fitting, since the frame is about a repeat-rate figure — the first Revenue section needing zero new
+people or agents at all. `Chip`, `Callout`, `KpiCards`, `PersonAvatar`, `StageSubpageHeader`, and
+`usePageBreadcrumb` were all reused from `lifecycle/stage/` and the shared breadcrumb context with
+zero forking. A local `BenchmarksKvList` (`kv-list.tsx`) was written fresh rather than reusing
+Attribution's `AttributionKvList` — this section's tone vocabulary (`BmTone`) is identical in shape
+but kept as its own type per the established "each section owns its tone type" convention. No bars
+component was needed (this section is table- and hero-driven, not bar-chart-driven).
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing to compare yet / first comparison / our own past | [x] | `index.tsx` + `states/*.tsx`. `empty`/`first` wired but unreachable with `BENCHMARK_STATE`'s current default |
+| Market vs market / Stage vs stage (query-param tabs) | [x] | `states/market-against-market.tsx`/`states/stage-against-stage.tsx`, rendered by `index.tsx` on `?by=market`/`?by=stage` |
+| Against a holdout | [x] | `holdouts-route.tsx` — "Design a holdout" reuses `/attribution/holdouts/new` |
+| Not compared (refused) / Where comparison breaks (limits) | [x] | `refused-route.tsx`, `limits-route.tsx` — cross-linked to each other |
+| Like for like | [x] | `like-for-like-route.tsx`, linked from the "Our own past" table |
+| One comparison in full (`:id`) | [x] | `repeat-rate-detail-route.tsx` — `repeat-rate` built, every other id falls back to not-found |
+| Build a comparison (wizard) | [x] | `new/index.tsx` + `step-what.tsx`/`step-matching.tsx`/`step-rail.tsx`, `/benchmarks/new` |
+| Add an external benchmark (modal) | [x] | `modals/add-an-external-benchmark-modal.tsx`, hardcoded preset, opens from `/benchmarks/refused` |
+| Settings | [x] | `settings/benchmarks-settings-route.tsx`, `/settings/benchmarks` — no in-app entry point yet, same as every other Revenue section's settings page |
+| Sidebar "Benchmarks" link | [x] | pre-existing stub already correctly pointed at `/benchmarks` |
+| `tsc -b` clean + dev server route sweep (11 routes incl. a not-found `:id`) + modal click-tested + wizard step-1→2→save click-tested through to the toast+navigate | [x] | Verified 2026-08-20 |
+
 ## 7. Teams (51–58)
 
 | # | Screen | Status | Endpoint(s) | Notes |

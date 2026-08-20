@@ -161,6 +161,14 @@ import AttributionInterventionDetailRoute from "@/pages/revenue/attribution/inte
 import AttributionDisputeDetailRoute from "@/pages/revenue/attribution/dispute-detail-route";
 import NewHoldout from "@/pages/revenue/attribution/new-holdout";
 import AttributionSettingsRoute from "@/pages/revenue/attribution/settings/attribution-settings-route";
+import Benchmarks from "@/pages/revenue/benchmarks";
+import BenchmarksHoldoutsRoute from "@/pages/revenue/benchmarks/holdouts-route";
+import BenchmarksRefusedRoute from "@/pages/revenue/benchmarks/refused-route";
+import BenchmarksLimitsRoute from "@/pages/revenue/benchmarks/limits-route";
+import BenchmarksLikeForLikeRoute from "@/pages/revenue/benchmarks/like-for-like-route";
+import RepeatRateDetailRoute from "@/pages/revenue/benchmarks/repeat-rate-detail-route";
+import NewComparison from "@/pages/revenue/benchmarks/new";
+import BenchmarksSettingsRoute from "@/pages/revenue/benchmarks/settings/benchmarks-settings-route";
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
@@ -491,6 +499,22 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/attribution",
                 Component: AttributionSettingsRoute,
+              },
+              {
+                path: "benchmarks",
+                children: [
+                  { index: true, Component: Benchmarks },
+                  { path: "holdouts", Component: BenchmarksHoldoutsRoute },
+                  { path: "refused", Component: BenchmarksRefusedRoute },
+                  { path: "limits", Component: BenchmarksLimitsRoute },
+                  { path: "like-for-like", Component: BenchmarksLikeForLikeRoute },
+                  { path: "new", Component: NewComparison },
+                  { path: ":id", Component: RepeatRateDetailRoute },
+                ],
+              },
+              {
+                path: "settings/benchmarks",
+                Component: BenchmarksSettingsRoute,
               },
               {
                 path: "ai-teammates",
