@@ -37,7 +37,8 @@ type CompanyClaim = {
 function decodeFlolytJwt(token: string) {
   try {
     const raw = jwtDecode<FlolytJwt>(token);
-    const company: CompanyClaim = JSON.parse(raw.company);
+    // company is "" for users with no company yet (e.g. onboardingRequired), not a decode failure.
+    const company: CompanyClaim | null = raw.company ? JSON.parse(raw.company) : null;
 
     return {
       tenantCurrency: company?.Currency ?? "NGN",
