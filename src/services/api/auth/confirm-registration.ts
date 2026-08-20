@@ -3,25 +3,30 @@ import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
 
-export interface RegisterUserPayload {
-  firstName: string;
-  lastName: string;
-  email: string;
+export interface ConfirmRegistrationPayload {
+  userId: string;
+  otp: string;
 }
 
-export interface RegisterResponse {
-  data: string;
-  messages: string[];
+export interface ConfirmRegistrationResponse {
   succeeded: boolean;
+  messages: string[];
+  data: string; // registration id
 }
 
 const {
-  USER: { REGISTER },
+  USER: { CONFIRM_REGISTRATION },
 } = API_ENDPOINTS;
 
-export const registerUser = async (payload: RegisterUserPayload): Promise<RegisterResponse> => {
+export const confirmRegistration = async ({
+  userId,
+  otp,
+}: ConfirmRegistrationPayload): Promise<ConfirmRegistrationResponse> => {
   try {
-    const response = await axiosInstance.post<RegisterResponse>(REGISTER, payload);
+    const response = await axiosInstance.patch<ConfirmRegistrationResponse>(
+      CONFIRM_REGISTRATION.replace("{userId}", userId),
+      { otp }
+    );
 
     return response.data;
   } catch (error: unknown) {

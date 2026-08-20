@@ -13,7 +13,8 @@ const FEATURES = [
   },
 ];
 
-export const RightSection = () => {
+/** Shared marketing column for every auth step (sign in, sign up, confirm, accept invite) — copy doesn't vary by step. */
+export const AuthRightSection = () => {
   return (
     <div className="flex h-full flex-col justify-center bg-paper-2 px-14 py-14">
       <span className="font-mono text-[9.5px] font-medium tracking-[0.1em] text-ink-4">

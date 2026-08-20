@@ -3,25 +3,28 @@ import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
 
-export interface RegisterUserPayload {
-  firstName: string;
-  lastName: string;
+export interface RequestLoginCodePayload {
   email: string;
 }
 
-export interface RegisterResponse {
-  data: string;
-  messages: string[];
+export interface RequestLoginCodeResponse {
   succeeded: boolean;
+  messages: string[];
+  data: { challengeId: string };
 }
 
 const {
-  USER: { REGISTER },
+  USER: { REQUEST_LOGIN_CODE },
 } = API_ENDPOINTS;
 
-export const registerUser = async (payload: RegisterUserPayload): Promise<RegisterResponse> => {
+export const requestLoginCode = async (
+  payload: RequestLoginCodePayload
+): Promise<RequestLoginCodeResponse> => {
   try {
-    const response = await axiosInstance.post<RegisterResponse>(REGISTER, payload);
+    const response = await axiosInstance.post<RequestLoginCodeResponse>(
+      REQUEST_LOGIN_CODE,
+      payload
+    );
 
     return response.data;
   } catch (error: unknown) {

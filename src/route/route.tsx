@@ -1,6 +1,9 @@
 import { createBrowserRouter } from "react-router";
-import { AuthLayout } from "@/pages/auth-layout";
-import SignIn from "@/pages/sign-in";
+import { AuthLayout } from "@/pages/auth/layout";
+import SignIn from "@/pages/auth/sign-in";
+import SignUp from "@/pages/auth/sign-up";
+import VerifyOtp from "@/pages/auth/verify-otp";
+import AcceptInvitation from "@/pages/auth/accept-invitation";
 import { AppLayout } from "@/pages/app-layout";
 import Home from "@/pages/home";
 import Lifecycle from "@/pages/everyday/lifecycle";
@@ -139,7 +142,8 @@ import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
 import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
-// import { ProtectedRoute } from "@/route/protected-route";
+import { ProtectedRoute } from "@/route/protected-route";
+import { GuestRoute } from "@/route/guest-route";
 
 export const routes = createBrowserRouter([
   {
@@ -153,14 +157,22 @@ export const routes = createBrowserRouter([
         Component: AuthLayout,
         children: [
           {
-            path: "sign-in",
-            Component: SignIn,
+            Component: GuestRoute,
+            children: [
+              { path: "sign-in", Component: SignIn },
+              { path: "sign-up", Component: SignUp },
+              { path: "verify-otp/:userId", Component: VerifyOtp },
+            ],
+          },
+          {
+            path: "accept-invitation",
+            Component: AcceptInvitation,
           },
         ],
       },
       {
         path: "/",
-        // Component: ProtectedRoute,
+        Component: ProtectedRoute,
         children: [
           {
             Component: AppLayout,

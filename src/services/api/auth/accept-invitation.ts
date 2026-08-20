@@ -3,25 +3,30 @@ import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
 
-export interface RegisterUserPayload {
+export interface AcceptInvitationPayload {
+  token: string;
   firstName: string;
   lastName: string;
-  email: string;
 }
 
-export interface RegisterResponse {
-  data: string;
-  messages: string[];
+export interface AcceptInvitationResponse {
   succeeded: boolean;
+  messages: string[];
+  data: unknown;
 }
 
 const {
-  USER: { REGISTER },
+  TEAMS: { ACCEPT_INVITATION },
 } = API_ENDPOINTS;
 
-export const registerUser = async (payload: RegisterUserPayload): Promise<RegisterResponse> => {
+export const acceptInvitation = async (
+  payload: AcceptInvitationPayload
+): Promise<AcceptInvitationResponse> => {
   try {
-    const response = await axiosInstance.post<RegisterResponse>(REGISTER, payload);
+    const response = await axiosInstance.post<AcceptInvitationResponse>(
+      ACCEPT_INVITATION,
+      payload
+    );
 
     return response.data;
   } catch (error: unknown) {

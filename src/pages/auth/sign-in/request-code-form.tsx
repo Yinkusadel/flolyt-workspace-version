@@ -1,10 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PasswordInput } from "@/components/ui/password-input";
-import useSignIn from "@/features/auth/use-sign-in";
+import useRequestLoginCode from "@/features/auth/use-request-login-code";
 
-export const SignInForm = () => {
-  const { form, isPending, onSubmit } = useSignIn();
+interface RequestCodeFormProps {
+  defaultEmail?: string;
+  onRequested: (email: string, challengeId: string) => void;
+}
+
+export const RequestCodeForm = ({ defaultEmail, onRequested }: RequestCodeFormProps) => {
+  const { form, isPending, onSubmit } = useRequestLoginCode({ onRequested, defaultEmail });
   const {
     register,
     handleSubmit,
@@ -31,29 +35,12 @@ export const SignInForm = () => {
         )}
       </div>
 
-      <div className="mt-4">
-        <label htmlFor="password" className="text-[10.5px] text-ink-3">
-          Password
-        </label>
-        <PasswordInput
-          id="password"
-          placeholder="••••••••"
-          autoComplete="current-password"
-          aria-invalid={!!errors.password}
-          className="mt-2"
-          {...register("password")}
-        />
-        {errors.password && (
-          <p className="mt-1.5 text-[11px] text-destructive">{errors.password.message}</p>
-        )}
-      </div>
-
       <Button
         type="submit"
         disabled={isPending}
         className="mt-6 h-9.5 w-full rounded-card bg-ink text-[13px] font-semibold text-paper hover:bg-ink/90"
       >
-        {isPending ? "Signing in..." : "Sign in"}
+        {isPending ? "Sending code..." : "Continue with email"}
       </Button>
     </form>
   );

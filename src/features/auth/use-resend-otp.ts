@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import {
   resendUserOtp,
@@ -8,6 +9,12 @@ import {
 const useResendOtp = () => {
   const mutation = useMutation<ResendOtpResponse, Error, ResendOtpRequest>({
     mutationFn: resendUserOtp,
+    onSuccess: () => {
+      toast.success("A new code is on its way.");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Couldn't resend the code. Please try again.");
+    },
   });
 
   // Expose an async version you can await
