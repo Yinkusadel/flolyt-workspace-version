@@ -185,6 +185,14 @@ import SourcesRoute from "@/pages/knowledge/business-memory/sources-route";
 import UndocumentedRoute from "@/pages/knowledge/business-memory/undocumented-route";
 import NewLearning from "@/pages/knowledge/business-memory/new";
 import BusinessMemorySettingsRoute from "@/pages/knowledge/business-memory/settings/business-memory-settings-route";
+import Playbooks from "@/pages/knowledge/playbooks";
+import PlaybookDetailRoute from "@/pages/knowledge/playbooks/playbook-detail-route";
+import RecordRoute from "@/pages/knowledge/playbooks/record-route";
+import BlockedRoute from "@/pages/knowledge/playbooks/blocked-route";
+import RetiredRoute from "@/pages/knowledge/playbooks/retired-route";
+import HistoryRoute from "@/pages/knowledge/playbooks/history-route";
+import NewPlaybook from "@/pages/knowledge/playbooks/new";
+import PlaybooksSettingsRoute from "@/pages/knowledge/playbooks/settings/playbooks-settings-route";
 import Segments from "@/pages/customers/segments";
 import SegmentsReachabilityRoute from "@/pages/customers/segments/reachability-route";
 import SegmentsOverlapRoute from "@/pages/customers/segments/overlap-route";
@@ -602,6 +610,22 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/business-memory",
                 Component: BusinessMemorySettingsRoute,
+              },
+              {
+                path: "playbooks",
+                children: [
+                  { index: true, Component: Playbooks },
+                  { path: "new", Component: NewPlaybook },
+                  { path: "record", Component: RecordRoute },
+                  { path: "blocked", Component: BlockedRoute },
+                  { path: "retired", Component: RetiredRoute },
+                  { path: "history", Component: HistoryRoute },
+                  { path: ":id", Component: PlaybookDetailRoute },
+                ],
+              },
+              {
+                path: "settings/playbooks",
+                Component: PlaybooksSettingsRoute,
               },
               {
                 path: "segments",
