@@ -10,6 +10,13 @@ import { LK13_STAGE_BARS, LK13_WOULD_HELP_ROWS } from "@/pages/revenue/leakage-m
 const DetectionRoute = () => {
   return (
     <div className="space-y-8">
+      <div>
+        <h1 className="text-[17px] font-semibold text-ink">Leakage map</h1>
+        <p className="mt-1 text-[11.5px] text-ink-3">
+          How fast the workspace saw it vs how fast it acted · 151 days cause to connection, 4 hours connection to decision
+        </p>
+      </div>
+
       <LeaksTabs active="Detection" />
 
       <KpiCards

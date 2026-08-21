@@ -14,6 +14,13 @@ const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8
 const FunnelCompareRoute = () => {
   return (
     <div className="space-y-8">
+      <div>
+        <h1 className="text-[17px] font-semibold text-ink">Funnel</h1>
+        <p className="mt-1 text-[11.5px] text-ink-3">
+          Where it bent · checkout to first order, all four markets over two weeks
+        </p>
+      </div>
+
       <FunnelTabs active="Compare" />
 
       <section className="space-y-3">

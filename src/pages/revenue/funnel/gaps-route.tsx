@@ -16,6 +16,13 @@ const FunnelGapsRoute = () => {
 
   return (
     <div className="space-y-8">
+      <div>
+        <h1 className="text-[17px] font-semibold text-ink">Funnel</h1>
+        <p className="mt-1 text-[11.5px] text-ink-3">
+          Five steps with no event · what each one would settle if it existed
+        </p>
+      </div>
+
       <FunnelTabs active="Not instrumented" />
 
       <div className="flex flex-wrap items-center justify-between gap-3">

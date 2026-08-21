@@ -13,6 +13,13 @@ const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8
 export function ByMarketState() {
   return (
     <div className="space-y-8">
+      <div>
+        <h1 className="text-[17px] font-semibold text-ink">Leakage map</h1>
+        <p className="mt-1 text-[11.5px] text-ink-3">
+          Four markets, four currencies · Nigeria worst at Retain, Ghana worst in nine of ten stages, the UK still at zero
+        </p>
+      </div>
+
       <LeaksTabs active="By market" />
 
       <section className="space-y-3">
