@@ -617,6 +617,81 @@ a drop-in match for another section's tone vocabulary).
 | `tsc -p tsconfig.app.json` clean + dev server + 11-route Playwright console/page-error sweep + 3-modal click-test | [x] | Verified 2026-08-21 |
 | Cherry-picked onto `archive/mock-data` | [x] | Clean cherry-pick, no conflicts |
 
+## 5b. Customer health
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Customers Screens/flolyt-customer-health/flolyt-customer-health/` (16 frames,
+HL01–HL16), the second section of the Customers group, sibling to Segments. Content was transcribed
+from the export's own `hl.py` generator source (same "read the `.py`, don't parse the SVG" approach
+as Segments and every Revenue section); `cust.py` is the same shared Customers sidebar-chrome script
+Segments already used.
+
+**Route stays flat, per the established rule**: lives on disk at
+`src/pages/customers/customer-health/` (mirrors the sidebar CUSTOMERS group) but mounts at the flat
+`/customer-health` — no `/customers` prefix — matching `/segments`. Settings is
+`/settings/customer-health`, outside the `/customer-health` tree, matching `/settings/segments`.
+
+**Architecture — index-branching on a query param first, then a mock flag, same shape as Segments:**
+- `/customer-health` (`src/pages/customers/customer-health/index.tsx`) is ONE route covering HL01
+  (no signal has a baseline yet), HL02 (the first signal, read for the first time), HL03 (the
+  default "Signals" tab, all six signals), and HL05 (`?by=cohort`, the "By cohort" tab). `by` is
+  checked first, then `HEALTH_STATE` (a 3-value mock flag defaulting to `"full"`) branches
+  HL01/HL02/HL03 — HL01/HL02 are wired but unreachable with that default, same "not wired, no demo
+  state currently triggers it" situation as every prior rebuild's empty/edge states.
+- `/customer-health/coverage` (HL09), `/customer-health/changed` (HL10), and
+  `/customer-health/thresholds` (HL11) are standalone sibling routes sharing the same 5-tab bar
+  (`tabs.tsx`, mixing a query-param tab with sibling-route tabs — same pattern Benchmarks used) as
+  the index's Signals/By-cohort states.
+- `/customer-health/unowned` (HL08, "At risk with no owner") is also a standalone sibling route,
+  reached from a link card on the By-cohort tab (HL05) rather than from the tab bar itself — it
+  keeps the tab bar rendered with "By cohort" active for orientation, matching the export's own
+  choice to draw the tab bar on that frame even though the URL isn't one of the tab's own hrefs.
+- `/customer-health/no-score` (HL04, "Why there is no score") is a standalone route with its own
+  `StageSubpageHeader` breadcrumb, no tab bar — reached from HL01's empty state.
+- `/customer-health/:id` (`cohort-detail-route.tsx`) only has one built reference row: HL06
+  (`lapsed-fee`) — every other id falls back to a not-found state, same "one/two reference rows"
+  pattern as Segments' `:id`. Reachable from the By-cohort table's row link.
+- **`/customers/:id` (`src/pages/customers/customer-detail-route.tsx`) is a new top-level route,
+  outside the `/customer-health` tree entirely** — HL07's own footer states the route as
+  `/customers/:id`, a cross-cutting customer profile rather than a Customer-health-specific screen
+  (no sidebar item is named plain "Customers"), so it was mounted exactly as the export states
+  rather than folded under `/customer-health`. Only `4118207` has real content, every other id
+  falls back to not-found. Reachable via a link card added to the `lapsed-fee` cohort detail page
+  ("One identifiable person in this cohort") — no export screen showed an explicit link to it, so
+  this entry point was added per [[flag_unreachable_routes]].
+- **HL12/HL13/HL14 are three bespoke modals**, each hardcoded to the one row/preset the export shows
+  it opened against — `add-a-signal-modal.tsx` ("Reordered the same item", opened from the Signals
+  tab's header CTA), `change-a-threshold-modal.tsx` ("Feature depth", opened from the Thresholds
+  route's header CTA and from that row's own breach-count chip), and
+  `contact-this-person-modal.tsx` (Customer 4,118,207, opened from a second header button on the
+  customer detail page — HL07's own frame CTA is "See their reply", a separate button, so the
+  detail page carries both).
+- HL16 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints, not a
+  separate page — same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** every named person in this export
+(Ifeoma, Tunde, Amara, Ravi, Zainab, Ada, Kunle) is an exact match for `rooms/data.ts`'s existing
+`PersonRef`s, reused as plain owner strings in table rows (same shape as Segments' `owner` column)
+rather than full `PersonRef` objects, since no avatar rendering was needed for them. The one
+`AgentRef` used (Repeat & Decay, "RD") matches Segments' own `SG01_OBSERVATION_ROWS` literal.
+`Chip`, `CHIP_INTERACTIVE_CLASS`, `Callout`, `KpiCards`, `PersonAvatar`, `StageSubpageHeader`, and
+`BarRow` were all reused from `lifecycle/stage/` and `components/` with zero forking. A local
+`HealthKvList` (`kv-list.tsx`) and `CoverageBar` (`coverage-bar.tsx`, a direct structural copy of
+Segments' `ReachabilityBar`) were written per-section, same "own 7-value tone vocabulary" precedent
+as every prior section.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing yet / first signal / all signals / by cohort | [x] | `src/pages/customers/customer-health/index.tsx` + `states/*.tsx`. HL01/HL02 wired but unreachable with `HEALTH_STATE`'s current default |
+| Why there is no score | [x] | `no-score-route.tsx`, `/customer-health/no-score` |
+| At risk with no owner / Coverage / What changed / Thresholds | [x] | `unowned-route.tsx`, `coverage-route.tsx`, `changed-route.tsx`, `thresholds-route.tsx` |
+| One cohort (`:id`) | [x] | `cohort-detail-route.tsx` — only `lapsed-fee` built, every other id falls back to not-found |
+| One customer (`/customers/:id`, top-level) | [x] | `src/pages/customers/customer-detail-route.tsx` — only `4118207` built |
+| Add a signal / Change a threshold / Contact this person (modals) | [x] | `modals/*.tsx`, each hardcoded to the one row/preset the export shows it against |
+| Settings | [x] | `settings/customer-health-settings-route.tsx`, `/settings/customer-health` |
+| Sidebar "Customer health" link | [x] | pre-existing stub already correctly pointed at `/customer-health` |
+| `tsc -p tsconfig.app.json` clean + dev server + 12-route Playwright console/page-error sweep + 3-modal click-test + mobile viewport check | [x] | Verified 2026-08-21 |
+
 ## 6. Revenue surfaces (44–50)
 
 | # | Screen | Status | Endpoint(s) | Notes |
