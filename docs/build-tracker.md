@@ -1661,6 +1661,85 @@ would make a true proportional bar visually pointless.
 | Sidebar "Community" link | [x] | pre-existing KNOWLEDGE-group stub already correctly pointed at `/community` |
 | `tsc -b` clean + dev server + 10-route Playwright console/page-error sweep + both modals click-tested | [x] | Verified 2026-08-21 |
 
+## 6j. Recognition
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Knowledge Screens/flolyt-recognition/flolyt-recognition/` (14 frames,
+RC01-RC14). Fourth and final section of the Knowledge group, after [[flolyt_community_rebuild]] —
+the Knowledge group is now complete. Content was transcribed from the export's own `rc.py`
+generator source (plus shared `know.py` chrome, reused as-is from the business memory/playbooks/
+community builds), same "read the `.py`, don't parse the SVG" approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/knowledge/recognition/` (mirrors the sidebar's KNOWLEDGE group, same as
+`pages/knowledge/community/`), but mounts at the flat `/recognition` — no `/knowledge` prefix.
+This exactly reused the sidebar's pre-existing "Recognition" stub (`href: "/recognition"`, `Award`
+icon), so no sidebar change was needed. Settings is `/settings/recognition`, outside the
+`/recognition` tree, matching `/settings/community`.
+
+**Architecture — index-branching on a query param first, then a mock flag:**
+- `/recognition` (`index.tsx`) is ONE route covering RC01 (nothing recognised yet), RC02 (the
+  first recognition, this morning), RC03 (the default "Recognised" tab, 34 acts this quarter), and
+  RC11 (`?as=me`, a viewing-as lens on Amara Okeke's own recognitions). `as=me` is checked first —
+  it is RC11's own literal footer route (`/knowledge/recognition?as=me`), a query-param variant of
+  the index rather than a sibling path, so "Yours" in the tab bar links to `/recognition?as=me`,
+  not `/recognition/yours` (a deliberate divergence from Community's own `/community/yours` sibling
+  route, since Recognition's own export shows the query-param shape instead). `RECOGNITION_STATE`
+  (a 3-value mock flag defaulting to `"full"`) then branches RC01/RC02/RC03 — RC01/RC02 are wired
+  but unreachable with that default, same "not wired, no demo state currently triggers it"
+  situation as every prior rebuild's empty/edge states.
+- `/recognition/dissent` (RC05), `/recognition/contributions` (RC06), and `/recognition/quiet`
+  (RC07, route path `quiet` per RC07's own footer even though the tab label reads "Quiet work") are
+  standalone sibling routes sharing the same 5-tab bar (`tabs.tsx`) as the index's "Recognised" state.
+- `/recognition/no-ranking` (RC04, "Why there is no leaderboard") and `/recognition/absent` (RC08,
+  "Who never appears here") are standalone own-header pages with no tab bar — neither has an
+  in-app link from the default "full" state in its own export (RC01's own CTA links to RC04, but
+  RC01 is unreachable with the current mock default), so per [[flag_unreachable_routes]] both got
+  header links added to the Recognised tab, next to the "Recognise somebody" CTA.
+- `/recognition/new` (`new/index.tsx`) is the 2-step "Recognise somebody" wizard (RC09 the act →
+  RC10 why it counts). Step position lives in `?step=`, not local `useState`, per the since-adopted
+  URL-over-state rule for wizards, same as Community's `/share`.
+- **RC12 is a single bespoke modal** ("Remove a recognition"), hardcoded to the one row the export
+  shows it opened against — "Marked Accra unmeasurable rather than claiming it" — wired from the
+  Recognised table's one row that carries a `rowAction`, rendered as a clickable "what it cost"
+  cell (text-ultra + underline) rather than a chip, since this table's cost column isn't drawn as a
+  chip in the source SVG; same "only this row has a wired row action" pattern as every prior
+  section's single-modal rows.
+- RC14 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints, not a
+  separate page — same call as every prior section's mobile frame.
+
+**No `:id` detail route this time** — unlike every other Knowledge section, this export has no
+single-reference-row drilldown screen; every RC frame is either an index state, a standalone
+own-header page, a wizard step, a modal, or a tab.
+
+**Cross-section reuse, confirmed by reading both before reusing:** every named person in this
+export (Amara Okeke, Ravi Mehta, Tunde Bakare, Ifeoma Nwosu, Kunle, Zainab Yusuf, Sam Iyer, Ada
+Obi) is an exact match for `AMARA`/`RAVI`/`TUNDE`/`IFEOMA`/`KUNLE`/`ZAINAB`/`SAM`/`ADA` in
+`rooms/data.ts`; Peter Kariuki matches `PETER` in `digest/data.ts` (re-exported the same way
+`handoff/data.ts` already does); both named agents (Repeat & Decay, Acquisition Quality) match
+`REPEAT_DECAY`/`ACQUISITION_QUALITY` in `rooms/data.ts` — zero new `PersonRef`/`AgentRef`s needed.
+A new `WhoCell` component (`who-cell.tsx`) wraps `rooms/actor.tsx`'s existing `ActorAvatar`/
+`actorName`/`actorColorClass` helpers for this section's "Who" table columns (several tables mix
+person and agent rows, e.g. Dissent's and Contributions' last rows), reusing the app's existing
+solid-person/dashed-agent material distinction rather than inventing a parallel one. `Chip`,
+`CHIP_INTERACTIVE_CLASS`, `Callout`, `KpiCards`, `PersonDot`, and `StageSubpageHeader` were all
+reused from `lifecycle/stage/` and `rooms/actor.tsx` with zero forking. `QuoteCard` is reused
+directly from `business-memory/quote-card.tsx`, same as Community.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing recognised / first recognition / Recognised table / Yours lens | [x] | `index.tsx` + `states/*.tsx`. RC01/RC02 wired but unreachable with `RECOGNITION_STATE`'s current default; RC11 reached via `?as=me` |
+| Dissent / Contributions / Quiet work | [x] | `dissent-route.tsx`, `contributions-route.tsx`, `quiet-work-route.tsx`, all sharing `tabs.tsx` |
+| Why there is no leaderboard / Who never appears | [x] | `no-ranking-route.tsx`, `absent-route.tsx` — both linked from the Recognised tab header (fixed an unreachable-route gap) |
+| Recognise somebody (wizard) | [x] | `new/index.tsx` + `step-act.tsx`/`step-why.tsx`, `?step=`, `/recognition/new` |
+| Remove a recognition (modal) | [x] | `modals/remove-a-recognition-modal.tsx`, wired via `rowAction` on one table row |
+| Settings | [x] | `settings/recognition-settings-route.tsx`, `/settings/recognition` |
+| Sidebar "Recognition" link | [x] | pre-existing KNOWLEDGE-group stub already correctly pointed at `/recognition` |
+| `tsc -b` clean + dev server + 10-route Playwright console/page-error sweep + modal click-test + reachability-link check | [x] | Verified 2026-08-21 |
+
+**The Knowledge group is now complete** — Business memory, Playbooks, Community, and Recognition
+all built end to end.
+
 ## 7. Teams (51–58)
 
 | # | Screen | Status | Endpoint(s) | Notes |
@@ -1863,7 +1942,7 @@ against the transcribed specs for the index, reassign modal and create-handoffs 
 | 103 | embedded and white label | [ ] | | |
 | 104 | dashboard builder | [ ] | | |
 | 105 | community | [x] | | Superseded — rebuilt as `/community` from the newer `flolyt-community` export, see section 6i |
-| 106 | recognition | [ ] | | |
+| 106 | recognition | [x] | | Superseded — rebuilt as `/recognition` from the newer `flolyt-recognition` export, see section 6j |
 | 107 | language and format | [ ] | | |
 
 ## 17. Mobile (108–110)

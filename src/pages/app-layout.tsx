@@ -369,6 +369,8 @@ function getBreadcrumb(pathname: string): React.ReactNode {
 
   if (pathname === "/community") return "Community";
 
+  if (pathname === "/recognition") return "Recognition";
+
   if (pathname === "/governance") return "Governance";
 
   return "Home";

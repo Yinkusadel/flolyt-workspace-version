@@ -202,6 +202,14 @@ import RefusedRouteCommunity from "@/pages/knowledge/community/refused-route";
 import YoursRoute from "@/pages/knowledge/community/yours-route";
 import ShareWithCommunity from "@/pages/knowledge/community/share";
 import CommunitySettingsRoute from "@/pages/knowledge/community/settings/community-settings-route";
+import Recognition from "@/pages/knowledge/recognition";
+import RecognitionDissentRoute from "@/pages/knowledge/recognition/dissent-route";
+import RecognitionContributionsRoute from "@/pages/knowledge/recognition/contributions-route";
+import RecognitionQuietWorkRoute from "@/pages/knowledge/recognition/quiet-work-route";
+import RecognitionNoRankingRoute from "@/pages/knowledge/recognition/no-ranking-route";
+import RecognitionAbsentRoute from "@/pages/knowledge/recognition/absent-route";
+import RecogniseSomebody from "@/pages/knowledge/recognition/new";
+import RecognitionSettingsRoute from "@/pages/knowledge/recognition/settings/recognition-settings-route";
 import Segments from "@/pages/customers/segments";
 import SegmentsReachabilityRoute from "@/pages/customers/segments/reachability-route";
 import SegmentsOverlapRoute from "@/pages/customers/segments/overlap-route";
@@ -652,6 +660,22 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/community",
                 Component: CommunitySettingsRoute,
+              },
+              {
+                path: "recognition",
+                children: [
+                  { index: true, Component: Recognition },
+                  { path: "new", Component: RecogniseSomebody },
+                  { path: "dissent", Component: RecognitionDissentRoute },
+                  { path: "contributions", Component: RecognitionContributionsRoute },
+                  { path: "quiet", Component: RecognitionQuietWorkRoute },
+                  { path: "no-ranking", Component: RecognitionNoRankingRoute },
+                  { path: "absent", Component: RecognitionAbsentRoute },
+                ],
+              },
+              {
+                path: "settings/recognition",
+                Component: RecognitionSettingsRoute,
               },
               {
                 path: "segments",
