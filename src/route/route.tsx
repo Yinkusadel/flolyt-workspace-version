@@ -183,6 +183,15 @@ import SegmentsRetiredRoute from "@/pages/customers/segments/retired-route";
 import NewSegment from "@/pages/customers/segments/new";
 import SegmentDetailRoute from "@/pages/customers/segments/segment-detail-route";
 import SegmentsSettingsRoute from "@/pages/customers/segments/settings/segments-settings-route";
+import CustomerHealth from "@/pages/customers/customer-health";
+import CustomerHealthNoScoreRoute from "@/pages/customers/customer-health/no-score-route";
+import CustomerHealthCohortDetailRoute from "@/pages/customers/customer-health/cohort-detail-route";
+import CustomerHealthUnownedRoute from "@/pages/customers/customer-health/unowned-route";
+import CustomerHealthCoverageRoute from "@/pages/customers/customer-health/coverage-route";
+import CustomerHealthChangedRoute from "@/pages/customers/customer-health/changed-route";
+import CustomerHealthThresholdsRoute from "@/pages/customers/customer-health/thresholds-route";
+import CustomerHealthSettingsRoute from "@/pages/customers/customer-health/settings/customer-health-settings-route";
+import CustomerDetailRoute from "@/pages/customers/customer-detail-route";
 import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
 // import { ProtectedRoute } from "@/route/protected-route";
@@ -556,6 +565,26 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/segments",
                 Component: SegmentsSettingsRoute,
+              },
+              {
+                path: "customer-health",
+                children: [
+                  { index: true, Component: CustomerHealth },
+                  { path: "no-score", Component: CustomerHealthNoScoreRoute },
+                  { path: "unowned", Component: CustomerHealthUnownedRoute },
+                  { path: "coverage", Component: CustomerHealthCoverageRoute },
+                  { path: "changed", Component: CustomerHealthChangedRoute },
+                  { path: "thresholds", Component: CustomerHealthThresholdsRoute },
+                  { path: ":id", Component: CustomerHealthCohortDetailRoute },
+                ],
+              },
+              {
+                path: "settings/customer-health",
+                Component: CustomerHealthSettingsRoute,
+              },
+              {
+                path: "customers/:id",
+                Component: CustomerDetailRoute,
               },
               {
                 path: "governance",
