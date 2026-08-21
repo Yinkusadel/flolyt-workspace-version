@@ -850,6 +850,82 @@ section.
 | Sidebar "Experiments" link | [x] | pre-existing stub already correctly pointed at `/experiments` |
 | `tsc -p tsconfig.app.json` clean + dev server + 13-route Playwright console/page-error sweep + full 3-step wizard click-through + 2-modal click-test + 2 detail-row link click-tests + mobile viewport check | [x] | Verified 2026-08-21 |
 
+## 5e. Replies
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Customers Screens/flolyt-replies/flolyt-replies/` (14 frames, RP01–RP14),
+the fifth and final section of the Customers group, sibling to Segments, Customer health,
+Campaigns and Experiments. Content was transcribed from the export's own `rp.py` generator
+source (same "read the `.py`, don't parse the SVG" approach as every prior section); `cust.py` is
+the same shared Customers sidebar-chrome script the other four sections already use. RP00 is an
+index/route-map frame, not a product screen.
+
+**Route stays flat, per the established rule**: lives on disk at `src/pages/customers/replies/`
+(mirrors the sidebar CUSTOMERS group) but mounts at the flat `/replies` — no `/customers` prefix
+— matching `/segments`, `/customer-health`, `/campaigns`, `/experiments`. Settings is
+`/settings/replies`, outside the `/replies` tree, matching `/settings/experiments`. The sidebar's
+"Replies" link already pointed at `/replies` before this build started.
+
+**Architecture — index-branching on a mock flag, then a 5-tab bar, same shape as Campaigns and
+Experiments:**
+- `/replies` (`index.tsx`) is ONE route covering RP01 (nobody has written back yet), RP02 (the
+  first reply, minutes-scale), and RP03 (the default "Needs an answer" tab state).
+  `REPLIES_STATE` (a 3-value mock flag defaulting to `"full"`) branches between them — RP01/RP02
+  are wired but unreachable with that default, same "not wired, no demo state currently triggers
+  it" situation as every prior rebuild's empty/edge states.
+- Five tabs (Needs an answer/Themes/Unanswered/Routing/Answered) share one `tabs.tsx`.
+  `/replies/themes` (RP05), `/replies/unanswered` (RP06), and `/replies/routing` (RP07) are
+  standalone sibling routes.
+- **`/replies/answered` has no dedicated frame in the export** — `TABS` in `rp.py` lists five tabs
+  but `S.save()` is only ever called for the other four. Same "tab with no frame" gap Scenario,
+  Campaigns and Experiments each hit with their own no-frame tab (see
+  [[flolyt_experiments_rebuild]]). Grounded this time in an exact arithmetic fact rather than
+  lifted vocabulary: RP13's own "12,388 sent" figure is precisely 12,800 total messages minus the
+  412 counted as never-answered on the Unanswered tab, so the number was already implied by two
+  other screens rather than invented for this one.
+- `/replies/4118207` (`conversation-detail-route.tsx`) and `/replies/4118207/answer`
+  (`answer-route.tsx`) are two nested detail routes for the one flagship customer threaded through
+  nearly the whole section (RP02, RP03, RP04, RP08, RP09 all reference them) — every other id on
+  either route falls back to a not-found state. `/replies/4118207/answer`'s own "Send it" button
+  resolves the send directly (toast + navigate back to `/replies`); RP09's modal is a separate,
+  faster path to the same underlying action reachable straight from the Needs-an-answer table's
+  draft-ready chip, skipping the two intermediate pages.
+- `/replies/use` (RP12, "What a reply may be used for") is a standalone policy page, not part of
+  the tab bar — reached from `/settings/replies`'s new secondary header button and from RP01's
+  own empty-state secondary CTA, both per [[flag_unreachable_routes]].
+- **RP09/RP10/RP11 are three bespoke modals**, each wired via a `rowAction` field on a specific
+  table row rather than a page-level button: `send-an-answer-modal.tsx` ("Customer 4,118,207")
+  opens from the Needs-an-answer table's draft-ready chip; `make-it-evidence-modal.tsx` ("Too many
+  messages") opens from the Themes table's "Became a finding?" cell; `close-without-answering-modal.tsx`
+  ("Customer 3,881,406") opens from the Unanswered table's "Fixable" cell on the "No channel to
+  reply on" row. None of the three modals' own preset row-counts need to match the real tables
+  exactly — same "a modal's own base state doesn't have to match the live page" precedent
+  [[flolyt_campaigns_rebuild]] established.
+- RP14 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints, not a
+  separate page — same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** all five named people in this export
+(Ravi, Ifeoma, Amara, Ada, Kunle) are exact matches for `rooms/data.ts`'s existing `PersonRef`s —
+no new person or agent refs were needed, same as Experiments. `Chip`, `CHIP_INTERACTIVE_CLASS`,
+`Callout`, `KpiCards`, `PersonAvatar`, and `StageSubpageHeader` were all reused with zero forking.
+A local `RepliesKvList` (`kv-list.tsx`) was written per section, same "own tone vocabulary"
+precedent as every prior section.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nobody has written back / first reply / needs an answer | [x] | `index.tsx` + `states/*.tsx`. RP01/RP02 wired but unreachable with `REPLIES_STATE`'s current default |
+| Themes / Unanswered / Routing | [x] | `themes-route.tsx`, `unanswered-route.tsx`, `routing-route.tsx` |
+| Answered (no dedicated frame) | [x] | `answered-route.tsx`, grounded in the exact arithmetic implied by RP13's "12,388 sent" figure |
+| One conversation (`:id`) + Draft an answer (`:id/answer`) | [x] | `conversation-detail-route.tsx`, `answer-route.tsx` — only `4118207` built on either, every other id falls back to not-found |
+| What a reply may be used for | [x] | `use-route.tsx`, `/replies/use`, reachable from Settings' second header button and the empty state |
+| Send an answer / Make it evidence / Close without answering (modals) | [x] | `modals/*.tsx` — each wired via `rowAction` on a different tab's table |
+| Settings | [x] | `settings/replies-settings-route.tsx`, `/settings/replies` |
+| Sidebar "Replies" link | [x] | pre-existing stub already correctly pointed at `/replies` |
+| `tsc -p tsconfig.app.json` clean + dev server + 11-route Playwright console/page-error sweep + 3-modal click-test + conversation→answer→send click-through + settings→policy cross-link click-test + mobile viewport check | [x] | Verified 2026-08-21 |
+
+**This completes the Customers sidebar group** (Segments, Customer health, Campaigns,
+Experiments, Replies — all five sections built).
+
 ## 6. Revenue surfaces (44–50)
 
 | # | Screen | Status | Endpoint(s) | Notes |

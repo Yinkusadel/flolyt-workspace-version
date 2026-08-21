@@ -214,6 +214,15 @@ import ExperimentsContaminatedRoute from "@/pages/customers/experiments/contamin
 import NewExperiment from "@/pages/customers/experiments/new";
 import ExperimentDetailRoute from "@/pages/customers/experiments/experiment-detail-route";
 import ExperimentsSettingsRoute from "@/pages/customers/experiments/settings/experiments-settings-route";
+import Replies from "@/pages/customers/replies";
+import RepliesThemesRoute from "@/pages/customers/replies/themes-route";
+import RepliesUnansweredRoute from "@/pages/customers/replies/unanswered-route";
+import RepliesRoutingRoute from "@/pages/customers/replies/routing-route";
+import RepliesAnsweredRoute from "@/pages/customers/replies/answered-route";
+import RepliesUseRoute from "@/pages/customers/replies/use-route";
+import ConversationDetailRoute from "@/pages/customers/replies/conversation-detail-route";
+import ReplyAnswerRoute from "@/pages/customers/replies/answer-route";
+import RepliesSettingsRoute from "@/pages/customers/replies/settings/replies-settings-route";
 import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
 // import { ProtectedRoute } from "@/route/protected-route";
@@ -651,6 +660,23 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/experiments",
                 Component: ExperimentsSettingsRoute,
+              },
+              {
+                path: "replies",
+                children: [
+                  { index: true, Component: Replies },
+                  { path: "themes", Component: RepliesThemesRoute },
+                  { path: "unanswered", Component: RepliesUnansweredRoute },
+                  { path: "routing", Component: RepliesRoutingRoute },
+                  { path: "answered", Component: RepliesAnsweredRoute },
+                  { path: "use", Component: RepliesUseRoute },
+                  { path: ":id/answer", Component: ReplyAnswerRoute },
+                  { path: ":id", Component: ConversationDetailRoute },
+                ],
+              },
+              {
+                path: "settings/replies",
+                Component: RepliesSettingsRoute,
               },
               {
                 path: "governance",
