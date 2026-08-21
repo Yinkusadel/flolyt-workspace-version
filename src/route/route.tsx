@@ -202,6 +202,15 @@ import NewCampaign from "@/pages/customers/campaigns/new";
 import CampaignDetailRoute from "@/pages/customers/campaigns/campaign-detail-route";
 import CampaignIncidentDetailRoute from "@/pages/customers/campaigns/incident-detail-route";
 import CampaignsSettingsRoute from "@/pages/customers/campaigns/settings/campaigns-settings-route";
+import Experiments from "@/pages/customers/experiments";
+import ExperimentsResultsRoute from "@/pages/customers/experiments/results-route";
+import ExperimentsExcludedRoute from "@/pages/customers/experiments/excluded-route";
+import ExperimentsReadabilityRoute from "@/pages/customers/experiments/readability-route";
+import ExperimentsHistoryRoute from "@/pages/customers/experiments/history-route";
+import ExperimentsContaminatedRoute from "@/pages/customers/experiments/contaminated-route";
+import NewExperiment from "@/pages/customers/experiments/new";
+import ExperimentDetailRoute from "@/pages/customers/experiments/experiment-detail-route";
+import ExperimentsSettingsRoute from "@/pages/customers/experiments/settings/experiments-settings-route";
 import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
 // import { ProtectedRoute } from "@/route/protected-route";
@@ -613,6 +622,23 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/campaigns",
                 Component: CampaignsSettingsRoute,
+              },
+              {
+                path: "experiments",
+                children: [
+                  { index: true, Component: Experiments },
+                  { path: "results", Component: ExperimentsResultsRoute },
+                  { path: "excluded", Component: ExperimentsExcludedRoute },
+                  { path: "readability", Component: ExperimentsReadabilityRoute },
+                  { path: "history", Component: ExperimentsHistoryRoute },
+                  { path: "contaminated", Component: ExperimentsContaminatedRoute },
+                  { path: "new", Component: NewExperiment },
+                  { path: ":id", Component: ExperimentDetailRoute },
+                ],
+              },
+              {
+                path: "settings/experiments",
+                Component: ExperimentsSettingsRoute,
               },
               {
                 path: "governance",
