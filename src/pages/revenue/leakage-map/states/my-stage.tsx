@@ -13,6 +13,11 @@ const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8
 export function MyStageState() {
   return (
     <div className="space-y-8">
+      <div>
+        <h1 className="text-[17px] font-semibold text-ink">Leakage map</h1>
+        <p className="mt-1 text-[11.5px] text-ink-3">Filtered to one stage · see everything to return to the full map</p>
+      </div>
+
       <LensBar
         person={IFEOMA}
         holds="owns Retain · 14 rooms"

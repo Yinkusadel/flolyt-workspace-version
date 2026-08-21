@@ -13,6 +13,13 @@ const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8
 export function ByCohortState() {
   return (
     <div className="space-y-8">
+      <div>
+        <h1 className="text-[17px] font-semibold text-ink">Funnel</h1>
+        <p className="mt-1 text-[11.5px] text-ink-3">
+          Who gets through, split by how they arrived · a 43-point gap with nobody owning it
+        </p>
+      </div>
+
       <FunnelTabs active="By cohort" />
 
       <div className="flex flex-wrap items-center justify-between gap-3">

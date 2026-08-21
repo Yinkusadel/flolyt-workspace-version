@@ -11,6 +11,11 @@ import { FN14_KV_ROWS, FN14_STEPS } from "@/pages/revenue/funnel/data";
 export function DegradedState() {
   return (
     <div className="space-y-8">
+      <div>
+        <h1 className="text-[17px] font-semibold text-ink">Funnel</h1>
+        <p className="mt-1 text-[11.5px] text-ink-3">Two steps went Unavailable at 04:12 · the rest is unaffected</p>
+      </div>
+
       <FunnelTabs active="The funnel" />
 
       <div className="rounded-card border border-rose-border bg-rose-bg p-4">

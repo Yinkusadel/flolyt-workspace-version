@@ -536,14 +536,395 @@ colors for all 5 so adding a demo room later needs no template change.
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 36 | segments | [x] | | `/segments` — static mock data in `src/pages/segments/data.ts`. Segments table is a plain `<table>` in `overflow-x-auto` (matches log-tab.tsx's pattern); on mobile that scrolls Size/30-day change/Used by off-screen with no scroll affordance — flagged to user, not yet fixed |
+| 36 | segments | [x] | | Superseded — rebuilt from scratch as `/segments` from the newer `flolyt-segments` export, see section 5a |
 | 37 | audience builder | [ ] | | |
 | 38 | audience at scale | [ ] | | |
-| 39 | campaign studio | [ ] | | |
-| 40 | campaigns index | [ ] | | |
-| 41 | campaign send monitor | [ ] | | |
+| 39 | campaign studio | [x] | | Superseded — rebuilt as `/campaigns/new` from the newer `flolyt-campaigns` export, see section 5c |
+| 40 | campaigns index | [x] | | Superseded — rebuilt as `/campaigns` from the newer `flolyt-campaigns` export, see section 5c |
+| 41 | campaign send monitor | [x] | | Superseded — rebuilt as `/campaigns/sent` + `/campaigns/history` from the newer `flolyt-campaigns` export, see section 5c |
 | 42 | campaign performance/lift | [ ] | | |
 | 43 | experiment detail | [ ] | | |
+
+## 5a. Segments
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Customers Screens/flolyt-segments/flolyt-segments/` (16 frames, SG01–SG16),
+superseding kit-122's frame 36 ("segments" — see section 5's note). This is the first section of a
+new **Customers** group, sibling to Every day and Revenue, sourced from its own
+`flolyt-figma-designs/Customers Screens/` export — four more sections (Customer health, Campaigns,
+Experiments, Replies) are documented there as sibling folders, not yet built. SG00 is an
+index/route-map frame, not a product screen. Content was transcribed from the export's own `sg.py`
+generator source (same "read the `.py`, don't parse the SVG" approach as every Revenue section);
+`cust.py` holds the five Customers sections' shared sidebar chrome, imported by each section's own
+script the same way `rev.py` backs the Revenue sections.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/customers/segments/` (folder nests under `src/pages/customers/` purely to mirror the
+sidebar's CUSTOMERS group, same as `pages/revenue/*` and `pages/everyday/*`), but mounts at the
+flat `/segments` — no `/customers` prefix — matching `/leakage-map`, `/funnel`, etc. Settings is
+`/settings/segments`, outside the `/segments` tree, matching `/settings/leakage-map`.
+
+**Architecture — index-branching on a query param first, then a mock flag:**
+- `/segments` (`src/pages/customers/segments/index.tsx`) is ONE route covering SG01 (no segments
+  defined yet), SG02 (20 minutes after the first segment was defined), SG03 (the default "all
+  segments" table), and SG08 (`?q=`, search — the one state with no tab bar). `q` is checked
+  first, then `SEGMENTS_STATE` (a 3-value mock flag defaulting to `"full"`) branches SG01/SG02/
+  SG03 — SG01/SG02 are wired but unreachable with that default, same "not wired, no demo state
+  currently triggers it" situation as every prior rebuild's empty/edge states.
+- `/segments/reachability` (SG05), `/segments/overlap` (SG06), `/segments/drift` (SG07), and
+  `/segments/retired` (SG13's base table) are standalone sibling routes that share the same
+  5-tab bar (`tabs.tsx`) as the index's "All segments" state — same "shared tab bar, not one route
+  subtree" pattern as Attribution's `tabs.tsx`.
+- `/segments/new` (`new/index.tsx`) is the 3-step "Define a segment" wizard (SG09 who's in it →
+  SG10 who's left out → SG11 review). Step position lives in `?step=`, not local `useState` —
+  deliberately deviates from Scenario/Benchmarks' `new/` wizards (which use local state) per a
+  since-adopted rule that page-level flow position belongs in the URL so a refresh mid-wizard
+  doesn't strand the user back at step 1.
+- `/segments/:id` (`segment-detail-route.tsx`) only has one built reference row: SG04
+  (`lapsed-fee`) — every other id falls back to a not-found state, same "one/two reference rows"
+  pattern as Leakage map's `:id`. Reachable in-app from the all-segments table's row link and
+  SG02's first-segment banner.
+- **SG12/SG13/SG14 are three bespoke modals**, each hardcoded to the one row the export shows it
+  opened against — `freeze-a-segment-modal.tsx` ("Lapsed after the fee change"),
+  `retire-a-segment-modal.tsx` ("Lagos, order failed in March"), and `use-a-segment-modal.tsx`
+  ("Two features in week one") — wired from the all-segments table via a `rowAction` field set on
+  exactly those three rows, same "only these three rows have a wired row action" pattern as
+  Leakage map's `roomAction`.
+- SG16 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints
+  (`hidden md:block` table / `md:hidden` stacked cards on the all-segments table) plus a
+  purpose-built `reachability-bar.tsx` stacked bar for SG05, not a separate page — same call as
+  every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** all six named people in this
+export (Ifeoma Nwosu, Ravi Mehta, Kunle, Amara Okeke, Ada Obi, Zainab Yusuf) are exact matches for
+`IFEOMA`/`RAVI`/`KUNLE`/`AMARA`/`ADA`/`ZAINAB` in `rooms/data.ts` — reused directly, zero new
+`PersonRef`s needed, and no new `AgentRef`s were needed either (RD/AQ/IC already existed).
+`Chip`, `CHIP_INTERACTIVE_CLASS`, `Callout`, `KpiCards`, `PersonAvatar`, and `StageSubpageHeader`
+were all reused from `lifecycle/stage/` and `components/` with zero forking. A local
+`SegmentsKvList` (`kv-list.tsx`) was written instead of reusing an existing one, following the same
+per-section-KvList precedent as Leakage map/Attribution (each section's own 7-value `SgTone` isn't
+a drop-in match for another section's tone vocabulary).
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — no segments yet / first segment / all segments / search | [x] | `src/pages/customers/segments/index.tsx` + `states/*.tsx`. SG01/SG02 wired but unreachable with `SEGMENTS_STATE`'s current default |
+| Reachability / Overlap / Drift / Retired | [x] | `reachability-route.tsx`, `overlap-route.tsx`, `drift-route.tsx`, `retired-route.tsx` |
+| Define a segment wizard | [x] | `new/index.tsx` + `new/step-*.tsx`, `/segments/new`, step position in `?step=` |
+| One segment (`:id`) | [x] | `segment-detail-route.tsx` — only `lapsed-fee` built, every other id falls back to not-found |
+| Freeze / Retire / Use a segment (modals) | [x] | `modals/*.tsx`, each hardcoded to the one row the export shows it against, wired via `rowAction` on the all-segments table |
+| Settings | [x] | `settings/segments-settings-route.tsx`, `/settings/segments` |
+| Sidebar "Segments" link | [x] | pre-existing stub already correctly pointed at `/segments` |
+| `tsc -p tsconfig.app.json` clean + dev server + 11-route Playwright console/page-error sweep + 3-modal click-test | [x] | Verified 2026-08-21 |
+| Cherry-picked onto `archive/mock-data` | [x] | Clean cherry-pick, no conflicts |
+
+## 5b. Customer health
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Customers Screens/flolyt-customer-health/flolyt-customer-health/` (16 frames,
+HL01–HL16), the second section of the Customers group, sibling to Segments. Content was transcribed
+from the export's own `hl.py` generator source (same "read the `.py`, don't parse the SVG" approach
+as Segments and every Revenue section); `cust.py` is the same shared Customers sidebar-chrome script
+Segments already used.
+
+**Route stays flat, per the established rule**: lives on disk at
+`src/pages/customers/customer-health/` (mirrors the sidebar CUSTOMERS group) but mounts at the flat
+`/customer-health` — no `/customers` prefix — matching `/segments`. Settings is
+`/settings/customer-health`, outside the `/customer-health` tree, matching `/settings/segments`.
+
+**Architecture — index-branching on a query param first, then a mock flag, same shape as Segments:**
+- `/customer-health` (`src/pages/customers/customer-health/index.tsx`) is ONE route covering HL01
+  (no signal has a baseline yet), HL02 (the first signal, read for the first time), HL03 (the
+  default "Signals" tab, all six signals), and HL05 (`?by=cohort`, the "By cohort" tab). `by` is
+  checked first, then `HEALTH_STATE` (a 3-value mock flag defaulting to `"full"`) branches
+  HL01/HL02/HL03 — HL01/HL02 are wired but unreachable with that default, same "not wired, no demo
+  state currently triggers it" situation as every prior rebuild's empty/edge states.
+- `/customer-health/coverage` (HL09), `/customer-health/changed` (HL10), and
+  `/customer-health/thresholds` (HL11) are standalone sibling routes sharing the same 5-tab bar
+  (`tabs.tsx`, mixing a query-param tab with sibling-route tabs — same pattern Benchmarks used) as
+  the index's Signals/By-cohort states.
+- `/customer-health/unowned` (HL08, "At risk with no owner") is also a standalone sibling route,
+  reached from a link card on the By-cohort tab (HL05) rather than from the tab bar itself — it
+  keeps the tab bar rendered with "By cohort" active for orientation, matching the export's own
+  choice to draw the tab bar on that frame even though the URL isn't one of the tab's own hrefs.
+- `/customer-health/no-score` (HL04, "Why there is no score") is a standalone route with its own
+  `StageSubpageHeader` breadcrumb, no tab bar — reached from HL01's empty state.
+- `/customer-health/:id` (`cohort-detail-route.tsx`) only has one built reference row: HL06
+  (`lapsed-fee`) — every other id falls back to a not-found state, same "one/two reference rows"
+  pattern as Segments' `:id`. Reachable from the By-cohort table's row link.
+- **`/customers/:id` (`src/pages/customers/customer-detail-route.tsx`) is a new top-level route,
+  outside the `/customer-health` tree entirely** — HL07's own footer states the route as
+  `/customers/:id`, a cross-cutting customer profile rather than a Customer-health-specific screen
+  (no sidebar item is named plain "Customers"), so it was mounted exactly as the export states
+  rather than folded under `/customer-health`. Only `4118207` has real content, every other id
+  falls back to not-found. Reachable via a link card added to the `lapsed-fee` cohort detail page
+  ("One identifiable person in this cohort") — no export screen showed an explicit link to it, so
+  this entry point was added per [[flag_unreachable_routes]].
+- **HL12/HL13/HL14 are three bespoke modals**, each hardcoded to the one row/preset the export shows
+  it opened against — `add-a-signal-modal.tsx` ("Reordered the same item", opened from the Signals
+  tab's header CTA), `change-a-threshold-modal.tsx` ("Feature depth", opened from the Thresholds
+  route's header CTA and from that row's own breach-count chip), and
+  `contact-this-person-modal.tsx` (Customer 4,118,207, opened from a second header button on the
+  customer detail page — HL07's own frame CTA is "See their reply", a separate button, so the
+  detail page carries both).
+- HL16 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints, not a
+  separate page — same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** every named person in this export
+(Ifeoma, Tunde, Amara, Ravi, Zainab, Ada, Kunle) is an exact match for `rooms/data.ts`'s existing
+`PersonRef`s, reused as plain owner strings in table rows (same shape as Segments' `owner` column)
+rather than full `PersonRef` objects, since no avatar rendering was needed for them. The one
+`AgentRef` used (Repeat & Decay, "RD") matches Segments' own `SG01_OBSERVATION_ROWS` literal.
+`Chip`, `CHIP_INTERACTIVE_CLASS`, `Callout`, `KpiCards`, `PersonAvatar`, `StageSubpageHeader`, and
+`BarRow` were all reused from `lifecycle/stage/` and `components/` with zero forking. A local
+`HealthKvList` (`kv-list.tsx`) and `CoverageBar` (`coverage-bar.tsx`, a direct structural copy of
+Segments' `ReachabilityBar`) were written per-section, same "own 7-value tone vocabulary" precedent
+as every prior section.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing yet / first signal / all signals / by cohort | [x] | `src/pages/customers/customer-health/index.tsx` + `states/*.tsx`. HL01/HL02 wired but unreachable with `HEALTH_STATE`'s current default |
+| Why there is no score | [x] | `no-score-route.tsx`, `/customer-health/no-score` |
+| At risk with no owner / Coverage / What changed / Thresholds | [x] | `unowned-route.tsx`, `coverage-route.tsx`, `changed-route.tsx`, `thresholds-route.tsx` |
+| One cohort (`:id`) | [x] | `cohort-detail-route.tsx` — only `lapsed-fee` built, every other id falls back to not-found |
+| One customer (`/customers/:id`, top-level) | [x] | `src/pages/customers/customer-detail-route.tsx` — only `4118207` built |
+| Add a signal / Change a threshold / Contact this person (modals) | [x] | `modals/*.tsx`, each hardcoded to the one row/preset the export shows it against |
+| Settings | [x] | `settings/customer-health-settings-route.tsx`, `/settings/customer-health` |
+| Sidebar "Customer health" link | [x] | pre-existing stub already correctly pointed at `/customer-health` |
+| `tsc -p tsconfig.app.json` clean + dev server + 12-route Playwright console/page-error sweep + 3-modal click-test + mobile viewport check | [x] | Verified 2026-08-21 |
+
+## 5c. Campaigns
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Customers Screens/flolyt-campaigns/flolyt-campaigns/` (18 frames,
+CP01–CP18), the third section of the Customers group, sibling to Segments and Customer health.
+Content was transcribed from the export's own `cp.py` generator source (same "read the `.py`,
+don't parse the SVG" approach as every prior section); `cust.py` is the same shared Customers
+sidebar-chrome script Segments and Customer health already used. CP00 is an index/route-map frame,
+not a product screen.
+
+**Route stays flat, per the established rule**: lives on disk at
+`src/pages/customers/campaigns/` (mirrors the sidebar CUSTOMERS group) but mounts at the flat
+`/campaigns` — no `/customers` prefix — matching `/segments` and `/customer-health`. Settings is
+`/settings/campaigns`, outside the `/campaigns` tree, matching `/settings/customer-health`.
+
+**Architecture — index-branching on a mock flag only, no query-param tab this time:**
+- `/campaigns` (`src/pages/customers/campaigns/index.tsx`) is ONE route covering CP01 (nothing
+  sent yet), CP02 (the first campaign, 20-minutes-scale), and CP03 (the default "Running now"
+  table). `CAMPAIGNS_STATE` (a 3-value mock flag defaulting to `"full"`) branches between them —
+  CP01/CP02 are wired but unreachable with that default, same "not wired, no demo state currently
+  triggers it" situation as every prior rebuild's empty/edge states. Unlike Segments/Customer
+  health, there's no extra query-param-branched tab at the index (no `?q=` or `?by=` frame in this
+  export).
+- `/campaigns/audiences` (CP05), `/campaigns/waiting` (CP06), `/campaigns/suppressed` (CP07), and
+  `/campaigns/sent` (CP08) are standalone sibling routes sharing the same 6-tab bar (`tabs.tsx`) as
+  the index's "Running" state.
+- **`/campaigns/history` has no dedicated frame in the export** — `TABS` in `cp.py` lists six tabs
+  but `S.save()` is only ever called for the other five. Same "tab with no frame" gap Scenario hit
+  with its own History tab (see [[flolyt_scenario_rebuild]]). Built anyway, grounded in CP17's own
+  "every change is logged, in the campaign log" line, widened into a chronological log of sends,
+  approvals, incidents and standing-authority changes.
+- `/campaigns/new` (`new/index.tsx`) is the 4-step "New campaign" wizard (CP09 who it reaches →
+  CP10 what it says → CP11 guardrails → CP12 review). Step position lives in `?step=`, per
+  [[url_param_over_state_for_page_flow]], same rule Segments' wizard established. Note: CP10's own
+  footer CTA is labelled "Fix the copy" rather than "Next" — it still advances the wizard to step 3
+  like every other step's CTA; the label is flavor text for that step's blocking-check content, not
+  a different action. (Caught in click-testing: the first pass treated it as a non-advancing action
+  and stranded the wizard at step 2 — fixed before landing.)
+- `/campaigns/:id` (`campaign-detail-route.tsx`) only has one built reference row: CP04
+  (`reactivation-1`) — every other id falls back to a not-found state, same "one/two reference
+  rows" pattern as every prior section's `:id`. CP03's own table draws every campaign name as plain
+  text, so the "wave one" row's name was made a link to keep the route reachable in-app, per
+  [[flag_unreachable_routes]] — same treatment as Segments' all-segments table.
+- `/campaigns/incidents/:id` (`incident-detail-route.tsx`) only has one built reference row: CP16
+  (`1`, "When a send goes wrong") — every other id falls back to not-found.
+- **CP13/CP14/CP15 are three bespoke modals.** `stop-a-campaign-modal.tsx` ("Reactivation · wave
+  one") is wired via a `rowAction` field on that one Running-table row's state chip, same pattern
+  as Segments' `rowAction`. `approve-a-campaign-modal.tsx` ("Reactivation · wave four") and
+  `raise-a-standing-authority-modal.tsx` (Ada's reactivation grant) both open from the Waiting
+  route's header — two separate header buttons for two separate frame CTAs, same "two CTAs on one
+  page" precedent Customer health's HL07 established, used here because CP13 and CP14 solve two
+  different problems for the one waiting campaign (approve it directly, or raise the cap that's
+  blocking it) rather than two different frames' CTAs disagreeing about one screen.
+- CP18 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Running table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** six of the seven named people in this
+export (Ifeoma, Ravi, Ada, Tunde, Amara — Zainab only appears as a plain string) are exact matches
+for `rooms/data.ts`'s existing `PersonRef`s; two agents (Repeat & Decay, Involuntary Churn) also
+matched existing `AgentRef`s. One new agent was needed and added locally rather than to
+`rooms/data.ts`: `PRODUCT_REASON` ("PR"), CP01's third proposal — not referenced anywhere in Rooms.
+`Chip`, `CHIP_INTERACTIVE_CLASS`, `Callout`, `KpiCards`, `PersonAvatar`, and `StageSubpageHeader`
+were all reused with zero forking. A local `CampaignsKvList` (`kv-list.tsx`) and `SuppressedBar`
+(`suppressed-bar.tsx`, a structural copy of Customer health's `CoverageBar`) were written per
+section, same "own tone vocabulary" precedent as every prior section.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing sent / first campaign / running now | [x] | `src/pages/customers/campaigns/index.tsx` + `states/*.tsx`. CP01/CP02 wired but unreachable with `CAMPAIGNS_STATE`'s current default |
+| Audiences / Waiting / Suppressed / Sent | [x] | `audiences-route.tsx`, `waiting-route.tsx`, `suppressed-route.tsx`, `sent-route.tsx` |
+| History (no dedicated frame) | [x] | `history-route.tsx`, grounded in CP17's "campaign log" line |
+| New campaign wizard | [x] | `new/index.tsx` + `new/step-*.tsx`, `/campaigns/new`, step position in `?step=` |
+| One campaign (`:id`) | [x] | `campaign-detail-route.tsx` — only `reactivation-1` built, every other id falls back to not-found |
+| One incident (`incidents/:id`) | [x] | `incident-detail-route.tsx` — only `1` built, every other id falls back to not-found |
+| Approve / Raise a standing authority / Stop a campaign (modals) | [x] | `modals/*.tsx` — stop wired via `rowAction` on the Running table, approve/standing wired from the Waiting route's two header buttons |
+| Settings | [x] | `settings/campaigns-settings-route.tsx`, `/settings/campaigns` |
+| Sidebar "Campaigns" link | [x] | pre-existing stub already correctly pointed at `/campaigns` |
+| `tsc -p tsconfig.app.json` clean + dev server + 15-route Playwright console/page-error sweep + 3-modal click-test + full 4-step wizard click-through + mobile viewport check | [x] | Verified 2026-08-21 |
+
+## 5d. Experiments
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Customers Screens/flolyt-experiments/flolyt-experiments/` (16 frames,
+XP01–XP16), the fourth section of the Customers group, sibling to Segments, Customer health and
+Campaigns. Content was transcribed from the export's own `xp.py` generator source (same "read the
+`.py`, don't parse the SVG" approach as every prior section); `cust.py` is the same shared
+Customers sidebar-chrome script the other three sections already use.
+
+**Route stays flat, per the established rule**: lives on disk at
+`src/pages/customers/experiments/` (mirrors the sidebar CUSTOMERS group) but mounts at the flat
+`/experiments` — no `/customers` prefix — matching `/segments`, `/customer-health`, `/campaigns`.
+Settings is `/settings/experiments`, outside the `/experiments` tree, matching
+`/settings/campaigns`. The sidebar's "Experiments" link already pointed at `/experiments` before
+this build started — nothing to wire there.
+
+**Architecture — index-branching on a mock flag, then a 5-tab bar, same shape as Campaigns:**
+- `/experiments` (`index.tsx`) is ONE route covering XP01 (nothing held back yet), XP02 (the first
+  result, 9-days-scale), and XP03 (the default "Running" tab state). `EXPERIMENTS_STATE` (a
+  3-value mock flag defaulting to `"full"`) branches between them — XP01/XP02 are wired but
+  unreachable with that default, same "not wired, no demo state currently triggers it" situation
+  as every prior rebuild's empty/edge states.
+- Five tabs (Running/Results/Never included/Readability/History) share one `tabs.tsx`.
+  `/experiments/results` (XP06), `/experiments/excluded` (XP05, "Never included" — the route
+  segment follows the frame's own footer URL rather than the tab label), and
+  `/experiments/readability` (XP12) are standalone sibling routes.
+- **`/experiments/history` has no dedicated frame in the export** — `TABS` in `xp.py` lists five
+  tabs but `S.save()` is only ever called for the other four. Same "tab with no frame" gap
+  Scenario and Campaigns each hit with their own History tab (see
+  [[flolyt_scenario_rebuild]], [[flolyt_campaigns_rebuild]]). Built anyway, grounded not in one
+  adjacent line but in the vocabulary every other Experiments screen already repeats — "signed",
+  "locked", "condition changed", "contamination detected" — widened into a chronological log of
+  signings, closures, condition changes and contamination events.
+- `/experiments/contaminated` (XP08, "When one breaks") is a dedicated route reached from the
+  Running table's "contaminated" state chip on the wave-one row — same `rowAction` pattern as
+  Campaigns' stop-a-campaign chip, but this one navigates instead of opening a modal.
+- `/experiments/new` (`new/index.tsx`) is the 3-step "Design an experiment" wizard (XP09 the
+  question → XP10 the holdout → XP11 review). Step position lives in `?step=`, per
+  [[url_param_over_state_for_page_flow]], same rule Segments'/Campaigns' wizards established.
+  Click-tested end to end via real button clicks (not just direct `?step=` navigation) after
+  Campaigns' CP10 bug showed direct nav doesn't catch a wizard step that silently fails to
+  advance — this one advanced correctly at every step.
+- `/experiments/:id` (`experiment-detail-route.tsx`) has two built reference rows — XP04
+  (`kenya-retry`, reached from the Running table) and XP07 (`weekend-cadence`, reached from the
+  Results table) — every other id falls back to a not-found state, same "one/two reference rows"
+  pattern [[flolyt_scenario_rebuild]] and [[flolyt_attribution_rebuild]] established.
+- **XP13/XP14 are two bespoke modals**, both wired via `rowAction` fields on Running-tab table
+  rows rather than a dedicated header button, since both target a specific row rather than a
+  page-level action: `stop-early-modal.tsx` ("Reactivation · wave two") opens from that row's
+  "clean" state chip in the main experiments table; `change-the-condition-modal.tsx` ("Basket
+  prompt · rerun") opens from that row's "written" date in the second (condition) table. Neither
+  preset's row counts need to match the real tables exactly — same "a modal's own base state
+  doesn't have to match the live page" precedent [[flolyt_campaigns_rebuild]] established.
+- XP16 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Running table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** all six named people in this export
+(Ifeoma, Ravi, Ada, Tunde, Amara, Zainab) are exact matches for `rooms/data.ts`'s existing
+`PersonRef`s — no new person or agent refs were needed, unlike Campaigns' `PRODUCT_REASON`.
+`Chip`, `CHIP_INTERACTIVE_CLASS`, `Callout`, `KpiCards`, `BarTrack`, `PersonAvatar`, and
+`StageSubpageHeader` were all reused with zero forking. A local `ExperimentsKvList`
+(`kv-list.tsx`) was written per section, same "own tone vocabulary" precedent as every prior
+section.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing to measure / first result / running now | [x] | `index.tsx` + `states/*.tsx`. XP01/XP02 wired but unreachable with `EXPERIMENTS_STATE`'s current default |
+| Results / Never included / Readability | [x] | `results-route.tsx`, `excluded-route.tsx`, `readability-route.tsx` |
+| History (no dedicated frame) | [x] | `history-route.tsx`, grounded in the section's own recurring audit-trail vocabulary |
+| When one breaks | [x] | `contaminated-route.tsx`, reached via the Running table's "contaminated" chip |
+| New experiment wizard | [x] | `new/index.tsx` + `new/step-*.tsx`, `/experiments/new`, step position in `?step=` |
+| One experiment (`:id`) | [x] | `experiment-detail-route.tsx` — `kenya-retry` and `weekend-cadence` built, every other id falls back to not-found |
+| Stop early / Change the condition (modals) | [x] | `modals/*.tsx` — both wired via `rowAction` on Running-tab table rows |
+| Settings | [x] | `settings/experiments-settings-route.tsx`, `/settings/experiments` |
+| Sidebar "Experiments" link | [x] | pre-existing stub already correctly pointed at `/experiments` |
+| `tsc -p tsconfig.app.json` clean + dev server + 13-route Playwright console/page-error sweep + full 3-step wizard click-through + 2-modal click-test + 2 detail-row link click-tests + mobile viewport check | [x] | Verified 2026-08-21 |
+
+## 5e. Replies
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Customers Screens/flolyt-replies/flolyt-replies/` (14 frames, RP01–RP14),
+the fifth and final section of the Customers group, sibling to Segments, Customer health,
+Campaigns and Experiments. Content was transcribed from the export's own `rp.py` generator
+source (same "read the `.py`, don't parse the SVG" approach as every prior section); `cust.py` is
+the same shared Customers sidebar-chrome script the other four sections already use. RP00 is an
+index/route-map frame, not a product screen.
+
+**Route stays flat, per the established rule**: lives on disk at `src/pages/customers/replies/`
+(mirrors the sidebar CUSTOMERS group) but mounts at the flat `/replies` — no `/customers` prefix
+— matching `/segments`, `/customer-health`, `/campaigns`, `/experiments`. Settings is
+`/settings/replies`, outside the `/replies` tree, matching `/settings/experiments`. The sidebar's
+"Replies" link already pointed at `/replies` before this build started.
+
+**Architecture — index-branching on a mock flag, then a 5-tab bar, same shape as Campaigns and
+Experiments:**
+- `/replies` (`index.tsx`) is ONE route covering RP01 (nobody has written back yet), RP02 (the
+  first reply, minutes-scale), and RP03 (the default "Needs an answer" tab state).
+  `REPLIES_STATE` (a 3-value mock flag defaulting to `"full"`) branches between them — RP01/RP02
+  are wired but unreachable with that default, same "not wired, no demo state currently triggers
+  it" situation as every prior rebuild's empty/edge states.
+- Five tabs (Needs an answer/Themes/Unanswered/Routing/Answered) share one `tabs.tsx`.
+  `/replies/themes` (RP05), `/replies/unanswered` (RP06), and `/replies/routing` (RP07) are
+  standalone sibling routes.
+- **`/replies/answered` has no dedicated frame in the export** — `TABS` in `rp.py` lists five tabs
+  but `S.save()` is only ever called for the other four. Same "tab with no frame" gap Scenario,
+  Campaigns and Experiments each hit with their own no-frame tab (see
+  [[flolyt_experiments_rebuild]]). Grounded this time in an exact arithmetic fact rather than
+  lifted vocabulary: RP13's own "12,388 sent" figure is precisely 12,800 total messages minus the
+  412 counted as never-answered on the Unanswered tab, so the number was already implied by two
+  other screens rather than invented for this one.
+- `/replies/4118207` (`conversation-detail-route.tsx`) and `/replies/4118207/answer`
+  (`answer-route.tsx`) are two nested detail routes for the one flagship customer threaded through
+  nearly the whole section (RP02, RP03, RP04, RP08, RP09 all reference them) — every other id on
+  either route falls back to a not-found state. `/replies/4118207/answer`'s own "Send it" button
+  resolves the send directly (toast + navigate back to `/replies`); RP09's modal is a separate,
+  faster path to the same underlying action reachable straight from the Needs-an-answer table's
+  draft-ready chip, skipping the two intermediate pages.
+- `/replies/use` (RP12, "What a reply may be used for") is a standalone policy page, not part of
+  the tab bar — reached from `/settings/replies`'s new secondary header button and from RP01's
+  own empty-state secondary CTA, both per [[flag_unreachable_routes]].
+- **RP09/RP10/RP11 are three bespoke modals**, each wired via a `rowAction` field on a specific
+  table row rather than a page-level button: `send-an-answer-modal.tsx` ("Customer 4,118,207")
+  opens from the Needs-an-answer table's draft-ready chip; `make-it-evidence-modal.tsx` ("Too many
+  messages") opens from the Themes table's "Became a finding?" cell; `close-without-answering-modal.tsx`
+  ("Customer 3,881,406") opens from the Unanswered table's "Fixable" cell on the "No channel to
+  reply on" row. None of the three modals' own preset row-counts need to match the real tables
+  exactly — same "a modal's own base state doesn't have to match the live page" precedent
+  [[flolyt_campaigns_rebuild]] established.
+- RP14 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints, not a
+  separate page — same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** all five named people in this export
+(Ravi, Ifeoma, Amara, Ada, Kunle) are exact matches for `rooms/data.ts`'s existing `PersonRef`s —
+no new person or agent refs were needed, same as Experiments. `Chip`, `CHIP_INTERACTIVE_CLASS`,
+`Callout`, `KpiCards`, `PersonAvatar`, and `StageSubpageHeader` were all reused with zero forking.
+A local `RepliesKvList` (`kv-list.tsx`) was written per section, same "own tone vocabulary"
+precedent as every prior section.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nobody has written back / first reply / needs an answer | [x] | `index.tsx` + `states/*.tsx`. RP01/RP02 wired but unreachable with `REPLIES_STATE`'s current default |
+| Themes / Unanswered / Routing | [x] | `themes-route.tsx`, `unanswered-route.tsx`, `routing-route.tsx` |
+| Answered (no dedicated frame) | [x] | `answered-route.tsx`, grounded in the exact arithmetic implied by RP13's "12,388 sent" figure |
+| One conversation (`:id`) + Draft an answer (`:id/answer`) | [x] | `conversation-detail-route.tsx`, `answer-route.tsx` — only `4118207` built on either, every other id falls back to not-found |
+| What a reply may be used for | [x] | `use-route.tsx`, `/replies/use`, reachable from Settings' second header button and the empty state |
+| Send an answer / Make it evidence / Close without answering (modals) | [x] | `modals/*.tsx` — each wired via `rowAction` on a different tab's table |
+| Settings | [x] | `settings/replies-settings-route.tsx`, `/settings/replies` |
+| Sidebar "Replies" link | [x] | pre-existing stub already correctly pointed at `/replies` |
+| `tsc -p tsconfig.app.json` clean + dev server + 11-route Playwright console/page-error sweep + 3-modal click-test + conversation→answer→send click-through + settings→policy cross-link click-test + mobile viewport check | [x] | Verified 2026-08-21 |
+
+**This completes the Customers sidebar group** (Segments, Customer health, Campaigns,
+Experiments, Replies — all five sections built).
 
 ## 6. Revenue surfaces (44–50)
 
@@ -553,7 +934,7 @@ colors for all 5 so adding a demo room later needs no template change.
 | 45 | leakage map accounts | [x] | | Superseded — same rebuild, see section 6a; the export has no separate "accounts mode", unlike Expand's own account view |
 | 46 | involuntary churn/dunning | [ ] | | |
 | 47 | revenue forecast | [ ] | | |
-| 48 | business memory | [x] | | `/business-memory` — static mock data in `src/pages/business-memory/data.ts`; search + filter pills (Validated/Observed/Superseded/Account-scoped) are real client-side state, not just decorative |
+| 48 | business memory | [x] | | Superseded — rebuilt as `/business-memory` from the newer `flolyt-business-memory` export, see section 6g |
 | 49 | customer profile consumer | [ ] | | |
 | 50 | customer profile account | [ ] | | |
 
@@ -969,6 +1350,395 @@ component was needed (this section is table- and hero-driven, not bar-chart-driv
 | Sidebar "Benchmarks" link | [x] | pre-existing stub already correctly pointed at `/benchmarks` |
 | `tsc -b` clean + dev server route sweep (11 routes incl. a not-found `:id`) + modal click-tested + wizard step-1→2→save click-tested through to the toast+navigate | [x] | Verified 2026-08-20 |
 
+## 6f. Forecast
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Revenue Screens/flolyt-forecast/flolyt-forecast/` (14 frames, FC01–FC14),
+the sixth Revenue section built (after Leakage map/Funnel/Scenario/Attribution/Benchmarks) but,
+per `REVENUE-GROUP.md`'s own gap-closure note, the **fourth child of the Revenue group in sidebar
+order** — it sits between Scenario and Attribution, both in the sidebar and in `route.tsx`. Same
+"read the export's own `.py` generator source, not the rendered SVGs" approach — `fc.py` imports
+the same shared `rev.py` chrome. FC00 is the index/route-map frame, not a product screen. This is
+a brand-new section (not a kit-122 supersession) — `REVENUE-AUDIT.md` had flagged Forecast as an
+orphaned structural gap, closed by this export.
+
+**Route stays flat** per [[flolyt_flat_url_pattern]]: `/forecast`, not `/revenue/forecast`, even
+though the export's own frame footers say `/revenue/forecast` throughout. Settings at
+`/settings/forecast`, not `/settings/revenue/forecast`. The sidebar had no "Forecast" item at all
+(the one gap this section's own build request called out) — added between "Scenario" and
+"Attribution" with a `LineChart` icon.
+
+**Architecture — same index-branching shape as every prior Revenue section, plus a query-param-tab
+pair like Benchmarks':**
+- `/forecast` (`index.tsx`) is ONE route covering FC01 (nothing to forecast from — no baseline, no
+  owner has committed to a number), FC02 (the first forecast, Kunle's 88.4% renewal figure), and
+  FC03 (the default populated "Next 90 days" state with the 6-tab bar). A 3-value `FORECAST_STATE`
+  mock flag (`empty`/`first`/`full`, defaulting to `"full"`) branches these — `empty`/`first` are
+  wired but unreachable with that default, same "not wired" situation as every prior rebuild's
+  empty/edge states.
+- **Tab-frame gap, same shape as Scenario's History:** `fc.py`'s own `TABS` list has six entries,
+  but no frame ever calls `subtabs(p, "By stage", TABS)` — only "Next 90 days", "By market",
+  "Blocked", "Against actuals" and "History" get an active frame. Built `?by=stage` anyway, reusing
+  FC03's own per-stage table (dropping the summary cards), the same "reuse an adjacent frame's data
+  shape rather than inventing new copy" call Scenario's History made for an identical kind of gap.
+  "By market" (`?by=market`, FC05-disk) is the section's other query-param tab, mirroring
+  Benchmarks' `?by=market`/`?by=stage` pair exactly. "Blocked" (`/forecast/blocked`, FC06-disk),
+  "Against actuals" (`/forecast/actuals`, FC07-disk) and "History" (`/forecast/history`, FC12-disk)
+  are ordinary sibling routes, same as every prior section's tab bar.
+- `/forecast/:stage` (`stage-detail-route.tsx`) has one built reference row — `renew` (FC04-disk,
+  "One forecast") — every other stage falls back to a not-found state, same "one/two reference
+  rows" pattern as every prior section's `:id`/`:step`. Linked from the "Next 90 days" and "By
+  stage" tables' Renew row.
+- `/forecast/:stage/re-forecast` (`re-forecast/`) is the "Re-forecast" wizard (FC08–FC09 — what has
+  changed, then your number). No `?step=` param in the source footer, so step state is
+  client-local, same pattern as every prior section's wizard. Only `renew` renders the wizard
+  content (every other `:stage` gets a lightweight "not available for this stage" fallback, since
+  no other stage has a built re-forecast flow). Saving navigates to `/forecast/renew`, since signing
+  a number is exactly that page's subject.
+- Two bespoke modals, hardcoded to specific figures, not generalized — same pattern as every prior
+  section's modals: `modals/an-overdue-re-forecast-modal.tsx` (FC10-disk, "An overdue re-forecast")
+  opens from the "Next 90 days"/"By stage" tables' Renew row via its "overdue" chip; the primary
+  action is "Ask Kunle" (a toast, not a navigation — re-forecasting is Kunle's job, not the viewer's).
+  `modals/revise-a-signed-forecast-modal.tsx` (FC11-disk, "Revise a signed forecast") opens from a
+  "Revise a signed forecast" button on `/forecast/actuals` — the export's own modal base frame is
+  the "Against actuals" tab even though its preset content (Retain, 29.8% → 27.9%) is a live
+  forecast rather than one of that table's own closed rows, the same "read the preset content
+  itself, not just which tab frame the modal was drawn over" call the Attribution rebuild made.
+- `/settings/forecast` (FC13-disk) is a standalone route outside the `/forecast` tree, matching the
+  `/settings/benchmarks` precedent.
+- FC14-disk (mobile) was treated as a responsive-design constraint (tables scroll, cards stack), not
+  a separate page — same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** all 6 named people (Kunle, Ifeoma,
+Ravi, Zainab, Tunde, Amara) plus Ada and Sam mentioned by name are exact matches for existing
+`rooms/data.ts` refs, including departments (e.g. Ifeoma → Marketing, matching her FC12-disk
+avatar row exactly) — the second Revenue section (after Attribution) needing zero new people or
+agents at all. `Chip`, `Callout`, `KpiCards`, `PersonAvatar`, `StageSubpageHeader`, and
+`usePageBreadcrumb` were all reused from `lifecycle/stage/` and the shared breadcrumb context with
+zero forking. A local `ForecastKvList` (`kv-list.tsx`) was written fresh rather than reusing
+Benchmarks' `BenchmarksKvList` — this section's tone vocabulary (`FcTone`) is identical in shape but
+kept as its own type per the established "each section owns its tone type" convention. No bars
+component was needed (this section is table- and hero-driven, not bar-chart-driven).
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing to forecast from / the first forecast / next 90 days | [x] | `index.tsx` + `states/*.tsx`. `empty`/`first` wired but unreachable with `FORECAST_STATE`'s current default |
+| By stage (query-param tab, no dedicated frame) / By market (query-param tab) | [x] | `states/by-stage.tsx` (reuses FC03's table), `states/by-market.tsx`, rendered by `index.tsx` on `?by=stage`/`?by=market` |
+| Blocked | [x] | `blocked-route.tsx` |
+| Against actuals | [x] | `actuals-route.tsx` — also hosts the "Revise a signed forecast" modal |
+| History | [x] | `history-route.tsx` |
+| One forecast (`:stage`) | [x] | `stage-detail-route.tsx` — `renew` built, every other stage falls back to not-found |
+| Re-forecast (wizard) | [x] | `re-forecast/index.tsx` + `step-what-changed.tsx`/`step-your-number.tsx`/`step-rail.tsx`, `/forecast/:stage/re-forecast` |
+| An overdue re-forecast (modal) | [x] | `modals/an-overdue-re-forecast-modal.tsx`, opens from the Renew row's "overdue" chip |
+| Revise a signed forecast (modal) | [x] | `modals/revise-a-signed-forecast-modal.tsx`, opens from `/forecast/actuals` |
+| Settings | [x] | `settings/forecast-settings-route.tsx`, `/settings/forecast` — no in-app entry point yet, same as every other Revenue section's settings page |
+| Sidebar "Forecast" link | [x] | added between "Scenario" and "Attribution" with a `LineChart` icon — this section's own build request flagged it as missing |
+| `tsc -b` clean + dev server route sweep (10 routes incl. a not-found `:stage`) + both modals click-tested + wizard step-1→2→save click-tested through to the toast+navigate + `empty`/`first` mock states swept individually by temporarily flipping and reverting | [x] | Verified 2026-08-21 |
+
+## 6g. Business memory
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Knowledge Screens/flolyt-business-memory/flolyt-business-memory/` (18 frames,
+ME01–ME18), superseding kit-122's frame 48 ("business memory" — see section 6's note, row 937).
+This is the first section of a brand-new **Knowledge** group, sibling to Every day/Revenue/
+Customers — the sidebar's KNOWLEDGE group already listed all four of its sections (Business
+memory, Playbooks, Community, Recognition) pointing at their flat routes before any of them were
+built; three more sections (Playbooks, Community, Recognition) are documented as sibling folders
+in the same `Knowledge Screens/` export, not yet built. Kept under this tracker's old section-6
+numbering (not a new top-level "Knowledge" section number) purely to match this file's own
+convention of anchoring a rebuild's letter to whichever legacy kit-122 range it superseded — the
+same reason Handoff (an Every day sidebar section) sits under legacy section 7 rather than 3.
+Content was transcribed from the export's own `me.py` generator source (plus shared `know.py`
+sidebar chrome), same "read the `.py`, don't parse the SVG" approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/knowledge/business-memory/` (folder nests under `src/pages/knowledge/` purely to
+mirror the sidebar's KNOWLEDGE group, same as `pages/customers/*` and `pages/revenue/*`), but
+mounts at the flat `/business-memory` — no `/knowledge` prefix, and not the export's own
+`/knowledge/memory` footer route either. This exactly reused the old superseded page's route, so
+no sidebar change was needed. Settings is `/settings/business-memory`, outside the
+`/business-memory` tree, matching `/settings/leakage-map`.
+
+**Architecture — index-branching on a query param first, then a mock flag:**
+- `/business-memory` (`index.tsx`) is ONE route covering ME01 (no room has closed yet), ME02
+  (the first learning, written by a room that claimed ₦0), ME03 (the default "all 61 learnings"
+  table), and ME08 (`?q=`, search — the one state with no tab bar). `q` is checked first, then
+  `MEMORY_STATE` (a 3-value mock flag defaulting to `"full"`) branches ME01/ME02/ME03 — ME01/ME02
+  are wired but unreachable with that default, same "not wired, no demo state currently triggers
+  it" situation as every prior rebuild's empty/edge states.
+- `/business-memory/superseded` (ME05), `/constraints` (ME06), `/challenged` (ME09), `/questions`
+  (ME10), and `/review` (ME14) are standalone sibling routes sharing the same 6-tab bar
+  (`tabs.tsx`, underline style per the house rule — not the export's own pill-tab rendering) as
+  the index's "Learnings" state.
+- `/business-memory/sources` (ME07, "Where these come from") and `/business-memory/undocumented`
+  (ME11, "Not written down" — Peter Kariuki's four-day departure countdown, reusing `PersonDot`
+  and the same hero-banner shape as Handoff's `/settings/departures`) are standalone routes with
+  their own header and no tab bar, reached via crumb/in-app links rather than a tab.
+- `/business-memory/new` (`new/index.tsx`) is the 2-step "Write a learning" wizard (ME12 the claim
+  → ME13 scope and evidence). Step position lives in `?step=`, not local `useState`, per the
+  since-adopted URL-over-state rule for wizards.
+- `/business-memory/:id` (`learning-detail-route.tsx`) only has one built reference row: ME04
+  (`first-order-discount`) — every other id falls back to a not-found state, same "one/two
+  reference rows" pattern as every prior section's `:id` route. Reachable from the Learnings
+  table's row link.
+- **ME15/ME16 are two bespoke modals**, each hardcoded to the one row the export shows it opened
+  against — `cite-a-learning-modal.tsx` ("Unsubscribes fell 41% after the cadence change," wired
+  from the Learnings table) and `supersede-a-learning-modal.tsx` ("Reactivation works best on a
+  Thursday," wired from the Superseded table) — via a `rowAction` field set on exactly those two
+  rows, same "only this row has a wired row action" pattern as Segments' SG12/13/14.
+- ME18 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Learnings table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** Kunle, Tunde, Zainab
+(`CHALLENGED_ROWS`) and Repeat & Decay/Orchestrator (`REVIEW_ROWS`) are exact matches for
+`KUNLE`/`TUNDE`/`ZAINAB`/`REPEAT_DECAY`/`ORCHESTRATOR` in `rooms/data.ts`; Peter Kariuki
+(`ME11_HERO`) is an exact match for `PETER` in `digest/data.ts` — all reused directly, zero new
+`PersonRef`s needed. One new `AgentRef` was needed (`ACTIVATION`, "AC") — not on the existing
+rooms/lifecycle roster, added locally to this section's own `data.ts` rather than the shared
+roster, same precedent as Digest's locally-added East Africa CS people. `Callout`, `Chip`/
+`CHIP_INTERACTIVE_CLASS`, `KpiCards`, `StageSubpageHeader`, `PersonDot`/`AgentDot`, and
+`usePageBreadcrumb` were all reused from `lifecycle/stage/`, `rooms/actor.tsx`, and the shared
+breadcrumb context with zero forking. A local `BusinessMemoryKvList` (`kv-list.tsx`) and a new
+`QuoteCard` (`quote-card.tsx`, the serif-face "a learning stated as a sentence" card used on
+ME02/ME04/first-learning) were written fresh — the quote card's left accent strand from the
+export's own `quote()` python helper was flattened per the house "no card strands" rule.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing learned yet / first learning / all 61 / search | [x] | `index.tsx` + `states/*.tsx`. ME01/ME02 wired but unreachable with `MEMORY_STATE`'s current default |
+| One learning (`:id`) | [x] | `learning-detail-route.tsx` — only `first-order-discount` built, every other id falls back to not-found |
+| Superseded / Constraints / Challenged / Open questions / Due for review | [x] | `superseded-route.tsx`, `constraints-route.tsx`, `challenged-route.tsx`, `questions-route.tsx`, `review-route.tsx`, all sharing `tabs.tsx` |
+| Where these come from / Not written down | [x] | `sources-route.tsx` (`/business-memory/sources`), `undocumented-route.tsx` (`/business-memory/undocumented`) — both standalone, no tab bar |
+| Write a learning (wizard) | [x] | `new/index.tsx` + `step-claim.tsx`/`step-scope.tsx`/`step-rail.tsx`, `?step=`, `/business-memory/new` |
+| Cite a learning / Supersede a learning (modals) | [x] | `modals/cite-a-learning-modal.tsx`, `modals/supersede-a-learning-modal.tsx` — each wired via `rowAction` on one table row |
+| Settings | [x] | `settings/business-memory-settings-route.tsx`, `/settings/business-memory` |
+| Sidebar "Business memory" link | [x] | pre-existing KNOWLEDGE-group stub already correctly pointed at `/business-memory` |
+| Old `src/pages/business-memory/` (kit-122 static mock) removed | [x] | Fully superseded, zero remaining references |
+
+## 6h. Playbooks
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Knowledge Screens/flolyt-playbooks/flolyt-playbooks/` (16 frames, PB01-PB16),
+superseding kit-122's frames 85/86 ("playbook library" / "playbook activation" — see section 13's
+note, rows 1686-1687). Second section of the Knowledge group, after
+[[flolyt_business_memory_rebuild]]. PB00 is an index/route-map frame, not a product screen.
+Content was transcribed from the export's own `pb.py` generator source (plus shared `know.py`
+chrome, reused as-is from the business memory build), same "read the `.py`, don't parse the SVG"
+approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/knowledge/playbooks/` (mirrors the sidebar's KNOWLEDGE group, same as
+`pages/knowledge/business-memory/`), but mounts at the flat `/playbooks` — no `/knowledge`
+prefix, and not the export's own `/knowledge/playbooks` footer route either. This exactly reused
+the sidebar's pre-existing "Playbooks" stub (`href: "/playbooks"`), so no sidebar change was
+needed. Settings is `/settings/playbooks`, outside the `/playbooks` tree, matching
+`/settings/business-memory` (PB15's own footer literally reads `/settings/knowledge/playbooks`,
+overridden per the same flat-URL precedent business memory's own ME17 settings screen set).
+
+**Architecture — index-branching on a mock flag, no query-param search this time:**
+- `/playbooks` (`index.tsx`) is ONE route covering PB01 (nothing has been done twice — the empty
+  state), PB02 (the first playbook, written after a second run), and PB03 (the default "all nine
+  playbooks" table). `PLAYBOOKS_STATE` (a 3-value mock flag defaulting to `"full"`) branches
+  them — PB01/PB02 are wired but unreachable with that default, same "not wired, no demo state
+  currently triggers it" situation as every prior rebuild's empty/edge states. Unlike Business
+  memory's index, this export has no `?q=` search screen, so there is no query-param branch.
+- `/playbooks/record` (PB05), `/playbooks/blocked` (PB06), `/playbooks/retired` (PB07), and
+  `/playbooks/history` (PB14) are standalone sibling routes sharing the same 5-tab bar
+  (`tabs.tsx`) as the index's "All playbooks" state.
+- `/playbooks/new` (`new/index.tsx`) is the 3-step "Write a playbook" wizard (PB08 which runs
+  it's written from → PB09 preconditions → PB10 steps and measurement). Step position lives in
+  `?step=`, not local `useState`, per the since-adopted URL-over-state rule for wizards, same as
+  Business memory's `/new`.
+- `/playbooks/:id` (`playbook-detail-route.tsx`) only has one built reference row: PB04
+  (`retry-0900`, "Retry cards at 09:00 local") — every other id falls back to a not-found state,
+  same "one/two reference rows" pattern as every prior section's `:id` route. Reachable from the
+  all-playbooks table's row link.
+- **PB11/PB12/PB13 are three bespoke modals**, each hardcoded to the one row the export shows it
+  opened against — `run-a-playbook-modal.tsx` ("Retry cards at 09:00 local," wired from the
+  all-playbooks table), `adapt-a-playbook-modal.tsx` ("Retry cards at 09:00 · Ghana · 90 days of
+  card volume history," wired from the Blocked table — the row whose failed precondition matches
+  PB12's own subject exactly, not the Blocked table's second Ghana row, which fails a different
+  precondition), and `retire-a-playbook-modal.tsx` ("Win back with 20% off at day 60–90," wired
+  from the Retired table) — via a `rowAction` field set on exactly those three rows, same "only
+  these rows have a wired row action" pattern as Business memory's ME15/ME16.
+- PB16 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the all-playbooks table), not a separate page —
+  same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** RM/IN/KO/AO (Ravi Mehta,
+Ifeoma Nwosu, Kunle, Amara Okeke) are exact matches for `RAVI`/`IFEOMA`/`KUNLE`/`AMARA` in
+`rooms/data.ts`, and the "IC" agent in PB04's steps table is an exact match for
+`INVOLUNTARY_CHURN` — all reused directly, zero new `PersonRef`/`AgentRef`s needed. `Chip`,
+`CHIP_INTERACTIVE_CLASS`, `Callout`, `KpiCards`, `PersonDot`, and `StageSubpageHeader` were all
+reused from `lifecycle/stage/` and `rooms/actor.tsx` with zero forking. A local `PlaybooksKvList`
+(`kv-list.tsx`) was written fresh, copying Business memory's own `kv-list.tsx` shape exactly. PB04's
+hero banner (a big stat + a right-aligned "refuses to run in Ghana" figure) was built inline on the
+detail route without a left accent strand — the export's own `hero()` python helper draws one,
+flattened per [[no_card_strands]].
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing done twice / first playbook / all nine | [x] | `index.tsx` + `states/*.tsx`. PB01/PB02 wired but unreachable with `PLAYBOOKS_STATE`'s current default |
+| One playbook (`:id`) | [x] | `playbook-detail-route.tsx` — only `retry-0900` built, every other id falls back to not-found |
+| Track record / Blocked / Retired / History | [x] | `record-route.tsx`, `blocked-route.tsx`, `retired-route.tsx`, `history-route.tsx`, all sharing `tabs.tsx` |
+| Write a playbook (wizard) | [x] | `new/index.tsx` + `step-what-and-when.tsx`/`step-preconditions.tsx`/`step-steps-measurement.tsx`, `?step=`, `/playbooks/new` |
+| Run / Adapt / Retire a playbook (modals) | [x] | `modals/run-a-playbook-modal.tsx`, `modals/adapt-a-playbook-modal.tsx`, `modals/retire-a-playbook-modal.tsx` — each wired via `rowAction` on one table row |
+| Settings | [x] | `settings/playbooks-settings-route.tsx`, `/settings/playbooks` |
+| Sidebar "Playbooks" link | [x] | pre-existing KNOWLEDGE-group stub already correctly pointed at `/playbooks` |
+| `tsc -b` clean + Playwright console-error sweep (11 routes) + modal click-test (3 modals) + tab/row-link nav + mobile card check | [x] | Verified 2026-08-21 |
+| `tsc -b` clean + dev server + 13-route Playwright console/page-error sweep + both modals click-tested | [x] | Verified 2026-08-21 |
+
+## 6i. Community
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Knowledge Screens/flolyt-community/flolyt-community/` (14 frames, CM01-CM14).
+Third section of the Knowledge group, after [[flolyt_playbooks_rebuild]]. Content was transcribed
+from the export's own `cm.py` generator source (plus shared `know.py` chrome, reused as-is from
+the business memory/playbooks builds), same "read the `.py`, don't parse the SVG" approach as
+every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/knowledge/community/` (mirrors the sidebar's KNOWLEDGE group, same as
+`pages/knowledge/playbooks/`), but mounts at the flat `/community` — no `/knowledge` prefix. This
+exactly reused the sidebar's pre-existing "Community" stub (`href: "/community"`, `Users2` icon),
+so no sidebar change was needed. Settings is `/settings/community`, outside the `/community` tree,
+matching `/settings/playbooks`.
+
+**Architecture — index-branching on a mock flag:**
+- `/community` (`index.tsx`) is ONE route covering CM01 (not connected — the off state), CM02 (20
+  minutes after the first thing was shared), and CM03 (the default "Methods" tab, 88 companies
+  connected). `COMMUNITY_STATE` (a 3-value mock flag defaulting to `"full"`) branches them — CM01/
+  CM02 are wired but unreachable with that default, same "not wired, no demo state currently
+  triggers it" situation as every prior rebuild's empty/edge states.
+- `/community/constraints` (CM05), `/community/questions` (CM06), `/community/outbound` (CM07,
+  "What leaves"), and `/community/yours` (assembled from CM12's own table, not a numbered CM frame
+  on its own) are standalone sibling routes sharing the same 5-tab bar (`tabs.tsx`) as the index's
+  "Methods" state.
+- `/community/refused` (CM08, "What this is not") is a standalone own-header page with no tab bar
+  — its own export shows no in-app link to it, so per [[flag_unreachable_routes]] a "What this is
+  not" link was added to the Methods tab's header, next to the "Share a method" CTA.
+- `/community/share` (`share/index.tsx`) is the 2-step "Share with the community" wizard (CM09
+  what you're sharing → CM10 what leaves). Step position lives in `?step=`, not local `useState`,
+  per the since-adopted URL-over-state rule for wizards, same as Business memory's/Playbooks' `/new`.
+- `/community/:id` (`method-detail-route.tsx`) only has one built reference row: CM04
+  (`lapsed-what-changed`, "Tell lapsed customers what changed") — every other id falls back to a
+  not-found state, same "one/two reference rows" pattern as every prior section's `:id` route.
+  Reachable from the Methods table's row link and the Yours tab's row link.
+- **CM11/CM12 are two bespoke modals**, each hardcoded to the one row the export shows it opened
+  against — `adopt-a-method-modal.tsx` ("Ask support what people wrote in about first," wired from
+  the Methods table's one "not adopted" row that carries a `rowAction`) and `report-back-modal.tsx`
+  ("Prompt a second feature in week one," wired from the Yours tab's matching row) — via a
+  `rowAction` field, same "only this row has a wired row action" pattern as Playbooks' PB11/PB12/PB13.
+- CM14 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Methods table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Fidelity note, transcribed rather than reconciled per the "SVG wins" rule:** CM03's Methods
+table marks "Prompt a second feature in week one" as `not adopted` in its own "You" column, while
+CM12's own modal text says "You adopted it in April." Both are kept exactly as their own screen
+states them — see the comment above `YOUR_METHOD_ROWS` in `data.ts`.
+
+**Cross-section reuse, confirmed by reading both before reusing:** `QuoteCard` was reused directly
+from `@/pages/knowledge/business-memory/quote-card` (generic text+source shape, no Business-memory-
+specific types) rather than forking a second copy. `Chip`, `CHIP_INTERACTIVE_CLASS`, `Callout`,
+`KpiCards`, and `StageSubpageHeader` were all reused from `lifecycle/stage/` with zero forking. A
+local `CommunityKvList` (`kv-list.tsx`) was written fresh, copying Playbooks'/Business memory's own
+`kv-list.tsx` shape exactly. CM07's "what has never left" people-count visual was built as three
+plain stat cards rather than a proportional stacked bar — the underlying counts (1,247 vs. 1 vs. 1)
+would make a true proportional bar visually pointless.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — not connected / first share / Methods table | [x] | `index.tsx` + `states/*.tsx`. CM01/CM02 wired but unreachable with `COMMUNITY_STATE`'s current default |
+| One method (`:id`) | [x] | `method-detail-route.tsx` — only `lapsed-what-changed` built, every other id falls back to not-found |
+| Constraints / Questions / What leaves / Yours | [x] | `constraints-route.tsx`, `questions-route.tsx`, `outbound-route.tsx`, `yours-route.tsx`, all sharing `tabs.tsx` |
+| What this is not | [x] | `refused-route.tsx`, `/community/refused` — linked from the Methods tab header (fixed an unreachable-route gap) |
+| Share with the community (wizard) | [x] | `share/index.tsx` + `share/step-what.tsx`/`share/step-leaves.tsx`, `?step=`, `/community/share` |
+| Adopt a method / Report back (modals) | [x] | `modals/adopt-a-method-modal.tsx`, `modals/report-back-modal.tsx` — each wired via `rowAction` on one table row |
+| Settings | [x] | `settings/community-settings-route.tsx`, `/settings/community` |
+| Sidebar "Community" link | [x] | pre-existing KNOWLEDGE-group stub already correctly pointed at `/community` |
+| `tsc -b` clean + dev server + 10-route Playwright console/page-error sweep + both modals click-tested | [x] | Verified 2026-08-21 |
+
+## 6j. Recognition
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Knowledge Screens/flolyt-recognition/flolyt-recognition/` (14 frames,
+RC01-RC14). Fourth and final section of the Knowledge group, after [[flolyt_community_rebuild]] —
+the Knowledge group is now complete. Content was transcribed from the export's own `rc.py`
+generator source (plus shared `know.py` chrome, reused as-is from the business memory/playbooks/
+community builds), same "read the `.py`, don't parse the SVG" approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/knowledge/recognition/` (mirrors the sidebar's KNOWLEDGE group, same as
+`pages/knowledge/community/`), but mounts at the flat `/recognition` — no `/knowledge` prefix.
+This exactly reused the sidebar's pre-existing "Recognition" stub (`href: "/recognition"`, `Award`
+icon), so no sidebar change was needed. Settings is `/settings/recognition`, outside the
+`/recognition` tree, matching `/settings/community`.
+
+**Architecture — index-branching on a query param first, then a mock flag:**
+- `/recognition` (`index.tsx`) is ONE route covering RC01 (nothing recognised yet), RC02 (the
+  first recognition, this morning), RC03 (the default "Recognised" tab, 34 acts this quarter), and
+  RC11 (`?as=me`, a viewing-as lens on Amara Okeke's own recognitions). `as=me` is checked first —
+  it is RC11's own literal footer route (`/knowledge/recognition?as=me`), a query-param variant of
+  the index rather than a sibling path, so "Yours" in the tab bar links to `/recognition?as=me`,
+  not `/recognition/yours` (a deliberate divergence from Community's own `/community/yours` sibling
+  route, since Recognition's own export shows the query-param shape instead). `RECOGNITION_STATE`
+  (a 3-value mock flag defaulting to `"full"`) then branches RC01/RC02/RC03 — RC01/RC02 are wired
+  but unreachable with that default, same "not wired, no demo state currently triggers it"
+  situation as every prior rebuild's empty/edge states.
+- `/recognition/dissent` (RC05), `/recognition/contributions` (RC06), and `/recognition/quiet`
+  (RC07, route path `quiet` per RC07's own footer even though the tab label reads "Quiet work") are
+  standalone sibling routes sharing the same 5-tab bar (`tabs.tsx`) as the index's "Recognised" state.
+- `/recognition/no-ranking` (RC04, "Why there is no leaderboard") and `/recognition/absent` (RC08,
+  "Who never appears here") are standalone own-header pages with no tab bar — neither has an
+  in-app link from the default "full" state in its own export (RC01's own CTA links to RC04, but
+  RC01 is unreachable with the current mock default), so per [[flag_unreachable_routes]] both got
+  header links added to the Recognised tab, next to the "Recognise somebody" CTA.
+- `/recognition/new` (`new/index.tsx`) is the 2-step "Recognise somebody" wizard (RC09 the act →
+  RC10 why it counts). Step position lives in `?step=`, not local `useState`, per the since-adopted
+  URL-over-state rule for wizards, same as Community's `/share`.
+- **RC12 is a single bespoke modal** ("Remove a recognition"), hardcoded to the one row the export
+  shows it opened against — "Marked Accra unmeasurable rather than claiming it" — wired from the
+  Recognised table's one row that carries a `rowAction`, rendered as a clickable "what it cost"
+  cell (text-ultra + underline) rather than a chip, since this table's cost column isn't drawn as a
+  chip in the source SVG; same "only this row has a wired row action" pattern as every prior
+  section's single-modal rows.
+- RC14 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints, not a
+  separate page — same call as every prior section's mobile frame.
+
+**No `:id` detail route this time** — unlike every other Knowledge section, this export has no
+single-reference-row drilldown screen; every RC frame is either an index state, a standalone
+own-header page, a wizard step, a modal, or a tab.
+
+**Cross-section reuse, confirmed by reading both before reusing:** every named person in this
+export (Amara Okeke, Ravi Mehta, Tunde Bakare, Ifeoma Nwosu, Kunle, Zainab Yusuf, Sam Iyer, Ada
+Obi) is an exact match for `AMARA`/`RAVI`/`TUNDE`/`IFEOMA`/`KUNLE`/`ZAINAB`/`SAM`/`ADA` in
+`rooms/data.ts`; Peter Kariuki matches `PETER` in `digest/data.ts` (re-exported the same way
+`handoff/data.ts` already does); both named agents (Repeat & Decay, Acquisition Quality) match
+`REPEAT_DECAY`/`ACQUISITION_QUALITY` in `rooms/data.ts` — zero new `PersonRef`/`AgentRef`s needed.
+A new `WhoCell` component (`who-cell.tsx`) wraps `rooms/actor.tsx`'s existing `ActorAvatar`/
+`actorName`/`actorColorClass` helpers for this section's "Who" table columns (several tables mix
+person and agent rows, e.g. Dissent's and Contributions' last rows), reusing the app's existing
+solid-person/dashed-agent material distinction rather than inventing a parallel one. `Chip`,
+`CHIP_INTERACTIVE_CLASS`, `Callout`, `KpiCards`, `PersonDot`, and `StageSubpageHeader` were all
+reused from `lifecycle/stage/` and `rooms/actor.tsx` with zero forking. `QuoteCard` is reused
+directly from `business-memory/quote-card.tsx`, same as Community.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing recognised / first recognition / Recognised table / Yours lens | [x] | `index.tsx` + `states/*.tsx`. RC01/RC02 wired but unreachable with `RECOGNITION_STATE`'s current default; RC11 reached via `?as=me` |
+| Dissent / Contributions / Quiet work | [x] | `dissent-route.tsx`, `contributions-route.tsx`, `quiet-work-route.tsx`, all sharing `tabs.tsx` |
+| Why there is no leaderboard / Who never appears | [x] | `no-ranking-route.tsx`, `absent-route.tsx` — both linked from the Recognised tab header (fixed an unreachable-route gap) |
+| Recognise somebody (wizard) | [x] | `new/index.tsx` + `step-act.tsx`/`step-why.tsx`, `?step=`, `/recognition/new` |
+| Remove a recognition (modal) | [x] | `modals/remove-a-recognition-modal.tsx`, wired via `rowAction` on one table row |
+| Settings | [x] | `settings/recognition-settings-route.tsx`, `/settings/recognition` |
+| Sidebar "Recognition" link | [x] | pre-existing KNOWLEDGE-group stub already correctly pointed at `/recognition` |
+| `tsc -b` clean + dev server + 10-route Playwright console/page-error sweep + modal click-test + reachability-link check | [x] | Verified 2026-08-21 |
+
+**The Knowledge group is now complete** — Business memory, Playbooks, Community, and Recognition
+all built end to end.
+
 ## 7. Teams (51–58)
 
 | # | Screen | Status | Endpoint(s) | Notes |
@@ -1135,8 +1905,8 @@ against the transcribed specs for the index, reassign modal and create-handoffs 
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 85 | playbook library | [ ] | | |
-| 86 | playbook activation | [ ] | | |
+| 85 | playbook library | [x] | | Superseded — rebuilt as `/playbooks` from the newer `flolyt-playbooks` export, see section 6h |
+| 86 | playbook activation | [x] | | Superseded — rebuilt as `/playbooks` (run modal) from the newer `flolyt-playbooks` export, see section 6h |
 | 87 | experiments | [ ] | | |
 | 88 | agent builder | [ ] | | |
 | 89 | agent detail | [ ] | | |
@@ -1170,8 +1940,8 @@ against the transcribed specs for the index, reassign modal and create-handoffs 
 | 102 | developer portal | [ ] | | |
 | 103 | embedded and white label | [ ] | | |
 | 104 | dashboard builder | [ ] | | |
-| 105 | community | [ ] | | |
-| 106 | recognition | [ ] | | |
+| 105 | community | [x] | | Superseded — rebuilt as `/community` from the newer `flolyt-community` export, see section 6i |
+| 106 | recognition | [x] | | Superseded — rebuilt as `/recognition` from the newer `flolyt-recognition` export, see section 6j |
 | 107 | language and format | [ ] | | |
 
 ## 17. Mobile (108–110)

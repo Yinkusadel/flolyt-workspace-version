@@ -12,6 +12,13 @@ const CARD_EYEBROW_CLASS: Record<string, string> = { ultra: "text-ultra", amber:
 export function ByClaimState() {
   return (
     <div className="space-y-8">
+      <div>
+        <h1 className="text-[17px] font-semibold text-ink">Leakage map</h1>
+        <p className="mt-1 text-[11.5px] text-ink-3">
+          Three claim types, kept apart and never averaged · five of seven upgrades waiting on one person
+        </p>
+      </div>
+
       <LeaksTabs active="By claim" />
 
       <section className="space-y-3">

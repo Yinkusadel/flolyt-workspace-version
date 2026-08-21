@@ -152,6 +152,13 @@ import ValueReconciliationRoute from "@/pages/revenue/value/reconciliation-route
 import ValueBoardRoute from "@/pages/revenue/value/board-route";
 import ValueRatesRoute from "@/pages/revenue/value/rates-route";
 import ValueSettingsRoute from "@/pages/revenue/value/settings/value-settings-route";
+import Forecast from "@/pages/revenue/forecast";
+import ForecastBlockedRoute from "@/pages/revenue/forecast/blocked-route";
+import ForecastActualsRoute from "@/pages/revenue/forecast/actuals-route";
+import ForecastHistoryRoute from "@/pages/revenue/forecast/history-route";
+import ForecastStageDetailRoute from "@/pages/revenue/forecast/stage-detail-route";
+import NewReForecast from "@/pages/revenue/forecast/re-forecast";
+import ForecastSettingsRoute from "@/pages/revenue/forecast/settings/forecast-settings-route";
 import Attribution from "@/pages/revenue/attribution";
 import AttributionHoldoutsRoute from "@/pages/revenue/attribution/holdouts-route";
 import AttributionOverlapRoute from "@/pages/revenue/attribution/overlap-route";
@@ -170,8 +177,87 @@ import RepeatRateDetailRoute from "@/pages/revenue/benchmarks/repeat-rate-detail
 import NewComparison from "@/pages/revenue/benchmarks/new";
 import BenchmarksSettingsRoute from "@/pages/revenue/benchmarks/settings/benchmarks-settings-route";
 import AiTeammates from "@/pages/ai-teammates";
-import BusinessMemory from "@/pages/business-memory";
-import Segments from "@/pages/segments";
+import BusinessMemory from "@/pages/knowledge/business-memory";
+import LearningDetailRoute from "@/pages/knowledge/business-memory/learning-detail-route";
+import SupersededRoute from "@/pages/knowledge/business-memory/superseded-route";
+import ConstraintsRoute from "@/pages/knowledge/business-memory/constraints-route";
+import ChallengedRoute from "@/pages/knowledge/business-memory/challenged-route";
+import QuestionsRoute from "@/pages/knowledge/business-memory/questions-route";
+import ReviewRoute from "@/pages/knowledge/business-memory/review-route";
+import SourcesRoute from "@/pages/knowledge/business-memory/sources-route";
+import UndocumentedRoute from "@/pages/knowledge/business-memory/undocumented-route";
+import NewLearning from "@/pages/knowledge/business-memory/new";
+import BusinessMemorySettingsRoute from "@/pages/knowledge/business-memory/settings/business-memory-settings-route";
+import Playbooks from "@/pages/knowledge/playbooks";
+import PlaybookDetailRoute from "@/pages/knowledge/playbooks/playbook-detail-route";
+import RecordRoute from "@/pages/knowledge/playbooks/record-route";
+import BlockedRoute from "@/pages/knowledge/playbooks/blocked-route";
+import RetiredRoute from "@/pages/knowledge/playbooks/retired-route";
+import HistoryRoute from "@/pages/knowledge/playbooks/history-route";
+import NewPlaybook from "@/pages/knowledge/playbooks/new";
+import PlaybooksSettingsRoute from "@/pages/knowledge/playbooks/settings/playbooks-settings-route";
+import Community from "@/pages/knowledge/community";
+import MethodDetailRoute from "@/pages/knowledge/community/method-detail-route";
+import ConstraintsRouteCommunity from "@/pages/knowledge/community/constraints-route";
+import QuestionsRouteCommunity from "@/pages/knowledge/community/questions-route";
+import OutboundRoute from "@/pages/knowledge/community/outbound-route";
+import RefusedRouteCommunity from "@/pages/knowledge/community/refused-route";
+import YoursRoute from "@/pages/knowledge/community/yours-route";
+import ShareWithCommunity from "@/pages/knowledge/community/share";
+import CommunitySettingsRoute from "@/pages/knowledge/community/settings/community-settings-route";
+import Recognition from "@/pages/knowledge/recognition";
+import RecognitionDissentRoute from "@/pages/knowledge/recognition/dissent-route";
+import RecognitionContributionsRoute from "@/pages/knowledge/recognition/contributions-route";
+import RecognitionQuietWorkRoute from "@/pages/knowledge/recognition/quiet-work-route";
+import RecognitionNoRankingRoute from "@/pages/knowledge/recognition/no-ranking-route";
+import RecognitionAbsentRoute from "@/pages/knowledge/recognition/absent-route";
+import RecogniseSomebody from "@/pages/knowledge/recognition/new";
+import RecognitionSettingsRoute from "@/pages/knowledge/recognition/settings/recognition-settings-route";
+import Segments from "@/pages/customers/segments";
+import SegmentsReachabilityRoute from "@/pages/customers/segments/reachability-route";
+import SegmentsOverlapRoute from "@/pages/customers/segments/overlap-route";
+import SegmentsDriftRoute from "@/pages/customers/segments/drift-route";
+import SegmentsRetiredRoute from "@/pages/customers/segments/retired-route";
+import NewSegment from "@/pages/customers/segments/new";
+import SegmentDetailRoute from "@/pages/customers/segments/segment-detail-route";
+import SegmentsSettingsRoute from "@/pages/customers/segments/settings/segments-settings-route";
+import CustomerHealth from "@/pages/customers/customer-health";
+import CustomerHealthNoScoreRoute from "@/pages/customers/customer-health/no-score-route";
+import CustomerHealthCohortDetailRoute from "@/pages/customers/customer-health/cohort-detail-route";
+import CustomerHealthUnownedRoute from "@/pages/customers/customer-health/unowned-route";
+import CustomerHealthCoverageRoute from "@/pages/customers/customer-health/coverage-route";
+import CustomerHealthChangedRoute from "@/pages/customers/customer-health/changed-route";
+import CustomerHealthThresholdsRoute from "@/pages/customers/customer-health/thresholds-route";
+import CustomerHealthSettingsRoute from "@/pages/customers/customer-health/settings/customer-health-settings-route";
+import CustomerDetailRoute from "@/pages/customers/customer-detail-route";
+import Campaigns from "@/pages/customers/campaigns";
+import CampaignsAudiencesRoute from "@/pages/customers/campaigns/audiences-route";
+import CampaignsWaitingRoute from "@/pages/customers/campaigns/waiting-route";
+import CampaignsSuppressedRoute from "@/pages/customers/campaigns/suppressed-route";
+import CampaignsSentRoute from "@/pages/customers/campaigns/sent-route";
+import CampaignsHistoryRoute from "@/pages/customers/campaigns/history-route";
+import NewCampaign from "@/pages/customers/campaigns/new";
+import CampaignDetailRoute from "@/pages/customers/campaigns/campaign-detail-route";
+import CampaignIncidentDetailRoute from "@/pages/customers/campaigns/incident-detail-route";
+import CampaignsSettingsRoute from "@/pages/customers/campaigns/settings/campaigns-settings-route";
+import Experiments from "@/pages/customers/experiments";
+import ExperimentsResultsRoute from "@/pages/customers/experiments/results-route";
+import ExperimentsExcludedRoute from "@/pages/customers/experiments/excluded-route";
+import ExperimentsReadabilityRoute from "@/pages/customers/experiments/readability-route";
+import ExperimentsHistoryRoute from "@/pages/customers/experiments/history-route";
+import ExperimentsContaminatedRoute from "@/pages/customers/experiments/contaminated-route";
+import NewExperiment from "@/pages/customers/experiments/new";
+import ExperimentDetailRoute from "@/pages/customers/experiments/experiment-detail-route";
+import ExperimentsSettingsRoute from "@/pages/customers/experiments/settings/experiments-settings-route";
+import Replies from "@/pages/customers/replies";
+import RepliesThemesRoute from "@/pages/customers/replies/themes-route";
+import RepliesUnansweredRoute from "@/pages/customers/replies/unanswered-route";
+import RepliesRoutingRoute from "@/pages/customers/replies/routing-route";
+import RepliesAnsweredRoute from "@/pages/customers/replies/answered-route";
+import RepliesUseRoute from "@/pages/customers/replies/use-route";
+import ConversationDetailRoute from "@/pages/customers/replies/conversation-detail-route";
+import ReplyAnswerRoute from "@/pages/customers/replies/answer-route";
+import RepliesSettingsRoute from "@/pages/customers/replies/settings/replies-settings-route";
 import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
 // import { ProtectedRoute } from "@/route/protected-route";
@@ -484,6 +570,21 @@ export const routes = createBrowserRouter([
                 Component: ScenarioSettingsRoute,
               },
               {
+                path: "forecast",
+                children: [
+                  { index: true, Component: Forecast },
+                  { path: "blocked", Component: ForecastBlockedRoute },
+                  { path: "actuals", Component: ForecastActualsRoute },
+                  { path: "history", Component: ForecastHistoryRoute },
+                  { path: ":stage/re-forecast", Component: NewReForecast },
+                  { path: ":stage", Component: ForecastStageDetailRoute },
+                ],
+              },
+              {
+                path: "settings/forecast",
+                Component: ForecastSettingsRoute,
+              },
+              {
                 path: "attribution",
                 children: [
                   { index: true, Component: Attribution },
@@ -522,11 +623,159 @@ export const routes = createBrowserRouter([
               },
               {
                 path: "business-memory",
-                Component: BusinessMemory,
+                children: [
+                  { index: true, Component: BusinessMemory },
+                  { path: "new", Component: NewLearning },
+                  { path: "superseded", Component: SupersededRoute },
+                  { path: "constraints", Component: ConstraintsRoute },
+                  { path: "challenged", Component: ChallengedRoute },
+                  { path: "questions", Component: QuestionsRoute },
+                  { path: "review", Component: ReviewRoute },
+                  { path: "sources", Component: SourcesRoute },
+                  { path: "undocumented", Component: UndocumentedRoute },
+                  { path: ":id", Component: LearningDetailRoute },
+                ],
+              },
+              {
+                path: "settings/business-memory",
+                Component: BusinessMemorySettingsRoute,
+              },
+              {
+                path: "playbooks",
+                children: [
+                  { index: true, Component: Playbooks },
+                  { path: "new", Component: NewPlaybook },
+                  { path: "record", Component: RecordRoute },
+                  { path: "blocked", Component: BlockedRoute },
+                  { path: "retired", Component: RetiredRoute },
+                  { path: "history", Component: HistoryRoute },
+                  { path: ":id", Component: PlaybookDetailRoute },
+                ],
+              },
+              {
+                path: "settings/playbooks",
+                Component: PlaybooksSettingsRoute,
+              },
+              {
+                path: "community",
+                children: [
+                  { index: true, Component: Community },
+                  { path: "share", Component: ShareWithCommunity },
+                  { path: "constraints", Component: ConstraintsRouteCommunity },
+                  { path: "questions", Component: QuestionsRouteCommunity },
+                  { path: "outbound", Component: OutboundRoute },
+                  { path: "refused", Component: RefusedRouteCommunity },
+                  { path: "yours", Component: YoursRoute },
+                  { path: ":id", Component: MethodDetailRoute },
+                ],
+              },
+              {
+                path: "settings/community",
+                Component: CommunitySettingsRoute,
+              },
+              {
+                path: "recognition",
+                children: [
+                  { index: true, Component: Recognition },
+                  { path: "new", Component: RecogniseSomebody },
+                  { path: "dissent", Component: RecognitionDissentRoute },
+                  { path: "contributions", Component: RecognitionContributionsRoute },
+                  { path: "quiet", Component: RecognitionQuietWorkRoute },
+                  { path: "no-ranking", Component: RecognitionNoRankingRoute },
+                  { path: "absent", Component: RecognitionAbsentRoute },
+                ],
+              },
+              {
+                path: "settings/recognition",
+                Component: RecognitionSettingsRoute,
               },
               {
                 path: "segments",
-                Component: Segments,
+                children: [
+                  { index: true, Component: Segments },
+                  { path: "reachability", Component: SegmentsReachabilityRoute },
+                  { path: "overlap", Component: SegmentsOverlapRoute },
+                  { path: "drift", Component: SegmentsDriftRoute },
+                  { path: "retired", Component: SegmentsRetiredRoute },
+                  { path: "new", Component: NewSegment },
+                  { path: ":id", Component: SegmentDetailRoute },
+                ],
+              },
+              {
+                path: "settings/segments",
+                Component: SegmentsSettingsRoute,
+              },
+              {
+                path: "customer-health",
+                children: [
+                  { index: true, Component: CustomerHealth },
+                  { path: "no-score", Component: CustomerHealthNoScoreRoute },
+                  { path: "unowned", Component: CustomerHealthUnownedRoute },
+                  { path: "coverage", Component: CustomerHealthCoverageRoute },
+                  { path: "changed", Component: CustomerHealthChangedRoute },
+                  { path: "thresholds", Component: CustomerHealthThresholdsRoute },
+                  { path: ":id", Component: CustomerHealthCohortDetailRoute },
+                ],
+              },
+              {
+                path: "settings/customer-health",
+                Component: CustomerHealthSettingsRoute,
+              },
+              {
+                path: "customers/:id",
+                Component: CustomerDetailRoute,
+              },
+              {
+                path: "campaigns",
+                children: [
+                  { index: true, Component: Campaigns },
+                  { path: "audiences", Component: CampaignsAudiencesRoute },
+                  { path: "waiting", Component: CampaignsWaitingRoute },
+                  { path: "suppressed", Component: CampaignsSuppressedRoute },
+                  { path: "sent", Component: CampaignsSentRoute },
+                  { path: "history", Component: CampaignsHistoryRoute },
+                  { path: "new", Component: NewCampaign },
+                  { path: "incidents/:id", Component: CampaignIncidentDetailRoute },
+                  { path: ":id", Component: CampaignDetailRoute },
+                ],
+              },
+              {
+                path: "settings/campaigns",
+                Component: CampaignsSettingsRoute,
+              },
+              {
+                path: "experiments",
+                children: [
+                  { index: true, Component: Experiments },
+                  { path: "results", Component: ExperimentsResultsRoute },
+                  { path: "excluded", Component: ExperimentsExcludedRoute },
+                  { path: "readability", Component: ExperimentsReadabilityRoute },
+                  { path: "history", Component: ExperimentsHistoryRoute },
+                  { path: "contaminated", Component: ExperimentsContaminatedRoute },
+                  { path: "new", Component: NewExperiment },
+                  { path: ":id", Component: ExperimentDetailRoute },
+                ],
+              },
+              {
+                path: "settings/experiments",
+                Component: ExperimentsSettingsRoute,
+              },
+              {
+                path: "replies",
+                children: [
+                  { index: true, Component: Replies },
+                  { path: "themes", Component: RepliesThemesRoute },
+                  { path: "unanswered", Component: RepliesUnansweredRoute },
+                  { path: "routing", Component: RepliesRoutingRoute },
+                  { path: "answered", Component: RepliesAnsweredRoute },
+                  { path: "use", Component: RepliesUseRoute },
+                  { path: ":id/answer", Component: ReplyAnswerRoute },
+                  { path: ":id", Component: ConversationDetailRoute },
+                ],
+              },
+              {
+                path: "settings/replies",
+                Component: RepliesSettingsRoute,
               },
               {
                 path: "governance",

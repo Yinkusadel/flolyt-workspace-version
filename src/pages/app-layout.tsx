@@ -10,6 +10,7 @@ import { TODAY_ITEMS } from "@/pages/everyday/what-to-do-today/data";
 import { INBOX_ITEM_DETAILS } from "@/pages/everyday/inbox/data";
 import { FUNNEL_STEP_TITLES } from "@/pages/revenue/funnel/data";
 import { SC_DETAIL_TITLES } from "@/pages/revenue/scenario/data";
+import { FC_DETAIL_TITLES } from "@/pages/revenue/forecast/data";
 import { ATTRIBUTION_DETAIL_TITLES } from "@/pages/revenue/attribution/data";
 import { BM_DETAIL_TITLES } from "@/pages/revenue/benchmarks/data";
 
@@ -288,6 +289,28 @@ function getBreadcrumb(pathname: string): React.ReactNode {
     );
   }
 
+  if (pathname === "/forecast") return "Forecast";
+  if (pathname === "/forecast/blocked")
+    return renderCrumbs([{ label: "Forecast", to: "/forecast" }, { label: "Blocked" }]);
+  if (pathname === "/forecast/actuals")
+    return renderCrumbs([{ label: "Forecast", to: "/forecast" }, { label: "Against actuals" }]);
+  if (pathname === "/forecast/history")
+    return renderCrumbs([{ label: "Forecast", to: "/forecast" }, { label: "History" }]);
+
+  const forecastDetailMatch = /^\/forecast\/([^/]+)$/.exec(pathname);
+  if (forecastDetailMatch) {
+    const title = FC_DETAIL_TITLES[forecastDetailMatch[1]] ?? forecastDetailMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/forecast" className="hover:text-ink">
+          Forecast
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
   if (pathname === "/attribution") return "Attribution";
   if (pathname === "/attribution/holdouts")
     return renderCrumbs([{ label: "Attribution", to: "/attribution" }, { label: "Holdouts" }]);
@@ -343,6 +366,10 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   if (pathname === "/ai-teammates") return "AI teammates";
 
   if (pathname === "/business-memory") return "Business memory";
+
+  if (pathname === "/community") return "Community";
+
+  if (pathname === "/recognition") return "Recognition";
 
   if (pathname === "/governance") return "Governance";
 
