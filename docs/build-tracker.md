@@ -1515,6 +1515,78 @@ export's own `quote()` python helper was flattened per the house "no card strand
 | Settings | [x] | `settings/business-memory-settings-route.tsx`, `/settings/business-memory` |
 | Sidebar "Business memory" link | [x] | pre-existing KNOWLEDGE-group stub already correctly pointed at `/business-memory` |
 | Old `src/pages/business-memory/` (kit-122 static mock) removed | [x] | Fully superseded, zero remaining references |
+
+## 6h. Playbooks
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Knowledge Screens/flolyt-playbooks/flolyt-playbooks/` (16 frames, PB01-PB16),
+superseding kit-122's frames 85/86 ("playbook library" / "playbook activation" — see section 13's
+note, rows 1686-1687). Second section of the Knowledge group, after
+[[flolyt_business_memory_rebuild]]. PB00 is an index/route-map frame, not a product screen.
+Content was transcribed from the export's own `pb.py` generator source (plus shared `know.py`
+chrome, reused as-is from the business memory build), same "read the `.py`, don't parse the SVG"
+approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/knowledge/playbooks/` (mirrors the sidebar's KNOWLEDGE group, same as
+`pages/knowledge/business-memory/`), but mounts at the flat `/playbooks` — no `/knowledge`
+prefix, and not the export's own `/knowledge/playbooks` footer route either. This exactly reused
+the sidebar's pre-existing "Playbooks" stub (`href: "/playbooks"`), so no sidebar change was
+needed. Settings is `/settings/playbooks`, outside the `/playbooks` tree, matching
+`/settings/business-memory` (PB15's own footer literally reads `/settings/knowledge/playbooks`,
+overridden per the same flat-URL precedent business memory's own ME17 settings screen set).
+
+**Architecture — index-branching on a mock flag, no query-param search this time:**
+- `/playbooks` (`index.tsx`) is ONE route covering PB01 (nothing has been done twice — the empty
+  state), PB02 (the first playbook, written after a second run), and PB03 (the default "all nine
+  playbooks" table). `PLAYBOOKS_STATE` (a 3-value mock flag defaulting to `"full"`) branches
+  them — PB01/PB02 are wired but unreachable with that default, same "not wired, no demo state
+  currently triggers it" situation as every prior rebuild's empty/edge states. Unlike Business
+  memory's index, this export has no `?q=` search screen, so there is no query-param branch.
+- `/playbooks/record` (PB05), `/playbooks/blocked` (PB06), `/playbooks/retired` (PB07), and
+  `/playbooks/history` (PB14) are standalone sibling routes sharing the same 5-tab bar
+  (`tabs.tsx`) as the index's "All playbooks" state.
+- `/playbooks/new` (`new/index.tsx`) is the 3-step "Write a playbook" wizard (PB08 which runs
+  it's written from → PB09 preconditions → PB10 steps and measurement). Step position lives in
+  `?step=`, not local `useState`, per the since-adopted URL-over-state rule for wizards, same as
+  Business memory's `/new`.
+- `/playbooks/:id` (`playbook-detail-route.tsx`) only has one built reference row: PB04
+  (`retry-0900`, "Retry cards at 09:00 local") — every other id falls back to a not-found state,
+  same "one/two reference rows" pattern as every prior section's `:id` route. Reachable from the
+  all-playbooks table's row link.
+- **PB11/PB12/PB13 are three bespoke modals**, each hardcoded to the one row the export shows it
+  opened against — `run-a-playbook-modal.tsx` ("Retry cards at 09:00 local," wired from the
+  all-playbooks table), `adapt-a-playbook-modal.tsx` ("Retry cards at 09:00 · Ghana · 90 days of
+  card volume history," wired from the Blocked table — the row whose failed precondition matches
+  PB12's own subject exactly, not the Blocked table's second Ghana row, which fails a different
+  precondition), and `retire-a-playbook-modal.tsx` ("Win back with 20% off at day 60–90," wired
+  from the Retired table) — via a `rowAction` field set on exactly those three rows, same "only
+  these rows have a wired row action" pattern as Business memory's ME15/ME16.
+- PB16 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the all-playbooks table), not a separate page —
+  same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** RM/IN/KO/AO (Ravi Mehta,
+Ifeoma Nwosu, Kunle, Amara Okeke) are exact matches for `RAVI`/`IFEOMA`/`KUNLE`/`AMARA` in
+`rooms/data.ts`, and the "IC" agent in PB04's steps table is an exact match for
+`INVOLUNTARY_CHURN` — all reused directly, zero new `PersonRef`/`AgentRef`s needed. `Chip`,
+`CHIP_INTERACTIVE_CLASS`, `Callout`, `KpiCards`, `PersonDot`, and `StageSubpageHeader` were all
+reused from `lifecycle/stage/` and `rooms/actor.tsx` with zero forking. A local `PlaybooksKvList`
+(`kv-list.tsx`) was written fresh, copying Business memory's own `kv-list.tsx` shape exactly. PB04's
+hero banner (a big stat + a right-aligned "refuses to run in Ghana" figure) was built inline on the
+detail route without a left accent strand — the export's own `hero()` python helper draws one,
+flattened per [[no_card_strands]].
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing done twice / first playbook / all nine | [x] | `index.tsx` + `states/*.tsx`. PB01/PB02 wired but unreachable with `PLAYBOOKS_STATE`'s current default |
+| One playbook (`:id`) | [x] | `playbook-detail-route.tsx` — only `retry-0900` built, every other id falls back to not-found |
+| Track record / Blocked / Retired / History | [x] | `record-route.tsx`, `blocked-route.tsx`, `retired-route.tsx`, `history-route.tsx`, all sharing `tabs.tsx` |
+| Write a playbook (wizard) | [x] | `new/index.tsx` + `step-what-and-when.tsx`/`step-preconditions.tsx`/`step-steps-measurement.tsx`, `?step=`, `/playbooks/new` |
+| Run / Adapt / Retire a playbook (modals) | [x] | `modals/run-a-playbook-modal.tsx`, `modals/adapt-a-playbook-modal.tsx`, `modals/retire-a-playbook-modal.tsx` — each wired via `rowAction` on one table row |
+| Settings | [x] | `settings/playbooks-settings-route.tsx`, `/settings/playbooks` |
+| Sidebar "Playbooks" link | [x] | pre-existing KNOWLEDGE-group stub already correctly pointed at `/playbooks` |
+| `tsc -b` clean + Playwright console-error sweep (11 routes) + modal click-test (3 modals) + tab/row-link nav + mobile card check | [x] | Verified 2026-08-21 |
 | `tsc -b` clean + dev server + 13-route Playwright console/page-error sweep + both modals click-tested | [x] | Verified 2026-08-21 |
 
 ## 7. Teams (51–58)
@@ -1683,8 +1755,8 @@ against the transcribed specs for the index, reassign modal and create-handoffs 
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 85 | playbook library | [ ] | | |
-| 86 | playbook activation | [ ] | | |
+| 85 | playbook library | [x] | | Superseded — rebuilt as `/playbooks` from the newer `flolyt-playbooks` export, see section 6h |
+| 86 | playbook activation | [x] | | Superseded — rebuilt as `/playbooks` (run modal) from the newer `flolyt-playbooks` export, see section 6h |
 | 87 | experiments | [ ] | | |
 | 88 | agent builder | [ ] | | |
 | 89 | agent detail | [ ] | | |
