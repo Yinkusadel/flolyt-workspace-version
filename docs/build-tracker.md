@@ -772,6 +772,84 @@ section, same "own tone vocabulary" precedent as every prior section.
 | Sidebar "Campaigns" link | [x] | pre-existing stub already correctly pointed at `/campaigns` |
 | `tsc -p tsconfig.app.json` clean + dev server + 15-route Playwright console/page-error sweep + 3-modal click-test + full 4-step wizard click-through + mobile viewport check | [x] | Verified 2026-08-21 |
 
+## 5d. Experiments
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Customers Screens/flolyt-experiments/flolyt-experiments/` (16 frames,
+XP01–XP16), the fourth section of the Customers group, sibling to Segments, Customer health and
+Campaigns. Content was transcribed from the export's own `xp.py` generator source (same "read the
+`.py`, don't parse the SVG" approach as every prior section); `cust.py` is the same shared
+Customers sidebar-chrome script the other three sections already use.
+
+**Route stays flat, per the established rule**: lives on disk at
+`src/pages/customers/experiments/` (mirrors the sidebar CUSTOMERS group) but mounts at the flat
+`/experiments` — no `/customers` prefix — matching `/segments`, `/customer-health`, `/campaigns`.
+Settings is `/settings/experiments`, outside the `/experiments` tree, matching
+`/settings/campaigns`. The sidebar's "Experiments" link already pointed at `/experiments` before
+this build started — nothing to wire there.
+
+**Architecture — index-branching on a mock flag, then a 5-tab bar, same shape as Campaigns:**
+- `/experiments` (`index.tsx`) is ONE route covering XP01 (nothing held back yet), XP02 (the first
+  result, 9-days-scale), and XP03 (the default "Running" tab state). `EXPERIMENTS_STATE` (a
+  3-value mock flag defaulting to `"full"`) branches between them — XP01/XP02 are wired but
+  unreachable with that default, same "not wired, no demo state currently triggers it" situation
+  as every prior rebuild's empty/edge states.
+- Five tabs (Running/Results/Never included/Readability/History) share one `tabs.tsx`.
+  `/experiments/results` (XP06), `/experiments/excluded` (XP05, "Never included" — the route
+  segment follows the frame's own footer URL rather than the tab label), and
+  `/experiments/readability` (XP12) are standalone sibling routes.
+- **`/experiments/history` has no dedicated frame in the export** — `TABS` in `xp.py` lists five
+  tabs but `S.save()` is only ever called for the other four. Same "tab with no frame" gap
+  Scenario and Campaigns each hit with their own History tab (see
+  [[flolyt_scenario_rebuild]], [[flolyt_campaigns_rebuild]]). Built anyway, grounded not in one
+  adjacent line but in the vocabulary every other Experiments screen already repeats — "signed",
+  "locked", "condition changed", "contamination detected" — widened into a chronological log of
+  signings, closures, condition changes and contamination events.
+- `/experiments/contaminated` (XP08, "When one breaks") is a dedicated route reached from the
+  Running table's "contaminated" state chip on the wave-one row — same `rowAction` pattern as
+  Campaigns' stop-a-campaign chip, but this one navigates instead of opening a modal.
+- `/experiments/new` (`new/index.tsx`) is the 3-step "Design an experiment" wizard (XP09 the
+  question → XP10 the holdout → XP11 review). Step position lives in `?step=`, per
+  [[url_param_over_state_for_page_flow]], same rule Segments'/Campaigns' wizards established.
+  Click-tested end to end via real button clicks (not just direct `?step=` navigation) after
+  Campaigns' CP10 bug showed direct nav doesn't catch a wizard step that silently fails to
+  advance — this one advanced correctly at every step.
+- `/experiments/:id` (`experiment-detail-route.tsx`) has two built reference rows — XP04
+  (`kenya-retry`, reached from the Running table) and XP07 (`weekend-cadence`, reached from the
+  Results table) — every other id falls back to a not-found state, same "one/two reference rows"
+  pattern [[flolyt_scenario_rebuild]] and [[flolyt_attribution_rebuild]] established.
+- **XP13/XP14 are two bespoke modals**, both wired via `rowAction` fields on Running-tab table
+  rows rather than a dedicated header button, since both target a specific row rather than a
+  page-level action: `stop-early-modal.tsx` ("Reactivation · wave two") opens from that row's
+  "clean" state chip in the main experiments table; `change-the-condition-modal.tsx` ("Basket
+  prompt · rerun") opens from that row's "written" date in the second (condition) table. Neither
+  preset's row counts need to match the real tables exactly — same "a modal's own base state
+  doesn't have to match the live page" precedent [[flolyt_campaigns_rebuild]] established.
+- XP16 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Running table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** all six named people in this export
+(Ifeoma, Ravi, Ada, Tunde, Amara, Zainab) are exact matches for `rooms/data.ts`'s existing
+`PersonRef`s — no new person or agent refs were needed, unlike Campaigns' `PRODUCT_REASON`.
+`Chip`, `CHIP_INTERACTIVE_CLASS`, `Callout`, `KpiCards`, `BarTrack`, `PersonAvatar`, and
+`StageSubpageHeader` were all reused with zero forking. A local `ExperimentsKvList`
+(`kv-list.tsx`) was written per section, same "own tone vocabulary" precedent as every prior
+section.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing to measure / first result / running now | [x] | `index.tsx` + `states/*.tsx`. XP01/XP02 wired but unreachable with `EXPERIMENTS_STATE`'s current default |
+| Results / Never included / Readability | [x] | `results-route.tsx`, `excluded-route.tsx`, `readability-route.tsx` |
+| History (no dedicated frame) | [x] | `history-route.tsx`, grounded in the section's own recurring audit-trail vocabulary |
+| When one breaks | [x] | `contaminated-route.tsx`, reached via the Running table's "contaminated" chip |
+| New experiment wizard | [x] | `new/index.tsx` + `new/step-*.tsx`, `/experiments/new`, step position in `?step=` |
+| One experiment (`:id`) | [x] | `experiment-detail-route.tsx` — `kenya-retry` and `weekend-cadence` built, every other id falls back to not-found |
+| Stop early / Change the condition (modals) | [x] | `modals/*.tsx` — both wired via `rowAction` on Running-tab table rows |
+| Settings | [x] | `settings/experiments-settings-route.tsx`, `/settings/experiments` |
+| Sidebar "Experiments" link | [x] | pre-existing stub already correctly pointed at `/experiments` |
+| `tsc -p tsconfig.app.json` clean + dev server + 13-route Playwright console/page-error sweep + full 3-step wizard click-through + 2-modal click-test + 2 detail-row link click-tests + mobile viewport check | [x] | Verified 2026-08-21 |
+
 ## 6. Revenue surfaces (44–50)
 
 | # | Screen | Status | Endpoint(s) | Notes |
