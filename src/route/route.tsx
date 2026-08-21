@@ -168,7 +168,14 @@ import NewComparison from "@/pages/revenue/benchmarks/new";
 import BenchmarksSettingsRoute from "@/pages/revenue/benchmarks/settings/benchmarks-settings-route";
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
-import Segments from "@/pages/segments";
+import Segments from "@/pages/customers/segments";
+import SegmentsReachabilityRoute from "@/pages/customers/segments/reachability-route";
+import SegmentsOverlapRoute from "@/pages/customers/segments/overlap-route";
+import SegmentsDriftRoute from "@/pages/customers/segments/drift-route";
+import SegmentsRetiredRoute from "@/pages/customers/segments/retired-route";
+import NewSegment from "@/pages/customers/segments/new";
+import SegmentDetailRoute from "@/pages/customers/segments/segment-detail-route";
+import SegmentsSettingsRoute from "@/pages/customers/segments/settings/segments-settings-route";
 import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
 // import { ProtectedRoute } from "@/route/protected-route";
@@ -514,7 +521,19 @@ export const routes = createBrowserRouter([
               },
               {
                 path: "segments",
-                Component: Segments,
+                children: [
+                  { index: true, Component: Segments },
+                  { path: "reachability", Component: SegmentsReachabilityRoute },
+                  { path: "overlap", Component: SegmentsOverlapRoute },
+                  { path: "drift", Component: SegmentsDriftRoute },
+                  { path: "retired", Component: SegmentsRetiredRoute },
+                  { path: "new", Component: NewSegment },
+                  { path: ":id", Component: SegmentDetailRoute },
+                ],
+              },
+              {
+                path: "settings/segments",
+                Component: SegmentsSettingsRoute,
               },
               {
                 path: "governance",
