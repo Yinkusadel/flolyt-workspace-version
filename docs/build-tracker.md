@@ -536,7 +536,7 @@ colors for all 5 so adding a demo room later needs no template change.
 
 | # | Screen | Status | Endpoint(s) | Notes |
 |---|---|---|---|---|
-| 36 | segments | [x] | | `/segments` — static mock data in `src/pages/segments/data.ts`. Segments table is a plain `<table>` in `overflow-x-auto` (matches log-tab.tsx's pattern); on mobile that scrolls Size/30-day change/Used by off-screen with no scroll affordance — flagged to user, not yet fixed |
+| 36 | segments | [x] | | Superseded — rebuilt from scratch as `/segments` from the newer `flolyt-segments` export, see section 5a |
 | 37 | audience builder | [ ] | | |
 | 38 | audience at scale | [ ] | | |
 | 39 | campaign studio | [ ] | | |
@@ -544,6 +544,78 @@ colors for all 5 so adding a demo room later needs no template change.
 | 41 | campaign send monitor | [ ] | | |
 | 42 | campaign performance/lift | [ ] | | |
 | 43 | experiment detail | [ ] | | |
+
+## 5a. Segments
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Customers Screens/flolyt-segments/flolyt-segments/` (16 frames, SG01–SG16),
+superseding kit-122's frame 36 ("segments" — see section 5's note). This is the first section of a
+new **Customers** group, sibling to Every day and Revenue, sourced from its own
+`flolyt-figma-designs/Customers Screens/` export — four more sections (Customer health, Campaigns,
+Experiments, Replies) are documented there as sibling folders, not yet built. SG00 is an
+index/route-map frame, not a product screen. Content was transcribed from the export's own `sg.py`
+generator source (same "read the `.py`, don't parse the SVG" approach as every Revenue section);
+`cust.py` holds the five Customers sections' shared sidebar chrome, imported by each section's own
+script the same way `rev.py` backs the Revenue sections.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/customers/segments/` (folder nests under `src/pages/customers/` purely to mirror the
+sidebar's CUSTOMERS group, same as `pages/revenue/*` and `pages/everyday/*`), but mounts at the
+flat `/segments` — no `/customers` prefix — matching `/leakage-map`, `/funnel`, etc. Settings is
+`/settings/segments`, outside the `/segments` tree, matching `/settings/leakage-map`.
+
+**Architecture — index-branching on a query param first, then a mock flag:**
+- `/segments` (`src/pages/customers/segments/index.tsx`) is ONE route covering SG01 (no segments
+  defined yet), SG02 (20 minutes after the first segment was defined), SG03 (the default "all
+  segments" table), and SG08 (`?q=`, search — the one state with no tab bar). `q` is checked
+  first, then `SEGMENTS_STATE` (a 3-value mock flag defaulting to `"full"`) branches SG01/SG02/
+  SG03 — SG01/SG02 are wired but unreachable with that default, same "not wired, no demo state
+  currently triggers it" situation as every prior rebuild's empty/edge states.
+- `/segments/reachability` (SG05), `/segments/overlap` (SG06), `/segments/drift` (SG07), and
+  `/segments/retired` (SG13's base table) are standalone sibling routes that share the same
+  5-tab bar (`tabs.tsx`) as the index's "All segments" state — same "shared tab bar, not one route
+  subtree" pattern as Attribution's `tabs.tsx`.
+- `/segments/new` (`new/index.tsx`) is the 3-step "Define a segment" wizard (SG09 who's in it →
+  SG10 who's left out → SG11 review). Step position lives in `?step=`, not local `useState` —
+  deliberately deviates from Scenario/Benchmarks' `new/` wizards (which use local state) per a
+  since-adopted rule that page-level flow position belongs in the URL so a refresh mid-wizard
+  doesn't strand the user back at step 1.
+- `/segments/:id` (`segment-detail-route.tsx`) only has one built reference row: SG04
+  (`lapsed-fee`) — every other id falls back to a not-found state, same "one/two reference rows"
+  pattern as Leakage map's `:id`. Reachable in-app from the all-segments table's row link and
+  SG02's first-segment banner.
+- **SG12/SG13/SG14 are three bespoke modals**, each hardcoded to the one row the export shows it
+  opened against — `freeze-a-segment-modal.tsx` ("Lapsed after the fee change"),
+  `retire-a-segment-modal.tsx` ("Lagos, order failed in March"), and `use-a-segment-modal.tsx`
+  ("Two features in week one") — wired from the all-segments table via a `rowAction` field set on
+  exactly those three rows, same "only these three rows have a wired row action" pattern as
+  Leakage map's `roomAction`.
+- SG16 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints
+  (`hidden md:block` table / `md:hidden` stacked cards on the all-segments table) plus a
+  purpose-built `reachability-bar.tsx` stacked bar for SG05, not a separate page — same call as
+  every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** all six named people in this
+export (Ifeoma Nwosu, Ravi Mehta, Kunle, Amara Okeke, Ada Obi, Zainab Yusuf) are exact matches for
+`IFEOMA`/`RAVI`/`KUNLE`/`AMARA`/`ADA`/`ZAINAB` in `rooms/data.ts` — reused directly, zero new
+`PersonRef`s needed, and no new `AgentRef`s were needed either (RD/AQ/IC already existed).
+`Chip`, `CHIP_INTERACTIVE_CLASS`, `Callout`, `KpiCards`, `PersonAvatar`, and `StageSubpageHeader`
+were all reused from `lifecycle/stage/` and `components/` with zero forking. A local
+`SegmentsKvList` (`kv-list.tsx`) was written instead of reusing an existing one, following the same
+per-section-KvList precedent as Leakage map/Attribution (each section's own 7-value `SgTone` isn't
+a drop-in match for another section's tone vocabulary).
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — no segments yet / first segment / all segments / search | [x] | `src/pages/customers/segments/index.tsx` + `states/*.tsx`. SG01/SG02 wired but unreachable with `SEGMENTS_STATE`'s current default |
+| Reachability / Overlap / Drift / Retired | [x] | `reachability-route.tsx`, `overlap-route.tsx`, `drift-route.tsx`, `retired-route.tsx` |
+| Define a segment wizard | [x] | `new/index.tsx` + `new/step-*.tsx`, `/segments/new`, step position in `?step=` |
+| One segment (`:id`) | [x] | `segment-detail-route.tsx` — only `lapsed-fee` built, every other id falls back to not-found |
+| Freeze / Retire / Use a segment (modals) | [x] | `modals/*.tsx`, each hardcoded to the one row the export shows it against, wired via `rowAction` on the all-segments table |
+| Settings | [x] | `settings/segments-settings-route.tsx`, `/settings/segments` |
+| Sidebar "Segments" link | [x] | pre-existing stub already correctly pointed at `/segments` |
+| `tsc -p tsconfig.app.json` clean + dev server + 11-route Playwright console/page-error sweep + 3-modal click-test | [x] | Verified 2026-08-21 |
+| Cherry-picked onto `archive/mock-data` | [x] | Clean cherry-pick, no conflicts |
 
 ## 6. Revenue surfaces (44–50)
 
