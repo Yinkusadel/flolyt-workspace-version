@@ -196,6 +196,15 @@ import RetiredRoute from "@/pages/knowledge/playbooks/retired-route";
 import HistoryRoute from "@/pages/knowledge/playbooks/history-route";
 import NewPlaybook from "@/pages/knowledge/playbooks/new";
 import PlaybooksSettingsRoute from "@/pages/knowledge/playbooks/settings/playbooks-settings-route";
+import Community from "@/pages/knowledge/community";
+import MethodDetailRoute from "@/pages/knowledge/community/method-detail-route";
+import ConstraintsRouteCommunity from "@/pages/knowledge/community/constraints-route";
+import QuestionsRouteCommunity from "@/pages/knowledge/community/questions-route";
+import OutboundRoute from "@/pages/knowledge/community/outbound-route";
+import RefusedRouteCommunity from "@/pages/knowledge/community/refused-route";
+import YoursRoute from "@/pages/knowledge/community/yours-route";
+import ShareWithCommunity from "@/pages/knowledge/community/share";
+import CommunitySettingsRoute from "@/pages/knowledge/community/settings/community-settings-route";
 import Segments from "@/pages/customers/segments";
 import SegmentsReachabilityRoute from "@/pages/customers/segments/reachability-route";
 import SegmentsOverlapRoute from "@/pages/customers/segments/overlap-route";
@@ -638,6 +647,23 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/playbooks",
                 Component: PlaybooksSettingsRoute,
+              },
+              {
+                path: "community",
+                children: [
+                  { index: true, Component: Community },
+                  { path: "share", Component: ShareWithCommunity },
+                  { path: "constraints", Component: ConstraintsRouteCommunity },
+                  { path: "questions", Component: QuestionsRouteCommunity },
+                  { path: "outbound", Component: OutboundRoute },
+                  { path: "refused", Component: RefusedRouteCommunity },
+                  { path: "yours", Component: YoursRoute },
+                  { path: ":id", Component: MethodDetailRoute },
+                ],
+              },
+              {
+                path: "settings/community",
+                Component: CommunitySettingsRoute,
               },
               {
                 path: "segments",

@@ -1589,6 +1589,77 @@ flattened per [[no_card_strands]].
 | `tsc -b` clean + Playwright console-error sweep (11 routes) + modal click-test (3 modals) + tab/row-link nav + mobile card check | [x] | Verified 2026-08-21 |
 | `tsc -b` clean + dev server + 13-route Playwright console/page-error sweep + both modals click-tested | [x] | Verified 2026-08-21 |
 
+## 6i. Community
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Knowledge Screens/flolyt-community/flolyt-community/` (14 frames, CM01-CM14).
+Third section of the Knowledge group, after [[flolyt_playbooks_rebuild]]. Content was transcribed
+from the export's own `cm.py` generator source (plus shared `know.py` chrome, reused as-is from
+the business memory/playbooks builds), same "read the `.py`, don't parse the SVG" approach as
+every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/knowledge/community/` (mirrors the sidebar's KNOWLEDGE group, same as
+`pages/knowledge/playbooks/`), but mounts at the flat `/community` — no `/knowledge` prefix. This
+exactly reused the sidebar's pre-existing "Community" stub (`href: "/community"`, `Users2` icon),
+so no sidebar change was needed. Settings is `/settings/community`, outside the `/community` tree,
+matching `/settings/playbooks`.
+
+**Architecture — index-branching on a mock flag:**
+- `/community` (`index.tsx`) is ONE route covering CM01 (not connected — the off state), CM02 (20
+  minutes after the first thing was shared), and CM03 (the default "Methods" tab, 88 companies
+  connected). `COMMUNITY_STATE` (a 3-value mock flag defaulting to `"full"`) branches them — CM01/
+  CM02 are wired but unreachable with that default, same "not wired, no demo state currently
+  triggers it" situation as every prior rebuild's empty/edge states.
+- `/community/constraints` (CM05), `/community/questions` (CM06), `/community/outbound` (CM07,
+  "What leaves"), and `/community/yours` (assembled from CM12's own table, not a numbered CM frame
+  on its own) are standalone sibling routes sharing the same 5-tab bar (`tabs.tsx`) as the index's
+  "Methods" state.
+- `/community/refused` (CM08, "What this is not") is a standalone own-header page with no tab bar
+  — its own export shows no in-app link to it, so per [[flag_unreachable_routes]] a "What this is
+  not" link was added to the Methods tab's header, next to the "Share a method" CTA.
+- `/community/share` (`share/index.tsx`) is the 2-step "Share with the community" wizard (CM09
+  what you're sharing → CM10 what leaves). Step position lives in `?step=`, not local `useState`,
+  per the since-adopted URL-over-state rule for wizards, same as Business memory's/Playbooks' `/new`.
+- `/community/:id` (`method-detail-route.tsx`) only has one built reference row: CM04
+  (`lapsed-what-changed`, "Tell lapsed customers what changed") — every other id falls back to a
+  not-found state, same "one/two reference rows" pattern as every prior section's `:id` route.
+  Reachable from the Methods table's row link and the Yours tab's row link.
+- **CM11/CM12 are two bespoke modals**, each hardcoded to the one row the export shows it opened
+  against — `adopt-a-method-modal.tsx` ("Ask support what people wrote in about first," wired from
+  the Methods table's one "not adopted" row that carries a `rowAction`) and `report-back-modal.tsx`
+  ("Prompt a second feature in week one," wired from the Yours tab's matching row) — via a
+  `rowAction` field, same "only this row has a wired row action" pattern as Playbooks' PB11/PB12/PB13.
+- CM14 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Methods table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Fidelity note, transcribed rather than reconciled per the "SVG wins" rule:** CM03's Methods
+table marks "Prompt a second feature in week one" as `not adopted` in its own "You" column, while
+CM12's own modal text says "You adopted it in April." Both are kept exactly as their own screen
+states them — see the comment above `YOUR_METHOD_ROWS` in `data.ts`.
+
+**Cross-section reuse, confirmed by reading both before reusing:** `QuoteCard` was reused directly
+from `@/pages/knowledge/business-memory/quote-card` (generic text+source shape, no Business-memory-
+specific types) rather than forking a second copy. `Chip`, `CHIP_INTERACTIVE_CLASS`, `Callout`,
+`KpiCards`, and `StageSubpageHeader` were all reused from `lifecycle/stage/` with zero forking. A
+local `CommunityKvList` (`kv-list.tsx`) was written fresh, copying Playbooks'/Business memory's own
+`kv-list.tsx` shape exactly. CM07's "what has never left" people-count visual was built as three
+plain stat cards rather than a proportional stacked bar — the underlying counts (1,247 vs. 1 vs. 1)
+would make a true proportional bar visually pointless.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — not connected / first share / Methods table | [x] | `index.tsx` + `states/*.tsx`. CM01/CM02 wired but unreachable with `COMMUNITY_STATE`'s current default |
+| One method (`:id`) | [x] | `method-detail-route.tsx` — only `lapsed-what-changed` built, every other id falls back to not-found |
+| Constraints / Questions / What leaves / Yours | [x] | `constraints-route.tsx`, `questions-route.tsx`, `outbound-route.tsx`, `yours-route.tsx`, all sharing `tabs.tsx` |
+| What this is not | [x] | `refused-route.tsx`, `/community/refused` — linked from the Methods tab header (fixed an unreachable-route gap) |
+| Share with the community (wizard) | [x] | `share/index.tsx` + `share/step-what.tsx`/`share/step-leaves.tsx`, `?step=`, `/community/share` |
+| Adopt a method / Report back (modals) | [x] | `modals/adopt-a-method-modal.tsx`, `modals/report-back-modal.tsx` — each wired via `rowAction` on one table row |
+| Settings | [x] | `settings/community-settings-route.tsx`, `/settings/community` |
+| Sidebar "Community" link | [x] | pre-existing KNOWLEDGE-group stub already correctly pointed at `/community` |
+| `tsc -b` clean + dev server + 10-route Playwright console/page-error sweep + both modals click-tested | [x] | Verified 2026-08-21 |
+
 ## 7. Teams (51–58)
 
 | # | Screen | Status | Endpoint(s) | Notes |
@@ -1790,7 +1861,7 @@ against the transcribed specs for the index, reassign modal and create-handoffs 
 | 102 | developer portal | [ ] | | |
 | 103 | embedded and white label | [ ] | | |
 | 104 | dashboard builder | [ ] | | |
-| 105 | community | [ ] | | |
+| 105 | community | [x] | | Superseded — rebuilt as `/community` from the newer `flolyt-community` export, see section 6i |
 | 106 | recognition | [ ] | | |
 | 107 | language and format | [ ] | | |
 
