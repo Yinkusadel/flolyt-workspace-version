@@ -20,14 +20,19 @@ export function SavedScenariosState() {
 
   return (
     <div className="space-y-8">
-      <ScenarioTabs active="Saved" />
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className={EYEBROW_CLASS}>Six modelled · two blocked on data · one has been overtaken by what actually happened</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-[17px] font-semibold text-ink">Scenario</h1>
+          <p className="mt-1 text-[11.5px] text-ink-3">
+            Six modelled · two blocked on data · one has been overtaken by what actually happened
+          </p>
+        </div>
         <Button asChild type="button" size="sm">
           <Link to="/scenario/new">Model a change</Link>
         </Button>
       </div>
+
+      <ScenarioTabs active="Saved" />
 
       <div className="overflow-x-auto rounded-card border border-line bg-paper">
         <table className="w-full min-w-[900px] text-left text-[11.5px]">
