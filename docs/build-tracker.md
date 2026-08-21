@@ -969,6 +969,91 @@ component was needed (this section is table- and hero-driven, not bar-chart-driv
 | Sidebar "Benchmarks" link | [x] | pre-existing stub already correctly pointed at `/benchmarks` |
 | `tsc -b` clean + dev server route sweep (11 routes incl. a not-found `:id`) + modal click-tested + wizard step-1→2→save click-tested through to the toast+navigate | [x] | Verified 2026-08-20 |
 
+## 6f. Forecast
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Revenue Screens/flolyt-forecast/flolyt-forecast/` (14 frames, FC01–FC14),
+the sixth Revenue section built (after Leakage map/Funnel/Scenario/Attribution/Benchmarks) but,
+per `REVENUE-GROUP.md`'s own gap-closure note, the **fourth child of the Revenue group in sidebar
+order** — it sits between Scenario and Attribution, both in the sidebar and in `route.tsx`. Same
+"read the export's own `.py` generator source, not the rendered SVGs" approach — `fc.py` imports
+the same shared `rev.py` chrome. FC00 is the index/route-map frame, not a product screen. This is
+a brand-new section (not a kit-122 supersession) — `REVENUE-AUDIT.md` had flagged Forecast as an
+orphaned structural gap, closed by this export.
+
+**Route stays flat** per [[flolyt_flat_url_pattern]]: `/forecast`, not `/revenue/forecast`, even
+though the export's own frame footers say `/revenue/forecast` throughout. Settings at
+`/settings/forecast`, not `/settings/revenue/forecast`. The sidebar had no "Forecast" item at all
+(the one gap this section's own build request called out) — added between "Scenario" and
+"Attribution" with a `LineChart` icon.
+
+**Architecture — same index-branching shape as every prior Revenue section, plus a query-param-tab
+pair like Benchmarks':**
+- `/forecast` (`index.tsx`) is ONE route covering FC01 (nothing to forecast from — no baseline, no
+  owner has committed to a number), FC02 (the first forecast, Kunle's 88.4% renewal figure), and
+  FC03 (the default populated "Next 90 days" state with the 6-tab bar). A 3-value `FORECAST_STATE`
+  mock flag (`empty`/`first`/`full`, defaulting to `"full"`) branches these — `empty`/`first` are
+  wired but unreachable with that default, same "not wired" situation as every prior rebuild's
+  empty/edge states.
+- **Tab-frame gap, same shape as Scenario's History:** `fc.py`'s own `TABS` list has six entries,
+  but no frame ever calls `subtabs(p, "By stage", TABS)` — only "Next 90 days", "By market",
+  "Blocked", "Against actuals" and "History" get an active frame. Built `?by=stage` anyway, reusing
+  FC03's own per-stage table (dropping the summary cards), the same "reuse an adjacent frame's data
+  shape rather than inventing new copy" call Scenario's History made for an identical kind of gap.
+  "By market" (`?by=market`, FC05-disk) is the section's other query-param tab, mirroring
+  Benchmarks' `?by=market`/`?by=stage` pair exactly. "Blocked" (`/forecast/blocked`, FC06-disk),
+  "Against actuals" (`/forecast/actuals`, FC07-disk) and "History" (`/forecast/history`, FC12-disk)
+  are ordinary sibling routes, same as every prior section's tab bar.
+- `/forecast/:stage` (`stage-detail-route.tsx`) has one built reference row — `renew` (FC04-disk,
+  "One forecast") — every other stage falls back to a not-found state, same "one/two reference
+  rows" pattern as every prior section's `:id`/`:step`. Linked from the "Next 90 days" and "By
+  stage" tables' Renew row.
+- `/forecast/:stage/re-forecast` (`re-forecast/`) is the "Re-forecast" wizard (FC08–FC09 — what has
+  changed, then your number). No `?step=` param in the source footer, so step state is
+  client-local, same pattern as every prior section's wizard. Only `renew` renders the wizard
+  content (every other `:stage` gets a lightweight "not available for this stage" fallback, since
+  no other stage has a built re-forecast flow). Saving navigates to `/forecast/renew`, since signing
+  a number is exactly that page's subject.
+- Two bespoke modals, hardcoded to specific figures, not generalized — same pattern as every prior
+  section's modals: `modals/an-overdue-re-forecast-modal.tsx` (FC10-disk, "An overdue re-forecast")
+  opens from the "Next 90 days"/"By stage" tables' Renew row via its "overdue" chip; the primary
+  action is "Ask Kunle" (a toast, not a navigation — re-forecasting is Kunle's job, not the viewer's).
+  `modals/revise-a-signed-forecast-modal.tsx` (FC11-disk, "Revise a signed forecast") opens from a
+  "Revise a signed forecast" button on `/forecast/actuals` — the export's own modal base frame is
+  the "Against actuals" tab even though its preset content (Retain, 29.8% → 27.9%) is a live
+  forecast rather than one of that table's own closed rows, the same "read the preset content
+  itself, not just which tab frame the modal was drawn over" call the Attribution rebuild made.
+- `/settings/forecast` (FC13-disk) is a standalone route outside the `/forecast` tree, matching the
+  `/settings/benchmarks` precedent.
+- FC14-disk (mobile) was treated as a responsive-design constraint (tables scroll, cards stack), not
+  a separate page — same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** all 6 named people (Kunle, Ifeoma,
+Ravi, Zainab, Tunde, Amara) plus Ada and Sam mentioned by name are exact matches for existing
+`rooms/data.ts` refs, including departments (e.g. Ifeoma → Marketing, matching her FC12-disk
+avatar row exactly) — the second Revenue section (after Attribution) needing zero new people or
+agents at all. `Chip`, `Callout`, `KpiCards`, `PersonAvatar`, `StageSubpageHeader`, and
+`usePageBreadcrumb` were all reused from `lifecycle/stage/` and the shared breadcrumb context with
+zero forking. A local `ForecastKvList` (`kv-list.tsx`) was written fresh rather than reusing
+Benchmarks' `BenchmarksKvList` — this section's tone vocabulary (`FcTone`) is identical in shape but
+kept as its own type per the established "each section owns its tone type" convention. No bars
+component was needed (this section is table- and hero-driven, not bar-chart-driven).
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing to forecast from / the first forecast / next 90 days | [x] | `index.tsx` + `states/*.tsx`. `empty`/`first` wired but unreachable with `FORECAST_STATE`'s current default |
+| By stage (query-param tab, no dedicated frame) / By market (query-param tab) | [x] | `states/by-stage.tsx` (reuses FC03's table), `states/by-market.tsx`, rendered by `index.tsx` on `?by=stage`/`?by=market` |
+| Blocked | [x] | `blocked-route.tsx` |
+| Against actuals | [x] | `actuals-route.tsx` — also hosts the "Revise a signed forecast" modal |
+| History | [x] | `history-route.tsx` |
+| One forecast (`:stage`) | [x] | `stage-detail-route.tsx` — `renew` built, every other stage falls back to not-found |
+| Re-forecast (wizard) | [x] | `re-forecast/index.tsx` + `step-what-changed.tsx`/`step-your-number.tsx`/`step-rail.tsx`, `/forecast/:stage/re-forecast` |
+| An overdue re-forecast (modal) | [x] | `modals/an-overdue-re-forecast-modal.tsx`, opens from the Renew row's "overdue" chip |
+| Revise a signed forecast (modal) | [x] | `modals/revise-a-signed-forecast-modal.tsx`, opens from `/forecast/actuals` |
+| Settings | [x] | `settings/forecast-settings-route.tsx`, `/settings/forecast` — no in-app entry point yet, same as every other Revenue section's settings page |
+| Sidebar "Forecast" link | [x] | added between "Scenario" and "Attribution" with a `LineChart` icon — this section's own build request flagged it as missing |
+| `tsc -b` clean + dev server route sweep (10 routes incl. a not-found `:stage`) + both modals click-tested + wizard step-1→2→save click-tested through to the toast+navigate + `empty`/`first` mock states swept individually by temporarily flipping and reverting | [x] | Verified 2026-08-21 |
+
 ## 7. Teams (51–58)
 
 | # | Screen | Status | Endpoint(s) | Notes |
