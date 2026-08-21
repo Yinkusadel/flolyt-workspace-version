@@ -195,6 +195,16 @@ import CustomerHealthChangedRoute from "@/pages/customers/customer-health/change
 import CustomerHealthThresholdsRoute from "@/pages/customers/customer-health/thresholds-route";
 import CustomerHealthSettingsRoute from "@/pages/customers/customer-health/settings/customer-health-settings-route";
 import CustomerDetailRoute from "@/pages/customers/customer-detail-route";
+import Campaigns from "@/pages/customers/campaigns";
+import CampaignsAudiencesRoute from "@/pages/customers/campaigns/audiences-route";
+import CampaignsWaitingRoute from "@/pages/customers/campaigns/waiting-route";
+import CampaignsSuppressedRoute from "@/pages/customers/campaigns/suppressed-route";
+import CampaignsSentRoute from "@/pages/customers/campaigns/sent-route";
+import CampaignsHistoryRoute from "@/pages/customers/campaigns/history-route";
+import NewCampaign from "@/pages/customers/campaigns/new";
+import CampaignDetailRoute from "@/pages/customers/campaigns/campaign-detail-route";
+import CampaignIncidentDetailRoute from "@/pages/customers/campaigns/incident-detail-route";
+import CampaignsSettingsRoute from "@/pages/customers/campaigns/settings/campaigns-settings-route";
 import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
 // import { ProtectedRoute } from "@/route/protected-route";
@@ -597,6 +607,24 @@ export const routes = createBrowserRouter([
               {
                 path: "customers/:id",
                 Component: CustomerDetailRoute,
+              },
+              {
+                path: "campaigns",
+                children: [
+                  { index: true, Component: Campaigns },
+                  { path: "audiences", Component: CampaignsAudiencesRoute },
+                  { path: "waiting", Component: CampaignsWaitingRoute },
+                  { path: "suppressed", Component: CampaignsSuppressedRoute },
+                  { path: "sent", Component: CampaignsSentRoute },
+                  { path: "history", Component: CampaignsHistoryRoute },
+                  { path: "new", Component: NewCampaign },
+                  { path: "incidents/:id", Component: CampaignIncidentDetailRoute },
+                  { path: ":id", Component: CampaignDetailRoute },
+                ],
+              },
+              {
+                path: "settings/campaigns",
+                Component: CampaignsSettingsRoute,
               },
               {
                 path: "governance",
