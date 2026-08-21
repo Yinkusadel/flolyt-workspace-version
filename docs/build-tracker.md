@@ -565,7 +565,7 @@ kit-122's frames 44/45 ("leakage map consumer" / "leakage map accounts" — see 
 This is the first section of a new **Revenue** group, sibling to Every day, sourced from its own
 `flolyt-figma-designs/Revenue Screens/` export — six more sections (Funnel, Scenario, Forecast,
 Attribution, Value, Benchmarks) are documented there; Funnel was built next, same day, see
-section 6b below. LK00 is an index/route-map
+section 6b below, and Scenario followed on 2026-08-20, see section 6c. LK00 is an index/route-map
 frame, not a product screen. Content was transcribed from the export's own `lk.py` generator
 source (which holds every frame's exact copy as literal Python string arguments) rather than
 parsed off the rendered SVG text nodes — confirmed more reliable than re-deriving copy from SVG
@@ -726,6 +726,249 @@ drop-off line below), so it was purpose-built rather than forked from `BarRow`/`
 | Sidebar "Funnel" link | [x] | pre-existing stub already correctly pointed at `/funnel` |
 | `tsc -b` clean + dev server + 10-route Playwright console/page-error sweep (including a not-found `:step`) + modal open/close click-test + wizard step-1→2 click-test + all 3 unreachable mock states swept individually | [x] | Verified 2026-08-19 |
 
+## 6c. Scenario
+
+**Built from scratch on 2026-08-20** from
+`flolyt-figma-designs/Revenue Screens/flolyt-scenario/flolyt-scenario/` (15 frames, SC01–SC15),
+third section of the Revenue group after Leakage map and Funnel. Same "read the export's own
+`.py` generator source, not the rendered SVGs" approach — `sc.py` imports the same shared `rev.py`
+chrome as `lk.py`/`fn.py` did. SC00 is the index/route-map frame, not a product screen. On-disk
+filenames are the routing ground truth (`Section.save()` auto-numbers past whatever literal id
+the script passes) — confirmed against `sc.py`'s own `S.save()` call order, which matched the
+on-disk sequence 1:1 this time (no reordering needed).
+
+**Route stays flat** per [[flolyt_flat_url_pattern]]: `/scenario`, not `/revenue/scenarios`, even
+though the export's own frame footers say `/revenue/scenarios` throughout. Settings at
+`/settings/scenario`, not `/settings/revenue/scenarios`. The sidebar's "Scenario" link was already
+a pre-existing stub correctly pointed at `/scenario` — no correction needed.
+
+**Architecture — same index-branching shape as Leakage map/Funnel:**
+- `/scenario` (`src/pages/revenue/scenario/index.tsx`) is ONE route covering SC01 (nothing
+  modelled yet), SC02 (the first scenario, 40 minutes after saving), and SC03 (the default
+  populated "Saved scenarios" list with the 4-tab bar). A 3-value `SCENARIO_STATE` mock flag
+  (`empty`/`first`/`full`, defaulting to `"full"`) branches these — `empty`/`first` are wired but
+  unreachable with that default, same "not wired, no demo state currently triggers it" situation
+  as every prior rebuild's empty/edge states.
+- `/scenario/blocked` (SC10), `/scenario/actuals` (SC09, "Against what happened"), and
+  `/scenario/history` are standalone sibling routes sharing the same 4-tab bar (`tabs.tsx`) as the
+  index's Saved state — same "shared tab bar, not one route subtree" pattern as prior sections.
+  **History has no dedicated frame in the export** (SC01–SC15 cover the other three tabs plus the
+  wizard/detail/modals/settings/mobile, none of them History) — built consistent with the
+  timeline vocabulary SC08 already established (When/What/Who/Effect), widened across every saved
+  scenario rather than just S-114's own.
+- `/scenario/new` (`new/`) is the "Model a change" wizard (SC04–SC07 — the change, who it
+  reaches, assumptions, the result). No `?step=` param in the source footer (all four frames save
+  to the same route), so step state is client-local, same pattern as Funnel's `/funnel/steps/new`
+  and Goals' `/goals/new`. The result step (SC07) ends with "Save as S-114", which toasts and
+  navigates to `/scenario/s-114`.
+- `/scenario/:id` (`scenario-detail-route.tsx`) has two built reference rows — `s-114` (SC08,
+  "Reverse the delivery fee", the fully-detailed one with a timeline table) and `s-131`
+  ("Reactivation wave three", built lighter from SC13's own stats block since it has no dedicated
+  "one-scenario" frame of its own) — every other id falls back to a not-found state, same
+  "one/two reference rows" pattern as Leakage map's/Funnel's `:id`/`:step`.
+- Three bespoke modals (`modals/*.tsx`), each hardcoded to the one scenario the export shows it
+  opened against — same "hardcoded, not generalized" pattern as Leakage map's three modals:
+  - SC11 "Change an assumption" — opens from `/scenario/s-114`, fixed to its weakest input ("it
+    returns over 9 weeks" → 14 weeks).
+  - SC12 "Share a scenario" — opens from the Saved list's share icon (S-114's row only), fixed to
+    S-114's own share preset.
+  - SC13 "Turn it into something" — opens from `/scenario/s-131`, and its primary action
+    ("Attach to the room") actually navigates to `/rooms/second-order-never-happened`, the same
+    room LK03/LK04 already link to from Leakage map.
+- `/settings/scenario` (SC14) is a standalone route outside the `/scenario` tree, matching the
+  `/settings/funnel` precedent.
+- SC15 (mobile) was treated as a responsive-design constraint (tables scroll, cards stack), not a
+  separate page — same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** all named people (Ada Obi, Kunle,
+Ifeoma Nwosu, Ravi Mehta, Zainab Yusuf, Tunde Bakare, Sam Iyer) are exact matches for
+`ADA`/`KUNLE`/`IFEOMA`/`RAVI`/`ZAINAB`/`TUNDE`/`SAM` in `rooms/data.ts`; both agents
+(`PRICE_MARGIN`, `REPEAT_DECAY`) matched existing `AgentRef`s with no new people or agents needed.
+`Chip`, `Callout`, `KpiCards`, `PersonAvatar`, `StageSubpageHeader`, and `usePageBreadcrumb` were
+all reused from `lifecycle/stage/` and the shared breadcrumb context with zero forking. A local
+`ScenarioKvList` (`kv-list.tsx`) was written instead of reusing Funnel's `FunnelKvList` — this
+section's tone vocabulary (`ScTone`) is identical in shape to `FnTone` but kept as its own type per
+the established "each section owns its tone type" convention. A local `RangeBars` (`range-bars.tsx`)
+renders the "what moves the range" sensitivity bars (SC07) — closest to Funnel's `FunnelStepBars`
+but a different shape (percent-of-spread rather than count/percent-of-total), so purpose-built
+rather than forked.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — no scenarios yet / the first scenario / saved scenarios | [x] | `src/pages/revenue/scenario/index.tsx` + `states/*.tsx`. `empty`/`first` wired but unreachable with `SCENARIO_STATE`'s current default |
+| Blocked / Against what happened / History (siblings) | [x] | `blocked-route.tsx`, `actuals-route.tsx`, `history-route.tsx` — History has no dedicated frame, built consistent with SC08's timeline shape |
+| One scenario (`:id`) | [x] | `scenario-detail-route.tsx` — `s-114` and `s-131` built, every other id falls back to not-found |
+| Model a change (wizard) | [x] | `new/index.tsx` + `step-change.tsx`/`step-reach.tsx`/`step-assumptions.tsx`/`step-result.tsx`/`step-rail.tsx`, `/scenario/new` |
+| Change an assumption / Share a scenario / Turn it into something (modals) | [x] | `modals/*.tsx`, hardcoded to S-114/S-114/S-131 respectively |
+| Settings | [x] | `settings/scenario-settings-route.tsx`, `/settings/scenario` |
+| Sidebar "Scenario" link | [x] | pre-existing stub already correctly pointed at `/scenario` |
+| `tsc -b` clean + dev server route sweep + all 3 modals click-tested + wizard step-1→4 click-tested + both unreachable mock states swept individually | [x] | Verified 2026-08-20 |
+
+## 6d. Attribution
+
+**Built from scratch on 2026-08-20** from
+`flolyt-figma-designs/Revenue Screens/flolyt-attribution/flolyt-attribution/` (16 frames,
+AT01–AT16), fourth section of the Revenue group after Leakage map/Funnel/Scenario, superseding
+kit-122's frame 82 ("attribution" — see section 6's note). Same "read the export's own `.py`
+generator source, not the rendered SVGs" approach — `at.py` imports the same shared `rev.py`
+chrome as `lk.py`/`fn.py`/`sc.py` did. AT00 is the index/route-map frame, not a product screen.
+On-disk filenames are the routing ground truth (`Section.save()` auto-numbers past whatever
+literal id the script passes — several frames are saved under a provisional id and land on their
+final `ATxx` number only once sequenced).
+
+**Route stays flat** per [[flolyt_flat_url_pattern]]: `/attribution`, not `/revenue/attribution`,
+even though the export's own frame footers say `/revenue/attribution` throughout. Settings at
+`/settings/attribution`, not `/settings/revenue/attribution`. The sidebar's "Attribution" link was
+already a pre-existing stub correctly pointed at `/attribution` — no correction needed.
+
+**Architecture — same index-branching shape as Leakage map/Funnel/Scenario:**
+- `/attribution` (`index.tsx`) is ONE route covering AT01 (nothing attributed yet), AT02 (the
+  first holdout closes), and AT03 (the default populated "Attributed" board with the 5-tab bar). A
+  3-value `ATTRIBUTION_STATE` mock flag (`empty`/`first`/`full`, defaulting to `"full"`) branches
+  these — `empty`/`first` are wired but unreachable with that default, same "not wired" situation
+  as every prior rebuild's empty/edge states.
+- `/attribution/holdouts` (`holdouts-route.tsx`) is a second branching route: AT05 (four holdouts
+  running, clean) versus AT14 (one holdout contaminated by a resend that bypassed the hold list),
+  on its own 2-value `HOLDOUT_STATE` flag (`clean`/`contaminated`, defaulting to `"clean"`) — a new
+  pattern for this app, a mock flag scoped to one tab route rather than the section index.
+- `/attribution/overlap`, `/attribution/unattributable`, and `/attribution/methods` are standalone
+  sibling routes sharing the same 5-tab bar (`tabs.tsx`) as the index's Attributed state — same
+  "shared tab bar, not one route subtree" pattern as prior sections.
+- `/attribution/holdouts/new` (`new-holdout/`) is the "Design a holdout" wizard (AT11–AT12 — size
+  and duration, then who is excluded). No `?step=` param in the source footer, so step state is
+  client-local, same pattern as Funnel's/Scenario's wizards. Step 2 reuses the exact same exclusion
+  list as `/attribution/holdouts`' own "who is never held back" table (`AT_EXCLUDED_ROWS` in
+  `data.ts`) — identical content in the export, so shared rather than duplicated.
+- `/attribution/:id` (`intervention-detail-route.tsx`) has one built reference row — `retry-0900`
+  (AT04, "Retry cards at 09:00 local") — every other id falls back to a not-found state, same
+  "one/two reference rows" pattern as every prior section's `:id`/`:step`.
+- `/attribution/disputes/:id` (`dispute-detail-route.tsx`) has one built reference row — `1`
+  (AT13, "₦16M claimed twice") — a new secondary detail-route shape for this app (a dispute is not
+  an intervention, so it gets its own `/disputes/` sub-path rather than overloading `/attribution/:id`).
+- Two bespoke modals (`modals/*.tsx`), each hardcoded to the one row the export shows it opened
+  against — same "hardcoded, not generalized" pattern as every prior section's modals:
+  - AT09 "Credit a recovery" — opens from the Kenya retry window row on `/attribution/holdouts`
+    (the one holdout closing "today"), fixed to its own preset.
+  - AT10 "Mark it unattributable" — opens from the Accra reactivation row on
+    `/attribution/unattributable`, fixed to its own preset.
+- `/settings/attribution` (AT15) is a standalone route outside the `/attribution` tree, matching
+  the `/settings/scenario` precedent.
+- AT16 (mobile) was treated as a responsive-design constraint (tables scroll, cards stack), not a
+  separate page — same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** all named people (Ravi Mehta, Ifeoma
+Nwosu, Zainab Yusuf, Tunde Bakare, Amara Okeke, Sam Iyer, Ada Obi, Kunle) are exact matches for
+`RAVI`/`IFEOMA`/`ZAINAB`/`TUNDE`/`AMARA`/`SAM`/`ADA`/`KUNLE` in `rooms/data.ts` — zero new people
+needed, the first section where all eight named people already existed. One new agent was needed:
+`ATTRIBUTION_SIGNAL` ("Attribution Signal"), the agent that reads the Tunde/Ravi overlap dispute
+and refuses to pick a side — none of the seven existing `rooms/data.ts` agents fit, so it was
+defined locally in `attribution/data.ts`, same "defined locally, available for reuse" precedent as
+Funnel's `PRODUCT_REASON`. `Chip`, `Callout`, `KpiCards`, `PersonAvatar`, `StageSubpageHeader`, and
+`usePageBreadcrumb` were all reused from `lifecycle/stage/` and the shared breadcrumb context with
+zero forking. A local `AttributionKvList` and `AttributionBars` were written fresh rather than
+reusing Scenario's `ScenarioKvList`/`RangeBars` — this section's tone vocabulary (`AtTone`) is
+identical in shape but kept as its own type per the established "each section owns its tone type"
+convention.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing attributed yet / first holdout closes / the board | [x] | `index.tsx` + `states/*.tsx`. `empty`/`first` wired but unreachable with `ATTRIBUTION_STATE`'s current default |
+| Holdouts (clean / contaminated) | [x] | `holdouts-route.tsx` + `states/the-holdouts.tsx`/`states/contaminated-holdout.tsx`. `contaminated` wired but unreachable with `HOLDOUT_STATE`'s current default |
+| Overlap / Unattributable / Methods (siblings) | [x] | `overlap-route.tsx`, `unattributable-route.tsx`, `methods-route.tsx` |
+| One intervention (`:id`) | [x] | `intervention-detail-route.tsx` — `retry-0900` built, every other id falls back to not-found |
+| One dispute (`disputes/:id`) | [x] | `dispute-detail-route.tsx` — `1` built, every other id falls back to not-found |
+| Design a holdout (wizard) | [x] | `new-holdout/index.tsx` + `step-size.tsx`/`step-exclusions.tsx`/`step-rail.tsx`, `/attribution/holdouts/new` |
+| Credit a recovery / Mark it unattributable (modals) | [x] | `modals/*.tsx`, hardcoded to Kenya retry window / Accra reactivation respectively |
+| Settings | [x] | `settings/attribution-settings-route.tsx`, `/settings/attribution` |
+| Sidebar "Attribution" link | [x] | pre-existing stub already correctly pointed at `/attribution` |
+| `tsc -b` clean + dev server route sweep + both modals click-tested + wizard step-1→2 click-tested + both unreachable mock states swept individually | [x] | Verified 2026-08-20 |
+
+## 6e. Benchmarks
+
+**Built from scratch on 2026-08-20** from
+`flolyt-figma-designs/Revenue Screens/flolyt-benchmarks/flolyt-benchmarks/` (16 files on disk,
+BM00–BM15), fifth section of the Revenue group after Leakage map/Funnel/Scenario/Attribution. Same
+"read the export's own `.py` generator source, not the rendered SVGs" approach — `bm.py` imports
+the same shared `rev.py` chrome. BM00 is the index/route-map frame, not a product screen. Note:
+`bm.py`'s own internal `S.save("BM02", ...)` id is reused once (both "the first comparison" and
+"against our own past" save under the literal id `"BM02"`) — the on-disk SVG filenames are treated
+as the routing ground truth, same "on-disk wins over the script's own internal id" precedent as
+Attribution.
+
+**Route stays flat** per [[flolyt_flat_url_pattern]]: `/benchmarks`, not `/revenue/benchmarks`,
+even though the export's own frame footers say `/revenue/benchmarks` throughout. Settings at
+`/settings/benchmarks`, not `/settings/revenue/benchmarks`. The sidebar's "Benchmarks" link was
+already a pre-existing stub correctly pointed at `/benchmarks` — no correction needed.
+
+**Architecture — same index-branching shape as Leakage map/Funnel/Scenario/Attribution, plus a new
+query-param-tab wrinkle:**
+- `/benchmarks` (`index.tsx`) is ONE route covering BM01 (nothing to compare yet), BM02-disk (the
+  baseline locks overnight, a first unreadable zero), and BM03-disk (the default populated "Our own
+  past" state with the 5-tab bar). A 3-value `BENCHMARK_STATE` mock flag (`empty`/`first`/`full`,
+  defaulting to `"full"`) branches these — `empty`/`first` are wired but unreachable with that
+  default, same "not wired" situation as every prior rebuild's empty/edge states.
+- **New pattern this section adds:** two of the five tabs — "Market vs market" and "Stage vs
+  stage" — are NOT sibling routes but `?by=market`/`?by=stage` query params read inside the same
+  `/benchmarks` `index.tsx` (same query-param-tab shape as the Digest rebuild), independent of
+  `BENCHMARK_STATE`. The other two non-index tabs ("Against a holdout", "Not compared") are
+  ordinary sibling routes, same as every prior section's tab bar.
+- `/benchmarks/holdouts` (`holdouts-route.tsx`, BM06-disk) — the causal comparisons. Its "Design a
+  holdout" action reuses Attribution's already-built `/attribution/holdouts/new` wizard rather than
+  duplicating a second holdout designer — the first cross-section reuse of a full built flow in the
+  Revenue group (previous cross-links, like Scenario's room link, only reused a destination page,
+  not another section's wizard).
+- `/benchmarks/refused` (`refused-route.tsx`, BM08-disk) is the "Not compared" tab landing;
+  `/benchmarks/limits` (`limits-route.tsx`, BM09-disk) is a secondary page linked from it — the
+  export gives both frames the same `subtabs(p, "Not compared", ...)` call but two different routes
+  in their own footers, so both are built as siblings under one tab, cross-linked to each other.
+- `/benchmarks/like-for-like` (`like-for-like-route.tsx`, BM10-disk) is linked from the "Our own
+  past" tab's own table (a "What has to match…" footer link), same "secondary page off a tab, not
+  in the tab bar itself" shape as `limits`.
+- `/benchmarks/new` (`new/`) is the "Build a comparison" wizard (BM11–BM12 — what against what,
+  then what has to match). No `?step=` param in the source footer, so step state is client-local,
+  same pattern as every prior section's wizard. Saving navigates to `/benchmarks/repeat-rate`,
+  since the wizard's own preset (Nigeria vs UK repeat rate) is exactly that page's subject.
+- `/benchmarks/:id` (`repeat-rate-detail-route.tsx`) has one built reference row — `repeat-rate`
+  (BM07-disk, "One comparison in full") — every other id falls back to a not-found state, same
+  "one/two reference rows" pattern as every prior section's `:id`/`:step`. Linked from the "Our own
+  past" table's first row.
+- One bespoke modal (`modals/add-an-external-benchmark-modal.tsx`, BM12-disk/BM13-disk) — "Add an
+  external benchmark", opened from `/benchmarks/refused`'s header action, hardcoded to its own
+  preset (a 34% food-delivery figure) with no form that actually adds anything — same
+  "hardcoded, not generalized, the refusal is the feature" pattern as every prior section's modals.
+- `/settings/benchmarks` (BM13-disk/BM14-disk) is a standalone route outside the `/benchmarks`
+  tree, matching the `/settings/attribution` precedent. Like every other Revenue section's settings
+  page (`/settings/funnel`, `/settings/scenario`, `/settings/attribution`, `/settings/value`), it
+  has no in-app link pointing to it yet — a pre-existing gap across the whole settings family, not
+  new to this section, flagged here per [[flag_unreachable_routes]] rather than fixed unilaterally
+  since it would need a decision about where a cross-section settings entry point belongs.
+- BM15-disk (mobile) was treated as a responsive-design constraint (tables scroll, cards stack),
+  not a separate page — same call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** the "RD" agent avatar on BM02-disk's
+first-comparison card is an exact match for `REPEAT_DECAY` ("Repeat & Decay") in `rooms/data.ts` —
+fitting, since the frame is about a repeat-rate figure — the first Revenue section needing zero new
+people or agents at all. `Chip`, `Callout`, `KpiCards`, `PersonAvatar`, `StageSubpageHeader`, and
+`usePageBreadcrumb` were all reused from `lifecycle/stage/` and the shared breadcrumb context with
+zero forking. A local `BenchmarksKvList` (`kv-list.tsx`) was written fresh rather than reusing
+Attribution's `AttributionKvList` — this section's tone vocabulary (`BmTone`) is identical in shape
+but kept as its own type per the established "each section owns its tone type" convention. No bars
+component was needed (this section is table- and hero-driven, not bar-chart-driven).
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing to compare yet / first comparison / our own past | [x] | `index.tsx` + `states/*.tsx`. `empty`/`first` wired but unreachable with `BENCHMARK_STATE`'s current default |
+| Market vs market / Stage vs stage (query-param tabs) | [x] | `states/market-against-market.tsx`/`states/stage-against-stage.tsx`, rendered by `index.tsx` on `?by=market`/`?by=stage` |
+| Against a holdout | [x] | `holdouts-route.tsx` — "Design a holdout" reuses `/attribution/holdouts/new` |
+| Not compared (refused) / Where comparison breaks (limits) | [x] | `refused-route.tsx`, `limits-route.tsx` — cross-linked to each other |
+| Like for like | [x] | `like-for-like-route.tsx`, linked from the "Our own past" table |
+| One comparison in full (`:id`) | [x] | `repeat-rate-detail-route.tsx` — `repeat-rate` built, every other id falls back to not-found |
+| Build a comparison (wizard) | [x] | `new/index.tsx` + `step-what.tsx`/`step-matching.tsx`/`step-rail.tsx`, `/benchmarks/new` |
+| Add an external benchmark (modal) | [x] | `modals/add-an-external-benchmark-modal.tsx`, hardcoded preset, opens from `/benchmarks/refused` |
+| Settings | [x] | `settings/benchmarks-settings-route.tsx`, `/settings/benchmarks` — no in-app entry point yet, same as every other Revenue section's settings page |
+| Sidebar "Benchmarks" link | [x] | pre-existing stub already correctly pointed at `/benchmarks` |
+| `tsc -b` clean + dev server route sweep (11 routes incl. a not-found `:id`) + modal click-tested + wizard step-1→2→save click-tested through to the toast+navigate | [x] | Verified 2026-08-20 |
+
 ## 7. Teams (51–58)
 
 | # | Screen | Status | Endpoint(s) | Notes |
@@ -884,7 +1127,7 @@ against the transcribed specs for the index, reassign modal and create-handoffs 
 |---|---|---|---|---|
 | 80 | funnel explorer | [x] | | Superseded — rebuilt as `/funnel` from the newer `flolyt-funnel` export, see section 6b |
 | 81 | scenario simulator | [ ] | | |
-| 82 | attribution | [ ] | | |
+| 82 | attribution | [x] | | Superseded — rebuilt as `/attribution` from the newer `flolyt-attribution` export, see section 6d |
 | 83 | benchmarking | [ ] | | |
 | 84 | health scoring | [ ] | | |
 

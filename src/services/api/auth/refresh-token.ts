@@ -1,6 +1,6 @@
 import axios from "axios";
-import { API_ENDPOINTS } from "@//config/apiConfig";
-import { COOKIE_KEYS, getCookie, setCookie } from "@//utils/cookies";
+import { API_ENDPOINTS } from "@/config/apiConfig";
+import { COOKIE_KEYS, getCookie, setCookie } from "@/utils/cookies";
 
 const { USER: { REFRESH_TOKEN } } = API_ENDPOINTS;
 

@@ -1,6 +1,9 @@
 import { createBrowserRouter } from "react-router";
-import { AuthLayout } from "@/pages/auth-layout";
-import SignIn from "@/pages/sign-in";
+import { AuthLayout } from "@/pages/auth/layout";
+import SignIn from "@/pages/auth/sign-in";
+import SignUp from "@/pages/auth/sign-up";
+import VerifyOtp from "@/pages/auth/verify-otp";
+import AcceptInvitation from "@/pages/auth/accept-invitation";
 import { AppLayout } from "@/pages/app-layout";
 import Home from "@/pages/home";
 import Lifecycle from "@/pages/everyday/lifecycle";
@@ -82,7 +85,6 @@ import { GoalContributionsRoute } from "@/pages/everyday/goals/goal/contribution
 import { GoalCascadeRoute } from "@/pages/everyday/goals/cascade-route";
 import { GoalsInTensionRoute } from "@/pages/everyday/goals/conflicts-route";
 import { QuarterCloseRoute } from "@/pages/everyday/goals/quarter-close-route";
-import Value from "@/pages/value";
 import WhatToDoToday from "@/pages/everyday/what-to-do-today";
 import TodayRankingRoute from "@/pages/everyday/what-to-do-today/ranking-route";
 import TodayItemDetailRoute from "@/pages/everyday/what-to-do-today/item-detail-route";
@@ -134,12 +136,46 @@ import FunnelHistoryRoute from "@/pages/revenue/funnel/history-route";
 import FunnelStepDetailRoute from "@/pages/revenue/funnel/step-detail-route";
 import NewFunnelStep from "@/pages/revenue/funnel/new-step";
 import FunnelSettingsRoute from "@/pages/revenue/funnel/settings/funnel-settings-route";
+import Scenario from "@/pages/revenue/scenario";
+import ScenarioActualsRoute from "@/pages/revenue/scenario/actuals-route";
+import ScenarioBlockedRoute from "@/pages/revenue/scenario/blocked-route";
+import ScenarioHistoryRoute from "@/pages/revenue/scenario/history-route";
+import ScenarioDetailRoute from "@/pages/revenue/scenario/scenario-detail-route";
+import NewScenario from "@/pages/revenue/scenario/new";
+import ScenarioSettingsRoute from "@/pages/revenue/scenario/settings/scenario-settings-route";
+import Value from "@/pages/revenue/value";
+import ValueRoomDetailRoute from "@/pages/revenue/value/room-detail-route";
+import ValueCostRoute from "@/pages/revenue/value/cost-route";
+import ValueUnmeasurableRoute from "@/pages/revenue/value/unmeasurable-route";
+import ValueOverTimeRoute from "@/pages/revenue/value/over-time-route";
+import ValueReconciliationRoute from "@/pages/revenue/value/reconciliation-route";
+import ValueBoardRoute from "@/pages/revenue/value/board-route";
+import ValueRatesRoute from "@/pages/revenue/value/rates-route";
+import ValueSettingsRoute from "@/pages/revenue/value/settings/value-settings-route";
+import Attribution from "@/pages/revenue/attribution";
+import AttributionHoldoutsRoute from "@/pages/revenue/attribution/holdouts-route";
+import AttributionOverlapRoute from "@/pages/revenue/attribution/overlap-route";
+import AttributionUnattributableRoute from "@/pages/revenue/attribution/unattributable-route";
+import AttributionMethodsRoute from "@/pages/revenue/attribution/methods-route";
+import AttributionInterventionDetailRoute from "@/pages/revenue/attribution/intervention-detail-route";
+import AttributionDisputeDetailRoute from "@/pages/revenue/attribution/dispute-detail-route";
+import NewHoldout from "@/pages/revenue/attribution/new-holdout";
+import AttributionSettingsRoute from "@/pages/revenue/attribution/settings/attribution-settings-route";
+import Benchmarks from "@/pages/revenue/benchmarks";
+import BenchmarksHoldoutsRoute from "@/pages/revenue/benchmarks/holdouts-route";
+import BenchmarksRefusedRoute from "@/pages/revenue/benchmarks/refused-route";
+import BenchmarksLimitsRoute from "@/pages/revenue/benchmarks/limits-route";
+import BenchmarksLikeForLikeRoute from "@/pages/revenue/benchmarks/like-for-like-route";
+import RepeatRateDetailRoute from "@/pages/revenue/benchmarks/repeat-rate-detail-route";
+import NewComparison from "@/pages/revenue/benchmarks/new";
+import BenchmarksSettingsRoute from "@/pages/revenue/benchmarks/settings/benchmarks-settings-route";
 import AiTeammates from "@/pages/ai-teammates";
 import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
 import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
 // import { ProtectedRoute } from "@/route/protected-route";
+import { GuestRoute } from "@/route/guest-route";
 
 export const routes = createBrowserRouter([
   {
@@ -153,8 +189,16 @@ export const routes = createBrowserRouter([
         Component: AuthLayout,
         children: [
           {
-            path: "sign-in",
-            Component: SignIn,
+            Component: GuestRoute,
+            children: [
+              { path: "sign-in", Component: SignIn },
+              { path: "sign-up", Component: SignUp },
+              { path: "verify-otp/:userId", Component: VerifyOtp },
+            ],
+          },
+          {
+            path: "accept-invitation",
+            Component: AcceptInvitation,
           },
         ],
       },
@@ -379,7 +423,20 @@ export const routes = createBrowserRouter([
               },
               {
                 path: "value",
-                Component: Value,
+                children: [
+                  { index: true, Component: Value },
+                  { path: "rooms/:id", Component: ValueRoomDetailRoute },
+                  { path: "cost", Component: ValueCostRoute },
+                  { path: "unmeasurable", Component: ValueUnmeasurableRoute },
+                  { path: "over-time", Component: ValueOverTimeRoute },
+                  { path: "reconciliation", Component: ValueReconciliationRoute },
+                  { path: "board", Component: ValueBoardRoute },
+                  { path: "rates", Component: ValueRatesRoute },
+                ],
+              },
+              {
+                path: "settings/value",
+                Component: ValueSettingsRoute,
               },
               {
                 path: "leakage-map",
@@ -410,6 +467,54 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/funnel",
                 Component: FunnelSettingsRoute,
+              },
+              {
+                path: "scenario",
+                children: [
+                  { index: true, Component: Scenario },
+                  { path: "new", Component: NewScenario },
+                  { path: "actuals", Component: ScenarioActualsRoute },
+                  { path: "blocked", Component: ScenarioBlockedRoute },
+                  { path: "history", Component: ScenarioHistoryRoute },
+                  { path: ":id", Component: ScenarioDetailRoute },
+                ],
+              },
+              {
+                path: "settings/scenario",
+                Component: ScenarioSettingsRoute,
+              },
+              {
+                path: "attribution",
+                children: [
+                  { index: true, Component: Attribution },
+                  { path: "holdouts", Component: AttributionHoldoutsRoute },
+                  { path: "holdouts/new", Component: NewHoldout },
+                  { path: "overlap", Component: AttributionOverlapRoute },
+                  { path: "unattributable", Component: AttributionUnattributableRoute },
+                  { path: "methods", Component: AttributionMethodsRoute },
+                  { path: "disputes/:id", Component: AttributionDisputeDetailRoute },
+                  { path: ":id", Component: AttributionInterventionDetailRoute },
+                ],
+              },
+              {
+                path: "settings/attribution",
+                Component: AttributionSettingsRoute,
+              },
+              {
+                path: "benchmarks",
+                children: [
+                  { index: true, Component: Benchmarks },
+                  { path: "holdouts", Component: BenchmarksHoldoutsRoute },
+                  { path: "refused", Component: BenchmarksRefusedRoute },
+                  { path: "limits", Component: BenchmarksLimitsRoute },
+                  { path: "like-for-like", Component: BenchmarksLikeForLikeRoute },
+                  { path: "new", Component: NewComparison },
+                  { path: ":id", Component: RepeatRateDetailRoute },
+                ],
+              },
+              {
+                path: "settings/benchmarks",
+                Component: BenchmarksSettingsRoute,
               },
               {
                 path: "ai-teammates",

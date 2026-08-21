@@ -36,13 +36,11 @@ export const CURRENCY_BASE_URL = `${API_BASE_URL}/api/flolyt/currency`;
 export const API_ENDPOINTS = {
   USER: {
     REGISTER: `${API_BASE_URL}/api/users/registration/register`,
-    SIGN_IN: `${USER_BASE_URL}/login`,
-    VERIFY_OTP: `${API_BASE_URL}/api/users/registration/{userId}/confirm`,
-    SET_PASSWORD: `${API_BASE_URL}/api/users/registration/{userId}/password`,
+    CONFIRM_REGISTRATION: `${API_BASE_URL}/api/users/registration/{userId}/confirm`,
+    RESEND_OTP: `${API_BASE_URL}/api/users/registration/resend-otp`,
+    REQUEST_LOGIN_CODE: `${USER_BASE_URL}/login/request-code`,
+    VERIFY_LOGIN_CODE: `${USER_BASE_URL}/login/verify-code`,
     CREATE_COMPANY: `${API_BASE_URL}/api/flolyt/company`,
-    FORGOT_PASSWORD: `${USER_BASE_URL}/forgot-password`,
-    RECOVER_PASSWORD: `${USER_BASE_URL}/recover-password`,
-    RESEND_OTP: `${API_BASE_URL}//api/users/registration/resend-otp`,
     GET_USER_BY_EMAIL: `${API_BASE_URL}/api/users/registration/{email}`,
     REFRESH_TOKEN: `${USER_BASE_URL}/token/refresh`,
     LOGOUT: `${USER_BASE_URL}/logout`,

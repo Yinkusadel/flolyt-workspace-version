@@ -1,5 +1,7 @@
 import axios from "axios";
-import { API_ENDPOINTS } from "@//config/apiConfig";
+import { axiosInstance } from "@/services/index.service";
+import { API_ENDPOINTS } from "@/config/apiConfig";
+import { getServerErrorMessage } from "@/services/get-server-error";
 
 export interface UserDto {
   id: string;
@@ -22,17 +24,15 @@ const {
 
 export const getUserByEmail = async (email: string): Promise<GetUserByEmailResponse> => {
   try {
-    const response = await axios.get<GetUserByEmailResponse>(
-      GET_USER_BY_EMAIL.replace("{email}", encodeURIComponent(email)),
-      {
-        headers: { "Content-Type": "application/json" },
-      }
+    const response = await axiosInstance.get<GetUserByEmailResponse>(
+      GET_USER_BY_EMAIL.replace("{email}", encodeURIComponent(email))
     );
 
     return response.data;
   } catch (error: unknown) {
-    if (axios.isAxiosError(error) && error.response) {
-      throw new Error(error.response.data?.message || "Failed to fetch user by email");
+    if (axios.isAxiosError(error)) {
+      const serverMessage = error.response ? getServerErrorMessage(error.response.data) : null;
+      throw new Error(serverMessage || "Failed to fetch user by email");
     }
     throw new Error(
       "No response from server. Please check your internet connection and try again."

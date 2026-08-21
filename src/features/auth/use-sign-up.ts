@@ -67,7 +67,9 @@ const useSignUp = (options?: UseSignUpOptions) => {
             // Resend OTP
             await resendOtpAsync({ email: user.email });
             toast.success("OTP has been resent. Please complete registration.");
-            navigate(`/auth/verify-otp/${user.id}`, { replace: true });
+            navigate(`/auth/verify-otp/${user.id}?email=${encodeURIComponent(user.email)}`, {
+              replace: true,
+            });
           } else {
             toast.error("This email is already registered. Please log in.");
             navigate("/auth/sign-in");
