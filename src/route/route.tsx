@@ -174,7 +174,7 @@ import BusinessMemory from "@/pages/business-memory";
 import Segments from "@/pages/segments";
 import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
-import { ProtectedRoute } from "@/route/protected-route";
+// import { ProtectedRoute } from "@/route/protected-route";
 import { GuestRoute } from "@/route/guest-route";
 
 export const routes = createBrowserRouter([
@@ -204,7 +204,7 @@ export const routes = createBrowserRouter([
       },
       {
         path: "/",
-        Component: ProtectedRoute,
+        // Component: ProtectedRoute,
         children: [
           {
             Component: AppLayout,
