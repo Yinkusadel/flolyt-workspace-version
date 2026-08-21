@@ -152,6 +152,13 @@ import ValueReconciliationRoute from "@/pages/revenue/value/reconciliation-route
 import ValueBoardRoute from "@/pages/revenue/value/board-route";
 import ValueRatesRoute from "@/pages/revenue/value/rates-route";
 import ValueSettingsRoute from "@/pages/revenue/value/settings/value-settings-route";
+import Forecast from "@/pages/revenue/forecast";
+import ForecastBlockedRoute from "@/pages/revenue/forecast/blocked-route";
+import ForecastActualsRoute from "@/pages/revenue/forecast/actuals-route";
+import ForecastHistoryRoute from "@/pages/revenue/forecast/history-route";
+import ForecastStageDetailRoute from "@/pages/revenue/forecast/stage-detail-route";
+import NewReForecast from "@/pages/revenue/forecast/re-forecast";
+import ForecastSettingsRoute from "@/pages/revenue/forecast/settings/forecast-settings-route";
 import Attribution from "@/pages/revenue/attribution";
 import AttributionHoldoutsRoute from "@/pages/revenue/attribution/holdouts-route";
 import AttributionOverlapRoute from "@/pages/revenue/attribution/overlap-route";
@@ -489,6 +496,21 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/scenario",
                 Component: ScenarioSettingsRoute,
+              },
+              {
+                path: "forecast",
+                children: [
+                  { index: true, Component: Forecast },
+                  { path: "blocked", Component: ForecastBlockedRoute },
+                  { path: "actuals", Component: ForecastActualsRoute },
+                  { path: "history", Component: ForecastHistoryRoute },
+                  { path: ":stage/re-forecast", Component: NewReForecast },
+                  { path: ":stage", Component: ForecastStageDetailRoute },
+                ],
+              },
+              {
+                path: "settings/forecast",
+                Component: ForecastSettingsRoute,
               },
               {
                 path: "attribution",
