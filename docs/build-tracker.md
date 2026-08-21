@@ -935,7 +935,7 @@ Experiments, Replies — all five sections built).
 | 45 | leakage map accounts | [x] | | Superseded — same rebuild, see section 6a; the export has no separate "accounts mode", unlike Expand's own account view |
 | 46 | involuntary churn/dunning | [ ] | | |
 | 47 | revenue forecast | [ ] | | |
-| 48 | business memory | [x] | | `/business-memory` — static mock data in `src/pages/business-memory/data.ts`; search + filter pills (Validated/Observed/Superseded/Account-scoped) are real client-side state, not just decorative |
+| 48 | business memory | [x] | | Superseded — rebuilt as `/business-memory` from the newer `flolyt-business-memory` export, see section 6g |
 | 49 | customer profile consumer | [ ] | | |
 | 50 | customer profile account | [ ] | | |
 
@@ -1435,6 +1435,88 @@ component was needed (this section is table- and hero-driven, not bar-chart-driv
 | Settings | [x] | `settings/forecast-settings-route.tsx`, `/settings/forecast` — no in-app entry point yet, same as every other Revenue section's settings page |
 | Sidebar "Forecast" link | [x] | added between "Scenario" and "Attribution" with a `LineChart` icon — this section's own build request flagged it as missing |
 | `tsc -b` clean + dev server route sweep (10 routes incl. a not-found `:stage`) + both modals click-tested + wizard step-1→2→save click-tested through to the toast+navigate + `empty`/`first` mock states swept individually by temporarily flipping and reverting | [x] | Verified 2026-08-21 |
+
+## 6g. Business memory
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Knowledge Screens/flolyt-business-memory/flolyt-business-memory/` (18 frames,
+ME01–ME18), superseding kit-122's frame 48 ("business memory" — see section 6's note, row 937).
+This is the first section of a brand-new **Knowledge** group, sibling to Every day/Revenue/
+Customers — the sidebar's KNOWLEDGE group already listed all four of its sections (Business
+memory, Playbooks, Community, Recognition) pointing at their flat routes before any of them were
+built; three more sections (Playbooks, Community, Recognition) are documented as sibling folders
+in the same `Knowledge Screens/` export, not yet built. Kept under this tracker's old section-6
+numbering (not a new top-level "Knowledge" section number) purely to match this file's own
+convention of anchoring a rebuild's letter to whichever legacy kit-122 range it superseded — the
+same reason Handoff (an Every day sidebar section) sits under legacy section 7 rather than 3.
+Content was transcribed from the export's own `me.py` generator source (plus shared `know.py`
+sidebar chrome), same "read the `.py`, don't parse the SVG" approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/knowledge/business-memory/` (folder nests under `src/pages/knowledge/` purely to
+mirror the sidebar's KNOWLEDGE group, same as `pages/customers/*` and `pages/revenue/*`), but
+mounts at the flat `/business-memory` — no `/knowledge` prefix, and not the export's own
+`/knowledge/memory` footer route either. This exactly reused the old superseded page's route, so
+no sidebar change was needed. Settings is `/settings/business-memory`, outside the
+`/business-memory` tree, matching `/settings/leakage-map`.
+
+**Architecture — index-branching on a query param first, then a mock flag:**
+- `/business-memory` (`index.tsx`) is ONE route covering ME01 (no room has closed yet), ME02
+  (the first learning, written by a room that claimed ₦0), ME03 (the default "all 61 learnings"
+  table), and ME08 (`?q=`, search — the one state with no tab bar). `q` is checked first, then
+  `MEMORY_STATE` (a 3-value mock flag defaulting to `"full"`) branches ME01/ME02/ME03 — ME01/ME02
+  are wired but unreachable with that default, same "not wired, no demo state currently triggers
+  it" situation as every prior rebuild's empty/edge states.
+- `/business-memory/superseded` (ME05), `/constraints` (ME06), `/challenged` (ME09), `/questions`
+  (ME10), and `/review` (ME14) are standalone sibling routes sharing the same 6-tab bar
+  (`tabs.tsx`, underline style per the house rule — not the export's own pill-tab rendering) as
+  the index's "Learnings" state.
+- `/business-memory/sources` (ME07, "Where these come from") and `/business-memory/undocumented`
+  (ME11, "Not written down" — Peter Kariuki's four-day departure countdown, reusing `PersonDot`
+  and the same hero-banner shape as Handoff's `/settings/departures`) are standalone routes with
+  their own header and no tab bar, reached via crumb/in-app links rather than a tab.
+- `/business-memory/new` (`new/index.tsx`) is the 2-step "Write a learning" wizard (ME12 the claim
+  → ME13 scope and evidence). Step position lives in `?step=`, not local `useState`, per the
+  since-adopted URL-over-state rule for wizards.
+- `/business-memory/:id` (`learning-detail-route.tsx`) only has one built reference row: ME04
+  (`first-order-discount`) — every other id falls back to a not-found state, same "one/two
+  reference rows" pattern as every prior section's `:id` route. Reachable from the Learnings
+  table's row link.
+- **ME15/ME16 are two bespoke modals**, each hardcoded to the one row the export shows it opened
+  against — `cite-a-learning-modal.tsx` ("Unsubscribes fell 41% after the cadence change," wired
+  from the Learnings table) and `supersede-a-learning-modal.tsx` ("Reactivation works best on a
+  Thursday," wired from the Superseded table) — via a `rowAction` field set on exactly those two
+  rows, same "only this row has a wired row action" pattern as Segments' SG12/13/14.
+- ME18 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Learnings table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** Kunle, Tunde, Zainab
+(`CHALLENGED_ROWS`) and Repeat & Decay/Orchestrator (`REVIEW_ROWS`) are exact matches for
+`KUNLE`/`TUNDE`/`ZAINAB`/`REPEAT_DECAY`/`ORCHESTRATOR` in `rooms/data.ts`; Peter Kariuki
+(`ME11_HERO`) is an exact match for `PETER` in `digest/data.ts` — all reused directly, zero new
+`PersonRef`s needed. One new `AgentRef` was needed (`ACTIVATION`, "AC") — not on the existing
+rooms/lifecycle roster, added locally to this section's own `data.ts` rather than the shared
+roster, same precedent as Digest's locally-added East Africa CS people. `Callout`, `Chip`/
+`CHIP_INTERACTIVE_CLASS`, `KpiCards`, `StageSubpageHeader`, `PersonDot`/`AgentDot`, and
+`usePageBreadcrumb` were all reused from `lifecycle/stage/`, `rooms/actor.tsx`, and the shared
+breadcrumb context with zero forking. A local `BusinessMemoryKvList` (`kv-list.tsx`) and a new
+`QuoteCard` (`quote-card.tsx`, the serif-face "a learning stated as a sentence" card used on
+ME02/ME04/first-learning) were written fresh — the quote card's left accent strand from the
+export's own `quote()` python helper was flattened per the house "no card strands" rule.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing learned yet / first learning / all 61 / search | [x] | `index.tsx` + `states/*.tsx`. ME01/ME02 wired but unreachable with `MEMORY_STATE`'s current default |
+| One learning (`:id`) | [x] | `learning-detail-route.tsx` — only `first-order-discount` built, every other id falls back to not-found |
+| Superseded / Constraints / Challenged / Open questions / Due for review | [x] | `superseded-route.tsx`, `constraints-route.tsx`, `challenged-route.tsx`, `questions-route.tsx`, `review-route.tsx`, all sharing `tabs.tsx` |
+| Where these come from / Not written down | [x] | `sources-route.tsx` (`/business-memory/sources`), `undocumented-route.tsx` (`/business-memory/undocumented`) — both standalone, no tab bar |
+| Write a learning (wizard) | [x] | `new/index.tsx` + `step-claim.tsx`/`step-scope.tsx`/`step-rail.tsx`, `?step=`, `/business-memory/new` |
+| Cite a learning / Supersede a learning (modals) | [x] | `modals/cite-a-learning-modal.tsx`, `modals/supersede-a-learning-modal.tsx` — each wired via `rowAction` on one table row |
+| Settings | [x] | `settings/business-memory-settings-route.tsx`, `/settings/business-memory` |
+| Sidebar "Business memory" link | [x] | pre-existing KNOWLEDGE-group stub already correctly pointed at `/business-memory` |
+| Old `src/pages/business-memory/` (kit-122 static mock) removed | [x] | Fully superseded, zero remaining references |
+| `tsc -b` clean + dev server + 13-route Playwright console/page-error sweep + both modals click-tested | [x] | Verified 2026-08-21 |
 
 ## 7. Teams (51–58)
 

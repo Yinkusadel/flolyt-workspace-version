@@ -174,7 +174,17 @@ import RepeatRateDetailRoute from "@/pages/revenue/benchmarks/repeat-rate-detail
 import NewComparison from "@/pages/revenue/benchmarks/new";
 import BenchmarksSettingsRoute from "@/pages/revenue/benchmarks/settings/benchmarks-settings-route";
 import AiTeammates from "@/pages/ai-teammates";
-import BusinessMemory from "@/pages/business-memory";
+import BusinessMemory from "@/pages/knowledge/business-memory";
+import LearningDetailRoute from "@/pages/knowledge/business-memory/learning-detail-route";
+import SupersededRoute from "@/pages/knowledge/business-memory/superseded-route";
+import ConstraintsRoute from "@/pages/knowledge/business-memory/constraints-route";
+import ChallengedRoute from "@/pages/knowledge/business-memory/challenged-route";
+import QuestionsRoute from "@/pages/knowledge/business-memory/questions-route";
+import ReviewRoute from "@/pages/knowledge/business-memory/review-route";
+import SourcesRoute from "@/pages/knowledge/business-memory/sources-route";
+import UndocumentedRoute from "@/pages/knowledge/business-memory/undocumented-route";
+import NewLearning from "@/pages/knowledge/business-memory/new";
+import BusinessMemorySettingsRoute from "@/pages/knowledge/business-memory/settings/business-memory-settings-route";
 import Segments from "@/pages/customers/segments";
 import SegmentsReachabilityRoute from "@/pages/customers/segments/reachability-route";
 import SegmentsOverlapRoute from "@/pages/customers/segments/overlap-route";
@@ -576,7 +586,22 @@ export const routes = createBrowserRouter([
               },
               {
                 path: "business-memory",
-                Component: BusinessMemory,
+                children: [
+                  { index: true, Component: BusinessMemory },
+                  { path: "new", Component: NewLearning },
+                  { path: "superseded", Component: SupersededRoute },
+                  { path: "constraints", Component: ConstraintsRoute },
+                  { path: "challenged", Component: ChallengedRoute },
+                  { path: "questions", Component: QuestionsRoute },
+                  { path: "review", Component: ReviewRoute },
+                  { path: "sources", Component: SourcesRoute },
+                  { path: "undocumented", Component: UndocumentedRoute },
+                  { path: ":id", Component: LearningDetailRoute },
+                ],
+              },
+              {
+                path: "settings/business-memory",
+                Component: BusinessMemorySettingsRoute,
               },
               {
                 path: "segments",
