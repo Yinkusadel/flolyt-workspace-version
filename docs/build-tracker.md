@@ -539,9 +539,9 @@ colors for all 5 so adding a demo room later needs no template change.
 | 36 | segments | [x] | | `/segments` — static mock data in `src/pages/segments/data.ts`. Segments table is a plain `<table>` in `overflow-x-auto` (matches log-tab.tsx's pattern); on mobile that scrolls Size/30-day change/Used by off-screen with no scroll affordance — flagged to user, not yet fixed |
 | 37 | audience builder | [ ] | | |
 | 38 | audience at scale | [ ] | | |
-| 39 | campaign studio | [ ] | | |
-| 40 | campaigns index | [ ] | | |
-| 41 | campaign send monitor | [ ] | | |
+| 39 | campaign studio | [x] | | Superseded — rebuilt as `/campaigns/new` from the newer `flolyt-campaigns` export, see section 5c |
+| 40 | campaigns index | [x] | | Superseded — rebuilt as `/campaigns` from the newer `flolyt-campaigns` export, see section 5c |
+| 41 | campaign send monitor | [x] | | Superseded — rebuilt as `/campaigns/sent` + `/campaigns/history` from the newer `flolyt-campaigns` export, see section 5c |
 | 42 | campaign performance/lift | [ ] | | |
 | 43 | experiment detail | [ ] | | |
 
@@ -692,6 +692,86 @@ as every prior section.
 | Sidebar "Customer health" link | [x] | pre-existing stub already correctly pointed at `/customer-health` |
 | `tsc -p tsconfig.app.json` clean + dev server + 12-route Playwright console/page-error sweep + 3-modal click-test + mobile viewport check | [x] | Verified 2026-08-21 |
 | Cherry-picked onto `archive/mock-data` | [x] | See below |
+
+## 5c. Campaigns
+
+**Built from scratch on 2026-08-21** from
+`flolyt-figma-designs/Customers Screens/flolyt-campaigns/flolyt-campaigns/` (18 frames,
+CP01–CP18), the third section of the Customers group, sibling to Segments and Customer health.
+Content was transcribed from the export's own `cp.py` generator source (same "read the `.py`,
+don't parse the SVG" approach as every prior section); `cust.py` is the same shared Customers
+sidebar-chrome script Segments and Customer health already used. CP00 is an index/route-map frame,
+not a product screen.
+
+**Route stays flat, per the established rule**: lives on disk at
+`src/pages/customers/campaigns/` (mirrors the sidebar CUSTOMERS group) but mounts at the flat
+`/campaigns` — no `/customers` prefix — matching `/segments` and `/customer-health`. Settings is
+`/settings/campaigns`, outside the `/campaigns` tree, matching `/settings/customer-health`.
+
+**Architecture — index-branching on a mock flag only, no query-param tab this time:**
+- `/campaigns` (`src/pages/customers/campaigns/index.tsx`) is ONE route covering CP01 (nothing
+  sent yet), CP02 (the first campaign, 20-minutes-scale), and CP03 (the default "Running now"
+  table). `CAMPAIGNS_STATE` (a 3-value mock flag defaulting to `"full"`) branches between them —
+  CP01/CP02 are wired but unreachable with that default, same "not wired, no demo state currently
+  triggers it" situation as every prior rebuild's empty/edge states. Unlike Segments/Customer
+  health, there's no extra query-param-branched tab at the index (no `?q=` or `?by=` frame in this
+  export).
+- `/campaigns/audiences` (CP05), `/campaigns/waiting` (CP06), `/campaigns/suppressed` (CP07), and
+  `/campaigns/sent` (CP08) are standalone sibling routes sharing the same 6-tab bar (`tabs.tsx`) as
+  the index's "Running" state.
+- **`/campaigns/history` has no dedicated frame in the export** — `TABS` in `cp.py` lists six tabs
+  but `S.save()` is only ever called for the other five. Same "tab with no frame" gap Scenario hit
+  with its own History tab (see [[flolyt_scenario_rebuild]]). Built anyway, grounded in CP17's own
+  "every change is logged, in the campaign log" line, widened into a chronological log of sends,
+  approvals, incidents and standing-authority changes.
+- `/campaigns/new` (`new/index.tsx`) is the 4-step "New campaign" wizard (CP09 who it reaches →
+  CP10 what it says → CP11 guardrails → CP12 review). Step position lives in `?step=`, per
+  [[url_param_over_state_for_page_flow]], same rule Segments' wizard established. Note: CP10's own
+  footer CTA is labelled "Fix the copy" rather than "Next" — it still advances the wizard to step 3
+  like every other step's CTA; the label is flavor text for that step's blocking-check content, not
+  a different action. (Caught in click-testing: the first pass treated it as a non-advancing action
+  and stranded the wizard at step 2 — fixed before landing.)
+- `/campaigns/:id` (`campaign-detail-route.tsx`) only has one built reference row: CP04
+  (`reactivation-1`) — every other id falls back to a not-found state, same "one/two reference
+  rows" pattern as every prior section's `:id`. CP03's own table draws every campaign name as plain
+  text, so the "wave one" row's name was made a link to keep the route reachable in-app, per
+  [[flag_unreachable_routes]] — same treatment as Segments' all-segments table.
+- `/campaigns/incidents/:id` (`incident-detail-route.tsx`) only has one built reference row: CP16
+  (`1`, "When a send goes wrong") — every other id falls back to not-found.
+- **CP13/CP14/CP15 are three bespoke modals.** `stop-a-campaign-modal.tsx` ("Reactivation · wave
+  one") is wired via a `rowAction` field on that one Running-table row's state chip, same pattern
+  as Segments' `rowAction`. `approve-a-campaign-modal.tsx` ("Reactivation · wave four") and
+  `raise-a-standing-authority-modal.tsx` (Ada's reactivation grant) both open from the Waiting
+  route's header — two separate header buttons for two separate frame CTAs, same "two CTAs on one
+  page" precedent Customer health's HL07 established, used here because CP13 and CP14 solve two
+  different problems for the one waiting campaign (approve it directly, or raise the cap that's
+  blocking it) rather than two different frames' CTAs disagreeing about one screen.
+- CP18 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Running table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading before reusing:** six of the seven named people in this
+export (Ifeoma, Ravi, Ada, Tunde, Amara — Zainab only appears as a plain string) are exact matches
+for `rooms/data.ts`'s existing `PersonRef`s; two agents (Repeat & Decay, Involuntary Churn) also
+matched existing `AgentRef`s. One new agent was needed and added locally rather than to
+`rooms/data.ts`: `PRODUCT_REASON` ("PR"), CP01's third proposal — not referenced anywhere in Rooms.
+`Chip`, `CHIP_INTERACTIVE_CLASS`, `Callout`, `KpiCards`, `PersonAvatar`, and `StageSubpageHeader`
+were all reused with zero forking. A local `CampaignsKvList` (`kv-list.tsx`) and `SuppressedBar`
+(`suppressed-bar.tsx`, a structural copy of Customer health's `CoverageBar`) were written per
+section, same "own tone vocabulary" precedent as every prior section.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing sent / first campaign / running now | [x] | `src/pages/customers/campaigns/index.tsx` + `states/*.tsx`. CP01/CP02 wired but unreachable with `CAMPAIGNS_STATE`'s current default |
+| Audiences / Waiting / Suppressed / Sent | [x] | `audiences-route.tsx`, `waiting-route.tsx`, `suppressed-route.tsx`, `sent-route.tsx` |
+| History (no dedicated frame) | [x] | `history-route.tsx`, grounded in CP17's "campaign log" line |
+| New campaign wizard | [x] | `new/index.tsx` + `new/step-*.tsx`, `/campaigns/new`, step position in `?step=` |
+| One campaign (`:id`) | [x] | `campaign-detail-route.tsx` — only `reactivation-1` built, every other id falls back to not-found |
+| One incident (`incidents/:id`) | [x] | `incident-detail-route.tsx` — only `1` built, every other id falls back to not-found |
+| Approve / Raise a standing authority / Stop a campaign (modals) | [x] | `modals/*.tsx` — stop wired via `rowAction` on the Running table, approve/standing wired from the Waiting route's two header buttons |
+| Settings | [x] | `settings/campaigns-settings-route.tsx`, `/settings/campaigns` |
+| Sidebar "Campaigns" link | [x] | pre-existing stub already correctly pointed at `/campaigns` |
+| `tsc -p tsconfig.app.json` clean + dev server + 15-route Playwright console/page-error sweep + 3-modal click-test + full 4-step wizard click-through + mobile viewport check | [x] | Verified 2026-08-21 |
 
 ## 6. Revenue surfaces (44–50)
 
