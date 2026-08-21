@@ -59,13 +59,19 @@ export function TheMapState() {
 
   return (
     <div className="space-y-8">
-      <LeaksTabs active="The map" />
-
-      <div className="flex items-center justify-end">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-[17px] font-semibold text-ink">Leakage map</h1>
+          <p className="mt-1 text-[11.5px] text-ink-3">
+            ₦1.08B lost since 4 March · ₦1.11B still at stake · ₦411M recovered
+          </p>
+        </div>
         <Button type="button" size="sm" onClick={() => setModal("open-room")}>
           Open a room
         </Button>
       </div>
+
+      <LeaksTabs active="The map" />
 
       <KpiCards
         items={[
