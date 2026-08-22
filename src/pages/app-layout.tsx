@@ -364,6 +364,20 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   }
 
   if (pathname === "/ai-teammates") return "AI teammates";
+  if (pathname === "/ai-teammates/coverage")
+    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Coverage" }]);
+  if (pathname === "/ai-teammates/runs")
+    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Reading now" }]);
+  if (pathname === "/ai-teammates/conflicts")
+    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Disagreements" }]);
+  if (pathname === "/ai-teammates/paused")
+    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Paused" }]);
+  if (pathname === "/ai-teammates/cost")
+    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "What they cost" }]);
+  if (pathname === "/ai-teammates/record")
+    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Their record" }]);
+  if (pathname === "/settings/ai-teammates")
+    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Settings" }]);
 
   if (pathname === "/business-memory") return "Business memory";
 
