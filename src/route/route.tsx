@@ -210,6 +210,13 @@ import GovernanceIncidentDetailRoute from "@/pages/agents/governance/incident-de
 import GovernanceExportRoute from "@/pages/agents/governance/export-route";
 import GovernanceLimitsRoute from "@/pages/agents/governance/limits-route";
 import GovernanceSettingsRoute from "@/pages/agents/governance/settings/governance-settings-route";
+import AgentBuilder from "@/pages/agents/agent-builder";
+import NewAgent from "@/pages/agents/agent-builder/new";
+import AgentBuilderWaitingForApprovalRoute from "@/pages/agents/agent-builder/waiting-for-approval-route";
+import AgentBuilderTestRunsRoute from "@/pages/agents/agent-builder/test-runs-route";
+import AgentBuilderRetiredRoute from "@/pages/agents/agent-builder/retired-route";
+import AgentBuilderAgentDetailRoute from "@/pages/agents/agent-builder/agent-detail-route";
+import AgentBuilderSettingsRoute from "@/pages/agents/agent-builder/settings/agent-builder-settings-route";
 import BusinessMemory from "@/pages/knowledge/business-memory";
 import LearningDetailRoute from "@/pages/knowledge/business-memory/learning-detail-route";
 import SupersededRoute from "@/pages/knowledge/business-memory/superseded-route";
@@ -862,6 +869,21 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/governance",
                 Component: GovernanceSettingsRoute,
+              },
+              {
+                path: "agent-builder",
+                children: [
+                  { index: true, Component: AgentBuilder },
+                  { path: "new", Component: NewAgent },
+                  { path: "waiting-for-approval", Component: AgentBuilderWaitingForApprovalRoute },
+                  { path: "test-runs", Component: AgentBuilderTestRunsRoute },
+                  { path: "retired", Component: AgentBuilderRetiredRoute },
+                  { path: ":id", Component: AgentBuilderAgentDetailRoute },
+                ],
+              },
+              {
+                path: "settings/agent-builder",
+                Component: AgentBuilderSettingsRoute,
               },
             ],
           },
