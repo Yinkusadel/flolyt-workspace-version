@@ -197,6 +197,19 @@ import MarketplaceListingDetailRoute from "@/pages/agents/marketplace/listing-de
 import MarketplaceUpdateRoute from "@/pages/agents/marketplace/update-route";
 import MarketplaceRefusedRoute from "@/pages/agents/marketplace/refused-route";
 import MarketplaceSettingsRoute from "@/pages/agents/marketplace/settings/marketplace-settings-route";
+import Governance from "@/pages/agents/governance";
+import GovernanceEntryDetailRoute from "@/pages/agents/governance/entry-detail-route";
+import GovernanceCapabilityRoute from "@/pages/agents/governance/capability-route";
+import GovernanceAccessRoute from "@/pages/agents/governance/access-route";
+import GovernanceAgentAccessRoute from "@/pages/agents/governance/agent-access-route";
+import GovernancePermissionsRoute from "@/pages/agents/governance/permissions-route";
+import GovernanceSpendRoute from "@/pages/agents/governance/spend-route";
+import GovernanceCapRoute from "@/pages/agents/governance/cap-route";
+import GovernanceReviewsRoute from "@/pages/agents/governance/reviews-route";
+import GovernanceIncidentDetailRoute from "@/pages/agents/governance/incident-detail-route";
+import GovernanceExportRoute from "@/pages/agents/governance/export-route";
+import GovernanceLimitsRoute from "@/pages/agents/governance/limits-route";
+import GovernanceSettingsRoute from "@/pages/agents/governance/settings/governance-settings-route";
 import BusinessMemory from "@/pages/knowledge/business-memory";
 import LearningDetailRoute from "@/pages/knowledge/business-memory/learning-detail-route";
 import SupersededRoute from "@/pages/knowledge/business-memory/superseded-route";
@@ -278,7 +291,6 @@ import RepliesUseRoute from "@/pages/customers/replies/use-route";
 import ConversationDetailRoute from "@/pages/customers/replies/conversation-detail-route";
 import ReplyAnswerRoute from "@/pages/customers/replies/answer-route";
 import RepliesSettingsRoute from "@/pages/customers/replies/settings/replies-settings-route";
-import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
 // import { ProtectedRoute } from "@/route/protected-route";
 import { GuestRoute } from "@/route/guest-route";
@@ -832,7 +844,24 @@ export const routes = createBrowserRouter([
               },
               {
                 path: "governance",
-                Component: Governance,
+                children: [
+                  { index: true, Component: Governance },
+                  { path: "access", Component: GovernanceAccessRoute },
+                  { path: "access/:id", Component: GovernanceAgentAccessRoute },
+                  { path: "permissions", Component: GovernancePermissionsRoute },
+                  { path: "spend", Component: GovernanceSpendRoute },
+                  { path: "cap", Component: GovernanceCapRoute },
+                  { path: "reviews", Component: GovernanceReviewsRoute },
+                  { path: "incidents/:id", Component: GovernanceIncidentDetailRoute },
+                  { path: "capability", Component: GovernanceCapabilityRoute },
+                  { path: "export", Component: GovernanceExportRoute },
+                  { path: "limits", Component: GovernanceLimitsRoute },
+                  { path: ":id", Component: GovernanceEntryDetailRoute },
+                ],
+              },
+              {
+                path: "settings/governance",
+                Component: GovernanceSettingsRoute,
               },
             ],
           },

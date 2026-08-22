@@ -14,6 +14,7 @@ import { FC_DETAIL_TITLES } from "@/pages/revenue/forecast/data";
 import { ATTRIBUTION_DETAIL_TITLES } from "@/pages/revenue/attribution/data";
 import { BM_DETAIL_TITLES } from "@/pages/revenue/benchmarks/data";
 import { MARKETPLACE_LISTING_TITLES } from "@/pages/agents/marketplace/data";
+import { GOVERNANCE_ACCESS_TITLES, GOVERNANCE_ENTRY_TITLES } from "@/pages/agents/governance/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -409,6 +410,47 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   if (pathname === "/recognition") return "Recognition";
 
   if (pathname === "/governance") return "Governance";
+  if (pathname === "/governance/access")
+    return renderCrumbs([{ label: "Governance", to: "/governance" }, { label: "Data access" }]);
+  if (pathname === "/governance/permissions")
+    return renderCrumbs([{ label: "Governance", to: "/governance" }, { label: "Permissions" }]);
+  if (pathname === "/governance/spend")
+    return renderCrumbs([{ label: "Governance", to: "/governance" }, { label: "Spend" }]);
+  if (pathname === "/governance/reviews")
+    return renderCrumbs([{ label: "Governance", to: "/governance" }, { label: "Reviews" }]);
+
+  const governanceIncidentMatch = /^\/governance\/incidents\/([^/]+)$/.exec(pathname);
+  if (governanceIncidentMatch) {
+    return renderCrumbs([{ label: "Governance", to: "/governance" }, { label: "Incidents" }]);
+  }
+
+  const governanceAccessMatch = /^\/governance\/access\/([^/]+)$/.exec(pathname);
+  if (governanceAccessMatch) {
+    const title = GOVERNANCE_ACCESS_TITLES[governanceAccessMatch[1]] ?? governanceAccessMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/governance/access" className="hover:text-ink">
+          Data access
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  const governanceEntryMatch = /^\/governance\/([^/]+)$/.exec(pathname);
+  if (governanceEntryMatch) {
+    const title = GOVERNANCE_ENTRY_TITLES[governanceEntryMatch[1]] ?? governanceEntryMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/governance" className="hover:text-ink">
+          Governance
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
 
   return "Home";
 }
