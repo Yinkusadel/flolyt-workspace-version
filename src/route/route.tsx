@@ -188,6 +188,15 @@ import AiTeammatesBoundaryRoute from "@/pages/agents/ai-teammates/boundary-route
 import AiTeammatesSteeringRoute from "@/pages/agents/ai-teammates/steering-route";
 import AiTeammatesAdvocateRoute from "@/pages/agents/ai-teammates/advocate-route";
 import AiTeammatesSettingsRoute from "@/pages/agents/ai-teammates/settings/ai-teammates-settings-route";
+import Marketplace from "@/pages/agents/marketplace";
+import MarketplaceInstalledRoute from "@/pages/agents/marketplace/installed-route";
+import MarketplacePublishersRoute from "@/pages/agents/marketplace/publishers-route";
+import MarketplaceWhatArrivesRoute from "@/pages/agents/marketplace/what-arrives-route";
+import MarketplaceRequestedRoute from "@/pages/agents/marketplace/requested-route";
+import MarketplaceListingDetailRoute from "@/pages/agents/marketplace/listing-detail-route";
+import MarketplaceUpdateRoute from "@/pages/agents/marketplace/update-route";
+import MarketplaceRefusedRoute from "@/pages/agents/marketplace/refused-route";
+import MarketplaceSettingsRoute from "@/pages/agents/marketplace/settings/marketplace-settings-route";
 import BusinessMemory from "@/pages/knowledge/business-memory";
 import LearningDetailRoute from "@/pages/knowledge/business-memory/learning-detail-route";
 import SupersededRoute from "@/pages/knowledge/business-memory/superseded-route";
@@ -647,6 +656,23 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/ai-teammates",
                 Component: AiTeammatesSettingsRoute,
+              },
+              {
+                path: "marketplace",
+                children: [
+                  { index: true, Component: Marketplace },
+                  { path: "installed", Component: MarketplaceInstalledRoute },
+                  { path: "publishers", Component: MarketplacePublishersRoute },
+                  { path: "what-arrives", Component: MarketplaceWhatArrivesRoute },
+                  { path: "requested", Component: MarketplaceRequestedRoute },
+                  { path: "installed/update", Component: MarketplaceUpdateRoute },
+                  { path: "refused", Component: MarketplaceRefusedRoute },
+                  { path: ":id", Component: MarketplaceListingDetailRoute },
+                ],
+              },
+              {
+                path: "settings/marketplace",
+                Component: MarketplaceSettingsRoute,
               },
               {
                 path: "business-memory",
