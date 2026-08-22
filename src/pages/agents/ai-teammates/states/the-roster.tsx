@@ -10,7 +10,7 @@ import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { AgentCell } from "@/pages/agents/ai-teammates/agent-cell";
 import { TeammatesTabs } from "@/pages/agents/ai-teammates/tabs";
 import { PauseAgentModal } from "@/pages/agents/ai-teammates/modals/pause-agent-modal";
-import { PR, TM03_ROWS, TM03_STATS, TM_CHIP_TONE, TM_KPI_TONE, TM_TONE_CLASS } from "@/pages/agents/ai-teammates/data";
+import { PR, RD, TM03_ROWS, TM03_STATS, TM_CHIP_TONE, TM_KPI_TONE, TM_TONE_CLASS } from "@/pages/agents/ai-teammates/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 
@@ -60,7 +60,7 @@ export function TheRosterState() {
               {TM03_ROWS.map((row) => (
                 <tr key={row.agent.initials} className="border-b border-line last:border-0">
                   <td className="px-4 py-3">
-                    <AgentCell agent={row.agent} />
+                    <AgentCell agent={row.agent} href={row.agent.initials === RD.initials ? "/agent-detail" : undefined} />
                   </td>
                   <td className="px-4 py-3 text-ink-3">{row.watches}</td>
                   <td className="px-4 py-3 text-right text-ink-4">{row.role}</td>

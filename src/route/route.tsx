@@ -214,6 +214,18 @@ import AgentBuilderTestRunsRoute from "@/pages/agents/agent-builder/test-runs-ro
 import AgentBuilderRetiredRoute from "@/pages/agents/agent-builder/retired-route";
 import AgentBuilderAgentDetailRoute from "@/pages/agents/agent-builder/agent-detail-route";
 import AgentBuilderSettingsRoute from "@/pages/agents/agent-builder/settings/agent-builder-settings-route";
+import AgentDetail from "@/pages/agents/agent-detail";
+import AgentDetailConditionsRoute from "@/pages/agents/agent-detail/conditions-route";
+import AgentDetailSourcesRoute from "@/pages/agents/agent-detail/sources-route";
+import AgentDetailFindingsRoute from "@/pages/agents/agent-detail/findings-route";
+import AgentDetailFindingDetailRoute from "@/pages/agents/agent-detail/finding-detail-route";
+import AgentDetailRunsRoute from "@/pages/agents/agent-detail/runs-route";
+import AgentDetailRunDetailRoute from "@/pages/agents/agent-detail/run-detail-route";
+import AgentDetailRecordRoute from "@/pages/agents/agent-detail/record-route";
+import AgentDetailConflictsRoute from "@/pages/agents/agent-detail/conflicts-route";
+import AgentDetailSteeringRoute from "@/pages/agents/agent-detail/steering-route";
+import AgentDetailLimitsRoute from "@/pages/agents/agent-detail/limits-route";
+import AgentDetailSettingsRoute from "@/pages/agents/agent-detail/settings/agent-detail-settings-route";
 import BusinessMemory from "@/pages/knowledge/business-memory";
 import LearningDetailRoute from "@/pages/knowledge/business-memory/learning-detail-route";
 import SupersededRoute from "@/pages/knowledge/business-memory/superseded-route";
@@ -872,6 +884,26 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/agent-builder",
                 Component: AgentBuilderSettingsRoute,
+              },
+              {
+                path: "agent-detail",
+                children: [
+                  { index: true, Component: AgentDetail },
+                  { path: "conditions", Component: AgentDetailConditionsRoute },
+                  { path: "sources", Component: AgentDetailSourcesRoute },
+                  { path: "findings", Component: AgentDetailFindingsRoute },
+                  { path: "findings/:fid", Component: AgentDetailFindingDetailRoute },
+                  { path: "runs", Component: AgentDetailRunsRoute },
+                  { path: "runs/:rid", Component: AgentDetailRunDetailRoute },
+                  { path: "record", Component: AgentDetailRecordRoute },
+                  { path: "conflicts", Component: AgentDetailConflictsRoute },
+                  { path: "steering", Component: AgentDetailSteeringRoute },
+                  { path: "limits", Component: AgentDetailLimitsRoute },
+                ],
+              },
+              {
+                path: "settings/agent-detail",
+                Component: AgentDetailSettingsRoute,
               },
             ],
           },
