@@ -13,6 +13,7 @@ import { SC_DETAIL_TITLES } from "@/pages/revenue/scenario/data";
 import { FC_DETAIL_TITLES } from "@/pages/revenue/forecast/data";
 import { ATTRIBUTION_DETAIL_TITLES } from "@/pages/revenue/attribution/data";
 import { BM_DETAIL_TITLES } from "@/pages/revenue/benchmarks/data";
+import { MARKETPLACE_LISTING_TITLES } from "@/pages/agents/marketplace/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -376,6 +377,30 @@ function getBreadcrumb(pathname: string): React.ReactNode {
     return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "What they cost" }]);
   if (pathname === "/settings/ai-teammates")
     return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Settings" }]);
+
+  if (pathname === "/marketplace") return "Marketplace";
+  if (pathname === "/marketplace/installed")
+    return renderCrumbs([{ label: "Marketplace", to: "/marketplace" }, { label: "Installed" }]);
+  if (pathname === "/marketplace/publishers")
+    return renderCrumbs([{ label: "Marketplace", to: "/marketplace" }, { label: "Publishers" }]);
+  if (pathname === "/marketplace/what-arrives")
+    return renderCrumbs([{ label: "Marketplace", to: "/marketplace" }, { label: "What arrives" }]);
+  if (pathname === "/marketplace/requested")
+    return renderCrumbs([{ label: "Marketplace", to: "/marketplace" }, { label: "Requested" }]);
+
+  const marketplaceListingMatch = /^\/marketplace\/([^/]+)$/.exec(pathname);
+  if (marketplaceListingMatch) {
+    const title = MARKETPLACE_LISTING_TITLES[marketplaceListingMatch[1]] ?? marketplaceListingMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/marketplace" className="hover:text-ink">
+          Marketplace
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
 
   if (pathname === "/business-memory") return "Business memory";
 
