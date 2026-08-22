@@ -16,6 +16,7 @@ import { BM_DETAIL_TITLES } from "@/pages/revenue/benchmarks/data";
 import { MARKETPLACE_LISTING_TITLES } from "@/pages/agents/marketplace/data";
 import { GOVERNANCE_ACCESS_TITLES, GOVERNANCE_ENTRY_TITLES } from "@/pages/agents/governance/data";
 import { AGENT_BUILDER_DETAIL_TITLES } from "@/pages/agents/agent-builder/data";
+import { AN_FINDING_TITLES, AN_RUN_TITLES } from "@/pages/agents/agent-detail/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -468,6 +469,46 @@ function getBreadcrumb(pathname: string): React.ReactNode {
       <span className="flex items-center gap-1.5">
         <Link to="/agent-builder" className="hover:text-ink">
           Agent Builder
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/agent-detail") return "Repeat & Decay";
+  if (pathname === "/agent-detail/conditions")
+    return renderCrumbs([{ label: "Repeat & Decay", to: "/agent-detail" }, { label: "What it watches" }]);
+  if (pathname === "/agent-detail/sources")
+    return renderCrumbs([{ label: "Repeat & Decay", to: "/agent-detail" }, { label: "What it reads" }]);
+  if (pathname === "/agent-detail/findings")
+    return renderCrumbs([{ label: "Repeat & Decay", to: "/agent-detail" }, { label: "Findings" }]);
+  if (pathname === "/agent-detail/runs")
+    return renderCrumbs([{ label: "Repeat & Decay", to: "/agent-detail" }, { label: "Runs" }]);
+  if (pathname === "/agent-detail/record")
+    return renderCrumbs([{ label: "Repeat & Decay", to: "/agent-detail" }, { label: "Record" }]);
+
+  const agentDetailFindingMatch = /^\/agent-detail\/findings\/([^/]+)$/.exec(pathname);
+  if (agentDetailFindingMatch) {
+    const title = AN_FINDING_TITLES[agentDetailFindingMatch[1]] ?? agentDetailFindingMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/agent-detail/findings" className="hover:text-ink">
+          Findings
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  const agentDetailRunMatch = /^\/agent-detail\/runs\/([^/]+)$/.exec(pathname);
+  if (agentDetailRunMatch) {
+    const title = AN_RUN_TITLES[agentDetailRunMatch[1]] ?? agentDetailRunMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/agent-detail/runs" className="hover:text-ink">
+          Runs
         </Link>
         <span className="text-ink-4">/</span>
         <span className="text-ink">{title}</span>
