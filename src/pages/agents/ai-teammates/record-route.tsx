@@ -1,21 +1,28 @@
+import { Link } from "react-router-dom";
+
+import { Button } from "@/components/ui/button";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
+import { StageSubpageHeader } from "@/pages/everyday/lifecycle/stage/stage-subpage-header";
 import { AgentCell } from "@/pages/agents/ai-teammates/agent-cell";
-import { TeammatesTabs } from "@/pages/agents/ai-teammates/tabs";
 import { TM12_ROWS, TM_TONE_CLASS } from "@/pages/agents/ai-teammates/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 
-/** TM12 — /ai-teammates/record. Grounded in "The roster" tab rather than owning one of its own, same as the export's own subtabs() call on this screen. */
+/** TM12 — /ai-teammates/record. Standalone page, not a tab: the export's own subtabs() call on this screen highlighted "The roster" while showing unrelated content, which read as broken rather than intentional — see docs/build-tracker.md. Grounded in a breadcrumb instead, same as Orchestrator/Boundary/Steering/Advocate. */
 const RecordRoute = () => {
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-[17px] font-semibold text-ink">Their record</h1>
-        <p className="mt-1 text-[11.5px] text-ink-3">88 claims · 7 tested · 1 did not hold · and no accuracy score anywhere</p>
-      </div>
-
-      <TeammatesTabs active="The roster" />
+      <StageSubpageHeader
+        crumbs={[{ label: "AI teammates", to: "/ai-teammates" }, { label: "Their record" }]}
+        title="Their record"
+        subtitle="88 claims · 7 tested · 1 did not hold · and no accuracy score anywhere"
+        action={
+          <Button asChild type="button">
+            <Link to="/experiments/new">Design an experiment</Link>
+          </Button>
+        }
+      />
 
       <section className="space-y-3">
         <p className={EYEBROW_CLASS}>How often each agent's claims survived being tested</p>

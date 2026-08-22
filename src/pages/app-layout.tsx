@@ -374,8 +374,6 @@ function getBreadcrumb(pathname: string): React.ReactNode {
     return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Paused" }]);
   if (pathname === "/ai-teammates/cost")
     return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "What they cost" }]);
-  if (pathname === "/ai-teammates/record")
-    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Their record" }]);
   if (pathname === "/settings/ai-teammates")
     return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Settings" }]);
 
