@@ -15,6 +15,7 @@ import { ATTRIBUTION_DETAIL_TITLES } from "@/pages/revenue/attribution/data";
 import { BM_DETAIL_TITLES } from "@/pages/revenue/benchmarks/data";
 import { MARKETPLACE_LISTING_TITLES } from "@/pages/agents/marketplace/data";
 import { GOVERNANCE_ACCESS_TITLES, GOVERNANCE_ENTRY_TITLES } from "@/pages/agents/governance/data";
+import { AGENT_BUILDER_DETAIL_TITLES } from "@/pages/agents/agent-builder/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -445,6 +446,28 @@ function getBreadcrumb(pathname: string): React.ReactNode {
       <span className="flex items-center gap-1.5">
         <Link to="/governance" className="hover:text-ink">
           Governance
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/agent-builder") return "Agent Builder";
+  if (pathname === "/agent-builder/waiting-for-approval")
+    return renderCrumbs([{ label: "Agent Builder", to: "/agent-builder" }, { label: "Waiting for approval" }]);
+  if (pathname === "/agent-builder/test-runs")
+    return renderCrumbs([{ label: "Agent Builder", to: "/agent-builder" }, { label: "Test runs" }]);
+  if (pathname === "/agent-builder/retired")
+    return renderCrumbs([{ label: "Agent Builder", to: "/agent-builder" }, { label: "Retired" }]);
+
+  const agentBuilderDetailMatch = /^\/agent-builder\/([^/]+)$/.exec(pathname);
+  if (agentBuilderDetailMatch) {
+    const title = AGENT_BUILDER_DETAIL_TITLES[agentBuilderDetailMatch[1]] ?? agentBuilderDetailMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/agent-builder" className="hover:text-ink">
+          Agent Builder
         </Link>
         <span className="text-ink-4">/</span>
         <span className="text-ink">{title}</span>

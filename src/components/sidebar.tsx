@@ -13,7 +13,7 @@ import {
   Database,
   Eye,
   Filter,
-  // Fingerprint, // Agent detail — commented out in sidebar until the section is built
+  Fingerprint,
   FlaskConical,
   Frame,
   Gem,
@@ -42,7 +42,7 @@ import {
   TrendingUp,
   Users,
   Users2,
-  // Wrench, // Agent builder — commented out in sidebar until the section is built
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
@@ -126,8 +126,8 @@ const NAV_SECTIONS: NavSection[] = [
     label: "AGENTS",
     items: [
       { label: "AI teammates", href: "/ai-teammates", icon: Bot },
-      // { label: "Agent detail", href: "/agent-detail", icon: Fingerprint },
-      // { label: "Agent builder", href: "/agent-builder", icon: Wrench },
+      { label: "Agent detail", href: "/agent-detail", icon: Fingerprint },
+      { label: "Agent builder", href: "/agent-builder", icon: Wrench },
       { label: "Marketplace", href: "/marketplace", icon: Store },
       { label: "Governance", href: "/governance", icon: ShieldCheck },
     ],
