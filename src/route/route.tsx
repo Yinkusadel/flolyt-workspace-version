@@ -176,7 +176,18 @@ import BenchmarksLikeForLikeRoute from "@/pages/revenue/benchmarks/like-for-like
 import RepeatRateDetailRoute from "@/pages/revenue/benchmarks/repeat-rate-detail-route";
 import NewComparison from "@/pages/revenue/benchmarks/new";
 import BenchmarksSettingsRoute from "@/pages/revenue/benchmarks/settings/benchmarks-settings-route";
-import AiTeammates from "@/pages/ai-teammates";
+import AiTeammates from "@/pages/agents/ai-teammates";
+import AiTeammatesCoverageRoute from "@/pages/agents/ai-teammates/coverage-route";
+import AiTeammatesRunsRoute from "@/pages/agents/ai-teammates/runs-route";
+import AiTeammatesConflictsRoute from "@/pages/agents/ai-teammates/conflicts-route";
+import AiTeammatesPausedRoute from "@/pages/agents/ai-teammates/paused-route";
+import AiTeammatesCostRoute from "@/pages/agents/ai-teammates/cost-route";
+import AiTeammatesRecordRoute from "@/pages/agents/ai-teammates/record-route";
+import AiTeammatesOrchestratorRoute from "@/pages/agents/ai-teammates/orchestrator-route";
+import AiTeammatesBoundaryRoute from "@/pages/agents/ai-teammates/boundary-route";
+import AiTeammatesSteeringRoute from "@/pages/agents/ai-teammates/steering-route";
+import AiTeammatesAdvocateRoute from "@/pages/agents/ai-teammates/advocate-route";
+import AiTeammatesSettingsRoute from "@/pages/agents/ai-teammates/settings/ai-teammates-settings-route";
 import BusinessMemory from "@/pages/knowledge/business-memory";
 import LearningDetailRoute from "@/pages/knowledge/business-memory/learning-detail-route";
 import SupersededRoute from "@/pages/knowledge/business-memory/superseded-route";
@@ -619,7 +630,23 @@ export const routes = createBrowserRouter([
               },
               {
                 path: "ai-teammates",
-                Component: AiTeammates,
+                children: [
+                  { index: true, Component: AiTeammates },
+                  { path: "coverage", Component: AiTeammatesCoverageRoute },
+                  { path: "runs", Component: AiTeammatesRunsRoute },
+                  { path: "conflicts", Component: AiTeammatesConflictsRoute },
+                  { path: "paused", Component: AiTeammatesPausedRoute },
+                  { path: "cost", Component: AiTeammatesCostRoute },
+                  { path: "record", Component: AiTeammatesRecordRoute },
+                  { path: "orchestrator", Component: AiTeammatesOrchestratorRoute },
+                  { path: "boundary", Component: AiTeammatesBoundaryRoute },
+                  { path: "steering", Component: AiTeammatesSteeringRoute },
+                  { path: "advocate", Component: AiTeammatesAdvocateRoute },
+                ],
+              },
+              {
+                path: "settings/ai-teammates",
+                Component: AiTeammatesSettingsRoute,
               },
               {
                 path: "business-memory",
