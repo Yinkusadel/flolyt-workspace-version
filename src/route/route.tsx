@@ -316,6 +316,17 @@ import DataSourcesHistoryRoute from "@/pages/data/data-sources/history-route";
 import DataSourcesWhatWeReadRoute from "@/pages/data/data-sources/what-we-read-route";
 import SourceDetailRoute from "@/pages/data/data-sources/source-detail-route";
 import DataSourcesSettingsRoute from "@/pages/data/data-sources/settings/data-sources-settings-route";
+import DataHealth from "@/pages/data/data-health";
+import DataHealthFreshnessRoute from "@/pages/data/data-health/freshness-route";
+import DataHealthCompletenessRoute from "@/pages/data/data-health/completeness-route";
+import DataHealthUnavailableRoute from "@/pages/data/data-health/unavailable-route";
+import DataHealthIncidentsRoute from "@/pages/data/data-health/incidents-route";
+import DataHealthIncidentDetailRoute from "@/pages/data/data-health/incident-detail-route";
+import DataHealthBackfillRoute from "@/pages/data/data-health/backfill-route";
+import DataHealthShapeRoute from "@/pages/data/data-health/shape-route";
+import DataHealthNotificationsRoute from "@/pages/data/data-health/notifications-route";
+import DataHealthLimitsRoute from "@/pages/data/data-health/limits-route";
+import DataHealthSettingsRoute from "@/pages/data/data-health/settings/data-health-settings-route";
 import { RouteError } from "@/route/route-error";
 // import { ProtectedRoute } from "@/route/protected-route";
 
@@ -930,6 +941,25 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/data-sources",
                 Component: DataSourcesSettingsRoute,
+              },
+              {
+                path: "data-health",
+                children: [
+                  { index: true, Component: DataHealth },
+                  { path: "freshness", Component: DataHealthFreshnessRoute },
+                  { path: "completeness", Component: DataHealthCompletenessRoute },
+                  { path: "unavailable", Component: DataHealthUnavailableRoute },
+                  { path: "incidents", Component: DataHealthIncidentsRoute },
+                  { path: "incidents/:id", Component: DataHealthIncidentDetailRoute },
+                  { path: "backfill", Component: DataHealthBackfillRoute },
+                  { path: "shape", Component: DataHealthShapeRoute },
+                  { path: "notifications", Component: DataHealthNotificationsRoute },
+                  { path: "limits", Component: DataHealthLimitsRoute },
+                ],
+              },
+              {
+                path: "settings/data-health",
+                Component: DataHealthSettingsRoute,
               },
             ],
           },

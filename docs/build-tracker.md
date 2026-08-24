@@ -1932,6 +1932,74 @@ sections, but extracted locally since the same three-part shape repeated three t
 | Sidebar "Data sources" link | [x] | pre-existing DATA-group stub already correctly pointed at `/data-sources` |
 | `tsc -p tsconfig.app.json` clean + dev server + 14-route Playwright console/page-error sweep + both modals click-tested + wizard step 1 + mobile card check | [x] | Verified 2026-08-24 |
 
+## 8b. Data health
+
+**Built from scratch on 2026-08-24** from
+`flolyt-figma-designs/Data Screens & Specs/flolyt-data-health (1)/flolyt-data-health/` (16 frames,
+DH01-DH16). No kit-122 row to supersede — this closes a structural gap the same way Forecast did
+in the Revenue group, since kit-122 never had a "data health" screen at all. Second section of the
+Data group after [[flolyt_data_sources_rebuild]]; content transcribed from the export's own
+`dh.py` generator source (plus the shared `data.py` chrome reused as-is from Data sources), same
+"read the `.py`, don't parse the SVG" approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/data/data-health/`, mounts at the flat `/data-health` — not the export's own
+`/data/health` footer route. Settings is `/settings/data-health`, outside the `/data-health` tree.
+The sidebar already had "Data health" stubbed correctly at `/data-health`, no sidebar change
+needed.
+
+**Architecture, closest to Data sources' shape:**
+- `/data-health` (`index.tsx`) is ONE route covering DH01 (nothing to check yet — the empty
+  state), DH02 (the first failure), and DH03 (the default "right now" state with the 6-tab bar).
+  `DATA_HEALTH_STATE` (a 3-value mock flag defaulting to `"full"`) branches them, same
+  wired-but-unreachable pattern as every prior section's empty/first states.
+- `/data-health/freshness` (DH04), `/data-health/completeness` (DH05), `/data-health/unavailable`
+  (DH06, "What it broke"), `/data-health/incidents` (DH09), and `/data-health/backfill` (DH08) are
+  standalone sibling routes sharing the same 6-tab bar (`tabs.tsx`) as the index's "Right now"
+  state.
+- `/data-health/incidents/:id` (`incident-detail-route.tsx`) has one built reference row — DH07
+  (`checkout`, "checkout_events · 18 August") — every other id falls back to a not-found state.
+  Reuses `DataSourcesHero` from `pages/data/data-sources/hero-banner.tsx` directly rather than
+  forking a local copy, since the two sections sit in the same Data group and the accent-box shape
+  is identical — the first cross-section component reuse in this group (same precedent as
+  Benchmarks reusing Attribution's holdout wizard).
+- **DH10 ("Shape") is a tab-mislabel fix**: the export's own `subtabs(p, "Right now", TABS)` call
+  sets its active tab to "Right now" even though there is no "Shape" tab in `TABS` at all and the
+  screen is its own distinct page — see [[figma_tab_mislabel_check]]. Built as a standalone
+  breadcrumbed page at `/data-health/shape` instead, linked from the Right now state's
+  "healthy-and-busy" callout (its only in-app entry point, added deliberately per
+  [[flag_unreachable_routes]]).
+- `/data-health/notifications` (DH13, "Who is told") and `/data-health/limits` (DH14, "What this
+  cannot catch") are standalone pages outside the tab bar.
+- **DH11/DH12 are two bespoke modals**, each hardcoded to the one target the export shows it
+  opened against — `change-a-threshold-modal.tsx` ("`checkout_events`'s degraded threshold,"
+  wired from that row's degraded-at cell on the Freshness table's `rowAction`) and
+  `report-a-problem-modal.tsx` ("Something is wrong with `ad_spend`," wired from a header button
+  on the Limits page — DH12's own backdrop table doesn't include `ad_spend` as a row on any page
+  actually built, so a general header action was used instead of a row click, same reasoning
+  documented in Data sources' Widen-a-scope modal).
+- DH16 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Right now table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** `Chip`, `Callout`, `KpiCards`,
+`PersonAvatar`, `StageSubpageHeader`, `EYEBROW_CLASS`, and (new this section) Data sources'
+`DataSourcesHero` were all reused with zero forking. A local `DataHealthKvList` (`kv-list.tsx`)
+and a new `FreshnessBar` (`freshness-bar.tsx`, the 24-hourly-block delivery strip unique to this
+section) were written fresh.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing to check / first failure / right now | [x] | `index.tsx` + `states/*.tsx`. DH01/DH02 wired but unreachable with `DATA_HEALTH_STATE`'s current default |
+| One incident (`:id`) | [x] | `incident-detail-route.tsx` — `checkout` built, every other id falls back to not-found |
+| Freshness / Completeness / What it broke / Incidents / Backfill | [x] | `freshness-route.tsx`, `completeness-route.tsx`, `unavailable-route.tsx`, `incidents-route.tsx`, `backfill-route.tsx`, all sharing `tabs.tsx` |
+| Shape (tab-mislabel fix) | [x] | `shape-route.tsx`, `/data-health/shape`, standalone with one in-app link |
+| Who is told / What this cannot catch | [x] | `notifications-route.tsx`, `limits-route.tsx` |
+| Change a threshold / Report a problem (modals) | [x] | `modals/change-a-threshold-modal.tsx`, `modals/report-a-problem-modal.tsx` |
+| Settings | [x] | `settings/data-health-settings-route.tsx`, `/settings/data-health` |
+| Sidebar "Data health" link | [x] | pre-existing DATA-group stub already correctly pointed at `/data-health` |
+| `tsc -p tsconfig.app.json` clean + dev server + 12-route Playwright console/page-error sweep + both modals click-tested + shape/incident-detail visual check | [x] | Verified 2026-08-24 |
+
 ## 9. Mobile (67–69)
 
 | # | Screen | Status | Endpoint(s) | Notes |
