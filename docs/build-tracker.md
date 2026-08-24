@@ -1859,9 +1859,77 @@ against the transcribed specs for the index, reassign modal and create-handoffs 
 | 61 | compliance consent | [ ] | | |
 | 62 | consent at scale | [ ] | | |
 | 63 | delivery mesh | [ ] | | |
-| 64 | data sources | [ ] | | |
+| 64 | data sources | [x] | | Superseded — rebuilt as `/data-sources` from the newer `flolyt-data-sources` export, see section 8a |
 | 65 | markets and currency | [ ] | | |
 | 66 | ai teammates directory | [ ] | | `/ai-teammates` currently has only a minimal stub (agent list + Pause action) built to host screen 121 — the real directory screen isn't built |
+
+## 8a. Data sources
+
+**Built from scratch on 2026-08-24** from
+`flolyt-figma-designs/Data Screens & Specs/flolyt-data-sources (1)/flolyt-data-sources/` (18
+frames, DS01-DS18), superseding kit-122's frame 64 ("data sources," section 8, row above). First
+section of a brand-new **Data** sidebar group — the sidebar already had all four Data items
+stubbed correctly (`/data-sources`, `/data-health`, `/schema`, `/identity`), same "sidebar
+pre-stubbed, no sidebar change needed" situation as Segments and Playbooks. Content was
+transcribed from the export's own `ds.py` generator source (plus a new shared `data.py` chrome
+file for the four Data sections, analogous to `rev.py`/`cust.py`/`know.py`), same "read the
+`.py`, don't parse the SVG" approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/data/data-sources/` (mirrors the sidebar's DATA group), but mounts at the flat
+`/data-sources` — not the export's own `/data/sources` footer route. Settings is
+`/settings/data-sources`, outside the `/data-sources` tree, matching every prior section's
+settings precedent (DS17's own footer literally reads `/settings/data/sources`, overridden per
+the same flat-URL rule).
+
+**Architecture, closest to Segments/Leakage map's shape:**
+- `/data-sources` (`index.tsx`) is ONE route covering DS01 (nothing connected — the empty
+  state), DS02 (the first source, three hours in), and DS03 (the default "ten connected" state
+  with the 5-tab bar). `DATA_SOURCES_STATE` (a 3-value mock flag defaulting to `"full"`) branches
+  them — DS01/DS02 are wired but unreachable with that default, same "not wired, no demo state
+  currently triggers it" situation as every prior rebuild's empty/edge states.
+- `/data-sources/missing` (DS05), `/data-sources/dependencies` (DS06), `/data-sources/credentials`
+  (DS11), and `/data-sources/history` (DS12) are standalone sibling routes sharing the same
+  5-tab bar (`tabs.tsx`) as the index's "Connected" state.
+- `/data-sources/new` (`new/index.tsx`) is the 4-step "Connect a source" wizard (DS07 what → DS08
+  which fields → DS09 how/how often → DS10 review). Step position lives in `?step=`, not local
+  `useState`, per the URL-over-state rule for wizards.
+- `/data-sources/:id` (`source-detail-route.tsx`) has two built reference rows: DS04 (`orders`)
+  and DS15 (`ad-spend`, kebab-cased per the export's own footer even though the underlying field
+  is `ad_spend`) — every other id falls back to a not-found state, same "one/two reference rows"
+  pattern as every prior section's `:id` route.
+- **DS13/DS14 are two bespoke modals**, each hardcoded to the one row the export shows it opened
+  against — `widen-a-scope-modal.tsx` ("Add `orders.customer_reference` to the scope," wired from
+  a header button on the `orders` detail page — DS13's own backdrop table only showed `orders`
+  and `customers`, and the field is literally about `orders`) and `disconnect-a-source-modal.tsx`
+  ("Disconnect `loyalty_events`," wired from that row's state chip on the Connected table's
+  `rowAction`, DS14's own backdrop subject) — same "only these targets have a wired action"
+  pattern as every prior section's bespoke modals.
+- `/data-sources/what-we-read` (DS16) is a standalone page outside the tab bar, linked from DS01's
+  empty state (a secondary CTA) and reachable from DS03's notes.
+- DS18 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Connected table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** `Chip`, `CHIP_INTERACTIVE_CLASS`,
+`Callout`, `KpiCards`, `PersonAvatar`, `StageSubpageHeader`, and `EYEBROW_CLASS` were all reused
+from `lifecycle/` and `person-avatar.tsx` with zero forking. A local `DataSourcesKvList`
+(`kv-list.tsx`) was written fresh, copying every prior section's own `kv-list.tsx` shape exactly.
+A new `hero-banner.tsx` (`DataSourcesHero`) was written to cover the accent-box-with-a-right-hand-
+stat shape that recurs three times in this section (DS04, DS10, DS15) — not shared with other
+sections, but extracted locally since the same three-part shape repeated three times in one.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing connected / first source / all connected | [x] | `index.tsx` + `states/*.tsx`. DS01/DS02 wired but unreachable with `DATA_SOURCES_STATE`'s current default |
+| One source (`:id`) | [x] | `source-detail-route.tsx` — `orders` and `ad-spend` built, every other id falls back to not-found |
+| Not connected / What depends on it / Credentials / History | [x] | `missing-route.tsx`, `dependencies-route.tsx`, `credentials-route.tsx`, `history-route.tsx`, all sharing `tabs.tsx` |
+| Connect a source (wizard) | [x] | `new/index.tsx` + `step-what.tsx`/`step-fields.tsx`/`step-how.tsx`/`step-review.tsx`, `?step=`, `/data-sources/new` |
+| Widen a scope / Disconnect a source (modals) | [x] | `modals/widen-a-scope-modal.tsx`, `modals/disconnect-a-source-modal.tsx` |
+| What Flolyt reads | [x] | `what-we-read-route.tsx`, `/data-sources/what-we-read` |
+| Settings | [x] | `settings/data-sources-settings-route.tsx`, `/settings/data-sources` |
+| Sidebar "Data sources" link | [x] | pre-existing DATA-group stub already correctly pointed at `/data-sources` |
+| `tsc -p tsconfig.app.json` clean + dev server + 14-route Playwright console/page-error sweep + both modals click-tested + wizard step 1 + mobile card check | [x] | Verified 2026-08-24 |
 
 ## 9. Mobile (67–69)
 

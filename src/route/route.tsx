@@ -310,8 +310,17 @@ import RepliesUseRoute from "@/pages/customers/replies/use-route";
 import ConversationDetailRoute from "@/pages/customers/replies/conversation-detail-route";
 import ReplyAnswerRoute from "@/pages/customers/replies/answer-route";
 import RepliesSettingsRoute from "@/pages/customers/replies/settings/replies-settings-route";
+import DataSources from "@/pages/data/data-sources";
+import NewDataSource from "@/pages/data/data-sources/new";
+import DataSourcesMissingRoute from "@/pages/data/data-sources/missing-route";
+import DataSourcesDependenciesRoute from "@/pages/data/data-sources/dependencies-route";
+import DataSourcesCredentialsRoute from "@/pages/data/data-sources/credentials-route";
+import DataSourcesHistoryRoute from "@/pages/data/data-sources/history-route";
+import DataSourcesWhatWeReadRoute from "@/pages/data/data-sources/what-we-read-route";
+import SourceDetailRoute from "@/pages/data/data-sources/source-detail-route";
+import DataSourcesSettingsRoute from "@/pages/data/data-sources/settings/data-sources-settings-route";
 import { RouteError } from "@/route/route-error";
-// import { ProtectedRoute } from "@/route/protected-route";
+import { ProtectedRoute } from "@/route/protected-route";
 import { GuestRoute } from "@/route/guest-route";
 
 export const routes = createBrowserRouter([
@@ -341,7 +350,7 @@ export const routes = createBrowserRouter([
       },
       {
         path: "/",
-        // Component: ProtectedRoute,
+        Component: ProtectedRoute,
         children: [
           {
             Component: AppLayout,
@@ -916,6 +925,23 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/agent-detail",
                 Component: AgentDetailSettingsRoute,
+              },
+              {
+                path: "data-sources",
+                children: [
+                  { index: true, Component: DataSources },
+                  { path: "new", Component: NewDataSource },
+                  { path: "missing", Component: DataSourcesMissingRoute },
+                  { path: "dependencies", Component: DataSourcesDependenciesRoute },
+                  { path: "credentials", Component: DataSourcesCredentialsRoute },
+                  { path: "history", Component: DataSourcesHistoryRoute },
+                  { path: "what-we-read", Component: DataSourcesWhatWeReadRoute },
+                  { path: ":id", Component: SourceDetailRoute },
+                ],
+              },
+              {
+                path: "settings/data-sources",
+                Component: DataSourcesSettingsRoute,
               },
             ],
           },

@@ -17,6 +17,7 @@ import { MARKETPLACE_LISTING_TITLES } from "@/pages/agents/marketplace/data";
 import { GOVERNANCE_ACCESS_TITLES, GOVERNANCE_ENTRY_TITLES } from "@/pages/agents/governance/data";
 import { AGENT_BUILDER_DETAIL_TITLES } from "@/pages/agents/agent-builder/data";
 import { AN_FINDING_TITLES, AN_RUN_TITLES } from "@/pages/agents/agent-detail/data";
+import { DS_DETAIL_TITLES } from "@/pages/data/data-sources/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -509,6 +510,36 @@ function getBreadcrumb(pathname: string): React.ReactNode {
       <span className="flex items-center gap-1.5">
         <Link to="/agent-detail/runs" className="hover:text-ink">
           Runs
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/data-sources") return "Data sources";
+  if (pathname === "/data-sources/new")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "Connect" }]);
+  if (pathname === "/data-sources/missing")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "Not connected" }]);
+  if (pathname === "/data-sources/dependencies")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "What depends on it" }]);
+  if (pathname === "/data-sources/credentials")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "Credentials" }]);
+  if (pathname === "/data-sources/history")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "History" }]);
+  if (pathname === "/data-sources/what-we-read")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "What Flolyt reads" }]);
+  if (pathname === "/settings/data-sources")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "Settings" }]);
+
+  const dataSourceDetailMatch = /^\/data-sources\/([^/]+)$/.exec(pathname);
+  if (dataSourceDetailMatch) {
+    const title = DS_DETAIL_TITLES[dataSourceDetailMatch[1]] ?? dataSourceDetailMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/data-sources" className="hover:text-ink">
+          Data sources
         </Link>
         <span className="text-ink-4">/</span>
         <span className="text-ink">{title}</span>
