@@ -18,6 +18,7 @@ import { GOVERNANCE_ACCESS_TITLES, GOVERNANCE_ENTRY_TITLES } from "@/pages/agent
 import { AGENT_BUILDER_DETAIL_TITLES } from "@/pages/agents/agent-builder/data";
 import { AN_FINDING_TITLES, AN_RUN_TITLES } from "@/pages/agents/agent-detail/data";
 import { DS_DETAIL_TITLES } from "@/pages/data/data-sources/data";
+import { SM_FIELD_TITLES } from "@/pages/data/schema/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -570,6 +571,36 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   const dataHealthIncidentMatch = /^\/data-health\/incidents\/([^/]+)$/.exec(pathname);
   if (dataHealthIncidentMatch) {
     return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Incidents", to: "/data-health/incidents" }, { label: "checkout_events · 18 August" }]);
+  }
+
+  if (pathname === "/schema") return "Schema";
+  if (pathname === "/schema/events")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "Events" }]);
+  if (pathname === "/schema/changes")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "Changes" }]);
+  if (pathname === "/schema/requested")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "Requested" }]);
+  if (pathname === "/schema/definitions")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "Definitions" }]);
+  if (pathname === "/schema/unused")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "Unused" }]);
+  if (pathname === "/schema/change-costs")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "What a change costs" }]);
+  if (pathname === "/settings/schema")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "Settings" }]);
+
+  const schemaFieldMatch = /^\/schema\/([^/]+)$/.exec(pathname);
+  if (schemaFieldMatch) {
+    const title = SM_FIELD_TITLES[schemaFieldMatch[1]] ?? schemaFieldMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/schema" className="hover:text-ink">
+          Schema
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
   }
 
   return "Home";
