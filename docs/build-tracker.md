@@ -2061,6 +2061,76 @@ zero forking — `DataSourcesHero` is now used by all three built Data sections.
 | Sidebar "Schema" link | [x] | pre-existing DATA-group stub already correctly pointed at `/schema` |
 | `tsc -p tsconfig.app.json` clean + dev server + 10-route Playwright console/page-error sweep + all four modals + field-detail screenshotted | [x] | Verified 2026-08-24 |
 
+## 8d. Identity
+
+**Built from scratch on 2026-08-24** from
+`flolyt-figma-designs/Data Screens & Specs/flolyt-identity/flolyt-identity/` (16 frames,
+ID01-ID16). No kit-122 row to supersede — closes the last structural gap in the Data group, same
+as Data health and Schema. Fourth and final Data section, after
+[[flolyt_data_sources_rebuild]], [[flolyt_data_health_rebuild]] and [[flolyt_schema_rebuild]] —
+**the Data group is now complete**. Content transcribed from the export's own `id_.py` generator
+source (plus the shared `data.py` chrome reused as-is), same "read the `.py`, don't parse the
+SVG" approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/data/identity/`, mounts at the flat `/identity` — not the export's own `/data/identity`
+footer route. Settings is `/settings/identity`, outside the `/identity` tree. The sidebar already
+had "Identity" stubbed correctly at `/identity`, no sidebar change needed.
+
+**Architecture, closest to the other three Data sections' shape:**
+- `/identity` (`index.tsx`) is ONE route covering ID01 (no identity rule yet — the empty state),
+  ID02 (the first rule, 12 December), and ID03 (the default "Who is a customer" state with the
+  6-tab bar). `IDENTITY_STATE` (a 3-value mock flag defaulting to `"full"`) branches them, same
+  wired-but-unreachable pattern as every prior section's empty/first states. ID03 introduces a new
+  local `PeopleBar` component (`people-bar.tsx`) — a proportional stacked bar over the four totals
+  with a legend, the export's own `people_bar()` python helper — not shared with any other
+  section since nothing else needed a composition bar.
+- `/identity/unjoinable` (ID05), `/identity/duplicates` (ID06), `/identity/consent` (ID07),
+  `/identity/erasure` (ID08), and `/identity/dependencies` (ID12, the "Rules" tab's actual
+  content — confirmed NOT a tab-mislabel case, unlike Data health's Shape, since "Rules" is a real
+  entry in `TABS` and ID12's own `subtabs(p, "Rules", TABS)` call matches it correctly) are
+  standalone sibling routes sharing the same 6-tab bar (`tabs.tsx`) as the index's "Who is a
+  customer" state.
+- `/identity/rule` (ID04, "The rule") and `/identity/limits` (ID14, "What this cannot fix") are
+  standalone pages outside the tab bar, cross-linked with `/identity/unjoinable` and
+  `/identity/incidents/1` respectively (added deliberately per [[flag_unreachable_routes]]).
+  Both reuse `DataSourcesHero` from `pages/data/data-sources/hero-banner.tsx` directly — now used
+  by all four built Data sections.
+- `/identity/incidents/:id` (`false-merge-route.tsx`) has one built reference row at the export's
+  own literal slug, `1` (`/data/identity/incidents/1` in the source) — every other id falls back
+  to a not-found state, same "one/two reference rows" pattern as every prior section.
+- **Three bespoke modals**, each hardcoded to the one target the export shows it opened against —
+  `change-the-rule-modal.tsx` (adding phone number as a match key, triggered from the rule page's
+  header button), `merge-two-records-modal.tsx` (the same-unverified-email duplicate pair, wired
+  from that row's Action cell on the Duplicates table's `rowAction` — the Duplicates table has
+  three other rows whose Action column reads "leave" or a non-matching "review individually," and
+  only the row matching the modal's own hardcoded subject got the `rowAction`, same discipline as
+  Schema's Unmap-a-field modal), and `erasure-request-modal.tsx` (triggered from a header button
+  on the Erasure page).
+- ID16 (mobile) was treated as a responsive-design constraint, not a separate page — same call as
+  every prior section's mobile frame; the four-totals list and stacked bar already read cleanly
+  at narrow widths without a dedicated mobile layout.
+
+**Cross-section reuse, confirmed by reading both before reusing:** `Chip`, `Callout`, `KpiCards`,
+`PersonAvatar`, `StageSubpageHeader`, `EYEBROW_CLASS`, and `DataSourcesHero` were all reused with
+zero forking. A local `IdentityKvList` (`kv-list.tsx`) was written fresh, same shape as every
+other section's own.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — no rule yet / first rule / Who is a customer | [x] | `index.tsx` + `states/*.tsx`. ID01/ID02 wired but unreachable with `IDENTITY_STATE`'s current default |
+| The rule | [x] | `rule-route.tsx`, `/identity/rule` |
+| Unjoinable / Duplicates / Consent / Erasure / Rules (dependencies) | [x] | `unjoinable-route.tsx`, `duplicates-route.tsx`, `consent-route.tsx`, `erasure-route.tsx`, `dependencies-route.tsx`, all sharing `tabs.tsx` |
+| A false merge (`:id`) | [x] | `false-merge-route.tsx` — `1` built, every other id falls back to not-found |
+| Limits | [x] | `limits-route.tsx`, `/identity/limits`, two-way linked with Unjoinable and the false-merge incident |
+| Change the rule / Merge two records / An erasure request (modals) | [x] | `modals/change-the-rule-modal.tsx`, `modals/merge-two-records-modal.tsx`, `modals/erasure-request-modal.tsx` |
+| Settings | [x] | `settings/identity-settings-route.tsx`, `/settings/identity` |
+| Sidebar "Identity" link | [x] | pre-existing DATA-group stub already correctly pointed at `/identity` |
+| `tsc -p tsconfig.app.json` clean + dev server + 11-route Playwright console/page-error sweep + all three modals + false-merge detail screenshotted | [x] | Verified 2026-08-24 |
+
+**The Data group (Data sources, Data health, Schema, Identity) is now fully built — all four
+sidebar items resolve to real sections.**
+
 ## 9. Mobile (67–69)
 
 | # | Screen | Status | Endpoint(s) | Notes |
