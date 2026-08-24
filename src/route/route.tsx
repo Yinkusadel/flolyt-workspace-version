@@ -176,7 +176,59 @@ import BenchmarksLikeForLikeRoute from "@/pages/revenue/benchmarks/like-for-like
 import RepeatRateDetailRoute from "@/pages/revenue/benchmarks/repeat-rate-detail-route";
 import NewComparison from "@/pages/revenue/benchmarks/new";
 import BenchmarksSettingsRoute from "@/pages/revenue/benchmarks/settings/benchmarks-settings-route";
-import AiTeammates from "@/pages/ai-teammates";
+import AiTeammates from "@/pages/agents/ai-teammates";
+import AiTeammatesCoverageRoute from "@/pages/agents/ai-teammates/coverage-route";
+import AiTeammatesRunsRoute from "@/pages/agents/ai-teammates/runs-route";
+import AiTeammatesConflictsRoute from "@/pages/agents/ai-teammates/conflicts-route";
+import AiTeammatesPausedRoute from "@/pages/agents/ai-teammates/paused-route";
+import AiTeammatesCostRoute from "@/pages/agents/ai-teammates/cost-route";
+import AiTeammatesRecordRoute from "@/pages/agents/ai-teammates/record-route";
+import AiTeammatesOrchestratorRoute from "@/pages/agents/ai-teammates/orchestrator-route";
+import AiTeammatesBoundaryRoute from "@/pages/agents/ai-teammates/boundary-route";
+import AiTeammatesSteeringRoute from "@/pages/agents/ai-teammates/steering-route";
+import AiTeammatesAdvocateRoute from "@/pages/agents/ai-teammates/advocate-route";
+import AiTeammatesSettingsRoute from "@/pages/agents/ai-teammates/settings/ai-teammates-settings-route";
+import Marketplace from "@/pages/agents/marketplace";
+import MarketplaceInstalledRoute from "@/pages/agents/marketplace/installed-route";
+import MarketplacePublishersRoute from "@/pages/agents/marketplace/publishers-route";
+import MarketplaceWhatArrivesRoute from "@/pages/agents/marketplace/what-arrives-route";
+import MarketplaceRequestedRoute from "@/pages/agents/marketplace/requested-route";
+import MarketplaceListingDetailRoute from "@/pages/agents/marketplace/listing-detail-route";
+import MarketplaceUpdateRoute from "@/pages/agents/marketplace/update-route";
+import MarketplaceRefusedRoute from "@/pages/agents/marketplace/refused-route";
+import MarketplaceSettingsRoute from "@/pages/agents/marketplace/settings/marketplace-settings-route";
+import Governance from "@/pages/agents/governance";
+import GovernanceEntryDetailRoute from "@/pages/agents/governance/entry-detail-route";
+import GovernanceCapabilityRoute from "@/pages/agents/governance/capability-route";
+import GovernanceAccessRoute from "@/pages/agents/governance/access-route";
+import GovernanceAgentAccessRoute from "@/pages/agents/governance/agent-access-route";
+import GovernancePermissionsRoute from "@/pages/agents/governance/permissions-route";
+import GovernanceSpendRoute from "@/pages/agents/governance/spend-route";
+import GovernanceCapRoute from "@/pages/agents/governance/cap-route";
+import GovernanceReviewsRoute from "@/pages/agents/governance/reviews-route";
+import GovernanceIncidentDetailRoute from "@/pages/agents/governance/incident-detail-route";
+import GovernanceExportRoute from "@/pages/agents/governance/export-route";
+import GovernanceLimitsRoute from "@/pages/agents/governance/limits-route";
+import GovernanceSettingsRoute from "@/pages/agents/governance/settings/governance-settings-route";
+import AgentBuilder from "@/pages/agents/agent-builder";
+import NewAgent from "@/pages/agents/agent-builder/new";
+import AgentBuilderWaitingForApprovalRoute from "@/pages/agents/agent-builder/waiting-for-approval-route";
+import AgentBuilderTestRunsRoute from "@/pages/agents/agent-builder/test-runs-route";
+import AgentBuilderRetiredRoute from "@/pages/agents/agent-builder/retired-route";
+import AgentBuilderAgentDetailRoute from "@/pages/agents/agent-builder/agent-detail-route";
+import AgentBuilderSettingsRoute from "@/pages/agents/agent-builder/settings/agent-builder-settings-route";
+import AgentDetail from "@/pages/agents/agent-detail";
+import AgentDetailConditionsRoute from "@/pages/agents/agent-detail/conditions-route";
+import AgentDetailSourcesRoute from "@/pages/agents/agent-detail/sources-route";
+import AgentDetailFindingsRoute from "@/pages/agents/agent-detail/findings-route";
+import AgentDetailFindingDetailRoute from "@/pages/agents/agent-detail/finding-detail-route";
+import AgentDetailRunsRoute from "@/pages/agents/agent-detail/runs-route";
+import AgentDetailRunDetailRoute from "@/pages/agents/agent-detail/run-detail-route";
+import AgentDetailRecordRoute from "@/pages/agents/agent-detail/record-route";
+import AgentDetailConflictsRoute from "@/pages/agents/agent-detail/conflicts-route";
+import AgentDetailSteeringRoute from "@/pages/agents/agent-detail/steering-route";
+import AgentDetailLimitsRoute from "@/pages/agents/agent-detail/limits-route";
+import AgentDetailSettingsRoute from "@/pages/agents/agent-detail/settings/agent-detail-settings-route";
 import BusinessMemory from "@/pages/knowledge/business-memory";
 import LearningDetailRoute from "@/pages/knowledge/business-memory/learning-detail-route";
 import SupersededRoute from "@/pages/knowledge/business-memory/superseded-route";
@@ -258,7 +310,6 @@ import RepliesUseRoute from "@/pages/customers/replies/use-route";
 import ConversationDetailRoute from "@/pages/customers/replies/conversation-detail-route";
 import ReplyAnswerRoute from "@/pages/customers/replies/answer-route";
 import RepliesSettingsRoute from "@/pages/customers/replies/settings/replies-settings-route";
-import Governance from "@/pages/governance";
 import { RouteError } from "@/route/route-error";
 // import { ProtectedRoute } from "@/route/protected-route";
 import { GuestRoute } from "@/route/guest-route";
@@ -619,7 +670,40 @@ export const routes = createBrowserRouter([
               },
               {
                 path: "ai-teammates",
-                Component: AiTeammates,
+                children: [
+                  { index: true, Component: AiTeammates },
+                  { path: "coverage", Component: AiTeammatesCoverageRoute },
+                  { path: "runs", Component: AiTeammatesRunsRoute },
+                  { path: "conflicts", Component: AiTeammatesConflictsRoute },
+                  { path: "paused", Component: AiTeammatesPausedRoute },
+                  { path: "cost", Component: AiTeammatesCostRoute },
+                  { path: "record", Component: AiTeammatesRecordRoute },
+                  { path: "orchestrator", Component: AiTeammatesOrchestratorRoute },
+                  { path: "boundary", Component: AiTeammatesBoundaryRoute },
+                  { path: "steering", Component: AiTeammatesSteeringRoute },
+                  { path: "advocate", Component: AiTeammatesAdvocateRoute },
+                ],
+              },
+              {
+                path: "settings/ai-teammates",
+                Component: AiTeammatesSettingsRoute,
+              },
+              {
+                path: "marketplace",
+                children: [
+                  { index: true, Component: Marketplace },
+                  { path: "installed", Component: MarketplaceInstalledRoute },
+                  { path: "publishers", Component: MarketplacePublishersRoute },
+                  { path: "what-arrives", Component: MarketplaceWhatArrivesRoute },
+                  { path: "requested", Component: MarketplaceRequestedRoute },
+                  { path: "installed/update", Component: MarketplaceUpdateRoute },
+                  { path: "refused", Component: MarketplaceRefusedRoute },
+                  { path: ":id", Component: MarketplaceListingDetailRoute },
+                ],
+              },
+              {
+                path: "settings/marketplace",
+                Component: MarketplaceSettingsRoute,
               },
               {
                 path: "business-memory",
@@ -779,7 +863,59 @@ export const routes = createBrowserRouter([
               },
               {
                 path: "governance",
-                Component: Governance,
+                children: [
+                  { index: true, Component: Governance },
+                  { path: "access", Component: GovernanceAccessRoute },
+                  { path: "access/:id", Component: GovernanceAgentAccessRoute },
+                  { path: "permissions", Component: GovernancePermissionsRoute },
+                  { path: "spend", Component: GovernanceSpendRoute },
+                  { path: "cap", Component: GovernanceCapRoute },
+                  { path: "reviews", Component: GovernanceReviewsRoute },
+                  { path: "incidents/:id", Component: GovernanceIncidentDetailRoute },
+                  { path: "capability", Component: GovernanceCapabilityRoute },
+                  { path: "export", Component: GovernanceExportRoute },
+                  { path: "limits", Component: GovernanceLimitsRoute },
+                  { path: ":id", Component: GovernanceEntryDetailRoute },
+                ],
+              },
+              {
+                path: "settings/governance",
+                Component: GovernanceSettingsRoute,
+              },
+              {
+                path: "agent-builder",
+                children: [
+                  { index: true, Component: AgentBuilder },
+                  { path: "new", Component: NewAgent },
+                  { path: "waiting-for-approval", Component: AgentBuilderWaitingForApprovalRoute },
+                  { path: "test-runs", Component: AgentBuilderTestRunsRoute },
+                  { path: "retired", Component: AgentBuilderRetiredRoute },
+                  { path: ":id", Component: AgentBuilderAgentDetailRoute },
+                ],
+              },
+              {
+                path: "settings/agent-builder",
+                Component: AgentBuilderSettingsRoute,
+              },
+              {
+                path: "agent-detail",
+                children: [
+                  { index: true, Component: AgentDetail },
+                  { path: "conditions", Component: AgentDetailConditionsRoute },
+                  { path: "sources", Component: AgentDetailSourcesRoute },
+                  { path: "findings", Component: AgentDetailFindingsRoute },
+                  { path: "findings/:fid", Component: AgentDetailFindingDetailRoute },
+                  { path: "runs", Component: AgentDetailRunsRoute },
+                  { path: "runs/:rid", Component: AgentDetailRunDetailRoute },
+                  { path: "record", Component: AgentDetailRecordRoute },
+                  { path: "conflicts", Component: AgentDetailConflictsRoute },
+                  { path: "steering", Component: AgentDetailSteeringRoute },
+                  { path: "limits", Component: AgentDetailLimitsRoute },
+                ],
+              },
+              {
+                path: "settings/agent-detail",
+                Component: AgentDetailSettingsRoute,
               },
             ],
           },

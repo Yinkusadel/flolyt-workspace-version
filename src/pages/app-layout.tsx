@@ -13,6 +13,10 @@ import { SC_DETAIL_TITLES } from "@/pages/revenue/scenario/data";
 import { FC_DETAIL_TITLES } from "@/pages/revenue/forecast/data";
 import { ATTRIBUTION_DETAIL_TITLES } from "@/pages/revenue/attribution/data";
 import { BM_DETAIL_TITLES } from "@/pages/revenue/benchmarks/data";
+import { MARKETPLACE_LISTING_TITLES } from "@/pages/agents/marketplace/data";
+import { GOVERNANCE_ACCESS_TITLES, GOVERNANCE_ENTRY_TITLES } from "@/pages/agents/governance/data";
+import { AGENT_BUILDER_DETAIL_TITLES } from "@/pages/agents/agent-builder/data";
+import { AN_FINDING_TITLES, AN_RUN_TITLES } from "@/pages/agents/agent-detail/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -364,6 +368,42 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   }
 
   if (pathname === "/ai-teammates") return "AI teammates";
+  if (pathname === "/ai-teammates/coverage")
+    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Coverage" }]);
+  if (pathname === "/ai-teammates/runs")
+    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Reading now" }]);
+  if (pathname === "/ai-teammates/conflicts")
+    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Disagreements" }]);
+  if (pathname === "/ai-teammates/paused")
+    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Paused" }]);
+  if (pathname === "/ai-teammates/cost")
+    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "What they cost" }]);
+  if (pathname === "/settings/ai-teammates")
+    return renderCrumbs([{ label: "AI teammates", to: "/ai-teammates" }, { label: "Settings" }]);
+
+  if (pathname === "/marketplace") return "Marketplace";
+  if (pathname === "/marketplace/installed")
+    return renderCrumbs([{ label: "Marketplace", to: "/marketplace" }, { label: "Installed" }]);
+  if (pathname === "/marketplace/publishers")
+    return renderCrumbs([{ label: "Marketplace", to: "/marketplace" }, { label: "Publishers" }]);
+  if (pathname === "/marketplace/what-arrives")
+    return renderCrumbs([{ label: "Marketplace", to: "/marketplace" }, { label: "What arrives" }]);
+  if (pathname === "/marketplace/requested")
+    return renderCrumbs([{ label: "Marketplace", to: "/marketplace" }, { label: "Requested" }]);
+
+  const marketplaceListingMatch = /^\/marketplace\/([^/]+)$/.exec(pathname);
+  if (marketplaceListingMatch) {
+    const title = MARKETPLACE_LISTING_TITLES[marketplaceListingMatch[1]] ?? marketplaceListingMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/marketplace" className="hover:text-ink">
+          Marketplace
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
 
   if (pathname === "/business-memory") return "Business memory";
 
@@ -372,6 +412,109 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   if (pathname === "/recognition") return "Recognition";
 
   if (pathname === "/governance") return "Governance";
+  if (pathname === "/governance/access")
+    return renderCrumbs([{ label: "Governance", to: "/governance" }, { label: "Data access" }]);
+  if (pathname === "/governance/permissions")
+    return renderCrumbs([{ label: "Governance", to: "/governance" }, { label: "Permissions" }]);
+  if (pathname === "/governance/spend")
+    return renderCrumbs([{ label: "Governance", to: "/governance" }, { label: "Spend" }]);
+  if (pathname === "/governance/reviews")
+    return renderCrumbs([{ label: "Governance", to: "/governance" }, { label: "Reviews" }]);
+
+  const governanceIncidentMatch = /^\/governance\/incidents\/([^/]+)$/.exec(pathname);
+  if (governanceIncidentMatch) {
+    return renderCrumbs([{ label: "Governance", to: "/governance" }, { label: "Incidents" }]);
+  }
+
+  const governanceAccessMatch = /^\/governance\/access\/([^/]+)$/.exec(pathname);
+  if (governanceAccessMatch) {
+    const title = GOVERNANCE_ACCESS_TITLES[governanceAccessMatch[1]] ?? governanceAccessMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/governance/access" className="hover:text-ink">
+          Data access
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  const governanceEntryMatch = /^\/governance\/([^/]+)$/.exec(pathname);
+  if (governanceEntryMatch) {
+    const title = GOVERNANCE_ENTRY_TITLES[governanceEntryMatch[1]] ?? governanceEntryMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/governance" className="hover:text-ink">
+          Governance
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/agent-builder") return "Agent Builder";
+  if (pathname === "/agent-builder/waiting-for-approval")
+    return renderCrumbs([{ label: "Agent Builder", to: "/agent-builder" }, { label: "Waiting for approval" }]);
+  if (pathname === "/agent-builder/test-runs")
+    return renderCrumbs([{ label: "Agent Builder", to: "/agent-builder" }, { label: "Test runs" }]);
+  if (pathname === "/agent-builder/retired")
+    return renderCrumbs([{ label: "Agent Builder", to: "/agent-builder" }, { label: "Retired" }]);
+
+  const agentBuilderDetailMatch = /^\/agent-builder\/([^/]+)$/.exec(pathname);
+  if (agentBuilderDetailMatch) {
+    const title = AGENT_BUILDER_DETAIL_TITLES[agentBuilderDetailMatch[1]] ?? agentBuilderDetailMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/agent-builder" className="hover:text-ink">
+          Agent Builder
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/agent-detail") return "Repeat & Decay";
+  if (pathname === "/agent-detail/conditions")
+    return renderCrumbs([{ label: "Repeat & Decay", to: "/agent-detail" }, { label: "What it watches" }]);
+  if (pathname === "/agent-detail/sources")
+    return renderCrumbs([{ label: "Repeat & Decay", to: "/agent-detail" }, { label: "What it reads" }]);
+  if (pathname === "/agent-detail/findings")
+    return renderCrumbs([{ label: "Repeat & Decay", to: "/agent-detail" }, { label: "Findings" }]);
+  if (pathname === "/agent-detail/runs")
+    return renderCrumbs([{ label: "Repeat & Decay", to: "/agent-detail" }, { label: "Runs" }]);
+  if (pathname === "/agent-detail/record")
+    return renderCrumbs([{ label: "Repeat & Decay", to: "/agent-detail" }, { label: "Record" }]);
+
+  const agentDetailFindingMatch = /^\/agent-detail\/findings\/([^/]+)$/.exec(pathname);
+  if (agentDetailFindingMatch) {
+    const title = AN_FINDING_TITLES[agentDetailFindingMatch[1]] ?? agentDetailFindingMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/agent-detail/findings" className="hover:text-ink">
+          Findings
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  const agentDetailRunMatch = /^\/agent-detail\/runs\/([^/]+)$/.exec(pathname);
+  if (agentDetailRunMatch) {
+    const title = AN_RUN_TITLES[agentDetailRunMatch[1]] ?? agentDetailRunMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/agent-detail/runs" className="hover:text-ink">
+          Runs
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
 
   return "Home";
 }
