@@ -339,6 +339,16 @@ import SchemaDefinitionsRoute from "@/pages/data/schema/definitions-route";
 import SchemaUnusedRoute from "@/pages/data/schema/unused-route";
 import SchemaChangeCostsRoute from "@/pages/data/schema/change-costs-route";
 import SchemaSettingsRoute from "@/pages/data/schema/settings/schema-settings-route";
+import Identity from "@/pages/data/identity";
+import IdentityRuleRoute from "@/pages/data/identity/rule-route";
+import IdentityUnjoinableRoute from "@/pages/data/identity/unjoinable-route";
+import IdentityDuplicatesRoute from "@/pages/data/identity/duplicates-route";
+import IdentityConsentRoute from "@/pages/data/identity/consent-route";
+import IdentityErasureRoute from "@/pages/data/identity/erasure-route";
+import IdentityDependenciesRoute from "@/pages/data/identity/dependencies-route";
+import IdentityFalseMergeRoute from "@/pages/data/identity/false-merge-route";
+import IdentityLimitsRoute from "@/pages/data/identity/limits-route";
+import IdentitySettingsRoute from "@/pages/data/identity/settings/identity-settings-route";
 import { RouteError } from "@/route/route-error";
 import { ProtectedRoute } from "@/route/protected-route";
 import { GuestRoute } from "@/route/guest-route";
@@ -998,6 +1008,24 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/schema",
                 Component: SchemaSettingsRoute,
+              },
+              {
+                path: "identity",
+                children: [
+                  { index: true, Component: Identity },
+                  { path: "rule", Component: IdentityRuleRoute },
+                  { path: "unjoinable", Component: IdentityUnjoinableRoute },
+                  { path: "duplicates", Component: IdentityDuplicatesRoute },
+                  { path: "consent", Component: IdentityConsentRoute },
+                  { path: "erasure", Component: IdentityErasureRoute },
+                  { path: "dependencies", Component: IdentityDependenciesRoute },
+                  { path: "limits", Component: IdentityLimitsRoute },
+                  { path: "incidents/:id", Component: IdentityFalseMergeRoute },
+                ],
+              },
+              {
+                path: "settings/identity",
+                Component: IdentitySettingsRoute,
               },
             ],
           },

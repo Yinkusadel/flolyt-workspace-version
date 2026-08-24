@@ -603,6 +603,26 @@ function getBreadcrumb(pathname: string): React.ReactNode {
     );
   }
 
+  if (pathname === "/identity") return "Identity";
+  if (pathname === "/identity/rule")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "The rule" }]);
+  if (pathname === "/identity/unjoinable")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Unjoinable" }]);
+  if (pathname === "/identity/duplicates")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Duplicates" }]);
+  if (pathname === "/identity/consent")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Consent" }]);
+  if (pathname === "/identity/erasure")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Erasure" }]);
+  if (pathname === "/identity/dependencies")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Rules" }]);
+  if (pathname === "/identity/limits")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Limits" }]);
+  if (pathname === "/identity/incidents/1")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "A false merge" }]);
+  if (pathname === "/settings/identity")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Settings" }]);
+
   return "Home";
 }
 
