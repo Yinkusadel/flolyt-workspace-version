@@ -2000,6 +2000,67 @@ section) were written fresh.
 | Sidebar "Data health" link | [x] | pre-existing DATA-group stub already correctly pointed at `/data-health` |
 | `tsc -p tsconfig.app.json` clean + dev server + 12-route Playwright console/page-error sweep + both modals click-tested + shape/incident-detail visual check | [x] | Verified 2026-08-24 |
 
+## 8c. Schema
+
+**Built from scratch on 2026-08-24** from
+`flolyt-figma-designs/Data Screens & Specs/flolyt-schema/flolyt-schema/` (16 frames, SM01-SM16).
+No kit-122 row to supersede — closes a structural gap the same way Data health did. Third and
+final built section of the Data group after [[flolyt_data_sources_rebuild]] and
+[[flolyt_data_health_rebuild]] (Identity remains unbuilt); content transcribed from the export's
+own `sm.py` generator source (plus the shared `data.py` chrome reused as-is), same "read the
+`.py`, don't parse the SVG" approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/data/schema/`, mounts at the flat `/schema` — not the export's own `/data/schema`
+footer route. Settings is `/settings/schema`, outside the `/schema` tree. The sidebar already had
+"Schema" stubbed correctly at `/schema`, no sidebar change needed.
+
+**Architecture, closest to Data sources/Data health's shape:**
+- `/schema` (`index.tsx`) is ONE route covering SM01 (nothing mapped yet — the empty state), SM02
+  (the first field mapped), and SM03 (the default "Fields" state with the 6-tab bar).
+  `SCHEMA_STATE` (a 3-value mock flag defaulting to `"full"`) branches them, same
+  wired-but-unreachable pattern as every prior section's empty/first states.
+- `/schema/events` (SM05), `/schema/changes` (SM06), `/schema/requested` (SM07),
+  `/schema/definitions` (SM08), and `/schema/unused` (SM09) are standalone sibling routes sharing
+  the same 6-tab bar (`tabs.tsx`) as the index's "Fields" state.
+- `/schema/:field` (`field-detail-route.tsx`) has one built reference row — SM04
+  (`customers-market`, "customers.market") — every other slug falls back to a not-found state.
+  Reuses `DataSourcesHero` from `pages/data/data-sources/hero-banner.tsx` directly, same
+  cross-section reuse Data health established for its own incident-detail hero.
+- `/schema/change-costs` (SM14, "What a change costs") is a standalone page outside the tab bar,
+  cross-linked both ways with `/schema/changes` (its only in-app entry points, added deliberately
+  per [[flag_unreachable_routes]]).
+- **Four bespoke modals**, each hardcoded to the one target the export shows it opened against —
+  `map-a-field-modal.tsx` (`orders.line_count`, triggered from a header button on the empty/first
+  states and the Fields state — three separate launch points for one modal, since mapping is the
+  section's single most central action), `confirm-a-rename-modal.tsx` (`orders.channel` →
+  `acq_channel`, wired from that row on the Changes table's `rowAction`),
+  `disputed-definition-modal.tsx` ("Active", wired from that row's Disputed cell on the
+  Definitions table), and `unmap-a-field-modal.tsx` (`orders.gift_message`, wired from that row's
+  Action cell on the Unused table — note the Unused table has a second row whose Action column
+  also reads "unmap" (`subscriptions.trial_end`), but only the row matching the modal's own
+  hardcoded subject got the `rowAction`, same "match the modal's actual subject, not every row
+  with matching text" discipline as every prior section's rowAction wiring).
+- SM16 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Fields table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** `Chip`, `Callout`, `KpiCards`,
+`PersonAvatar`, `StageSubpageHeader`, `EYEBROW_CLASS`, and `DataSourcesHero` were all reused with
+zero forking — `DataSourcesHero` is now used by all three built Data sections. A local
+`SchemaKvList` (`kv-list.tsx`) was written fresh, same shape as every other section's own.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing mapped / first field / Fields | [x] | `index.tsx` + `states/*.tsx`. SM01/SM02 wired but unreachable with `SCHEMA_STATE`'s current default |
+| One field (`:field`) | [x] | `field-detail-route.tsx` — `customers-market` built, every other slug falls back to not-found |
+| Events / Changes / Requested / Definitions / Unused | [x] | `events-route.tsx`, `changes-route.tsx`, `requested-route.tsx`, `definitions-route.tsx`, `unused-route.tsx`, all sharing `tabs.tsx` |
+| What a change costs | [x] | `change-costs-route.tsx`, `/schema/change-costs`, standalone with two-way in-app links |
+| Map a field / Confirm a rename / A disputed definition / Unmap a field (modals) | [x] | `modals/map-a-field-modal.tsx`, `modals/confirm-a-rename-modal.tsx`, `modals/disputed-definition-modal.tsx`, `modals/unmap-a-field-modal.tsx` |
+| Settings | [x] | `settings/schema-settings-route.tsx`, `/settings/schema` |
+| Sidebar "Schema" link | [x] | pre-existing DATA-group stub already correctly pointed at `/schema` |
+| `tsc -p tsconfig.app.json` clean + dev server + 10-route Playwright console/page-error sweep + all four modals + field-detail screenshotted | [x] | Verified 2026-08-24 |
+
 ## 9. Mobile (67–69)
 
 | # | Screen | Status | Endpoint(s) | Notes |

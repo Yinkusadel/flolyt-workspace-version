@@ -327,6 +327,15 @@ import DataHealthShapeRoute from "@/pages/data/data-health/shape-route";
 import DataHealthNotificationsRoute from "@/pages/data/data-health/notifications-route";
 import DataHealthLimitsRoute from "@/pages/data/data-health/limits-route";
 import DataHealthSettingsRoute from "@/pages/data/data-health/settings/data-health-settings-route";
+import Schema from "@/pages/data/schema";
+import SchemaFieldDetailRoute from "@/pages/data/schema/field-detail-route";
+import SchemaEventsRoute from "@/pages/data/schema/events-route";
+import SchemaChangesRoute from "@/pages/data/schema/changes-route";
+import SchemaRequestedRoute from "@/pages/data/schema/requested-route";
+import SchemaDefinitionsRoute from "@/pages/data/schema/definitions-route";
+import SchemaUnusedRoute from "@/pages/data/schema/unused-route";
+import SchemaChangeCostsRoute from "@/pages/data/schema/change-costs-route";
+import SchemaSettingsRoute from "@/pages/data/schema/settings/schema-settings-route";
 import { RouteError } from "@/route/route-error";
 // import { ProtectedRoute } from "@/route/protected-route";
 
@@ -960,6 +969,23 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/data-health",
                 Component: DataHealthSettingsRoute,
+              },
+              {
+                path: "schema",
+                children: [
+                  { index: true, Component: Schema },
+                  { path: "events", Component: SchemaEventsRoute },
+                  { path: "changes", Component: SchemaChangesRoute },
+                  { path: "requested", Component: SchemaRequestedRoute },
+                  { path: "definitions", Component: SchemaDefinitionsRoute },
+                  { path: "unused", Component: SchemaUnusedRoute },
+                  { path: "change-costs", Component: SchemaChangeCostsRoute },
+                  { path: ":field", Component: SchemaFieldDetailRoute },
+                ],
+              },
+              {
+                path: "settings/schema",
+                Component: SchemaSettingsRoute,
               },
             ],
           },
