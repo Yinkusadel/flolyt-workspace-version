@@ -547,6 +547,31 @@ function getBreadcrumb(pathname: string): React.ReactNode {
     );
   }
 
+  if (pathname === "/data-health") return "Data health";
+  if (pathname === "/data-health/freshness")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Freshness" }]);
+  if (pathname === "/data-health/completeness")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Completeness" }]);
+  if (pathname === "/data-health/unavailable")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "What it broke" }]);
+  if (pathname === "/data-health/incidents")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Incidents" }]);
+  if (pathname === "/data-health/backfill")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Backfill" }]);
+  if (pathname === "/data-health/shape")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Shape" }]);
+  if (pathname === "/data-health/notifications")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Who is told" }]);
+  if (pathname === "/data-health/limits")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Limits" }]);
+  if (pathname === "/settings/data-health")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Settings" }]);
+
+  const dataHealthIncidentMatch = /^\/data-health\/incidents\/([^/]+)$/.exec(pathname);
+  if (dataHealthIncidentMatch) {
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Incidents", to: "/data-health/incidents" }, { label: "checkout_events · 18 August" }]);
+  }
+
   return "Home";
 }
 
