@@ -17,6 +17,8 @@ import { MARKETPLACE_LISTING_TITLES } from "@/pages/agents/marketplace/data";
 import { GOVERNANCE_ACCESS_TITLES, GOVERNANCE_ENTRY_TITLES } from "@/pages/agents/governance/data";
 import { AGENT_BUILDER_DETAIL_TITLES } from "@/pages/agents/agent-builder/data";
 import { AN_FINDING_TITLES, AN_RUN_TITLES } from "@/pages/agents/agent-detail/data";
+import { DS_DETAIL_TITLES } from "@/pages/data/data-sources/data";
+import { SM_FIELD_TITLES } from "@/pages/data/schema/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -515,6 +517,111 @@ function getBreadcrumb(pathname: string): React.ReactNode {
       </span>
     );
   }
+
+  if (pathname === "/data-sources") return "Data sources";
+  if (pathname === "/data-sources/new")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "Connect" }]);
+  if (pathname === "/data-sources/missing")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "Not connected" }]);
+  if (pathname === "/data-sources/dependencies")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "What depends on it" }]);
+  if (pathname === "/data-sources/credentials")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "Credentials" }]);
+  if (pathname === "/data-sources/history")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "History" }]);
+  if (pathname === "/data-sources/what-we-read")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "What Flolyt reads" }]);
+  if (pathname === "/settings/data-sources")
+    return renderCrumbs([{ label: "Data sources", to: "/data-sources" }, { label: "Settings" }]);
+
+  const dataSourceDetailMatch = /^\/data-sources\/([^/]+)$/.exec(pathname);
+  if (dataSourceDetailMatch) {
+    const title = DS_DETAIL_TITLES[dataSourceDetailMatch[1]] ?? dataSourceDetailMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/data-sources" className="hover:text-ink">
+          Data sources
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/data-health") return "Data health";
+  if (pathname === "/data-health/freshness")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Freshness" }]);
+  if (pathname === "/data-health/completeness")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Completeness" }]);
+  if (pathname === "/data-health/unavailable")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "What it broke" }]);
+  if (pathname === "/data-health/incidents")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Incidents" }]);
+  if (pathname === "/data-health/backfill")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Backfill" }]);
+  if (pathname === "/data-health/shape")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Shape" }]);
+  if (pathname === "/data-health/notifications")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Who is told" }]);
+  if (pathname === "/data-health/limits")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Limits" }]);
+  if (pathname === "/settings/data-health")
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Settings" }]);
+
+  const dataHealthIncidentMatch = /^\/data-health\/incidents\/([^/]+)$/.exec(pathname);
+  if (dataHealthIncidentMatch) {
+    return renderCrumbs([{ label: "Data health", to: "/data-health" }, { label: "Incidents", to: "/data-health/incidents" }, { label: "checkout_events · 18 August" }]);
+  }
+
+  if (pathname === "/schema") return "Schema";
+  if (pathname === "/schema/events")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "Events" }]);
+  if (pathname === "/schema/changes")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "Changes" }]);
+  if (pathname === "/schema/requested")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "Requested" }]);
+  if (pathname === "/schema/definitions")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "Definitions" }]);
+  if (pathname === "/schema/unused")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "Unused" }]);
+  if (pathname === "/schema/change-costs")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "What a change costs" }]);
+  if (pathname === "/settings/schema")
+    return renderCrumbs([{ label: "Schema", to: "/schema" }, { label: "Settings" }]);
+
+  const schemaFieldMatch = /^\/schema\/([^/]+)$/.exec(pathname);
+  if (schemaFieldMatch) {
+    const title = SM_FIELD_TITLES[schemaFieldMatch[1]] ?? schemaFieldMatch[1];
+    return (
+      <span className="flex items-center gap-1.5">
+        <Link to="/schema" className="hover:text-ink">
+          Schema
+        </Link>
+        <span className="text-ink-4">/</span>
+        <span className="text-ink">{title}</span>
+      </span>
+    );
+  }
+
+  if (pathname === "/identity") return "Identity";
+  if (pathname === "/identity/rule")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "The rule" }]);
+  if (pathname === "/identity/unjoinable")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Unjoinable" }]);
+  if (pathname === "/identity/duplicates")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Duplicates" }]);
+  if (pathname === "/identity/consent")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Consent" }]);
+  if (pathname === "/identity/erasure")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Erasure" }]);
+  if (pathname === "/identity/dependencies")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Rules" }]);
+  if (pathname === "/identity/limits")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Limits" }]);
+  if (pathname === "/identity/incidents/1")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "A false merge" }]);
+  if (pathname === "/settings/identity")
+    return renderCrumbs([{ label: "Identity", to: "/identity" }, { label: "Settings" }]);
 
   return "Home";
 }

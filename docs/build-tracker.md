@@ -1859,9 +1859,276 @@ against the transcribed specs for the index, reassign modal and create-handoffs 
 | 61 | compliance consent | [ ] | | |
 | 62 | consent at scale | [ ] | | |
 | 63 | delivery mesh | [ ] | | |
-| 64 | data sources | [ ] | | |
+| 64 | data sources | [x] | | Superseded — rebuilt as `/data-sources` from the newer `flolyt-data-sources` export, see section 8a |
 | 65 | markets and currency | [ ] | | |
 | 66 | ai teammates directory | [ ] | | `/ai-teammates` currently has only a minimal stub (agent list + Pause action) built to host screen 121 — the real directory screen isn't built |
+
+## 8a. Data sources
+
+**Built from scratch on 2026-08-24** from
+`flolyt-figma-designs/Data Screens & Specs/flolyt-data-sources (1)/flolyt-data-sources/` (18
+frames, DS01-DS18), superseding kit-122's frame 64 ("data sources," section 8, row above). First
+section of a brand-new **Data** sidebar group — the sidebar already had all four Data items
+stubbed correctly (`/data-sources`, `/data-health`, `/schema`, `/identity`), same "sidebar
+pre-stubbed, no sidebar change needed" situation as Segments and Playbooks. Content was
+transcribed from the export's own `ds.py` generator source (plus a new shared `data.py` chrome
+file for the four Data sections, analogous to `rev.py`/`cust.py`/`know.py`), same "read the
+`.py`, don't parse the SVG" approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/data/data-sources/` (mirrors the sidebar's DATA group), but mounts at the flat
+`/data-sources` — not the export's own `/data/sources` footer route. Settings is
+`/settings/data-sources`, outside the `/data-sources` tree, matching every prior section's
+settings precedent (DS17's own footer literally reads `/settings/data/sources`, overridden per
+the same flat-URL rule).
+
+**Architecture, closest to Segments/Leakage map's shape:**
+- `/data-sources` (`index.tsx`) is ONE route covering DS01 (nothing connected — the empty
+  state), DS02 (the first source, three hours in), and DS03 (the default "ten connected" state
+  with the 5-tab bar). `DATA_SOURCES_STATE` (a 3-value mock flag defaulting to `"full"`) branches
+  them — DS01/DS02 are wired but unreachable with that default, same "not wired, no demo state
+  currently triggers it" situation as every prior rebuild's empty/edge states.
+- `/data-sources/missing` (DS05), `/data-sources/dependencies` (DS06), `/data-sources/credentials`
+  (DS11), and `/data-sources/history` (DS12) are standalone sibling routes sharing the same
+  5-tab bar (`tabs.tsx`) as the index's "Connected" state.
+- `/data-sources/new` (`new/index.tsx`) is the 4-step "Connect a source" wizard (DS07 what → DS08
+  which fields → DS09 how/how often → DS10 review). Step position lives in `?step=`, not local
+  `useState`, per the URL-over-state rule for wizards.
+- `/data-sources/:id` (`source-detail-route.tsx`) has two built reference rows: DS04 (`orders`)
+  and DS15 (`ad-spend`, kebab-cased per the export's own footer even though the underlying field
+  is `ad_spend`) — every other id falls back to a not-found state, same "one/two reference rows"
+  pattern as every prior section's `:id` route.
+- **DS13/DS14 are two bespoke modals**, each hardcoded to the one row the export shows it opened
+  against — `widen-a-scope-modal.tsx` ("Add `orders.customer_reference` to the scope," wired from
+  a header button on the `orders` detail page — DS13's own backdrop table only showed `orders`
+  and `customers`, and the field is literally about `orders`) and `disconnect-a-source-modal.tsx`
+  ("Disconnect `loyalty_events`," wired from that row's state chip on the Connected table's
+  `rowAction`, DS14's own backdrop subject) — same "only these targets have a wired action"
+  pattern as every prior section's bespoke modals.
+- `/data-sources/what-we-read` (DS16) is a standalone page outside the tab bar, linked from DS01's
+  empty state (a secondary CTA) and reachable from DS03's notes.
+- DS18 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Connected table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** `Chip`, `CHIP_INTERACTIVE_CLASS`,
+`Callout`, `KpiCards`, `PersonAvatar`, `StageSubpageHeader`, and `EYEBROW_CLASS` were all reused
+from `lifecycle/` and `person-avatar.tsx` with zero forking. A local `DataSourcesKvList`
+(`kv-list.tsx`) was written fresh, copying every prior section's own `kv-list.tsx` shape exactly.
+A new `hero-banner.tsx` (`DataSourcesHero`) was written to cover the accent-box-with-a-right-hand-
+stat shape that recurs three times in this section (DS04, DS10, DS15) — not shared with other
+sections, but extracted locally since the same three-part shape repeated three times in one.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing connected / first source / all connected | [x] | `index.tsx` + `states/*.tsx`. DS01/DS02 wired but unreachable with `DATA_SOURCES_STATE`'s current default |
+| One source (`:id`) | [x] | `source-detail-route.tsx` — `orders` and `ad-spend` built, every other id falls back to not-found |
+| Not connected / What depends on it / Credentials / History | [x] | `missing-route.tsx`, `dependencies-route.tsx`, `credentials-route.tsx`, `history-route.tsx`, all sharing `tabs.tsx` |
+| Connect a source (wizard) | [x] | `new/index.tsx` + `step-what.tsx`/`step-fields.tsx`/`step-how.tsx`/`step-review.tsx`, `?step=`, `/data-sources/new` |
+| Widen a scope / Disconnect a source (modals) | [x] | `modals/widen-a-scope-modal.tsx`, `modals/disconnect-a-source-modal.tsx` |
+| What Flolyt reads | [x] | `what-we-read-route.tsx`, `/data-sources/what-we-read` |
+| Settings | [x] | `settings/data-sources-settings-route.tsx`, `/settings/data-sources` |
+| Sidebar "Data sources" link | [x] | pre-existing DATA-group stub already correctly pointed at `/data-sources` |
+| `tsc -p tsconfig.app.json` clean + dev server + 14-route Playwright console/page-error sweep + both modals click-tested + wizard step 1 + mobile card check | [x] | Verified 2026-08-24 |
+
+## 8b. Data health
+
+**Built from scratch on 2026-08-24** from
+`flolyt-figma-designs/Data Screens & Specs/flolyt-data-health (1)/flolyt-data-health/` (16 frames,
+DH01-DH16). No kit-122 row to supersede — this closes a structural gap the same way Forecast did
+in the Revenue group, since kit-122 never had a "data health" screen at all. Second section of the
+Data group after [[flolyt_data_sources_rebuild]]; content transcribed from the export's own
+`dh.py` generator source (plus the shared `data.py` chrome reused as-is from Data sources), same
+"read the `.py`, don't parse the SVG" approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/data/data-health/`, mounts at the flat `/data-health` — not the export's own
+`/data/health` footer route. Settings is `/settings/data-health`, outside the `/data-health` tree.
+The sidebar already had "Data health" stubbed correctly at `/data-health`, no sidebar change
+needed.
+
+**Architecture, closest to Data sources' shape:**
+- `/data-health` (`index.tsx`) is ONE route covering DH01 (nothing to check yet — the empty
+  state), DH02 (the first failure), and DH03 (the default "right now" state with the 6-tab bar).
+  `DATA_HEALTH_STATE` (a 3-value mock flag defaulting to `"full"`) branches them, same
+  wired-but-unreachable pattern as every prior section's empty/first states.
+- `/data-health/freshness` (DH04), `/data-health/completeness` (DH05), `/data-health/unavailable`
+  (DH06, "What it broke"), `/data-health/incidents` (DH09), and `/data-health/backfill` (DH08) are
+  standalone sibling routes sharing the same 6-tab bar (`tabs.tsx`) as the index's "Right now"
+  state.
+- `/data-health/incidents/:id` (`incident-detail-route.tsx`) has one built reference row — DH07
+  (`checkout`, "checkout_events · 18 August") — every other id falls back to a not-found state.
+  Reuses `DataSourcesHero` from `pages/data/data-sources/hero-banner.tsx` directly rather than
+  forking a local copy, since the two sections sit in the same Data group and the accent-box shape
+  is identical — the first cross-section component reuse in this group (same precedent as
+  Benchmarks reusing Attribution's holdout wizard).
+- **DH10 ("Shape") is a tab-mislabel fix**: the export's own `subtabs(p, "Right now", TABS)` call
+  sets its active tab to "Right now" even though there is no "Shape" tab in `TABS` at all and the
+  screen is its own distinct page — see [[figma_tab_mislabel_check]]. Built as a standalone
+  breadcrumbed page at `/data-health/shape` instead, linked from the Right now state's
+  "healthy-and-busy" callout (its only in-app entry point, added deliberately per
+  [[flag_unreachable_routes]]).
+- `/data-health/notifications` (DH13, "Who is told") and `/data-health/limits` (DH14, "What this
+  cannot catch") are standalone pages outside the tab bar.
+- **DH11/DH12 are two bespoke modals**, each hardcoded to the one target the export shows it
+  opened against — `change-a-threshold-modal.tsx` ("`checkout_events`'s degraded threshold,"
+  wired from that row's degraded-at cell on the Freshness table's `rowAction`) and
+  `report-a-problem-modal.tsx` ("Something is wrong with `ad_spend`," wired from a header button
+  on the Limits page — DH12's own backdrop table doesn't include `ad_spend` as a row on any page
+  actually built, so a general header action was used instead of a row click, same reasoning
+  documented in Data sources' Widen-a-scope modal).
+- DH16 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Right now table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** `Chip`, `Callout`, `KpiCards`,
+`PersonAvatar`, `StageSubpageHeader`, `EYEBROW_CLASS`, and (new this section) Data sources'
+`DataSourcesHero` were all reused with zero forking. A local `DataHealthKvList` (`kv-list.tsx`)
+and a new `FreshnessBar` (`freshness-bar.tsx`, the 24-hourly-block delivery strip unique to this
+section) were written fresh.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing to check / first failure / right now | [x] | `index.tsx` + `states/*.tsx`. DH01/DH02 wired but unreachable with `DATA_HEALTH_STATE`'s current default |
+| One incident (`:id`) | [x] | `incident-detail-route.tsx` — `checkout` built, every other id falls back to not-found |
+| Freshness / Completeness / What it broke / Incidents / Backfill | [x] | `freshness-route.tsx`, `completeness-route.tsx`, `unavailable-route.tsx`, `incidents-route.tsx`, `backfill-route.tsx`, all sharing `tabs.tsx` |
+| Shape (tab-mislabel fix) | [x] | `shape-route.tsx`, `/data-health/shape`, standalone with one in-app link |
+| Who is told / What this cannot catch | [x] | `notifications-route.tsx`, `limits-route.tsx` |
+| Change a threshold / Report a problem (modals) | [x] | `modals/change-a-threshold-modal.tsx`, `modals/report-a-problem-modal.tsx` |
+| Settings | [x] | `settings/data-health-settings-route.tsx`, `/settings/data-health` |
+| Sidebar "Data health" link | [x] | pre-existing DATA-group stub already correctly pointed at `/data-health` |
+| `tsc -p tsconfig.app.json` clean + dev server + 12-route Playwright console/page-error sweep + both modals click-tested + shape/incident-detail visual check | [x] | Verified 2026-08-24 |
+
+## 8c. Schema
+
+**Built from scratch on 2026-08-24** from
+`flolyt-figma-designs/Data Screens & Specs/flolyt-schema/flolyt-schema/` (16 frames, SM01-SM16).
+No kit-122 row to supersede — closes a structural gap the same way Data health did. Third and
+final built section of the Data group after [[flolyt_data_sources_rebuild]] and
+[[flolyt_data_health_rebuild]] (Identity remains unbuilt); content transcribed from the export's
+own `sm.py` generator source (plus the shared `data.py` chrome reused as-is), same "read the
+`.py`, don't parse the SVG" approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/data/schema/`, mounts at the flat `/schema` — not the export's own `/data/schema`
+footer route. Settings is `/settings/schema`, outside the `/schema` tree. The sidebar already had
+"Schema" stubbed correctly at `/schema`, no sidebar change needed.
+
+**Architecture, closest to Data sources/Data health's shape:**
+- `/schema` (`index.tsx`) is ONE route covering SM01 (nothing mapped yet — the empty state), SM02
+  (the first field mapped), and SM03 (the default "Fields" state with the 6-tab bar).
+  `SCHEMA_STATE` (a 3-value mock flag defaulting to `"full"`) branches them, same
+  wired-but-unreachable pattern as every prior section's empty/first states.
+- `/schema/events` (SM05), `/schema/changes` (SM06), `/schema/requested` (SM07),
+  `/schema/definitions` (SM08), and `/schema/unused` (SM09) are standalone sibling routes sharing
+  the same 6-tab bar (`tabs.tsx`) as the index's "Fields" state.
+- `/schema/:field` (`field-detail-route.tsx`) has one built reference row — SM04
+  (`customers-market`, "customers.market") — every other slug falls back to a not-found state.
+  Reuses `DataSourcesHero` from `pages/data/data-sources/hero-banner.tsx` directly, same
+  cross-section reuse Data health established for its own incident-detail hero.
+- `/schema/change-costs` (SM14, "What a change costs") is a standalone page outside the tab bar,
+  cross-linked both ways with `/schema/changes` (its only in-app entry points, added deliberately
+  per [[flag_unreachable_routes]]).
+- **Four bespoke modals**, each hardcoded to the one target the export shows it opened against —
+  `map-a-field-modal.tsx` (`orders.line_count`, triggered from a header button on the empty/first
+  states and the Fields state — three separate launch points for one modal, since mapping is the
+  section's single most central action), `confirm-a-rename-modal.tsx` (`orders.channel` →
+  `acq_channel`, wired from that row on the Changes table's `rowAction`),
+  `disputed-definition-modal.tsx` ("Active", wired from that row's Disputed cell on the
+  Definitions table), and `unmap-a-field-modal.tsx` (`orders.gift_message`, wired from that row's
+  Action cell on the Unused table — note the Unused table has a second row whose Action column
+  also reads "unmap" (`subscriptions.trial_end`), but only the row matching the modal's own
+  hardcoded subject got the `rowAction`, same "match the modal's actual subject, not every row
+  with matching text" discipline as every prior section's rowAction wiring).
+- SM16 (mobile) was treated as a responsive-design constraint via Tailwind breakpoints (`hidden
+  md:block` table / `md:hidden` stacked cards on the Fields table), not a separate page — same
+  call as every prior section's mobile frame.
+
+**Cross-section reuse, confirmed by reading both before reusing:** `Chip`, `Callout`, `KpiCards`,
+`PersonAvatar`, `StageSubpageHeader`, `EYEBROW_CLASS`, and `DataSourcesHero` were all reused with
+zero forking — `DataSourcesHero` is now used by all three built Data sections. A local
+`SchemaKvList` (`kv-list.tsx`) was written fresh, same shape as every other section's own.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — nothing mapped / first field / Fields | [x] | `index.tsx` + `states/*.tsx`. SM01/SM02 wired but unreachable with `SCHEMA_STATE`'s current default |
+| One field (`:field`) | [x] | `field-detail-route.tsx` — `customers-market` built, every other slug falls back to not-found |
+| Events / Changes / Requested / Definitions / Unused | [x] | `events-route.tsx`, `changes-route.tsx`, `requested-route.tsx`, `definitions-route.tsx`, `unused-route.tsx`, all sharing `tabs.tsx` |
+| What a change costs | [x] | `change-costs-route.tsx`, `/schema/change-costs`, standalone with two-way in-app links |
+| Map a field / Confirm a rename / A disputed definition / Unmap a field (modals) | [x] | `modals/map-a-field-modal.tsx`, `modals/confirm-a-rename-modal.tsx`, `modals/disputed-definition-modal.tsx`, `modals/unmap-a-field-modal.tsx` |
+| Settings | [x] | `settings/schema-settings-route.tsx`, `/settings/schema` |
+| Sidebar "Schema" link | [x] | pre-existing DATA-group stub already correctly pointed at `/schema` |
+| `tsc -p tsconfig.app.json` clean + dev server + 10-route Playwright console/page-error sweep + all four modals + field-detail screenshotted | [x] | Verified 2026-08-24 |
+
+## 8d. Identity
+
+**Built from scratch on 2026-08-24** from
+`flolyt-figma-designs/Data Screens & Specs/flolyt-identity/flolyt-identity/` (16 frames,
+ID01-ID16). No kit-122 row to supersede — closes the last structural gap in the Data group, same
+as Data health and Schema. Fourth and final Data section, after
+[[flolyt_data_sources_rebuild]], [[flolyt_data_health_rebuild]] and [[flolyt_schema_rebuild]] —
+**the Data group is now complete**. Content transcribed from the export's own `id_.py` generator
+source (plus the shared `data.py` chrome reused as-is), same "read the `.py`, don't parse the
+SVG" approach as every prior section.
+
+**Route stays flat, per the established rule**: the section lives on disk at
+`src/pages/data/identity/`, mounts at the flat `/identity` — not the export's own `/data/identity`
+footer route. Settings is `/settings/identity`, outside the `/identity` tree. The sidebar already
+had "Identity" stubbed correctly at `/identity`, no sidebar change needed.
+
+**Architecture, closest to the other three Data sections' shape:**
+- `/identity` (`index.tsx`) is ONE route covering ID01 (no identity rule yet — the empty state),
+  ID02 (the first rule, 12 December), and ID03 (the default "Who is a customer" state with the
+  6-tab bar). `IDENTITY_STATE` (a 3-value mock flag defaulting to `"full"`) branches them, same
+  wired-but-unreachable pattern as every prior section's empty/first states. ID03 introduces a new
+  local `PeopleBar` component (`people-bar.tsx`) — a proportional stacked bar over the four totals
+  with a legend, the export's own `people_bar()` python helper — not shared with any other
+  section since nothing else needed a composition bar.
+- `/identity/unjoinable` (ID05), `/identity/duplicates` (ID06), `/identity/consent` (ID07),
+  `/identity/erasure` (ID08), and `/identity/dependencies` (ID12, the "Rules" tab's actual
+  content — confirmed NOT a tab-mislabel case, unlike Data health's Shape, since "Rules" is a real
+  entry in `TABS` and ID12's own `subtabs(p, "Rules", TABS)` call matches it correctly) are
+  standalone sibling routes sharing the same 6-tab bar (`tabs.tsx`) as the index's "Who is a
+  customer" state.
+- `/identity/rule` (ID04, "The rule") and `/identity/limits` (ID14, "What this cannot fix") are
+  standalone pages outside the tab bar, cross-linked with `/identity/unjoinable` and
+  `/identity/incidents/1` respectively (added deliberately per [[flag_unreachable_routes]]).
+  Both reuse `DataSourcesHero` from `pages/data/data-sources/hero-banner.tsx` directly — now used
+  by all four built Data sections.
+- `/identity/incidents/:id` (`false-merge-route.tsx`) has one built reference row at the export's
+  own literal slug, `1` (`/data/identity/incidents/1` in the source) — every other id falls back
+  to a not-found state, same "one/two reference rows" pattern as every prior section.
+- **Three bespoke modals**, each hardcoded to the one target the export shows it opened against —
+  `change-the-rule-modal.tsx` (adding phone number as a match key, triggered from the rule page's
+  header button), `merge-two-records-modal.tsx` (the same-unverified-email duplicate pair, wired
+  from that row's Action cell on the Duplicates table's `rowAction` — the Duplicates table has
+  three other rows whose Action column reads "leave" or a non-matching "review individually," and
+  only the row matching the modal's own hardcoded subject got the `rowAction`, same discipline as
+  Schema's Unmap-a-field modal), and `erasure-request-modal.tsx` (triggered from a header button
+  on the Erasure page).
+- ID16 (mobile) was treated as a responsive-design constraint, not a separate page — same call as
+  every prior section's mobile frame; the four-totals list and stacked bar already read cleanly
+  at narrow widths without a dedicated mobile layout.
+
+**Cross-section reuse, confirmed by reading both before reusing:** `Chip`, `Callout`, `KpiCards`,
+`PersonAvatar`, `StageSubpageHeader`, `EYEBROW_CLASS`, and `DataSourcesHero` were all reused with
+zero forking. A local `IdentityKvList` (`kv-list.tsx`) was written fresh, same shape as every
+other section's own.
+
+| Piece | Status | Notes |
+|---|---|---|
+| Index — no rule yet / first rule / Who is a customer | [x] | `index.tsx` + `states/*.tsx`. ID01/ID02 wired but unreachable with `IDENTITY_STATE`'s current default |
+| The rule | [x] | `rule-route.tsx`, `/identity/rule` |
+| Unjoinable / Duplicates / Consent / Erasure / Rules (dependencies) | [x] | `unjoinable-route.tsx`, `duplicates-route.tsx`, `consent-route.tsx`, `erasure-route.tsx`, `dependencies-route.tsx`, all sharing `tabs.tsx` |
+| A false merge (`:id`) | [x] | `false-merge-route.tsx` — `1` built, every other id falls back to not-found |
+| Limits | [x] | `limits-route.tsx`, `/identity/limits`, two-way linked with Unjoinable and the false-merge incident |
+| Change the rule / Merge two records / An erasure request (modals) | [x] | `modals/change-the-rule-modal.tsx`, `modals/merge-two-records-modal.tsx`, `modals/erasure-request-modal.tsx` |
+| Settings | [x] | `settings/identity-settings-route.tsx`, `/settings/identity` |
+| Sidebar "Identity" link | [x] | pre-existing DATA-group stub already correctly pointed at `/identity` |
+| `tsc -p tsconfig.app.json` clean + dev server + 11-route Playwright console/page-error sweep + all three modals + false-merge detail screenshotted | [x] | Verified 2026-08-24 |
+
+**The Data group (Data sources, Data health, Schema, Identity) is now fully built — all four
+sidebar items resolve to real sections.**
 
 ## 9. Mobile (67–69)
 

@@ -310,8 +310,47 @@ import RepliesUseRoute from "@/pages/customers/replies/use-route";
 import ConversationDetailRoute from "@/pages/customers/replies/conversation-detail-route";
 import ReplyAnswerRoute from "@/pages/customers/replies/answer-route";
 import RepliesSettingsRoute from "@/pages/customers/replies/settings/replies-settings-route";
+import DataSources from "@/pages/data/data-sources";
+import NewDataSource from "@/pages/data/data-sources/new";
+import DataSourcesMissingRoute from "@/pages/data/data-sources/missing-route";
+import DataSourcesDependenciesRoute from "@/pages/data/data-sources/dependencies-route";
+import DataSourcesCredentialsRoute from "@/pages/data/data-sources/credentials-route";
+import DataSourcesHistoryRoute from "@/pages/data/data-sources/history-route";
+import DataSourcesWhatWeReadRoute from "@/pages/data/data-sources/what-we-read-route";
+import SourceDetailRoute from "@/pages/data/data-sources/source-detail-route";
+import DataSourcesSettingsRoute from "@/pages/data/data-sources/settings/data-sources-settings-route";
+import DataHealth from "@/pages/data/data-health";
+import DataHealthFreshnessRoute from "@/pages/data/data-health/freshness-route";
+import DataHealthCompletenessRoute from "@/pages/data/data-health/completeness-route";
+import DataHealthUnavailableRoute from "@/pages/data/data-health/unavailable-route";
+import DataHealthIncidentsRoute from "@/pages/data/data-health/incidents-route";
+import DataHealthIncidentDetailRoute from "@/pages/data/data-health/incident-detail-route";
+import DataHealthBackfillRoute from "@/pages/data/data-health/backfill-route";
+import DataHealthShapeRoute from "@/pages/data/data-health/shape-route";
+import DataHealthNotificationsRoute from "@/pages/data/data-health/notifications-route";
+import DataHealthLimitsRoute from "@/pages/data/data-health/limits-route";
+import DataHealthSettingsRoute from "@/pages/data/data-health/settings/data-health-settings-route";
+import Schema from "@/pages/data/schema";
+import SchemaFieldDetailRoute from "@/pages/data/schema/field-detail-route";
+import SchemaEventsRoute from "@/pages/data/schema/events-route";
+import SchemaChangesRoute from "@/pages/data/schema/changes-route";
+import SchemaRequestedRoute from "@/pages/data/schema/requested-route";
+import SchemaDefinitionsRoute from "@/pages/data/schema/definitions-route";
+import SchemaUnusedRoute from "@/pages/data/schema/unused-route";
+import SchemaChangeCostsRoute from "@/pages/data/schema/change-costs-route";
+import SchemaSettingsRoute from "@/pages/data/schema/settings/schema-settings-route";
+import Identity from "@/pages/data/identity";
+import IdentityRuleRoute from "@/pages/data/identity/rule-route";
+import IdentityUnjoinableRoute from "@/pages/data/identity/unjoinable-route";
+import IdentityDuplicatesRoute from "@/pages/data/identity/duplicates-route";
+import IdentityConsentRoute from "@/pages/data/identity/consent-route";
+import IdentityErasureRoute from "@/pages/data/identity/erasure-route";
+import IdentityDependenciesRoute from "@/pages/data/identity/dependencies-route";
+import IdentityFalseMergeRoute from "@/pages/data/identity/false-merge-route";
+import IdentityLimitsRoute from "@/pages/data/identity/limits-route";
+import IdentitySettingsRoute from "@/pages/data/identity/settings/identity-settings-route";
 import { RouteError } from "@/route/route-error";
-// import { ProtectedRoute } from "@/route/protected-route";
+import { ProtectedRoute } from "@/route/protected-route";
 import { GuestRoute } from "@/route/guest-route";
 
 export const routes = createBrowserRouter([
@@ -341,7 +380,7 @@ export const routes = createBrowserRouter([
       },
       {
         path: "/",
-        // Component: ProtectedRoute,
+        Component: ProtectedRoute,
         children: [
           {
             Component: AppLayout,
@@ -916,6 +955,77 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/agent-detail",
                 Component: AgentDetailSettingsRoute,
+              },
+              {
+                path: "data-sources",
+                children: [
+                  { index: true, Component: DataSources },
+                  { path: "new", Component: NewDataSource },
+                  { path: "missing", Component: DataSourcesMissingRoute },
+                  { path: "dependencies", Component: DataSourcesDependenciesRoute },
+                  { path: "credentials", Component: DataSourcesCredentialsRoute },
+                  { path: "history", Component: DataSourcesHistoryRoute },
+                  { path: "what-we-read", Component: DataSourcesWhatWeReadRoute },
+                  { path: ":id", Component: SourceDetailRoute },
+                ],
+              },
+              {
+                path: "settings/data-sources",
+                Component: DataSourcesSettingsRoute,
+              },
+              {
+                path: "data-health",
+                children: [
+                  { index: true, Component: DataHealth },
+                  { path: "freshness", Component: DataHealthFreshnessRoute },
+                  { path: "completeness", Component: DataHealthCompletenessRoute },
+                  { path: "unavailable", Component: DataHealthUnavailableRoute },
+                  { path: "incidents", Component: DataHealthIncidentsRoute },
+                  { path: "incidents/:id", Component: DataHealthIncidentDetailRoute },
+                  { path: "backfill", Component: DataHealthBackfillRoute },
+                  { path: "shape", Component: DataHealthShapeRoute },
+                  { path: "notifications", Component: DataHealthNotificationsRoute },
+                  { path: "limits", Component: DataHealthLimitsRoute },
+                ],
+              },
+              {
+                path: "settings/data-health",
+                Component: DataHealthSettingsRoute,
+              },
+              {
+                path: "schema",
+                children: [
+                  { index: true, Component: Schema },
+                  { path: "events", Component: SchemaEventsRoute },
+                  { path: "changes", Component: SchemaChangesRoute },
+                  { path: "requested", Component: SchemaRequestedRoute },
+                  { path: "definitions", Component: SchemaDefinitionsRoute },
+                  { path: "unused", Component: SchemaUnusedRoute },
+                  { path: "change-costs", Component: SchemaChangeCostsRoute },
+                  { path: ":field", Component: SchemaFieldDetailRoute },
+                ],
+              },
+              {
+                path: "settings/schema",
+                Component: SchemaSettingsRoute,
+              },
+              {
+                path: "identity",
+                children: [
+                  { index: true, Component: Identity },
+                  { path: "rule", Component: IdentityRuleRoute },
+                  { path: "unjoinable", Component: IdentityUnjoinableRoute },
+                  { path: "duplicates", Component: IdentityDuplicatesRoute },
+                  { path: "consent", Component: IdentityConsentRoute },
+                  { path: "erasure", Component: IdentityErasureRoute },
+                  { path: "dependencies", Component: IdentityDependenciesRoute },
+                  { path: "limits", Component: IdentityLimitsRoute },
+                  { path: "incidents/:id", Component: IdentityFalseMergeRoute },
+                ],
+              },
+              {
+                path: "settings/identity",
+                Component: IdentitySettingsRoute,
               },
             ],
           },
