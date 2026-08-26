@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getSupportedCurrencies,
   type GetSupportedCurrenciesResponse,
-  type SupportedCurrenciesDto,
 } from "@/services/api/currency/get-supported-currencies";
 
 export const SUPPORTED_CURRENCIES_QUERY_KEY = ["supported-currencies"];
@@ -15,7 +14,7 @@ const useGetSupportedCurrencies = () => {
 
   return {
     ...query,
-    supportedCurrencies: query.data?.data ?? (null as SupportedCurrenciesDto | null),
+    supportedCurrencies: query.data ?? null,
   };
 };
 

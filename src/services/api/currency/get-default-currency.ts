@@ -9,11 +9,11 @@ export interface DefaultCurrencyDto {
   isFallback: boolean;
 }
 
-export interface GetDefaultCurrencyResponse {
-  data: DefaultCurrencyDto;
-  messages: string[];
-  succeeded: boolean;
-}
+// GET /supported (the sibling currency endpoint) was confirmed 2026-08-26 to
+// return its DTO unwrapped, not the standard {data, messages, succeeded}
+// envelope — matches how currency.md documented this endpoint's response too.
+// Applying the same shape here; still worth a real call to confirm outright.
+export type GetDefaultCurrencyResponse = DefaultCurrencyDto;
 
 const {
   CURRENCY: { GET_DEFAULT },

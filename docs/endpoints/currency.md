@@ -18,8 +18,11 @@ the missing pre-workspace screen's silent timezone/currency defaults.
     defaultFallback: string;
   }
   ```
+  **Confirmed against a real call 2026-08-26 — no `{data, messages, succeeded}` envelope.** Unlike
+  every other endpoint in this app, this DTO sits directly at the response top level. Don't wrap it
+  when touching this file again.
 - **Used by:** `services/api/currency/get-supported-currencies.ts`, `features/currency/use-get-supported-currencies.ts`, wired to `/onboarding/workspace` (screen 03's "Reporting currency" dropdown).
-- **Status:** wired
+- **Status:** verified working
 - **Notes:** No country data in this response at all — earlier assumption that this endpoint
   might double as a country list was wrong, corrected mid-session. This is currencies only.
 
@@ -39,6 +42,8 @@ the missing pre-workspace screen's silent timezone/currency defaults.
     isFallback: boolean;
   }
   ```
+  **Also assumed unwrapped** (no envelope), matching the now-confirmed sibling endpoint above —
+  fixed in code 2026-08-26, but this one specifically hasn't had a real call to confirm it.
 - **Used by:** `services/api/currency/get-default-currency.ts`, `features/currency/use-get-default-currency.ts`, wired to `/onboarding/start` (silent currency default once a country is picked, not shown as its own field).
 - **Status:** wired
 - **Notes:** `isFallback` presumably means "this country has no specific default, here's the
@@ -49,3 +54,19 @@ the missing pre-workspace screen's silent timezone/currency defaults.
 
 _Request parameter shape for `GET /default` is inferred, not confirmed — flag if the countryCode
 turns out to be a path param instead of a query param._
+
+## Bug found and fixed, 2026-08-26
+
+On `/onboarding/workspace`, `GET /proposed-markets` returned `reportingCurrency: "NGN"`, but the
+"Reporting currency" select rendered empty. Traced by signing into the test account directly
+(Playwright + the Guerrilla Mail API for the OTP) and reading the real `GET /supported` response:
+
+```json
+{"currencies":["NGN","KES","USD","GBP","EUR","ZAR","XAF","XOF","EGP"],"defaultFallback":"USD"}
+```
+
+Confirmed: this endpoint's response has **no envelope** — `get-supported-currencies.ts` was
+written assuming the standard `{data, messages, succeeded}` wrapper (copy-pasted from every other
+service in this app) and read `response.data.data.currencies`, which didn't exist, silently
+resolving to an empty options list. Fixed both currency service/hook files to read the DTO
+directly. Re-verified live: "Reporting currency" now renders "NGN" pre-selected.

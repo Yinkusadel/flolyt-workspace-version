@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getDefaultCurrency,
   type GetDefaultCurrencyResponse,
-  type DefaultCurrencyDto,
 } from "@/services/api/currency/get-default-currency";
 
 export const DEFAULT_CURRENCY_QUERY_KEY = (countryCode: string) => ["default-currency", countryCode];
@@ -17,7 +16,7 @@ const useGetDefaultCurrency = (countryCode: string | null) => {
 
   return {
     ...query,
-    defaultCurrency: query.data?.data ?? (null as DefaultCurrencyDto | null),
+    defaultCurrency: query.data ?? null,
   };
 };
 

@@ -8,11 +8,10 @@ export interface SupportedCurrenciesDto {
   defaultFallback: string;
 }
 
-export interface GetSupportedCurrenciesResponse {
-  data: SupportedCurrenciesDto;
-  messages: string[];
-  succeeded: boolean;
-}
+// Confirmed against a real call 2026-08-26: unlike every other endpoint in this
+// app, this one returns the DTO directly at the top level — no {data, messages,
+// succeeded} envelope. Don't "fix" this to match the envelope pattern.
+export type GetSupportedCurrenciesResponse = SupportedCurrenciesDto;
 
 const {
   CURRENCY: { GET_SUPPORTED },
