@@ -18,6 +18,13 @@ export interface CreateWorkspacePayload {
   timeZoneId: string;
   currency: string;
   webSite: string | null;
+  // Nullable on the API (omit it to claim an address later via PUT /identity
+  // instead), but this app always supplies it — the address is collected on
+  // this same pre-workspace screen, not on a later onboarding step.
+  slug: string;
+  // Undocumented beyond the API doc's own curl example, which sends `true` —
+  // meaning not confirmed with the backend team yet. See build-plan.md.
+  createSeparately: boolean;
 }
 
 export interface CreateWorkspaceResponse {

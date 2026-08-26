@@ -1,57 +1,30 @@
 import { useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Country } from "country-state-city";
 
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SearchableSelect, SearchableSelectSkeleton } from "@/components/ui/searchable-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StepUpConfirmModal } from "@/components/step-up-confirm-modal";
 import { FlagIcon } from "@/components/flag-icon";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
-import useUpdateWorkspaceIdentity from "@/features/workspace/use-update-workspace-identity";
 import useUpdateWorkspaceMarkets from "@/features/workspace/use-update-workspace-markets";
 import useGetProposedMarkets from "@/features/workspace/use-get-proposed-markets";
-import useSlugAvailable from "@/features/workspace/use-slug-available";
 import useGetSupportedCurrencies from "@/features/currency/use-get-supported-currencies";
 import useStepUpConfirmation from "@/features/auth/use-step-up-confirmation";
-import { getCountryTimezones } from "@/lib/location";
-
-interface NavState {
-  name?: string;
-  timeZoneId?: string;
-  country?: string;
-}
 
 /**
  * Onboarding step 1 ("Workspace") — flolyt-figma-designs/onboarding/03-create-workspace.svg.
- * Combines two edits on an already-created workspace: PUT /identity (name/slug/timezone,
- * no step-up) and PUT /markets (primary market/currency/markets list, step-up gated).
- * See docs/onboarding/build-plan.md for the full field-to-endpoint mapping and open questions.
+ * Markets only: name, address and time zone are all collected earlier, on
+ * /onboarding/start (POST /workspace) — this screen used to re-collect and re-save them
+ * via PUT /identity, but that endpoint was narrowed to slug-only in an API update
+ * 2026-08-26, and re-asking for fields already saved at creation just added two more
+ * API calls for no product reason. This screen now only calls PUT /markets, step-up
+ * gated. See docs/onboarding/build-plan.md for the full history.
  */
 export default function OnboardingWorkspaceRoute() {
-  const location = useLocation();
-  const navState = (location.state ?? {}) as NavState;
-
   const { proposedMarkets, isLoading: isLoadingProposed } = useGetProposedMarkets();
   const { supportedCurrencies, isLoading: isLoadingCurrencies } = useGetSupportedCurrencies();
-
-  const identity = useUpdateWorkspaceIdentity({
-    defaultValues: {
-      name: navState.name ?? "",
-      timeZoneId: navState.timeZoneId ?? "",
-      slug: "",
-    },
-    onSuccess: async () => {
-      const marketsValid = await markets.form.trigger();
-      if (!marketsValid) {
-        toast.error("Check the markets section before continuing");
-        return;
-      }
-      stepUp.begin();
-    },
-  });
 
   const markets = useUpdateWorkspaceMarkets({
     onSuccess: () => {
@@ -69,21 +42,20 @@ export default function OnboardingWorkspaceRoute() {
   });
 
   const {
-    register: registerIdentity,
-    watch: watchIdentity,
-    setValue: setIdentityValue,
-    formState: { errors: identityErrors },
-  } = identity.form;
-
-  const {
     watch: watchMarkets,
     setValue: setMarketsValue,
     getValues: getMarketsValues,
     formState: { errors: marketsErrors },
   } = markets.form;
 
-  const slug = watchIdentity("slug");
-  const { availability } = useSlugAvailable(slug || "");
+  const handleContinue = async () => {
+    const valid = await markets.form.trigger();
+    if (!valid) {
+      toast.error("Check the markets section before continuing");
+      return;
+    }
+    stepUp.begin();
+  };
 
   // Pre-fill the markets form once the proposed set arrives — a reset, not per-field
   // setValue, since every field changes together on first real data.
@@ -100,11 +72,6 @@ export default function OnboardingWorkspaceRoute() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [proposedMarkets]);
-
-  const timezoneOptions = useMemo(
-    () => (navState.country ? getCountryTimezones(navState.country) : []),
-    [navState.country]
-  );
 
   const marketProposals = useMemo(
     () =>
@@ -156,87 +123,20 @@ export default function OnboardingWorkspaceRoute() {
     );
   };
 
-  const canContinue =
-    !isLoadingProposed && !identity.isPending && !markets.isPending && !stepUp.isRequesting;
+  const canContinue = !isLoadingProposed && !markets.isPending && !stepUp.isRequesting;
 
   return (
     <div>
       <WizardStepper activeStep={1} />
 
       <div className="mx-auto max-w-3xl px-6 pb-16">
-        <h1 className="text-[22px] font-semibold text-ink">Name the workspace and where it lives</h1>
+        <h1 className="text-[22px] font-semibold text-ink">Where you sell</h1>
         <p className="mt-2 text-[12.5px] text-ink-3">
           Currency, time zone and language follow each customer's market — these are the defaults
           for reports and for anything that has no market of its own.
         </p>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="workspace-name" className="text-[11px] text-ink-3">
-              Workspace name
-            </label>
-            <Input
-              id="workspace-name"
-              placeholder="Kito"
-              aria-invalid={!!identityErrors.name}
-              className="mt-1.5"
-              {...registerIdentity("name")}
-            />
-            {identityErrors.name && (
-              <p className="mt-1.5 text-[11px] text-destructive">{identityErrors.name.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="workspace-slug" className="text-[11px] text-ink-3">
-              Address
-            </label>
-            <Input
-              id="workspace-slug"
-              placeholder="kito"
-              aria-invalid={!!identityErrors.slug}
-              className="mt-1.5"
-              {...registerIdentity("slug")}
-            />
-            {identityErrors.slug ? (
-              <p className="mt-1.5 text-[11px] text-destructive">{identityErrors.slug.message}</p>
-            ) : (
-              availability &&
-              slug.length >= 3 && (
-                <p className={`mt-1.5 text-[10.5px] ${availability.isAvailable ? "text-teal" : "text-destructive"}`}>
-                  {availability.isAvailable
-                    ? `${slug}.flolyt.com is available`
-                    : availability.reason || "Not available"}
-                  {!availability.isAvailable && availability.suggestion && ` — try "${availability.suggestion}"`}
-                </p>
-              )
-            )}
-            <p className="mt-1.5 text-[10.5px] text-ink-4">accepted once — choose deliberately</p>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <label htmlFor="workspace-timezone" className="text-[11px] text-ink-3">
-            Time zone
-          </label>
-          <SearchableSelect
-            id="workspace-timezone"
-            options={timezoneOptions}
-            value={watchIdentity("timeZoneId") || null}
-            onChange={(value) => setIdentityValue("timeZoneId", value, { shouldValidate: true })}
-            placeholder="Select a time zone"
-            searchPlaceholder="Search time zones..."
-            emptyText={navState.country ? "No time zones found" : "Set your country on the previous step first"}
-            aria-invalid={!!identityErrors.timeZoneId}
-            disabled={timezoneOptions.length === 0}
-            className="mt-1.5"
-          />
-          {identityErrors.timeZoneId && (
-            <p className="mt-1.5 text-[11px] text-destructive">{identityErrors.timeZoneId.message}</p>
-          )}
-        </div>
-
-        <div className="mt-8">
+        <div className="mt-6">
           <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
             Markets you sell in
           </p>
@@ -346,11 +246,11 @@ export default function OnboardingWorkspaceRoute() {
 
         <Button
           type="button"
-          onClick={() => identity.form.handleSubmit(identity.onSubmit)()}
+          onClick={handleContinue}
           disabled={!canContinue}
           className="mt-8 h-10.5 w-full rounded-card bg-ink text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-40"
         >
-          {identity.isPending || stepUp.isRequesting ? "Saving..." : "Continue"}
+          {stepUp.isRequesting ? "Saving..." : "Continue"}
         </Button>
       </div>
 

@@ -26,38 +26,46 @@ Zod validators for the ones with a body live in
   create a workspace owned by any known user id.
 - **Request:** `name`, `description`, `phoneNumber` (nullable), `email`, `jobRole`,
   `employeeCountRange`, `location`, `city`, `state`, `zipCode` (nullable), `country`,
-  `timeZoneId`, `currency`, `webSite` (nullable).
-- **Response:** `data` = workspace id (uuid string).
+  `timeZoneId`, `currency`, `webSite` (nullable), `slug` (nullable), `createSeparately` (boolean).
+- **Response:** `data` = workspace id (uuid string). `409` on a taken/reserved `slug` — the whole
+  request fails and writes nothing.
 - **Used by:** `services/api/workspace/create-workspace.ts`, `features/workspace/use-create-workspace.ts`, wired to `/onboarding/start` (the missing pre-workspace screen — see `docs/onboarding/build-plan.md`).
 - **Status:** wired
-- **Notes:** Frame 006's actual setup step 1 is `PUT /identity` (naming + claiming the
-  address) — this endpoint is the earlier registration-time create.
+- **Notes:** Frame 006's actual setup step 1 is `PUT /identity` (claiming the address) — this
+  endpoint is the earlier registration-time create. **Updated 2026-08-26:** `slug` is now
+  optional here too — supply it to create and address the workspace in one call, or omit it
+  (send `null`) and claim an address later via `PUT /identity`. **This app does the former as of
+  the same day** — the "Workspace address" field lives on this pre-workspace screen, paired with
+  Business name, with its own live `GET /slug-available` check — rather than on a later
+  onboarding screen. `createSeparately` **meaning not confirmed** — the API doc's own curl
+  example sends `true` with no explanation; this app matches that but flag to the backend team
+  before trusting it.
 
 ### PUT /api/flolyt/workspace/identity
 
-- **Purpose:** Names the workspace and claims its address — frame 006's identity panel, setup
-  step 1.
+- **Purpose:** Claims the workspace's address — frame 006's identity panel, setup step 1.
 - **Auth:** Administrator only.
-- **Request:** `name` (string, required), `slug` (string, required), `timeZoneId` (string,
-  required).
+- **Request:** `slug` (string, required). **Updated 2026-08-26 — `name` and `timeZoneId` no
+  longer accepted here.** They used to be settable on this same call; the API doc now says
+  they're "creation's and `PUT /profile`'s" instead, since three writers for one field made this
+  endpoint hard to tell apart from creation.
 - **Response:** `data`: `{ workspaceId, name, slug, timeZoneId }`.
-- **Used by:** `services/api/workspace/update-workspace-identity.ts`, `features/workspace/use-update-workspace-identity.ts`, wired to `/onboarding/workspace` (onboarding step 1, screen 03).
+- **Used by:** `services/api/workspace/update-workspace-identity.ts`, `features/workspace/use-update-workspace-identity.ts`. **Not used by onboarding as of 2026-08-26** — the address is now collected on `/onboarding/start` and sent through `POST /workspace`'s own `slug` field instead, since re-collecting name/timezone/address a second time on screen 03 (this endpoint's original onboarding use) had no product reason once name+timezone were already captured at creation. Kept wired for a future settings screen that needs to re-address an existing workspace (workspaces created before addresses existed have no other route to getting one).
 - **Status:** wired
 - **Notes:** `slug` is a DNS label — lowercase letters/digits/hyphens, 3–63 chars — and is
   accepted **once**. Changing it later breaks every link already sent, so re-addressing must be
   a separate operation with a redirect behind it; a second call with a different slug is
   refused, not silently ignored. Reserved addresses are refused (`api`, `www`, `cdn` because
   Flolyt routes them; others because `{slug}.flolyt.com`-style addresses could send mail that
-  reads as us). Markets + reporting currency are on the same setup screen visually but are set
-  through `PUT /markets` instead (step-up gated — see that entry).
+  reads as us).
 
 ### GET /api/flolyt/workspace/slug-available
 
-- **Purpose:** Live availability check under frame 006's URL field.
+- **Purpose:** Live availability check under the address field.
 - **Auth:** authenticated.
 - **Request:** query param `slug` (string, required).
 - **Response:** `data`: `{ slug, isAvailable, reason (nullable), suggestion (nullable) }`.
-- **Used by:** `services/api/workspace/get-slug-available.ts`, `features/workspace/use-slug-available.ts`, wired to `/onboarding/workspace` (onboarding step 1, screen 03).
+- **Used by:** `services/api/workspace/get-slug-available.ts`, `features/workspace/use-slug-available.ts`, wired to `/onboarding/start` (the "Workspace address" field) as of 2026-08-26 — moved from screen 03 when the address field itself moved.
 - **Status:** wired
 - **Notes:** Returns *why not* when unavailable — "taken" vs "too short" send the user to
   different next actions. Suggests a numbered variant when the slug is taken and one's free
@@ -100,7 +108,7 @@ Zod validators for the ones with a body live in
   `missionStatement`, `primaryProduct`, `primaryUserActions` (string[]), `targetAudience`,
   `geographicFocus`, `companySize`, `currency`.
 - **Response:** `data` = boolean.
-- **Used by:** `services/api/workspace/update-workspace-profile.ts`, `features/workspace/use-update-workspace-profile.ts`. No screen wired yet.
+- **Used by:** `services/api/workspace/update-workspace-profile.ts`, `features/workspace/use-update-workspace-profile.ts`. No screen wired yet — briefly wired into onboarding screen 03 for name/timezone re-entry, then removed the same day once we realized name and timeZoneId are already captured at creation (`POST /workspace`) and don't need asking for again mid-onboarding. Still useful for a later, real settings screen.
 - **Status:** wired
 - **Notes:** Distinct from `PUT /revenue-model` — that one is a closed vocabulary the product
   branches on; this is free text, never branched on.
@@ -360,6 +368,14 @@ pre-workspace screen, `POST /workspace`) and `/onboarding/workspace` (screen 03:
 See `docs/onboarding/build-plan.md` for the full architecture. The post-login redirect in
 `use-verify-login-code.ts` still isn't flipped on `onboardingRequired` — do that only once the
 whole 5-step wizard is buildable end to end, not after step 1 alone.
+
+**Update, later same day:** `PUT /identity` was narrowed to `slug`-only per an updated API doc
+(name/timeZoneId moved to `POST /workspace` + `PUT /profile`). Rather than replacing the bundled
+`PUT /identity` call on screen 03 with a `PUT /profile` + `PUT /identity` chain, the address field
+moved to `/onboarding/start` instead — name and timezone are already collected there, so the
+whole workspace identity (name, address, timezone) is now set in one place, at creation. Screen 03
+is markets-only now (`PUT /markets`, step-up gated) and no longer calls `PUT /identity` or
+`PUT /profile` at all. See the per-endpoint entries above for the full reasoning.
 
 **Known gap, not a bug:** `PUT /markets` and `PUT /revenue-model` are step-up gated
 (`stepUpChallengeId`), and the step-up challenge flow was deliberately skipped during the auth

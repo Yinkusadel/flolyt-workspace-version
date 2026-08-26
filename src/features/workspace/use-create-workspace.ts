@@ -33,6 +33,7 @@ const useCreateWorkspace = (options?: UseCreateWorkspaceOptions) => {
       timeZoneId: "",
       currency: "",
       webSite: null,
+      slug: "",
     },
   });
 
@@ -58,6 +59,9 @@ const useCreateWorkspace = (options?: UseCreateWorkspaceOptions) => {
       phoneNumber: values.phoneNumber ?? null,
       zipCode: values.zipCode ?? null,
       webSite: values.webSite ?? null,
+      // Matches the API doc's own curl example — unconfirmed with the backend
+      // team what this actually controls. Flagged in build-plan.md.
+      createSeparately: true,
     });
   };
 

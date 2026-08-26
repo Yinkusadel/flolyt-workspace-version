@@ -9,6 +9,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useAuth } from "@/utils/auth-context";
 import { COOKIE_KEYS, setCookie } from "@/utils/cookies";
 import useCreateWorkspace from "@/features/workspace/use-create-workspace";
+import useSlugAvailable from "@/features/workspace/use-slug-available";
 import useGetDefaultCurrency from "@/features/currency/use-get-default-currency";
 import { getCityOptions, getCountryOptions, getCountryTimezones, getStateOptions } from "@/lib/location";
 
@@ -42,9 +43,7 @@ export default function OnboardingStartRoute() {
         setCookie(COOKIE_KEYS.USER_DATA, JSON.stringify(updatedUser), { expires: 7 });
       }
 
-      navigate("/onboarding/workspace", {
-        state: { name: values.name, timeZoneId: values.timeZoneId, country: values.country },
-      });
+      navigate("/onboarding/workspace");
     },
   });
 
@@ -60,6 +59,8 @@ export default function OnboardingStartRoute() {
   const countryCode = watch("country");
   const currency = watch("currency");
   const timeZoneId = watch("timeZoneId");
+  const slug = watch("slug") ?? "";
+  const { availability } = useSlugAvailable(slug);
 
   const [stateCode, setStateCode] = useState<string | null>(null);
 
@@ -135,18 +136,49 @@ export default function OnboardingStartRoute() {
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6" noValidate>
-        <div>
-          <label htmlFor="name" className="text-[11px] text-ink-3">
-            Business name
-          </label>
-          <Input
-            id="name"
-            placeholder="Kito"
-            aria-invalid={!!errors.name}
-            className="mt-1.5"
-            {...register("name")}
-          />
-          {errors.name && <p className="mt-1.5 text-[11px] text-destructive">{errors.name.message}</p>}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="name" className="text-[11px] text-ink-3">
+              Business name
+            </label>
+            <Input
+              id="name"
+              placeholder="Kito"
+              aria-invalid={!!errors.name}
+              className="mt-1.5"
+              {...register("name")}
+            />
+            {errors.name && <p className="mt-1.5 text-[11px] text-destructive">{errors.name.message}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="slug" className="text-[11px] text-ink-3">
+              Workspace address
+            </label>
+            <Input
+              id="slug"
+              placeholder="kito"
+              aria-invalid={!!errors.slug}
+              className="mt-1.5"
+              {...register("slug")}
+            />
+            {errors.slug ? (
+              <p className="mt-1.5 text-[11px] text-destructive">{errors.slug.message}</p>
+            ) : (
+              availability &&
+              slug.length >= 3 && (
+                <p className={`mt-1.5 text-[10.5px] ${availability.isAvailable ? "text-teal" : "text-destructive"}`}>
+                  {availability.isAvailable
+                    ? `${slug}.flolyt.com is available`
+                    : availability.reason || "Not available"}
+                  {!availability.isAvailable && availability.suggestion && ` — try "${availability.suggestion}"`}
+                </p>
+              )
+            )}
+            <p className="mt-1.5 text-[10.5px] text-ink-4">
+              {slug ? `${slug}.flolyt.com` : "yourname.flolyt.com"} — accepted once, choose deliberately
+            </p>
+          </div>
         </div>
 
         <div>

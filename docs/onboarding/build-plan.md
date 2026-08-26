@@ -63,7 +63,8 @@ right after sign-in when `onboardingRequired: true` and no workspace exists yet.
 
 | Field | Maps to | How |
 |---|---|---|
-| Business name | `POST /workspace` → `name` | typed here; screen 03 pre-fills its own name field with this and lets it be edited again via `PUT /identity` |
+| Business name | `POST /workspace` → `name` | typed here — the only place it's collected, since 2026-08-26 (see "Decisions made so far" below) |
+| *(new field, added 2026-08-26)* Workspace address | `slug` | typed here, paired with Business name; live `GET /slug-available` check under it |
 | What your business does | `description` | typed here |
 | Work email | `email` | **display-only**, pre-filled from the signed-in account, not editable |
 | Your role | `jobRole` | plain text — no enum in the doc |
@@ -73,7 +74,7 @@ right after sign-in when `onboardingRequired: true` and no workspace exists yet.
 | City, State | `city`, `state` | typed here |
 | Zip code, Phone, Website | `zipCode`, `phoneNumber`, `webSite` | all optional per the doc's own `(nullable)` markers |
 | *(not asked — silently defaulted)* | `currency` | `GET /currency/default?countryCode=` once country is picked (see `currency.md`) |
-| *(not asked — silently defaulted)* | `timeZoneId` | the browser's own detected timezone (`Intl.DateTimeFormat().resolvedOptions().timeZone`) — no backend call, no country-mapping table to maintain, editable for real on screen 03 |
+| *(not asked — silently defaulted)* | `timeZoneId` | the browser's own detected timezone (`Intl.DateTimeFormat().resolvedOptions().timeZone`) — no backend call, no country-mapping table to maintain |
 
 **Data sources, resolved this session:**
 - **Country picker (plain list):** no endpoint needed — ordinary static world-country reference
@@ -102,12 +103,19 @@ right after sign-in when `onboardingRequired: true` and no workspace exists yet.
   not a password. `change_workspace_markets` and `change_revenue_model` are **always** gated, so
   both step 1 and step 2 need this regardless — no avoiding it. Reuses the OTP-entry UI pattern
   already built for sign-in.
-- **Slug field: add it to screen 03**, even though the SVG doesn't draw one. `PUT /identity`
-  requires it and it's a one-time-accepted DNS label — better to let the user pick it deliberately
-  than silently auto-generate from the name. `workspaceIdentitySchema` in
-  `src/validators/workspace.ts` already validates this.
-- **Screen 03's fields are fully covered by `PUT /identity` + `PUT /markets`** — no `POST
-  /workspace` fields appear on this screen at all (see below).
+- **Slug field: lives on `/onboarding/start` (the pre-workspace screen), not screen 03.**
+  Originally added to screen 03 since neither SVG drew one and `PUT /identity` required it. Moved
+  2026-08-26 after `PUT /identity` was narrowed to slug-only in an API update: since Business
+  name and Time zone are already collected on the pre-workspace screen, and `POST /workspace`
+  itself accepts an optional `slug`, splitting workspace *identity* (name+address+timezone)
+  across two screens and two-then-three API calls had no product reason once name/timezone no
+  longer needed re-entry on screen 03. All three now go in one place, at creation. Still a
+  one-time-accepted DNS label — the user picks it deliberately, no auto-generation from the name.
+  `workspaceIdentitySchema` in `src/validators/workspace.ts` still validates the shape, now
+  shared by both the create-workspace schema and the (currently onboarding-unused) identity
+  schema.
+- **Screen 03 is markets-only.** `PUT /identity` and `PUT /profile` are not called from onboarding
+  at all as of 2026-08-26 — only `PUT /markets`, step-up gated.
 
 ## Onboarding gate — re-checked on every protected page load, not just at login
 
@@ -138,19 +146,28 @@ someone in a redirect loop.
 regardless of which step they're actually on, since only step 1 is built — it doesn't yet honor
 `GET /workspace/onboarding`'s `resumeAt` field. Revisit once steps 2-5 exist.
 
+## Open question: `POST /workspace`'s `createSeparately` field
+
+Added to the API doc 2026-08-26 with no explanation — the doc's own curl example sends `true`.
+Neither the user nor this session knows what it controls. Code sends `true` to match the example
+(`use-create-workspace.ts`), but this is an unconfirmed guess — check with the backend team before
+relying on it, and correct the default here once it's known.
+
 ## Resolved: what calls `POST /workspace`
 
 Was an open question — resolved by building a dedicated pre-workspace screen for it (see above)
 rather than assuming a hidden auto-stub or a missing sign-up field. That screen calls
-`POST /workspace` first; screen 03 then edits what it created.
+`POST /workspace` alone now — as of 2026-08-26, it's the only workspace-identity write in the
+whole onboarding flow (name, address, and timezone all set there); screen 03 no longer edits any
+of what it created.
 
 ## Per-screen status
 
 | Step | Endpoint(s) | Status | Notes |
 |---|---|---|---|
 | Step-up flow | `POST /step-up/request-code`, `POST /step-up/verify-code` (see handoff doc) | [x] built | Reusable hook + modal, not workspace-specific — see `docs/endpoints/auth.md`; not yet exercised against a real API call (local dev hits CORS on the configured backend) |
-| 0 — Pre-workspace (no Figma source) | `POST /workspace`, `GET /currency/default` | [x] built | `/onboarding/start`, `src/pages/onboarding/start/index.tsx`; verified with `tsc --noEmit` + a Playwright pass (country search, Nigeria→states cascade, no console errors) — submit itself not tested against a real API yet |
-| 1 — Workspace (03) | `PUT /identity`, `PUT /markets`, `GET /currency/supported`, `GET /proposed-markets` | [x] built | `/onboarding/workspace`, `src/pages/onboarding/workspace/index.tsx`; verified with `tsc --noEmit` + a Playwright pass (renders, slug field, no crashes) — real API calls hit CORS from local dev against the configured backend (`kckraft.com`), not a code issue, just means full save-flow verification needs a CORS-allowed environment |
+| 0 — Pre-workspace (no Figma source) | `POST /workspace`, `GET /currency/default`, `GET /slug-available` | [x] built | `/onboarding/start`, `src/pages/onboarding/start/index.tsx`; verified with `tsc --noEmit` + a Playwright pass (country search, Nigeria→states cascade, no console errors). **Updated 2026-08-26:** gained a "Workspace address" field (paired with Business name) — the whole workspace identity is now set here in one call, not split across two screens. Submit itself not tested against a real API yet since the address field was added. |
+| 1 — Workspace (03) | `PUT /markets`, `GET /currency/supported`, `GET /proposed-markets` | [x] built | `/onboarding/workspace`, `src/pages/onboarding/workspace/index.tsx`; verified with `tsc --noEmit`. **Updated 2026-08-26 (twice):** `PUT /identity` was narrowed to slug-only per an updated API doc, briefly replaced with a `PUT /profile` + `PUT /identity` chain, then the whole identity concern (name/address/timezone) was moved to screen 0 instead — this screen is markets-only now, heading changed to "Where you sell". Live-tested against the real backend earlier the same session (before either change) via a disposable test account + Playwright — see [[flolyt_onboarding_build]]; the current markets-only version hasn't been re-run live yet. |
 | 2 — Business model (04) | `PUT /revenue-model` | [ ] not started | step-up gated same as markets; also note the handoff doc lists this action's endpoint as `PUT api/flolyt/lifecycle/revenue-model` while `workspace.md`/`apiConfig.ts` both say `PUT api/flolyt/workspace/revenue-model` — using the workspace.md path since that's the one already coded, flag if it 404s |
 | 3 — Your data (05/06) | none documented yet | [ ] not started | connector list (Snowflake/Postgres/Stripe/...) isn't in `workspace.md` at all — likely belongs to the already-built Data Sources domain (`DATASOURCES` in `apiConfig.ts`) rather than a new onboarding-specific endpoint; screen 06's mapping table doesn't match `GET /mapping-quality`'s documented shape either. **Will ask before building** |
 | 4 — Your agents (07) | `GET /agents` | [ ] not started | clean, no blockers |

@@ -23,9 +23,7 @@ const useUpdateWorkspaceIdentity = (options?: UseUpdateWorkspaceIdentityOptions)
     resolver: zodResolver(workspaceIdentitySchema),
     mode: "onChange",
     defaultValues: {
-      name: "",
       slug: "",
-      timeZoneId: "",
       ...options?.defaultValues,
     },
   });

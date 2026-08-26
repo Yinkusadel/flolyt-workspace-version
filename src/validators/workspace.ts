@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+// slug is a DNS label — lowercase letters, digits, hyphens, 3–63 chars — and is
+// accepted once server-side, so validate the shape client-side before spending the call.
+const SLUG_REGEX = /^[a-z0-9-]{3,63}$/;
+const slugSchema = z
+  .string()
+  .min(3, "Address must be at least 3 characters")
+  .max(63, "Address must be at most 63 characters")
+  .regex(SLUG_REGEX, "Use lowercase letters, numbers, and hyphens only");
+
 export const createWorkspaceSchema = z.object({
   name: z.string().min(1, "Workspace name is required"),
   description: z.string().min(1, "Description is required"),
@@ -15,20 +24,16 @@ export const createWorkspaceSchema = z.object({
   timeZoneId: z.string().min(1, "Time zone is required"),
   currency: z.string().min(1, "Currency is required"),
   webSite: z.string().url("Invalid website URL").nullable().optional(),
+  // Nullable on the API, but this screen is where the app collects it — the
+  // address is claimed at creation time now, not on a later onboarding screen.
+  slug: slugSchema,
 });
 
-// slug is a DNS label — lowercase letters, digits, hyphens, 3–63 chars — and is
-// accepted once server-side, so validate the shape client-side before spending the call.
-const SLUG_REGEX = /^[a-z0-9-]{3,63}$/;
-
+// PUT /identity — unused by onboarding as of 2026-08-26 (the address is now set at
+// creation via POST /workspace's own slug field instead), kept for a future
+// settings screen that needs to re-address an existing workspace.
 export const workspaceIdentitySchema = z.object({
-  name: z.string().min(1, "Workspace name is required"),
-  slug: z
-    .string()
-    .min(3, "Address must be at least 3 characters")
-    .max(63, "Address must be at most 63 characters")
-    .regex(SLUG_REGEX, "Use lowercase letters, numbers, and hyphens only"),
-  timeZoneId: z.string().min(1, "Time zone is required"),
+  slug: slugSchema,
 });
 
 export const workspaceProfileSchema = z.object({

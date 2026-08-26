@@ -3,10 +3,10 @@ import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
 
+// PUT /identity sets only the address now — name/timeZoneId moved to
+// POST /workspace (creation) + PUT /profile (edits), confirmed 2026-08-26.
 export interface UpdateWorkspaceIdentityPayload {
-  name: string;
   slug: string;
-  timeZoneId: string;
 }
 
 export interface WorkspaceIdentityDto {
