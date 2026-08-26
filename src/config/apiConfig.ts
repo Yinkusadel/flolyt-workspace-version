@@ -32,6 +32,7 @@ export const GOVERNANCE_BASE_URL = `${API_BASE_URL}/api/flolyt/governance`;
 export const INTELLIGENCE_BASE_URL = `${API_BASE_URL}/api/v1/intelligence`;
 export const PLATFORM_ADMIN_BASE_URL = `${API_BASE_URL}/api/flolyt/platform-admin`;
 export const CURRENCY_BASE_URL = `${API_BASE_URL}/api/flolyt/currency`;
+export const WORKSPACE_BASE_URL = `${API_BASE_URL}/api/flolyt/workspace`;
 
 export const API_ENDPOINTS = {
   USER: {
@@ -446,5 +447,28 @@ export const API_ENDPOINTS = {
     GET_DEFAULT: `${CURRENCY_BASE_URL}/default`,
   },
 
+  WORKSPACE: {
+    CREATE_WORKSPACE: `${WORKSPACE_BASE_URL}`,
+    UPDATE_WORKSPACE_IDENTITY: `${WORKSPACE_BASE_URL}/identity`,
+    CHECK_SLUG_AVAILABLE: `${WORKSPACE_BASE_URL}/slug-available`,
+    ANALYZE_WORKSPACE: `${WORKSPACE_BASE_URL}/analyze`,
+    GET_WORKSPACE_PROFILE: `${WORKSPACE_BASE_URL}/profile`,
+    UPDATE_WORKSPACE_PROFILE: `${WORKSPACE_BASE_URL}/profile`,
+    GET_PROPOSED_MARKETS: `${WORKSPACE_BASE_URL}/proposed-markets`,
+    UPDATE_WORKSPACE_MARKETS: `${WORKSPACE_BASE_URL}/markets`,
+    UPDATE_REVENUE_MODEL: `${WORKSPACE_BASE_URL}/revenue-model`,
+    GET_LIFECYCLE_THRESHOLDS: `${WORKSPACE_BASE_URL}/lifecycle-thresholds`,
+    UPDATE_LIFECYCLE_THRESHOLDS: `${WORKSPACE_BASE_URL}/lifecycle-thresholds`,
+    GET_WORKSPACE_MEMBERS: `${WORKSPACE_BASE_URL}/members`,
+    GET_WORKSPACE_ROLES: `${WORKSPACE_BASE_URL}/roles`,
+    GET_MY_ROLES: `${WORKSPACE_BASE_URL}/members/me/roles`,
+    GET_MEMBER_ROLES: `${WORKSPACE_BASE_URL}/members/{userId}/roles`,
+    ASSIGN_MEMBER_ROLES: `${WORKSPACE_BASE_URL}/members/roles`,
+    REMOVE_MEMBER_ROLE: `${WORKSPACE_BASE_URL}/members/roles`,
+    GET_WORKSPACE_AGENTS: `${WORKSPACE_BASE_URL}/agents`,
+    GET_ONBOARDING_STATUS: `${WORKSPACE_BASE_URL}/onboarding`,
+    GET_MAPPING_QUALITY: `${WORKSPACE_BASE_URL}/mapping-quality`,
+    SAVE_ONBOARDING_PROGRESS: `${WORKSPACE_BASE_URL}/onboarding/progress`,
+  },
 
 };
