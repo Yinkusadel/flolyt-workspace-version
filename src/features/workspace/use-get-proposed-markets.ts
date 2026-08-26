@@ -11,6 +11,8 @@ const useGetProposedMarkets = () => {
   const query = useQuery<GetProposedMarketsResponse, Error>({
     queryKey: PROPOSED_MARKETS_QUERY_KEY,
     queryFn: getProposedMarkets,
+    // Override the app-wide retry:5 default — see use-get-onboarding-status.ts.
+    retry: 1,
   });
 
   return {

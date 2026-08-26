@@ -12,6 +12,8 @@ wired into code yet, so we always have a source of truth to check against and co
 | Domain | File | Status |
 | --- | --- | --- |
 | Workspace | [workspace.md](workspace.md) | 21/21 wired (no screen yet; markets/revenue-model blocked on step-up flow) |
+| Currency | [currency.md](currency.md) | 2/2 wired |
+| Auth (step-up only) | [auth.md](auth.md) | 2/2 wired, unverified against a real call |
 
 ## Per-endpoint entry format
 

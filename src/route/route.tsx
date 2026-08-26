@@ -5,6 +5,9 @@ import SignUp from "@/pages/auth/sign-up";
 import VerifyOtp from "@/pages/auth/verify-otp";
 import AcceptInvitation from "@/pages/auth/accept-invitation";
 import { AppLayout } from "@/pages/app-layout";
+import { OnboardingLayout } from "@/pages/onboarding/layout";
+import OnboardingStartRoute from "@/pages/onboarding/start";
+import OnboardingWorkspaceRoute from "@/pages/onboarding/workspace";
 import Home from "@/pages/home";
 import Lifecycle from "@/pages/everyday/lifecycle";
 import LifecycleSettings from "@/pages/everyday/lifecycle/settings";
@@ -382,6 +385,14 @@ export const routes = createBrowserRouter([
         path: "/",
         Component: ProtectedRoute,
         children: [
+          {
+            path: "onboarding",
+            Component: OnboardingLayout,
+            children: [
+              { path: "start", Component: OnboardingStartRoute },
+              { path: "workspace", Component: OnboardingWorkspaceRoute },
+            ],
+          },
           {
             Component: AppLayout,
             children: [

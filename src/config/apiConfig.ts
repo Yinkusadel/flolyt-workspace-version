@@ -41,6 +41,8 @@ export const API_ENDPOINTS = {
     RESEND_OTP: `${API_BASE_URL}/api/users/registration/resend-otp`,
     REQUEST_LOGIN_CODE: `${USER_BASE_URL}/login/request-code`,
     VERIFY_LOGIN_CODE: `${USER_BASE_URL}/login/verify-code`,
+    STEP_UP_REQUEST_CODE: `${USER_BASE_URL}/step-up/request-code`,
+    STEP_UP_VERIFY_CODE: `${USER_BASE_URL}/step-up/verify-code`,
     CREATE_COMPANY: `${API_BASE_URL}/api/flolyt/company`,
     GET_USER_BY_EMAIL: `${API_BASE_URL}/api/users/registration/{email}`,
     REFRESH_TOKEN: `${USER_BASE_URL}/token/refresh`,

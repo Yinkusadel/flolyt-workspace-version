@@ -28,7 +28,7 @@ Zod validators for the ones with a body live in
   `employeeCountRange`, `location`, `city`, `state`, `zipCode` (nullable), `country`,
   `timeZoneId`, `currency`, `webSite` (nullable).
 - **Response:** `data` = workspace id (uuid string).
-- **Used by:** `services/api/workspace/create-workspace.ts`, `features/workspace/use-create-workspace.ts`. No screen wired yet.
+- **Used by:** `services/api/workspace/create-workspace.ts`, `features/workspace/use-create-workspace.ts`, wired to `/onboarding/start` (the missing pre-workspace screen — see `docs/onboarding/build-plan.md`).
 - **Status:** wired
 - **Notes:** Frame 006's actual setup step 1 is `PUT /identity` (naming + claiming the
   address) — this endpoint is the earlier registration-time create.
@@ -41,7 +41,7 @@ Zod validators for the ones with a body live in
 - **Request:** `name` (string, required), `slug` (string, required), `timeZoneId` (string,
   required).
 - **Response:** `data`: `{ workspaceId, name, slug, timeZoneId }`.
-- **Used by:** `services/api/workspace/update-workspace-identity.ts`, `features/workspace/use-update-workspace-identity.ts`. No screen wired yet.
+- **Used by:** `services/api/workspace/update-workspace-identity.ts`, `features/workspace/use-update-workspace-identity.ts`, wired to `/onboarding/workspace` (onboarding step 1, screen 03).
 - **Status:** wired
 - **Notes:** `slug` is a DNS label — lowercase letters/digits/hyphens, 3–63 chars — and is
   accepted **once**. Changing it later breaks every link already sent, so re-addressing must be
@@ -57,7 +57,7 @@ Zod validators for the ones with a body live in
 - **Auth:** authenticated.
 - **Request:** query param `slug` (string, required).
 - **Response:** `data`: `{ slug, isAvailable, reason (nullable), suggestion (nullable) }`.
-- **Used by:** `services/api/workspace/get-slug-available.ts`, `features/workspace/use-slug-available.ts`. No screen wired yet.
+- **Used by:** `services/api/workspace/get-slug-available.ts`, `features/workspace/use-slug-available.ts`, wired to `/onboarding/workspace` (onboarding step 1, screen 03).
 - **Status:** wired
 - **Notes:** Returns *why not* when unavailable — "taken" vs "too short" send the user to
   different next actions. Suggests a numbered variant when the slug is taken and one's free
@@ -112,7 +112,7 @@ Zod validators for the ones with a body live in
 - **Response:** `data`: `{ proposals: [{ countryCode, currencyCode, source, isCertain }],
   primaryMarketCountry, reportingCurrency, declared, analysisAvailable, geographicFocus
   (nullable) }`.
-- **Used by:** `services/api/workspace/get-proposed-markets.ts`, `features/workspace/use-get-proposed-markets.ts`. No screen wired yet.
+- **Used by:** `services/api/workspace/get-proposed-markets.ts`, `features/workspace/use-get-proposed-markets.ts`, wired to `/onboarding/workspace` (onboarding step 1, screen 03).
 - **Status:** wired
 - **Notes:** Nothing here changes the workspace — `PUT /markets` is what declares them. The
   workspace's own country is always proposed and always first (the one certain market, so this
@@ -134,12 +134,14 @@ Zod validators for the ones with a body live in
   null), `primaryMarketCountry` (string, required), `reportingCurrency` (nullable string,
   required key — pass `null` explicitly), `stepUpChallengeId` (nullable uuid).
 - **Response:** `data` = integer (count, presumably markets saved).
-- **Used by:** `services/api/workspace/update-workspace-markets.ts`, `features/workspace/use-update-workspace-markets.ts`. No screen wired yet.
-- **Status:** wired (service/hook only — ⚠️ **cannot actually be called successfully yet**, see notes)
-- **Notes:** ⚠️ This is one of the [[flolyt_governance_stepup_reminder]] step-up endpoints —
-  needs the step-up confirmation flow that was deliberately skipped during the auth rebuild. The
-  hook accepts a `stepUpChallengeId` but nothing in this codebase produces one yet — a UI can't
-  actually complete this call until that flow exists. Replaces the **whole set** every call
+- **Used by:** `services/api/workspace/update-workspace-markets.ts`, `features/workspace/use-update-workspace-markets.ts`, wired to `/onboarding/workspace` (onboarding step 1, screen 03), gated behind `src/components/step-up-confirm-modal.tsx` + `use-step-up-confirmation`.
+- **Status:** wired — step-up flow built this session, not yet verified against a real API call
+- **Notes:** This is one of the [[flolyt_governance_stepup_reminder]] step-up endpoints. The
+  step-up confirmation flow (request/verify emailed code) that was deliberately skipped during the
+  auth rebuild is now built — see `src/features/auth/use-step-up-confirmation.ts` and
+  `flolyt-extras/auth-frontend-handoff.md`'s "Step-up confirmation" section — but the round trip
+  hasn't been exercised against a live backend yet (local dev hits CORS against the configured
+  API). Verify the full flow once that's possible. Replaces the **whole set** every call
   (primary market must be one of the set; dropping a market that's still primary would strand
   the fallback — the zod schema also refuses this client-side). A market's currency is validated
   against what Flolyt can *report* in — a superset of what it can *bill* in (e.g. NGN-billed
@@ -352,16 +354,42 @@ All 21 service files (`src/services/api/workspace/`) and hook files (`src/featur
 are built and typecheck clean (`npx tsc --noEmit -p tsconfig.app.json`). Zod schemas are in
 `src/validators/workspace.ts`. `API_ENDPOINTS.WORKSPACE` added to `src/config/apiConfig.ts`.
 
-**No screen wires any of this in yet** — the onboarding UI itself doesn't exist (per the comment
-in `src/features/auth/use-verify-login-code.ts`: "No onboarding UI exists yet — everyone lands
-on the dashboard for now"). This is API-layer-first: hooks are ready for whichever screen gets
-built against them next.
+**Update, same day:** onboarding step 1 is now wired — `/onboarding/start` (the missing
+pre-workspace screen, `POST /workspace`) and `/onboarding/workspace` (screen 03: `PUT /identity`,
+`PUT /markets`, `GET /slug-available`, `GET /proposed-markets`) both exist and typecheck clean.
+See `docs/onboarding/build-plan.md` for the full architecture. The post-login redirect in
+`use-verify-login-code.ts` still isn't flipped on `onboardingRequired` — do that only once the
+whole 5-step wizard is buildable end to end, not after step 1 alone.
 
 **Known gap, not a bug:** `PUT /markets` and `PUT /revenue-model` are step-up gated
 (`stepUpChallengeId`), and the step-up challenge flow was deliberately skipped during the auth
 rebuild ([[flolyt_governance_stepup_reminder]]). Their hooks exist and typecheck, but nothing in
 this codebase can produce a valid `stepUpChallengeId` yet, so a UI built against them today would
 get a 400 on submit. Build the step-up flow before wiring a screen to either of these.
+
+## Bugs found testing against the real API (2026-08-26)
+
+Both `GET /proposed-markets` and `GET /onboarding` return `500` with an identical body when called
+for real:
+
+```
+{
+  "title": "Server Failure",
+  "status": 500,
+  "detail": "The input does not contain any JSON tokens. Expected the input to start with a
+    valid JSON token, when isFinalBlock is true. Path: $ | LineNumber: 0 | BytePositionInLine: 0."
+}
+```
+
+This is a .NET JSON-deserialization error that fires when the server tries to parse a request
+body that was never sent. Both calls are plain bodyless `GET`s — same shape as `GET
+/currency/default` and `GET /currency/supported`, which both succeed. Points at a backend bug on
+these two specific endpoints (perhaps a `[FromBody]` binding on an action that shouldn't have
+one), not a frontend request-shape issue. Not something fixable from this codebase — flag to
+whoever owns the backend. The frontend hooks (`use-get-onboarding-status.ts`,
+`use-get-proposed-markets.ts`) fail gracefully either way (`/onboarding/workspace` shows "No
+proposed markets yet.", the `ProtectedRoute` gate fails open) and their retry count was dropped
+from the app-wide default of 5 to 1 so a broken backend doesn't spam the network.
 
 ## Missing
 
