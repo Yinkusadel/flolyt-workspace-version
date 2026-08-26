@@ -5,7 +5,8 @@ import { Country } from "country-state-city";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { SearchableSelect } from "@/components/ui/searchable-select";
+import { SearchableSelect, SearchableSelectSkeleton } from "@/components/ui/searchable-select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { StepUpConfirmModal } from "@/components/step-up-confirm-modal";
 import { FlagIcon } from "@/components/flag-icon";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
@@ -34,7 +35,7 @@ export default function OnboardingWorkspaceRoute() {
   const navState = (location.state ?? {}) as NavState;
 
   const { proposedMarkets, isLoading: isLoadingProposed } = useGetProposedMarkets();
-  const { supportedCurrencies } = useGetSupportedCurrencies();
+  const { supportedCurrencies, isLoading: isLoadingCurrencies } = useGetSupportedCurrencies();
 
   const identity = useUpdateWorkspaceIdentity({
     defaultValues: {
@@ -241,7 +242,17 @@ export default function OnboardingWorkspaceRoute() {
           </p>
 
           {isLoadingProposed ? (
-            <p className="mt-3 text-[11.5px] text-ink-3">Loading proposed markets...</p>
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="rounded-panel border border-line bg-paper-2 px-3.5 py-3">
+                  <div className="flex items-center gap-1.5">
+                    <Skeleton className="size-3.5 shrink-0 rounded-full" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="mt-2.5 h-2.5 w-10" />
+                </div>
+              ))}
+            </div>
           ) : marketProposals.length === 0 ? (
             <p className="mt-3 text-[11.5px] text-ink-3">No proposed markets yet.</p>
           ) : (
@@ -283,16 +294,20 @@ export default function OnboardingWorkspaceRoute() {
             <label htmlFor="primary-market" className="text-[11px] text-ink-3">
               Primary market
             </label>
-            <SearchableSelect
-              id="primary-market"
-              options={primaryMarketOptions}
-              value={primaryMarketCountry || null}
-              onChange={(value) => setMarketsValue("primaryMarketCountry", value, { shouldValidate: true })}
-              placeholder="Select the primary market"
-              searchPlaceholder="Search markets..."
-              className="mt-1.5"
-              aria-invalid={!!marketsErrors.primaryMarketCountry}
-            />
+            {isLoadingProposed ? (
+              <SearchableSelectSkeleton className="mt-1.5" />
+            ) : (
+              <SearchableSelect
+                id="primary-market"
+                options={primaryMarketOptions}
+                value={primaryMarketCountry || null}
+                onChange={(value) => setMarketsValue("primaryMarketCountry", value, { shouldValidate: true })}
+                placeholder="Select the primary market"
+                searchPlaceholder="Search markets..."
+                className="mt-1.5"
+                aria-invalid={!!marketsErrors.primaryMarketCountry}
+              />
+            )}
             {marketsErrors.primaryMarketCountry && (
               <p className="mt-1.5 text-[11px] text-destructive">{marketsErrors.primaryMarketCountry.message}</p>
             )}
@@ -303,15 +318,19 @@ export default function OnboardingWorkspaceRoute() {
             <label htmlFor="reporting-currency" className="text-[11px] text-ink-3">
               Reporting currency
             </label>
-            <SearchableSelect
-              id="reporting-currency"
-              options={currencyOptions}
-              value={watchMarkets("reportingCurrency") || null}
-              onChange={(value) => setMarketsValue("reportingCurrency", value, { shouldValidate: true })}
-              placeholder="Select a currency"
-              searchPlaceholder="Search currencies..."
-              className="mt-1.5"
-            />
+            {isLoadingCurrencies ? (
+              <SearchableSelectSkeleton className="mt-1.5" />
+            ) : (
+              <SearchableSelect
+                id="reporting-currency"
+                options={currencyOptions}
+                value={watchMarkets("reportingCurrency") || null}
+                onChange={(value) => setMarketsValue("reportingCurrency", value, { shouldValidate: true })}
+                placeholder="Select a currency"
+                searchPlaceholder="Search currencies..."
+                className="mt-1.5"
+              />
+            )}
             <p className="mt-1.5 text-[10.5px] text-ink-4">conversions are always dated and stated</p>
           </div>
         </div>

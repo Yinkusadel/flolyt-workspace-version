@@ -3,6 +3,7 @@ import { Check, ChevronDown, Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface SearchableSelectOption {
   value: string;
@@ -130,5 +131,24 @@ export function SearchableSelect({
         </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+/**
+ * Same footprint as the real trigger button, shown in its place while the
+ * options a select depends on are still loading — never render the real
+ * (empty-options) select mid-fetch, it reads as broken rather than loading.
+ */
+export function SearchableSelectSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "flex h-9 w-full items-center justify-between gap-2 rounded-panel border border-border bg-paper-2 px-2.5",
+        className
+      )}
+    >
+      <Skeleton className="h-3 w-28" />
+      <ChevronDown className="size-3.5 shrink-0 text-ink-4/40" />
+    </div>
   );
 }
