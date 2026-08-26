@@ -350,7 +350,7 @@ import IdentityFalseMergeRoute from "@/pages/data/identity/false-merge-route";
 import IdentityLimitsRoute from "@/pages/data/identity/limits-route";
 import IdentitySettingsRoute from "@/pages/data/identity/settings/identity-settings-route";
 import { RouteError } from "@/route/route-error";
-import { ProtectedRoute } from "@/route/protected-route";
+// import { ProtectedRoute } from "@/route/protected-route";
 import { GuestRoute } from "@/route/guest-route";
 
 export const routes = createBrowserRouter([
@@ -380,7 +380,7 @@ export const routes = createBrowserRouter([
       },
       {
         path: "/",
-        Component: ProtectedRoute,
+        // Component: ProtectedRoute,
         children: [
           {
             Component: AppLayout,
