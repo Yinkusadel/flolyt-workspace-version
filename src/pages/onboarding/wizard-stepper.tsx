@@ -11,7 +11,7 @@ interface WizardStepperProps {
 /** Matches the step-dot row baked into every onboarding SVG (03-07). */
 export function WizardStepper({ activeStep }: WizardStepperProps) {
   return (
-    <div className="flex items-center gap-2 px-6 py-6">
+    <div className="flex items-center justify-center gap-2 px-6 py-6">
       {STEPS.map((label, index) => {
         const step = index + 1;
         const isComplete = step < activeStep;
@@ -41,7 +41,7 @@ export function WizardStepper({ activeStep }: WizardStepperProps) {
               </span>
               <span
                 className={cn(
-                  "text-[12.5px]",
+                  "hidden text-[12.5px] sm:inline",
                   isActive ? "font-semibold text-ink" : isComplete ? "text-ink-3" : "font-normal text-ink-4"
                 )}
               >
