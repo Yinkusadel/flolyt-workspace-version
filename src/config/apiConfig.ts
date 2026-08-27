@@ -469,6 +469,7 @@ export const API_ENDPOINTS = {
     GET_WORKSPACE_AGENTS: `${WORKSPACE_BASE_URL}/agents`,
     GET_ONBOARDING_STATUS: `${WORKSPACE_BASE_URL}/onboarding`,
     GET_MAPPING_QUALITY: `${WORKSPACE_BASE_URL}/mapping-quality`,
+    GET_DATA_MAP: `${WORKSPACE_BASE_URL}/data-map`,
     SAVE_ONBOARDING_PROGRESS: `${WORKSPACE_BASE_URL}/onboarding/progress`,
   },
 

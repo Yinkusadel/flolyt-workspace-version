@@ -345,6 +345,39 @@ Zod validators for the ones with a body live in
   contributingSourceCount` means the flags list is known-incomplete — surface that. `reviewedAtUtc`
   is `null` while the onboarding step is still outstanding.
 
+### GET /api/flolyt/workspace/data-map
+
+- **Purpose:** Everything the onboarding "Your data" step renders in one call: each connected
+  source, the tables it found, what each was mapped to and from which columns, the confidence,
+  a summary, and the same `flags`/`state` `/mapping-quality` returns. Assembled server-side
+  because it was three call shapes across two prefixes with a per-source fan-out, to fill one
+  table and one callout.
+- **Auth:** authenticated.
+- **Response:** `data`: `{ state, sources: [{ datasourceId, name, type, connectionStatus,
+  isReading, lastSyncedAt (nullable), tables: [{ tableName, rowCount, mappedTo (nullable),
+  mappedColumns, confidence, confidenceBand (nullable: high/medium/low), countsTowardCapability
+  }] }], summary: { sourceCount, analysedSourceCount, tableCount, mappedTableCount,
+  unmappedTableCount, lowConfidenceTableCount, uncountedTableCount, totalRows, entitiesCovered,
+  entitiesMissing }, flags: [{ key, mapping, consequence, fix (nullable), entity, isMeasured }],
+  reviewedAtUtc (nullable) }`.
+- **Used by:** `services/api/workspace/get-data-map.ts`, `features/workspace/use-get-data-map.ts`.
+  No screen wired yet — use TBD.
+- **Status:** wired
+- **Notes:** `mappedTo: null` means the table was not mapped — render the row, don't hide it: an
+  ignored table is what tells a reader whether the mapping missed something that matters.
+  `mappedColumns` is only the columns carrying the mapping (the subtitle under the entity name).
+  `confidenceBand` is banded server-side so two surfaces can't draw the line differently;
+  `confidence` carries the raw score for anything that wants its own threshold. A `low` band
+  means the mapping was made but not counted toward capability, so a table can show
+  `mappedTo: "Subscription"` while `summary.entitiesMissing` also lists `Subscription` —
+  `countsTowardCapability` says which, `summary.lowConfidenceTableCount` totals them. `rowCount`
+  is a total, **not** a rate (no row-count-per-day history exists) and is the warehouse's own
+  ESTIMATE (Postgres `reltuples`), not a count — render it rounded, it will move between page
+  loads. `rowCount: 0` means empty OR never counted, upstream can't tell them apart — treat
+  `summary.totalRows` as a floor and check `summary.uncountedTableCount`. `state` and `flags`
+  are read from the same capability `/mapping-quality` reads, so the two can never disagree
+  about whether a mapping is sound — see that endpoint's notes above for the 4 `state` values.
+
 ### POST /api/flolyt/workspace/onboarding/progress
 
 - **Purpose:** Saves onboarding progress (the "acts that leave no other trace" from
