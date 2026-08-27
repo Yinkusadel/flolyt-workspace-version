@@ -57,7 +57,7 @@ export function ConnectedList({
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-ink-4" />
         <Input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.currentTarget.value)}
           placeholder="Filter by name..."
           className="h-8 pl-8"
         />

@@ -61,7 +61,7 @@ export function DisconnectSourceModal({
               <p className="text-[12px] text-ink-2">
                 Type <span className="font-semibold text-ink">"{connectionName}"</span> to confirm
               </p>
-              <Input value={typedName} onChange={(e) => setTypedName(e.target.value)} placeholder={connectionName} />
+              <Input value={typedName} onChange={(e) => setTypedName(e.currentTarget.value)} placeholder={connectionName} />
               {typedName.length > 0 && !isConfirmed && (
                 <p className="text-[10.5px] text-destructive">Name does not match</p>
               )}

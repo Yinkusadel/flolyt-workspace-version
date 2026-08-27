@@ -90,7 +90,7 @@ export function ConnectSourceModal({
           type={inputType}
           placeholder={field.placeholder ?? ""}
           value={formData[field.fieldName] ?? ""}
-          onChange={(e) => handleFieldChange(field.fieldName, e.target.value)}
+          onChange={(e) => handleFieldChange(field.fieldName, e.currentTarget.value)}
           aria-invalid={!!errors[field.fieldName]}
         />
         {field.helpText && <p className="mt-1 text-[10.5px] text-ink-4">{field.helpText}</p>}
@@ -140,7 +140,7 @@ export function ConnectSourceModal({
                 <Input
                   value={connectionName}
                   onChange={(e) => {
-                    setConnectionName(e.target.value);
+                    setConnectionName(e.currentTarget.value);
                     setErrors((prev) => ({ ...prev, connectionName: "" }));
                   }}
                   placeholder="Production DB"
