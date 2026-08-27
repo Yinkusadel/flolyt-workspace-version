@@ -9,6 +9,22 @@ const slugSchema = z
   .max(63, "Address must be at most 63 characters")
   .regex(SLUG_REGEX, "Use lowercase letters, numbers, and hyphens only");
 
+// The API doc lists webSite as nullable, but the backend team confirmed that's a
+// documentation mistake — it's actually required. Enforcing it client-side here
+// rather than waiting on a 400 round trip.
+//
+// zod's built-in .url() delegates to `new URL()`, which silently repairs a missing
+// "//" (e.g. "https:example.com" parses as "https://example.com/") instead of
+// rejecting it — so it's checked with an explicit regex instead. Requires a
+// scheme, "//", and a host with at least one dot (a real domain, not just a label).
+const WEBSITE_REGEX =
+  /^https?:\/\/[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+(?::\d+)?(?:[/?#]\S*)?$/i;
+const websiteSchema = z
+  .string()
+  .trim()
+  .min(1, "Website is required")
+  .regex(WEBSITE_REGEX, "Enter a full URL, e.g. https://example.com");
+
 export const createWorkspaceSchema = z.object({
   name: z.string().min(1, "Workspace name is required"),
   description: z.string().min(1, "Description is required"),
@@ -23,7 +39,7 @@ export const createWorkspaceSchema = z.object({
   country: z.string().min(1, "Country is required"),
   timeZoneId: z.string().min(1, "Time zone is required"),
   currency: z.string().min(1, "Currency is required"),
-  webSite: z.string().url("Invalid website URL").nullable().optional(),
+  webSite: websiteSchema,
   // Nullable on the API, but this screen is where the app collects it — the
   // address is claimed at creation time now, not on a later onboarding screen.
   slug: slugSchema,

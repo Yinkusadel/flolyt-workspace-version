@@ -26,7 +26,8 @@ Zod validators for the ones with a body live in
   create a workspace owned by any known user id.
 - **Request:** `name`, `description`, `phoneNumber` (nullable), `email`, `jobRole`,
   `employeeCountRange`, `location`, `city`, `state`, `zipCode` (nullable), `country`,
-  `timeZoneId`, `currency`, `webSite` (nullable), `slug` (nullable), `createSeparately` (boolean).
+  `timeZoneId`, `currency`, `webSite` (documented nullable, **actually required — see note**),
+  `slug` (nullable), `createSeparately` (boolean).
 - **Response:** `data` = workspace id (uuid string). `409` on a taken/reserved `slug` — the whole
   request fails and writes nothing.
 - **Used by:** `services/api/workspace/create-workspace.ts`, `features/workspace/use-create-workspace.ts`, wired to `/onboarding/start` (the missing pre-workspace screen — see `docs/onboarding/build-plan.md`).
@@ -39,7 +40,10 @@ Zod validators for the ones with a body live in
   Business name, with its own live `GET /slug-available` check — rather than on a later
   onboarding screen. `createSeparately` **meaning not confirmed** — the API doc's own curl
   example sends `true` with no explanation; this app matches that but flag to the backend team
-  before trusting it.
+  before trusting it. **`webSite` — 2026-08-27:** the API doc marks this nullable, but the
+  backend team confirmed that's a documentation mistake and it's actually required. Enforced
+  client-side (`validators/workspace.ts`'s `websiteSchema` — required, must be a full URL
+  including protocol) ahead of the doc being corrected upstream.
 
 ### PUT /api/flolyt/workspace/identity
 

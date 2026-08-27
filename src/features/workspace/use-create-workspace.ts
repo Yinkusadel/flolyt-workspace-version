@@ -32,7 +32,7 @@ const useCreateWorkspace = (options?: UseCreateWorkspaceOptions) => {
       country: "",
       timeZoneId: "",
       currency: "",
-      webSite: null,
+      webSite: "",
       slug: "",
     },
   });
@@ -58,7 +58,6 @@ const useCreateWorkspace = (options?: UseCreateWorkspaceOptions) => {
       ...values,
       phoneNumber: values.phoneNumber ?? null,
       zipCode: values.zipCode ?? null,
-      webSite: values.webSite ?? null,
       // Matches the API doc's own curl example — unconfirmed with the backend
       // team what this actually controls. Flagged in build-plan.md.
       createSeparately: true,

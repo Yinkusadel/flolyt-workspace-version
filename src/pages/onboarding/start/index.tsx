@@ -64,6 +64,15 @@ export default function OnboardingStartRoute() {
 
   const [stateCode, setStateCode] = useState<string | null>(null);
 
+  // The "https://" prefix is fixed in the UI (see the webSite field below) — the
+  // user only ever types/pastes the domain. Strip any protocol they paste anyway
+  // so it can't get doubled up into "https://https://...".
+  const websiteDomain = (watch("webSite") ?? "").replace(/^https?:\/\//i, "");
+  const handleWebsiteDomainChange = (raw: string) => {
+    const domain = raw.replace(/^https?:\/\//i, "");
+    setValue("webSite", domain ? `https://${domain}` : "", { shouldValidate: true });
+  };
+
   useEffect(() => {
     if (user?.email) setValue("email", user.email, { shouldValidate: true });
   }, [user?.email]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -280,44 +289,6 @@ export default function OnboardingStartRoute() {
           </div>
 
           <div>
-            <label htmlFor="location" className="text-[11px] text-ink-3">
-              Business address
-            </label>
-            <Input
-              id="location"
-              placeholder="14 Broad Street"
-              aria-invalid={!!errors.location}
-              className="mt-1.5"
-              {...register("location")}
-            />
-            {errors.location && (
-              <p className="mt-1.5 text-[11px] text-destructive">{errors.location.message}</p>
-            )}
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="timeZoneId" className="text-[11px] text-ink-3">
-            Time zone
-          </label>
-          <SearchableSelect
-            id="timeZoneId"
-            options={timezoneOptions}
-            value={timeZoneId || null}
-            onChange={(value) => setValue("timeZoneId", value, { shouldValidate: true })}
-            placeholder="Select a country first"
-            searchPlaceholder="Search time zones..."
-            disabled={!countryCode}
-            className="mt-1.5"
-            aria-invalid={!!errors.timeZoneId}
-          />
-          {errors.timeZoneId && (
-            <p className="mt-1.5 text-[11px] text-destructive">{errors.timeZoneId.message}</p>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
             <label htmlFor="state" className="text-[11px] text-ink-3">
               State / Province
             </label>
@@ -349,7 +320,9 @@ export default function OnboardingStartRoute() {
             )}
             {errors.state && <p className="mt-1.5 text-[11px] text-destructive">{errors.state.message}</p>}
           </div>
+        </div>
 
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="city" className="text-[11px] text-ink-3">
               City
@@ -378,9 +351,72 @@ export default function OnboardingStartRoute() {
             )}
             {errors.city && <p className="mt-1.5 text-[11px] text-destructive">{errors.city.message}</p>}
           </div>
+
+          <div>
+            <label htmlFor="timeZoneId" className="text-[11px] text-ink-3">
+              Time zone
+            </label>
+            <SearchableSelect
+              id="timeZoneId"
+              options={timezoneOptions}
+              value={timeZoneId || null}
+              onChange={(value) => setValue("timeZoneId", value, { shouldValidate: true })}
+              placeholder="Select a country first"
+              searchPlaceholder="Search time zones..."
+              disabled={!countryCode}
+              className="mt-1.5"
+              aria-invalid={!!errors.timeZoneId}
+            />
+            {errors.timeZoneId && (
+              <p className="mt-1.5 text-[11px] text-destructive">{errors.timeZoneId.message}</p>
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="location" className="text-[11px] text-ink-3">
+              Business address
+            </label>
+            <Input
+              id="location"
+              placeholder="14 Broad Street"
+              aria-invalid={!!errors.location}
+              className="mt-1.5"
+              {...register("location")}
+            />
+            {errors.location && (
+              <p className="mt-1.5 text-[11px] text-destructive">{errors.location.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="webSite" className="text-[11px] text-ink-3">
+              Website
+            </label>
+            <div
+              className={`mt-1.5 flex h-9 w-full items-center rounded-panel border bg-paper-2 pl-2.5 text-[12.5px] transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 ${
+                errors.webSite ? "border-destructive ring-3 ring-destructive/20" : "border-border hover:border-ink-4"
+              }`}
+            >
+              <span className="shrink-0 text-ink-4 select-none">https://</span>
+              <input
+                id="webSite"
+                type="text"
+                placeholder="www.example.com"
+                aria-invalid={!!errors.webSite}
+                value={websiteDomain}
+                onChange={(e) => handleWebsiteDomainChange(e.currentTarget.value)}
+                className="h-full w-full bg-transparent px-1 text-ink outline-none placeholder:text-ink-4"
+              />
+            </div>
+            {errors.webSite && (
+              <p className="mt-1.5 text-[11px] text-destructive">{errors.webSite.message}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="zipCode" className="text-[11px] text-ink-3">
               Zip code <span className="text-ink-4">(optional)</span>
@@ -393,22 +429,6 @@ export default function OnboardingStartRoute() {
               Phone <span className="text-ink-4">(optional)</span>
             </label>
             <Input id="phoneNumber" placeholder="+234..." className="mt-1.5" {...register("phoneNumber")} />
-          </div>
-
-          <div>
-            <label htmlFor="webSite" className="text-[11px] text-ink-3">
-              Website <span className="text-ink-4">(optional)</span>
-            </label>
-            <Input
-              id="webSite"
-              placeholder="https://example.com"
-              aria-invalid={!!errors.webSite}
-              className="mt-1.5"
-              {...register("webSite")}
-            />
-            {errors.webSite && (
-              <p className="mt-1.5 text-[11px] text-destructive">{errors.webSite.message}</p>
-            )}
           </div>
         </div>
 

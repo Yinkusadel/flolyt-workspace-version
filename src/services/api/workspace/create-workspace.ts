@@ -17,7 +17,7 @@ export interface CreateWorkspacePayload {
   country: string;
   timeZoneId: string;
   currency: string;
-  webSite: string | null;
+  webSite: string;
   // Nullable on the API (omit it to claim an address later via PUT /identity
   // instead), but this app always supplies it — the address is collected on
   // this same pre-workspace screen, not on a later onboarding step.
