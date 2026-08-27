@@ -38,16 +38,17 @@ those five come back as real endpoints later, re-add them then.
 
 - **Purpose:** The datasources this tenant currently has connected.
 - **Request:** none.
-- **Response:** **Confirmed 2026-08-27 — no `{data, messages, succeeded}` envelope**, a raw
-  array of `{ id, datasourceId, datasourceName, datasourceDisplayName, category,
-  connectionName, isActive, connectionStatus, connectedOn, disconnectedOn, lastSyncedOn,
-  lastSyncRecordCount, lastSyncError, metadata, architecture, targetSchemaName }`. Matches the
-  currency domain's pattern of a one-off unwrapped response — see
-  [[flolyt_onboarding_build]] lesson 3.
-- **Used by:** `services/api/datasources/get-connected-datasources.ts`, `features/datasources/use-get-connected-datasources.ts`. Not wired to a screen yet.
-- **Status:** wired
-- **Notes:** If a real call turns out to return the standard envelope after all, fix both files
-  together — don't patch just one.
+- **Response:** **Corrected 2026-08-27** — this does return the standard `{ data, messages,
+  succeeded }` envelope after all. `data` is an array of `{ id, datasourceId, datasourceName,
+  datasourceDisplayName, category, connectionName, isActive, connectionStatus, connectedOn,
+  disconnectedOn, lastSyncedOn, lastSyncRecordCount, lastSyncError, metadata, architecture,
+  targetSchemaName }`. The earlier "raw array, no envelope" reading here was wrong — it broke
+  `/onboarding/data` (`ConnectedDatasourceDto[].filter is not a function`) the first time this
+  was hit live, since the un-enveloped code was treating the envelope object itself as the array.
+- **Used by:** `services/api/datasources/get-connected-datasources.ts` (unwraps the envelope,
+  still returns a plain array to its caller), `features/datasources/use-get-connected-datasources.ts`.
+  Wired to `/onboarding/data` (`src/pages/onboarding/data/`).
+- **Status:** verified working
 
 ### POST /api/flolyt/datasources/test-connection
 

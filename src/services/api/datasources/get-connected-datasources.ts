@@ -22,17 +22,24 @@ export interface ConnectedDatasourceDto {
   targetSchemaName: string | null;
 }
 
+export interface GetConnectedDatasourcesResponse {
+  data: ConnectedDatasourceDto[];
+  messages: string[];
+  succeeded: boolean;
+}
+
 const {
   DATASOURCES: { GET_CONNECTED_DATASOURCES },
 } = API_ENDPOINTS;
 
-// No {data, messages, succeeded} envelope on this one — the documented response is a raw
-// array. See docs/endpoints/datasources.md's note before "fixing" this back to the envelope.
+// Verified live 2026-08-27: this does return the standard {data, messages, succeeded}
+// envelope, not the raw array docs/endpoints/datasources.md originally documented. That
+// doc's note has been corrected to match — see it before touching this again.
 export const getConnectedDatasources = async (): Promise<ConnectedDatasourceDto[]> => {
   try {
-    const response = await axiosInstance.get<ConnectedDatasourceDto[]>(GET_CONNECTED_DATASOURCES);
+    const response = await axiosInstance.get<GetConnectedDatasourcesResponse>(GET_CONNECTED_DATASOURCES);
 
-    return response.data;
+    return response.data.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       const serverMessage = error.response ? getServerErrorMessage(error.response.data) : null;

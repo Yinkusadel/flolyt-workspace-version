@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { StepUpConfirmModal } from "@/components/step-up-confirm-modal";
@@ -68,11 +69,13 @@ const REVENUE_MODEL_META = {
  * existing workspace changing an already-set model, never a first-time onboarding pick.
  */
 export default function OnboardingBusinessModelRoute() {
+  const navigate = useNavigate();
+
   const revenueModel = useUpdateRevenueModel({
     defaultValues: { revenueModel: "consumer" },
     onSuccess: () => {
       toast.success("Business model set — on to your data next");
-      // TODO: navigate("/onboarding/data") once that step is built.
+      navigate("/onboarding/data");
     },
   });
 
