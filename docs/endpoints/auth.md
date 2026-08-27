@@ -20,10 +20,30 @@ saves. See [[flolyt_governance_stepup_reminder]] for why this was deferred until
 - **Response:** `data` = the challengeId (uuid **string**, not wrapped in an object — differs
   from login's `request-code`, which nests it as `{ challengeId }`).
 - **Used by:** `services/api/auth/request-step-up-code.ts`, `features/auth/use-step-up-confirmation.ts`, wired into `src/components/step-up-confirm-modal.tsx` — first consumer is `/onboarding/workspace`'s markets save.
-- **Status:** wired, not yet verified against a real API call
+- **Status:** wired — first real call returns `500`, see bug below
 - **Notes:** Per the handoff doc, `change_workspace_markets` and `change_revenue_model` are
   **always** required; the other 3 actions are conditional (only when the sensitive threshold is
   actually being raised/loosened) and have no UI wired to them yet.
+
+## Bug found testing against the real API, 2026-08-26
+
+`POST /step-up/request-code` returns `500` for every action, always:
+
+```json
+{
+  "type": "https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.1",
+  "title": "Server Failure",
+  "status": 500,
+  "detail": "FLOLYT_STEP_UP_CODE_TEMPLATE_ID is not set. Confirmation codes cannot be delivered, which would make every guarded action impossible to complete.",
+  "instance": "/api/users/auth/step-up/request-code"
+}
+```
+
+Backend config gap, not a frontend bug — `FLOLYT_STEP_UP_CODE_TEMPLATE_ID` (presumably the email
+template id used to deliver the code) isn't set on the server. **Blocks the entire step-up flow**
+for all 5 actions until fixed server-side — markets and revenue-model saves can't complete, and
+the step-up round trip still hasn't been verified end-to-end because of this. Flag to the backend
+team; nothing to change here.
 
 ## POST /api/users/auth/step-up/verify-code
 

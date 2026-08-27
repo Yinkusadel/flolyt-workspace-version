@@ -166,13 +166,16 @@ Zod validators for the ones with a body live in
 - **Auth:** step-up gated (`stepUpChallengeId`).
 - **Request:** `revenueModel` (string, required), `stepUpChallengeId` (nullable uuid).
 - **Response:** `data` = uuid string.
-- **Used by:** `services/api/workspace/update-revenue-model.ts`, `features/workspace/use-update-revenue-model.ts`. No screen wired yet.
-- **Status:** wired (service/hook only — ⚠️ **cannot actually be called successfully yet**, see notes)
-- **Notes:** ⚠️ Another [[flolyt_governance_stepup_reminder]] step-up endpoint — same
-  no-step-up-flow-yet caveat as `PUT /markets` above. Selects the entire leakage vocabulary
-  (rows/conditions/agent questions) — changing it **discards** the grid built under the old
-  model rather than converting it. Distinct from the AI-derived `businessModel` free-text field
-  on the profile, which can't be branched on.
+- **Used by:** `services/api/workspace/update-revenue-model.ts`, `features/workspace/use-update-revenue-model.ts`, wired to `/onboarding/business-model` (onboarding step 2, screen 04) as of 2026-08-27.
+- **Status:** wired
+- **Notes:** Selects the entire leakage vocabulary (rows/conditions/agent questions) — changing it
+  **discards** the grid built under the old model rather than converting it. Distinct from the
+  AI-derived `businessModel` free-text field on the profile, which can't be branched on. No
+  discard-confirmation UI on the onboarding screen — that only matters for an *existing* workspace
+  changing an already-set model, never a first-time pick with nothing built yet to discard; add
+  one if this endpoint is ever reused on a real settings page. Step-up flow itself is now
+  confirmed working end to end (see [[flolyt_governance_stepup_reminder]] and
+  `docs/endpoints/auth.md`), so this was buildable for the first time this session.
 
 ### GET /api/flolyt/workspace/lifecycle-thresholds
 

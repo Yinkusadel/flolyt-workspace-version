@@ -14,10 +14,10 @@ decisions made along the way. The actual endpoint reference stays at
 After sign-in, `verifyLoginCode` gets back `onboardingRequired: true` for a user with no
 workspace yet. **Flipped** —
 [`use-verify-login-code.ts`](../../src/features/auth/use-verify-login-code.ts) now sends a user
-with `onboardingRequired: true` to `/onboarding/start`, everyone else to `/`. Only step 1
-(workspace) exists past that point — a real account will land in `/onboarding/workspace` after
-the pre-workspace screen and then have nowhere further to go until business-model/data/agents/team
-are built.
+with `onboardingRequired: true` to `/onboarding/start`, everyone else to `/`. Steps 1 (workspace)
+and 2 (business model) exist as of 2026-08-27 — a real account lands in `/onboarding/workspace`
+after the pre-workspace screen, then `/onboarding/business-model`, then has nowhere further to go
+until data/agents/team are built.
 
 ## The 5-step wizard, per the stepper baked into each SVG
 
@@ -142,9 +142,13 @@ onboarding, never blocks movement within the wizard's own screens. A network err
 onboarding status fails open (lets the request through, logs a warning) rather than trapping
 someone in a redirect loop.
 
-**Known simplification:** the guard always sends an unfinished user to `/onboarding/workspace`
-regardless of which step they're actually on, since only step 1 is built — it doesn't yet honor
-`GET /workspace/onboarding`'s `resumeAt` field. Revisit once steps 2-5 exist.
+**Fixed 2026-08-27:** the guard now honors `GET /workspace/onboarding`'s `resumeAt` field via a
+`RESUME_STEP_ROUTES` map in `protected-route.tsx`, instead of always hardcoding
+`/onboarding/workspace`. Falls back to the furthest **built** step (`LAST_BUILT_STEP_ROUTE`) for
+any `resumeAt` value that doesn't have a screen yet (`data`/`agents`/`team` today) — update both
+constants together as steps 3-5 land. Verified live: completing markets moved a test account's
+`resumeAt` to `"business_model"`, and a fresh reload from `/` correctly landed on
+`/onboarding/business-model` instead of bouncing back to step 1.
 
 ## Open question: `POST /workspace`'s `createSeparately` field
 
@@ -165,10 +169,10 @@ of what it created.
 
 | Step | Endpoint(s) | Status | Notes |
 |---|---|---|---|
-| Step-up flow | `POST /step-up/request-code`, `POST /step-up/verify-code` (see handoff doc) | [x] built | Reusable hook + modal, not workspace-specific — see `docs/endpoints/auth.md`; not yet exercised against a real API call (local dev hits CORS on the configured backend) |
+| Step-up flow | `POST /step-up/request-code`, `POST /step-up/verify-code` (see handoff doc) | [x] built, **working** | Reusable hook + modal, not workspace-specific — see `docs/endpoints/auth.md`. First real call (2026-08-26) 500'd on a missing backend config (`FLOLYT_STEP_UP_CODE_TEMPLATE_ID`) — the user's backend team fixed it 2026-08-27, confirmed working end to end since on the markets save (request-code → email → verify-code → `PUT /markets`, all 200s). Revenue-model's step-up submit hasn't been live-tested yet — only its card-selection UI has (see step 2's row below). |
 | 0 — Pre-workspace (no Figma source) | `POST /workspace`, `GET /currency/default`, `GET /slug-available` | [x] built | `/onboarding/start`, `src/pages/onboarding/start/index.tsx`; verified with `tsc --noEmit` + a Playwright pass (country search, Nigeria→states cascade, no console errors). **Updated 2026-08-26:** gained a "Workspace address" field (paired with Business name) — the whole workspace identity is now set here in one call, not split across two screens. Submit itself not tested against a real API yet since the address field was added. |
-| 1 — Workspace (03) | `PUT /markets`, `GET /currency/supported`, `GET /proposed-markets` | [x] built | `/onboarding/workspace`, `src/pages/onboarding/workspace/index.tsx`; verified with `tsc --noEmit`. **Updated 2026-08-26 (twice):** `PUT /identity` was narrowed to slug-only per an updated API doc, briefly replaced with a `PUT /profile` + `PUT /identity` chain, then the whole identity concern (name/address/timezone) was moved to screen 0 instead — this screen is markets-only now, heading changed to "Where you sell". Live-tested against the real backend earlier the same session (before either change) via a disposable test account + Playwright — see [[flolyt_onboarding_build]]; the current markets-only version hasn't been re-run live yet. |
-| 2 — Business model (04) | `PUT /revenue-model` | [ ] not started | step-up gated same as markets; also note the handoff doc lists this action's endpoint as `PUT api/flolyt/lifecycle/revenue-model` while `workspace.md`/`apiConfig.ts` both say `PUT api/flolyt/workspace/revenue-model` — using the workspace.md path since that's the one already coded, flag if it 404s |
+| 1 — Workspace (03) | `PUT /markets`, `GET /currency/supported`, `GET /proposed-markets` | [x] built, **verified live end to end** | `/onboarding/workspace`, `src/pages/onboarding/workspace/index.tsx`; markets-only, heading "Where you sell" (identity moved to screen 0, see "Decisions made so far"). 2026-08-27: fully completed live on the test account — request-code → email → verify-code → `PUT /markets`, all 200s, `GET /onboarding` afterward correctly showed `completedSteps: 1, resumeAt: "business_model"`. Navigates to `/onboarding/business-model` on success. |
+| 2 — Business model (04) | `PUT /revenue-model` | [x] built, **UI verified, submit not yet tested** | `/onboarding/business-model`, `src/pages/onboarding/business-model/index.tsx`. Card selection, dynamic "what changes" panel, and dynamic button label all confirmed live in the browser. **The actual `PUT /revenue-model` step-up submit has NOT been exercised live** — only clicked between cards, never completed the confirm-code flow through to a real save. Do that before treating this step as fully proven. Defaults to Consumer pre-selected, matching the SVG's own drawn state. "What changes" copy for Account-based/Both is written to match Consumer's — the SVG only draws one state. No `/onboarding/data` yet, so Continue's success handler has nowhere further to send anyone (same TODO pattern step 1 had before step 2 existed). |
 | 3 — Your data (05/06) | none documented yet | [ ] not started | connector list (Snowflake/Postgres/Stripe/...) isn't in `workspace.md` at all — likely belongs to the already-built Data Sources domain (`DATASOURCES` in `apiConfig.ts`) rather than a new onboarding-specific endpoint; screen 06's mapping table doesn't match `GET /mapping-quality`'s documented shape either. **Will ask before building** |
 | 4 — Your agents (07) | `GET /agents` | [ ] not started | clean, no blockers |
 | 5 — Team settings (08) | `GET /members`, `GET /roles`, `PUT /members/roles`, etc. | [ ] not started | not a wizard screen (see above); also no "send invite" endpoint documented anywhere yet — **will ask before building** |

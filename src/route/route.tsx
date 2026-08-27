@@ -8,6 +8,7 @@ import { AppLayout } from "@/pages/app-layout";
 import { OnboardingLayout } from "@/pages/onboarding/layout";
 import OnboardingStartRoute from "@/pages/onboarding/start";
 import OnboardingWorkspaceRoute from "@/pages/onboarding/workspace";
+import OnboardingBusinessModelRoute from "@/pages/onboarding/business-model";
 import Home from "@/pages/home";
 import Lifecycle from "@/pages/everyday/lifecycle";
 import LifecycleSettings from "@/pages/everyday/lifecycle/settings";
@@ -391,6 +392,7 @@ export const routes = createBrowserRouter([
             children: [
               { path: "start", Component: OnboardingStartRoute },
               { path: "workspace", Component: OnboardingWorkspaceRoute },
+              { path: "business-model", Component: OnboardingBusinessModelRoute },
             ],
           },
           {

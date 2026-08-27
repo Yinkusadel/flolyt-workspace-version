@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Country } from "country-state-city";
 
@@ -23,13 +24,14 @@ import useStepUpConfirmation from "@/features/auth/use-step-up-confirmation";
  * gated. See docs/onboarding/build-plan.md for the full history.
  */
 export default function OnboardingWorkspaceRoute() {
+  const navigate = useNavigate();
   const { proposedMarkets, isLoading: isLoadingProposed } = useGetProposedMarkets();
   const { supportedCurrencies, isLoading: isLoadingCurrencies } = useGetSupportedCurrencies();
 
   const markets = useUpdateWorkspaceMarkets({
     onSuccess: () => {
       toast.success("Workspace set up — on to business model next");
-      // TODO: navigate("/onboarding/business-model") once that step is built.
+      navigate("/onboarding/business-model");
     },
   });
 
