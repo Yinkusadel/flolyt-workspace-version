@@ -9,6 +9,7 @@ import { ConfirmModal } from "@/pages/onboarding/team/confirm-modal";
 import { WhyCreateATeam } from "@/pages/onboarding/team/why-create-a-team";
 import useGetTeams from "@/features/teams/use-get-teams";
 import useDeactivateTeam from "@/features/teams/use-deactivate-team";
+import useSaveOnboardingProgress from "@/features/workspace/use-save-onboarding-progress";
 import type { TeamDto } from "@/services/api/teams/get-teams";
 
 /**
@@ -22,6 +23,10 @@ import type { TeamDto } from "@/services/api/teams/get-teams";
  * (soft-deactivate). Header (title + Create team) is `shrink-0`; only the team-card list
  * scrolls (`md:min-h-0 md:flex-1 md:overflow-y-auto`) so a long list can't push the page past
  * the viewport, same bounded-height pattern the agents step already uses for its card grid.
+ * Team creation is optional — Continue works with zero teams just as well as with several,
+ * posts `kind: "Finished"` (the one progress event that exists specifically for this), and
+ * always sends the user to /onboarding/finishing-up regardless of whether that save succeeded,
+ * same fail-open pattern every other onboarding step's Continue already uses.
  */
 export default function OnboardingTeamRoute() {
   const navigate = useNavigate();
@@ -32,8 +37,14 @@ export default function OnboardingTeamRoute() {
   const { deactivateTeam, isPending: isDeleting } = useDeactivateTeam({
     onSuccess: () => setTeamToDelete(null),
   });
+  const { saveProgress, isPending: isSavingProgress } = useSaveOnboardingProgress();
 
   const goToTeamPage = (teamId: string) => navigate(`/onboarding/team/${teamId}`);
+
+  const handleContinue = () => {
+    const goToFinishingUp = () => navigate("/onboarding/finishing-up");
+    saveProgress({ kind: "Finished", step: "team" }, { onSuccess: goToFinishingUp, onError: goToFinishingUp });
+  };
 
   return (
     <div className="flex flex-col md:h-[calc(100dvh-62px)] md:overflow-hidden">
@@ -82,6 +93,17 @@ export default function OnboardingTeamRoute() {
                   />
                 ))
               )}
+            </div>
+
+            <div className="mt-6 shrink-0">
+              <Button
+                type="button"
+                onClick={handleContinue}
+                disabled={isSavingProgress}
+                className="h-10.5 w-full rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto"
+              >
+                {isSavingProgress ? "Saving..." : "Continue"}
+              </Button>
             </div>
           </div>
         </div>
