@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
 import { InviteMemberModal } from "@/pages/onboarding/team/invite-member-modal";
+import { ConfirmModal } from "@/pages/onboarding/team/confirm-modal";
 import useGetTeamById from "@/features/teams/use-get-team-by-id";
 import useResendTeamInvitation from "@/features/teams/use-resend-team-invitation";
 import useRevokeTeamInvitation from "@/features/teams/use-revoke-team-invitation";
@@ -35,15 +36,17 @@ function StatusChip({ status }: { status: string }) {
  * invitations off GET /teams/{teamId} (returns both in one call — no separate paginated
  * invitations query needed), with its own "Invite member" button opening the same-shaped modal
  * as the create-team one. Resend/Revoke only render for a "pending" invitation — an already
- * accepted/expired/revoked one has nothing left to do from here. "Back to teams" sits at the
- * bottom, styled like every other onboarding step's Continue button (the canonical CTA class —
- * see docs/onboarding/build-plan.md's "Cross-cutting: primary CTA button convention") rather
- * than a small top-of-page link, per the user's direct request.
+ * accepted/expired/revoked one has nothing left to do from here. Revoke opens `ConfirmModal`
+ * rather than firing immediately on click. "Back to teams" sits at the bottom, styled like
+ * every other onboarding step's Continue button (the canonical CTA class — see
+ * docs/onboarding/build-plan.md's "Cross-cutting: primary CTA button convention") rather than
+ * a small top-of-page link, per the user's direct request.
  */
 export default function OnboardingTeamDetailRoute() {
   const { teamId } = useParams<{ teamId: string }>();
   const navigate = useNavigate();
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [invitationToRevoke, setInvitationToRevoke] = useState<TeamInvitationDto | null>(null);
 
   const { team, isLoading } = useGetTeamById(teamId ?? "");
   const {
@@ -55,7 +58,7 @@ export default function OnboardingTeamDetailRoute() {
     revokeInvitation,
     isPending: isRevoking,
     variables: revokeVariables,
-  } = useRevokeTeamInvitation();
+  } = useRevokeTeamInvitation({ onSuccess: () => setInvitationToRevoke(null) });
 
   const handleResend = (invitation: TeamInvitationDto) => {
     resendInvitation({
@@ -207,7 +210,7 @@ export default function OnboardingTeamDetailRoute() {
                                   variant="destructive"
                                   size="sm"
                                   disabled={isThisResending || isThisRevoking}
-                                  onClick={() => revokeInvitation(invitation.id)}
+                                  onClick={() => setInvitationToRevoke(invitation)}
                                 >
                                   {isThisRevoking ? "Revoking..." : "Revoke"}
                                 </Button>
@@ -236,6 +239,17 @@ export default function OnboardingTeamDetailRoute() {
       {teamId && (
         <InviteMemberModal teamId={teamId} open={showInviteModal} onOpenChange={setShowInviteModal} />
       )}
+
+      <ConfirmModal
+        open={!!invitationToRevoke}
+        onOpenChange={(open) => !open && setInvitationToRevoke(null)}
+        title="Revoke this invitation?"
+        description={`${invitationToRevoke?.email} won't be able to accept it anymore. You can invite them again later.`}
+        confirmLabel="Revoke invitation"
+        pendingLabel="Revoking..."
+        isPending={isRevoking}
+        onConfirm={() => invitationToRevoke && revokeInvitation(invitationToRevoke.id)}
+      />
     </div>
   );
 }
