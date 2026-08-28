@@ -12,11 +12,10 @@ import useGetTeams from "@/features/teams/use-get-teams";
  * Onboarding step 5 ("Your team") — no Figma source for this one, built from conversation
  * only. "Create team" opens the create-team modal and stays available at the top regardless
  * of how many teams already exist — a workspace isn't limited to one. Every team gets its own
- * card, each with an "Invite team member" button that hands off to the real team page
- * (/onboarding/team/:teamId) — same handoff shape as the data step's "Show mapping", just
- * across a route instead of a sub-state, since a team has a real id to key off of. That
- * detail/invite page is a separate, later piece — not built yet, so the button's target
- * route doesn't exist until it ships.
+ * card, each with an "Invite team member" button that hands off to the team page
+ * (/onboarding/team/:teamId, team-detail-route.tsx) — same handoff shape as the data step's
+ * "Show mapping", just across a route instead of a sub-state, since a team has a real id to
+ * key off of.
  */
 export default function OnboardingTeamRoute() {
   const navigate = useNavigate();
