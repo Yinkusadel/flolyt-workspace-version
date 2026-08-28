@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,7 +35,10 @@ function StatusChip({ status }: { status: string }) {
  * invitations off GET /teams/{teamId} (returns both in one call — no separate paginated
  * invitations query needed), with its own "Invite member" button opening the same-shaped modal
  * as the create-team one. Resend/Revoke only render for a "pending" invitation — an already
- * accepted/expired/revoked one has nothing left to do from here.
+ * accepted/expired/revoked one has nothing left to do from here. "Back to teams" sits at the
+ * bottom, styled like every other onboarding step's Continue button (the canonical CTA class —
+ * see docs/onboarding/build-plan.md's "Cross-cutting: primary CTA button convention") rather
+ * than a small top-of-page link, per the user's direct request.
  */
 export default function OnboardingTeamDetailRoute() {
   const { teamId } = useParams<{ teamId: string }>();
@@ -62,22 +65,13 @@ export default function OnboardingTeamDetailRoute() {
       </div>
 
       <div className="mx-auto w-full max-w-4xl flex-1 px-6 pb-10 md:min-h-0 md:overflow-y-auto">
-        <button
-          type="button"
-          onClick={() => navigate("/onboarding/team")}
-          className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-ink-3 hover:text-ink"
-        >
-          <ArrowLeft className="size-3.5" />
-          Back to teams
-        </button>
-
         {isLoading || !team ? (
-          <div className="mt-4">
+          <div>
             <Skeleton className="h-6 w-48" />
             <Skeleton className="mt-2.5 h-3 w-80" />
           </div>
         ) : (
-          <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h1 className="text-[22px] font-semibold text-ink">{team.name}</h1>
               <p className="mt-2 max-w-2xl text-[12.5px] text-ink-3">
@@ -219,6 +213,14 @@ export default function OnboardingTeamDetailRoute() {
             </div>
           </section>
         </div>
+
+        <button
+          type="button"
+          onClick={() => navigate("/onboarding/team")}
+          className="mt-8 h-10.5 w-full rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto"
+        >
+          Back to teams
+        </button>
       </div>
 
       {teamId && (
