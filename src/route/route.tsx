@@ -3,7 +3,7 @@ import { AuthLayout } from "@/pages/auth/layout";
 import SignIn from "@/pages/auth/sign-in";
 import SignUp from "@/pages/auth/sign-up";
 import VerifyOtp from "@/pages/auth/verify-otp";
-import AcceptInvitation from "@/pages/auth/accept-invitation";
+import AcceptTeamInvitationRoute from "@/pages/teams/accept-invitation";
 import { AppLayout } from "@/pages/app-layout";
 import { OnboardingLayout } from "@/pages/onboarding/layout";
 import OnboardingStartRoute from "@/pages/onboarding/start";
@@ -381,11 +381,11 @@ export const routes = createBrowserRouter([
               { path: "verify-otp/:userId", Component: VerifyOtp },
             ],
           },
-          {
-            path: "accept-invitation",
-            Component: AcceptInvitation,
-          },
         ],
+      },
+      {
+        path: "/teams/accept-invitation",
+        Component: AcceptTeamInvitationRoute,
       },
       {
         path: "/",

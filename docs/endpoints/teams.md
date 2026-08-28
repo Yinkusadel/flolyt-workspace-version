@@ -107,8 +107,8 @@ Zod validators for the ones with a body live in
 - **Auth:** presumed unauthenticated (the invitee has no session yet) — same assumption as `POST /invitations/accept` below.
 - **Request:** query param `token` (required).
 - **Response:** `data`: `{ id, teamId, teamName, email, roles, inviterName, expiresAt, isExpired, userAlreadyExists, requiresRegistration }`.
-- **Used by:** `services/api/teams/get-invitation-details.ts`, `features/teams/use-get-invitation-details.ts`. No screen wired yet — pairs with the existing accept-invitation page/flow below once that page needs to render invitation details before the form.
-- **Status:** wired
+- **Used by:** `services/api/teams/get-invitation-details.ts`, `features/teams/use-get-invitation-details.ts`, `/teams/accept-invitation` (`pages/teams/accept-invitation/left-section.tsx`, wired 2026-08-29).
+- **Status:** wired, screen built
 
 ### POST /api/teams/invitations/accept
 
@@ -116,8 +116,9 @@ Zod validators for the ones with a body live in
 - **Auth:** unauthenticated.
 - **Request:** `token`, `firstName`, `lastName` (all required).
 - **Response:** `data` = boolean (typed `unknown` in the existing file, unverified against a real response).
-- **Used by:** **already built during the auth rebuild**, not this pass — `services/api/auth/accept-invitation.ts`, `features/auth/use-accept-invitation.ts`, wired to the accept-invitation page in the auth flow. Deliberately left in `auth/` rather than duplicated into `teams/` — it's part of that flow's own screen and already uses `TEAMS.ACCEPT_INVITATION` from `apiConfig.ts`.
-- **Status:** wired (per the auth rebuild); not independently verified live during this pass.
+- **Used by:** `services/api/auth/accept-invitation.ts`, `features/auth/use-accept-invitation.ts`, `pages/teams/accept-invitation/accept-invitation-form.tsx`. Deliberately left in `auth/` rather than duplicated into `teams/` — already uses `TEAMS.ACCEPT_INVITATION` from `apiConfig.ts`.
+- **Status:** wired; live-tested 2026-08-29 with an invalid token (404, correctly surfaced as "this link isn't valid" on the real screen) — a real invite token hasn't been exercised through this exact page yet.
+- **Notes (2026-08-29):** the real invite email links to `/teams/accept-invitation?token=...`, not `/auth/accept-invitation` — the page originally built at that guessed path (during the auth rebuild, before this URL shape was confirmed) never matched a real email and has been retired outright, replaced by `pages/teams/accept-invitation/`. That page also calls `GET /invitations/details` first to show the team name/role/inviter/expiry before the name form, and handles `isExpired` and `userAlreadyExists` in copy. **No decline/reject endpoint exists** for an invitee to act on their own invitation — the only invitation-cancelling endpoint is `DELETE /invitations/{invitationId}` below, which is admin-initiated (revoke), not something the invitee's own unauthenticated page can call. "Decline" on the new screen is therefore UI-only (sets local state, shows a "no problem" message) and does **not** notify the backend — flagged to the user, not guessed at.
 
 ### DELETE /api/teams/invitations/{invitationId}
 
@@ -151,4 +152,11 @@ step 5's real destination, see [[flolyt_onboarding_build]]) is a separate, later
 
 ## Missing
 
-_None flagged — this batch covered all 13 endpoints the user shared for this domain._
+_None flagged in the original 13-endpoint batch._
+
+**2026-08-29:** no endpoint for an **invitee** to decline/reject their own invitation. The only
+invitation-cancelling call is `DELETE /invitations/{invitationId}` above, which is
+admin-initiated (revoke) and requires auth the invitee's own unauthenticated
+`/teams/accept-invitation` page doesn't have. That page's "Decline" is currently UI-only (local
+state, no request sent) — ask the backend team whether a self-service decline endpoint exists or
+is planned before building anything more than that.
