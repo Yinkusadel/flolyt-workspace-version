@@ -7,10 +7,11 @@ export const DATA_MAP_QUERY_KEY = ["workspace-data-map"];
 // (summary.uncountedTableCount says how much is unknown). mappedTo: null means "not mapped",
 // still render the row. state/flags mirror useGetMappingQuality's — check .state before
 // treating an empty .flags array as "all good".
-const useGetDataMap = () => {
+const useGetDataMap = (enabled: boolean = true) => {
   const query = useQuery<GetDataMapResponse, Error>({
     queryKey: DATA_MAP_QUERY_KEY,
     queryFn: getDataMap,
+    enabled,
   });
 
   return {

@@ -45,6 +45,25 @@ export const UNLOCK_CATEGORIES: UnlockCategory[] = [
   },
 ];
 
+/** The one category the "what you can ask now" rail treats as unlocking the payment-gated questions. */
+export const PAYMENT_CATEGORY = "Payments";
+
+export type MappingQuestion = {
+  key: string;
+  question: string;
+  /** true if this question needs a Payments-category source; false if any other connected source answers it. */
+  needsPayment: boolean;
+};
+
+/** The aside's five rows on 06-source-connected.svg — "WHAT YOU CAN ASK NOW". */
+export const MAPPING_QUESTIONS: MappingQuestion[] = [
+  { key: "repeat-purchase", question: "Why did repeat purchase change?", needsPayment: false },
+  { key: "dormant-customers", question: "Which customers are going dormant?", needsPayment: false },
+  { key: "revenue-leaking", question: "Where is revenue leaking?", needsPayment: false },
+  { key: "leak-worth", question: "How much is that leak worth?", needsPayment: true },
+  { key: "channel-payback", question: "Which channel has the best payback?", needsPayment: true },
+];
+
 export function groupByCategory(datasources: DatasourceDto[]): Map<string, DatasourceDto[]> {
   const grouped = new Map<string, DatasourceDto[]>();
   for (const ds of datasources) {

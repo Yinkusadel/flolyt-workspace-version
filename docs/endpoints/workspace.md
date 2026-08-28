@@ -360,9 +360,10 @@ Zod validators for the ones with a body live in
   unmappedTableCount, lowConfidenceTableCount, uncountedTableCount, totalRows, entitiesCovered,
   entitiesMissing }, flags: [{ key, mapping, consequence, fix (nullable), entity, isMeasured }],
   reviewedAtUtc (nullable) }`.
-- **Used by:** `services/api/workspace/get-data-map.ts`, `features/workspace/use-get-data-map.ts`.
-  No screen wired yet — use TBD.
-- **Status:** wired
+- **Used by:** `services/api/workspace/get-data-map.ts`, `features/workspace/use-get-data-map.ts`,
+  `pages/onboarding/data/mapping-view.tsx` (onboarding step 3's "mapping" sub-state, behind the
+  "Show mapping" button on 05).
+- **Status:** wired, screen built
 - **Notes:** `mappedTo: null` means the table was not mapped — render the row, don't hide it: an
   ignored table is what tells a reader whether the mapping missed something that matters.
   `mappedColumns` is only the columns carrying the mapping (the subtitle under the entity name).
@@ -377,6 +378,9 @@ Zod validators for the ones with a body live in
   `summary.totalRows` as a floor and check `summary.uncountedTableCount`. `state` and `flags`
   are read from the same capability `/mapping-quality` reads, so the two can never disagree
   about whether a mapping is sound — see that endpoint's notes above for the 4 `state` values.
+  `flags` (the "fix the join" callout on 06) is intentionally not rendered yet — per the user, the
+  backend may never have a real fix behind a given flag, so that surface waits until there's a
+  confirmed action to put behind it.
 
 ### POST /api/flolyt/workspace/onboarding/progress
 
