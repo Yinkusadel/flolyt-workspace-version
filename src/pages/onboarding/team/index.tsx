@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
@@ -24,9 +25,13 @@ import type { TeamDto } from "@/services/api/teams/get-teams";
  * scrolls (`md:min-h-0 md:flex-1 md:overflow-y-auto`) so a long list can't push the page past
  * the viewport, same bounded-height pattern the agents step already uses for its card grid.
  * Team creation is optional — Continue works with zero teams just as well as with several,
- * posts `kind: "Finished"` (the one progress event that exists specifically for this), and
- * always sends the user to /onboarding/finishing-up regardless of whether that save succeeded,
- * same fail-open pattern every other onboarding step's Continue already uses.
+ * and posts `kind: "Finished"` (the one progress event that exists specifically for this).
+ * Unlike every other onboarding step's Continue (which fail-opens — navigates on both
+ * onSuccess and onError, since a transient network hiccup shouldn't trap someone on a
+ * non-gating step), this one is deliberately fail-closed, per the user's direct correction:
+ * only navigate to /onboarding/finishing-up once the save comes back `succeeded: true`;
+ * otherwise show an error and stay put so a genuinely-failed "Finished" flag doesn't get
+ * silently skipped past.
  */
 export default function OnboardingTeamRoute() {
   const navigate = useNavigate();
@@ -42,8 +47,21 @@ export default function OnboardingTeamRoute() {
   const goToTeamPage = (teamId: string) => navigate(`/onboarding/team/${teamId}`);
 
   const handleContinue = () => {
-    const goToFinishingUp = () => navigate("/onboarding/finishing-up");
-    saveProgress({ kind: "Finished", step: "team" }, { onSuccess: goToFinishingUp, onError: goToFinishingUp });
+    saveProgress(
+      { kind: "Finished", step: "team" },
+      {
+        onSuccess: (data) => {
+          if (data.succeeded) {
+            navigate("/onboarding/finishing-up");
+            return;
+          }
+          toast.error(data.messages?.[0] || "Couldn't finish setup. Please try again.");
+        },
+        onError: (error) => {
+          toast.error(error.message || "Couldn't finish setup. Please try again.");
+        },
+      }
+    );
   };
 
   return (
