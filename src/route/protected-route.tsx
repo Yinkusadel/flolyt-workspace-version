@@ -12,12 +12,13 @@ const Loader = () => (
 
 // GET /workspace/onboarding's resumeAt → the route for that step, for whichever
 // steps actually have a screen built.
-// "data"/"your_data", "agents"/"your_agents" and "team"/"your_team" are all
-// listed with both spellings since the real resumeAt values for steps 3-5
-// haven't been observed live yet — verify against a real response and drop
-// whichever key turns out unused, same as the workspace/business_model keys
-// were confirmed live before. Team-creation likely isn't backend-tracked at
-// all (no confirmed resumeAt observed for it) — these keys are speculative.
+// "data"/"your_data" and "agents"/"your_agents" are both listed since the real resumeAt
+// values for steps 3-4 haven't been observed live yet — verify against a real response and
+// drop whichever key turns out unused, same as the workspace/business_model keys were
+// confirmed live before. "team" IS confirmed live (2026-08-29, GET /onboarding's own
+// steps[].step value) — team-creation is backend-tracked after all, driven by real state
+// ("Invite someone" outstanding until an invite is sent), not by the Finished progress event;
+// no "your_team" variant needed.
 const RESUME_STEP_ROUTES: Record<string, string> = {
   workspace: "/onboarding/workspace",
   business_model: "/onboarding/business-model",
@@ -26,7 +27,6 @@ const RESUME_STEP_ROUTES: Record<string, string> = {
   agents: "/onboarding/agents",
   your_agents: "/onboarding/agents",
   team: "/onboarding/team",
-  your_team: "/onboarding/team",
 };
 
 // The furthest step that's actually built — keep this in sync with
@@ -96,6 +96,12 @@ export function ProtectedRoute() {
     return <Outlet />;
   }
 
+  // `finished` is the only thing this check reads — confirmed live 2026-08-29 that it can be
+  // `true` while `steps` still lists an incomplete one (`team`, until an invite is actually
+  // sent — the `Finished` progress event marks the whole record done without needing every
+  // per-step real-state condition to also be satisfied). Don't start reading `steps` here to
+  // "double-check" completeness; the backend's own doc is explicit that finishing does not
+  // mean nothing is outstanding.
   if (onboarding && !onboarding.finished) {
     return <Navigate to={resolveResumeRoute(onboarding.resumeAt)} replace />;
   }

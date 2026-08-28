@@ -331,7 +331,15 @@ Zod validators for the ones with a body live in
   `stalledForDays`: gap since onboarding last touched, `null` once finished. Finishing does
   **not** hide what's still outstanding — don't treat `finished: true` as "nothing left to
   show". This query's key (`workspace-onboarding-status`) is what every mutation hook above
-  invalidates when it changes something the checklist derives from.
+  invalidates when it changes something the checklist derives from. **Confirmed live
+  2026-08-29:** a 5th step, `team`, exists in `steps` (key confirmed as the plain string
+  `"team"`, not `"your_team"`) — derived from real state like the others (`isComplete: false`
+  with `outstanding: ["Invite someone"]` until an invitation is actually sent), **not** flipped
+  by posting `kind: "Finished"`. That progress event only sets the top-level `finished` flag —
+  observed going `true` while `team`'s own `isComplete` stayed `false`, exactly per this note's
+  own "don't treat finished as nothing outstanding" warning. `ProtectedRoute` only reads
+  `finished`, so this doesn't block app entry; it's the mechanism a future in-app "invite your
+  team" nudge would read from, if one gets built.
 
 ### GET /api/flolyt/workspace/mapping-quality
 
