@@ -12,15 +12,19 @@ import {
 } from "@/services/api/auth/verify-step-up-code";
 import type { StepUpAction } from "@/validators/auth";
 
-// Exact phrase the backend returns in `messages[0]` when a *conditionally* gated mutation
-// (e.g. change_administrators) is attempted with no stepUpChallengeId — per
+// Phrase the backend returns in `messages[0]` when a *conditionally* gated mutation (e.g.
+// change_administrators) is attempted with no stepUpChallengeId — per
 // auth-frontend-handoff.md's suggested UX: "attempt without a challenge id first. If the
 // reply is [this], request a step-up code and retry with the id attached." Actions that are
 // *always* gated (change_workspace_markets, change_revenue_model) don't need this — they
 // call useStepUpConfirmation up front instead of attempting bare first.
-const STEP_UP_REQUIRED_MESSAGE = "Confirm this change with the code we emailed you.";
+// Matched loosely (case-insensitive substring, not exact-string) since the confirmed shape is
+// from one live response, not the API doc — a differently-cased or reworded server message
+// elsewhere shouldn't silently fail to trigger the step-up flow.
+const STEP_UP_REQUIRED_PHRASE = "confirm this change with the code";
 
-export const isStepUpRequiredMessage = (message?: string): boolean => message === STEP_UP_REQUIRED_MESSAGE;
+export const isStepUpRequiredMessage = (message?: string): boolean =>
+  !!message && message.toLowerCase().includes(STEP_UP_REQUIRED_PHRASE);
 
 interface UseStepUpConfirmationOptions {
   action: StepUpAction;

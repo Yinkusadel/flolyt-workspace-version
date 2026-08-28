@@ -64,6 +64,15 @@ const useInviteTeamMember = (teamId: string, options?: UseInviteTeamMemberOption
       toast.error(data.messages?.[0] || "Failed to send invitation");
     },
     onError: (error) => {
+      // The backend appears to reject the conditional step-up case as a non-2xx (axios
+      // throws, landing here) rather than a 200 with succeeded:false — this branch is the
+      // one that actually fires in practice; the succeeded:false check above is kept in case
+      // that ever changes, cheap insurance either way.
+      if (isStepUpRequiredMessage(error.message) && options?.onStepUpRequired) {
+        options.onStepUpRequired();
+        return;
+      }
+
       toast.error(error.message || "Failed to send invitation");
     },
   });
