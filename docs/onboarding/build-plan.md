@@ -165,6 +165,24 @@ rather than assuming a hidden auto-stub or a missing sign-up field. That screen 
 whole onboarding flow (name, address, and timezone all set there); screen 03 no longer edits any
 of what it created.
 
+## Cross-cutting: primary CTA button convention
+
+**2026-08-28:** every primary "Continue"-style button across `/onboarding/*` (start, workspace,
+business-model, data/mapping-view, agents) was unified to one canonical class after the user
+flagged them as inconsistent (different heights, different width rules, one modal button
+accidentally `rounded-full`):
+
+```
+className="h-10.5 w-full rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto"
+```
+
+Full width on mobile, auto-width from `sm:` up — confirmed explicitly by the user. Any secondary
+button sharing a bottom bar with a primary CTA (e.g. mapping-view's "Check again"/"Connect new
+source") should also be `w-full sm:w-auto` inside a `flex-col sm:flex-row` container so they stack
+on mobile instead of squeezing into one row. **Use this class verbatim for any new onboarding
+step's Continue button** rather than inventing a new size — see
+[[flolyt_onboarding_button_convention]] in memory for the fuller rationale.
+
 ## Per-screen status
 
 | Step | Endpoint(s) | Status | Notes |

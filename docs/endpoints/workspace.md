@@ -147,13 +147,13 @@ Zod validators for the ones with a body live in
   required key — pass `null` explicitly), `stepUpChallengeId` (nullable uuid).
 - **Response:** `data` = integer (count, presumably markets saved).
 - **Used by:** `services/api/workspace/update-workspace-markets.ts`, `features/workspace/use-update-workspace-markets.ts`, wired to `/onboarding/workspace` (onboarding step 1, screen 03), gated behind `src/components/step-up-confirm-modal.tsx` + `use-step-up-confirmation`.
-- **Status:** wired — step-up flow built this session, not yet verified against a real API call
+- **Status:** verified working — full step-up round trip (request-code → email → verify-code →
+  this call) confirmed live 2026-08-27 on the test account, all 200s
 - **Notes:** This is one of the [[flolyt_governance_stepup_reminder]] step-up endpoints. The
   step-up confirmation flow (request/verify emailed code) that was deliberately skipped during the
-  auth rebuild is now built — see `src/features/auth/use-step-up-confirmation.ts` and
-  `flolyt-extras/auth-frontend-handoff.md`'s "Step-up confirmation" section — but the round trip
-  hasn't been exercised against a live backend yet (local dev hits CORS against the configured
-  API). Verify the full flow once that's possible. Replaces the **whole set** every call
+  auth rebuild is now built and confirmed working end to end — see
+  `src/features/auth/use-step-up-confirmation.ts` and `flolyt-extras/auth-frontend-handoff.md`'s
+  "Step-up confirmation" section. Replaces the **whole set** every call
   (primary market must be one of the set; dropping a market that's still primary would strand
   the fallback — the zod schema also refuses this client-side). A market's currency is validated
   against what Flolyt can *report* in — a superset of what it can *bill* in (e.g. NGN-billed
