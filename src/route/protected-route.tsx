@@ -11,23 +11,27 @@ const Loader = () => (
 );
 
 // GET /workspace/onboarding's resumeAt → the route for that step, for whichever
-// steps actually have a screen built. "agents"/"team" aren't in this map yet —
-// resolveResumeRoute below falls back to the last built step for those.
-// "data"/"your_data" are both listed for step 3 since the real resumeAt value
-// for it hasn't been observed live yet — verify against a real response and
-// drop whichever key turns out unused, same as the workspace/business_model
-// keys were confirmed live before.
+// steps actually have a screen built. "team" isn't in this map — step 5 is the
+// regular Team settings page, not a wizard route (see build-plan.md), and it
+// doesn't exist yet — resolveResumeRoute below falls back to the last built
+// step for that and anything else unrecognized.
+// "data"/"your_data" and "agents"/"your_agents" are both listed for steps 3-4
+// since the real resumeAt values for them haven't been observed live yet —
+// verify against a real response and drop whichever key turns out unused,
+// same as the workspace/business_model keys were confirmed live before.
 const RESUME_STEP_ROUTES: Record<string, string> = {
   workspace: "/onboarding/workspace",
   business_model: "/onboarding/business-model",
   data: "/onboarding/data",
   your_data: "/onboarding/data",
+  agents: "/onboarding/agents",
+  your_agents: "/onboarding/agents",
 };
 
 // The furthest step that's actually built — keep this in sync with
 // RESUME_STEP_ROUTES as more steps land, it's also the fallback for any
 // resumeAt this app can't show a screen for yet.
-const LAST_BUILT_STEP_ROUTE = "/onboarding/data";
+const LAST_BUILT_STEP_ROUTE = "/onboarding/agents";
 
 function resolveResumeRoute(resumeAt: string): string {
   return RESUME_STEP_ROUTES[resumeAt] ?? LAST_BUILT_STEP_ROUTE;

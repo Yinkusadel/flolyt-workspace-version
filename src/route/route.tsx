@@ -10,6 +10,7 @@ import OnboardingStartRoute from "@/pages/onboarding/start";
 import OnboardingWorkspaceRoute from "@/pages/onboarding/workspace";
 import OnboardingBusinessModelRoute from "@/pages/onboarding/business-model";
 import OnboardingDataRoute from "@/pages/onboarding/data";
+import OnboardingAgentsRoute from "@/pages/onboarding/agents";
 import Home from "@/pages/home";
 import Lifecycle from "@/pages/everyday/lifecycle";
 import LifecycleSettings from "@/pages/everyday/lifecycle/settings";
@@ -395,6 +396,7 @@ export const routes = createBrowserRouter([
               { path: "workspace", Component: OnboardingWorkspaceRoute },
               { path: "business-model", Component: OnboardingBusinessModelRoute },
               { path: "data", Component: OnboardingDataRoute },
+              { path: "agents", Component: OnboardingAgentsRoute },
             ],
           },
           {

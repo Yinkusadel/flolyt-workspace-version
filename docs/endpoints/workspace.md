@@ -283,10 +283,12 @@ Zod validators for the ones with a body live in
 - **Purpose:** The 13 specialist agents and what each can answer today — frame 014.
 - **Auth:** authenticated.
 - **Response:** `data`: `{ totalCount, readyCount, readingCount, notReadyCount, agents: [{
-  key, initials, name, description, state, reads (string[]), needs (nullable),
-  wouldUnlock (nullable), moreDaysNeeded (nullable), persona }] }`.
-- **Used by:** `services/api/workspace/get-workspace-agents.ts`, `features/workspace/use-get-workspace-agents.ts`. No screen wired yet.
-- **Status:** wired
+  key, initials, name, description, state, reads (string[]), needs (string, nullable),
+  wouldUnlock (string, nullable), moreDaysNeeded (nullable), persona }] }`.
+- **Used by:** `services/api/workspace/get-workspace-agents.ts`,
+  `features/workspace/use-get-workspace-agents.ts`, `/onboarding/agents`
+  (`src/pages/onboarding/agents/`).
+- **Status:** verified working
 - **Notes:** Readiness is computed from the **entities** a specialist reads, not named
   connectors — e.g. Support Signal needs "tickets", which could live in the workspace's own
   Postgres, so a connector-based check would wrongly say `not_ready`. `needs` is phrased in
@@ -301,7 +303,14 @@ Zod validators for the ones with a body live in
   backfilled customers imported yesterday still counts as 5 years), `ready`. **Advocacy** and
   **Release Impact** are always `not_ready` on every workspace — they need referral/deploy
   sources this product doesn't model at all; no connection fixes them, don't build a "connect
-  to unlock" CTA for those two.
+  to unlock" CTA for those two. **Corrected 2026-08-28, live-verified against the test
+  account:** `needs` and `wouldUnlock` are single free-text sentences (e.g. `"payments or
+  orders"`, `"a sentiment source — NPS, CSAT or survey responses over time are not modelled"`),
+  **not** `string[]` as originally guessed — render directly, don't `.join()`. Master
+  Orchestrator comes back `ready` with `reads: []` and `needs: null` (it doesn't read entities,
+  it's ready by definition) — the UI shows "always on" for that case rather than an empty
+  string. A fresh workspace with no datasources connected returns 12 of 13 agents `not_ready`
+  and only Master Orchestrator `ready`, confirming the whole-entity gating described above.
 
 ### GET /api/flolyt/workspace/onboarding
 
@@ -389,16 +398,22 @@ Zod validators for the ones with a body live in
 - **Auth:** authenticated.
 - **Request:** `kind` (enum, required): `ViewedStep` | `ReviewedMapping` | `AcknowledgedAgents` |
   `Finished`; `step` (nullable string, required key).
-- **Response:** `data` = null.
-- **Used by:** `services/api/workspace/save-onboarding-progress.ts`, `features/workspace/use-save-onboarding-progress.ts`. No screen wired yet.
-- **Status:** wired
+- **Response:** `data` = null (typed shape — the live response actually returns a plain string,
+  e.g. `"workspace"`, not null; unused by the app either way, see Notes).
+- **Used by:** `services/api/workspace/save-onboarding-progress.ts`,
+  `features/workspace/use-save-onboarding-progress.ts`, `/onboarding/data` (`ReviewedMapping`),
+  `/onboarding/agents` (`AcknowledgedAgents`).
+- **Status:** verified working
 - **Notes:** Only call this for what nothing else can tell the server — naming the workspace,
   declaring markets, choosing a revenue model, connecting a source are all visible in real
   state and must **never** be posted here as progress events. `ViewedStep` doubles as the resume
   hint and the activity clock (drives `resumeAt`/`stalledForDays`). Record is created on first
   contact — a workspace that never opens setup reports `started: false` rather than an empty
   record. The hook is silent by design (no toast) — it's meant to fire on step views, not
-  user-initiated submits.
+  user-initiated submits. **Verified live 2026-08-28:** `AcknowledgedAgents` returns `200
+  {"data":"workspace","messages":["Progress saved."],"succeeded":true}` — response `data` isn't
+  actually `null` on the wire, but nothing reads it, so the typed shape is left as-is rather than
+  chasing an unused field.
 
 ## Wiring notes (2026-08-26)
 

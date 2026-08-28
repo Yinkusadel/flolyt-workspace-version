@@ -97,7 +97,7 @@ export function MappingView({
         </Callout>
       ) : (
         <div>
-          <div className="grid grid-cols-[1fr_110px_1fr_100px] gap-3 border-b border-line pb-2.5">
+          <div className="hidden border-b border-line pb-2.5 sm:grid sm:grid-cols-[1fr_90px_1fr_90px] sm:gap-3">
             <p className="font-mono text-[9px] font-medium tracking-[0.85px] text-ink-4 uppercase">Your table</p>
             <p className="font-mono text-[9px] font-medium tracking-[0.85px] text-ink-4 uppercase">Rows</p>
             <p className="font-mono text-[9px] font-medium tracking-[0.85px] text-ink-4 uppercase">Mapped to</p>
@@ -107,25 +107,38 @@ export function MappingView({
           {rows.map((row, i) => (
             <div
               key={`${row.sourceName}-${row.tableName}-${i}`}
-              className="grid grid-cols-[1fr_110px_1fr_100px] items-center gap-3 border-b border-line py-3"
+              className="flex flex-col gap-2 border-b border-line py-3 sm:grid sm:grid-cols-[1fr_90px_1fr_90px] sm:items-center sm:gap-3"
             >
               <div className="min-w-0">
                 <p className="truncate font-mono text-[12px] text-ink">{row.tableName}</p>
                 {sourceCount > 1 && <p className="mt-0.5 text-[10px] text-ink-4">{row.sourceName}</p>}
               </div>
-              <p className="font-mono text-[11.5px] text-ink-2">{row.rowCount.toLocaleString()}</p>
+
+              <div className="flex items-center justify-between gap-3 sm:block">
+                <span className="font-mono text-[9px] tracking-[0.85px] text-ink-4 uppercase sm:hidden">
+                  Rows
+                </span>
+                <p className="font-mono text-[11.5px] text-ink-2">{row.rowCount.toLocaleString()}</p>
+              </div>
+
               <div className="min-w-0">
                 {row.mappedTo ? (
                   <>
                     <p className="text-[12px] font-semibold text-ink">{row.mappedTo}</p>
                     {row.mappedColumns.length > 0 && (
-                      <div className="group/cols relative mt-0.5 w-fit max-w-full">
-                        <p className="truncate font-mono text-[10px] text-ink-4">
+                      <div className="group/cols relative mt-0.5 sm:w-fit sm:max-w-full">
+                        {/* Wraps freely on mobile (no truncate/tooltip — a nowrap span here was
+                            forcing the whole page's layout viewport to blow past device width,
+                            which mobile browsers respond to by auto-zooming out to fit; the
+                            hover tooltip is also unreachable on touch anyway). Truncated with a
+                            hover tooltip only from sm: up, where the grid gives it a fixed track
+                            width to truncate against. */}
+                        <p className="font-mono text-[10px] text-ink-4 sm:truncate">
                           {row.mappedColumns.join(", ")}
                         </p>
                         <div
                           role="tooltip"
-                          className="pointer-events-none absolute top-full left-0 z-50 mt-1.5 w-max max-w-xs rounded-panel bg-ink px-3 py-1.5 font-mono text-[11px] text-paper opacity-0 shadow-md transition-opacity duration-150 group-hover/cols:opacity-100"
+                          className="pointer-events-none absolute top-full left-0 z-50 mt-1.5 hidden w-max max-w-xs rounded-panel bg-ink px-3 py-1.5 font-mono text-[11px] text-paper opacity-0 shadow-md transition-opacity duration-150 group-hover/cols:opacity-100 sm:block"
                         >
                           {row.mappedColumns.join(", ")}
                         </div>
@@ -136,14 +149,20 @@ export function MappingView({
                   <p className="text-[12px] text-ink-4">not mapped</p>
                 )}
               </div>
-              <p
-                className={cn(
-                  "font-mono text-[11px] font-semibold",
-                  row.confidenceBand ? CONFIDENCE_CLASS[row.confidenceBand] : "text-ink-4"
-                )}
-              >
-                {row.confidenceBand ?? "—"}
-              </p>
+
+              <div className="flex items-center justify-between gap-3 sm:block">
+                <span className="font-mono text-[9px] tracking-[0.85px] text-ink-4 uppercase sm:hidden">
+                  Confidence
+                </span>
+                <p
+                  className={cn(
+                    "font-mono text-[11px] font-semibold",
+                    row.confidenceBand ? CONFIDENCE_CLASS[row.confidenceBand] : "text-ink-4"
+                  )}
+                >
+                  {row.confidenceBand ?? "—"}
+                </p>
+              </div>
             </div>
           ))}
         </div>
@@ -157,27 +176,33 @@ export function MappingView({
         </Callout>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
           <Button
             type="button"
             onClick={onContinue}
             disabled={isContinuing || isStillMapping}
             title={isStillMapping ? "Waiting for the mapping to finish" : undefined}
-            className="h-10 rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90"
+            className="h-10.5 w-full rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto"
           >
             {isContinuing ? "Saving..." : "Continue"}
           </Button>
 
           {isStillMapping && (
-            <Button type="button" variant="outline" onClick={onRefresh} disabled={isRefreshing} className="gap-1.5">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="w-full gap-1.5 sm:w-auto"
+            >
               <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
               {isRefreshing ? "Checking..." : "Check again"}
             </Button>
           )}
         </div>
 
-        <Button type="button" variant="outline" onClick={onConnectNewSource}>
+        <Button type="button" variant="outline" onClick={onConnectNewSource} className="w-full sm:w-auto">
           Connect new source
         </Button>
       </div>

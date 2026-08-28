@@ -250,7 +250,7 @@ export default function OnboardingWorkspaceRoute() {
           type="button"
           onClick={handleContinue}
           disabled={!canContinue}
-          className="mt-8 h-10.5 w-full rounded-card bg-ink text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-40"
+          className="mt-8 h-10.5 w-full rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto"
         >
           {stepUp.isRequesting ? "Saving..." : "Continue"}
         </Button>

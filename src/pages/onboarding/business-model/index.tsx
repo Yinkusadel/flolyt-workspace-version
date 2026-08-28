@@ -177,7 +177,7 @@ export default function OnboardingBusinessModelRoute() {
           type="button"
           onClick={handleContinue}
           disabled={!canContinue}
-          className="mt-6 h-10.5 rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90"
+          className="mt-6 h-10.5 w-full rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto"
         >
           {revenueModel.isPending || stepUp.isRequesting ? "Saving..." : `Continue as ${meta.label}`}
         </Button>

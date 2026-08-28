@@ -12,8 +12,8 @@ export interface WorkspaceAgentDto {
   description: string;
   state: WorkspaceAgentState;
   reads: string[];
-  needs: string[] | null;
-  wouldUnlock: string[] | null;
+  needs: string | null;
+  wouldUnlock: string | null;
   moreDaysNeeded: number | null;
   persona: string;
 }

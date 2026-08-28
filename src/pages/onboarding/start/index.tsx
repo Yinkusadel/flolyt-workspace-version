@@ -435,7 +435,7 @@ export default function OnboardingStartRoute() {
         <Button
           type="submit"
           disabled={isPending || !canSubmit}
-          className="h-9.5 w-full rounded-card bg-ink text-[13px] font-semibold text-paper hover:bg-ink/90"
+          className="h-10.5 w-full rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto"
         >
           {isPending ? "Creating..." : "Continue"}
         </Button>

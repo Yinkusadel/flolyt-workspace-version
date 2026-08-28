@@ -115,7 +115,7 @@ export function ConnectSourceModal({
             <h2 className="text-[17px] font-semibold text-ink">{datasource.displayName}</h2>
             <p className="mt-2.5 text-[12px] text-ink-3">{datasource.description}</p>
 
-            <Button type="button" onClick={() => setStep("credentials")} className="mt-6 gap-1.5 rounded-full px-5">
+            <Button type="button" onClick={() => setStep("credentials")} className="mt-6 gap-1.5 px-5">
               <Plus className="size-4" />
               Connect
             </Button>
