@@ -1,10 +1,19 @@
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { StepUpConfirmModal } from "@/components/step-up-confirm-modal";
 import useInviteTeamMember from "@/features/teams/use-invite-team-member";
+import useStepUpConfirmation from "@/features/auth/use-step-up-confirmation";
 import { USER_ROLES, type UserRole } from "@/validators/teams";
 
-/** Invite-member form, opened from a team page's "Invite member" button — same shape as CreateTeamModal. */
+/**
+ * Invite-member form, opened from a team page's "Invite member" button — same shape as
+ * CreateTeamModal. Granting Administrator is conditionally step-up gated
+ * (`change_administrators`, per auth-frontend-handoff.md) — the first submit always goes out
+ * with no challenge id; if the backend comes back asking for one, `onStepUpRequired` opens
+ * `StepUpConfirmModal` on top of this one, and confirming resubmits the same form values with
+ * the verified challenge id attached.
+ */
 export function InviteMemberModal({
   teamId,
   open,
@@ -16,6 +25,15 @@ export function InviteMemberModal({
 }) {
   const { form, onSubmit, isPending } = useInviteTeamMember(teamId, {
     onSuccess: () => onOpenChange(false),
+    onStepUpRequired: () => stepUp.begin(),
+  });
+
+  const stepUp = useStepUpConfirmation({
+    action: "change_administrators",
+    onConfirmed: (challengeId) => {
+      form.setValue("stepUpChallengeId", challengeId);
+      form.handleSubmit(onSubmit)();
+    },
   });
 
   const {
@@ -86,8 +104,8 @@ export function InviteMemberModal({
 
           <DialogFooter>
             <div className="flex items-center gap-4">
-              <Button type="submit" disabled={!isValid || isPending}>
-                {isPending ? "Sending..." : "Send invite"}
+              <Button type="submit" disabled={!isValid || isPending || stepUp.isRequesting}>
+                {isPending || stepUp.isRequesting ? "Sending..." : "Send invite"}
               </Button>
               <button
                 type="button"
@@ -100,6 +118,17 @@ export function InviteMemberModal({
           </DialogFooter>
         </form>
       </DialogContent>
+
+      <StepUpConfirmModal
+        open={stepUp.isOpen}
+        onOpenChange={stepUp.close}
+        title="Confirm this invite"
+        description="Granting Administrator needs a fresh code — check your email."
+        isRequesting={stepUp.isRequesting}
+        isVerifying={stepUp.isVerifying}
+        onVerify={stepUp.verify}
+        onResend={stepUp.resend}
+      />
     </Dialog>
   );
 }

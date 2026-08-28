@@ -12,6 +12,16 @@ import {
 } from "@/services/api/auth/verify-step-up-code";
 import type { StepUpAction } from "@/validators/auth";
 
+// Exact phrase the backend returns in `messages[0]` when a *conditionally* gated mutation
+// (e.g. change_administrators) is attempted with no stepUpChallengeId — per
+// auth-frontend-handoff.md's suggested UX: "attempt without a challenge id first. If the
+// reply is [this], request a step-up code and retry with the id attached." Actions that are
+// *always* gated (change_workspace_markets, change_revenue_model) don't need this — they
+// call useStepUpConfirmation up front instead of attempting bare first.
+const STEP_UP_REQUIRED_MESSAGE = "Confirm this change with the code we emailed you.";
+
+export const isStepUpRequiredMessage = (message?: string): boolean => message === STEP_UP_REQUIRED_MESSAGE;
+
 interface UseStepUpConfirmationOptions {
   action: StepUpAction;
   /** Fires once the emailed code is verified — attach this challengeId to the real mutation. */
