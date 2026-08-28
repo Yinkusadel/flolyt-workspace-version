@@ -12,17 +12,15 @@ import useSaveOnboardingProgress from "@/features/workspace/use-save-onboarding-
  * Onboarding step 4 ("Your agents") — flolyt-figma-designs/onboarding/07-meet-your-agents.svg.
  * Read-only readiness grid off GET /workspace/agents, no step-up gating. Continue saves
  * `AcknowledgedAgents` (one of the two "acts that leave no other trace" onboarding tracks —
- * see docs/endpoints/workspace.md) then sends the user into the app itself: step 5 ("Your
- * team") is the regular Team settings page per docs/onboarding/build-plan.md, not a wizard
- * route, and that page doesn't exist yet — until it does, ProtectedRoute's onboarding guard
- * falls back to this same screen if the backend still reports something outstanding.
+ * see docs/endpoints/workspace.md) then sends the user into step 5 ("Your team",
+ * /onboarding/team).
  */
 export default function OnboardingAgentsRoute() {
   const navigate = useNavigate();
   const { agents, isLoading } = useGetWorkspaceAgents();
   const { saveProgress, isPending } = useSaveOnboardingProgress();
 
-  const goToNextStep = () => navigate("/");
+  const goToNextStep = () => navigate("/onboarding/team");
 
   const handleContinue = () => {
     saveProgress(
