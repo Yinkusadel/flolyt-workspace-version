@@ -46,8 +46,16 @@ export default function OnboardingTeamDetailRoute() {
   const [showInviteModal, setShowInviteModal] = useState(false);
 
   const { team, isLoading } = useGetTeamById(teamId ?? "");
-  const { resendInvitation, isPending: isResending } = useResendTeamInvitation(teamId ?? "");
-  const { revokeInvitation, isPending: isRevoking } = useRevokeTeamInvitation();
+  const {
+    resendInvitation,
+    isPending: isResending,
+    variables: resendVariables,
+  } = useResendTeamInvitation(teamId ?? "");
+  const {
+    revokeInvitation,
+    isPending: isRevoking,
+    variables: revokeVariables,
+  } = useRevokeTeamInvitation();
 
   const handleResend = (invitation: TeamInvitationDto) => {
     resendInvitation({
@@ -162,7 +170,9 @@ export default function OnboardingTeamDetailRoute() {
                   </thead>
                   <tbody>
                     {team.invitations.map((invitation: TeamInvitationDto) => {
-                      const isPending = invitation.status.toLowerCase() === "pending";
+                      const isPendingStatus = invitation.status.toLowerCase() === "pending";
+                      const isThisResending = isResending && resendVariables?.email === invitation.email;
+                      const isThisRevoking = isRevoking && revokeVariables === invitation.id;
                       return (
                         <tr key={invitation.id} className="border-b border-line last:border-0">
                           <td className="px-4 py-3 font-semibold text-ink">{invitation.email}</td>
@@ -181,25 +191,25 @@ export default function OnboardingTeamDetailRoute() {
                           <td className="px-4 py-3 text-ink-3">{formatDate(invitation.invitedAt)}</td>
                           <td className="px-4 py-3 text-ink-3">{formatDate(invitation.expiresAt)}</td>
                           <td className="px-4 py-3">
-                            {isPending && (
+                            {isPendingStatus && (
                               <div className="flex gap-2">
                                 <Button
                                   type="button"
                                   variant="outline"
                                   size="sm"
-                                  disabled={isResending}
+                                  disabled={isThisResending || isThisRevoking}
                                   onClick={() => handleResend(invitation)}
                                 >
-                                  Resend
+                                  {isThisResending ? "Resending..." : "Resend"}
                                 </Button>
                                 <Button
                                   type="button"
                                   variant="destructive"
                                   size="sm"
-                                  disabled={isRevoking}
+                                  disabled={isThisResending || isThisRevoking}
                                   onClick={() => revokeInvitation(invitation.id)}
                                 >
-                                  Revoke
+                                  {isThisRevoking ? "Revoking..." : "Revoke"}
                                 </Button>
                               </div>
                             )}

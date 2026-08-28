@@ -46,6 +46,10 @@ const useResendTeamInvitation = (teamId: string, options?: UseResendTeamInvitati
   return {
     resendInvitation: mutation.mutate,
     isPending: mutation.isPending,
+    // The payload of the in-flight (or last-settled) call — lets a caller with several
+    // invitations on screen tell which specific one `isPending` refers to, instead of
+    // treating every row as busy while any one resend is in flight.
+    variables: mutation.variables,
   };
 };
 

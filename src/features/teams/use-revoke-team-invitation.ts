@@ -36,6 +36,10 @@ const useRevokeTeamInvitation = (options?: UseRevokeTeamInvitationOptions) => {
   return {
     revokeInvitation: mutation.mutate,
     isPending: mutation.isPending,
+    // The invitationId of the in-flight (or last-settled) call — lets a caller with several
+    // invitations on screen tell which specific one `isPending` refers to, instead of
+    // treating every row as busy while any one revoke is in flight.
+    variables: mutation.variables,
   };
 };
 
