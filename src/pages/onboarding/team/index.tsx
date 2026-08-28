@@ -10,8 +10,9 @@ import useGetTeams from "@/features/teams/use-get-teams";
 
 /**
  * Onboarding step 5 ("Your team") — no Figma source for this one, built from conversation
- * only. A workspace has at most one team here: "Create team" opens the create-team modal,
- * and once it exists the card's "Invite team member" button hands off to the real team page
+ * only. "Create team" opens the create-team modal and stays available at the top regardless
+ * of how many teams already exist — a workspace isn't limited to one. Every team gets its own
+ * card, each with an "Invite team member" button that hands off to the real team page
  * (/onboarding/team/:teamId) — same handoff shape as the data step's "Show mapping", just
  * across a route instead of a sub-state, since a team has a real id to key off of. That
  * detail/invite page is a separate, later piece — not built yet, so the button's target
@@ -22,7 +23,6 @@ export default function OnboardingTeamRoute() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const { teams, isLoading } = useGetTeams();
-  const team = teams.find((t) => t.isActive) ?? teams[0] ?? null;
 
   const goToTeamPage = (teamId: string) => navigate(`/onboarding/team/${teamId}`);
 
@@ -44,25 +44,27 @@ export default function OnboardingTeamRoute() {
                 </p>
               </div>
 
-              {!isLoading && !team && (
+              {!isLoading && (
                 <Button type="button" onClick={() => setShowCreateModal(true)}>
                   Create team
                 </Button>
               )}
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 space-y-3">
               {isLoading ? (
                 <TeamCardSkeleton />
-              ) : team ? (
-                <TeamCard team={team} onInvite={() => goToTeamPage(team.id)} />
-              ) : (
+              ) : teams.length === 0 ? (
                 <div className="rounded-panel border border-dashed border-line bg-paper-2 p-5">
                   <p className="text-[13px] font-semibold text-ink">No team yet</p>
                   <p className="mt-2 text-[11.5px] text-ink-3">
                     Create one to start inviting people — it only takes a name.
                   </p>
                 </div>
+              ) : (
+                teams.map((team) => (
+                  <TeamCard key={team.id} team={team} onInvite={() => goToTeamPage(team.id)} />
+                ))
               )}
             </div>
           </div>
