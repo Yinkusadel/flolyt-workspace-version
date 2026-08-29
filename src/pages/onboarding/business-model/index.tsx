@@ -75,7 +75,7 @@ export default function OnboardingBusinessModelRoute() {
   const revenueModel = useUpdateRevenueModel({
     defaultValues: { revenueModel: "consumer" },
     onSuccess: () => {
-      toast.success("Business model set — on to your data next");
+      toast.success("Business model set. On to your data next");
       navigate("/onboarding/data");
     },
   });
@@ -191,7 +191,7 @@ export default function OnboardingBusinessModelRoute() {
         open={stepUp.isOpen}
         onOpenChange={stepUp.close}
         title="Confirm your business model"
-        description="Setting how you make money needs a fresh code — check your email."
+        description="Setting how you make money needs a fresh code. Check your email."
         isRequesting={stepUp.isRequesting}
         isVerifying={stepUp.isVerifying}
         onVerify={stepUp.verify}

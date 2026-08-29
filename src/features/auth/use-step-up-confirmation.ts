@@ -55,7 +55,7 @@ const useStepUpConfirmation = ({ action, onConfirmed }: UseStepUpConfirmationOpt
 
   const verifyMutation = useMutation<VerifyStepUpCodeResponse, Error, string>({
     mutationFn: (code) => {
-      if (!challengeId) throw new Error("Missing challenge id — request a code first.");
+      if (!challengeId) throw new Error("Missing challenge id. Request a code first.");
       return verifyStepUpCode({ challengeId, code });
     },
     onSuccess: () => {

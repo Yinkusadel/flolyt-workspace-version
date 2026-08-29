@@ -50,7 +50,7 @@ export function WhatYouCanAskNow({
             <>
               <p className="text-[12.5px] font-semibold text-ink">Three questions need a product source</p>
               <p className="mt-1.5 text-[11px] leading-relaxed text-ink-3">
-                Without one, Flolyt can tell you what customers paid but not what they did — repeat
+                Without one, Flolyt can tell you what customers paid but not what they did. Repeat
                 purchase, dormancy, and where revenue is leaking will read "unavailable" rather than
                 estimate, which is the honest answer, not a broken one.
               </p>
@@ -63,7 +63,7 @@ export function WhatYouCanAskNow({
               <p className="text-[12.5px] font-semibold text-ink">Two questions need a payments source</p>
               <p className="mt-1.5 text-[11px] leading-relaxed text-ink-3">
                 Without one, Flolyt can tell you a cohort is slipping but not what it is worth. It will
-                read "unavailable" rather than estimate — which is the honest answer, not a broken one.
+                read "unavailable" rather than estimate, which is the honest answer, not a broken one.
               </p>
               <Button type="button" onClick={onConnectStripe} className="mt-4 h-8">
                 Connect Stripe next

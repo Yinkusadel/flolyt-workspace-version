@@ -3,13 +3,13 @@ const POINTS = [
     key: "shared",
     title: "One shared workspace",
     description:
-      "Everyone you invite sees the same agents, data and rooms — there's no separate account per person.",
+      "Everyone you invite sees the same agents, data and rooms. There's no separate account per person.",
   },
   {
     key: "roles",
     title: "Roles decide reach",
     description:
-      "Member, Lead or Administrator — each invite picks one, and it can be changed any time from the team page.",
+      "Member, Lead or Administrator: each invite picks one, and it can be changed any time from the team page.",
   },
   {
     key: "optional",
@@ -41,7 +41,7 @@ export function WhyCreateATeam() {
       <div className="mt-10 rounded-card border border-dashed border-line bg-paper p-4">
         <p className="text-[12px] font-semibold text-ink">You stay the owner</p>
         <p className="mt-1.5 text-[11px] leading-relaxed text-ink-3">
-          Whoever creates a team keeps it — ownership doesn't move with an invite or a role change.
+          Whoever creates a team keeps it. Ownership doesn't move with an invite or a role change.
         </p>
       </div>
     </aside>

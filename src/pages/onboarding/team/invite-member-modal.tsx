@@ -123,7 +123,7 @@ export function InviteMemberModal({
         open={stepUp.isOpen}
         onOpenChange={stepUp.close}
         title="Confirm this invite"
-        description="Granting Administrator needs a fresh code — check your email."
+        description="Granting Administrator needs a fresh code. Check your email."
         isRequesting={stepUp.isRequesting}
         isVerifying={stepUp.isVerifying}
         onVerify={stepUp.verify}

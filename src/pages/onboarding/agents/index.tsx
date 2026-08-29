@@ -51,7 +51,7 @@ export default function OnboardingAgentsRoute() {
           <h1 className="text-[22px] font-semibold text-ink">Your agents are reading in</h1>
           <p className="mt-2 max-w-2xl text-[12.5px] text-ink-3">
             Thirteen specialists share one memory of your business. Each one says plainly what it
-            can answer today and what it is still missing — nothing here pretends to be ready
+            can answer today and what it is still missing. Nothing here pretends to be ready
             before it is.
           </p>
         </div>
@@ -85,7 +85,7 @@ export default function OnboardingAgentsRoute() {
               disabled={isPending || readinessLoading}
               className="h-10.5 flex-1 rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto sm:flex-none"
             >
-              {isPending ? "Saving..." : "Continue — invite your team"}
+              {isPending ? "Saving..." : "Continue to invite your team"}
             </Button>
           </div>
         </div>

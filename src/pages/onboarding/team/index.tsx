@@ -79,7 +79,7 @@ export default function OnboardingTeamRoute() {
                 <div>
                   <h1 className="text-[22px] font-semibold text-ink">Bring your team in</h1>
                   <p className="mt-2 max-w-2xl text-[12.5px] text-ink-3">
-                    Everyone you invite works from the same agents and data — create your team
+                    Everyone you invite works from the same agents and data. Create your team
                     first, then invite people whenever you're ready.
                   </p>
                 </div>
@@ -99,7 +99,7 @@ export default function OnboardingTeamRoute() {
                 <div className="rounded-panel border border-dashed border-line bg-paper-2 p-5">
                   <p className="text-[13px] font-semibold text-ink">No team yet</p>
                   <p className="mt-2 text-[11.5px] text-ink-3">
-                    Create one to start inviting people — it only takes a name.
+                    Create one to start inviting people. It only takes a name.
                   </p>
                 </div>
               ) : (

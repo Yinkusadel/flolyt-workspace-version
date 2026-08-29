@@ -84,15 +84,15 @@ export function MappingView({
           <p className="mt-2 text-[12.5px] text-ink-3">
             Flolyt mapped what it found into the customer graph.
             {entityCount > 0
-              ? ` Check the mapping — everything downstream is built on ${entityCount === 1 ? "this entity" : `these ${entityCount} entities`}.`
-              : " Check the mapping below — everything downstream is built on it."}
+              ? ` Check the mapping. Everything downstream is built on ${entityCount === 1 ? "this entity" : `these ${entityCount} entities`}.`
+              : " Check the mapping below. Everything downstream is built on it."}
           </p>
         </div>
       </div>
 
       {rows.length === 0 ? (
         <Callout tone="neutral" title="Still mapping your data">
-          This can take a minute right after connecting — Flolyt has to read your schema before it can
+          This can take a minute right after connecting. Flolyt has to read your schema before it can
           map anything. Check again in a bit.
         </Callout>
       ) : (
@@ -171,8 +171,8 @@ export function MappingView({
       {dataMap.summary.uncountedTableCount > 0 && (
         <Callout tone="neutral" title="Some row counts aren't in yet">
           {dataMap.summary.uncountedTableCount === 1
-            ? "One table hasn't reported a row count yet — that reads as 0 until the warehouse estimates it, not as empty."
-            : `${dataMap.summary.uncountedTableCount} tables haven't reported a row count yet — those read as 0 until the warehouse estimates them, not as empty.`}
+            ? "One table hasn't reported a row count yet. That reads as 0 until the warehouse estimates it, not as empty."
+            : `${dataMap.summary.uncountedTableCount} tables haven't reported a row count yet. Those read as 0 until the warehouse estimates them, not as empty.`}
         </Callout>
       )}
 

@@ -31,7 +31,7 @@ export default function OnboardingWorkspaceRoute() {
 
   const markets = useUpdateWorkspaceMarkets({
     onSuccess: () => {
-      toast.success("Workspace set up — on to business model next");
+      toast.success("Workspace set up. On to business model next");
       navigate("/onboarding/business-model");
     },
   });
@@ -135,7 +135,7 @@ export default function OnboardingWorkspaceRoute() {
       <div className="mx-auto max-w-3xl px-6 pb-16">
         <h1 className="text-[22px] font-semibold text-ink">Where you sell</h1>
         <p className="mt-2 text-[12.5px] text-ink-3">
-          Currency, time zone and language follow each customer's market — these are the defaults
+          Currency, time zone and language follow each customer's market. These are the defaults
           for reports and for anything that has no market of its own.
         </p>
 
@@ -242,7 +242,7 @@ export default function OnboardingWorkspaceRoute() {
           <p className="text-[13px] font-semibold text-ink">There is no blended currency in Flolyt</p>
           <p className="mt-2 text-[11.5px] text-ink-3">
             Every figure about a person is shown in the currency they pay in. The reporting
-            currency is used only where a combined number is genuinely needed — and the rate and
+            currency is used only where a combined number is genuinely needed, and the rate and
             its date are printed next to it, every time.
           </p>
         </div>
@@ -264,7 +264,7 @@ export default function OnboardingWorkspaceRoute() {
         open={stepUp.isOpen}
         onOpenChange={stepUp.close}
         title="Confirm your markets"
-        description="Setting where you sell needs a fresh code — check your email."
+        description="Setting where you sell needs a fresh code. Check your email."
         isRequesting={stepUp.isRequesting}
         isVerifying={stepUp.isVerifying}
         onVerify={stepUp.verify}

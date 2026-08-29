@@ -59,7 +59,7 @@ export const LeftSection = () => {
             <h1 className="mt-9 text-[22px] font-semibold text-ink">No problem</h1>
             <p className="mt-2 text-[12.5px] text-ink-3">
               You haven't been added to {invitation.teamName}. This invitation stays open if you
-              change your mind — just open the link again.
+              change your mind. Just open the link again.
             </p>
             <SignInFooter />
           </>
@@ -87,7 +87,7 @@ export const LeftSection = () => {
 
             {invitation.userAlreadyExists && (
               <p className="mt-4 text-[11.5px] text-ink-3">
-                Looks like you already have a Flolyt account with this email — confirm your name
+                Looks like you already have a Flolyt account with this email. Confirm your name
                 below to join, then sign in as usual.
               </p>
             )}

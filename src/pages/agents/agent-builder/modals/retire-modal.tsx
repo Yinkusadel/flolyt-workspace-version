@@ -28,7 +28,7 @@ export function RetireModal({ open, onOpenChange }: { open: boolean; onOpenChang
 
   const confirm = () => {
     onOpenChange(false);
-    toast.success("Reseller Terms was retired in August — this is how it was explained");
+    toast.success("Reseller Terms was retired in August. This is how it was explained");
   };
 
   return (

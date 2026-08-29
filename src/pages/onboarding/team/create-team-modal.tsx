@@ -31,7 +31,7 @@ export function CreateTeamModal({
       <DialogContent className="max-w-md gap-0 p-0">
         <DialogHeader>
           <DialogTitle>Create your team</DialogTitle>
-          <DialogDescription>Give it a name — you can invite people once it exists.</DialogDescription>
+          <DialogDescription>Give it a name. You can invite people once it exists.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)}>

@@ -21,7 +21,7 @@ export const UNLOCK_CATEGORIES: UnlockCategory[] = [
   {
     key: "product-events",
     title: "Product events",
-    description: "Activation, dormancy, feature usage — the spine of every churn answer.",
+    description: "Activation, dormancy, feature usage: the spine of every churn answer.",
     matchesCategories: ["Analytics"],
   },
   {

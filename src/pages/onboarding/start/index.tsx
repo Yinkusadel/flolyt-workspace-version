@@ -140,7 +140,7 @@ export default function OnboardingStartRoute() {
     <div className="mx-auto max-w-3xl px-6 py-10">
       <h1 className="text-[22px] font-semibold text-ink">Tell us about your business</h1>
       <p className="mt-2 text-[12.5px] text-ink-3">
-        A quick set of basics before we set up your workspace — you'll name it and pick your
+        A quick set of basics before we set up your workspace. You'll name it and pick your
         markets on the next step.
       </p>
 
@@ -180,12 +180,12 @@ export default function OnboardingStartRoute() {
                   {availability.isAvailable
                     ? `${slug}.flolyt.com is available`
                     : availability.reason || "Not available"}
-                  {!availability.isAvailable && availability.suggestion && ` — try "${availability.suggestion}"`}
+                  {!availability.isAvailable && availability.suggestion && `. Try "${availability.suggestion}"`}
                 </p>
               )
             )}
             <p className="mt-1.5 text-[10.5px] text-ink-4">
-              {slug ? `${slug}.flolyt.com` : "yourname.flolyt.com"} — accepted once, choose deliberately
+              {slug ? `${slug}.flolyt.com` : "yourname.flolyt.com"}. Accepted once, choose deliberately
             </p>
           </div>
         </div>
