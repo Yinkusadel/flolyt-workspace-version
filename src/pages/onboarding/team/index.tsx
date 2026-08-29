@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
+import { BackButton } from "@/pages/onboarding/back-button";
 import { TeamCard, TeamCardSkeleton } from "@/pages/onboarding/team/team-card";
 import { CreateTeamModal } from "@/pages/onboarding/team/create-team-modal";
 import { ConfirmModal } from "@/pages/onboarding/team/confirm-modal";
@@ -113,14 +114,15 @@ export default function OnboardingTeamRoute() {
               )}
             </div>
 
-            <div className="mt-6 shrink-0">
+            <div className="mt-6 flex shrink-0 items-center justify-between gap-3">
+              <BackButton to="/onboarding/agents" disabled={isSavingProgress} />
               <Button
                 type="button"
                 onClick={handleContinue}
                 disabled={isSavingProgress}
-                className="h-10.5 w-full rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto"
+                className="h-10.5 flex-1 rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto sm:flex-none"
               >
-                {isSavingProgress ? "Saving..." : "Continue"}
+                {isSavingProgress ? "Saving..." : "Finish setup"}
               </Button>
             </div>
           </div>

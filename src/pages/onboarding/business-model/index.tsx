@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { StepUpConfirmModal } from "@/components/step-up-confirm-modal";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
+import { BackButton } from "@/pages/onboarding/back-button";
 import useUpdateRevenueModel from "@/features/workspace/use-update-revenue-model";
 import useStepUpConfirmation from "@/features/auth/use-step-up-confirmation";
 import { REVENUE_MODELS } from "@/validators/workspace";
@@ -173,14 +174,17 @@ export default function OnboardingBusinessModelRoute() {
           You can change this later, but it rewrites the vocabulary of every room.
         </p>
 
-        <Button
-          type="button"
-          onClick={handleContinue}
-          disabled={!canContinue}
-          className="mt-6 h-10.5 w-full rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto"
-        >
-          {revenueModel.isPending || stepUp.isRequesting ? "Saving..." : `Continue as ${meta.label}`}
-        </Button>
+        <div className="mt-6 flex items-center justify-between gap-3">
+          <BackButton to="/onboarding/workspace" disabled={!canContinue} />
+          <Button
+            type="button"
+            onClick={handleContinue}
+            disabled={!canContinue}
+            className="h-10.5 flex-1 rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto sm:flex-none"
+          >
+            {revenueModel.isPending || stepUp.isRequesting ? "Saving..." : `Continue as ${meta.label}`}
+          </Button>
+        </div>
       </div>
 
       <StepUpConfirmModal

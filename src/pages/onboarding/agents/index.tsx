@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
+import { BackButton } from "@/pages/onboarding/back-button";
 import { AgentCard, AgentCardSkeleton } from "@/pages/onboarding/agents/agent-card";
 import useGetWorkspaceAgents from "@/features/workspace/use-get-workspace-agents";
 import useSaveOnboardingProgress from "@/features/workspace/use-save-onboarding-progress";
@@ -76,14 +77,17 @@ export default function OnboardingAgentsRoute() {
             </Callout>
           )}
 
-          <Button
-            type="button"
-            onClick={handleContinue}
-            disabled={isPending || readinessLoading}
-            className="mt-4 h-10.5 w-full rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto"
-          >
-            {isPending ? "Saving..." : "Continue — invite your team"}
-          </Button>
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <BackButton to="/onboarding/data" disabled={isPending} />
+            <Button
+              type="button"
+              onClick={handleContinue}
+              disabled={isPending || readinessLoading}
+              className="h-10.5 flex-1 rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto sm:flex-none"
+            >
+              {isPending ? "Saving..." : "Continue — invite your team"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

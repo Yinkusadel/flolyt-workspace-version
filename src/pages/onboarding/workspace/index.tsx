@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StepUpConfirmModal } from "@/components/step-up-confirm-modal";
 import { FlagIcon } from "@/components/flag-icon";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
+import { BackButton } from "@/pages/onboarding/back-button";
 import useUpdateWorkspaceMarkets from "@/features/workspace/use-update-workspace-markets";
 import useGetProposedMarkets from "@/features/workspace/use-get-proposed-markets";
 import useGetSupportedCurrencies from "@/features/currency/use-get-supported-currencies";
@@ -246,14 +247,17 @@ export default function OnboardingWorkspaceRoute() {
           </p>
         </div>
 
-        <Button
-          type="button"
-          onClick={handleContinue}
-          disabled={!canContinue}
-          className="mt-8 h-10.5 w-full rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto"
-        >
-          {stepUp.isRequesting ? "Saving..." : "Continue"}
-        </Button>
+        <div className="mt-8 flex items-center justify-between gap-3">
+          <BackButton to="/onboarding/start" disabled={markets.isPending || stepUp.isRequesting} />
+          <Button
+            type="button"
+            onClick={handleContinue}
+            disabled={!canContinue}
+            className="h-10.5 flex-1 rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto sm:flex-none"
+          >
+            {stepUp.isRequesting ? "Saving..." : "Continue"}
+          </Button>
+        </div>
       </div>
 
       <StepUpConfirmModal

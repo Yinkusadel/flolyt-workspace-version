@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
+import { BackButton } from "@/pages/onboarding/back-button";
 import useGetDatasources from "@/features/datasources/use-get-datasources";
 import useGetConnectedDatasources from "@/features/datasources/use-get-connected-datasources";
 import useGetDataMap, { DATA_MAP_QUERY_KEY } from "@/features/workspace/use-get-data-map";
@@ -79,9 +80,13 @@ export default function OnboardingDataRoute() {
       <div className="flex flex-1 md:min-h-0">
         <div className="flex flex-1 flex-col px-6 md:min-h-0 md:min-w-0 md:overflow-hidden lg:pl-10">
           <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col md:min-h-0">
+            <div className="shrink-0">
+              <BackButton to="/onboarding/business-model" />
+            </div>
+
             {view === "sources" ? (
               <>
-                <div className="flex shrink-0 flex-wrap items-start justify-between gap-3">
+                <div className="mt-4 flex shrink-0 flex-wrap items-start justify-between gap-3">
                   <div>
                     <h1 className="text-[19px] font-semibold text-ink">
                       Connect one source. That's enough to start.
@@ -118,7 +123,7 @@ export default function OnboardingDataRoute() {
                 </div>
               </>
             ) : (
-              <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">
+              <div className="mt-4 md:min-h-0 md:flex-1 md:overflow-y-auto">
                 {isLoadingDataMap || !dataMap ? (
                   <MappingViewSkeleton />
                 ) : (
