@@ -194,7 +194,7 @@ export function MappingView({
               variant="outline"
               onClick={onRefresh}
               disabled={isRefreshing}
-              className="w-full gap-1.5 sm:w-auto"
+              className="h-10.5 w-full gap-1.5 sm:w-auto"
             >
               <RefreshCw className={cn("size-3.5", isRefreshing && "animate-spin")} />
               {isRefreshing ? "Checking..." : "Check again"}
@@ -202,7 +202,12 @@ export function MappingView({
           )}
         </div>
 
-        <Button type="button" variant="outline" onClick={onConnectNewSource} className="w-full sm:w-auto">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onConnectNewSource}
+          className="h-10.5 w-full sm:w-auto"
+        >
           Connect new source
         </Button>
       </div>

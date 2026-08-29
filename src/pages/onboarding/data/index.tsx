@@ -80,13 +80,9 @@ export default function OnboardingDataRoute() {
       <div className="flex flex-1 md:min-h-0">
         <div className="flex flex-1 flex-col px-6 md:min-h-0 md:min-w-0 md:overflow-hidden lg:pl-10">
           <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col md:min-h-0">
-            <div className="shrink-0">
-              <BackButton to="/onboarding/business-model" />
-            </div>
-
             {view === "sources" ? (
               <>
-                <div className="mt-4 flex shrink-0 flex-wrap items-start justify-between gap-3">
+                <div className="flex shrink-0 flex-wrap items-start justify-between gap-3">
                   <div>
                     <h1 className="text-[19px] font-semibold text-ink">
                       Connect one source. That's enough to start.
@@ -121,9 +117,13 @@ export default function OnboardingDataRoute() {
                     />
                   )}
                 </div>
+
+                <div className="mt-4 shrink-0 pb-6">
+                  <BackButton to="/onboarding/business-model" />
+                </div>
               </>
             ) : (
-              <div className="mt-4 md:min-h-0 md:flex-1 md:overflow-y-auto">
+              <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">
                 {isLoadingDataMap || !dataMap ? (
                   <MappingViewSkeleton />
                 ) : (
