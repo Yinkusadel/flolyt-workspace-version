@@ -6,10 +6,13 @@ import {
   type RemoveTeamMemberParams,
   type RemoveTeamMemberResponse,
 } from "@/services/api/teams/remove-team-member";
+import { isStepUpRequiredMessage } from "@/features/auth/use-step-up-confirmation";
 import { TEAM_DETAIL_QUERY_KEY } from "./use-get-team-by-id";
 
 interface UseRemoveTeamMemberOptions {
   onSuccess?: () => void;
+  /** Mirrors useInviteTeamMember's onStepUpRequired — removing an Administrator may be conditionally step-up gated. */
+  onStepUpRequired?: () => void;
 }
 
 const useRemoveTeamMember = (options?: UseRemoveTeamMemberOptions) => {
@@ -25,9 +28,19 @@ const useRemoveTeamMember = (options?: UseRemoveTeamMemberOptions) => {
         return;
       }
 
+      if (isStepUpRequiredMessage(data.messages?.[0]) && options?.onStepUpRequired) {
+        options.onStepUpRequired();
+        return;
+      }
+
       toast.error(data.messages?.[0] || "Failed to remove member");
     },
     onError: (error) => {
+      if (isStepUpRequiredMessage(error.message) && options?.onStepUpRequired) {
+        options.onStepUpRequired();
+        return;
+      }
+
       toast.error(error.message || "Failed to remove member");
     },
   });

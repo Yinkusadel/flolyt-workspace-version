@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-/** Generic destructive-action confirm modal — shared by "delete team" and "revoke invitation". */
+/** Generic destructive-action confirm modal — shared by "delete team", "revoke invitation", and "remove member". */
 export function ConfirmModal({
   open,
   onOpenChange,

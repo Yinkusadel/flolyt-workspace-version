@@ -1,16 +1,26 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { UserPlus } from "lucide-react";
+import { MoreVertical, UserPlus } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { StepUpConfirmModal } from "@/components/step-up-confirm-modal";
 import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
 import { InviteMemberModal } from "@/pages/onboarding/team/invite-member-modal";
+import { EditMemberRolesModal } from "@/pages/onboarding/team/edit-member-roles-modal";
 import { ConfirmModal } from "@/pages/onboarding/team/confirm-modal";
 import useGetTeamById from "@/features/teams/use-get-team-by-id";
 import useResendTeamInvitation from "@/features/teams/use-resend-team-invitation";
 import useRevokeTeamInvitation from "@/features/teams/use-revoke-team-invitation";
+import useRemoveTeamMember from "@/features/teams/use-remove-team-member";
+import useStepUpConfirmation from "@/features/auth/use-step-up-confirmation";
 import type { TeamInvitationDto, TeamMemberDto } from "@/services/api/teams/get-team-by-id";
 import type { UserRole } from "@/validators/teams";
 
@@ -35,9 +45,11 @@ function StatusChip({ status }: { status: string }) {
  * member" button on a team card at /onboarding/team. Lists real members and pending/accepted
  * invitations off GET /teams/{teamId} (returns both in one call — no separate paginated
  * invitations query needed), with its own "Invite member" button opening the same-shaped modal
- * as the create-team one. Resend/Revoke only render for a "pending" invitation — an already
- * accepted/expired/revoked one has nothing left to do from here. Revoke opens `ConfirmModal`
- * rather than firing immediately on click. "Back to teams" sits at the bottom, styled like
+ * as the create-team one. Each member row has a dropdown with "Update role" (opens
+ * `EditMemberRolesModal`) and "Remove member" (opens `ConfirmModal`) — both, like inviting an
+ * Administrator, are conditionally step-up gated. Resend/Revoke only render for a "pending"
+ * invitation — an already accepted/expired/revoked one has nothing left to do from here. Revoke
+ * opens `ConfirmModal` rather than firing immediately on click. "Back to teams" sits at the bottom, styled like
  * every other onboarding step's Continue button (the canonical CTA class — see
  * docs/onboarding/build-plan.md's "Cross-cutting: primary CTA button convention") rather than
  * a small top-of-page link, per the user's direct request.
@@ -46,6 +58,8 @@ export default function OnboardingTeamDetailRoute() {
   const { teamId } = useParams<{ teamId: string }>();
   const navigate = useNavigate();
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [memberToEdit, setMemberToEdit] = useState<TeamMemberDto | null>(null);
+  const [memberToRemove, setMemberToRemove] = useState<TeamMemberDto | null>(null);
   const [invitationToRevoke, setInvitationToRevoke] = useState<TeamInvitationDto | null>(null);
 
   const { team, isLoading } = useGetTeamById(teamId ?? "");
@@ -59,6 +73,17 @@ export default function OnboardingTeamDetailRoute() {
     isPending: isRevoking,
     variables: revokeVariables,
   } = useRevokeTeamInvitation({ onSuccess: () => setInvitationToRevoke(null) });
+  const { removeMember, isPending: isRemoving } = useRemoveTeamMember({
+    onSuccess: () => setMemberToRemove(null),
+    onStepUpRequired: () => removeStepUp.begin(),
+  });
+
+  const removeStepUp = useStepUpConfirmation({
+    action: "change_administrators",
+    onConfirmed: (challengeId) => {
+      if (memberToRemove) removeMember({ memberId: memberToRemove.id, stepUpChallengeId: challengeId });
+    },
+  });
 
   const handleResend = (invitation: TeamInvitationDto) => {
     resendInvitation({
@@ -110,7 +135,7 @@ export default function OnboardingTeamDetailRoute() {
               ) : team.members.length === 0 ? (
                 <p className="p-4 text-[12px] text-ink-3">No members yet.</p>
               ) : (
-                <table className="w-full min-w-[560px] text-left text-[11.5px]">
+                <table className="w-full min-w-[680px] text-left text-[11.5px]">
                   <thead>
                     <tr className="border-b border-line bg-paper-2">
                       <th className={HEAD_CLASS}>Name</th>
@@ -118,6 +143,7 @@ export default function OnboardingTeamDetailRoute() {
                       <th className={HEAD_CLASS}>Role</th>
                       <th className={HEAD_CLASS}>Joined</th>
                       <th className={HEAD_CLASS}>Status</th>
+                      <th className={HEAD_CLASS}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -139,6 +165,24 @@ export default function OnboardingTeamDetailRoute() {
                           <Chip tone={member.isActive ? "teal" : "neutral"}>
                             {member.isActive ? "Active" : "Inactive"}
                           </Chip>
+                        </td>
+                        <td className="px-4 py-3">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+                              aria-label="Member actions"
+                            >
+                              <MoreVertical className="size-4" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem onSelect={() => setMemberToEdit(member)}>
+                                Update role
+                              </DropdownMenuItem>
+                              <DropdownMenuItem variant="destructive" onSelect={() => setMemberToRemove(member)}>
+                                Remove member
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </td>
                       </tr>
                     ))}
@@ -240,6 +284,12 @@ export default function OnboardingTeamDetailRoute() {
         <InviteMemberModal teamId={teamId} open={showInviteModal} onOpenChange={setShowInviteModal} />
       )}
 
+      <EditMemberRolesModal
+        member={memberToEdit}
+        open={!!memberToEdit}
+        onOpenChange={(open) => !open && setMemberToEdit(null)}
+      />
+
       <ConfirmModal
         open={!!invitationToRevoke}
         onOpenChange={(open) => !open && setInvitationToRevoke(null)}
@@ -249,6 +299,28 @@ export default function OnboardingTeamDetailRoute() {
         pendingLabel="Revoking..."
         isPending={isRevoking}
         onConfirm={() => invitationToRevoke && revokeInvitation(invitationToRevoke.id)}
+      />
+
+      <ConfirmModal
+        open={!!memberToRemove}
+        onOpenChange={(open) => !open && setMemberToRemove(null)}
+        title="Remove this member?"
+        description={`${memberToRemove?.userName} will lose access to this team. You can invite them again later.`}
+        confirmLabel="Remove member"
+        pendingLabel="Removing..."
+        isPending={isRemoving || removeStepUp.isRequesting}
+        onConfirm={() => memberToRemove && removeMember({ memberId: memberToRemove.id, stepUpChallengeId: null })}
+      />
+
+      <StepUpConfirmModal
+        open={removeStepUp.isOpen}
+        onOpenChange={removeStepUp.close}
+        title="Confirm this change"
+        description="Removing an Administrator needs a fresh code. Check your email."
+        isRequesting={removeStepUp.isRequesting}
+        isVerifying={removeStepUp.isVerifying}
+        onVerify={removeStepUp.verify}
+        onResend={removeStepUp.resend}
       />
     </div>
   );
