@@ -82,22 +82,14 @@ export default function OnboardingDataRoute() {
           <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col md:min-h-0">
             {view === "sources" ? (
               <>
-                <div className="flex shrink-0 flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h1 className="text-[19px] font-semibold text-ink">
-                      Connect one source. That's enough to start.
-                    </h1>
-                    <p className="mt-2 text-[12.5px] text-ink-3">
-                      Flolyt reasons over your systems where they are. There is no import to wait for and
-                      no nightly snapshot to go stale.
-                    </p>
-                  </div>
-
-                  {activeConnections.length > 0 && (
-                    <Button type="button" variant="outline" onClick={() => setView("mapping")}>
-                      Show mapping
-                    </Button>
-                  )}
+                <div className="shrink-0">
+                  <h1 className="text-[19px] font-semibold text-ink">
+                    Connect one source. That's enough to start.
+                  </h1>
+                  <p className="mt-2 text-[12.5px] text-ink-3">
+                    Flolyt reasons over your systems where they are. There is no import to wait for and
+                    no nightly snapshot to go stale.
+                  </p>
                 </div>
 
                 <div className="mt-6 flex-1 md:min-h-0">
@@ -118,8 +110,19 @@ export default function OnboardingDataRoute() {
                   )}
                 </div>
 
-                <div className="mt-4 shrink-0 pb-6">
+                <div className="mt-4 flex shrink-0 items-center justify-between gap-3 pb-6">
                   <BackButton to="/onboarding/business-model" />
+
+                  {activeConnections.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setView("mapping")}
+                      className="h-10.5 rounded-card px-5 text-[13px] font-semibold"
+                    >
+                      Show mapping
+                    </Button>
+                  )}
                 </div>
               </>
             ) : (

@@ -177,17 +177,16 @@ export function MappingView({
       )}
 
       <div className="flex flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
-          <Button
-            type="button"
-            onClick={onContinue}
-            disabled={isContinuing || isStillMapping}
-            title={isStillMapping ? "Waiting for the mapping to finish" : undefined}
-            className="h-10.5 w-full rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto"
-          >
-            {isContinuing ? "Saving..." : "Continue"}
-          </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onConnectNewSource}
+          className="h-10.5 w-full sm:w-auto"
+        >
+          Connect new source
+        </Button>
 
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
           {isStillMapping && (
             <Button
               type="button"
@@ -200,16 +199,17 @@ export function MappingView({
               {isRefreshing ? "Checking..." : "Check again"}
             </Button>
           )}
-        </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onConnectNewSource}
-          className="h-10.5 w-full sm:w-auto"
-        >
-          Connect new source
-        </Button>
+          <Button
+            type="button"
+            onClick={onContinue}
+            disabled={isContinuing || isStillMapping}
+            title={isStillMapping ? "Waiting for the mapping to finish" : undefined}
+            className="h-10.5 w-full rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto"
+          >
+            {isContinuing ? "Saving..." : "Continue"}
+          </Button>
+        </div>
       </div>
     </div>
   );
