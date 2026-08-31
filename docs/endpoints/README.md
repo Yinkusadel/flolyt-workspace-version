@@ -16,6 +16,7 @@ wired into code yet, so we always have a source of truth to check against and co
 | Auth (step-up only) | [auth.md](auth.md) | 2/2 wired, unverified against a real call |
 | Datasources | [datasources.md](datasources.md) | 14/14 wired, `GET /connected`'s no-envelope shape confirmed |
 | Teams | [teams.md](teams.md) | 13/13 wired (1 of those, `POST /invitations/accept`, was already built in `auth/` during the auth rebuild) |
+| Lifecycle | [lifecycle.md](lifecycle.md) | 17/17 documented, 0/17 wired — being worked section-by-section, see its own "Screen-section coverage tracker" |
 
 ## Per-endpoint entry format
 
