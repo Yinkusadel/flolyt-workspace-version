@@ -55,6 +55,7 @@ const Lifecycle = () => {
       // docs/endpoints/lifecycle.md's open question, still unanswered. Omitted, not faked.
       amount: live ? formatAtStake(live.atStake) : "Unavailable",
       amountCaveat: live?.atStake.value === null ? live.atStake.missingSource : undefined,
+      amountWouldUnlock: live?.atStake.value === null ? live.atStake.wouldUnlock : undefined,
     };
   });
 

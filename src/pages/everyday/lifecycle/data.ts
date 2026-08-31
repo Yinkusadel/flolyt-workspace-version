@@ -38,6 +38,8 @@ export type Stage = {
   amountLabel: "at stake" | "referred";
   /** Why `amount` is "Unavailable" — GET /lifecycle/map's atStake.missingSource, when the API named one. */
   amountCaveat?: string;
+  /** What connecting the missing source would unlock — GET /lifecycle/map's atStake.wouldUnlock. */
+  amountWouldUnlock?: string;
   /** False renders the A01-style "not defined yet" empty state instead of tabs/content. */
   isDefined: boolean;
   /** Shown under the stage name in the tab-bar header, e.g. "894,000 acquired in twelve months · ₦74M at stake · owned by Marketing". */

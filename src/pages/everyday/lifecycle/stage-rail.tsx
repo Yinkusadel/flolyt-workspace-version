@@ -1,4 +1,6 @@
-import { Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Info, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
@@ -15,12 +17,113 @@ export type StageRailProps = {
   onRetry?: () => void;
 };
 
+const HINT_VISIBLE_MS = 5000;
+
+// Portaled to document.body and positioned via getBoundingClientRect on open, not CSS
+// absolute-positioning within the card: the card row scrolls horizontally with overflow-x-auto,
+// which forces overflow-y to clip too (a CSS quirk), so a tooltip positioned relative to its
+// card would get cut off. createPortal is already used elsewhere in this repo (see
+// stage/overview/overview-tab.tsx's headerActionsEl slot) so this is a proven-safe pattern under
+// this repo's preact/compat setup. Plain JS positioning, no Radix Tooltip — see
+// preact_radix_dialog_crash memory on why Radix's Presence-based components misbehave here.
+function InfoTooltip({ missingSource, wouldUnlock }: { missingSource?: string; wouldUnlock?: string }) {
+  const triggerRef = useRef<HTMLSpanElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+  const hasContent = !!missingSource || !!wouldUnlock;
+
+  const open = () => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPosition({ top: rect.bottom + 8, left: rect.left + rect.width / 2 });
+    setIsOpen(true);
+  };
+  const close = () => setIsOpen(false);
+
+  return (
+    <>
+      <span
+        ref={triggerRef}
+        tabIndex={hasContent ? 0 : undefined}
+        onMouseEnter={open}
+        onMouseLeave={close}
+        onFocus={open}
+        onBlur={close}
+        className="inline-flex cursor-help items-center text-ink-4"
+      >
+        <Info className="size-4" aria-hidden />
+      </span>
+      {isOpen &&
+        position &&
+        hasContent &&
+        createPortal(
+          <div
+            role="tooltip"
+            style={{ top: position.top, left: position.left }}
+            className="pointer-events-none fixed z-50 -translate-x-1/2"
+          >
+            <div className="relative flex max-w-64 flex-col gap-1.5 rounded-2xl bg-ink px-3.5 py-2.5 text-[11.5px] leading-snug text-paper shadow-lg">
+              <span className="absolute -top-1.5 left-1/2 size-3 -translate-x-1/2 rotate-45 rounded-xs bg-ink" aria-hidden />
+              {missingSource && (
+                <p>
+                  <span className="text-paper/60">Missing: </span>
+                  {missingSource}
+                </p>
+              )}
+              {wouldUnlock && (
+                <p>
+                  <span className="text-paper/60">Would unlock: </span>
+                  {wouldUnlock}
+                </p>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
+    </>
+  );
+}
+
 export function StageRail({ stages, advocacyNote, isLoading, isError, onRetry }: StageRailProps) {
+  const hasUnavailableAmount = stages.some((stage) => stage.amount === "Unavailable");
+  const [showHint, setShowHint] = useState(false);
+
+  // Auto-shows once the cards are actually on screen, holds briefly, then fades — teaches that
+  // the dotted "—" is hoverable (it was reading as clickable on its own) without needing a
+  // Radix tooltip/coachmark, which crashes/flickers under this repo's preact/compat setup (see
+  // preact_radix_dialog_crash memory). Not anchored to a specific card: the row scrolls
+  // horizontally with overflow-x-auto, which forces overflow-y to clip too, so an
+  // absolutely-positioned bubble pointing at one card would get cut off.
+  useEffect(() => {
+    if (isLoading || isError || !hasUnavailableAmount) return;
+
+    setShowHint(true);
+    const timer = setTimeout(() => setShowHint(false), HINT_VISIBLE_MS);
+    return () => clearTimeout(timer);
+  }, [isLoading, isError, hasUnavailableAmount]);
+
   return (
     <section aria-labelledby="stage-rail-eyebrow">
       <p id="stage-rail-eyebrow" className={EYEBROW_CLASS}>
         Revenue at each stage, and what is leaking out of it
       </p>
+
+      {!isLoading && !isError && hasUnavailableAmount && (
+        <div
+          className={cn(
+            "grid overflow-hidden transition-all duration-500 ease-out",
+            showHint ? "mt-3 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          )}
+        >
+          <div className="min-h-0 pb-1.5">
+            <div className="relative inline-flex max-w-57.5 items-start gap-1.5 rounded-2xl bg-ink px-3.5 py-2.5 text-[11.5px] leading-snug text-paper shadow-lg">
+              <span className="absolute -bottom-1.5 left-5 size-3 rotate-45 rounded-xs bg-ink" aria-hidden />
+              <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+              <span>Hover the info icon on a card to see why it's unavailable</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isError ? (
         <div className="mt-3 flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
@@ -63,12 +166,7 @@ export function StageRail({ stages, advocacyNote, isLoading, isError, onRetry }:
                   {/* <p className="mt-0.5 truncate font-mono text-[9.5px] text-ink-4">{stage.metric}</p> */}
                   <div className="my-2.5 border-t border-dashed border-line" />
                   {stage.amount === "Unavailable" ? (
-                    <span
-                      title={stage.amountCaveat}
-                      className="inline-block cursor-help font-mono text-[13px] leading-none text-ink-4 underline decoration-dotted decoration-ink-4/50 underline-offset-4"
-                    >
-                      —
-                    </span>
+                    <InfoTooltip missingSource={stage.amountCaveat} wouldUnlock={stage.amountWouldUnlock} />
                   ) : (
                     <p className={cn("text-[15px] font-semibold", stage.amountLabel === "referred" ? "text-teal" : "text-rose")}>
                       {stage.amount}
