@@ -36,7 +36,7 @@ export function RejectPlayModal({
 
   const confirm = () => {
     onOpenChange(false);
-    toast.success("Rejected — the reason is kept");
+    toast.success("Rejected. The reason is kept");
   };
 
   return (

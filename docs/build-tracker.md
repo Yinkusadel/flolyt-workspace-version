@@ -27,7 +27,7 @@ correction (see Notes)
 |---|---|---|---|---|
 | 01 | sign up | [ ] | | |
 | 02 | sign in | [x] | `services/api/auth/sign-in.ts`, `features/auth/use-sign-in.ts` | Built email+password (matches existing hook), not the SVG's magic-link/SSO flow — see user decision in session |
-| 03 | create workspace | [ ] | | |
+| 03 | create workspace | [x] | `/onboarding/start` (missing pre-workspace screen), `/onboarding/workspace` | Split into two screens — SVG's fields alone don't cover `POST /workspace`'s required set, see `docs/onboarding/build-plan.md`. Markets save gated behind a newly-built step-up flow, unverified against a real API |
 | 04 | business model | [ ] | | |
 | 05 | connect first source | [ ] | | |
 | 06 | source connected | [ ] | | |

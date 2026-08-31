@@ -45,6 +45,26 @@ export const resendOtpSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
 });
 
+// The 5 actions the auth handoff doc gates behind a fresh emailed code, even for a
+// signed-in user. `change_workspace_markets` and `change_revenue_model` are always
+// required; the other 3 are conditional and not wired to any screen yet.
+export const STEP_UP_ACTIONS = [
+  "raise_agent_spend_limit",
+  "override_send_stop_line",
+  "change_administrators",
+  "change_workspace_markets",
+  "change_revenue_model",
+] as const;
+
+export const requestStepUpCodeSchema = z.object({
+  action: z.enum(STEP_UP_ACTIONS),
+});
+
+export const verifyStepUpCodeSchema = z.object({
+  challengeId: z.string().min(1, "Missing challenge id"),
+  code: codeSchema,
+});
+
 export const acceptInvitationSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -115,3 +135,6 @@ export type VerifyLoginCodeSchemaType = z.infer<typeof verifyLoginCodeSchema>;
 export type ConfirmRegistrationSchemaType = z.infer<typeof confirmRegistrationSchema>;
 export type ResendOtpSchemaType = z.infer<typeof resendOtpSchema>;
 export type AcceptInvitationSchemaType = z.infer<typeof acceptInvitationSchema>;
+export type StepUpAction = (typeof STEP_UP_ACTIONS)[number];
+export type RequestStepUpCodeSchemaType = z.infer<typeof requestStepUpCodeSchema>;
+export type VerifyStepUpCodeSchemaType = z.infer<typeof verifyStepUpCodeSchema>;

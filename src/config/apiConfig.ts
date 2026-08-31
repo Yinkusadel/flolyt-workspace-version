@@ -32,6 +32,7 @@ export const GOVERNANCE_BASE_URL = `${API_BASE_URL}/api/flolyt/governance`;
 export const INTELLIGENCE_BASE_URL = `${API_BASE_URL}/api/v1/intelligence`;
 export const PLATFORM_ADMIN_BASE_URL = `${API_BASE_URL}/api/flolyt/platform-admin`;
 export const CURRENCY_BASE_URL = `${API_BASE_URL}/api/flolyt/currency`;
+export const WORKSPACE_BASE_URL = `${API_BASE_URL}/api/flolyt/workspace`;
 
 export const API_ENDPOINTS = {
   USER: {
@@ -40,6 +41,8 @@ export const API_ENDPOINTS = {
     RESEND_OTP: `${API_BASE_URL}/api/users/registration/resend-otp`,
     REQUEST_LOGIN_CODE: `${USER_BASE_URL}/login/request-code`,
     VERIFY_LOGIN_CODE: `${USER_BASE_URL}/login/verify-code`,
+    STEP_UP_REQUEST_CODE: `${USER_BASE_URL}/step-up/request-code`,
+    STEP_UP_VERIFY_CODE: `${USER_BASE_URL}/step-up/verify-code`,
     CREATE_COMPANY: `${API_BASE_URL}/api/flolyt/company`,
     GET_USER_BY_EMAIL: `${API_BASE_URL}/api/users/registration/{email}`,
     REFRESH_TOKEN: `${USER_BASE_URL}/token/refresh`,
@@ -251,15 +254,14 @@ export const API_ENDPOINTS = {
     GET_DATASOURCE_SYNC_STATUS: `${DATASOURCES_BASE_URL}/{id}/sync-status`,
     TRIGGER_DATASOURCE_SYNC: `${DATASOURCES_BASE_URL}/{id}/sync/trigger`,
     GET_DATASOURCE_MCP_SCHEMA: `${DATASOURCES_BASE_URL}/{id}/schema/mcp`,
-    GET_DATASOURCE_SCHEMA: `${DATASOURCES_BASE_URL}/{id}/schema`,
-    ANALYZE_DATASOURCE: `${DATASOURCES_BASE_URL}/{id}/analyze`,
-    GET_DATASOURCE_CAPABILITIES: `${DATASOURCES_BASE_URL}/{id}/capabilities`,
-    COMPUTE_DATASOURCE_SIGNALS: `${DATASOURCES_BASE_URL}/{id}/signals/compute`,
-    GET_DATASOURCE_SIGNALS_SUMMARY: `${DATASOURCES_BASE_URL}/{id}/signals/summary`,
     GET_DATASOURCE_CONNECTION_SCHEMA: `${DATASOURCES_BASE_URL}/{name}/connection-schema`,
     CONNECT_DATASOURCE: `${DATASOURCES_BASE_URL}/connect`,
     DISCONNECT_DATASOURCE: `${DATASOURCES_BASE_URL}/{id}/disconnect`,
     RECONNECT_DATASOURCE: `${DATASOURCES_BASE_URL}/{id}/reconnect`,
+    GET_DATASOURCE_DISCONNECTIONS: `${DATASOURCES_BASE_URL}/disconnections`,
+    GET_DATASOURCE_DELETION_CONFIG: `${DATASOURCES_BASE_URL}/deletion-config`,
+    UPDATE_DATASOURCE_DELETION_CONFIG: `${DATASOURCES_BASE_URL}/deletion-config`,
+    DELETE_DATASOURCE_DELETION_CONFIG: `${DATASOURCES_BASE_URL}/deletion-config`,
   },
 
 
@@ -446,5 +448,29 @@ export const API_ENDPOINTS = {
     GET_DEFAULT: `${CURRENCY_BASE_URL}/default`,
   },
 
+  WORKSPACE: {
+    CREATE_WORKSPACE: `${WORKSPACE_BASE_URL}`,
+    UPDATE_WORKSPACE_IDENTITY: `${WORKSPACE_BASE_URL}/identity`,
+    CHECK_SLUG_AVAILABLE: `${WORKSPACE_BASE_URL}/slug-available`,
+    ANALYZE_WORKSPACE: `${WORKSPACE_BASE_URL}/analyze`,
+    GET_WORKSPACE_PROFILE: `${WORKSPACE_BASE_URL}/profile`,
+    UPDATE_WORKSPACE_PROFILE: `${WORKSPACE_BASE_URL}/profile`,
+    GET_PROPOSED_MARKETS: `${WORKSPACE_BASE_URL}/proposed-markets`,
+    UPDATE_WORKSPACE_MARKETS: `${WORKSPACE_BASE_URL}/markets`,
+    UPDATE_REVENUE_MODEL: `${WORKSPACE_BASE_URL}/revenue-model`,
+    GET_LIFECYCLE_THRESHOLDS: `${WORKSPACE_BASE_URL}/lifecycle-thresholds`,
+    UPDATE_LIFECYCLE_THRESHOLDS: `${WORKSPACE_BASE_URL}/lifecycle-thresholds`,
+    GET_WORKSPACE_MEMBERS: `${WORKSPACE_BASE_URL}/members`,
+    GET_WORKSPACE_ROLES: `${WORKSPACE_BASE_URL}/roles`,
+    GET_MY_ROLES: `${WORKSPACE_BASE_URL}/members/me/roles`,
+    GET_MEMBER_ROLES: `${WORKSPACE_BASE_URL}/members/{userId}/roles`,
+    ASSIGN_MEMBER_ROLES: `${WORKSPACE_BASE_URL}/members/roles`,
+    REMOVE_MEMBER_ROLE: `${WORKSPACE_BASE_URL}/members/roles`,
+    GET_WORKSPACE_AGENTS: `${WORKSPACE_BASE_URL}/agents`,
+    GET_ONBOARDING_STATUS: `${WORKSPACE_BASE_URL}/onboarding`,
+    GET_MAPPING_QUALITY: `${WORKSPACE_BASE_URL}/mapping-quality`,
+    GET_DATA_MAP: `${WORKSPACE_BASE_URL}/data-map`,
+    SAVE_ONBOARDING_PROGRESS: `${WORKSPACE_BASE_URL}/onboarding/progress`,
+  },
 
 };

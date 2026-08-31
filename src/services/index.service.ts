@@ -40,8 +40,8 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 429) {
       const retryAfter = error.response.headers?.["retry-after"];
       const msg = retryAfter
-        ? `Too many attempts — please wait ${retryAfter} second${retryAfter === "1" ? "" : "s"}.`
-        : "Too many attempts — please wait a moment.";
+        ? `Too many attempts. Please wait ${retryAfter} second${retryAfter === "1" ? "" : "s"}.`
+        : "Too many attempts. Please wait a moment.";
       toast.error(msg);
       return Promise.reject(error);
     }
@@ -84,8 +84,8 @@ axiosInstance.interceptors.response.use(
         if (e?.response?.status === 429) {
           const retryAfter = e.response.headers?.["retry-after"];
           const msg = retryAfter
-            ? `Too many attempts — please wait ${retryAfter} second${retryAfter === "1" ? "" : "s"}.`
-            : "Too many attempts — please wait a moment.";
+            ? `Too many attempts. Please wait ${retryAfter} second${retryAfter === "1" ? "" : "s"}.`
+            : "Too many attempts. Please wait a moment.";
           toast.error(msg);
           return Promise.reject(e);
         }

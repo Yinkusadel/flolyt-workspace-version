@@ -15,7 +15,7 @@ export const AcceptInvitationForm = ({ token }: AcceptInvitationFormProps) => {
   } = form;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="mt-10" noValidate>
+    <form onSubmit={handleSubmit(onSubmit)} className="mt-6" noValidate>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label htmlFor="firstName" className="text-[10.5px] text-ink-3">

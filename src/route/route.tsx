@@ -3,8 +3,17 @@ import { AuthLayout } from "@/pages/auth/layout";
 import SignIn from "@/pages/auth/sign-in";
 import SignUp from "@/pages/auth/sign-up";
 import VerifyOtp from "@/pages/auth/verify-otp";
-import AcceptInvitation from "@/pages/auth/accept-invitation";
+import AcceptTeamInvitationRoute from "@/pages/teams/accept-invitation";
 import { AppLayout } from "@/pages/app-layout";
+import { OnboardingLayout } from "@/pages/onboarding/layout";
+import OnboardingStartRoute from "@/pages/onboarding/start";
+import OnboardingWorkspaceRoute from "@/pages/onboarding/workspace";
+import OnboardingBusinessModelRoute from "@/pages/onboarding/business-model";
+import OnboardingDataRoute from "@/pages/onboarding/data";
+import OnboardingAgentsRoute from "@/pages/onboarding/agents";
+import OnboardingTeamRoute from "@/pages/onboarding/team";
+import OnboardingTeamDetailRoute from "@/pages/onboarding/team/team-detail-route";
+import OnboardingFinishingUpRoute from "@/pages/onboarding/finishing-up";
 import Home from "@/pages/home";
 import Lifecycle from "@/pages/everyday/lifecycle";
 import LifecycleSettings from "@/pages/everyday/lifecycle/settings";
@@ -372,16 +381,30 @@ export const routes = createBrowserRouter([
               { path: "verify-otp/:userId", Component: VerifyOtp },
             ],
           },
-          {
-            path: "accept-invitation",
-            Component: AcceptInvitation,
-          },
         ],
+      },
+      {
+        path: "/teams/accept-invitation",
+        Component: AcceptTeamInvitationRoute,
       },
       {
         path: "/",
         // Component: ProtectedRoute,
         children: [
+          {
+            path: "onboarding",
+            Component: OnboardingLayout,
+            children: [
+              { path: "start", Component: OnboardingStartRoute },
+              { path: "workspace", Component: OnboardingWorkspaceRoute },
+              { path: "business-model", Component: OnboardingBusinessModelRoute },
+              { path: "data", Component: OnboardingDataRoute },
+              { path: "agents", Component: OnboardingAgentsRoute },
+              { path: "team", Component: OnboardingTeamRoute },
+              { path: "team/:teamId", Component: OnboardingTeamDetailRoute },
+              { path: "finishing-up", Component: OnboardingFinishingUpRoute },
+            ],
+          },
           {
             Component: AppLayout,
             children: [

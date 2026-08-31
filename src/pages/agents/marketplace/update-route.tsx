@@ -18,7 +18,7 @@ const UpdateRoute = () => {
         title="An update that needs approval"
         subtitle="One new field · the agent paused itself rather than read something unapproved"
         action={
-          <Button type="button" onClick={() => toast.success("Change reviewed — send approval from Governance")}>
+          <Button type="button" onClick={() => toast.success("Change reviewed. Send approval from Governance")}>
             Review the change
           </Button>
         }
