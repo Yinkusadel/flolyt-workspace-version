@@ -32,9 +32,12 @@ export type Stage = {
   /** Path segment under /lifecycle/ for this stage's detail page. */
   slug: string;
   department: Department | null;
-  metric: string;
+  /** ❌ Backend does NOT provide this on GET /lifecycle/map — optional so a wired consumer can omit it rather than fake a value. Still set by the mock for not-yet-wired stage screens. */
+  metric?: string;
   amount: string;
   amountLabel: "at stake" | "referred";
+  /** Why `amount` is "Unavailable" — GET /lifecycle/map's atStake.missingSource, when the API named one. */
+  amountCaveat?: string;
   /** False renders the A01-style "not defined yet" empty state instead of tabs/content. */
   isDefined: boolean;
   /** Shown under the stage name in the tab-bar header, e.g. "894,000 acquired in twelve months · ₦74M at stake · owned by Marketing". */
@@ -59,7 +62,7 @@ export const STAGES: Stage[] = [
   { name: "Expand", slug: "expand", department: "Sales", metric: "1.4× ARPU", amount: "₦61M", amountLabel: "at stake", isDefined: true, headline: "1.4× ARPU on expansion · ₦61M at stake · owned by Sales" },
   { name: "Support", slug: "support", department: "Support", metric: "12.8k tickets", amount: "₦9M", amountLabel: "at stake", isDefined: true, headline: "12.8k tickets · ₦9M at stake · owned by Support" },
   { name: "Renew", slug: "renew", department: "Customer Success", metric: "88.4% projected", amount: "₦88M", amountLabel: "at stake", isDefined: true, headline: "88.4% projected to renew · ₦88M at stake · owned by Customer Success" },
-  { name: "Advocate", slug: "advocate", department: "Marketing", metric: "124k referrers", amount: "₦0 CAC", amountLabel: "referred", isDefined: true, headline: "124k referrers · ₦0 CAC · owned by Marketing" },
+  { name: "Advocate", slug: "advocate", department: "Marketing", metric: "124k referrers", amount: "₦0 CAC", amountLabel: "at stake", isDefined: true, headline: "124k referrers · ₦0 CAC · owned by Marketing" },
   { name: "Churn", slug: "churn", department: "Customer Success", metric: "3.1%/mo", amount: "₦124M", amountLabel: "at stake", isDefined: true, headline: "3.1% monthly churn · ₦124M at stake · owned by Customer Success" },
 ];
 

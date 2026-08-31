@@ -1,12 +1,21 @@
 # Lifecycle domain endpoints
 
-Everything under `/api/flolyt/lifecycle/*`, pasted 2026-08-31. Five sibling endpoints
-(`/search`, `/home`, `/inbox`, `/command-bar`, `/sources`) were pasted alongside these in the
-same doc page but are cross-cutting (workspace home / inbox / command palette / search), not
-lifecycle-specific — not recorded here; file them under their own domain doc when we get to
-those surfaces.
+Everything under `/api/flolyt/lifecycle/*`, first pasted 2026-08-31 from a written description,
+then **corrected 2026-08-31 against the real Scalar/OpenAPI reference** (the user pasted the
+actual spec + example responses). That correction matters: every GET response below is wrapped in
+the standard `{ data, messages, succeeded }` envelope — the first pass had documented each GET's
+raw inner shape with no envelope, which was wrong for all 11 GET endpoints. Nullability below is
+also now sourced from the spec's own example payloads (a field shown as `null` in the example is
+recorded as nullable here), not guessed from the prose description alone. Five sibling endpoints
+(`/search`, `/home`, `/inbox`, `/command-bar`, `/sources`) were pasted alongside these in the same
+doc page but are cross-cutting (workspace home / inbox / command palette / search), not
+lifecycle-specific — not recorded here; file them under their own domain doc when we get to those
+surfaces.
 
-Status: 17/17 documented, 0/17 wired.
+Status: 18 endpoints documented. Service + hook files exist for all 18
+(`src/services/api/lifecycle/*`, `src/features/lifecycle/*`). Only `GET /lifecycle/map` is wired
+into an actual page (`/lifecycle`'s map page, partially — see tracker below); the rest have
+service/hook infrastructure ready but no page consuming them yet.
 
 ## Screen-section coverage tracker
 
@@ -18,12 +27,12 @@ Legend: ✅ covered · ⚠️ partial (see note) · ❌ not covered · ❓ open 
 
 | On-screen section (header text) | Needs | Endpoint | Status |
 | --- | --- | --- | --- |
-| "The customer lifecycle" stage cards — name/department/owner/open rooms | `StageRail`, `data.ts` `Stage.name`/`department`/`owner` | `GET /lifecycle/map` → `stages[].name`/`owningTeam`/`owner`/`openRoomCount` | ✅ |
-| Stage cards — ₦ at-stake figure | `Stage.amount`/`amountLabel` | `GET /lifecycle/map` → `stages[].atStake` | ⚠️ doc says measured for only 3/10 stages (activate/retain/churn) — the other 7 render "unavailable" per spec, but the mock shows all 10 with a figure. ❓ Ask backend: is `leakage-map`'s per-row cells the intended source for the other 7, or should the UI just show "unavailable" for them? |
-| Stage cards — second metric line ("894k/yr", "6 plans", "1.4× ARPU"...) | `Stage.metric` | none | ❌ no field anywhere returns a stage-specific unit ratio like this. `population` is a raw count, not this. ❓ Ask backend directly — may need a new field or may just not exist yet. |
-| "Where the same root cause shows up · [event]" table | `RootCauseSpotlight`, `ROOT_CAUSE_ROWS` (stage/department/free-text symptom) | `GET /lifecycle/changes/{changeId}/impact` → `stages[].effect` | ⚠️ gives numeric `delta`/`percentChange`/`status`, not the narrative sentence ("abandonment at the fee step rose 3.1×") — that phrasing needs client-side templating from a per-stage vocabulary the endpoint doesn't supply. **Also:** no discovery path for *which* `changeId` the map page should spotlight — no `GET /lifecycle/changes` list endpoint, and `/map`'s own `callouts[]` carries no `changeId` reference. ❓ Ask backend how the map page is meant to know which change to feature. |
-| "One change. Five teams." callout card | `RootCauseSpotlight`'s static copy | `GET /lifecycle/changes/{changeId}/impact` → `callouts[]` (key/tone/headline/body) | ✅ shape matches, blocked on the same changeId-discovery question above |
-| Teal "Advocacy feeds acquisition…" banner | `ADVOCACY_LOOP_NOTE` | `GET /lifecycle/map` → `callouts[]` | ✅ shape now exists (added in the 2026-08-31 update) |
+| "The customer lifecycle" stage cards — name/department | `StageRail`, `data.ts` `Stage.name`/`department` | `GET /lifecycle/map` → `stages[].name`/`owningTeam` | ✅ **wired** (`index.tsx`) — name and `owningTeam`→department are live. Per [[feedback_no_hardcoded_fallback]]: an unrecognized `owningTeam` string (or the query still loading/erroring) renders as unavailable/neutral, never a fallback to the `data.ts` mock department — `owningTeam`'s exact string values are still unconfirmed against a live response, verify on first real paste. `owner`/`openRoomCount` aren't rendered on the card itself, so not touched today. |
+| Stage cards — ₦ at-stake figure | `Stage.amount`/`amountLabel` | `GET /lifecycle/map` → `stages[].atStake` | ✅ **wired** (`index.tsx`/`stage-rail.tsx`) — renders whatever `atStake.value`/`state` the API returns per stage. No client-side allowlist of which stages get a figure. **Correction 2026-08-31, confirmed by a live response:** the "measured only for activate/retain/churn" claim below (under GET /lifecycle/map's Notes) is wrong for `atStake` — all 10 stages returned the identical wrapper shape, each with its own `missingSource` (e.g. acquire needs "an acquisition-channel source", price needs "plan and discount economics"). That 3-stage restriction is real for `population`'s lifecycle-fallback classifier, a different field — the original doc conflated the two. **UI, same day:** when `state` is `"unavailable"` the card shows a compact `—` (dotted-underline + `cursor-help`, native `title` tooltip carrying `missingSource`) instead of the word "Unavailable" repeated across the whole row — a full "Unavailable" grid (which is what every stage shows right now, since this workspace has no completed leakage refresh) was visually noisy; a custom CSS group-hover tooltip was considered and rejected because the row's `overflow-x-auto` forces `overflow-y` to clip too (a CSS quirk), which would cut off an absolutely-positioned popup. The `amountLabel` caption ("at stake"/"referred") under the figure was also removed — it was a hardcoded `data.ts` string with no live backing, and after fixing the Advocate mismatch below it would read "at stake" on every card anyway, so it added nothing. Also fixed same day: Advocate's `amountLabel` was hardcoded to `"referred"` in `data.ts` (a leftover "₦0 CAC — referred" design idea), but the live `atStake.wouldUnlock` text for Advocate reads "what Advocate is costing you" — the same cost/leak framing as every other stage, no field anywhere supports a distinct positive "referred" framing. Changed to `"at stake"` for all 10. |
+| Stage cards — second metric line ("894k/yr", "6 plans", "1.4× ARPU"...) | `Stage.metric` | none | ❌ no field anywhere returns a stage-specific unit ratio like this. `population` is a raw count, not this. ❓ still open — ask backend directly, may need a new field or may just not exist yet. Per [[feedback_backend_gap_comment_convention]]: the JSX line is commented out in `stage-rail.tsx` (`// ❌ Backend does NOT provide: metric`), not rendered as "Unavailable" — that word would be a fabrication since there's no live signal for this field, unlike `atStake`'s. |
+| "Where the same root cause shows up · [event]" table | `RootCauseSpotlight`, `ROOT_CAUSE_ROWS` (stage/department/free-text symptom) | `GET /lifecycle/changes/{changeId}/impact` → `stages[].effect` | ⚠️ **not wired, reminder to ask backend still open (2026-08-31).** Gives numeric `delta`/`percentChange`/`status`, not the narrative sentence ("abandonment at the fee step rose 3.1×") — needs client-side templating from a per-stage vocabulary the endpoint doesn't supply. **Also:** no discovery path for *which* `changeId` the map page should spotlight — no `GET /lifecycle/changes` list endpoint, and `/map`'s own `callouts[]` carries no `changeId` reference. ❓ Ask backend how the map page is meant to know which change to feature. |
+| "One change. Five teams." callout card | `RootCauseSpotlight`'s static copy | `GET /lifecycle/changes/{changeId}/impact` → `callouts[]` (key/tone/headline/body) | ⚠️ **not wired** — shape matches, blocked on the same changeId-discovery question above (reminder to ask backend still open). |
+| Teal "Advocacy feeds acquisition…" banner | `ADVOCACY_LOOP_NOTE` | `GET /lifecycle/map` → `callouts[]` | ✅ **wired** (`index.tsx`/`stage-rail.tsx`) — matched by content (`/advoc/i` against headline/body) since the doc doesn't document a `key` value for this callout. Per [[feedback_no_hardcoded_fallback]]: no match found → the banner doesn't render at all, it no longer falls back to the mock copy. Verify the real key on first live paste and switch to matching on it. |
 | "Owner, lead agent and review cadence… on stage ownership" footer link | link only, no data | n/a | ✅ (just a `<Link>`, settings page is its own screen) |
 
 ### Per-stage screens (Overview, What changed, Cohorts, Compare, Chain, etc.)
@@ -36,15 +45,20 @@ recur on every stage.
 
 ## Per-endpoint entries
 
+Every GET below returns `{ data: <shape below>, messages: string[], succeeded: boolean }` —
+the envelope is omitted from each `Response:` line for brevity; only the `data` shape is shown.
+Mutations (PUT/POST/DELETE) show their real top-level shape including the envelope, since several
+return something other than the full resource (e.g. `data: null`, `data: changeId`).
+
 ### GET /lifecycle/map
 
 - **Purpose:** The ten business stages in spine order — owning team, named owner, lead agent, review cadence, open room count, at-stake amount, population.
 - **Auth:** Bearer token (workspace-scoped).
 - **Request:** none.
-- **Response:** `{ stages: [{ key, name, position, owningTeam, owner: {ownerUserId, displayName, isActive} | null, leadAgentKey, leadAgentName, reviewCadence, atStake, openRoomCount, population, populationSource, definitionVersion, populationComputedAtUtc, populationCaveat }], callouts: [{key, tone, headline, body}], marketLens: {countryCode, currencyCode, isPrimary} | null }`
-- **Used by:** not wired yet — target `src/pages/everyday/lifecycle/index.tsx` (`StageRail`) and `root-cause-spotlight.tsx`'s advocacy-loop banner.
-- **Status:** documented.
-- **Notes:** `atStake` measured only for activate/retain/churn per the doc's own description — see coverage tracker above. `callouts[]` and `marketLens` added in the 2026-08-31 spec update (weren't in the first paste). Churn carries no `owningTeam`/`owner` by design.
+- **Response `data`:** `{ stages: [{ key, name, position, owningTeam, owner: {ownerUserId, displayName, isActive} | null, leadAgentKey, leadAgentName, reviewCadence, atStake, openRoomCount, population, populationSource, definitionVersion, populationComputedAtUtc, populationCaveat }], callouts: [{key, tone, headline, body}], marketLens: {countryCode, currencyCode, isPrimary} | null }`. **`atStake` and `population` are NOT bare nullable numbers** — confirmed 2026-08-31 from a real response pasted by the user (the written spec's example had glossed over this): both are a "measured value" wrapper, `{ value: number | null, state: string, missingSource?: string, wouldUnlock?: string }` — `missingSource`/`wouldUnlock` are present only when `state` is `"unavailable"` (omitted entirely, not null, when available). `populationSource`/`definitionVersion`/`populationComputedAtUtc` are plain nullable fields, separate from the `population` wrapper — only `openRoomCount` is a guaranteed real number ("a true zero, unlike the other figures here"). **This wrapper is very likely reused across other lifecycle endpoints** for any field the prose describes as "unavailable and says why" (candidates: `primaryConversion`, departures' `observedValue`/`reachability`, `rateOfChange`, `delta`, `change`/`changePercent`, `endPopulation`/`averagePopulation`, `customersAdded`/`customersRemoved`, cohort values) — that's inferred from this one confirmed example, not verified per-field. Check a real response before wiring any other endpoint's "measured" numeric fields; don't assume bare `number | null`.
+- **Used by:** **wired** — `src/pages/everyday/lifecycle/index.tsx` (name/`owningTeam`/`atStake` on `StageRail`'s cards, `callouts[]` for the advocacy banner) via `src/features/lifecycle/use-get-lifecycle-map.ts` / `src/services/api/lifecycle/get-lifecycle-map.ts`. `marketLens` not consumed yet (LC05's `?market=` filter still not wired).
+- **Status:** wired (partial — see coverage tracker above for exactly which fields).
+- **Notes:** `atStake` measured only for activate/retain/churn per the doc's own description. Churn carries no `owningTeam`/`owner` by design.
 
 ### PUT /lifecycle/map/{stageKey}/owner
 
@@ -52,8 +66,8 @@ recur on every stage.
 - **Auth:** Bearer token; owner must be a workspace member.
 - **Request:** path `stageKey`; body `{ ownerUserId: uuid }`.
 - **Response:** `{ data: null, messages, succeeded }`.
-- **Used by:** not wired yet — target the "Assign an owner" modal (Advocate/Churn overview CTAs).
-- **Status:** documented.
+- **Used by:** service + hook exist (`update-stage-owner.ts` / `use-update-stage-owner.ts`), not wired into a page yet — target the "Assign an owner" modal (Advocate/Churn overview CTAs).
+- **Status:** service/hook ready, not wired.
 - **Notes:** Refused for `churn` — no single-person accountability for a stage that aggregates every other stage's losses.
 
 ### GET /lifecycle/market/{country}
@@ -61,9 +75,9 @@ recur on every stage.
 - **Purpose:** The map read through one declared market — same shape as `GET /map`, `atStake` filtered to that market's currency cells.
 - **Auth:** Bearer token.
 - **Request:** path `country`.
-- **Response:** same as `GET /lifecycle/map`, with `marketLens` populated.
-- **Used by:** not wired yet — LC05's `?market=` filter, not currently wired in the UI at all (see [[index.tsx]] comment "LC05's ?market= filter... not wired in yet").
-- **Status:** documented.
+- **Response `data`:** same shape as `GET /lifecycle/map`, with `marketLens` populated.
+- **Used by:** service + hook exist (`get-lifecycle-market.ts` / `use-get-lifecycle-market.ts`), not wired — LC05's `?market=` filter, not currently wired in the UI at all.
+- **Status:** service/hook ready, not wired.
 - **Notes:** Unknown country fails with the declared market list rather than silently showing the whole workspace. `population` stays workspace-wide (nothing maps a customer to a market yet) — only `atStake` narrows.
 
 ### GET /lifecycle/leakage-map
@@ -71,9 +85,9 @@ recur on every stage.
 - **Purpose:** Where revenue is going, by row (lifecycle stage and/or segment) × condition × market.
 - **Auth:** Bearer token.
 - **Request:** none.
-- **Response:** `{ revenueModel, grids: [{ grid, markets, conditions: [{key,label}], cells: [{rowKey, rowLabel, conditionKey, conditionLabel, currency, amount, customerCount, missingSource, wouldUnlock, method, ...}] }], computedAtUtc }`
-- **Used by:** not wired yet — candidate source for the 7 stages' `atStake` that `/map` itself can't provide (see coverage tracker, needs backend confirmation).
-- **Status:** documented.
+- **Response `data`:** `{ revenueModel, grids: [{ grid, markets, conditions: [{key,label}], cells: [{rowKey, rowLabel, conditionKey, conditionLabel, currency, amount, customerCount, missingSource, wouldUnlock, method}] }], computedAtUtc }`. `amount`/`customerCount`/`missingSource`/`method` are all nullable per the spec's example — a cell either carries a figure (amount+method) or names what's missing (missingSource+wouldUnlock), never an estimate/zero standing in for unknown. The spec's own example marks the cell object as having **additional properties beyond what's listed here** ("Additional Properties Truncated") — `LeakageMapCellDto` is not treated as exhaustive in the service file.
+- **Used by:** service + hook exist (`get-leakage-map.ts` / `use-get-leakage-map.ts`), not wired — candidate source for the 7 stages' `atStake` that `/map` itself can't provide (see coverage tracker, needs backend confirmation).
+- **Status:** service/hook ready, not wired.
 - **Notes:** No revenue-model-selected workspace gets `grids: []`/`revenueModel: null` — treat as "ask the question," not an empty state. Figures never blended across currencies.
 
 ### GET /lifecycle/distribution
@@ -81,9 +95,9 @@ recur on every stage.
 - **Purpose:** Customer counts + lifetime revenue per lifecycle stage, rolled up to the 3 business stages the lifecycle axis reaches (activate/retain/churn).
 - **Auth:** Bearer token.
 - **Request:** none.
-- **Response:** `{ totalCustomers, lifecycleStages: [{stage, customerCount, lifetimeRevenue, percentOfBase}], businessStages: [...], computedAtUtc }`
-- **Used by:** not wired yet.
-- **Status:** documented.
+- **Response `data`:** `{ totalCustomers, lifecycleStages: [{stage, customerCount, lifetimeRevenue, percentOfBase}], businessStages: [...], computedAtUtc }`. `computedAtUtc` is nullable per the spec's example.
+- **Used by:** service + hook exist (`get-lifecycle-distribution.ts` / `use-get-lifecycle-distribution.ts`), not wired.
+- **Status:** service/hook ready, not wired.
 - **Notes:** Every lifecycle stage returned including zero-count ones; business stages with no source are omitted (not zeroed).
 
 ### GET /lifecycle/stages/{stageKey}
@@ -91,9 +105,9 @@ recur on every stage.
 - **Purpose:** One stage's live state — population, departures (grouped by exit-rule cause), rate of change, restating flag.
 - **Auth:** Bearer token.
 - **Request:** path `stageKey`.
-- **Response:** `{ stageKey, stageName, position, owningTeam, leadAgentKey, leadAgentName, reviewCadence, population, populationSource, definitionVersion, populationComputedAtUtc, populationCaveat, rateOfChange, primaryConversion, departures: [{cause, toStageKey, toStageName, conditionKey, size, observedValue, observedValueCaveat, reachability, reachabilityCaveat, claim: {statement, grade, confidence}, roomOpen}], restating, callouts: [...] }`
-- **Used by:** not wired yet — target Overview tab's KPI numbers, but NOT its bespoke per-row leak-table narrative (see coverage tracker note on Overview).
-- **Status:** documented.
+- **Response `data`:** `{ stageKey, stageName, position, owningTeam, leadAgentKey, leadAgentName, reviewCadence, population, populationSource, definitionVersion, populationComputedAtUtc, populationCaveat, rateOfChange, primaryConversion, departures: [{cause, toStageKey, toStageName, conditionKey, size, observedValue, observedValueCaveat, reachability, reachabilityCaveat, claim: {statement, grade, confidence: number}, roomOpen}], restating, callouts: [...] }`. `population`/`populationSource`/`definitionVersion`/`populationComputedAtUtc`, and each departure's `size`, are nullable per the spec's example.
+- **Used by:** service + hook exist (`get-stage.ts` / `use-get-stage.ts`), not wired — target Overview tab's KPI numbers, but NOT its bespoke per-row leak-table narrative (see coverage tracker note on Overview).
+- **Status:** service/hook ready, not wired.
 - **Notes:** `primaryConversion` unavailable throughout (nothing models it yet). Departures' `observedValue`/`reachability` are unavailable and say why (no customer-record match in the warehouse).
 
 ### GET /lifecycle/stages/{stageKey}/changes
@@ -101,9 +115,9 @@ recur on every stage.
 - **Purpose:** Month-by-month population history for one stage, flagging definition-change/restated months.
 - **Auth:** Bearer token.
 - **Request:** path `stageKey`; query `from`/`to` (RFC 3339, default 12-month restatement window).
-- **Response:** `{ stageKey, stageName, restating, periods: [{periodStartUtc, population, delta, isDefinitionChange, isRestated, definitionVersion, restatedFromVersion, asOfUtc}] }`
-- **Used by:** not wired yet — target `stage/history/history-tab.tsx`.
-- **Status:** documented.
+- **Response `data`:** `{ stageKey, stageName, restating, periods: [{periodStartUtc, population, delta, isDefinitionChange, isRestated, definitionVersion, restatedFromVersion, asOfUtc}] }`. `population`/`delta` nullable — unavailable rather than zero whenever either bounding month is unmeasured.
+- **Used by:** service + hook exist (`get-stage-changes.ts` / `use-get-stage-changes.ts`), not wired — target `stage/history/history-tab.tsx`.
+- **Status:** service/hook ready, not wired.
 - **Notes:** Distinct from `change-registry` below — this is the population trend, not dated causes.
 
 ### GET /lifecycle/stages/{stageKey}/change-registry
@@ -111,9 +125,9 @@ recur on every stage.
 - **Purpose:** The stage's "What changed" tab — every dated registry change, measured against this stage's own history.
 - **Auth:** Bearer token.
 - **Request:** path `stageKey`.
-- **Response:** `{ stageKey, stageName, entries: [{id, occurredOnUtc, title, team, source, affectedStageKeys, effect: {status, delta, percentChange, caveat}, sourceRoomId}], callouts: [...] }`
-- **Used by:** not wired yet — target `stage/changes/changes-tab.tsx`. Row's `id` is the `changeId` for the impact drilldown below.
-- **Status:** documented.
+- **Response `data`:** `{ stageKey, stageName, entries: [{id, occurredOnUtc, title, team, source, affectedStageKeys, effect: {status, delta, percentChange, caveat}, sourceRoomId}], callouts: [...] }`
+- **Used by:** service + hook exist (`get-stage-change-registry.ts` / `use-get-stage-change-registry.ts`), not wired — target `stage/changes/changes-tab.tsx`. Row's `id` is the `changeId` for the impact drilldown below.
+- **Status:** service/hook ready, not wired.
 - **Notes:** `effect.status` ∈ measured/no_effect/too_recent/outside_history/not_instrumented — each a distinct, real state, not a fallback chain.
 
 ### POST /lifecycle/changes
@@ -122,8 +136,8 @@ recur on every stage.
 - **Auth:** Bearer token; open to any member.
 - **Request:** `{ occurredOnUtc, title, team?, description?, affectedStageKeys? }`.
 - **Response:** `{ data: changeId (uuid), messages, succeeded }`.
-- **Used by:** not wired yet — target the "Add a change" header button on `changes-tab.tsx`.
-- **Status:** documented.
+- **Used by:** service + hook exist (`create-change.ts` / `use-create-change.ts`), not wired — target the "Add a change" header button on `changes-tab.tsx`.
+- **Status:** service/hook ready, not wired.
 - **Notes:** Future `occurredOnUtc` refused. `affectedStageKeys` never filters measurement, only records intent — the impact view flags stages that moved which weren't listed.
 
 ### POST /lifecycle/changes/from-room
@@ -132,8 +146,8 @@ recur on every stage.
 - **Auth:** Bearer token; requires room membership/ownership/administration.
 - **Request:** `{ roomId, occurredOnUtc, title?, affectedStageKeys? }`.
 - **Response:** `{ data: changeId (uuid), messages, succeeded }`.
-- **Used by:** not wired yet.
-- **Status:** documented.
+- **Used by:** service + hook exist (`create-change-from-room.ts` / `use-create-change-from-room.ts`), not wired.
+- **Status:** service/hook ready, not wired.
 - **Notes:** One promotion per room opening; a reopened room's new decision is a new change.
 
 ### DELETE /lifecycle/changes/{changeId}
@@ -142,17 +156,17 @@ recur on every stage.
 - **Auth:** Bearer token; recorder can remove their own, administrator can remove any.
 - **Request:** path `changeId`.
 - **Response:** `{ data: changeId, messages, succeeded }`.
-- **Used by:** not wired yet.
-- **Status:** documented.
+- **Used by:** service + hook exist (`delete-change.ts` / `use-delete-change.ts`), not wired.
+- **Status:** service/hook ready, not wired.
 
 ### GET /lifecycle/changes/{changeId}/impact
 
 - **Purpose:** One change measured against every stage — the release-impact drilldown and "the skeleton of the whole-chain view."
 - **Auth:** Bearer token.
 - **Request:** path `changeId`.
-- **Response:** `{ changeId, title, occurredOnUtc, team, source, affectedStageKeys, sourceRoomId, stages: [{stageKey, stageName, effect: {status, delta, percentChange, caveat}}], callouts: [...] }` (all 10 stages always returned, in spine order).
-- **Used by:** not wired yet — target `activate/release-impact-route.tsx` (`/lifecycle/:stage/changes/:id`, already has a live `:id` param) and, pending the routing fix noted in the coverage tracker, `stage/chain/chain-route.tsx`.
-- **Status:** documented.
+- **Response `data`:** `{ changeId, title, occurredOnUtc, team, source, affectedStageKeys, sourceRoomId, stages: [{stageKey, stageName, effect: {status, delta, percentChange, caveat}}], callouts: [...] }` (all 10 stages always returned, in spine order).
+- **Used by:** service + hook exist (`get-change-impact.ts` / `use-get-change-impact.ts`), not wired — target `activate/release-impact-route.tsx` (`/lifecycle/:stage/changes/:id`, already has a live `:id` param) and, pending the routing fix noted in the coverage tracker, `stage/chain/chain-route.tsx`.
+- **Status:** service/hook ready, not wired.
 - **Notes:** 404 if the change isn't in this workspace's registry. "Moved-where-nobody-expected" callout names stages that moved but weren't in `affectedStageKeys`.
 
 ### GET /lifecycle/stages/{stageKey}/definition
@@ -160,9 +174,9 @@ recur on every stage.
 - **Purpose:** A stage's current definition (if any), full version history, and candidate entry events.
 - **Auth:** Bearer token.
 - **Request:** path `stageKey`.
-- **Response:** `{ stageKey, stageName, canEdit, isDefined, fallbackInUse, fallbackNote, current: {version, entryEventKey, exitRules, exclusions, effectiveFromUtc, createdByUserId, createdBy, createdAtUtc} | null, history: [{version, createdAtUtc, createdByUserId, createdBy, isCurrent}], candidates: [{eventKey, description, datasourceId, estimatedRows, population}] }`
-- **Used by:** not wired yet — target `stage/definition/definition-route.tsx`.
-- **Status:** documented.
+- **Response `data`:** `{ stageKey, stageName, canEdit, isDefined, fallbackInUse, fallbackNote, current: {version, entryEventKey, exitRules: [{kind, eventKey, days, movesToStageKey}] | null, exclusions: [{kind, mergeKey}] | null, effectiveFromUtc, createdByUserId, createdBy, createdAtUtc} | null, history: [{version, createdAtUtc, createdByUserId, createdBy, isCurrent}], candidates: [{eventKey, description, datasourceId, estimatedRows, population}] }`. `candidates[].description`/`population` nullable per the spec's example.
+- **Used by:** service + hook exist (`get-stage-definition.ts` / `use-get-stage-definition.ts`), not wired — target `stage/definition/definition-route.tsx`.
+- **Status:** service/hook ready, not wired.
 - **Notes:** New workspace has `isDefined: false`/`current: null` for all 10 — never seeded. `fallbackInUse` marks activate/retain/churn using the classifier's recency thresholds until defined.
 
 ### PUT /lifecycle/stages/{stageKey}/definition
@@ -171,8 +185,8 @@ recur on every stage.
 - **Auth:** Bearer token.
 - **Request:** path `stageKey`; body `{ previewToken (uuid), entryEventKey, exitRules, exclusions }`.
 - **Response:** `{ data: {stageKey, version, supersededVersion, effectiveFromUtc}, messages, succeeded }`; `409` if the body doesn't match what the token was issued for.
-- **Used by:** not wired yet.
-- **Status:** documented.
+- **Used by:** service + hook exist (`update-stage-definition.ts` / `use-update-stage-definition.ts`, which surfaces the 409 as a distinct `onTokenMismatch` callback rather than a generic error), not wired.
+- **Status:** service/hook ready, not wired.
 - **Notes:** Token single-use, expires 30 min.
 
 ### POST /lifecycle/stages/{stageKey}/definition/preview
@@ -180,9 +194,9 @@ recur on every stage.
 - **Purpose:** What a proposed definition would break — customers moved, figures restated, cohorts/goals invalidated — plus the save token.
 - **Auth:** Bearer token; only the stage's owner or a workspace administrator.
 - **Request:** path `stageKey`; body `{ entryEventKey, exitRules, exclusions }`.
-- **Response:** `{ previewToken, expiresAtUtc, stageKey, wouldBeVersion, customersAdded, customersRemoved, figuresAffected: {measured, items, unmeasuredReason}, cohortsBroken: {...}, goalsInvalidated: {...}, learningsScoped: {...} }`
-- **Used by:** not wired yet.
-- **Status:** documented.
+- **Response:** `{ data: {previewToken, expiresAtUtc, stageKey, wouldBeVersion, customersAdded, customersRemoved, figuresAffected, cohortsBroken, goalsInvalidated, learningsScoped}, messages, succeeded }` — corrected 2026-08-31, the first pass wrongly had this response unwrapped. `figuresAffected`/`cohortsBroken`/`goalsInvalidated`/`learningsScoped` all share one shape: `{measured, items: string[], unmeasuredReason}`. `customersAdded`/`customersRemoved` nullable per the spec's example.
+- **Used by:** service + hook exist (`preview-stage-definition.ts` / `use-preview-stage-definition.ts`), not wired.
+- **Status:** service/hook ready, not wired.
 
 ### POST /lifecycle/entry-events/measure
 
@@ -190,18 +204,18 @@ recur on every stage.
 - **Auth:** Bearer token.
 - **Request:** query `force` (bool, default false).
 - **Response:** `{ data: number, messages, succeeded }`.
-- **Used by:** not wired yet.
-- **Status:** documented.
-- **Notes:** Bounded per call with a timeout; counts cached for a day unless `force=true`.
+- **Used by:** service + hook exist (`measure-entry-event.ts` / `use-measure-entry-event.ts`), not wired.
+- **Status:** service/hook ready, not wired.
+- **Notes:** ❓ Neither the original doc nor the real spec documents a field identifying *which* candidate event a call measures — the request is just `force`, despite the purpose line saying "each candidate entry event." Looks like a real gap, not something to guess at; ask backend before wiring this into the definition screen. Bounded per call with a timeout; counts cached for a day unless `force=true`.
 
 ### GET /lifecycle/stages/{stageKey}/cohorts
 
 - **Purpose:** Entry cohorts by arrival month, with observed lifetime value per cohort.
 - **Auth:** Bearer token.
 - **Request:** path `stageKey`; query `months` (3-12, default 6).
-- **Response:** `{ stageKey, stageName, cohorts, undatedCustomers, currency, valueCaveat, callouts: [...] }`
-- **Used by:** not wired yet — target `stage/{acquire,...}/cohorts-tab.tsx`.
-- **Status:** documented.
+- **Response `data`:** `{ stageKey, stageName, cohorts, undatedCustomers, currency, valueCaveat, callouts: [...] }` — ❓ neither the doc nor the real spec's example specifies the per-cohort row shape (the example just shows `cohorts: null`); don't invent fields, confirm before rendering a table.
+- **Used by:** service + hook exist (`get-stage-cohorts.ts` / `use-get-stage-cohorts.ts`), not wired — target `stage/{acquire,...}/cohorts-tab.tsx`.
+- **Status:** service/hook ready, not wired.
 - **Notes:** Only lifecycle-bridged stages can cohort; a definition-backed stage returns "cohorts unavailable" (per-customer rows deliberately not kept).
 
 ### GET /lifecycle/stages/{stageKey}/compare
@@ -209,7 +223,7 @@ recur on every stage.
 - **Purpose:** Last N months vs the N before, population only (for now).
 - **Auth:** Bearer token.
 - **Request:** path `stageKey`; query `months` (1-12, default 3).
-- **Response:** `{ stageKey, stageName, windowMonths, before: {fromUtc, toUtc, monthsInWindow, monthsMeasured, endPopulation, averagePopulation, restatedMonths}, after: {...}, change, changePercent, definitionChangedInside, callouts: [...] }`
-- **Used by:** not wired yet — target `stage/compare/compare-route.tsx`.
-- **Status:** documented.
+- **Response `data`:** `{ stageKey, stageName, windowMonths, before: {fromUtc, toUtc, monthsInWindow, monthsMeasured, endPopulation, averagePopulation, restatedMonths}, after: {...}, change, changePercent, definitionChangedInside, callouts: [...] }`. `endPopulation`/`averagePopulation`/`change`/`changePercent` all nullable per the spec's example.
+- **Used by:** service + hook exist (`get-stage-compare.ts` / `use-get-stage-compare.ts`), not wired — target `stage/compare/compare-route.tsx`.
+- **Status:** service/hook ready, not wired.
 - **Notes:** Only population compares today — CAC/repeat-rate/value-per-customer need sources nothing models yet, response says so rather than faking a row.

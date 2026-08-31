@@ -33,6 +33,7 @@ export const INTELLIGENCE_BASE_URL = `${API_BASE_URL}/api/v1/intelligence`;
 export const PLATFORM_ADMIN_BASE_URL = `${API_BASE_URL}/api/flolyt/platform-admin`;
 export const CURRENCY_BASE_URL = `${API_BASE_URL}/api/flolyt/currency`;
 export const WORKSPACE_BASE_URL = `${API_BASE_URL}/api/flolyt/workspace`;
+export const LIFECYCLE_BASE_URL = `${API_BASE_URL}/api/flolyt/lifecycle`;
 
 export const API_ENDPOINTS = {
   USER: {
@@ -471,6 +472,27 @@ export const API_ENDPOINTS = {
     GET_MAPPING_QUALITY: `${WORKSPACE_BASE_URL}/mapping-quality`,
     GET_DATA_MAP: `${WORKSPACE_BASE_URL}/data-map`,
     SAVE_ONBOARDING_PROGRESS: `${WORKSPACE_BASE_URL}/onboarding/progress`,
+  },
+
+  LIFECYCLE: {
+    GET_MAP: `${LIFECYCLE_BASE_URL}/map`,
+    UPDATE_STAGE_OWNER: `${LIFECYCLE_BASE_URL}/map/{stageKey}/owner`,
+    GET_MARKET: `${LIFECYCLE_BASE_URL}/market/{country}`,
+    GET_LEAKAGE_MAP: `${LIFECYCLE_BASE_URL}/leakage-map`,
+    GET_DISTRIBUTION: `${LIFECYCLE_BASE_URL}/distribution`,
+    GET_STAGE: `${LIFECYCLE_BASE_URL}/stages/{stageKey}`,
+    GET_STAGE_CHANGES: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/changes`,
+    GET_STAGE_CHANGE_REGISTRY: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/change-registry`,
+    CREATE_CHANGE: `${LIFECYCLE_BASE_URL}/changes`,
+    CREATE_CHANGE_FROM_ROOM: `${LIFECYCLE_BASE_URL}/changes/from-room`,
+    DELETE_CHANGE: `${LIFECYCLE_BASE_URL}/changes/{changeId}`,
+    GET_CHANGE_IMPACT: `${LIFECYCLE_BASE_URL}/changes/{changeId}/impact`,
+    GET_STAGE_DEFINITION: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/definition`,
+    UPDATE_STAGE_DEFINITION: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/definition`,
+    PREVIEW_STAGE_DEFINITION: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/definition/preview`,
+    MEASURE_ENTRY_EVENT: `${LIFECYCLE_BASE_URL}/entry-events/measure`,
+    GET_STAGE_COHORTS: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/cohorts`,
+    GET_STAGE_COMPARE: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/compare`,
   },
 
 };
