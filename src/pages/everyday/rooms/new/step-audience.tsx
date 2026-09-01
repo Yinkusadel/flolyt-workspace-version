@@ -1,6 +1,10 @@
 import { cn } from "@/lib/utils";
+import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
+import { ActorAvatar } from "@/pages/everyday/rooms/actor";
 import { TONE_TEXT_CLASS } from "@/pages/everyday/rooms/tone";
-import { AUDIENCE_FILTERS, DROPOUT_ROWS } from "@/pages/everyday/rooms/new/new-room-data";
+import { AUDIENCE_FILTERS, DROPOUT_ROWS, SIMILAR_ROOMS } from "@/pages/everyday/rooms/new/new-room-data";
+
+const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 
 /** R07 — New room · who is in it. */
 export function StepAudience() {
@@ -26,6 +30,49 @@ export function StepAudience() {
         <p className="text-[16px] font-semibold text-ultra">148,000 customers · ₦412M at stake</p>
         <p className="mt-1.5 text-[11px] text-ink-2">Counted against the orders feed, refreshed 6 minutes ago</p>
         <p className="mt-0.5 text-[10.5px] text-ink-3">Recount as you type · this is a live query, not a saved list</p>
+      </div>
+
+      <div>
+        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
+          Rooms that already exist about something similar
+        </p>
+        <div className="mt-2 overflow-x-auto rounded-card border border-line bg-paper">
+          <table className="w-full min-w-[720px] text-left text-[12px]">
+            <thead>
+              <tr className="border-b border-line bg-paper-2">
+                <th className={HEAD_CLASS}>Room</th>
+                <th className={HEAD_CLASS}>Population</th>
+                <th className={HEAD_CLASS}>Overlap with yours</th>
+                <th className={HEAD_CLASS}>Owner</th>
+                <th className={HEAD_CLASS}>State</th>
+                <th className={HEAD_CLASS}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SIMILAR_ROOMS.map((room) => (
+                <tr key={room.title} className="border-b border-line last:border-0">
+                  <td className="px-4 py-3 font-semibold text-ink-2">{room.title}</td>
+                  <td className="px-4 py-3 font-mono text-ink">{room.population}</td>
+                  <td className="px-4 py-3">
+                    <Chip tone={room.overlapTone}>{room.overlap}</Chip>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <ActorAvatar actor={{ kind: "human", person: room.owner }} size="sm" />
+                      <span className="text-ink-2">{room.owner.name.split(" ")[0]}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Chip tone={room.stateTone}>{room.state}</Chip>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Chip tone={room.actionTone}>{room.action}</Chip>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div>

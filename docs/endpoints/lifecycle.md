@@ -151,9 +151,9 @@ return something other than the full resource (e.g. `data: null`, `data: changeI
 - **Auth:** Bearer token.
 - **Request:** none.
 - **Response `data`:** `{ revenueModel, grids: [{ grid, markets, conditions: [{key,label}], cells: [{rowKey, rowLabel, conditionKey, conditionLabel, currency, amount, customerCount, missingSource, wouldUnlock, method}] }], computedAtUtc }`. `amount`/`customerCount`/`missingSource`/`method` are all nullable per the spec's example — a cell either carries a figure (amount+method) or names what's missing (missingSource+wouldUnlock), never an estimate/zero standing in for unknown. The spec's own example marks the cell object as having **additional properties beyond what's listed here** ("Additional Properties Truncated") — `LeakageMapCellDto` is not treated as exhaustive in the service file.
-- **Used by:** service + hook exist (`get-leakage-map.ts` / `use-get-leakage-map.ts`), not wired — candidate source for the 7 stages' `atStake` that `/map` itself can't provide (see coverage tracker, needs backend confirmation).
-- **Status:** service/hook ready, not wired.
-- **Notes:** No revenue-model-selected workspace gets `grids: []`/`revenueModel: null` — treat as "ask the question," not an empty state. Figures never blended across currencies.
+- **Used by:** `get-leakage-map.ts` / `use-get-leakage-map.ts`, wired 2026-09-01 to `/rooms/new`'s Step 1 (condition step) as the `conditionKey` vocabulary picker — grouped in the dropdown by `grid` (deduped by `condition.key` across grids, since `POST /rooms/new` only takes a bare `conditionKey`, never `grid`). Still a candidate source for the 7 stages' `atStake` that `/map` itself can't provide (see coverage tracker, needs backend confirmation) — that use is separate and still not wired.
+- **Status:** partially wired (rooms/new condition step only).
+- **Notes:** No revenue-model-selected workspace gets `grids: []`/`revenueModel: null` — treat as "ask the question," not an empty state (rendered as an amber prompt on the condition step, not an empty dropdown). Figures never blended across currencies. **Confirmed 2026-09-01 from a live response:** `grid` values are meaningful categories, not arbitrary — seen `lifecycle_stage` (conditions: repeat_decay, involuntary_churn, abandonment, refunds, discount_dependency) and `segment` (spoilage, leakage, churn_risk, activation, expansion_gap), each with `markets: []`/`cells: []` in that response. No key collision seen between the two grids' conditions in this sample.
 
 ### GET /lifecycle/distribution
 
