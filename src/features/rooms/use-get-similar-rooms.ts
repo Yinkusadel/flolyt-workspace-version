@@ -18,6 +18,10 @@ const useGetSimilarRooms = () => {
   return {
     findSimilarRooms: mutation.mutate,
     isPending: mutation.isPending,
+    isError: mutation.isError,
+    error: mutation.error,
+    similar: mutation.data?.data ?? null,
+    reset: mutation.reset,
   };
 };
 

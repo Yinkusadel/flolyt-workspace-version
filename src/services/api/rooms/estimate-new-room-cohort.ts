@@ -3,10 +3,15 @@ import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
 
+// `operator` is a fixed backend enum (Equals/NotEquals/GreaterThan/LessThan/
+// GreaterThanOrEquals/LessThanOrEquals/Contains/NotContains/IsSet/IsNotSet) — see
+// ROOM_RULE_OPERATORS in new-room-data.ts. `field` has no enum in the spec and a live test
+// (an unrecognized field string) returned 200 rather than a 400, so it's free text, not picked
+// from a vocabulary. `value` accepts null (confirmed live) alongside string/number.
 export interface RoomSegmentRuleInput {
   field: string;
   operator: string;
-  value: string;
+  value: string | number | null;
   logicOperator: string | null;
   order: number;
 }

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { usePageBreadcrumb } from "@/components/breadcrumb-context";
 import { StepRail } from "@/pages/everyday/rooms/new/step-rail";
 import { StepCondition, type ConditionStepValue } from "@/pages/everyday/rooms/new/step-condition";
-import { StepAudience } from "@/pages/everyday/rooms/new/step-audience";
+import { StepAudience, type AudienceStepValue } from "@/pages/everyday/rooms/new/step-audience";
 import { StepPeople } from "@/pages/everyday/rooms/new/step-people";
 import { StepSettle } from "@/pages/everyday/rooms/new/step-settle";
 import { StepDuplicate } from "@/pages/everyday/rooms/new/step-duplicate";
@@ -13,7 +13,7 @@ import { StepReview } from "@/pages/everyday/rooms/new/step-review";
 
 const STEP_META: Record<number, { eyebrow: string; cta: string; crumb: string | null }> = {
   1: { eyebrow: "Step 1 of 5 · a room is about a cohort in a condition", cta: "Next · who is in it", crumb: null },
-  2: { eyebrow: "Step 2 of 5 · 148,000 match · 100,000 are reachable", cta: "Next · who is in the room", crumb: "Who is in it" },
+  2: { eyebrow: "Step 2 of 5 · who this room is about, counted live", cta: "Next · who is in the room", crumb: "Who is in it" },
   3: { eyebrow: "Step 3 of 5 · one decision owner, four people, three agents", cta: "Next · what would settle it", crumb: "Who is in the room" },
   4: { eyebrow: "Step 4 of 5 · written before the answer is known", cta: "Next · review", crumb: "What would settle it" },
   5: { eyebrow: "Step 5 of 5 · nothing here is final · everything is editable inside the room", cta: "Open the room", crumb: "Review" },
@@ -30,11 +30,8 @@ const STEP_META: Record<number, { eyebrow: string; cta: string; crumb: string | 
 interface NewRoomForm {
   /** Step 1 — wired. */
   condition: ConditionStepValue;
-  /** Step 2 — NOT wired yet; step-audience.tsx still renders static mock rows. */
-  audience: {
-    rules: unknown[]; // CreateSegmentRuleInput[]
-    currency: string | null;
-  };
+  /** Step 2 — wired. */
+  audience: AudienceStepValue;
   /** Step 3 — NOT wired yet; step-people.tsx still renders static mock rows. */
   people: {
     people: unknown[]; // { userId, role, maxApprovalReach }[]
@@ -151,7 +148,12 @@ const NewRoom = () => {
           onChange={(condition) => setForm((f) => ({ ...f, condition }))}
         />
       )}
-      {step === 2 && <StepAudience />}
+      {step === 2 && (
+        <StepAudience
+          value={form.audience}
+          onChange={(audience) => setForm((f) => ({ ...f, audience }))}
+        />
+      )}
       {step === 3 && <StepPeople />}
       {step === 4 && <StepSettle />}
       {step === 5 && showDuplicate && (

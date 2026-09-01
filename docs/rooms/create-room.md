@@ -69,17 +69,44 @@ SVG footer, none show a step query string).
   so the shape of the eventual submit body is visible immediately, not built up ad hoc as each
   step gets wired.
 - **Temporary debug logging, at the user's request — remove once every step is wired and
-  reviewed, not before.** Two `console.log` calls, both behind `// TEMP DEBUG` comments: a
-  per-step log inside each step component (currently only `step-condition.tsx`) showing that
+  reviewed, not before.** `console.log` calls behind `// TEMP DEBUG` comments: a per-step log
+  inside each wired step component (`step-condition.tsx`, `step-audience.tsx`) showing that
   step's own current values, and a whole-form log inside `index.tsx` showing the full
   `NewRoomForm` object (all 5 slices, including the still-empty placeholder ones) on every change.
+- **Step 2's `field` is free text, not a picked vocabulary — confirmed by a live test, not
+  guessed.** The endpoint spec gives `field` no enum (unlike `operator`, which is a real fixed
+  enum: `Equals`/`NotEquals`/`GreaterThan`/`LessThan`/`GreaterThanOrEquals`/
+  `LessThanOrEquals`/`Contains`/`NotContains`/`IsSet`/`IsNotSet`). The user tested
+  `POST /rooms/new/estimate` live with `field: "hi"` (not a real customer attribute) and got a
+  200 back both times (matched everyone with `value: null`, matched no one with `value: 20`) —
+  no 400, no validation error. That rules out a fixed field vocabulary; the backend accepts any
+  string and just computes against it. So the rule-builder's field input is a plain text box
+  (`ROOM_RULE_OPERATORS` in `new-room-data.ts` supplies the operator dropdown only), same
+  pattern as `value` — there's no equivalent of Step 1's `GET /lifecycle/leakage-map` needed
+  here.
+- **Currency is picked per-room from `GET /currency/supported`, not inherited from anywhere.**
+  No workspace-level "current reporting currency" is readable outside the onboarding flow (only
+  `onboarding/workspace` and `onboarding/start` read currency endpoints today), so Step 2 asks
+  directly — a row of currency chips sourced live, nothing pre-selected.
+- **`POST /rooms/new/estimate` and `POST /rooms/new/similar` are debounced together, 400ms,
+  keyed off the rule list + currency** (same 400ms debounce pattern as `useSlugAvailable`).
+  Both fire once at least one rule has a non-empty `field` and a currency is picked; neither
+  call is a `useQuery` (they're POST, "not a saved list," per the endpoint's own note that
+  nothing persists) so both stay `useMutation`-based, extended to also expose `data`/`isError`
+  so the step can render live results instead of just firing-and-forgetting.
+- **The dropout list and similar-rooms table now render live data, not the old mock shape.**
+  `DROPOUT_TONE` in `new-room-data.ts` maps known `dropOut[].key` values seen in a real response
+  (`matched`, `no-contact`, `opted-out`, `at-cap`, `reachable`) to a tone, falling back to
+  neutral for any key not yet seen live. The old `AUDIENCE_FILTERS`/`DROPOUT_ROWS`/
+  `SIMILAR_ROOMS` mock exports were deleted from `new-room-data.ts` (confirmed unused
+  elsewhere first).
 
 ## Per-step status
 
 | Step | Endpoint(s) | Status | Notes |
 |---|---|---|---|
 | 1 — Condition | `GET /lifecycle/leakage-map` (vocabulary) | [x] built, **wired** | `step-condition.tsx`. Real loading/error/"no revenue model selected" states, no hardcoded fallback. `title`/`conditionKey` lifted to wizard-level `form.condition`. Not yet exercised against a live authenticated session in this sandbox (route is auth-gated) — `tsc -b` clean, code review only. |
-| 2 — Audience | `POST /rooms/new/estimate` (live cohort count), `POST /rooms/new/similar` (duplicate table) | [ ] not wired | `step-audience.tsx` still renders `AUDIENCE_FILTERS`/`DROPOUT_ROWS` mock rows and the relocated `SIMILAR_ROOMS` table on mock data. Needs a real rule-builder before either endpoint has anything real to send. **Next up.** |
+| 2 — Audience | `GET /currency/supported` (currency picker), `POST /rooms/new/estimate` (live cohort count + dropout), `POST /rooms/new/similar` (duplicate table) | [x] built, **wired** | `step-audience.tsx`. Real rule-builder (free-text `field`, fixed-enum `operator` dropdown, `value`, `and`/`or` `logicOperator` between rows, add/remove), currency chips, debounced (400ms) live calls to both room endpoints once a currency + ≥1 non-empty rule exist. Real loading/error/empty states throughout, no hardcoded fallback. `rules`/`currency` lifted to wizard-level `form.audience`. Not yet exercised against a live authenticated session — `tsc -b` clean, code review only. |
 | 3 — People | `GET /rooms/*` people/agent suggestion source (not yet identified — no candidate endpoint found for "suggested people/agents" specifically; may just be workspace member + agent-roster lookups) | [ ] not wired | `step-people.tsx` still renders `SUGGESTED_PEOPLE`/`SUGGESTED_AGENTS` mock rows. |
 | 4 — Settle | none identified yet — these are all plain form fields on `POST /rooms/new`'s body, no supporting GET found | [ ] not wired | `step-settle.tsx` still renders `SETTLE_OPTIONS`/`MEASURE_ROWS` mock rows. |
 | 5 — Review / duplicate / submit | `POST /rooms/new/similar` (final duplicate check), `POST /rooms/new` (actual submit), `POST /rooms/{roomId}/link` | [ ] not wired | `step-review.tsx`/`step-duplicate.tsx` render `buildReviewRows`/`DUPLICATE_COMPARE` mock data. Final submit currently just `navigate()`s to a hardcoded room, no real API call. |

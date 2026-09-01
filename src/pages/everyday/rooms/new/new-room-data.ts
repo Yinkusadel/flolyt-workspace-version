@@ -3,72 +3,33 @@ import type { AgentRef, PersonRef, Tone } from "@/pages/everyday/rooms/types";
 
 /** Static content for the new-room wizard (`/rooms/new`) — R06–R11. */
 
-export type SimilarRoom = {
-  title: string;
-  population: string;
-  overlap: string;
-  overlapTone: Tone;
-  owner: PersonRef;
-  state: string;
-  stateTone: Tone;
-  action: string;
-  actionTone: Tone;
+/**
+ * `operator` on `POST /rooms/new/estimate` and `POST /rooms/new/similar` is a fixed backend
+ * enum (confirmed from the endpoint's own spec) — `field` has no such enum and a live test
+ * (an unrecognized field string still returned 200, just with a 0/irrelevant count) confirmed
+ * it's free text, not picked from a vocabulary, so only `operator` gets a picker here.
+ */
+export const ROOM_RULE_OPERATORS: { value: string; label: string; needsValue: boolean }[] = [
+  { value: "Equals", label: "is", needsValue: true },
+  { value: "NotEquals", label: "is not", needsValue: true },
+  { value: "GreaterThan", label: "is more than", needsValue: true },
+  { value: "LessThan", label: "is less than", needsValue: true },
+  { value: "GreaterThanOrEquals", label: "is at least", needsValue: true },
+  { value: "LessThanOrEquals", label: "is at most", needsValue: true },
+  { value: "Contains", label: "contains", needsValue: true },
+  { value: "NotContains", label: "does not contain", needsValue: true },
+  { value: "IsSet", label: "is set", needsValue: false },
+  { value: "IsNotSet", label: "is not set", needsValue: false },
+];
+
+/** Known `dropOut[].key` values seen in a live response — anything else falls back to neutral. */
+export const DROPOUT_TONE: Record<string, Tone> = {
+  matched: "neutral",
+  "no-contact": "rose",
+  "opted-out": "rose",
+  "at-cap": "amber",
+  reachable: "teal",
 };
-
-export const SIMILAR_ROOMS: SimilarRoom[] = [
-  {
-    title: "Checkout abandoned at delivery fee",
-    population: "308,000",
-    overlap: "91,400",
-    overlapTone: "rose",
-    owner: ZAINAB,
-    state: "open",
-    stateTone: "amber",
-    action: "join instead?",
-    actionTone: "ultra",
-  },
-  {
-    title: "Thursday win-back",
-    population: "218,000",
-    overlap: "31,900",
-    overlapTone: "amber",
-    owner: { initials: "IN", name: "Ifeoma Nwosu", department: "Marketing" },
-    state: "open",
-    stateTone: "amber",
-    action: "note the overlap",
-    actionTone: "amber",
-  },
-  {
-    title: "Weekend push fatigue",
-    population: "94,000",
-    overlap: "2,100",
-    overlapTone: "neutral",
-    owner: { initials: "IN", name: "Ifeoma Nwosu", department: "Marketing" },
-    state: "recovering",
-    stateTone: "ultra",
-    action: "unrelated",
-    actionTone: "neutral",
-  },
-];
-
-export type ConditionFilterRow = { field: string; operator: string; value: string };
-
-export const AUDIENCE_FILTERS: ConditionFilterRow[] = [
-  { field: "Acquired between", operator: "is", value: "1 Mar and 31 May 2026" },
-  { field: "Orders placed", operator: "is exactly", value: "1" },
-  { field: "Days since first order", operator: "is more than", value: "90" },
-  { field: "Markets", operator: "is any of", value: "Nigeria" },
-];
-
-export type DropoutRow = { label: string; customers: string; tone: Tone; why: string; whyTone: Tone };
-
-export const DROPOUT_ROWS: DropoutRow[] = [
-  { label: "Match the condition", customers: "148,000", tone: "neutral", why: "", whyTone: "neutral" },
-  { label: "No contact details · guest checkout", customers: "−42,000", tone: "rose", why: "cannot be reached by anyone, ever", whyTone: "neutral" },
-  { label: "Opted out or erasure requested", customers: "−2,400", tone: "rose", why: "excluded permanently, in every room", whyTone: "neutral" },
-  { label: "Already in Thursday's win-back", customers: "−6,000", tone: "amber", why: "would breach the frequency cap", whyTone: "neutral" },
-  { label: "Reachable by anything this room does", customers: "100,000", tone: "teal", why: "this is the number the room will carry", whyTone: "teal" },
-];
 
 export type SuggestedPerson = { person: PersonRef; team: string; why: string; roomCount: number; added: boolean };
 

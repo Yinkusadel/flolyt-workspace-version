@@ -22,6 +22,10 @@ const useEstimateNewRoomCohort = () => {
   return {
     estimateCohort: mutation.mutate,
     isPending: mutation.isPending,
+    isError: mutation.isError,
+    error: mutation.error,
+    estimate: mutation.data?.data ?? null,
+    reset: mutation.reset,
   };
 };
 
