@@ -37,11 +37,76 @@ Legend: ✅ covered · ⚠️ partial (see note) · ❌ not covered · ❓ open 
 
 ### Per-stage screens (Overview, What changed, Cohorts, Compare, Chain, etc.)
 
-Not started — pick up here once the map page's open questions above are resolved, working one
-stage-screen header at a time the same way. `GET /lifecycle/stages/{stageKey}` covers part of
-Overview's KPI/departures data (see prior conversation) but not the bespoke `OverviewData`
-per-row narrative copy — same "numbers yes, narrative sentences no" gap as above, expect it to
-recur on every stage.
+Not started (no endpoint wired into any per-stage page yet) — but four screens were live-checked
+2026-08-31 (Playwright, signed in as `ichigo@yopmail.com`) against their candidate endpoints, one
+stage-screen header at a time, per [[feedback_incremental_endpoint_coverage]]:
+
+**"[Stage name]" Overview tab** (`/lifecycle/{stage}`) — `GET /lifecycle/stages/{stageKey}`. Covers
+the KPI-card row only partially, and inconsistently per stage — this is NOT a safe blanket "card 1
+= population" mapping. Checked against live screenshots of `/lifecycle/price`, `/lifecycle/adopt`,
+`/lifecycle/retain`, `/lifecycle/support` (values are still `data.ts` mock, not live-refetched for
+these 4): Acquire/Activate's "Acquired · 12 months" card is a real `population` match; Retain's
+identical "Acquired · 12 months / 894,000" card is NOT its own `population` — it's echoing Acquire's
+top-of-funnel number for context, a different concept than "who's in Retain now"; Price's "Customers
+with revenue" (90-day revenue filter), Support's "Something went wrong"/"Told us about it" (monthly
+incident rates against active-customer count), and every stage's "At stake" card (that's `/map`'s
+`atStake`, a different endpoint) don't match `population`/`rateOfChange`/`primaryConversion` at all.
+`rateOfChange`/`primaryConversion` were live-confirmed unavailable for both `acquire` and `activate`
+(see that endpoint's entry above) — not yet available for any stage. Net: 0-2 of each stage's 4 KPI
+cards are backed by this endpoint's fields; the rest need per-stage backend-gap comments, same
+treatment as the map page's metric line. ❓ open — this needs the same per-stage audit the metric
+line got before wiring anything.
+
+**"What changed" tab** (`/lifecycle/price/changes`, tab bar shared across all stages) —
+`GET /lifecycle/stages/{stageKey}/change-registry`. **Best match found so far** — the live table
+("DATED CHANGES THAT MOVED SOMETHING IN THIS STAGE": date · team-dot · title · effect subtitle ·
+status chip) lines up column-for-column with `entries[]`: date → `occurredOnUtc`, team dot/label →
+`team`, title → `title`, and the status chip ("causal finding"/"no effect"/"not instrumented") looks
+like a friendlier label over `effect.status`'s documented enum (`measured`/`no_effect`/`too_recent`/
+`outside_history`/`not_instrumented` — "causal finding" is presumably `measured`, not yet confirmed
+live). The two amber callouts at the bottom ("The 4 March delivery fee is a pricing change and it
+was never reviewed as one," "One change on this list has no owner and no date") match the response's
+top-level `callouts[]`. The header's "Add a change" button is exactly `POST /lifecycle/changes`'s
+already-noted target. **Only unconfirmed piece:** each row's effect subtitle ("Effective price +₦350
+on 61% of orders") — plausibly templated from `effect.delta`/`percentChange`/`caveat`, not yet
+verified whether `caveat` supplies this sentence directly or it still needs client-side templating
+like the root-cause table. ❓ needs one live `change-registry` response pasted to confirm `effect`'s
+exact shape and close this out. **Cross-stage check, same day:** `/lifecycle/acquire/changes` and
+`/lifecycle/churn/changes` were also screenshotted — same shared `ChangesTab` component (per
+`stage-tabs-config.ts`), same columns, only the row data differs, confirming this isn't a
+Price-only shape. Churn's page also surfaced a 4th status-chip value not seen on Price/Acquire —
+"measuring" (distinct from "causal finding"/"no effect"/"not instrumented") — plausibly the
+doc's `too_recent` status, and a "nobody" team row for its ownerless "This stage was given no
+owner" entry, consistent with Churn's documented no-owner-by-design status.
+
+**"History" tab** (`/lifecycle/price/history`, tab bar shared across all stages) — **correction to
+this doc's own prior claim.** The `GET /lifecycle/stages/{stageKey}/changes` entry above said "target
+`stage/history/history-tab.tsx`," assuming population-trend data belonged on a tab literally called
+History. A live screenshot shows this tab renders two completely different tables — "Goals that
+depend on this stage" (goal/owner/target/today/pace/this-stage's-part) and "What has already been
+tried here" (a room/experiment log: what/when/result/measured-how/learning-kept, with chips like
+"validated"/"contested"/"blocked in 2024") — neither resembling a population-over-time series at all.
+These look sourced from the Goals and Rooms domains, not lifecycle. **`GET /lifecycle/stages/
+{stageKey}/changes` currently has no confirmed UI target anywhere in the built app** — the doc's
+"target" note above is wrong and should not be trusted until a real target screen is found (if one
+exists) or this is asked of backend/design directly.
+
+**"Definition" screen** (`/lifecycle/price/definition`, reached via the Overview tab's "How this
+stage is defined" header link) — `GET /lifecycle/stages/{stageKey}/definition`. Partial, roughly
+half the screen. **Matches well:** the "A customer is in Price when" 3-option list ("They have
+chosen a plan" · billing.plan_id · 1.31M / "They have seen a price" · any order or plan view · 4.2M /
+"They have paid anything," selected · orders or billing · 894,000 ever, 1.1M active) maps cleanly
+onto `candidates: [{eventKey, description, datasourceId, estimatedRows, population}]`, with the
+selected option matching `current.entryEventKey`. The header's "last changed 12 January by Ravi
+Mehta" plausibly maps to `current.effectiveFromUtc`/`createdBy`. **Doesn't match at all:** the
+"What this stage needs, and what it has" table (6 rows: Plan and price per customer, Discounts
+applied, Currency and FX rate, Cost of goods per order, Payment processing cost, Delivery cost per
+order — each with a connection-status caption like "nothing connected · every margin figure is
+unavailable" or "Nigeria and Kenya only · Ghana and UK unavailable") has no corresponding field
+anywhere in the documented `GET /definition` shape — that response describes the stage's entry-event
+definition, not a per-input data-source readiness table. This is its own gap, same class as the
+metric-line one, not yet asked of backend. Both callouts (info box up top, red "Four of six inputs
+are present..." box at the bottom) are narrative copy with no backing field, as expected.
 
 ## Per-endpoint entries
 
@@ -105,10 +170,10 @@ return something other than the full resource (e.g. `data: null`, `data: changeI
 - **Purpose:** One stage's live state — population, departures (grouped by exit-rule cause), rate of change, restating flag.
 - **Auth:** Bearer token.
 - **Request:** path `stageKey`.
-- **Response `data`:** `{ stageKey, stageName, position, owningTeam, leadAgentKey, leadAgentName, reviewCadence, population, populationSource, definitionVersion, populationComputedAtUtc, populationCaveat, rateOfChange, primaryConversion, departures: [{cause, toStageKey, toStageName, conditionKey, size, observedValue, observedValueCaveat, reachability, reachabilityCaveat, claim: {statement, grade, confidence: number}, roomOpen}], restating, callouts: [...] }`. `population`/`populationSource`/`definitionVersion`/`populationComputedAtUtc`, and each departure's `size`, are nullable per the spec's example.
+- **Response `data`:** `{ stageKey, stageName, position, owningTeam, leadAgentKey, leadAgentName, reviewCadence, population, populationSource, definitionVersion, populationComputedAtUtc, populationCaveat, rateOfChange, primaryConversion, departures: [{cause, toStageKey, toStageName, conditionKey, size, observedValue, observedValueCaveat, reachability, reachabilityCaveat, claim: {statement, grade, confidence: number}, roomOpen}], restating, callouts: [...] }`. `population`/`populationSource`/`definitionVersion`/`populationComputedAtUtc`, and each departure's `size`, are nullable per the spec's example. **Confirmed 2026-08-31 from two live responses (`acquire`, `activate`):** `population`, `rateOfChange`, and `primaryConversion` are each the same "measured value" wrapper as `GET /map`'s `atStake` — `{ value: number | null, state: string, missingSource?: string, wouldUnlock?: string }` — not the bare nullable numbers the written spec implied. This confirms the wrapper-reuse guess flagged under `GET /map`'s notes, now verified for these three fields specifically.
 - **Used by:** service + hook exist (`get-stage.ts` / `use-get-stage.ts`), not wired — target Overview tab's KPI numbers, but NOT its bespoke per-row leak-table narrative (see coverage tracker note on Overview).
 - **Status:** service/hook ready, not wired.
-- **Notes:** `primaryConversion` unavailable throughout (nothing models it yet). Departures' `observedValue`/`reachability` are unavailable and say why (no customer-record match in the warehouse).
+- **Notes:** `primaryConversion` unavailable throughout (nothing models it yet) — confirmed live for both `acquire` and `activate`. `rateOfChange` was also unavailable for both (same `missingSource`: "a count for this month and the one before it") — not yet confirmed available for any stage. Departures' `observedValue`/`reachability` are unavailable and say why (no customer-record match in the warehouse); both live responses returned `departures: []` (empty array, not populated rows) and `callouts: []`/one entry — not yet seen a stage with actual departure rows. `population` is genuinely unavailable for `acquire` (`missingSource`: "a definition for Acquire — nothing yet says who is in it") but available for `activate` via `populationSource: "lifecycle-fallback"` — consistent with `GET /map`'s note that the fallback classifier only covers activate/retain/churn. `owningTeam` confirmed live: `"Marketing"` for acquire, `"Product"` for activate — matches `data.ts`'s mock department values for both, first live confirmation of this field (still worth re-checking on `GET /map` itself, which returns it from a different call). `leadAgentKey`/`leadAgentName` confirmed format: kebab-case key, Title Case name (e.g. `"acquisition-quality"` / `"Acquisition Quality"`). `reviewCadence` confirmed lowercase string enum (`"weekly"`, `"daily"`). Activate's one live callout, `{key: "population-from-fallback", tone: "context", ...}`, confirms a `"context"` tone value not previously seen (distinct from `GET /map`'s callout tones).
 
 ### GET /lifecycle/stages/{stageKey}/changes
 
