@@ -17,6 +17,7 @@ wired into code yet, so we always have a source of truth to check against and co
 | Datasources | [datasources.md](datasources.md) | 14/14 wired, `GET /connected`'s no-envelope shape confirmed |
 | Teams | [teams.md](teams.md) | 13/13 wired (1 of those, `POST /invitations/accept`, was already built in `auth/` during the auth rebuild) |
 | Lifecycle | [lifecycle.md](lifecycle.md) | 17/17 documented, 0/17 wired — being worked section-by-section, see its own "Screen-section coverage tracker" |
+| Rooms | [rooms.md](rooms.md) | 52/52 documented, service+hook scaffolded for all 52, 0/52 wired into a page |
 
 ## Per-endpoint entry format
 
