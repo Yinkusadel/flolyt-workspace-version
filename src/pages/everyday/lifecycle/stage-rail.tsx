@@ -138,13 +138,13 @@ export function StageRail({ stages, advocacyNote, isLoading, isError, onRetry }:
         <div className="mt-3 flex snap-x gap-1.5 overflow-x-auto pb-2">
           {isLoading
             ? Array.from({ length: 10 }).map((_, index) => (
-                <div key={index} className="w-32 shrink-0 snap-start rounded-card border border-line bg-paper-2 p-3">
+                <div key={index} className="w-36 shrink-0 snap-start rounded-card border border-line bg-paper-2 p-3">
                   <Skeleton className="size-2 rounded-full" />
                   <Skeleton className="mt-1.5 h-3.5 w-16" />
-                  <Skeleton className="mt-1.5 h-2.5 w-20" />
+                  <Skeleton className="mt-2.5 h-3.5 w-10" />
+                  <Skeleton className="mt-1 h-2 w-20" />
                   <div className="my-2.5 border-t border-dashed border-line" />
                   <Skeleton className="h-4 w-14" />
-                  <Skeleton className="mt-1 h-2 w-10" />
                 </div>
               ))
             : stages.map((stage) => (
@@ -152,7 +152,7 @@ export function StageRail({ stages, advocacyNote, isLoading, isError, onRetry }:
                   key={stage.slug}
                   to={`/lifecycle/${stage.slug}`}
                   className={cn(
-                    "w-32 shrink-0 snap-start rounded-card border border-line p-3 transition-colors hover:border-ink-4",
+                    "w-36 shrink-0 snap-start rounded-card border border-line p-3 transition-colors hover:border-ink-4",
                     stage.name === "Churn" ? "bg-rose-bg/60" : "bg-paper-2"
                   )}
                 >
@@ -162,9 +162,27 @@ export function StageRail({ stages, advocacyNote, isLoading, isError, onRetry }:
                     aria-hidden
                   />
                   <p className="mt-1.5 text-[13px] font-semibold text-ink">{stage.name}</p>
-                  {/* ❌ Backend does NOT provide: metric */}
-                  {/* <p className="mt-0.5 truncate font-mono text-[9.5px] text-ink-4">{stage.metric}</p> */}
+
+                  {/* Metric stat tile — same value-or-icon shape as the amount tile below, every
+                      card renders one: a formatted value when the headline computes for this
+                      stage, or the InfoTooltip icon in its place when it's gated. The label
+                      caption is always shown (all 10 stages carry one) so a gated stage still
+                      names the concept instead of a bare, unexplained icon. */}
+                  <div className="mt-2 min-h-9">
+                    {stage.metricValue ? (
+                      <p className="text-[12px] font-semibold text-ink-2">{stage.metricValue}</p>
+                    ) : (
+                      <InfoTooltip missingSource={stage.metricCaveat} wouldUnlock={stage.metricWouldUnlock} />
+                    )}
+                    {stage.metricLabel && (
+                      <p className="mt-0.5 truncate font-mono text-[8.5px] text-ink-4" title={stage.metricLabel}>
+                        {stage.metricLabel}
+                      </p>
+                    )}
+                  </div>
+
                   <div className="my-2.5 border-t border-dashed border-line" />
+
                   {stage.amount === "Unavailable" ? (
                     <InfoTooltip missingSource={stage.amountCaveat} wouldUnlock={stage.amountWouldUnlock} />
                   ) : (
@@ -172,9 +190,6 @@ export function StageRail({ stages, advocacyNote, isLoading, isError, onRetry }:
                       {stage.amount}
                     </p>
                   )}
-                  {/* ❌ amountLabel caption removed 2026-08-31 — it was hardcoded in data.ts, not
-                      backend-derived, and always reads "at stake" now anyway (see the Advocate
-                      fix in feedback_no_hardcoded_fallback / flolyt_lifecycle_endpoints memory). */}
                 </Link>
               ))}
         </div>

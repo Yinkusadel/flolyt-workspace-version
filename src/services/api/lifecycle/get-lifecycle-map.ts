@@ -40,10 +40,12 @@ export interface LifecycleHeadlineDto {
   yearOverYear: LifecycleMeasuredValueDto<number> | null;
 }
 
+// Confirmed 2026-09-04 from a real response: referred/shareOfAcquisition/newCustomers are each
+// the same measured-value wrapper as atStake/headline, not bare nullable numbers as first typed.
 export interface LifecycleReferralReachDto {
-  referred: number | null;
-  shareOfAcquisition: number | null;
-  newCustomers: number | null;
+  referred: LifecycleMeasuredValueDto<number>;
+  shareOfAcquisition: LifecycleMeasuredValueDto<number>;
+  newCustomers: LifecycleMeasuredValueDto<number>;
   windowDays: number;
 }
 

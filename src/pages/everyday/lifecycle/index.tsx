@@ -5,7 +5,7 @@ import { RootCauseSpotlight } from "@/pages/everyday/lifecycle/root-cause-spotli
 import { StageRail } from "@/pages/everyday/lifecycle/stage-rail";
 import { DEPARTMENT_COLORS, ROOT_CAUSE_ROWS, STAGES, type Department, type Stage } from "@/pages/everyday/lifecycle/data";
 import useGetLifecycleMap from "@/features/lifecycle/use-get-lifecycle-map";
-import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import type { LifecycleHeadlineDto, LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
 const KNOWN_DEPARTMENTS = new Set(Object.keys(DEPARTMENT_COLORS));
 
@@ -21,15 +21,42 @@ function formatAtStake(atStake: LifecycleMeasuredValueDto<number>): string {
   return `₦${atStake.value}`;
 }
 
+function round(value: number, decimals: number): number {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+}
+
+// headline is new as of the 2026-09-04 spec paste, replacing the old commented-out "metric"
+// line — a single always-present figure per card (6 of 10 stages compute one today; the other 4
+// are declared but gated, same missingSource/wouldUnlock shape as atStake). This only formats the
+// number; the card pairs it with headline.label as a separate caption (stage-rail.tsx), the same
+// stat-tile shape atStake already used, rather than concatenating everything into one truncated
+// string. unit decides the numeric formatting, never renders as a literal suffix: "percent"/"%"
+// and "share"/"ratio"/"rate" (confirmed live: retain's repeat share, 0.9567) both render as a
+// percentage; anything else (confirmed live: "count", "average") rounds to 1-2dp / compacts past
+// 1000 — adopt's raw 10.0748175182481... needed the rounding.
+function formatHeadlineValue(headline: LifecycleHeadlineDto): string | undefined {
+  if (headline.value === null) return undefined;
+  const { value } = headline;
+  const normalizedUnit = headline.unit.trim().toLowerCase();
+  if (normalizedUnit === "percent" || normalizedUnit === "%") return `${round(value, 1)}%`;
+  if (normalizedUnit === "share" || normalizedUnit === "ratio" || normalizedUnit === "rate") return `${round(value * 100, 1)}%`;
+
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${round(value / 1_000_000, 1)}M`;
+  if (abs >= 1_000) return `${round(value / 1_000, 1)}k`;
+  return `${round(value, 2)}`;
+}
+
 /**
  * The lifecycle map (LC02, plus LC01's first-run empty state and LC05's
  * ?market= filter — those aren't wired in yet, see docs/build-tracker.md).
  * See flolyt-figma-designs/flolyt-lifecycle/LC02-lifecycle-map.svg.
  *
- * Stage-card name/owningTeam/atStake are live from GET /lifecycle/map; the second metric
- * line has no backend field at all (see the ❌ comment in stage-rail.tsx — commented out, not
- * faked) and the root-cause spotlight table (blocked on changeId discovery — see
- * docs/endpoints/lifecycle.md) stays on mock data until backend answers those questions.
+ * Stage-card name/owningTeam/atStake/headline (the second metric line) are live from
+ * GET /lifecycle/map — headline added 2026-09-04, wired same day. The root-cause spotlight
+ * table (blocked on changeId discovery — see docs/endpoints/lifecycle.md) stays on mock data
+ * until backend answers those questions.
  *
  * Once wired, a field never falls back to data.ts's mock value on loading/error/mismatch — see
  * feedback_no_hardcoded_fallback memory. Only `slug` (routing) and `amountLabel` (a fixed
@@ -51,8 +78,10 @@ const Lifecycle = () => {
       headline: mock.headline,
       name: live?.name ?? "Unavailable",
       department: live?.owningTeam && KNOWN_DEPARTMENTS.has(live.owningTeam) ? (live.owningTeam as Department) : null,
-      // ❌ Backend does NOT provide: metric (e.g. "894k/yr", "6 plans") — see
-      // docs/endpoints/lifecycle.md's open question, still unanswered. Omitted, not faked.
+      metricValue: live ? formatHeadlineValue(live.headline) : undefined,
+      metricLabel: live?.headline.label,
+      metricCaveat: live?.headline.value === null ? (live.headline.missingSource ?? undefined) : undefined,
+      metricWouldUnlock: live?.headline.value === null ? (live.headline.wouldUnlock ?? undefined) : undefined,
       amount: live ? formatAtStake(live.atStake) : "Unavailable",
       amountCaveat: live?.atStake.value === null ? live.atStake.missingSource : undefined,
       amountWouldUnlock: live?.atStake.value === null ? live.atStake.wouldUnlock : undefined,
