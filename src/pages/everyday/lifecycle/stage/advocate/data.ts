@@ -8,7 +8,7 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -581,30 +581,8 @@ export const ADVOCATE_THRESHOLD_PRESET: ThresholdPreset = {
   },
 };
 
-// ---- History (AV10) ----------------------------------------------------------
-
-export const ADVOCATE_GOAL_ROWS: GoalRow[] = [
-  { id: "second-orders", goal: "Second orders", owner: { name: "Tunde", initials: "TB", color: "#B4568F" }, target: "184,000", today: "ahead", todayTone: "teal", paceLabel: "ahead", paceTone: "teal", part: "31% of acquisition, unmanaged", partTone: "amber" },
-];
-
-export const ADVOCATE_HISTORY_MID_INSIGHT = {
-  tone: "amber" as const,
-  title: "The largest acquisition channel in the company contributes to exactly one goal and owns none",
-  body: "Referral produces 278,000 customers a year with the best repeat rate and the lowest cost. It appears in no company goal, has no team target, and its only accountability is that its output rolls into somebody else's volume number.",
-};
-
-export const ADVOCATE_TRIED_ROWS: TriedRow[] = [
-  { id: "reward-raised-1000", what: "Referral reward raised to ₦1,000", when: "18 Apr", result: "+22% volume, +144% cost", resultTone: "amber", measuredHow: "no holdout", learningKept: "unresolved" },
-  { id: "reward-raised-500", what: "Reward raised ₦300 → ₦500", when: "2023", result: "+14% volume", resultTone: "neutral", measuredHow: "no holdout", learningKept: "unresolved" },
-  { id: "rating-prompt", what: "Referral prompt after a 5-star rating", when: "2024", result: "+8% referrals", resultTone: "teal", measuredHow: "A/B · 50/50", learningKept: "validated" },
-  { id: "group-ordering-cross-referral", what: "Group ordering cross-referral", when: "never", whenTone: "amber", result: "untried · 4.1 referrals each", resultTone: "amber", measuredHow: "—", learningKept: "never proposed", learningKeptTone: "rose" },
-  { id: "reward-holdout", what: "A holdout on the reward", when: "never", whenTone: "rose", result: "untried · ₦278M unexplained", resultTone: "rose", measuredHow: "—", learningKept: "never proposed", learningKeptTone: "rose" },
-];
-
-export const ADVOCATE_HISTORY_INSIGHT = {
-  title: "One test in five had a control, and it is the only one anybody can still argue from",
-  body: "The 2024 rating prompt was A/B tested and returned +8%. Two reward increases totalling ₦278M a year were not tested at all. This is the least-measured stage in the lifecycle and the one with the highest return per naira — which are not unrelated facts.",
-};
+// ---- History (AV10) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
+// acquire/data.ts's History note and history-tab.tsx.
 
 // ---- Compare periods (AV11) -----------------------------------------------
 

@@ -8,7 +8,7 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
@@ -504,25 +504,8 @@ export const RENEW_THRESHOLD_PRESET: ThresholdPreset = {
   },
 };
 
-// ---- History (RN10) ----------------------------------------------------------
-
-export const RENEW_GOAL_ROWS: GoalRow[] = [
-  { id: "involuntary-churn-goal", goal: "Involuntary churn", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" }, target: "1.8%/mo", today: "1.9%/mo", todayTone: "teal", paceLabel: "on target", paceTone: "teal", part: "the retry window did it", partTone: "teal" },
-  { id: "net-revenue", goal: "Net revenue", owner: { name: "Ada", initials: "AD", color: "#2E8B7F" }, target: "₦4.90B", today: "₦4.71B proj", todayTone: "amber", paceLabel: "94% of pace", paceTone: "amber", part: "₦88M of the projection is wrong", partTone: "rose" },
-];
-
-export const RENEW_HISTORY_INSIGHT = {
-  title: "This is the only goal in the company that is on target, and it is on target because of one change",
-  body: "Involuntary churn went from 3.1% to 1.9% because Ravi approved moving card retries nine hours later. One decision, nine days from room opening to close, ₦62M recovered and measured against a holdout. It is the clearest example in the workspace of the product working exactly as intended.",
-};
-
-export const RENEW_TRIED_ROWS: TriedRow[] = [
-  { id: "card-retry-0900-local", what: "Card retry at 09:00 local", when: "2 Apr", result: "₦62M recovered · 25% → 70.5%", resultTone: "teal", measuredHow: "holdout · 10% not retried", learningKept: "validated" },
-  { id: "retry-payday-plus-1", what: "Retry at payday +1", when: "pending", whenTone: "amber", result: "untried · awaiting approval", resultTone: "amber", measuredHow: "holdout planned", learningKept: "4 hrs waiting" },
-  { id: "pause-reason-made-optional", what: "Pause reason made optional", when: "2023", result: "68% skip · diagnostic lost", resultTone: "amber", measuredHow: "never measured", learningKept: "reverse it" },
-  { id: "winback-pause-expiry", what: "Win-back on pause expiry", when: "2024", result: "+11 pts return rate", resultTone: "teal", measuredHow: "holdout · 20%", learningKept: "validated" },
-  { id: "prompt-expired-card", what: "Prompt to update an expired card", when: "never", whenTone: "rose", result: "untried · ₦19M identified", resultTone: "rose", measuredHow: "—", learningKept: "never proposed", learningKeptTone: "rose" },
-];
+// ---- History (RN10) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
+// acquire/data.ts's History note and history-tab.tsx.
 
 // ---- Compare periods (RN11) -----------------------------------------------
 

@@ -9,7 +9,7 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -704,24 +704,8 @@ export const CHURN_THRESHOLD_PRESET: ThresholdPreset = {
   },
 };
 
-// ---- History (CH10) -------------------------------------------------------------
-
-export const CHURN_GOAL_ROWS: GoalRow[] = [
-  { id: "net-revenue", goal: "Net revenue", owner: { name: "Ada", initials: "AD", color: "#2E8B7F" }, target: "₦4.90B", today: "₦4.71B proj", todayTone: "amber", paceLabel: "94% of pace", paceTone: "amber", part: "where the whole gap lands", partTone: "rose" },
-];
-
-export const CHURN_TRIED_ROWS: TriedRow[] = [
-  { id: "post-fee-fix-outreach", what: "Post-fee-fix outreach", when: "Aug", result: "9.4% won back · ₦1,490 each", resultTone: "teal", measuredHow: "holdout · 10%", learningKept: "validated" },
-  { id: "failed-delivery-apology-late", what: "Failed-delivery apology · late", when: "Mar", result: "11.1% won back", resultTone: "teal", measuredHow: "holdout · 15%", learningKept: "validated" },
-  { id: "annual-we-miss-you-30-off", what: "Annual “we miss you” · 30% off", when: "2023–", result: "2.1% · ₦14,200 each", resultTone: "rose", measuredHow: "no holdout", learningKept: "stop it", learningKeptTone: "rose" },
-  { id: "churn-prediction-model", what: "Churn prediction model", when: "12 Jan", result: "71% precision · 0 actions", resultTone: "rose", measuredHow: "backtested", learningKept: "built, unused", learningKeptTone: "rose" },
-  { id: "acting-on-the-prediction", what: "Acting on the prediction", when: "never", whenTone: "rose", result: "untried · ₦31M in the top decile", resultTone: "rose", measuredHow: "—", learningKept: "never proposed", learningKeptTone: "rose" },
-];
-
-export const CHURN_HISTORY_INSIGHT = {
-  title: "The two win-backs that were measured both worked and both told people something true",
-  body: "A fix notice and an apology, no discount, 9.4% and 11.1%. The unmeasured one offers 30% off and recovers 2.1%. Three stages have now independently produced the same finding, and business memory holds it as validated — which is what that system is for.",
-};
+// ---- History (CH10) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
+// acquire/data.ts's History note and history-tab.tsx.
 
 // ---- Compare periods (CH11) -----------------------------------------------------
 

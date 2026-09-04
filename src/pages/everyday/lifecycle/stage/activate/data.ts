@@ -478,44 +478,8 @@ export const ACTIVATE_THRESHOLD_PRESET: ThresholdPreset = {
   },
 };
 
-// ---- History (AC11) -------------------------------------------------------
-
-export type ActivateGoalRow = {
-  id: string;
-  goal: string;
-  owner: { name: string; initials: string; color: string };
-  target: string;
-  today: string;
-  todayTone: "amber";
-  paceLabel: string;
-  paceTone: "rose" | "amber";
-  part: string;
-  partTone: "rose";
-};
-
-export const ACTIVATE_GOAL_ROWS: ActivateGoalRow[] = [
-  { id: "repeat-rate", goal: "90-day repeat rate", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" }, target: "36.4%", today: "29.2%", todayTone: "amber", paceLabel: "7.2 behind", paceTone: "rose", part: "activation is the upstream cause", partTone: "rose" },
-  { id: "net-revenue", goal: "Net revenue", owner: { name: "Ada", initials: "AD", color: "#2E8B7F" }, target: "₦4.90B", today: "₦4.71B proj", todayTone: "amber", paceLabel: "94% of pace", paceTone: "amber", part: "₦188M of the ₦186M gap", partTone: "rose" },
-];
-
-export type ActivateTriedRow = {
-  id: string;
-  what: string;
-  when: string;
-  whenTone?: "neutral" | "amber";
-  result: string;
-  resultTone: "teal" | "amber" | "neutral";
-  measuredHow: string;
-  learningKept: "validated" | "superseded" | "validated · no effect" | "suggested twice";
-};
-
-export const ACTIVATE_TRIED_ROWS: ActivateTriedRow[] = [
-  { id: "one-tap-reorder", what: "One-tap reorder", when: "18 Mar", result: "+2.1 pts, app users only", resultTone: "teal", measuredHow: "before/after · 14 days", learningKept: "validated" },
-  { id: "welcome-sequence", what: "Welcome sequence · 3 emails", when: "Feb", result: "+0.4 pts · not significant", resultTone: "neutral", measuredHow: "holdout · 20%", learningKept: "validated · no effect" },
-  { id: "free-first-delivery", what: "Free first delivery · 2024", when: "Sep 2024", result: "+11 pts activation, −6 pts margin", resultTone: "amber", measuredHow: "holdout · 15%", learningKept: "superseded" },
-  { id: "new-address-picker", what: "New address picker", when: "2 Apr", result: "no measurable effect", resultTone: "neutral", measuredHow: "A/B · 50/50", learningKept: "validated" },
-  { id: "account-after-checkout", what: "Account after checkout", when: "never", whenTone: "amber", result: "untried", resultTone: "amber", measuredHow: "—", learningKept: "suggested twice" },
-];
+// ---- History (AC11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
+// acquire/data.ts's History note and history-tab.tsx.
 
 // ---- Compare periods (AC12) -----------------------------------------------
 

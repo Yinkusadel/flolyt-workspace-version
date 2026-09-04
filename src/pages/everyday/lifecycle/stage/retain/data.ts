@@ -9,7 +9,7 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
@@ -567,27 +567,8 @@ export const RETAIN_THRESHOLD_PRESET: ThresholdPreset = {
   },
 };
 
-// ---- History (RT11) ----------------------------------------------------------
-
-export const RETAIN_GOAL_ROWS: GoalRow[] = [
-  { id: "90-day-repeat-rate", goal: "90-day repeat rate", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" }, target: "36.4%", today: "29.2%", todayTone: "amber", paceLabel: "7.2 behind", paceTone: "rose", part: "this stage is the goal", partTone: "rose" },
-  { id: "net-revenue", goal: "Net revenue", owner: { name: "Ada", initials: "AD", color: "#2E8B7F" }, target: "₦4.90B", today: "₦4.71B proj", todayTone: "amber", paceLabel: "94% of pace", paceTone: "amber", part: "₦412M of the ₦186M gap", partTone: "rose" },
-  { id: "second-orders", goal: "Second orders", owner: { name: "Tunde", initials: "TB", color: "#B4568F" }, target: "184,000", today: "ahead", todayTone: "teal", paceLabel: "ahead", paceTone: "teal", part: "ahead on volume, not rate", partTone: "amber" },
-];
-
-export const RETAIN_HISTORY_MID_INSIGHT = {
-  tone: "rose" as const,
-  title: "Two goals on this stage are moving in opposite directions and both are being hit as designed",
-  body: "Second orders is ahead because acquisition rose 31%. Repeat rate is 7.2 points behind because the rate per acquired customer fell. Tunde and Ifeoma are both doing their jobs and one of them will be wrong at the quarter end. That tension is priced at ₦88M and nobody has decided it.",
-};
-
-export const RETAIN_TRIED_ROWS: TriedRow[] = [
-  { id: "kenya-scheduled-nudge", what: "Kenya scheduled-order nudge · no offer", when: "Jun", result: "18.1% recovered", resultTone: "teal", measuredHow: "holdout · 20%", learningKept: "validated" },
-  { id: "lagos-apology", what: "Lagos apology · failed deliveries", when: "Mar", result: "31.4% recovered", resultTone: "teal", measuredHow: "holdout · 15%", learningKept: "validated" },
-  { id: "thursday-winback", what: "Thursday win-back · 20% off", when: "2024–", result: "9.4% · +4.1 vs holdout", resultTone: "amber", measuredHow: "holdout · 10%", learningKept: "works, aimed late" },
-  { id: "first-order-discount", what: "First-order discount · 2024", when: "Nov 2024", result: "+41% volume, −14 pts repeat", resultTone: "rose", measuredHow: "holdout · 10%", learningKept: "validated" },
-  { id: "reactivation-no-offer-7-30", what: "Reactivation with no offer, day 7–30", when: "pending", whenTone: "amber", result: "untried · waiting 19 hrs", resultTone: "rose", measuredHow: "holdout planned · 10%", learningKept: "the open approval" },
-];
+// ---- History (RT11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
+// acquire/data.ts's History note and history-tab.tsx.
 
 // ---- Compare periods (RT12) -----------------------------------------------
 

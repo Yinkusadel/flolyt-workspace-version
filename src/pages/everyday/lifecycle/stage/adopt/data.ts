@@ -10,7 +10,7 @@ import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -535,19 +535,8 @@ export const ADOPT_THRESHOLD_PRESET: ThresholdPreset = {
   },
 };
 
-// ---- History (AD11) ----------------------------------------------------------
-
-export const ADOPT_GOAL_ROWS: GoalRow[] = [
-  { id: "90-day-repeat-rate", goal: "90-day repeat rate", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" }, target: "36.4%", today: "29.2%", todayTone: "amber", paceLabel: "7.2 behind", paceTone: "rose", part: "depth is the strongest predictor", partTone: "rose" },
-];
-
-export const ADOPT_TRIED_ROWS: TriedRow[] = [
-  { id: "one-tap-reorder", what: "One-tap reorder", when: "18 Mar", result: "612,000 adopted · +2.1 pts", resultTone: "teal", measuredHow: "before/after · 14 days", learningKept: "validated" },
-  { id: "wallet-launch", what: "Wallet launch", when: "Nov 2025", result: "184,000 funded, 56,000 reused", resultTone: "amber", measuredHow: "no follow-up measured", learningKept: "incomplete" },
-  { id: "rate-your-delivery", what: "Rate-your-delivery prompt", when: "2022", result: "241,000 rated · +6 pts retention", resultTone: "neutral", measuredHow: "holdout · 10%", learningKept: "validated · low lift" },
-  { id: "group-ordering-launch", what: "Group ordering launch", when: "2024", result: "94,000 · highest orders/month", resultTone: "teal", measuredHow: "no holdout", learningKept: "never promoted" },
-  { id: "prompt-toward-scheduled", what: "Prompt toward scheduled delivery", when: "never", whenTone: "amber", result: "untried · +38 pts available", resultTone: "amber", measuredHow: "—", learningKept: "never proposed" },
-];
+// ---- History (AD11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
+// acquire/data.ts's History note and history-tab.tsx.
 
 // ---- Compare periods (AD12) -----------------------------------------------
 

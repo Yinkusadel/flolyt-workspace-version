@@ -14,7 +14,7 @@ import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { CheckedRow, ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -555,20 +555,8 @@ export const PRICE_THRESHOLD_PRESET: ThresholdPreset = {
   },
 };
 
-// ---- History (PR11) -------------------------------------------------------
-
-export const PRICE_GOAL_ROWS: GoalRow[] = [
-  { id: "contribution-margin", goal: "Contribution margin", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" }, target: "Unavailable", today: "Unavailable", todayTone: "neutral", paceLabel: "no baseline", paceTone: "amber", part: "blocked at the source", partTone: "rose" },
-  { id: "net-revenue", goal: "Net revenue", owner: { name: "Ada", initials: "AD", color: "#2E8B7F" }, target: "₦4.90B", today: "₦4.71B proj", todayTone: "amber", paceLabel: "94% of pace", paceTone: "amber", part: "₦46M identified here", partTone: "amber" },
-];
-
-export const PRICE_TRIED_ROWS: TriedRow[] = [
-  { id: "nigeria-price-4pct", what: "Nigeria list price +4%", when: "2 Mar", result: "no volume effect", resultTone: "teal", measuredHow: "before/after · 8 weeks", learningKept: "validated" },
-  { id: "student-plan-launch", what: "Student plan launch", when: "14 Feb", result: "6,200 downgraded from full price", resultTone: "rose", measuredHow: "no holdout", learningKept: "room needed" },
-  { id: "discount-15-20", what: "Discount 15% → 20%", when: "16 Mar", result: "+9% orders, +31k discount-only", resultTone: "amber", measuredHow: "no holdout", learningKept: "contested" },
-  { id: "first-order-discount-2024", what: "First-order discount · 2024", when: "Nov 2024", result: "+41% volume, −14 pts repeat", resultTone: "rose", measuredHow: "holdout · 10%", learningKept: "validated" },
-  { id: "legacy-unlimited-reprice", what: "Legacy Unlimited reprice", when: "never", whenTone: "amber", result: "untried since 2022", resultTone: "amber", measuredHow: "—", learningKept: "blocked in 2024" },
-];
+// ---- History (PR11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
+// acquire/data.ts's History note and history-tab.tsx.
 
 // ---- Compare periods (PR12) --------------------------------------------
 

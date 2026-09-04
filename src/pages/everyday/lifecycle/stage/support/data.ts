@@ -9,7 +9,7 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
@@ -520,26 +520,8 @@ export const SUPPORT_THRESHOLD_PRESET: ThresholdPreset = {
   },
 };
 
-// ---- History (SU10) ----------------------------------------------------------
-
-export const SUPPORT_GOAL_ROWS: GoalRow[] = [
-  { id: "90-day-repeat-rate", goal: "90-day repeat rate", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" }, target: "36.4%", today: "29.2%", todayTone: "amber", paceLabel: "7.2 behind", paceTone: "rose", part: "earliest detectable signal", partTone: "amber" },
-  { id: "cost-per-contact", goal: "Cost per contact", owner: { name: "Amara", initials: "AO", color: "#C56A2E" }, target: "₦42", today: "₦48", todayTone: "amber", paceLabel: "behind", paceTone: "amber", part: "the goal that caused three losses", partTone: "rose" },
-];
-
-export const SUPPORT_HISTORY_MID_INSIGHT = {
-  tone: "rose" as const,
-  title: "This stage has a goal that actively works against the company's other four",
-  body: "Cost per contact rewards deflection, headcount cuts and shorter conversations. Three of those decisions this year each saved money and lost more revenue than they saved. Amara is being measured on the one number that makes the ₦12M invisible. Nobody set out to do this — the goal predates the lifecycle view by three years.",
-};
-
-export const SUPPORT_TRIED_ROWS: TriedRow[] = [
-  { id: "proactive-outreach-failed-delivery", what: "Proactive outreach · failed delivery", when: "Mar", result: "31.4% repeat · +22 vs holdout", resultTone: "teal", measuredHow: "holdout · 15%", learningKept: "validated · best in lifecycle" },
-  { id: "chatbot-refund-flow", what: "Chatbot refund flow", when: "Feb", result: "4,200 deflected · −9 pts repeat", resultTone: "rose", measuredHow: "no holdout · found later", learningKept: "net negative" },
-  { id: "help-centre-fee-article", what: "Help centre fee article", when: "Apr", result: "6,900 deflected · −5 pts repeat", resultTone: "rose", measuredHow: "no holdout", learningKept: "net negative" },
-  { id: "ghana-headcount-reduction", what: "Ghana headcount reduction", when: "Jun", result: "₦4M saved · resolution 3.4× worse", resultTone: "rose", measuredHow: "no holdout", learningKept: "under review" },
-  { id: "outreach-on-late-delivery", what: "Outreach on late delivery", when: "never", whenTone: "amber", result: "untried · 31,400/mo silent", resultTone: "rose", measuredHow: "—", learningKept: "the obvious next test" },
-];
+// ---- History (SU10) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
+// acquire/data.ts's History note and history-tab.tsx.
 
 // ---- Compare periods (SU11) -----------------------------------------------
 

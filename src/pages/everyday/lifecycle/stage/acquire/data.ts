@@ -358,72 +358,12 @@ export const ACQUIRE_THRESHOLD_ROWS: ThresholdRow[] = [
   { id: "spend-rises", condition: "Spend rises with no volume change", threshold: "more than 15%", currently: "+4%", currentlyTone: "teal", status: "no", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" } },
 ];
 
-// ---- History (A14) ----------------------------------------------------------
-
-export type GoalRow = {
-  id: string;
-  goal: string;
-  owner: { name: string; initials: string; color: string };
-  target: string;
-  today: string;
-  todayTone: "teal" | "rose" | "amber" | "neutral";
-  paceLabel: string;
-  paceTone: "teal" | "rose" | "amber";
-  part: string;
-  partTone: "amber" | "rose" | "neutral" | "teal";
-};
-
-export const ACQUIRE_GOAL_ROWS: GoalRow[] = [
-  { id: "second-orders", goal: "Second orders", owner: { name: "Tunde", initials: "TB", color: "#B4568F" }, target: "184,000", today: "ahead", todayTone: "teal", paceLabel: "ahead", paceTone: "teal", part: "volume is doing the work", partTone: "amber" },
-  { id: "repeat-rate", goal: "90-day repeat rate", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" }, target: "36.4%", today: "29.2%", todayTone: "rose", paceLabel: "behind", paceTone: "rose", part: "acquisition quality is the drag", partTone: "rose" },
-  { id: "contribution-margin", goal: "Contribution margin", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" }, target: "Unavailable", today: "Unavailable", todayTone: "neutral", paceLabel: "no baseline", paceTone: "amber", part: "blocked on COGS", partTone: "amber" },
-];
-
-export type TriedRow = {
-  id: string;
-  what: string;
-  when: string;
-  whenTone?: "neutral" | "amber" | "rose";
-  result: string;
-  resultTone: "teal" | "rose" | "amber" | "neutral";
-  measuredHow: string;
-  learningKept:
-    | "validated"
-    | "room open"
-    | "superseded"
-    | "validated · no effect"
-    | "suggested twice"
-    | "room needed"
-    | "contested"
-    | "blocked in 2024"
-    | "incomplete"
-    | "validated · low lift"
-    | "never promoted"
-    | "never proposed"
-    | "works, aimed late"
-    | "the open approval"
-    | "works at small scale"
-    | "never cross-sold"
-    | "net negative"
-    | "validated · a wash"
-    | "validated · best in lifecycle"
-    | "under review"
-    | "the obvious next test"
-    | "4 hrs waiting"
-    | "reverse it"
-    | "unresolved"
-    | "stop it"
-    | "built, unused";
-  /** Overrides the learning-kept chip's tone — defaults to the fixed lookup by text (e.g. Renew's "never proposed" is rose here, not the usual amber). */
-  learningKeptTone?: "teal" | "amber" | "neutral" | "rose";
-};
-
-export const ACQUIRE_TRIED_ROWS: TriedRow[] = [
-  { id: "referral-reward", what: "Raised the referral reward to ₦1,000", when: "18 Apr", result: "+22% referral acquisition", resultTone: "teal", measuredHow: "holdout · 20% of referrers", learningKept: "validated" },
-  { id: "signup-form", what: "Reduced the signup form to three fields", when: "6 May", result: "no measurable effect", resultTone: "neutral", measuredHow: "A/B · 50/50, 4 weeks", learningKept: "validated" },
-  { id: "ghana-campaign", what: "Ghana paid social campaign", when: "11 Mar", result: "31,200 at 4.1% conversion", resultTone: "rose", measuredHow: "no holdout", learningKept: "room open" },
-  { id: "discounted-first-order", what: "Discounted first order · 2024", when: "Nov 2024", result: "+41% volume, −14 pts repeat", resultTone: "rose", measuredHow: "holdout · 10%", learningKept: "superseded" },
-];
+// ---- History (A14) is wired to GET /lifecycle/stages/{stageKey}/history (shared across all 10
+// stages) — see history-tab.tsx and docs/endpoints/lifecycle.md. The "goals that depend on this
+// stage" table is dropped (goalDependencies is permanently null on that endpoint); the "what has
+// already been tried" table now reads its `attempts[]`, which uses a fixed 6-value
+// learningState vocabulary (validated/observation/constraint/superseded/rejected/room-open), not
+// the ~20 freeform labels these mocks used.
 
 // ---- Compare periods (A16) --------------------------------------------------
 

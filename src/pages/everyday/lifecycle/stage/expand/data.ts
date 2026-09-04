@@ -9,7 +9,7 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -558,20 +558,8 @@ export const EXPAND_THRESHOLD_PRESET: ThresholdPreset = {
   },
 };
 
-// ---- History (EX11) ----------------------------------------------------------
-
-export const EXPAND_GOAL_ROWS: GoalRow[] = [
-  { id: "net-revenue", goal: "Net revenue", owner: { name: "Ada", initials: "AD", color: "#2E8B7F" }, target: "₦4.90B", today: "₦4.71B proj", todayTone: "amber", paceLabel: "94% of pace", paceTone: "amber", part: "₦61M identified, none actioned", partTone: "amber" },
-  { id: "contribution-margin", goal: "Contribution margin", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" }, target: "Unavailable", today: "Unavailable", todayTone: "neutral", paceLabel: "no baseline", paceTone: "amber", part: "every upgrade is unpriceable", partTone: "rose" },
-];
-
-export const EXPAND_TRIED_ROWS: TriedRow[] = [
-  { id: "business-plan-sales-motion", what: "Business plan sales motion", when: "Jan", result: "1,204 accounts · ₦74M", resultTone: "teal", measuredHow: "no holdout · sales-led", learningKept: "works at small scale" },
-  { id: "group-ordering-launch", what: "Group ordering launch", when: "2024", result: "94,000 · ₦6,890 baskets", resultTone: "teal", measuredHow: "no holdout", learningKept: "never cross-sold" },
-  { id: "student-plan-launch", what: "Student plan launch", when: "14 Feb", result: "6,200 downgrades from full price", resultTone: "rose", measuredHow: "no holdout", learningKept: "net negative" },
-  { id: "annual-billing-discount", what: "Annual billing discount · 2024", when: "Jun 2024", result: "+11% plan conversion, −8% ARPU", resultTone: "amber", measuredHow: "holdout · 20%", learningKept: "validated · a wash" },
-  { id: "behavioural-upgrade-prompt", what: "Behavioural upgrade prompt", when: "never", whenTone: "amber", result: "untried · ₦31M identified", resultTone: "rose", measuredHow: "—", learningKept: "never proposed" },
-];
+// ---- History (EX11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
+// acquire/data.ts's History note and history-tab.tsx.
 
 // ---- Compare periods (EX12) -----------------------------------------------
 
