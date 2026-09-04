@@ -31,3 +31,25 @@ export function formatPercent(value: number): string {
 export function formatShortDate(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString("en-US", { day: "numeric", month: "short" });
 }
+
+/**
+ * GET /lifecycle/map's `headline` — the one always-present per-stage figure (new customers,
+ * repeat share, plans in use, etc.). `unit` decides the numeric formatting, never renders as a
+ * literal suffix: "percent"/"%" and "share"/"ratio"/"rate" (confirmed live: retain's repeat
+ * share, 0.9567) both render as a percentage; anything else (confirmed live: "count", "average")
+ * rounds to 1-2dp / compacts past 1000 — adopt's raw 10.0748175182481... needed the rounding.
+ * Returns undefined when `headline.value` is null — pair with `headline.label` and an
+ * unavailable indicator in that case, same as `atStake`'s own gated state.
+ */
+export function formatHeadlineValue(headline: { value: number | null; unit: string }): string | undefined {
+  if (headline.value === null) return undefined;
+  const { value } = headline;
+  const normalizedUnit = headline.unit.trim().toLowerCase();
+  if (normalizedUnit === "percent" || normalizedUnit === "%") return `${round(value, 1)}%`;
+  if (normalizedUnit === "share" || normalizedUnit === "ratio" || normalizedUnit === "rate") return `${round(value * 100, 1)}%`;
+
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `${round(value / 1_000_000, 1)}M`;
+  if (abs >= 1_000) return `${round(value / 1_000, 1)}k`;
+  return `${round(value, 2)}`;
+}

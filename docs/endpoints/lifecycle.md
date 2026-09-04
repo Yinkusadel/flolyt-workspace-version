@@ -61,6 +61,21 @@ Legend: ✅ covered · ⚠️ partial (see note) · ❌ not covered · ❓ open 
 
 ### Per-stage screens (Overview, What changed, Cohorts, Compare, Chain, etc.)
 
+**Stage header subtitle** (under the stage name, every tab-bar page — `stage-tabs-layout.tsx`) —
+built 2026-09-04 against `GET /lifecycle/map` (not a per-stage endpoint), reusing the same
+`headline`/`atStake`/`owningTeam` fields `stage-rail.tsx`'s cards already prove correct, **then
+commented out the same day** rather than shipped — `atStake` is real for only activate/retain/churn
+today, so most stages' three-clause sentence would read as a string of gated icons instead of the
+settled line the design calls for. The implementation (`StageHeadlineSubtitle`, commented out in
+`stage-tabs-layout.tsx`) is left in place, ready to re-enable once more of these fields are live —
+each clause stays an independent field, never combined into a derived number. The old
+hand-authored `Stage.headline` mock sentence (e.g. "894,000 acquired in twelve months · ₦74M at
+stake · owned by Marketing") was deleted from `data.ts` regardless, along with the `headline`
+field on `Stage` — confirmed unused elsewhere first — so the header currently shows just the stage
+name, no subtitle, per [[feedback_no_hardcoded_fallback]] (no reverting to the mock once touched).
+`formatHeadlineValue` was moved out of `index.tsx` into a shared `format-measured-value.ts` export
+either way, so the map page and this (dormant) subtitle share one formatting implementation.
+
 Not started (no endpoint wired into any per-stage page yet) — but four screens were live-checked
 2026-08-31 (Playwright, signed in as `ichigo@yopmail.com`) against their candidate endpoints, one
 stage-screen header at a time, per [[feedback_incremental_endpoint_coverage]]:

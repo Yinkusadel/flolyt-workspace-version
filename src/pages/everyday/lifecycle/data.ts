@@ -51,30 +51,19 @@ export type Stage = {
   amountWouldUnlock?: string;
   /** False renders the A01-style "not defined yet" empty state instead of tabs/content. */
   isDefined: boolean;
-  /** Shown under the stage name in the tab-bar header, e.g. "894,000 acquired in twelve months · ₦74M at stake · owned by Marketing". */
-  headline: string;
 };
 
 export const STAGES: Stage[] = [
-  {
-    name: "Acquire",
-    slug: "acquire",
-    department: "Marketing",
-    metricValue: "894k / yr",
-    amount: "₦74M",
-    amountLabel: "at stake",
-    isDefined: true,
-    headline: "894,000 acquired in twelve months · ₦74M at stake · owned by Marketing",
-  },
-  { name: "Activate", slug: "activate", department: "Product", metricValue: "41% reach value", amount: "₦188M", amountLabel: "at stake", isDefined: true, headline: "894,000 enter · 366,000 reach value · ₦188M at stake · owned by Product" },
-  { name: "Price", slug: "price", department: "Finance", metricValue: "6 plans", amount: "₦46M", amountLabel: "at stake", isDefined: true, headline: "Six plans · ₦46M at stake · owned by Finance" },
-  { name: "Adopt", slug: "adopt", department: "Product", metricValue: "2.1 features avg", amount: "₦112M", amountLabel: "at stake", isDefined: true, headline: "2.1 features adopted on average · ₦112M at stake · owned by Product" },
-  { name: "Retain", slug: "retain", department: "Marketing", metricValue: "27% repeat", amount: "₦412M", amountLabel: "at stake", isDefined: true, headline: "27% repeat rate · ₦412M at stake · owned by Marketing" },
-  { name: "Expand", slug: "expand", department: "Sales", metricValue: "1.4× ARPU", amount: "₦61M", amountLabel: "at stake", isDefined: true, headline: "1.4× ARPU on expansion · ₦61M at stake · owned by Sales" },
-  { name: "Support", slug: "support", department: "Support", metricValue: "12.8k tickets", amount: "₦9M", amountLabel: "at stake", isDefined: true, headline: "12.8k tickets · ₦9M at stake · owned by Support" },
-  { name: "Renew", slug: "renew", department: "Customer Success", metricValue: "88.4% projected", amount: "₦88M", amountLabel: "at stake", isDefined: true, headline: "88.4% projected to renew · ₦88M at stake · owned by Customer Success" },
-  { name: "Advocate", slug: "advocate", department: "Marketing", metricValue: "124k referrers", amount: "₦0 CAC", amountLabel: "at stake", isDefined: true, headline: "124k referrers · ₦0 CAC · owned by Marketing" },
-  { name: "Churn", slug: "churn", department: "Customer Success", metricValue: "3.1%/mo", amount: "₦124M", amountLabel: "at stake", isDefined: true, headline: "3.1% monthly churn · ₦124M at stake · owned by Customer Success" },
+  { name: "Acquire", slug: "acquire", department: "Marketing", metricValue: "894k / yr", amount: "₦74M", amountLabel: "at stake", isDefined: true },
+  { name: "Activate", slug: "activate", department: "Product", metricValue: "41% reach value", amount: "₦188M", amountLabel: "at stake", isDefined: true },
+  { name: "Price", slug: "price", department: "Finance", metricValue: "6 plans", amount: "₦46M", amountLabel: "at stake", isDefined: true },
+  { name: "Adopt", slug: "adopt", department: "Product", metricValue: "2.1 features avg", amount: "₦112M", amountLabel: "at stake", isDefined: true },
+  { name: "Retain", slug: "retain", department: "Marketing", metricValue: "27% repeat", amount: "₦412M", amountLabel: "at stake", isDefined: true },
+  { name: "Expand", slug: "expand", department: "Sales", metricValue: "1.4× ARPU", amount: "₦61M", amountLabel: "at stake", isDefined: true },
+  { name: "Support", slug: "support", department: "Support", metricValue: "12.8k tickets", amount: "₦9M", amountLabel: "at stake", isDefined: true },
+  { name: "Renew", slug: "renew", department: "Customer Success", metricValue: "88.4% projected", amount: "₦88M", amountLabel: "at stake", isDefined: true },
+  { name: "Advocate", slug: "advocate", department: "Marketing", metricValue: "124k referrers", amount: "₦0 CAC", amountLabel: "at stake", isDefined: true },
+  { name: "Churn", slug: "churn", department: "Customer Success", metricValue: "3.1%/mo", amount: "₦124M", amountLabel: "at stake", isDefined: true },
 ];
 
 export const ADVOCACY_LOOP_NOTE =

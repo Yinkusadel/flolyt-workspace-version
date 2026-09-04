@@ -6,36 +6,14 @@ import { StageRail } from "@/pages/everyday/lifecycle/stage-rail";
 import { KNOWN_DEPARTMENTS, STAGES, type Department, type RootCauseRow, type Stage } from "@/pages/everyday/lifecycle/data";
 import useGetLifecycleMap from "@/features/lifecycle/use-get-lifecycle-map";
 import { useGetChurnChain } from "@/features/lifecycle/use-get-churn-chain";
-import type { LifecycleHeadlineDto, LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
-import { formatCompactCurrency, round } from "@/pages/everyday/lifecycle/format-measured-value";
+import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import { formatCompactCurrency, formatHeadlineValue } from "@/pages/everyday/lifecycle/format-measured-value";
 
 // GET /lifecycle/map's atStake is a measured-value wrapper, not a bare number — confirmed
 // 2026-08-31 from a real response (see LifecycleMeasuredValueDto).
 function formatAtStake(atStake: LifecycleMeasuredValueDto<number>): string {
   if (atStake.value === null) return "Unavailable";
   return formatCompactCurrency(atStake.value);
-}
-
-// headline is new as of the 2026-09-04 spec paste, replacing the old commented-out "metric"
-// line — a single always-present figure per card (6 of 10 stages compute one today; the other 4
-// are declared but gated, same missingSource/wouldUnlock shape as atStake). This only formats the
-// number; the card pairs it with headline.label as a separate caption (stage-rail.tsx), the same
-// stat-tile shape atStake already used, rather than concatenating everything into one truncated
-// string. unit decides the numeric formatting, never renders as a literal suffix: "percent"/"%"
-// and "share"/"ratio"/"rate" (confirmed live: retain's repeat share, 0.9567) both render as a
-// percentage; anything else (confirmed live: "count", "average") rounds to 1-2dp / compacts past
-// 1000 — adopt's raw 10.0748175182481... needed the rounding.
-function formatHeadlineValue(headline: LifecycleHeadlineDto): string | undefined {
-  if (headline.value === null) return undefined;
-  const { value } = headline;
-  const normalizedUnit = headline.unit.trim().toLowerCase();
-  if (normalizedUnit === "percent" || normalizedUnit === "%") return `${round(value, 1)}%`;
-  if (normalizedUnit === "share" || normalizedUnit === "ratio" || normalizedUnit === "rate") return `${round(value * 100, 1)}%`;
-
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000) return `${round(value / 1_000_000, 1)}M`;
-  if (abs >= 1_000) return `${round(value / 1_000, 1)}k`;
-  return `${round(value, 2)}`;
 }
 
 /**
@@ -68,7 +46,6 @@ const Lifecycle = () => {
       slug: mock.slug,
       amountLabel: mock.amountLabel,
       isDefined: mock.isDefined,
-      headline: mock.headline,
       name: live?.name ?? "Unavailable",
       department: live?.owningTeam && KNOWN_DEPARTMENTS.has(live.owningTeam) ? (live.owningTeam as Department) : null,
       metricValue: live ? formatHeadlineValue(live.headline) : undefined,
