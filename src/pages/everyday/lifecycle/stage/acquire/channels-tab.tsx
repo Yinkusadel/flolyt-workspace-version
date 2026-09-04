@@ -103,7 +103,12 @@ const AcquireChannelsTab = () => {
         ) : isLoading ? (
           <ChannelsSkeleton />
         ) : (
-          <DataTable columns={COLUMNS} rows={rows} />
+          <DataTable
+            columns={COLUMNS}
+            rows={rows}
+            emptyTitle="No channels measured yet"
+            emptyBody="Channel-level spend and value figures will appear here once acquisition data has been read for this workspace."
+          />
         )}
       </section>
 
