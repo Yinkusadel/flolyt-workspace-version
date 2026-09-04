@@ -8,7 +8,7 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { LeakRow, ChangeRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
@@ -448,15 +448,8 @@ export const RENEW_MARKET_GHANA_ROWS: { label: string; value: string }[] = [
 ];
 
 // ---- What changed (RN08) ---------------------------------------------------
-
-export const RENEW_CHANGE_ROWS: ChangeRow[] = [
-  { id: "delivery-fee-checkout", date: "4 Mar", team: "Engineering", teamColor: "#4E7080", title: "Delivery fee moved to checkout", effect: "Pauses +22% · “too expensive” 19% → 37%", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "card-retry-0900", date: "2 Apr", team: "Finance", teamColor: "#5D6BB8", title: "Card retry moved to 09:00 local", effect: "Recovery 25% → 70.5% · ₦62M", effectTone: "teal", badge: "causal finding", badgeTone: "ultra" },
-  { id: "ghana-retry-not-rolled-out", date: "2 Apr", team: "Finance", teamColor: "#5D6BB8", title: "Retry change not rolled out to Ghana", effect: "Ghana card failure 8.4% vs 5.9%", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "book-built-old-rate", date: "Jul", team: "Customer Success", teamColor: "#2E8B7F", title: "Renewal book built on the old repeat rate", effect: "₦88M overstatement, still live", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "room-obliged-reforecast", date: "2 Aug", team: "Customer Success", teamColor: "#2E8B7F", title: "Room 8f2c obliged a re-forecast", effect: "Accepted, due 9 Aug, not started", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "pause-reason-optional", date: "2023", team: "Product", teamColor: "#7A5AA8", title: "Pause reason field made optional", effect: "68% skip it · diagnostic lost", effectTone: "amber", badge: "causal finding", badgeTone: "ultra" },
-];
+// Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
+// — no mock export here anymore.
 
 // ---- Agents (RN09) ----------------------------------------------------------
 

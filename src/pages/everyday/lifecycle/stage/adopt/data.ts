@@ -10,7 +10,7 @@ import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, ChangeRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -480,15 +480,8 @@ export const ADOPT_MARKET_CLOSING = {
 };
 
 // ---- What changed (AD09) ---------------------------------------------------
-
-export const ADOPT_CHANGE_ROWS: ChangeRow[] = [
-  { id: "delivery-fee-checkout", date: "4 Mar", team: "Engineering", teamColor: "#4E7080", title: "Delivery fee moved to checkout", effect: "Scheduled delivery second use 71% → 45%", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "one-tap-reorder", date: "18 Mar", team: "Product", teamColor: "#7A5AA8", title: "One-tap reorder shipped", effect: "612,000 ever used · +2.1 pts activation", effectTone: "teal", badge: "causal finding", badgeTone: "ultra" },
-  { id: "ghana-campaign", date: "11 Mar", team: "Marketing", teamColor: "#79883A", title: "Ghana campaign · web-heavy, guest-default", effect: "Eligible population diluted 6 pts", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "wallet-shipped", date: "Nov 2025", team: "Product", teamColor: "#7A5AA8", title: "Wallet shipped", effect: "184,000 funded · 56,000 used twice", effectTone: "amber", badge: "causal finding", badgeTone: "ultra" },
-  { id: "loyalty-tiers-renamed", date: "19 Apr", team: "Marketing", teamColor: "#79883A", title: "Loyalty tiers renamed", effect: "Unavailable · event never updated", effectTone: "amber", badge: "not instrumented", badgeTone: "amber" },
-  { id: "new-address-picker", date: "2 Apr", team: "Product", teamColor: "#7A5AA8", title: "New address picker", effect: "No measurable effect on saved addresses", effectTone: "neutral", badge: "no effect", badgeTone: "neutral" },
-];
+// Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
+// — no mock export here anymore.
 
 // ---- Agents (AD10) ----------------------------------------------------------
 

@@ -9,7 +9,7 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, ChangeRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
@@ -511,15 +511,8 @@ export const RETAIN_MARKET_PREVENT_ROWS: { label: string; value: string; percent
 ];
 
 // ---- What changed (RT09) ---------------------------------------------------
-
-export const RETAIN_CHANGE_ROWS: ChangeRow[] = [
-  { id: "delivery-fee-checkout", date: "4 Mar", team: "Engineering", teamColor: "#4E7080", title: "Delivery fee moved to checkout", effect: "Repeat rate 38.1% → 27.2%", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "discount-depth-raised", date: "16 Mar", team: "Marketing", teamColor: "#79883A", title: "Discount depth raised 15% → 20%", effect: "+31,000 discount-only, repeat 11.1%", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "one-tap-reorder", date: "18 Mar", team: "Product", teamColor: "#7A5AA8", title: "One-tap reorder shipped", effect: "+2.1 pts repeat, app users only", effectTone: "teal", badge: "causal finding", badgeTone: "ultra" },
-  { id: "fee-shipped-kenya", date: "9 Jun", team: "Engineering", teamColor: "#4E7080", title: "Delivery fee shipped in Kenya", effect: "Kenya repeat falling since · −3 pts", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "winback-moved-60-day", date: "Jul", team: "Marketing", teamColor: "#79883A", title: "Thursday win-back moved to 60-day window", effect: "Response 12.1% → 9.4%", effectTone: "amber", badge: "causal finding", badgeTone: "ultra" },
-  { id: "fee-shown-at-basket", date: "7 Aug", team: "Engineering", teamColor: "#4E7080", title: "Fee shown at basket · Nigeria", effect: "Too early · 18,900 customers", effectTone: "ultra", badge: "measuring", badgeTone: "ultra" },
-];
+// Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
+// — no mock export here anymore.
 
 // ---- Agents (RT10) ----------------------------------------------------------
 

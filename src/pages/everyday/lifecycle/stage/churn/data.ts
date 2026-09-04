@@ -9,7 +9,7 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { LeakRow, ChangeRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -639,20 +639,8 @@ export const CHURN_MARKETS_OPEN_ROOM_PRESET: OpenRoomPreset = {
 };
 
 // ---- What changed (CH08) -----------------------------------------------------
-
-export const CHURN_CHANGE_ROWS: ChangeRow[] = [
-  { id: "delivery-fee-moved-to-checkout", date: "4 Mar", team: "Engineering", teamColor: "#4E7080", title: "Delivery fee moved to checkout", effect: "Churn 57.2% → 67.6% · median life 70 → 48 days", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "card-retry-0900-local", date: "2 Apr", team: "Finance", teamColor: "#5D6BB8", title: "Card retry moved to 09:00 local", effect: "Payment-failure churn −1.1 pts", effectTone: "teal", badge: "causal finding", badgeTone: "ultra" },
-  { id: "fee-shown-at-basket", date: "7 Aug", team: "Engineering", teamColor: "#4E7080", title: "Fee shown at basket", effect: "18,900 customers · win-back at 9.4%", effectTone: "ultra", badge: "measuring", badgeTone: "ultra" },
-  { id: "winback-moved-to-annual-campaign", date: "2023", team: "Marketing", teamColor: "#79883A", title: "Win-back moved to an annual campaign", effect: "2.1% response · ₦14,200 per recovery", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "churn-prediction-model-live", date: "12 Jan", team: "Product", teamColor: "#7A5AA8", title: "Churn prediction model went live", effect: "31 weekly lists · 0 actions", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "no-owner-assigned", date: "12 Jan", team: "nobody", teamColor: "#CE3F51", title: "This stage was given no owner", effect: "Nothing here has ever opened a room", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-];
-
-export const CHURN_CHANGES_INSIGHT = {
-  title: "A prediction model and no owner shipped on the same day",
-  body: "On 12 January the company built a system that identifies 118,000 customers a month who are about to leave, and did not give anyone responsibility for doing something about it. Both decisions were reasonable in isolation. Together they produced 31 weekly lists that nobody has ever opened.",
-};
+// Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
+// — no mock export here anymore.
 
 // ---- Agents (CH09) -------------------------------------------------------------
 

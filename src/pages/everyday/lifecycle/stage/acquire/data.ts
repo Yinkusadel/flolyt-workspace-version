@@ -289,37 +289,8 @@ export const ACQUIRE_MARKET_SPOTLIGHTS: { id: string; eyebrow: string; tone: "te
 ];
 
 // ---- What changed (A09) ---------------------------------------------------
-
-export type ChangeRow = {
-  id: string;
-  date: string;
-  team: string;
-  teamColor: string;
-  title: string;
-  effect: string;
-  effectTone: "teal" | "rose" | "amber" | "neutral" | "ultra";
-  badge: "causal finding" | "no effect" | "not instrumented" | "measuring";
-  badgeTone: "ultra" | "neutral" | "amber";
-  /** When set, the row's title links to /lifecycle/:stage/changes/:id (a release-impact drilldown). */
-  hasDetail?: boolean;
-};
-
-export const ACQUIRE_CHANGE_ROWS: ChangeRow[] = [
-  { id: "delivery-fee", date: "4 Mar", team: "Engineering", teamColor: "#4E7080", title: "Delivery fee moved to checkout", effect: "First-order completion −7.0 pts", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "ghana-campaign", date: "11 Mar", team: "Marketing", teamColor: "#79883A", title: "Ghana paid social campaign launched", effect: "31,200 acquired at 4.1% conversion", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "mtn-route", date: "2 Apr", team: "Engineering", teamColor: "#4E7080", title: "MTN Nigeria SMS route changed", effect: "Verification −8.1 pts for MTN numbers only", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "referral-reward", date: "18 Apr", team: "Marketing", teamColor: "#79883A", title: "Referral reward raised to ₦1,000", effect: "Referral acquisition +22%", effectTone: "teal", badge: "causal finding", badgeTone: "ultra" },
-  { id: "signup-form", date: "6 May", team: "Product", teamColor: "#7A5AA8", title: "Signup form reduced to three fields", effect: "No measurable effect", effectTone: "neutral", badge: "no effect", badgeTone: "neutral" },
-  { id: "loyalty-tiers", date: "2 Jun", team: "Marketing", teamColor: "#79883A", title: "Loyalty tiers renamed", effect: "Not instrumented", effectTone: "amber", badge: "not instrumented", badgeTone: "amber" },
-];
-
-export const ACQUIRE_CHANGE_SOURCE_ROWS: { label: string; value: string; tone: "teal" | "amber" | "ultra" | "neutral" }[] = [
-  { label: "From a release feed", value: "if one is connected · yours is, for Engineering only", tone: "teal" },
-  { label: "From a campaign", value: "automatically, with its audience and spend", tone: "neutral" },
-  { label: "From a room decision", value: "anything a room decided that changed the product or the offer", tone: "neutral" },
-  { label: "Detected without being told", value: "a dated step change with no known cause · 2 this quarter", tone: "ultra" },
-  { label: "Added by a person", value: "for things Flolyt cannot see · a price change at a partner, for instance", tone: "neutral" },
-];
+// Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
+// — no mock export here anymore, same for every other stage's *_CHANGE_ROWS.
 
 // ---- Agents (A10) ----------------------------------------------------------
 

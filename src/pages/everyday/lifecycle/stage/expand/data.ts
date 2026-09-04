@@ -9,7 +9,7 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, ChangeRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -502,15 +502,8 @@ export const EXPAND_MARKET_FINAL_CLOSING = {
 };
 
 // ---- What changed (EX09) ---------------------------------------------------
-
-export const EXPAND_CHANGE_ROWS: ChangeRow[] = [
-  { id: "student-plan-launched", date: "14 Feb", team: "Finance", teamColor: "#5D6BB8", title: "Student plan launched · self-serve, unverified", effect: "6,200 downgraded from Lagos Plus", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "delivery-fee-checkout", date: "4 Mar", team: "Engineering", teamColor: "#4E7080", title: "Delivery fee moved to checkout", effect: "No effect on expansion rate · population −14%", effectTone: "amber", badge: "no effect", badgeTone: "neutral" },
-  { id: "group-ordering-launched", date: "2024", team: "Product", teamColor: "#7A5AA8", title: "Group ordering launched", effect: "94,000 users · ₦6,890 baskets · never cross-sold", effectTone: "amber", badge: "causal finding", badgeTone: "ultra" },
-  { id: "business-plan-sales-motion", date: "Jan", team: "Sales", teamColor: "#B4568F", title: "Business plan sales motion started", effect: "1,204 accounts · ₦74M · works and is tiny", effectTone: "teal", badge: "causal finding", badgeTone: "ultra" },
-  { id: "legacy-unlimited-closed", date: "Mar 2022", team: "Finance", teamColor: "#5D6BB8", title: "Legacy Unlimited closed to new customers", effect: "3,100 frozen · never migrated", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "behavioural-upgrade-prompt", date: "—", team: "nobody", teamColor: "#98A0AF", title: "A behavioural upgrade prompt", effect: "Never built · ₦31M identified", effectTone: "rose", badge: "not instrumented", badgeTone: "amber" },
-];
+// Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
+// — no mock export here anymore.
 
 // ---- Agents (EX10) ----------------------------------------------------------
 

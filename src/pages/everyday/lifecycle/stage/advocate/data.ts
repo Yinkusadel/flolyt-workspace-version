@@ -8,7 +8,7 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { LeakRow, ChangeRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -519,20 +519,8 @@ export const ADVOCATE_MARKETS_OPEN_ROOM_PRESET: OpenRoomPreset = {
 };
 
 // ---- What changed (AV08) ---------------------------------------------------
-
-export const ADVOCATE_CHANGE_ROWS: ChangeRow[] = [
-  { id: "delivery-fee-checkout", date: "4 Mar", team: "Engineering", teamColor: "#4E7080", title: "Delivery fee moved to checkout", effect: "Referral rate fell · first time in two years", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "reward-raised-1000", date: "18 Apr", team: "Marketing", teamColor: "#79883A", title: "Referral reward raised ₦500 → ₦1,000", effect: "+22% referrals, +144% cost, no holdout", effectTone: "amber", badge: "causal finding", badgeTone: "ultra" },
-  { id: "loyalty-tiers-renamed", date: "19 Apr", team: "Marketing", teamColor: "#79883A", title: "Loyalty tiers renamed", effect: "Unavailable · tier-driven referral invisible", effectTone: "amber", badge: "not instrumented", badgeTone: "amber" },
-  { id: "legacy-unlimited-closed", date: "Mar 2022", team: "Finance", teamColor: "#5D6BB8", title: "Legacy Unlimited closed to new customers", effect: "Froze the highest-referring group at 3,100", effectTone: "amber", badge: "causal finding", badgeTone: "ultra" },
-  { id: "attribution-on-redemption", date: "2024", team: "Engineering", teamColor: "#4E7080", title: "Referral attribution on redemption only", effect: "Shares invisible · the 124,000 is a floor", effectTone: "rose", badge: "not instrumented", badgeTone: "amber" },
-  { id: "given-no-owner", date: "12 Jan", team: "nobody", teamColor: "#CE3F51", title: "This stage was given no owner", effect: "Five signals, seven months, no room", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-];
-
-export const ADVOCATE_CHANGES_INSIGHT = {
-  title: "The last row is on this list because an absence of ownership is a dated change with a measurable effect",
-  body: "On 12 January every stage was assigned an owner except two. Advocate produced the fifth signal in the delivery-fee chain, lost 18,000 referrers, had its reward doubled untested and its measurement left broken — and none of those became a room, because a room needs a person and this stage has never had one.",
-};
+// Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
+// — no mock export here anymore.
 
 // ---- Agents (AV09) ----------------------------------------------------------
 

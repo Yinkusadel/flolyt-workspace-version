@@ -8,7 +8,7 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { CheckedRow, ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
-import type { LeakRow, ChangeRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
@@ -423,16 +423,11 @@ export const ACTIVATE_MARKET_GHANA_ROWS: { label: string; value: string; tone: "
   { label: "Rooms open in Ghana", value: "1 · the Accra acquisition room, with no owner", tone: "rose" },
 ];
 
-// ---- What changed (AC08) + release impact drilldown (AC09) ---------------
+// ---- What changed (AC08) -------------------------------------------------
+// Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
+// — no mock export here anymore.
 
-export const ACTIVATE_CHANGE_ROWS: ChangeRow[] = [
-  { id: "delivery-fee-checkout", date: "4 Mar", team: "Engineering", teamColor: "#4E7080", title: "Delivery fee moved to checkout", effect: "Activation −7.4 pts · time to value +2.6 days", effectTone: "rose", badge: "causal finding", badgeTone: "ultra", hasDetail: true },
-  { id: "ghana-paid-social", date: "11 Mar", team: "Marketing", teamColor: "#79883A", title: "Ghana paid social launched · web-heavy", effect: "Guest share +5.2 pts · activation −3.2 pts", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "one-tap-reorder", date: "18 Mar", team: "Product", teamColor: "#7A5AA8", title: "One-tap reorder shipped", effect: "Activation +2.1 pts for app users only", effectTone: "teal", badge: "causal finding", badgeTone: "ultra" },
-  { id: "new-address-picker", date: "2 Apr", team: "Product", teamColor: "#7A5AA8", title: "New address picker", effect: "No measurable effect", effectTone: "neutral", badge: "no effect", badgeTone: "neutral" },
-  { id: "loyalty-tiers-renamed", date: "19 Apr", team: "Marketing", teamColor: "#79883A", title: "Loyalty tiers renamed", effect: "Not instrumented", effectTone: "amber", badge: "not instrumented", badgeTone: "amber" },
-  { id: "fee-shown-at-basket", date: "7 Aug", team: "Engineering", teamColor: "#4E7080", title: "Fee shown at basket", effect: "Too early · 18,900 customers so far", effectTone: "ultra", badge: "measuring", badgeTone: "ultra" },
-];
+// ---- Release impact drilldown (AC09) --------------------------------------
 
 export type StageImpactRow = {
   id: string;

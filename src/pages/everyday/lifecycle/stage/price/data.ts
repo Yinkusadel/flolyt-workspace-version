@@ -14,7 +14,7 @@ import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { CheckedRow, ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, ChangeRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -500,15 +500,8 @@ export const PRICE_MARKET_CLOSING = {
 };
 
 // ---- What changed (PR09) ---------------------------------------------------
-
-export const PRICE_CHANGE_ROWS: ChangeRow[] = [
-  { id: "delivery-fee-checkout", date: "4 Mar", team: "Engineering", teamColor: "#4E7080", title: "Delivery fee moved to checkout", effect: "Effective price +₦350 on 61% of orders", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "student-plan-launch", date: "14 Feb", team: "Finance", teamColor: "#5D6BB8", title: "Student plan launched · verification “to follow”", effect: "11,400 accounts · 6,200 downgraded from Lagos Plus", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "discount-depth-raised", date: "16 Mar", team: "Marketing", teamColor: "#79883A", title: "Discount depth raised 15% → 20%", effect: "Discount-only group +31,000 customers", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "nigeria-price-raised", date: "2 Mar", team: "Finance", teamColor: "#5D6BB8", title: "Nigeria list price raised 4%", effect: "No measurable effect on volume", effectTone: "teal", badge: "no effect", badgeTone: "neutral" },
-  { id: "loyalty-tiers-renamed", date: "19 Apr", team: "Marketing", teamColor: "#79883A", title: "Loyalty tiers renamed", effect: "Not instrumented", effectTone: "amber", badge: "not instrumented", badgeTone: "amber" },
-  { id: "ghana-price-set", date: "Aug 2024", team: "Finance", teamColor: "#5D6BB8", title: "Ghana price set · never revisited", effect: "Drifted +22% against Nigeria since", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-];
+// Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
+// — no mock export here anymore.
 
 // ---- Agents (PR10) --------------------------------------------------------
 

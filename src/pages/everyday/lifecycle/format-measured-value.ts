@@ -26,3 +26,8 @@ export function formatCount(value: number): string {
 export function formatPercent(value: number): string {
   return `${round(value * 100, 1)}%`;
 }
+
+/** An ISO datetime to a short "4 Mar" style date, for a dated registry entry. */
+export function formatShortDate(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString("en-US", { day: "numeric", month: "short" });
+}

@@ -9,7 +9,7 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, ChangeRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
@@ -463,15 +463,8 @@ export const SUPPORT_MARKET_GHANA_ROWS: { label: string; value: string }[] = [
 ];
 
 // ---- What changed (SU08) ---------------------------------------------------
-
-export const SUPPORT_CHANGE_ROWS: ChangeRow[] = [
-  { id: "delivery-fee-checkout", date: "4 Mar", team: "Engineering", teamColor: "#4E7080", title: "Delivery fee moved to checkout", effect: "Contact rate 11.7% → 17.3% · new top driver", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "support-signal-reclassified", date: "11 Mar", team: "Support", teamColor: "#C56A2E", title: "Support Signal reclassified the top driver", effect: "Logged as a revenue driver · routed to nobody", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "chatbot-refund-flow-launched", date: "Feb", team: "Support", teamColor: "#C56A2E", title: "Chatbot refund flow launched", effect: "4,200 deflected · repeat rate 9 pts worse", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "proactive-outreach-failed-delivery", date: "Mar", team: "Support", teamColor: "#C56A2E", title: "Proactive outreach on failed deliveries", effect: "1,200/mo · repeat rate 31.4% · +22 vs holdout", effectTone: "teal", badge: "causal finding", badgeTone: "ultra" },
-  { id: "help-centre-fee-article", date: "Apr", team: "Support", teamColor: "#C56A2E", title: "Help centre delivery-fee article", effect: "6,900 deflected · repeat rate 5 pts worse", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "ghana-headcount-cut", date: "Jun", team: "Support", teamColor: "#C56A2E", title: "Ghana support team cut to 3", effect: "Resolution 51 min → 2.9 hrs", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-];
+// Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
+// — no mock export here anymore.
 
 // ---- Agents (SU09) ----------------------------------------------------------
 
