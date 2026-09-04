@@ -279,9 +279,12 @@ const LEAK_TREND_TONE_CLASS: Record<LeakRow["trendTone"], string> = {
 // primaryConversion ("Reach a second order") — each the same measured-value wrapper as
 // GET /map's atStake, rendered unavailable via the same InfoTooltip icon when its value is null.
 // Every note/value below is one field, formatted alone — never combined with another field.
+// 4th card added 2026-09-04: rateOfChange ("how fast Acquire is moving") — a real field on the
+// same response, unused until now (a live response confirmed it's currently unavailable for
+// Acquire, same missingSource pattern as the other three).
 function buildAcquireKpis(stageData: StageData | undefined): Kpi[] {
   if (!stageData) return [];
-  const { population, yearOverYear, atStake, primaryConversion } = stageData;
+  const { population, rateOfChange, yearOverYear, atStake, primaryConversion } = stageData;
 
   const acquiredNote =
     yearOverYear.value !== null ? `${yearOverYear.value >= 0 ? "+" : ""}${formatPercent(yearOverYear.value)} on last year` : undefined;
@@ -293,11 +296,9 @@ function buildAcquireKpis(stageData: StageData | undefined): Kpi[] {
     atStake.value !== null
       ? { eyebrow: "At stake", value: formatCompactCurrency(atStake.value), tone: "rose", note: "in this stage alone" }
       : { eyebrow: "At stake", unavailable: { missingSource: atStake.missingSource, wouldUnlock: atStake.wouldUnlock } },
-    // ❌ Backend does NOT provide: blended CAC — no such field anywhere in StageData (get-stage.ts)
-    // or any other documented lifecycle endpoint, confirmed against docs/endpoints/lifecycle.md.
-    // Per the backend-gap convention this card is commented out rather than shown with a
-    // fabricated "unavailable" tooltip — there's no real field to hang that state off of.
-    // { eyebrow: "Blended CAC", unavailable: { missingSource: ... } },
+    rateOfChange.value !== null
+      ? { eyebrow: "Rate of change", value: `${rateOfChange.value >= 0 ? "+" : ""}${formatPercent(rateOfChange.value)}`, tone: rateOfChange.value >= 0 ? "teal" : "rose", note: "month over month" }
+      : { eyebrow: "Rate of change", unavailable: { missingSource: rateOfChange.missingSource, wouldUnlock: rateOfChange.wouldUnlock } },
     primaryConversion.value !== null
       ? { eyebrow: "Reach a second order", value: formatPercent(primaryConversion.value), tone: "rose", note: "the number that decides if this is good" }
       : {
