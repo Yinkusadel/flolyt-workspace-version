@@ -28,7 +28,6 @@ import {
 } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import {
   ACTIVATE_OPEN_ROOM_PRESET,
-  ACTIVATE_OVERVIEW_KPIS,
   ACTIVATE_OVERVIEW_LEAK_ROWS,
   ACTIVATE_SHARE_EXPORT_PRESET,
 } from "@/pages/everyday/lifecycle/stage/activate/data";
@@ -127,7 +126,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     shareExportPreset: ACQUIRE_SHARE_EXPORT_PRESET,
   },
   activate: {
-    kpis: ACTIVATE_OVERVIEW_KPIS,
     insightTitle: "116,000 customers had a perfectly good first order and never came back, and nobody knows why",
     insightBody:
       "It is the third-largest group in the stage and the only one with no reading behind it. Everything Flolyt can see about them looks normal. That is a real answer and it is stated as one — a plausible story would be worse than an admitted gap.",
@@ -308,6 +306,39 @@ function buildAcquireKpis(stageData: StageData | undefined): Kpi[] {
   ];
 }
 
+// Activate's KPI row is wired to the same GET /lifecycle/stages/{stageKey} endpoint as Acquire's.
+// Of the design's original 4 cards, only 3 have a backing field here: population ("Acquired · 12
+// months"), atStake ("At stake" — Activate is one of the 3 leakage-reachable stages, so this one
+// can carry a real value rather than reading unavailable throughout), and primaryConversion
+// ("Reach value").
+function buildActivateKpis(stageData: StageData | undefined): Kpi[] {
+  if (!stageData) return [];
+  const { population, yearOverYear, atStake, primaryConversion } = stageData;
+
+  const acquiredNote =
+    yearOverYear.value !== null ? `${yearOverYear.value >= 0 ? "+" : ""}${formatPercent(yearOverYear.value)} on last year` : undefined;
+
+  return [
+    population.value !== null
+      ? { eyebrow: "Acquired · 12 months", value: formatCount(population.value), tone: "teal", note: acquiredNote }
+      : { eyebrow: "Acquired · 12 months", unavailable: { missingSource: population.missingSource, wouldUnlock: population.wouldUnlock } },
+    primaryConversion.value !== null
+      ? { eyebrow: "Reach value", value: formatPercent(primaryConversion.value), tone: "rose", note: "activation, not just a first order" }
+      : {
+          eyebrow: "Reach value",
+          unavailable: { missingSource: primaryConversion.missingSource, wouldUnlock: primaryConversion.wouldUnlock },
+        },
+    atStake.value !== null
+      ? { eyebrow: "At stake", value: formatCompactCurrency(atStake.value), tone: "rose", note: "in this stage alone" }
+      : { eyebrow: "At stake", unavailable: { missingSource: atStake.missingSource, wouldUnlock: atStake.wouldUnlock } },
+    // ❌ Not provided by GET /lifecycle/stages/{stageKey}: "Median time to value" — that figure
+    // (medianBand, deliberately a band not a day count) lives on GET /lifecycle/activate/time-to-
+    // value instead. Pulling a second endpoint just for this one Overview card is deferred rather
+    // than composed here — unlike Acquire's "Blended CAC" this field does exist, just elsewhere.
+    // { eyebrow: "Median time to value", unavailable: { missingSource: ... } },
+  ];
+}
+
 /** Screen A02 (and the shared template for every stage's Overview tab). */
 export function OverviewTab() {
   const { stage, headerActionsEl } = useStageContext();
@@ -316,14 +347,21 @@ export function OverviewTab() {
   const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
 
   const isAcquire = stage.slug === "acquire";
+  const isActivate = stage.slug === "activate";
   const acquireStageQuery = useGetStage(isAcquire ? "acquire" : "");
+  const activateStageQuery = useGetStage(isActivate ? "activate" : "");
+  const wiredStageQuery = isAcquire ? acquireStageQuery : isActivate ? activateStageQuery : undefined;
 
   if (!stage.isDefined) return <StageEmptyState stageName={stage.name} />;
 
   const data = OVERVIEW_DATA[stage.slug];
   if (!data) return null;
 
-  const kpis = isAcquire ? buildAcquireKpis(acquireStageQuery.data?.data) : (data.kpis ?? []);
+  const kpis = isAcquire
+    ? buildAcquireKpis(acquireStageQuery.data?.data)
+    : isActivate
+      ? buildActivateKpis(activateStageQuery.data?.data)
+      : (data.kpis ?? []);
 
   const columns: Column<LeakRow>[] = [
     {
@@ -422,9 +460,9 @@ export function OverviewTab() {
 
       <KpiCards
         items={kpis}
-        isLoading={isAcquire && acquireStageQuery.isLoading}
-        isError={isAcquire && acquireStageQuery.isError}
-        onRetry={isAcquire ? () => acquireStageQuery.refetch() : undefined}
+        isLoading={wiredStageQuery?.isLoading ?? false}
+        isError={wiredStageQuery?.isError ?? false}
+        onRetry={wiredStageQuery ? () => wiredStageQuery.refetch() : undefined}
       />
 
       {data.barEyebrow && data.barRows && (

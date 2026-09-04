@@ -15,13 +15,8 @@ import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modal
 import type { DefinitionData } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
 
 // ---- Overview (AC02) --------------------------------------------------
-
-export const ACTIVATE_OVERVIEW_KPIS: Kpi[] = [
-  { eyebrow: "Acquired · 12 months", value: "894,000", note: "enter this stage" },
-  { eyebrow: "Reach value", value: "366,000", tone: "rose", note: "41.0% · was 52.1%" },
-  { eyebrow: "At stake", value: "₦188M", tone: "rose", note: "second-largest leak in the lifecycle" },
-  { eyebrow: "Median time to value", value: "6.1 days", tone: "rose", note: "was 3.4 days" },
-];
+// KPI row wired to GET /lifecycle/stages/activate (buildActivateKpis in overview-tab.tsx) —
+// see docs/endpoints/lifecycle.md.
 
 export const ACTIVATE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
   {
