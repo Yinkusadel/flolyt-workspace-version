@@ -120,40 +120,10 @@ export const ACQUIRE_FUNNEL_ACTION_CARDS: FunnelActionCard[] = [
   },
 ];
 
-// ---- Channels (A04) + one-channel drilldown (A05) -----------------------
-
-export type ChannelRow = {
-  id: string;
-  channel: string;
-  acquired: string;
-  spend: string;
-  spendTone: "teal" | "ink";
-  cac: string;
-  cacTone: "teal" | "amber" | "rose" | "neutral";
-  reach2nd: string;
-  reach2ndTone: "teal" | "amber" | "rose" | "ink";
-  valuePerCustomer: string;
-  valueTone: "teal" | "amber" | "rose" | "ink";
-  verdict: string;
-  verdictTone: "teal" | "amber" | "rose" | "neutral";
-};
-
-export const ACQUIRE_CHANNEL_ROWS: ChannelRow[] = [
-  { id: "referral", channel: "Referral", acquired: "278,000", spend: "₦0", spendTone: "teal", cac: "₦0", cacTone: "teal", reach2nd: "41.2%", reach2ndTone: "teal", valuePerCustomer: "₦11,400", valueTone: "teal", verdict: "best", verdictTone: "teal" },
-  { id: "organic-search", channel: "Organic search", acquired: "184,000", spend: "₦0", spendTone: "teal", cac: "₦0", cacTone: "teal", reach2nd: "31.1%", reach2ndTone: "teal", valuePerCustomer: "₦8,600", valueTone: "teal", verdict: "good", verdictTone: "teal" },
-  { id: "paid-social-nigeria", channel: "Paid social · Nigeria", acquired: "214,000", spend: "₦412M", spendTone: "ink", cac: "₦1,925", cacTone: "amber", reach2nd: "24.8%", reach2ndTone: "amber", valuePerCustomer: "₦6,900", valueTone: "amber", verdict: "marginal", verdictTone: "amber" },
-  { id: "paid-social-ghana", channel: "Paid social · Ghana", acquired: "31,200", spend: "₦188M", spendTone: "ink", cac: "₦6,026", cacTone: "rose", reach2nd: "4.1%", reach2ndTone: "rose", valuePerCustomer: "₦1,140", valueTone: "rose", verdict: "loses money", verdictTone: "rose" },
-  { id: "partner-fuel-stations", channel: "Partner · fuel stations", acquired: "94,000", spend: "₦61M", spendTone: "ink", cac: "₦649", cacTone: "teal", reach2nd: "29.4%", reach2ndTone: "teal", valuePerCustomer: "₦8,100", valueTone: "teal", verdict: "good", verdictTone: "teal" },
-  { id: "paid-search", channel: "Paid search", acquired: "61,000", spend: "₦74M", spendTone: "ink", cac: "₦1,213", cacTone: "teal", reach2nd: "28.1%", reach2ndTone: "teal", valuePerCustomer: "₦7,800", valueTone: "teal", verdict: "good", verdictTone: "teal" },
-  { id: "unattributed", channel: "Unattributed", acquired: "31,800", spend: "Unavailable", spendTone: "ink", cac: "Unavailable", cacTone: "neutral", reach2nd: "26.9%", reach2ndTone: "ink", valuePerCustomer: "₦7,400", valueTone: "ink", verdict: "3.6% · acceptable", verdictTone: "neutral" },
-];
-
-export const ACQUIRE_CHANNEL_SPEND_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Paid social · Nigeria", value: "₦412M · 214,000 customers", percent: 55, tone: "amber" },
-  { label: "Paid social · Ghana", value: "₦188M · 31,200 customers", percent: 25, tone: "rose" },
-  { label: "Paid search", value: "₦74M · 61,000", percent: 10, tone: "teal" },
-  { label: "Partner · fuel stations", value: "₦61M · 94,000", percent: 8, tone: "teal" },
-];
+// ---- Channels (A04) -----------------------------------------------------
+// The channel list + spend breakdown are wired live (see channels-tab.tsx, GET
+// /lifecycle/acquire/channels) — no mock export here anymore. ACQUIRE_CHANNEL_DETAILS below
+// (the A05 one-channel drilldown) stays mock — no endpoint covers its narrative content at all.
 
 export type ChannelDetail = {
   channel: string;
