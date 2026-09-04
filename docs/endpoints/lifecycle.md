@@ -15,15 +15,15 @@ pasted 2026-09-04.
 Status: **all 69 lifecycle-scoped endpoints from the original sidebar list now documented**
 (18 original + 4 new core + 24 per-stage tab-specific + 23 churn-routing/analytics/agents/
 governance — see the batch-3 and batch-4 sections below), plus the 5 cross-cutting app-shell
-endpoints in [`app-shell.md`](app-shell.md) (74 total across both files). Service + hook files
-exist only for the original 18 (`src/services/api/lifecycle/*`, `src/features/lifecycle/*`) —
-**stale as of 2026-09-04**, several gained new response fields in the fresh spec pastes (`GET
-/map`, `GET /market/{country}`, `GET /stages/{stageKey}`, `GET /stages/{stageKey}/compare`, `POST
-/changes`, `GET .../change-registry`, `GET /changes/{id}/impact` — see each entry below) that the
-service files don't type yet; **the other 51 endpoints have no service/hook file at all.** Only
-`GET /lifecycle/map` is wired into an actual page (`/lifecycle`'s map page, partially — see
-tracker below); everything else has service/hook infrastructure ready (the original 18) or nothing
-at all (the other 51), and no page consumes any of it yet.
+endpoints in [`app-shell.md`](app-shell.md) (74 total across both files). **Service + hook files
+now exist for all 69** (`src/services/api/lifecycle/*`, `src/features/lifecycle/*` — scaffolded
+2026-09-04, typechecks clean via `npx tsc --noEmit -p tsconfig.app.json`): the original 18's stale
+fields (`GET /map`, `GET /market/{country}`, `GET /stages/{stageKey}`, `GET /stages/{stageKey}/
+compare`, `GET .../change-registry`, `GET /changes/{id}/impact`, `POST /changes`) were corrected,
+and all 51 new endpoints (4 core + 24 tab-specific + 23 governance/agents/churn-routing) got fresh
+service+hook pairs. Only `GET /lifecycle/map` is wired into an actual page (`/lifecycle`'s map
+page, partially — see tracker below); everything else has service/hook infrastructure ready but no
+page consumes it yet — that's the next real step.
 
 **2026-09-04:** the lifecycle domain has ~116 routes total (69 documented in this file + the ~70
 adjacent `/rooms`/`/claims` routes, out of scope here — see [`rooms.md`](rooms.md)) — see

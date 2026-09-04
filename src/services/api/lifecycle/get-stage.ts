@@ -2,12 +2,30 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
-import type { LifecycleCalloutDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import type {
+  LifecycleCalloutDto,
+  LifecycleMeasuredValueDto,
+  LifecycleReferralReachDto,
+  LifecycleStageOwnerDto,
+} from "@/services/api/lifecycle/get-lifecycle-map";
 
 export interface StageDepartureClaimDto {
   statement: string;
   grade: string;
+  /** Added 2026-09-04, not in the original pass. */
+  type: string;
   confidence: number;
+}
+
+// Added 2026-09-04. Compares two periods the same way GET .../compare does, scoped to this one
+// departure cause.
+export interface StageDepartureTrendDto {
+  direction: string | null;
+  reading: number | null;
+  shareChange: number | null;
+  countChange: number | null;
+  monthsCompared: number;
+  missingSource: string | null;
 }
 
 export interface StageDepartureDto {
@@ -22,6 +40,17 @@ export interface StageDepartureDto {
   reachabilityCaveat: string | null;
   claim: StageDepartureClaimDto;
   roomOpen: boolean;
+  /** Added 2026-09-04. */
+  trend: StageDepartureTrendDto;
+}
+
+// Added 2026-09-04.
+export interface StageOwnershipStandingDto {
+  ownerUserId: string | null;
+  unownedSinceUtc: string | null;
+  unownedMonths: number | null;
+  reason: string | null;
+  isOwned: boolean;
 }
 
 export interface StageData {
@@ -32,16 +61,30 @@ export interface StageData {
   leadAgentKey: string | null;
   leadAgentName: string | null;
   reviewCadence: string | null;
-  population: number | null;
+  // Corrected 2026-09-04 — confirmed live 2026-08-31 (acquire/activate responses) that these are
+  // the same measured-value wrapper GET /map's atStake uses, not bare `number | null`.
+  population: LifecycleMeasuredValueDto<number>;
   populationSource: string | null;
   definitionVersion: number | null;
   populationComputedAtUtc: string | null;
   populationCaveat: string | null;
-  rateOfChange: number | null;
-  primaryConversion: number | null;
+  rateOfChange: LifecycleMeasuredValueDto<number>;
+  /** Added 2026-09-04. This month vs the same month a year ago, as a share of where it started. */
+  yearOverYear: LifecycleMeasuredValueDto<number>;
+  /** Added 2026-09-04. Set when the stage's definition changed inside the comparison year. */
+  yearOverYearCaveat: string | null;
+  primaryConversion: LifecycleMeasuredValueDto<number>;
+  /** Added 2026-09-04. Decided by the same code GET /map uses — real value only for activate/retain/churn. */
+  atStake: LifecycleMeasuredValueDto<number>;
   departures: StageDepartureDto[];
   restating: boolean;
   callouts: LifecycleCalloutDto[];
+  /** Added 2026-09-04. Advocate-specific in practice. */
+  referralReach: LifecycleReferralReachDto | null;
+  /** Added 2026-09-04. */
+  owner: LifecycleStageOwnerDto | null;
+  /** Added 2026-09-04. */
+  ownershipStanding: StageOwnershipStandingDto;
 }
 
 export interface GetStageResponse {

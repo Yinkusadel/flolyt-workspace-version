@@ -16,7 +16,7 @@ wired into code yet, so we always have a source of truth to check against and co
 | Auth (step-up only) | [auth.md](auth.md) | 2/2 wired, unverified against a real call |
 | Datasources | [datasources.md](datasources.md) | 14/14 wired, `GET /connected`'s no-envelope shape confirmed |
 | Teams | [teams.md](teams.md) | 13/13 wired (1 of those, `POST /invitations/accept`, was already built in `auth/` during the auth rebuild) |
-| Lifecycle | [lifecycle.md](lifecycle.md) | 69/69 lifecycle-scoped endpoints documented (all 4 batches landed 2026-09-04) — only the original 18 scaffolded, and stale; the other 51 have no service/hook file yet. 1/69 wired (`GET /map`, partial). Full-surface reference (tab matrix, conventions) at [lifecycle-reference.md](lifecycle-reference.md) |
+| Lifecycle | [lifecycle.md](lifecycle.md) | 69/69 documented, 69/69 scaffolded (service+hook files, typechecks clean), 1/69 wired (`GET /map`, partial). Full-surface reference (tab matrix, conventions) at [lifecycle-reference.md](lifecycle-reference.md) |
 | App shell | [app-shell.md](app-shell.md) | 5/5 documented (`/search /home /inbox /command-bar /sources`), 0/5 wired |
 | Rooms | [rooms.md](rooms.md) | 52/52 documented, service+hook scaffolded for all 52, 0/52 wired into a page |
 

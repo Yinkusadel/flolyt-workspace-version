@@ -4,6 +4,7 @@ import {
   type GetLifecycleMapResponse,
   type LifecycleCalloutDto,
   type LifecycleMarketLensDto,
+  type LifecycleReferralReachDto,
   type LifecycleStageDto,
 } from "@/services/api/lifecycle/get-lifecycle-map";
 
@@ -20,6 +21,7 @@ const useGetLifecycleMap = () => {
     stages: query.data?.data.stages ?? ([] as LifecycleStageDto[]),
     callouts: query.data?.data.callouts ?? ([] as LifecycleCalloutDto[]),
     marketLens: query.data?.data.marketLens ?? (null as LifecycleMarketLensDto | null),
+    referralReach: query.data?.data.referralReach ?? (null as LifecycleReferralReachDto | null),
   };
 };
 

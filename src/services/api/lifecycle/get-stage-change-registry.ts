@@ -18,6 +18,8 @@ export interface StageChangeRegistryEntryDto {
   title: string;
   team: string | null;
   source: string;
+  /** Added 2026-09-04. "action" (default) | "absence_of_action". */
+  kind: string;
   affectedStageKeys: string[];
   effect: StageChangeEffectDto;
   sourceRoomId: string | null;

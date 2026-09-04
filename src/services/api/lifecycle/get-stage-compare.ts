@@ -16,6 +16,8 @@ export interface StageCompareWindowDto {
   monthsMeasured: number;
   endPopulation: number | null;
   averagePopulation: number | null;
+  /** Added 2026-09-04. Reads the same primaryConversion binding PUT .../conversion sets, unconfirmed live. */
+  endConversion: number | null;
   restatedMonths: number;
 }
 
@@ -27,6 +29,8 @@ export interface StageCompareData {
   after: StageCompareWindowDto;
   change: number | null;
   changePercent: number | null;
+  /** Added 2026-09-04. */
+  conversionChange: number | null;
   definitionChangedInside: boolean;
   callouts: LifecycleCalloutDto[];
 }

@@ -18,8 +18,9 @@ const {
   LIFECYCLE: { UPDATE_STAGE_OWNER },
 } = API_ENDPOINTS;
 
-// Refused server-side for "churn" — no single-person accountability for a stage that
-// aggregates every other stage's losses.
+// Corrected 2026-09-04: the real spec explicitly includes churn ("any of the ten, churn
+// included") — the previous "refused for churn" note here was wrong, don't refuse it
+// client-side. ownerUserId must be a workspace member and a person, never an agent.
 export const updateStageOwner = async ({
   stageKey,
   ownerUserId,

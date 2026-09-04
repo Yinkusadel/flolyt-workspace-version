@@ -11,14 +11,20 @@ export interface GetStageCohortsParams {
 
 // ❌ neither docs/endpoints/lifecycle.md nor the real spec's example specify the per-cohort row
 // shape (both just name the field "cohorts", the spec's example even shows it as `null`) — typed
-// loosely until a live response confirms it, don't invent fields.
+// loosely until a live response confirms it, don't invent fields. Per the 2026-09-04 spec's prose
+// (not yet a concrete schema): each row should carry an arrival month, an `entered` measured
+// value, one `stillInStageShare` cell per `measurementAgeDays` entry, and a `values` array of
+// {currency, amount} observed-revenue-to-date figures — never at-stake, never a forecast.
 export interface StageCohortsData {
   stageKey: string;
   stageName: string;
+  /** Added 2026-09-04. [30, 60, 90] for most stages, [180] for expand/advocate/churn per the prose — unconfirmed live. */
+  measurementAgeDays: number[];
   cohorts: unknown[] | null;
-  undatedCustomers: number;
-  currency: string;
+  undatedCustomers: number | null;
   valueCaveat: string | null;
+  /** Added 2026-09-04. */
+  caveat: string | null;
   callouts: LifecycleCalloutDto[];
 }
 

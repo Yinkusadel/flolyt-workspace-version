@@ -9,6 +9,8 @@ export interface CreateChangePayload {
   team?: string;
   description?: string;
   affectedStageKeys?: string[];
+  /** Added 2026-09-04. "action" (default) | "absence_of_action" — the latter indexes things that should have happened and didn't, dated from when the omission took effect. */
+  kind?: string;
 }
 
 export interface CreateChangeResponse {

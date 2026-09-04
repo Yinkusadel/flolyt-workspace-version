@@ -17,6 +17,8 @@ export interface ChangeImpactData {
   occurredOnUtc: string;
   team: string | null;
   source: string;
+  /** Added 2026-09-04. "action" (default) | "absence_of_action". */
+  kind: string;
   affectedStageKeys: string[];
   sourceRoomId: string | null;
   /** Always all 10 stages, in spine order. */
