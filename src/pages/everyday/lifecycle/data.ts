@@ -27,6 +27,9 @@ export const DEPARTMENT_COLORS: Record<Department, string> = {
   Engineering: "#4E7080",
 };
 
+/** For validating a live `owningTeam`/`team` string against the known department palette before casting it to `Department`. */
+export const KNOWN_DEPARTMENTS = new Set(Object.keys(DEPARTMENT_COLORS));
+
 export type Stage = {
   name: string;
   /** Path segment under /lifecycle/ for this stage's detail page. */
@@ -79,19 +82,9 @@ export const ADVOCACY_LOOP_NOTE =
 
 export type RootCauseRow = {
   stage: string;
-  department: Department;
+  department: Department | null;
   detail: string;
 };
-
-export const ROOT_CAUSE_HEADLINE = "THE 4 MARCH DELIVERY-FEE CHANGE";
-
-export const ROOT_CAUSE_ROWS: RootCauseRow[] = [
-  { stage: "Activate", department: "Product", detail: "abandonment at the fee step rose 3.1×" },
-  { stage: "Retain", department: "Marketing", detail: "second-order rate fell 11 points" },
-  { stage: "Support", department: "Support", detail: "“where is my order” became the top contact driver" },
-  { stage: "Renew", department: "Customer Success", detail: "subscription pauses up 22%" },
-  { stage: "Advocate", department: "Marketing", detail: "referral rate fell for the first time in two years" },
-];
 
 export type Trend = "steady" | "worsening" | "improving";
 

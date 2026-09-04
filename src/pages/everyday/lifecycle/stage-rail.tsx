@@ -26,7 +26,7 @@ const HINT_VISIBLE_MS = 5000;
 // stage/overview/overview-tab.tsx's headerActionsEl slot) so this is a proven-safe pattern under
 // this repo's preact/compat setup. Plain JS positioning, no Radix Tooltip — see
 // preact_radix_dialog_crash memory on why Radix's Presence-based components misbehave here.
-function InfoTooltip({ missingSource, wouldUnlock }: { missingSource?: string; wouldUnlock?: string }) {
+export function InfoTooltip({ missingSource, wouldUnlock }: { missingSource?: string; wouldUnlock?: string }) {
   const triggerRef = useRef<HTMLSpanElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);

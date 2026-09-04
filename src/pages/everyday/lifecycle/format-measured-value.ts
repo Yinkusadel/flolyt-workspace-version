@@ -1,0 +1,22 @@
+export function round(value: number, decimals: number): number {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+}
+
+/** ₦ compact formatting for a currency-valued measured figure (e.g. atStake). */
+export function formatCompactCurrency(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `₦${Math.round(value / 1_000_000)}M`;
+  if (abs >= 1_000) return `₦${Math.round(value / 1_000)}k`;
+  return `₦${value}`;
+}
+
+/** Comma-grouped count, for a measured figure meant to read as an exact-looking total (e.g. a 12-month population). */
+export function formatCount(value: number): string {
+  return value.toLocaleString("en-US");
+}
+
+/** Fraction (0-1) to a one-decimal percent string, for share/rate-style measured figures. */
+export function formatPercent(value: number): string {
+  return `${round(value * 100, 1)}%`;
+}

@@ -9,13 +9,8 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 
 // ---- Overview (A02) --------------------------------------------------
-
-export const ACQUIRE_OVERVIEW_KPIS: Kpi[] = [
-  { eyebrow: "Acquired · 12 months", value: "894,000", tone: "teal", note: "+31% on last year" },
-  { eyebrow: "At stake", value: "₦74M", tone: "rose", note: "in this stage alone" },
-  { eyebrow: "Blended CAC", value: "₦1,840", tone: "amber", note: "up from ₦1,410" },
-  { eyebrow: "Reach a second order", value: "27.2%", tone: "rose", note: "the number that decides if this is good" },
-];
+// The KPI row is wired live (see overview-tab.tsx's buildAcquireKpis) — no mock export here
+// anymore, per feedback_no_hardcoded_fallback.
 
 export const ACQUIRE_OVERVIEW_BAR_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
   { label: "Acquired · last year", value: "682,000 · 38.1% reached a second order", percent: 68, tone: "teal" },

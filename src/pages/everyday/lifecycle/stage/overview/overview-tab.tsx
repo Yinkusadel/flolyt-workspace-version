@@ -16,10 +16,12 @@ import { OpenARoomModal, type OpenRoomPreset } from "@/pages/everyday/lifecycle/
 import { ShareOrExportModal, type ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 import { AssignAnOwnerModal, type AssignOwnerPreset } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
 import { STAGES } from "@/pages/everyday/lifecycle/data";
+import { formatCompactCurrency, formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetStage } from "@/features/lifecycle/use-get-stage";
+import type { StageData } from "@/services/api/lifecycle/get-stage";
 import {
   ACQUIRE_OPEN_ROOM_PRESET,
   ACQUIRE_OVERVIEW_BAR_ROWS,
-  ACQUIRE_OVERVIEW_KPIS,
   ACQUIRE_OVERVIEW_LEAK_ROWS,
   ACQUIRE_SHARE_EXPORT_PRESET,
   type LeakRow,
@@ -86,7 +88,8 @@ import {
 } from "@/pages/everyday/lifecycle/stage/churn/data";
 
 type OverviewData = {
-  kpis: Kpi[];
+  /** Omit when a stage builds its KPI row live instead (see buildAcquireKpis below). */
+  kpis?: Kpi[];
   /** A callout shown before the KPI cards, for a finding urgent enough to lead the page (e.g. Advocate's "no owner" banner). */
   leadTitle?: string;
   leadBody?: string;
@@ -111,7 +114,6 @@ type OverviewData = {
 
 const OVERVIEW_DATA: Record<string, OverviewData> = {
   acquire: {
-    kpis: ACQUIRE_OVERVIEW_KPIS,
     barEyebrow: "Volume is up 31% and quality is down 11 points",
     barRows: ACQUIRE_OVERVIEW_BAR_ROWS,
     insightTitle: "More customers, fewer second orders, and both numbers are correct",
@@ -271,6 +273,40 @@ const LEAK_TREND_TONE_CLASS: Record<LeakRow["trendTone"], string> = {
   neutral: "text-ink-4",
 };
 
+// Acquire's KPI row is wired to GET /lifecycle/stages/{stageKey} — see docs/endpoints/lifecycle.md's
+// coverage tracker. Of the design's original 4 cards, only 3 have a backing field at all:
+// population ("Acquired · 12 months") and its yearOverYear note, atStake ("At stake"), and
+// primaryConversion ("Reach a second order") — each the same measured-value wrapper as
+// GET /map's atStake, rendered unavailable via the same InfoTooltip icon when its value is null.
+// Every note/value below is one field, formatted alone — never combined with another field.
+function buildAcquireKpis(stageData: StageData | undefined): Kpi[] {
+  if (!stageData) return [];
+  const { population, yearOverYear, atStake, primaryConversion } = stageData;
+
+  const acquiredNote =
+    yearOverYear.value !== null ? `${yearOverYear.value >= 0 ? "+" : ""}${formatPercent(yearOverYear.value)} on last year` : undefined;
+
+  return [
+    population.value !== null
+      ? { eyebrow: "Acquired · 12 months", value: formatCount(population.value), tone: "teal", note: acquiredNote }
+      : { eyebrow: "Acquired · 12 months", unavailable: { missingSource: population.missingSource, wouldUnlock: population.wouldUnlock } },
+    atStake.value !== null
+      ? { eyebrow: "At stake", value: formatCompactCurrency(atStake.value), tone: "rose", note: "in this stage alone" }
+      : { eyebrow: "At stake", unavailable: { missingSource: atStake.missingSource, wouldUnlock: atStake.wouldUnlock } },
+    // ❌ Backend does NOT provide: blended CAC — no such field anywhere in StageData (get-stage.ts)
+    // or any other documented lifecycle endpoint, confirmed against docs/endpoints/lifecycle.md.
+    // Per the backend-gap convention this card is commented out rather than shown with a
+    // fabricated "unavailable" tooltip — there's no real field to hang that state off of.
+    // { eyebrow: "Blended CAC", unavailable: { missingSource: ... } },
+    primaryConversion.value !== null
+      ? { eyebrow: "Reach a second order", value: formatPercent(primaryConversion.value), tone: "rose", note: "the number that decides if this is good" }
+      : {
+          eyebrow: "Reach a second order",
+          unavailable: { missingSource: primaryConversion.missingSource, wouldUnlock: primaryConversion.wouldUnlock },
+        },
+  ];
+}
+
 /** Screen A02 (and the shared template for every stage's Overview tab). */
 export function OverviewTab() {
   const { stage, headerActionsEl } = useStageContext();
@@ -278,10 +314,15 @@ export function OverviewTab() {
   const [shareOpen, setShareOpen] = useState(false);
   const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
 
+  const isAcquire = stage.slug === "acquire";
+  const acquireStageQuery = useGetStage(isAcquire ? "acquire" : "");
+
   if (!stage.isDefined) return <StageEmptyState stageName={stage.name} />;
 
   const data = OVERVIEW_DATA[stage.slug];
   if (!data) return null;
+
+  const kpis = isAcquire ? buildAcquireKpis(acquireStageQuery.data?.data) : (data.kpis ?? []);
 
   const columns: Column<LeakRow>[] = [
     {
@@ -378,7 +419,12 @@ export function OverviewTab() {
         </Callout>
       )}
 
-      <KpiCards items={data.kpis} />
+      <KpiCards
+        items={kpis}
+        isLoading={isAcquire && acquireStageQuery.isLoading}
+        isError={isAcquire && acquireStageQuery.isError}
+        onRetry={isAcquire ? () => acquireStageQuery.refetch() : undefined}
+      />
 
       {data.barEyebrow && data.barRows && (
         <section className="space-y-3">
