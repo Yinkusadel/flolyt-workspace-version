@@ -74,26 +74,8 @@ export const ACQUIRE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
 ];
 
 // ---- Funnel (A03) ------------------------------------------------------
-
-export type FunnelStep = {
-  id: string;
-  label: string;
-  value: string;
-  percent: number;
-  tone: "ultra" | "rose";
-  delta?: string;
-  deltaTone?: "rose" | "amber" | "teal";
-  note?: string;
-};
-
-export const ACQUIRE_FUNNEL_STEPS: FunnelStep[] = [
-  { id: "visited", label: "Visited", value: "8.41M", percent: 100, tone: "ultra" },
-  { id: "started-signup", label: "Started a signup", value: "2.14M", percent: 25, tone: "ultra", delta: "−74.5%", deltaTone: "amber", note: "Expected. Most visits are browsing." },
-  { id: "created-account", label: "Created an account", value: "1.31M", percent: 16, tone: "ultra", delta: "−38.8%", deltaTone: "amber", note: "412k drop out at the phone-number step" },
-  { id: "verified", label: "Verified", value: "1.04M", percent: 12, tone: "rose", delta: "−20.6%", deltaTone: "rose", note: "SMS delivery fails for 118k · a fixable ₦9M" },
-  { id: "added-first-item", label: "Added a first item", value: "961,000", percent: 11, tone: "ultra", delta: "−7.6%", deltaTone: "teal" },
-  { id: "placed-first-order", label: "Placed a first order", value: "894,000", percent: 10, tone: "ultra", delta: "−7.0%", deltaTone: "amber", note: "67k abandon at the delivery-fee step" },
-];
+// Steps are wired live (see funnel-tab.tsx, GET /lifecycle/acquire/funnel) — no mock export
+// here anymore. Only the action cards below stay mock; the endpoint has no field for them.
 
 export type FunnelActionCard = {
   id: string;
