@@ -150,64 +150,12 @@ export const ACTIVATE_DEFINITION: DefinitionData = {
     "“Two orders in 30 days” predicts a second order perfectly, because it is a second order. A definition that contains its own outcome cannot be used to find out what causes it — it just renames the thing you were trying to explain.",
 };
 
-// ---- Time to value (AC03) -----------------------------------------------
+// ---- Time to value (AC03) and Paths (AC04) are wired to
+// GET /lifecycle/activate/time-to-value and GET /lifecycle/activate/paths — see
+// docs/endpoints/lifecycle.md. Neither endpoint has a cohort-by-month or per-route
+// median-days/at-stake/verdict shape, so those mock rows were dropped rather than kept unused.
 
-export const ACTIVATE_TIME_TO_VALUE_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Same day", value: "41,000 · 11.2%", percent: 11, tone: "teal" },
-  { label: "1–3 days", value: "128,000 · 35.0%", percent: 35, tone: "teal" },
-  { label: "4–7 days", value: "94,000 · 25.7%", percent: 26, tone: "teal" },
-  { label: "8–14 days", value: "103,000 · 28.1%", percent: 28, tone: "amber" },
-  { label: "Never · 528,000 did not activate", value: "59.0% of everyone acquired", percent: 59, tone: "rose" },
-];
-
-export type TimeToValueCohortRow = {
-  id: string;
-  cohort: string;
-  activated: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  medianDays: string;
-  medianTone: "teal" | "rose" | "neutral";
-  sameDay: string;
-  sameDayTone: "ink" | "amber";
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
-
-export const ACTIVATE_TIME_TO_VALUE_COHORT_ROWS: TimeToValueCohortRow[] = [
-  { id: "january", cohort: "January", activated: "31,900", rate: "52.1%", rateTone: "teal", medianDays: "3.2", medianTone: "teal", sameDay: "14.1%", sameDayTone: "ink", vsFeb: "+0.4", vsFebTone: "teal" },
-  { id: "february", cohort: "February", activated: "33,800", rate: "52.1%", rateTone: "teal", medianDays: "3.4", medianTone: "teal", sameDay: "13.8%", sameDayTone: "ink", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", activated: "34,100", rate: "41.5%", rateTone: "rose", medianDays: "6.0", medianTone: "rose", sameDay: "11.4%", sameDayTone: "amber", vsFeb: "−10.6", vsFebTone: "rose" },
-  { id: "april", cohort: "April", activated: "32,200", rate: "41.1%", rateTone: "rose", medianDays: "6.2", medianTone: "rose", sameDay: "11.1%", sameDayTone: "amber", vsFeb: "−11.0", vsFebTone: "rose" },
-  { id: "may", cohort: "May", activated: "32,600", rate: "42.0%", rateTone: "rose", medianDays: "6.1", medianTone: "rose", sameDay: "11.2%", sameDayTone: "amber", vsFeb: "−10.1", vsFebTone: "rose" },
-  { id: "june", cohort: "June", activated: "30,900", rate: "40.6%", rateTone: "rose", medianDays: "Unavailable", medianTone: "neutral", sameDay: "11.0%", sameDayTone: "ink", vsFeb: "—", vsFebTone: "neutral" },
-];
-
-// ---- Paths (AC04) + one-path drilldown (AC05) ----------------------------
-
-export type PathRow = {
-  id: string;
-  path: string;
-  customers: string;
-  activate: string;
-  activateTone: "teal" | "amber" | "rose";
-  medianDays: string;
-  medianTone: "teal" | "amber" | "rose";
-  secondOrder: string;
-  secondOrderTone: "teal" | "amber" | "rose";
-  atStake: string;
-  atStakeTone: "neutral" | "amber" | "rose";
-  verdict: string;
-  verdictTone: "teal" | "amber" | "rose";
-};
-
-export const ACTIVATE_PATH_ROWS: PathRow[] = [
-  { id: "referral-link", path: "Referral link → app → order", customers: "218,000", activate: "61.4%", activateTone: "teal", medianDays: "2.1", medianTone: "teal", secondOrder: "48.1%", secondOrderTone: "teal", atStake: "₦18M", atStakeTone: "neutral", verdict: "best", verdictTone: "teal" },
-  { id: "app-signup", path: "App signup → browse → order", customers: "264,000", activate: "44.2%", activateTone: "amber", medianDays: "5.8", medianTone: "amber", secondOrder: "29.4%", secondOrderTone: "amber", atStake: "₦61M", atStakeTone: "amber", verdict: "typical", verdictTone: "amber" },
-  { id: "partner-qr", path: "Partner QR → app → order", customers: "94,000", activate: "46.1%", activateTone: "amber", medianDays: "4.2", medianTone: "teal", secondOrder: "31.1%", secondOrderTone: "teal", atStake: "₦19M", atStakeTone: "amber", verdict: "good", verdictTone: "teal" },
-  { id: "guest-checkout", path: "Guest checkout → no account", customers: "186,000", activate: "12.1%", activateTone: "rose", medianDays: "11.4", medianTone: "rose", secondOrder: "8.4%", secondOrderTone: "rose", atStake: "₦74M", atStakeTone: "rose", verdict: "the problem", verdictTone: "rose" },
-  { id: "paid-ad", path: "Paid ad → web → order", customers: "132,000", activate: "38.4%", activateTone: "amber", medianDays: "6.9", medianTone: "amber", secondOrder: "24.1%", secondOrderTone: "amber", atStake: "₦16M", atStakeTone: "amber", verdict: "typical", verdictTone: "amber" },
-];
+// ---- One-path drilldown (AC05) -------------------------------------------
 
 export type InsightCard = {
   id: string;
@@ -218,35 +166,6 @@ export type InsightCard = {
   footnote: string;
   tone: "teal" | "amber" | "rose";
 };
-
-export const ACTIVATE_PATH_INSIGHT_CARDS: InsightCard[] = [
-  {
-    id: "guest-checkout-activates-low",
-    agentTag: "PR",
-    meta: "₦74M · 186,000 customers",
-    title: "Guest checkout activates at 12%",
-    body: "No account means no push, no saved address and no order history. 88% never return. It is the single worst path into the product and it is the default on web.",
-    footnote: "the default, not a choice",
-    tone: "rose",
-  },
-  {
-    id: "counter-argument",
-    meta: "THE COUNTER-ARGUMENT",
-    title: "Removing it costs first orders",
-    body: "Guest checkout was added in 2024 and lifted first-order completion by 9 points. Forcing signup would very likely give some of that back — which is the trade nobody has priced.",
-    footnote: "no test has been run",
-    tone: "amber",
-  },
-  {
-    id: "untried-middle",
-    agentTag: "PR",
-    meta: "The untried middle",
-    title: "Account after the order, not before",
-    body: "Offer the account at the confirmation screen, when the customer already has a reason to want one. No holdout has ever tested this and it is cheap to test.",
-    footnote: "suggested, never tried",
-    tone: "teal",
-  },
-];
 
 export type PathDetail = {
   path: string;
