@@ -306,14 +306,13 @@ function buildAcquireKpis(stageData: StageData | undefined): Kpi[] {
   ];
 }
 
-// Activate's KPI row is wired to the same GET /lifecycle/stages/{stageKey} endpoint as Acquire's.
-// Of the design's original 4 cards, only 3 have a backing field here: population ("Acquired · 12
-// months"), atStake ("At stake" — Activate is one of the 3 leakage-reachable stages, so this one
-// can carry a real value rather than reading unavailable throughout), and primaryConversion
-// ("Reach value").
+// Activate's KPI row is wired to the same GET /lifecycle/stages/{stageKey} endpoint as Acquire's,
+// same 4-card shape for consistency: population, atStake, rateOfChange, primaryConversion. Of the
+// design's original 4 cards, "Median time to value" is the one with no field here — it lives on
+// GET /lifecycle/activate/time-to-value instead (medianBand, deliberately a band not a day count).
 function buildActivateKpis(stageData: StageData | undefined): Kpi[] {
   if (!stageData) return [];
-  const { population, yearOverYear, atStake, primaryConversion } = stageData;
+  const { population, rateOfChange, yearOverYear, atStake, primaryConversion } = stageData;
 
   const acquiredNote =
     yearOverYear.value !== null ? `${yearOverYear.value >= 0 ? "+" : ""}${formatPercent(yearOverYear.value)} on last year` : undefined;
@@ -322,20 +321,22 @@ function buildActivateKpis(stageData: StageData | undefined): Kpi[] {
     population.value !== null
       ? { eyebrow: "Acquired · 12 months", value: formatCount(population.value), tone: "teal", note: acquiredNote }
       : { eyebrow: "Acquired · 12 months", unavailable: { missingSource: population.missingSource, wouldUnlock: population.wouldUnlock } },
+    atStake.value !== null
+      ? { eyebrow: "At stake", value: formatCompactCurrency(atStake.value), tone: "rose", note: "in this stage alone" }
+      : { eyebrow: "At stake", unavailable: { missingSource: atStake.missingSource, wouldUnlock: atStake.wouldUnlock } },
+    rateOfChange.value !== null
+      ? { eyebrow: "Rate of change", value: `${rateOfChange.value >= 0 ? "+" : ""}${formatPercent(rateOfChange.value)}`, tone: rateOfChange.value >= 0 ? "teal" : "rose", note: "month over month" }
+      : { eyebrow: "Rate of change", unavailable: { missingSource: rateOfChange.missingSource, wouldUnlock: rateOfChange.wouldUnlock } },
     primaryConversion.value !== null
       ? { eyebrow: "Reach value", value: formatPercent(primaryConversion.value), tone: "rose", note: "activation, not just a first order" }
       : {
           eyebrow: "Reach value",
           unavailable: { missingSource: primaryConversion.missingSource, wouldUnlock: primaryConversion.wouldUnlock },
         },
-    atStake.value !== null
-      ? { eyebrow: "At stake", value: formatCompactCurrency(atStake.value), tone: "rose", note: "in this stage alone" }
-      : { eyebrow: "At stake", unavailable: { missingSource: atStake.missingSource, wouldUnlock: atStake.wouldUnlock } },
     // ❌ Not provided by GET /lifecycle/stages/{stageKey}: "Median time to value" — that figure
-    // (medianBand, deliberately a band not a day count) lives on GET /lifecycle/activate/time-to-
-    // value instead. Pulling a second endpoint just for this one Overview card is deferred rather
-    // than composed here — unlike Acquire's "Blended CAC" this field does exist, just elsewhere.
-    // { eyebrow: "Median time to value", unavailable: { missingSource: ... } },
+    // lives on GET /lifecycle/activate/time-to-value instead. Pulling a second endpoint just for
+    // this one Overview card is deferred rather than composed here — unlike Acquire's "Blended
+    // CAC" this field does exist, just elsewhere, so a 5th card is dropped, not this one.
   ];
 }
 
