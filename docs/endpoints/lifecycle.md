@@ -755,8 +755,9 @@ wired 2026-09-05 (read side only) — see its own entry below.
 
 - **Purpose:** The stage's Agents tab — which agents watch it, on what thresholds, routed where.
 - **Response `data`:** `{ stageKey, stageName, agents: [{key, initials, name, role, readiness, reads: string[], needs, wouldUnlock, conditions: [{id, label, metricKey, metricQuestion, unit, segment, comparison, threshold, sustainReadings, status, ...}]}], recentFirings: [{id, conditionId, label, reading, threshold, outcome, routedVia, isTriage, roomId, note, firedAtUtc}], disagreements: [{conflictId, roomId, raisedByAgent, summary, raisedAtUtc, readings: string[]}], autoOpenRoomCap, autoOpenedRoomsOpen, callouts }`. Each condition object has additional properties beyond what's listed (spec marks it truncated), same pattern as `leakage-map`'s cells.
-- **Used by:** service + hook exist (`get-stage-agents.ts` / `use-get-stage-agents.ts`) — **wired 2026-09-05**, `stage/agents/agents-tab.tsx` (shared across all 10 stages, generic on `stage.slug`). Cards render `agents[]` (name/initials/role/readiness, `reads[]` as body text, `needs`/`wouldUnlock` via `InfoTooltip` when not `ready`). The threshold table flattens every agent's `conditions[]` into rows (Agent/Condition/Threshold/Status); **"Currently" and "Who it goes to" are dropped** — neither a live reading nor a resolved owner name is among the condition object's documented fields, and the spec marks that object truncated (has undocumented extra properties) — confirm against a real response before adding either back. `recentFirings[]` is rendered as a compact list (label/reading vs threshold/outcome/routedVia/date) when non-empty; `disagreements[]` is fetched but not yet rendered anywhere. The "Add a threshold" preview dialog still uses each stage's old mock `*_THRESHOLD_PRESET` — it's a static design mock, not backed by a live backtest (that would be `POST .../conditions/backtest`, out of scope here). All 10 stages' `*_AGENT_CARDS`/`*_THRESHOLD_ROWS`/`*_AGENTS_INSIGHT` mocks removed. Not yet checked against a real response.
-- **Status:** wired (all 10 stages), not yet live-verified.
+- **Correction 2026-09-05:** the JSON example truncates the condition object, but the endpoint's own prose description (re-pasted by the user) names what's actually missing from it: **`status`'s real enum is `proposed`/`watching`/`muted`/`declined`** (this doc previously had no enum at all, and the shipped UI incorrectly assumed an `"active"` state that doesn't exist — `watching` is the real name for an evaluating condition). The prose also confirms two more real fields not in the JSON example, exact wire names still unconfirmed: **a last-reading measured value** ("the last reading as a measured value (unavailable naming what it cannot see)") and **sustain-window progress** ("how far into its sustain window it is") — these are very likely what "Currently" should have rendered from, see the note below. **Lesson: for a spec-marked-truncated object, the endpoint's own prose description can name fields the JSON example omits — read both, not just the example, before declaring a field undocumented.**
+- **Used by:** service + hook exist (`get-stage-agents.ts` / `use-get-stage-agents.ts`) — **wired 2026-09-05**, `stage/agents/agents-tab.tsx` (shared across all 10 stages, generic on `stage.slug`). Cards render `agents[]` (name/initials/role/readiness, `reads[]` as body text, `needs`/`wouldUnlock` via `InfoTooltip` when not `ready`). The threshold table flattens every agent's `conditions[]` into rows (Agent/Condition/Threshold/Status); **"Currently" and "Who it goes to" are dropped** — a live reading and sustain progress are now confirmed to exist (see correction above) but their exact field names aren't, and a resolved owner name still isn't named anywhere — confirm exact field names against a real response before adding either column back. `status`'s chip rendering needs fixing to the real 4-value enum (was defaulting everything to a generic neutral chip). `recentFirings[]` is rendered as a compact list (label/reading vs threshold/outcome/routedVia/date) when non-empty; `disagreements[]` is fetched but not yet rendered anywhere. The "Add a threshold" preview dialog still uses each stage's old mock `*_THRESHOLD_PRESET` — it's a static design mock, not backed by a live backtest (that would be `POST .../conditions/backtest`, out of scope here). All 10 stages' `*_AGENT_CARDS`/`*_THRESHOLD_ROWS`/`*_AGENTS_INSIGHT` mocks removed. Not yet checked against a real response.
+- **Status:** wired (all 10 stages), not yet live-verified. Condition row actions (edit/mute/decide) not yet built — see the condition-management endpoints below.
 - **Notes:** `role` is `lead` for the stage's own agent, `supporting` for any other agent carrying a condition on it. `readiness` (`ready`/`reading`/`not-ready`) is how an agent with nothing to read still appears at all, rather than silently showing zero findings — same 3-state vocabulary as `GET /workspace/agents` (see [workspace.md](workspace.md)). Each condition's routing resolves **through the live chain** — stage owner → owning team's lead → an admin marked `isTriage` — which is a hand-off waiting to be re-pointed, not permanent ownership. **`unroutedFireCount` is the number that matters most**: firings that reached nobody. `disagreements` keeps **both** conflicting agents' readings, never adjudicated by the API itself.
 
 ### GET /lifecycle/teams
@@ -778,7 +779,7 @@ wired 2026-09-05 (read side only) — see its own entry below.
 
 - **Purpose:** What a stage condition may legally be written against.
 - **Response `data`:** `[{key, question, unit, needsSegmentation, hasHistory, readsFrom}]` — bare array.
-- **Status:** service/hook ready, not wired — no page consumes this yet.
+- **Status:** **✅ wired 2026-09-05** — the metric picker in `set-a-threshold-modal.tsx`'s create flow, and looked up by `metricKey` in the edit/accept flows purely to read `hasHistory`/`unit` for that condition's already-fixed metric (metric itself isn't editable post-creation).
 - **Notes:** **Deliberately a small fixed catalog, not a formula language** — a named metric can be refused at authoring time if it can't be read, which is the difference between "a condition that never fires" and "a condition nobody knew had silently stopped working." `needsSegmentation` means the metric is meaningless unsliced (e.g. needs a departure or a currency named); `hasHistory` means a stored series exists to backtest against (see `.../conditions/backtest` below — a metric without history can't be backtested).
 
 ### POST /lifecycle/stages/{stageKey}/conditions
@@ -787,7 +788,7 @@ wired 2026-09-05 (read side only) — see its own entry below.
 - **Auth:** Bearer token; stage owner or workspace administrator.
 - **Request:** path `stageKey`; body `{ label, metricKey, comparison: "AtOrBelow"|"AtOrAbove", threshold (number), sustainReadings (int), agentKey?, routesToUserId? (uuid), segment? }`.
 - **Response:** `{ data: conditionId (uuid), messages, succeeded }`.
-- **Status:** service/hook ready, not wired — no page consumes this yet.
+- **Status:** **✅ wired 2026-09-05** — `stage/modals/set-a-threshold-modal.tsx` ("Add a threshold" on every stage's Agents tab, replacing the old per-stage `*_THRESHOLD_PRESET` mock). Metric picker sourced live from `GET /watchable-metrics`; segment field only shown when the selected metric's `needsSegmentation` is true; `agentKey` picker sourced from the same `GET .../agents` response already on the page (optional — "Not agent-specific" sends `null`); `routesToUserId` picker sourced from `GET /workspace/members` (`kind === "Human" && isActive`, "Stage's own routing chain" sends `null`). Includes a live `BacktestPreview` (see the backtest entry below) so the person previews against the exact draft values before saving.
 - **Notes:** Watches from the moment it's saved. `routesToUserId: null` uses the stage's own routing chain (owner → team lead → triage admin, see `GET .../agents` above) — **routing to a team or to a log is not offered at all**, since both are places an alert goes to become nobody's. `sustainReadings` is counted in daily evaluator passes — a pass that didn't run *delays* a firing, it never manufactures one early.
 
 ### PUT /lifecycle/conditions/{conditionId}
@@ -796,7 +797,7 @@ wired 2026-09-05 (read side only) — see its own entry below.
 - **Auth:** Bearer token; owner-or-admin, like a definition edit — a person only.
 - **Request:** path `conditionId`; body `{ threshold, sustainReadings, routesToUserId }`.
 - **Response:** `{ data: conditionId, messages, succeeded }`.
-- **Status:** service/hook ready, not wired — no page consumes this yet.
+- **Status:** **✅ wired 2026-09-05** — `stage/modals/edit-condition-modal.tsx`'s `EditConditionModal`, opened via "Edit" on a `watching` or `muted` row in the Agents tab's conditions table (never offered on a `proposed` or `declined` row, matching this endpoint's own refusal rule). Threshold/sustain-readings inputs seeded from the row's current values; `routesToUserId` picker same as create's (workspace members, "stage's own routing chain" for `null` — there's no way to show the row's *current* routing since it isn't among the condition object's documented fields, see the `GET .../agents` correction above). Includes the same live `BacktestPreview`.
 - **Notes:** **The only edit anybody may make** to a condition (create/mute/decide are separate endpoints). The breach count is **reset** on edit — what a condition counted against the old threshold says nothing about the new one, carrying it forward would let a rule fire on a sustain it never actually met under the new terms. **Refused on a still-proposed condition** — accept it via `.../decide` with the threshold you actually want instead of editing a proposal.
 
 ### POST /lifecycle/conditions/{conditionId}/decide
@@ -804,7 +805,7 @@ wired 2026-09-05 (read side only) — see its own entry below.
 - **Purpose:** Accepts or declines a condition an **agent** proposed.
 - **Request:** path `conditionId`; body `{ accept (bool), routesToUserId?, sustainReadings?, threshold? }`.
 - **Response:** `{ data: conditionId, messages, succeeded }`.
-- **Status:** service/hook ready, not wired — no page consumes this yet.
+- **Status:** **✅ wired 2026-09-05.** Accept-with-changes via `stage/modals/edit-condition-modal.tsx`'s `AcceptConditionModal` (same fields as edit, submits `accept: true` plus the draft threshold/sustainReadings/routesToUserId) from "Accept…" on a `proposed` row; a plain Decline (`accept: false`, no overrides) via `ConfirmActionModal` from "Decline" on the same row's menu — the only irreversible-from-the-UI action in this set, so it asks first.
 - **Notes:** Agents may **propose** thresholds but may **never set them** — a proposed condition isn't evaluated at all until a person accepts it, optionally adjusting threshold/sustain/routing in the same call. A **declined** proposal is kept, not deleted, so the same suggestion doesn't get re-proposed forever.
 
 ### POST /lifecycle/conditions/{conditionId}/mute
@@ -812,7 +813,7 @@ wired 2026-09-05 (read side only) — see its own entry below.
 - **Purpose:** Stops (or resumes) a condition being read.
 - **Request:** path `conditionId`; body `{ muted (bool) }`.
 - **Response:** `{ data: conditionId, messages, succeeded }`.
-- **Status:** service/hook ready, not wired — no page consumes this yet.
+- **Status:** **✅ wired 2026-09-05** — direct dropdown action ("Mute"/"Unmute") on a `watching`/`muted` row, no confirmation modal (reversible, and the endpoint's own semantics keep everything found).
 - **Notes:** Muting **keeps everything already found** and resets the breach run — the tool a person reaches for instead of deleting a rule that turned out to be noise, preserving history rather than discarding it.
 
 ### POST /lifecycle/stages/{stageKey}/conditions/backtest
@@ -820,7 +821,7 @@ wired 2026-09-05 (read side only) — see its own entry below.
 - **Purpose:** How often a proposed threshold would have fired against real kept history.
 - **Request:** path `stageKey`; body `{ metricKey, comparison, threshold, sustainReadings, segment? }`.
 - **Response `data`:** `{ stageKey, stageName, metricKey, metricQuestion, threshold, sustainReadings, firings, grain, points: [{periodStartUtc, reading, breaching, wouldHaveFired}], caveat }`.
-- **Status:** service/hook ready, not wired — no page consumes this yet.
+- **Status:** **✅ wired 2026-09-05** — `stage/modals/backtest-preview.tsx`'s `BacktestPreview`, shared by the create, edit and accept-with-changes modals as a "Simulate" button + live preview against the in-progress draft values (replacing the old static per-stage `simulation` mock text). Renders `firings`/`grain`/`caveat` as text and `points[].reading` as a `Sparkline` (see `stage/sparkline.tsx`) with `threshold` drawn as a dashed reference line. Disabled when the selected metric's `hasHistory` is `false` (from `GET /watchable-metrics`), with the reason shown inline instead of letting a doomed request fire.
 - **Notes:** Only available for metrics with a **stored monthly series** (see `watchable-metrics`' `hasHistory`) — a current-state metric like money-at-risk returns `firings` unavailable, naming that, rather than fake-simulating over a single reading. `grain` is `"month"`, and `caveat` says plainly that the *live* sustain window is counted in **daily** readings — a month-grain backtest is a structurally coarser test than the rule it's previewing, don't present the backtest result as an exact prediction of live behavior.
 
 ### PUT /lifecycle/teams/{team}/lead
@@ -913,17 +914,21 @@ number.
 
 ### Remaining, unrelated to this sweep — pick up fresh in a new chat
 
-1. **The churn-routing / governance cluster — 15 endpoints, service+hook ready, no UI built at
-   all** (not a wiring gap, a missing-page gap): `POST /churn/route-upstream`, `GET
+1. **The churn-routing / governance cluster — 9 endpoints remaining, service+hook ready, no UI
+   built at all** (not a wiring gap, a missing-page gap): `POST /churn/route-upstream`, `GET
    /churn/routings`, `POST /churn/routings/{id}/acknowledge`, `GET /teams`, `PUT
-   /teams/{team}/lead`, `GET /watchable-metrics`, `POST /stages/{stageKey}/conditions`, `PUT
-   /conditions/{conditionId}`, `POST /conditions/{conditionId}/decide`, `POST
-   /conditions/{conditionId}/mute`, `POST /stages/{stageKey}/conditions/backtest`, `PUT
-   /governance/room-cap`, `POST /instrumentation-requests`, `POST
+   /teams/{team}/lead`, `PUT /governance/room-cap`, `POST /instrumentation-requests`, `POST
    /instrumentation-requests/{obligationId}/close`, `PUT
    /instrumentation-requests/{obligationId}/owner`. These would need actual page/screen design
    work, not just data-wiring, since no Figma screen in this codebase's build history targets most
-   of them.
+   of them. **Corrected 2026-09-05: the other 6 of the original 15 are wired** — `GET
+   /watchable-metrics`, `POST /stages/{stageKey}/conditions`, `PUT /conditions/{conditionId}`,
+   `POST /conditions/{conditionId}/decide`, `POST /conditions/{conditionId}/mute`, `POST
+   /stages/{stageKey}/conditions/backtest` all now back the Agents tab's condition status
+   chip/actions-dropdown and its create/edit/accept modals — see each endpoint's own entry above
+   for exactly what shipped. The `status` enum used to drive this (`proposed`/`watching`/`muted`/
+   `declined`) came from the endpoint's own prose description, not its truncated JSON example —
+   see the `GET .../agents` correction above and [[feedback_stop_on_truncated_endpoint_fields]].
 2. ~~**Definition's edit flow**~~ — **done 2026-09-05, in a later session.** Correction to this
    line's original claim: `update-stage-conversion.ts`/`preview-stage-definition.ts`/
    `update-stage-definition.ts` were all already scaffolded, contrary to what this line said — the
