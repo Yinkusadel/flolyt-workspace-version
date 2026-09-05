@@ -457,49 +457,8 @@ export const EXPAND_COHORT_MOVED_CLOSING = {
   body: "Because a customer who upgrades still upgrades by the same amount — there are simply fewer of them and more of the ones there are chose Student. Two facts on one screen that would look contradictory in any report that only carried the headline rate.",
 };
 
-// ---- Markets (EX08, stage-specific layout) --------------------------------
-
-export type ExpandMarketRow = {
-  id: string;
-  market: string;
-  eligible: string;
-  expanded: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  arpuMultiple: string;
-  arpuMultipleTone: "teal" | "rose";
-  businessAccounts: string;
-  atStake: string;
-  atStakeTone: "amber" | "neutral";
-  trend: "flat" | "improving" | "worsening";
-};
-
-export const EXPAND_MARKET_ROWS: ExpandMarketRow[] = [
-  { id: "nigeria", market: "Nigeria", eligible: "781,000", expanded: "151,000", rate: "19.3%", rateTone: "teal", arpuMultiple: "1.39×", arpuMultipleTone: "teal", businessAccounts: "1,041", atStake: "₦48M", atStakeTone: "amber", trend: "flat" },
-  { id: "kenya", market: "Kenya", eligible: "218,000", expanded: "48,000", rate: "22.0%", rateTone: "teal", arpuMultiple: "1.51×", arpuMultipleTone: "teal", businessAccounts: "94", atStake: "KES 3.1M", atStakeTone: "amber", trend: "improving" },
-  { id: "ghana", market: "Ghana", eligible: "112,000", expanded: "14,000", rate: "12.5%", rateTone: "rose", arpuMultiple: "1.18×", arpuMultipleTone: "rose", businessAccounts: "41", atStake: "GHS 1.4M", atStakeTone: "amber", trend: "worsening" },
-  { id: "uk", market: "United Kingdom", eligible: "79,000", expanded: "18,000", rate: "22.8%", rateTone: "teal", arpuMultiple: "1.61×", arpuMultipleTone: "teal", businessAccounts: "28", atStake: "£21k", atStakeTone: "neutral", trend: "improving" },
-];
-
-export const EXPAND_MARKET_CLOSING = {
-  title: "Ghana expands at 12.5% against 19.3% in Nigeria, and price is the obvious candidate nobody has checked",
-  body: "Ghanaian customers already pay a 22% premium against every other market because the price has not been revised since August 2024. Asking them to move up a tier is asking them to move up from a base that is already too high. No room has ever connected these two facts.",
-};
-
-export const EXPAND_MARKET_GHANA_ROWS: { label: string; value: string }[] = [
-  { label: "Acquire", value: "CAC ₦6,026 · conversion 4.1%" },
-  { label: "Activate", value: "33.0% · slowest time to value" },
-  { label: "Price", value: "22% above every other market since 2024" },
-  { label: "Adopt", value: "1.6 features · lowest" },
-  { label: "Retain", value: "the fee ships there 14 September" },
-  { label: "Expand", value: "12.5% · lowest ARPU multiple" },
-  { label: "Rooms open about Ghana", value: "1 · about a campaign · no owner since 10 August" },
-];
-
-export const EXPAND_MARKET_FINAL_CLOSING = {
-  title: "Six stages, six worst-in-class readings, one unowned room about a campaign",
-  body: "No individual stage owner is wrong to treat Ghana as a small market with a local problem. Only the lifecycle view shows that every one of them independently flagged the same market, and that the thing they have in common — a price nobody revised — sits in a stage none of them own.",
-};
+// ---- Markets (EX08) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
+// acquire/data.ts's Markets note and markets-tab.tsx.
 
 // ---- What changed (EX09) ---------------------------------------------------
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)

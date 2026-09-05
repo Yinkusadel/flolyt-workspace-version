@@ -564,79 +564,11 @@ export const CHURN_COHORTS_OPEN_ROOM_PRESET: OpenRoomPreset = {
   participantsNote: "Churn Reason leads · no owner assigned since 12 January",
 };
 
-// ---- Markets (CH07, stage-specific layout) ----------------------------------
-
-export type ChurnMarketRow = {
-  id: string;
-  market: string;
-  churnedYr: string;
-  monthlyRate: string;
-  monthlyRateTone: "rose" | "teal";
-  reasonKnown: string;
-  reasonKnownTone: "amber" | "teal" | "rose";
-  reachable: string;
-  reachableTone: "teal" | "amber";
-  everContacted: string;
-  everContactedTone: "rose" | "amber" | "teal";
-  atStake: string;
-  atStakeTone: "rose" | "amber" | "neutral";
-  trend: "worsening" | "flat" | "improving";
-};
-
-export const CHURN_MARKET_ROWS: ChurnMarketRow[] = [
-  { id: "nigeria", market: "Nigeria", churnedYr: "781,000", monthlyRate: "3.4%", monthlyRateTone: "rose", reasonKnown: "32.1%", reasonKnownTone: "amber", reachable: "79.4%", reachableTone: "teal", everContacted: "12.1%", everContactedTone: "rose", atStake: "₦98M", atStakeTone: "rose", trend: "worsening" },
-  { id: "kenya", market: "Kenya", churnedYr: "121,000", monthlyRate: "2.1%", monthlyRateTone: "teal", reasonKnown: "41.4%", reasonKnownTone: "teal", reachable: "88.1%", reachableTone: "teal", everContacted: "18.4%", everContactedTone: "amber", atStake: "KES 8.1M", atStakeTone: "amber", trend: "flat" },
-  { id: "ghana", market: "Ghana", churnedYr: "94,000", monthlyRate: "4.1%", monthlyRateTone: "rose", reasonKnown: "Unavailable", reasonKnownTone: "rose", reachable: "71.1%", reachableTone: "amber", everContacted: "0%", everContactedTone: "rose", atStake: "GHS 2.1M", atStakeTone: "rose", trend: "worsening" },
-  { id: "uk", market: "United Kingdom", churnedYr: "28,000", monthlyRate: "1.6%", monthlyRateTone: "teal", reasonKnown: "48.1%", reasonKnownTone: "teal", reachable: "91.4%", reachableTone: "teal", everContacted: "31.1%", everContactedTone: "teal", atStake: "£41k", atStakeTone: "neutral", trend: "improving" },
-];
-
-export const CHURN_MARKET_CLOSING = {
-  title: "Ghana has the highest churn rate, no reason data, and has never been sent a win-back",
-  body: "94,000 customers a year leave a market where the delivery feed is not connected, so no reason can be inferred, and where no win-back campaign has ever run. Ghana's churn is the only figure on this screen that is both worst and completely unexplained.",
-};
-
-export type GhanaStageRow = {
-  id: string;
-  stage: string;
-  reading: string;
-  rank: string;
-  rankTone: "rose" | "amber" | "neutral";
-  owner?: { name: string; initials: string; color: string };
-  noOwner?: boolean;
-};
-
-export const CHURN_GHANA_ACROSS_STAGES_ROWS: GhanaStageRow[] = [
-  { id: "acquire", stage: "Acquire", reading: "CAC ₦6,026 · conversion 4.1%", rank: "4th", rankTone: "rose", owner: { name: "Tunde", initials: "TB", color: "#B4568F" } },
-  { id: "activate", stage: "Activate", reading: "33.0% · slowest time to value", rank: "4th", rankTone: "rose", owner: { name: "Zainab", initials: "ZY", color: "#7A5AA8" } },
-  { id: "price", stage: "Price", reading: "22% premium, unrevised since 2024", rank: "4th", rankTone: "rose", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" } },
-  { id: "adopt", stage: "Adopt", reading: "1.6 features", rank: "4th", rankTone: "rose", owner: { name: "Zainab", initials: "ZY", color: "#7A5AA8" } },
-  { id: "retain", stage: "Retain", reading: "fee ships 14 September", rank: "—", rankTone: "amber", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" } },
-  { id: "expand", stage: "Expand", reading: "12.5% · lowest ARPU multiple", rank: "4th", rankTone: "rose", owner: { name: "Tunde", initials: "TB", color: "#B4568F" } },
-  { id: "support", stage: "Support", reading: "2.9 hr resolution · silent failures unmeasurable", rank: "4th", rankTone: "rose", owner: { name: "Amara", initials: "AO", color: "#C56A2E" } },
-  { id: "renew", stage: "Renew", reading: "still retrying cards at midnight", rank: "4th", rankTone: "rose", owner: { name: "Kunle", initials: "KO", color: "#2E8B7F" } },
-  { id: "advocate", stage: "Advocate", reading: "6.4% referral rate", rank: "4th", rankTone: "rose", noOwner: true },
-  { id: "churn", stage: "Churn", reading: "4.1%/mo · no reason data · never contacted", rank: "4th", rankTone: "rose", noOwner: true },
-];
-
-export const CHURN_GHANA_CLOSING = {
-  title: "Ten stages, nine worst-in-class readings, eight different owners, and one room with nobody on it",
-  body: "No individual owner is wrong to treat Ghana as a small market with a local problem. This table only exists because the ten stages sit on one page — and it is the strongest argument in the whole product for why they do.",
-};
-
-export const CHURN_MARKETS_OPEN_ROOM_PRESET: OpenRoomPreset = {
-  condition: "Ghana has no reason data and no win-back history",
-  carriedIn: [
-    { label: "Stage", value: "Churn" },
-    { label: "Entered", value: "last 12 months" },
-    { label: "Markets", value: "Ghana" },
-    { label: "Reason known", value: "Unavailable" },
-    { label: "Excludes", value: "test accounts, merged duplicates" },
-  ],
-  countedSummary: "94,000 customers · GHS 2.1M at stake",
-  countedNote: "Counted 6 minutes ago · worst rank of four markets, nine of ten stages",
-  participants: [{ initials: "CH", kind: "agent" }],
-  participantsNote: "Churn Reason leads · no owner assigned since 12 January",
-};
+// ---- Markets (CH07) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
+// acquire/data.ts's Markets note and markets-tab.tsx. Churn's bespoke "Ghana across all ten
+// stages" cross-stage table and its "Open a war room" header button are both dropped along with
+// it — neither is backed by this (or any) endpoint; both were hand-authored narrative built
+// entirely around the old mock's fabricated Ghana story.
 
 // ---- What changed (CH08) -----------------------------------------------------
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)

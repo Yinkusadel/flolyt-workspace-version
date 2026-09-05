@@ -10,7 +10,6 @@
  */
 
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
-import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { CheckedRow, ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
@@ -460,44 +459,8 @@ export const PRICE_COHORT_CAUSE_CARDS: InsightCard[] = [
   },
 ];
 
-// ---- Markets (PR08, stage-specific layout) --------------------------------
-
-export type PriceMarketRow = {
-  id: string;
-  market: string;
-  customers: string;
-  basket: string;
-  inNairaToday: string;
-  inNairaTone: "ink" | "amber" | "rose";
-  vsNigeria: string;
-  vsNigeriaTone: "ink" | "teal" | "rose";
-  lastRepriced: string;
-  lastRepricedTone: "teal" | "rose";
-};
-
-export const PRICE_MARKET_ROWS: PriceMarketRow[] = [
-  { id: "nigeria", market: "Nigeria", customers: "2.91M", basket: "₦2,140", inNairaToday: "₦2,140", inNairaTone: "ink", vsNigeria: "baseline", vsNigeriaTone: "ink", lastRepriced: "Mar 2026", lastRepricedTone: "teal" },
-  { id: "kenya", market: "Kenya", customers: "610,000", basket: "KES 194", inNairaToday: "₦2,130", inNairaTone: "ink", vsNigeria: "−0.5%", vsNigeriaTone: "teal", lastRepriced: "Feb 2026", lastRepricedTone: "teal" },
-  { id: "ghana", market: "Ghana", customers: "410,000", basket: "GHS 41", inNairaToday: "₦2,610", inNairaTone: "rose", vsNigeria: "+22.0%", vsNigeriaTone: "rose", lastRepriced: "Aug 2024", lastRepricedTone: "rose" },
-  { id: "uk", market: "United Kingdom", customers: "269,000", basket: "£4.10", inNairaToday: "₦8,610", inNairaTone: "ink", vsNigeria: "+302%", vsNigeriaTone: "ink", lastRepriced: "Jan 2026", lastRepricedTone: "teal" },
-];
-
-export const PRICE_MARKET_INSIGHT = {
-  title: "The UK is 302% more expensive and that is correct. Ghana is 22% more expensive and that is drift.",
-  body: "The UK is a different market with different costs and a price set deliberately in January. Ghana has not been repriced since August 2024 — the cedi moved, nobody re-ran the list, and Ghanaian customers now pay a premium nobody chose. This is the only row on the screen where the comparison to Nigeria means anything.",
-};
-
-export const PRICE_MARKET_FX_DRIFT_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Aug 2024 · price set · GHS 41", value: "₦2,140 equivalent · matched Nigeria", percent: 82, tone: "teal" },
-  { label: "Aug 2025 · no repricing", value: "₦2,380 equivalent · +11%", percent: 91, tone: "amber" },
-  { label: "Aug 2026 · no repricing", value: "₦2,610 equivalent · +22%", percent: 100, tone: "rose" },
-  { label: "If repriced to match Nigeria today", value: "GHS 33.6", percent: 82, tone: "ultra" },
-];
-
-export const PRICE_MARKET_CLOSING = {
-  title: "This connects to two other stages and nobody has drawn the line",
-  body: "Acquire reports Ghana paid social converting at 4.1% and blames the creative, which promises free delivery. Activate reports Ghana as worst-in-class on every measure. Both are true. Neither team looked at the price, which has quietly risen 22% against every other market since 2024.",
-};
+// ---- Markets (PR08) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
+// acquire/data.ts's Markets note and markets-tab.tsx.
 
 // ---- What changed (PR09) ---------------------------------------------------
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)

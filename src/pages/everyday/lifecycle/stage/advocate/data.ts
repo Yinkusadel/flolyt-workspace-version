@@ -465,58 +465,11 @@ export const ADVOCATE_COHORTS_OPEN_ROOM_PRESET: OpenRoomPreset = {
   participantsNote: "Referral leads · no stage owner, escalated to Ada by default",
 };
 
-// ---- Markets (AV07, stage-specific layout) ---------------------------------
-
-export type AdvocateMarketRow = {
-  id: string;
-  market: string;
-  referrers: string;
-  referralRate: string;
-  referralRateTone: "teal" | "amber" | "rose";
-  referredCustomers: string;
-  shareOfAcquisition: string;
-  shareOfAcquisitionTone: "teal" | "rose";
-  reward: string;
-  trend: "worsening" | "flat" | "improving";
-};
-
-export const ADVOCATE_MARKET_ROWS: AdvocateMarketRow[] = [
-  { id: "nigeria", market: "Nigeria", referrers: "81,000", referralRate: "10.4%", referralRateTone: "amber", referredCustomers: "184,000", shareOfAcquisition: "30.2%", shareOfAcquisitionTone: "teal", reward: "₦1,000", trend: "worsening" },
-  { id: "kenya", market: "Kenya", referrers: "24,000", referralRate: "19.8%", referralRateTone: "teal", referredCustomers: "58,000", shareOfAcquisition: "47.9%", shareOfAcquisitionTone: "teal", reward: "KES 90", trend: "flat" },
-  { id: "ghana", market: "Ghana", referrers: "6,000", referralRate: "6.4%", referralRateTone: "rose", referredCustomers: "11,000", shareOfAcquisition: "11.7%", shareOfAcquisitionTone: "rose", reward: "GHS 18", trend: "worsening" },
-  { id: "uk", market: "United Kingdom", referrers: "13,000", referralRate: "18.8%", referralRateTone: "teal", referredCustomers: "25,000", shareOfAcquisition: "36.2%", shareOfAcquisitionTone: "teal", reward: "£1.80", trend: "improving" },
-];
-
-export const ADVOCATE_MARKET_CLOSING = {
-  title: "Nearly half of Kenya's new customers come from other Kenyan customers",
-  body: "47.9% of acquisition at effectively zero cost, in a market with the second-highest repeat rate and the fastest time to value. Kenya is not a smaller Nigeria — it is a working example of what the whole company is trying to be, and no room has ever been opened to ask why.",
-};
-
-export const ADVOCATE_MARKET_GHANA_ROWS: { label: string; value: string }[] = [
-  { label: "Ghana referral rate", value: "6.4% · a third of Kenya's" },
-  { label: "Ghana share of acquisition from referral", value: "11.7% · lowest" },
-  { label: "Ghana paid social CAC", value: "₦6,026 · to replace what referral would give free" },
-  { label: "The connection nobody has drawn", value: "a market paying a 22% price premium does not recommend you" },
-  { label: "Rooms open about Ghana", value: "1 · about a campaign · no owner since 10 August" },
-];
-
-export const ADVOCATE_MARKETS_OPEN_ROOM_PRESET: OpenRoomPreset = {
-  condition: "Kenya gets 47.9% of acquisition from referral and nobody has asked why",
-  carriedIn: [
-    { label: "Stage", value: "Advocate" },
-    { label: "Market", value: "Kenya" },
-    { label: "Share of acquisition", value: "47.9%" },
-    { label: "Compare against", value: "Nigeria · 30.2%" },
-    { label: "Excludes", value: "test accounts, merged duplicates" },
-  ],
-  countedSummary: "58,000 referred customers · Kenya",
-  countedNote: "Counted 6 minutes ago · second-highest repeat rate, fastest time to value",
-  participants: [
-    { initials: "AD", kind: "human", color: "#2E8B7F" },
-    { initials: "RF", kind: "agent" },
-  ],
-  participantsNote: "Referral leads · no stage owner, escalated to Ada by default",
-};
+// ---- Markets (AV07) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
+// acquire/data.ts's Markets note and markets-tab.tsx. The "Open a war room" header button this
+// tab used to show is dropped along with it — it was seeded with a hardcoded Kenya-specific
+// finding (ADVOCATE_MARKETS_OPEN_ROOM_PRESET), not a generic affordance, and that finding has no
+// grounding once the underlying table is real per-market population/atStake/conversion instead.
 
 // ---- What changed (AV08) ---------------------------------------------------
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)

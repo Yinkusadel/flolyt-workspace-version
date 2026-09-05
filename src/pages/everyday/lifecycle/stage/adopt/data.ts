@@ -438,46 +438,8 @@ export const ADOPT_COHORT_CAUSE_CARDS: InsightCard[] = [
   },
 ];
 
-// ---- Markets (AD08, stage-specific layout) --------------------------------
-
-export type AdoptMarketRow = {
-  id: string;
-  market: string;
-  eligible: string;
-  twoPlusFeatures: string;
-  twoPlusTone: "teal" | "rose";
-  avgFeatures: string;
-  avgFeaturesTone: "teal" | "rose";
-  topSecondFeature: string;
-  atStake: string;
-  atStakeTone: "rose" | "amber" | "neutral";
-  trend: "worsening" | "flat" | "improving";
-};
-
-export const ADOPT_MARKET_ROWS: AdoptMarketRow[] = [
-  { id: "nigeria", market: "Nigeria", eligible: "781,000", twoPlusFeatures: "31.1%", twoPlusTone: "rose", avgFeatures: "2.0", avgFeaturesTone: "rose", topSecondFeature: "Order again", atStake: "₦88M", atStakeTone: "rose", trend: "worsening" },
-  { id: "kenya", market: "Kenya", eligible: "218,000", twoPlusFeatures: "44.2%", twoPlusTone: "teal", avgFeatures: "2.8", avgFeaturesTone: "teal", topSecondFeature: "Scheduled delivery", atStake: "KES 4.1M", atStakeTone: "amber", trend: "flat" },
-  { id: "ghana", market: "Ghana", eligible: "112,000", twoPlusFeatures: "24.1%", twoPlusTone: "rose", avgFeatures: "1.6", avgFeaturesTone: "rose", topSecondFeature: "Saved addresses", atStake: "GHS 1.9M", atStakeTone: "rose", trend: "worsening" },
-  { id: "uk", market: "United Kingdom", eligible: "79,000", twoPlusFeatures: "48.9%", twoPlusTone: "teal", avgFeatures: "3.1", avgFeaturesTone: "teal", topSecondFeature: "Group ordering", atStake: "£19k", atStakeTone: "neutral", trend: "improving" },
-];
-
-export const ADOPT_MARKET_INSIGHT = {
-  title: "Kenya schedules and the UK orders in groups. Nigeria does neither.",
-  body: "The two markets with the highest adoption each lean on a different high-lift feature, and both discovered it without a campaign. Nigeria's most common second feature is “order again”, which is the lowest-effort and lowest-lift of the seven. Nobody has ever tried to move Nigeria toward what Kenya does naturally.",
-};
-
-export const ADOPT_MARKET_GHANA_ROWS: { label: string; value: string; tone: "amber" | "rose" }[] = [
-  { label: "Average features", value: "1.6 · the lowest of any market", tone: "rose" },
-  { label: "Why, in part", value: "31% guest share · guests cannot adopt anything", tone: "rose" },
-  { label: "Why, in part", value: "no delivery feed, so scheduling cannot be offered reliably", tone: "amber" },
-  { label: "Price", value: "22% above Nigeria and unrevised since 2024", tone: "rose" },
-  { label: "Rooms open in Ghana", value: "1 · about acquisition · with no owner", tone: "rose" },
-];
-
-export const ADOPT_MARKET_CLOSING = {
-  title: "This is the fourth stage in a row where Ghana is worst and nobody owns it",
-  body: "Acquire, Activate, Price and now Adopt each independently flag Ghana. There is one Ghana room, it is about a campaign, and it has had no owner since 10 August. The market is 410,000 customers and it does not have a person.",
-};
+// ---- Markets (AD08) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
+// acquire/data.ts's Markets note and markets-tab.tsx.
 
 // ---- What changed (AD09) ---------------------------------------------------
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)

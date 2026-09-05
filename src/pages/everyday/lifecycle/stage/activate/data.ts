@@ -299,43 +299,8 @@ export const ACTIVATE_COHORT_CAUSE_CARDS: InsightCard[] = [
   },
 ];
 
-// ---- Markets (AC07, stage-specific layout) --------------------------------
-
-export type ActivateMarketRow = {
-  id: string;
-  market: string;
-  enter: string;
-  activate: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  medianDays: string;
-  medianTone: "teal" | "rose";
-  guestShare: string;
-  guestShareTone: "teal" | "amber" | "rose";
-  atStake: string;
-  atStakeTone: "teal" | "amber" | "rose" | "neutral";
-  trend: "worsening" | "improving" | "flat";
-};
-
-export const ACTIVATE_MARKET_ROWS: ActivateMarketRow[] = [
-  { id: "nigeria", market: "Nigeria", enter: "610,000", activate: "241,000", rate: "39.5%", rateTone: "rose", medianDays: "6.4", medianTone: "rose", guestShare: "24.8%", guestShareTone: "amber", atStake: "₦148M", atStakeTone: "rose", trend: "worsening" },
-  { id: "kenya", market: "Kenya", enter: "121,000", activate: "62,900", rate: "52.0%", rateTone: "teal", medianDays: "3.9", medianTone: "teal", guestShare: "14.1%", guestShareTone: "teal", atStake: "KES 9.4M", atStakeTone: "amber", trend: "improving" },
-  { id: "ghana", market: "Ghana", enter: "94,000", activate: "31,000", rate: "33.0%", rateTone: "rose", medianDays: "8.1", medianTone: "rose", guestShare: "31.2%", guestShareTone: "rose", atStake: "GHS 4.1M", atStakeTone: "rose", trend: "worsening" },
-  { id: "uk", market: "United Kingdom", enter: "69,000", activate: "31,100", rate: "45.1%", rateTone: "teal", medianDays: "4.1", medianTone: "teal", guestShare: "11.9%", guestShareTone: "teal", atStake: "£31k", atStakeTone: "neutral", trend: "flat" },
-];
-
-export const ACTIVATE_MARKET_KENYA_INSIGHT = {
-  title: "Kenya activates 12.5 points better than Nigeria and nobody has ever asked why",
-  body: "Lower guest share, faster delivery windows and a market where the fee did not ship until June. Two of those three are copyable into Nigeria today. Kenya is 14% of the base and is currently treated as a smaller version of the main market rather than as the working example.",
-};
-
-export const ACTIVATE_MARKET_GHANA_ROWS: { label: string; value: string; tone: "amber" | "rose" }[] = [
-  { label: "Guest share", value: "31.2% · the highest of any market · web-heavy acquisition", tone: "rose" },
-  { label: "Median time to value", value: "8.1 days · slowest · delivery windows are 2–4 hours wider", tone: "rose" },
-  { label: "Delivery feed", value: "not connected · so late-delivery effects cannot be measured here", tone: "amber" },
-  { label: "Fee ships here", value: "14 September · the only market where this is still preventable", tone: "amber" },
-  { label: "Rooms open in Ghana", value: "1 · the Accra acquisition room, with no owner", tone: "rose" },
-];
+// ---- Markets (AC07) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
+// acquire/data.ts's Markets note and markets-tab.tsx.
 
 // ---- What changed (AC08) -------------------------------------------------
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)

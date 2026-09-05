@@ -422,45 +422,8 @@ export const SUPPORT_COHORT_COST_CLOSING = {
   body: "₦3.4M of extra support cost per cohort is a line item that appears in a monthly budget review. ₦53M of extra revenue loss per cohort appears nowhere, because no support system in this company has ever been connected to what the customer did next.",
 };
 
-// ---- Markets (SU07, stage-specific layout) --------------------------------
-
-export type SupportMarketRow = {
-  id: string;
-  market: string;
-  contactsPerMo: string;
-  contactRate: string;
-  contactRateTone: "teal" | "amber" | "rose";
-  resolution: string;
-  resolutionTone: "teal" | "rose";
-  repeatAfter: string;
-  repeatAfterTone: "teal" | "rose";
-  silentFailures: string;
-  silentFailuresTone: "teal" | "amber" | "rose" | "neutral";
-  atStake: string;
-  atStakeTone: "amber";
-  deliveryFeed: string;
-  deliveryFeedTone: "teal" | "rose";
-};
-
-export const SUPPORT_MARKET_ROWS: SupportMarketRow[] = [
-  { id: "nigeria", market: "Nigeria", contactsPerMo: "14,900", contactRate: "17.1%", contactRateTone: "rose", resolution: "41 min", resolutionTone: "teal", repeatAfter: "21.4%", repeatAfterTone: "rose", silentFailures: "31,400", silentFailuresTone: "rose", atStake: "₦7M", atStakeTone: "amber", deliveryFeed: "connected", deliveryFeedTone: "teal" },
-  { id: "kenya", market: "Kenya", contactsPerMo: "3,100", contactRate: "11.4%", contactRateTone: "teal", resolution: "38 min", resolutionTone: "teal", repeatAfter: "29.1%", repeatAfterTone: "teal", silentFailures: "4,100", silentFailuresTone: "amber", atStake: "KES 1.1M", atStakeTone: "amber", deliveryFeed: "connected", deliveryFeedTone: "teal" },
-  { id: "ghana", market: "Ghana", contactsPerMo: "2,400", contactRate: "14.1%", contactRateTone: "amber", resolution: "2.9 hrs", resolutionTone: "rose", repeatAfter: "18.1%", repeatAfterTone: "rose", silentFailures: "Unavailable", silentFailuresTone: "neutral", atStake: "GHS 410k", atStakeTone: "amber", deliveryFeed: "not connected", deliveryFeedTone: "rose" },
-  { id: "uk", market: "United Kingdom", contactsPerMo: "1,000", contactRate: "8.1%", contactRateTone: "teal", resolution: "22 min", resolutionTone: "teal", repeatAfter: "34.1%", repeatAfterTone: "teal", silentFailures: "1,100", silentFailuresTone: "amber", atStake: "£9k", atStakeTone: "amber", deliveryFeed: "connected", deliveryFeedTone: "teal" },
-];
-
-export const SUPPORT_MARKET_CLOSING = {
-  title: "Ghana's silent failures cannot be counted at all",
-  body: "There is no delivery feed for Ghana, so Flolyt cannot know how many orders arrived late or failed. It can only count people who complained — 2,400 a month, at a resolution time six times worse than Nigeria's. The real number is unavailable, and given Ghana's position in five other stages it is unlikely to be small.",
-};
-
-export const SUPPORT_MARKET_GHANA_ROWS: { label: string; value: string }[] = [
-  { label: "Ghana resolution time", value: "2.9 hours against 41 minutes in Nigeria" },
-  { label: "Ghana repeat rate after contact", value: "18.1% · lowest of four markets" },
-  { label: "Ghana silent failures", value: "Unavailable · no delivery source" },
-  { label: "Ghana support headcount", value: "3 people for 410,000 customers" },
-  { label: "Rooms open about Ghana", value: "1 · about a campaign · no owner since 10 August" },
-];
+// ---- Markets (SU07) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
+// acquire/data.ts's Markets note and markets-tab.tsx.
 
 // ---- What changed (SU08) ---------------------------------------------------
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)

@@ -408,44 +408,8 @@ export const RENEW_COHORT_ATTRIBUTION_ROWS: { label: string; value: string; perc
   { label: "Card failures", value: "0.0 pts · unchanged", percent: 0, tone: "teal" },
 ];
 
-// ---- Markets (RN07, stage-specific layout) --------------------------------
-
-export type RenewMarketRow = {
-  id: string;
-  market: string;
-  renewing: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  cardFailure: string;
-  cardFailureTone: "teal" | "rose";
-  retryWindow: string;
-  retryWindowTone: "teal" | "rose";
-  paused: string;
-  pausedTone: "teal" | "rose";
-  atStake: string;
-  atStakeTone: "teal" | "amber" | "rose" | "neutral";
-  trend: "worsening" | "flat" | "improving";
-};
-
-export const RENEW_MARKET_ROWS: RenewMarketRow[] = [
-  { id: "nigeria", market: "Nigeria", renewing: "781,000", rate: "87.9%", rateTone: "rose", cardFailure: "5.9%", cardFailureTone: "rose", retryWindow: "09:00 WAT", retryWindowTone: "teal", paused: "4.4%", pausedTone: "rose", atStake: "₦74M", atStakeTone: "rose", trend: "improving" },
-  { id: "kenya", market: "Kenya", renewing: "189,000", rate: "91.2%", rateTone: "teal", cardFailure: "3.1%", cardFailureTone: "teal", retryWindow: "09:00 EAT", retryWindowTone: "teal", paused: "2.9%", pausedTone: "teal", atStake: "KES 4.1M", atStakeTone: "amber", trend: "flat" },
-  { id: "ghana", market: "Ghana", renewing: "94,000", rate: "84.1%", rateTone: "rose", cardFailure: "8.4%", cardFailureTone: "rose", retryWindow: "00:00 GMT", retryWindowTone: "rose", paused: "5.1%", pausedTone: "rose", atStake: "GHS 890k", atStakeTone: "rose", trend: "worsening" },
-  { id: "uk", market: "United Kingdom", renewing: "46,000", rate: "93.1%", rateTone: "teal", cardFailure: "1.9%", cardFailureTone: "teal", retryWindow: "09:00 BST", retryWindowTone: "teal", paused: "2.1%", pausedTone: "teal", atStake: "£12k", atStakeTone: "neutral", trend: "improving" },
-];
-
-export const RENEW_MARKET_CLOSING = {
-  title: "Ghana is still retrying cards at midnight, four months after everyone else stopped",
-  body: "The retry-window change was approved in April and rolled out per market. Ghana was missed. Its card failure rate is 8.4% against Nigeria's 5.9%, and the fix is a configuration change that has already been made three times. Nobody noticed because Ghana has no owner in this stage either.",
-};
-
-export const RENEW_MARKET_GHANA_ROWS: { label: string; value: string }[] = [
-  { label: "Ghana renewal rate", value: "84.1% · lowest of four markets" },
-  { label: "Ghana card failure", value: "8.4% · a fix already deployed elsewhere" },
-  { label: "Value of the missed rollout", value: "≈GHS 890k a year · one configuration change" },
-  { label: "Ghana pause rate", value: "5.1% · highest" },
-  { label: "Rooms open about Ghana", value: "1 · about a campaign · no owner since 10 August" },
-];
+// ---- Markets (RN07) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
+// acquire/data.ts's Markets note and markets-tab.tsx.
 
 // ---- What changed (RN08) ---------------------------------------------------
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)

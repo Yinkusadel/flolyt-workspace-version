@@ -261,32 +261,11 @@ export const ACQUIRE_UNIT_ECON_UNLOCK_ROWS: { label: string; value: string; tone
 
 // ---- Markets (A08) --------------------------------------------------------
 
-export type MarketRow = {
-  id: string;
-  market: string;
-  acquired: string;
-  spend: string;
-  cac: string;
-  cacTone: "teal" | "rose";
-  reach2nd: string;
-  reach2ndTone: "teal" | "rose";
-  atStake: string;
-  atStakeTone: "rose" | "neutral";
-  trend: "worsening" | "flat" | "improving";
-};
-
-export const ACQUIRE_MARKET_ROWS: MarketRow[] = [
-  { id: "nigeria", market: "Nigeria", acquired: "610,000", spend: "₦486M", cac: "₦1,796", cacTone: "rose", reach2nd: "26.1%", reach2ndTone: "rose", atStake: "₦48M", atStakeTone: "rose", trend: "worsening" },
-  { id: "kenya", market: "Kenya", acquired: "121,000", spend: "KES 41M", cac: "KES 339", cacTone: "teal", reach2nd: "34.2%", reach2ndTone: "teal", atStake: "KES 6.1M", atStakeTone: "neutral", trend: "flat" },
-  { id: "ghana", market: "Ghana", acquired: "94,000", spend: "GHS 12.4M", cac: "GHS 132", cacTone: "rose", reach2nd: "9.4%", reach2ndTone: "rose", atStake: "GHS 2.1M", atStakeTone: "rose", trend: "worsening" },
-  { id: "uk", market: "United Kingdom", acquired: "69,000", spend: "£212k", cac: "£3.07", cacTone: "teal", reach2nd: "41.1%", reach2ndTone: "teal", atStake: "£14k", atStakeTone: "neutral", trend: "improving" },
-];
-
-export const ACQUIRE_MARKET_SPOTLIGHTS: { id: string; eyebrow: string; tone: "teal" | "rose"; title: string; body: string; footnote: string }[] = [
-  { id: "nigeria", eyebrow: "Nigeria · 68% of acquisition", tone: "rose", title: "Volume up 31%, quality down 11 points", body: "The dominant market and the one carrying the 4 March damage. Everything on the lifecycle map is mostly this.", footnote: "₦48M at stake here" },
-  { id: "ghana", eyebrow: "Ghana · 11%", tone: "rose", title: "The worst CAC and the worst conversion", body: "Driven almost entirely by one paid social campaign promising free delivery in a market that has never had it.", footnote: "one channel, five months" },
-  { id: "uk", eyebrow: "UK · 8%", tone: "teal", title: "The best of everything, and the smallest", body: "Lowest CAC, highest conversion, improving. It is also 0.4% of company exposure — worth learning from, not worth reallocating toward.", footnote: "small, and stated as small" },
-];
+// ---- Markets (A08) is wired to GET /lifecycle/stages/{stageKey}/markets (shared across all 10
+// stages) — see markets-tab.tsx and docs/endpoints/lifecycle.md. That endpoint only ever returns
+// population/atStake/primaryConversion per market — the per-market spend/CAC/reach-a-second-order
+// columns and narrative spotlight cards every stage's old mock had are dropped, no field backs
+// them.
 
 // ---- What changed (A09) ---------------------------------------------------
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)

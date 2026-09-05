@@ -2,25 +2,28 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
-import type { LifecycleCalloutDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import type { LifecycleCalloutDto, LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
 export interface GetStageCohortsParams {
   /** 3-12, default 6. */
   months?: number;
 }
 
-// ❌ neither docs/endpoints/lifecycle.md nor the real spec's example specify the per-cohort row
-// shape (both just name the field "cohorts", the spec's example even shows it as `null`) — typed
-// loosely until a live response confirms it, don't invent fields. Per the 2026-09-04 spec's prose
-// (not yet a concrete schema): each row should carry an arrival month, an `entered` measured
-// value, one `stillInStageShare` cell per `measurementAgeDays` entry, and a `values` array of
+// Corrected 2026-09-05, confirmed live for `expand`: `cohorts` is ALSO the measured-value wrapper
+// (`{value, state, missingSource, wouldUnlock}`) — same recurring bug class as get-stage-compare.ts
+// had. Expand's live response came back unavailable (`missingSource`: "a definition for Expand —
+// nothing yet says who enters it"), which confirms the wrapper but NOT the per-cohort row shape
+// inside `.value` — that still isn't confirmed by any live response. `.value` is typed `unknown[]`
+// until one is seen; don't invent fields on it. Per the 2026-09-04 spec's prose (not a concrete
+// schema): each row should carry an arrival month, an `entered` measured value, one
+// `stillInStageShare` cell per `measurementAgeDays` entry, and a `values` array of
 // {currency, amount} observed-revenue-to-date figures — never at-stake, never a forecast.
 export interface StageCohortsData {
   stageKey: string;
   stageName: string;
-  /** Added 2026-09-04. [30, 60, 90] for most stages, [180] for expand/advocate/churn per the prose — unconfirmed live. */
+  /** Added 2026-09-04. [30, 60, 90] for most stages, [180] for expand/advocate/churn — confirmed live for expand. */
   measurementAgeDays: number[];
-  cohorts: unknown[] | null;
+  cohorts: LifecycleMeasuredValueDto<unknown[]>;
   undatedCustomers: number | null;
   valueCaveat: string | null;
   /** Added 2026-09-04. */

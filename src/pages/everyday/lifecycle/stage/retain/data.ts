@@ -473,42 +473,8 @@ export const RETAIN_COHORT_CLOSING = {
   body: "Kenya held at 37% until 9 June and has fallen 3 points since. It is the only market where this cause is currently in progress rather than historical — and Ghana ships the same release on 14 September with no room open about it.",
 };
 
-// ---- Markets (RT08, stage-specific layout) --------------------------------
-
-export type RetainMarketRow = {
-  id: string;
-  market: string;
-  acquired: string;
-  repeatRate: string;
-  repeatRateTone: "teal" | "amber" | "rose";
-  medianDays: string;
-  medianDaysTone: "teal" | "rose";
-  reactivableNow: string;
-  atStake: string;
-  atStakeTone: "rose" | "amber" | "neutral";
-  feeShipped: string;
-  feeShippedTone: "teal" | "amber" | "rose";
-  trend: string;
-  trendTone: "rose" | "amber" | "teal" | "neutral";
-};
-
-export const RETAIN_MARKET_ROWS: RetainMarketRow[] = [
-  { id: "nigeria", market: "Nigeria", acquired: "610,000", repeatRate: "26.1%", repeatRateTone: "rose", medianDays: "25", medianDaysTone: "rose", reactivableNow: "148,000", atStake: "₦412M", atStakeTone: "rose", feeShipped: "4 Mar", feeShippedTone: "rose", trend: "flat, low", trendTone: "rose" },
-  { id: "kenya", market: "Kenya", acquired: "121,000", repeatRate: "34.1%", repeatRateTone: "amber", medianDays: "18", medianDaysTone: "teal", reactivableNow: "31,000", atStake: "KES 18.2M", atStakeTone: "rose", feeShipped: "9 Jun", feeShippedTone: "amber", trend: "falling", trendTone: "rose" },
-  { id: "ghana", market: "Ghana", acquired: "94,000", repeatRate: "31.1%", repeatRateTone: "amber", medianDays: "21", medianDaysTone: "teal", reactivableNow: "24,000", atStake: "GHS 2.4M", atStakeTone: "amber", feeShipped: "14 Sep", feeShippedTone: "amber", trend: "flat", trendTone: "neutral" },
-  { id: "uk", market: "United Kingdom", acquired: "69,000", repeatRate: "41.1%", repeatRateTone: "teal", medianDays: "12", medianDaysTone: "teal", reactivableNow: "9,000", atStake: "£31k", atStakeTone: "neutral", feeShipped: "not planned", feeShippedTone: "teal", trend: "improving", trendTone: "teal" },
-];
-
-export const RETAIN_MARKET_CLOSING = {
-  title: "Ghana is the only market where this is still preventable",
-  body: "The release ships there on 14 September — 31 days away. Nigeria lost ₦412M to it and Kenya is losing KES 18.2M now. Nothing is open about Ghana in this stage, and the one Ghana room in the workspace is about acquisition and has had no owner since 10 August.",
-};
-
-export const RETAIN_MARKET_PREVENT_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Ghana · if the fee ships at checkout as planned", value: "≈GHS 2.4M lost over two quarters", percent: 100, tone: "rose" },
-  { label: "Ghana · if it ships at basket instead", value: "≈GHS 0.3M · the Nigeria fix, applied first", percent: 12, tone: "teal" },
-  { label: "Cost of applying the fix now", value: "one release · already built and shipped in Nigeria", percent: 4, tone: "teal" },
-];
+// ---- Markets (RT08) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
+// acquire/data.ts's Markets note and markets-tab.tsx.
 
 // ---- What changed (RT09) ---------------------------------------------------
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
