@@ -1,4 +1,4 @@
-# Lifecycle domain endpoints
+﻿# Lifecycle domain endpoints
 
 Everything under `/api/flolyt/lifecycle/*`, first pasted 2026-08-31 from a written description,
 then **corrected 2026-08-31 against the real Scalar/OpenAPI reference** (the user pasted the
@@ -54,8 +54,8 @@ Legend: ✅ covered · ⚠️ partial (see note) · ❌ not covered · ❓ open 
 | "The customer lifecycle" stage cards — name/department | `StageRail`, `data.ts` `Stage.name`/`department` | `GET /lifecycle/map` → `stages[].name`/`owningTeam` | ✅ **wired** (`index.tsx`) — name and `owningTeam`→department are live. Per [[feedback_no_hardcoded_fallback]]: an unrecognized `owningTeam` string (or the query still loading/erroring) renders as unavailable/neutral, never a fallback to the `data.ts` mock department — `owningTeam`'s exact string values are still unconfirmed against a live response, verify on first real paste. `owner`/`openRoomCount` aren't rendered on the card itself, so not touched today. |
 | Stage cards — ₦ at-stake figure | `Stage.amount`/`amountLabel` | `GET /lifecycle/map` → `stages[].atStake` | ✅ **wired** (`index.tsx`/`stage-rail.tsx`) — renders whatever `atStake.value`/`state` the API returns per stage. No client-side allowlist of which stages get a figure. **Correction 2026-08-31, confirmed by a live response:** the "measured only for activate/retain/churn" claim below (under GET /lifecycle/map's Notes) is wrong for `atStake` — all 10 stages returned the identical wrapper shape, each with its own `missingSource` (e.g. acquire needs "an acquisition-channel source", price needs "plan and discount economics"). That 3-stage restriction is real for `population`'s lifecycle-fallback classifier, a different field — the original doc conflated the two. **UI, same day, final state:** when `state` is `"unavailable"` the card shows a lucide `Info` icon (not the word "Unavailable" repeated across the whole row, and not the dash-with-dotted-underline first tried — that read as clickable rather than hoverable). Hovering/focusing it opens a dark rounded chat-bubble tooltip (`InfoTooltip` component in `stage-rail.tsx`) showing **both** `atStake.missingSource` ("Missing: …") and `atStake.wouldUnlock` ("Would unlock: …") as two lines. That tooltip is rendered via `createPortal` to `document.body`, positioned with `getBoundingClientRect()` on open — not CSS `absolute`/native `title` — because the card row's `overflow-x-auto` forces `overflow-y` to clip too (a CSS quirk: setting one overflow axis to non-`visible` forces the other to compute to `auto`), which would cut off any tooltip positioned relative to its card. `createPortal` is already used elsewhere in this repo (`stage/overview/overview-tab.tsx`'s `headerActionsEl` slot) so this is a proven-safe pattern under the repo's preact/compat setup — see [[preact_radix_dialog_crash]] for why a Radix Tooltip/Popover isn't used instead. A one-time discovery hint (`StageRail`'s `showHint` state) auto-appears ~500ms after the cards render, styled the same way (rounded chat bubble with a tail), reading "Hover the info icon on a card to see why it's unavailable," visible for 5000ms then fades — added because the icon alone wasn't self-explanatory on first sight. The `amountLabel` caption ("at stake"/"referred") under the figure was removed entirely — it was a hardcoded `data.ts` string with no live backing and, after the Advocate fix below, would read "at stake" on every card anyway. Also fixed same day: Advocate's `amountLabel` was hardcoded to `"referred"` in `data.ts` (a leftover "₦0 CAC — referred" design idea), but the live `atStake.wouldUnlock` text for Advocate reads "what Advocate is costing you" — the same cost/leak framing as every other stage, no field anywhere supports a distinct positive "referred" framing. Changed to `"at stake"` for all 10. |
 | Stage cards — second metric line ("894k/yr", "6 plans", "1.4× ARPU"...) | `Stage.metricValue`/`metricLabel` | `GET /lifecycle/map` → `stages[].headline` | ✅ **wired 2026-09-04, redesigned same day.** The exact bespoke-per-stage-KPI gap flagged below (2026-08-31) is answered by the fresh spec's new `headline` field: `{key, label, unit, value, missingSource, wouldUnlock, computedAtUtc, yearOverYear}`, the map card's one always-present figure, computed today for 6 of 10 stages (new customers, repeat share, order-problem-then-lapsed customers, plans in use, plans up-for-renewal) — the other 4 are declared but gated, same `missingSource`/`wouldUnlock`-when-unavailable convention as `atStake`. **Live-checked against a real response**, two rounds: round 1 concatenated a formatted value + `label` into one truncated string, which read as a bare, contextless number for the `count`-unit stages ("3" alone, for Price) and duplicated the literal word "Unavailable" on top of the amount tile's own "Unavailable" (two identical icons on Activate/Expand/Support/Advocate, no visual distinction) — flagged by the user as inconsistent. **Round 2, same day — card redesigned as a proper stat tile, mirroring `atStake`'s own value-or-icon shape:** `stage-rail.tsx` now renders `metricValue` (or the `InfoTooltip` icon in its place when the headline is gated) with `metricLabel` always shown underneath as a small caption — `formatHeadlineValue` only formats the number, the label is a separate line, never concatenated. Card widened `w-32`→`w-36` for the extra caption line; `title={metricLabel}` added for the cases CSS `truncate` clips. Fixes two real formatting bugs found in the same live response: retain's `repeat_share` came back a 0-1 fraction (`0.9567`) with `unit: "share"` — needed a ×100 + `%` conversion, first pass wrongly showed "0.9567 share"; adopt's `features_used` came back an unrounded float (`10.0748175182481...`) with `unit: "average"` — needed rounding to 2dp. `formatHeadlineValue` now treats `share`/`ratio`/`rate` as percent-like (×100, 1dp) and rounds every other value to 1-2dp before compact-formatting past 1000. Confirmed live unit strings so far: `count`, `share`, `average` — `average` falls through to the same numeric rounding as `count` (no literal suffix rendered; the caption already carries the word "average" inline, e.g. adopt's label is literally "features used, on average"). Live stage→headline mapping confirmed: acquire = new customers (360), price = plans in use (3), renew = up for renewal (18), churn = lapsed (390), retain = buy again/repeat share (95.7%), adopt = features used on average (10.07) — the 6 computed stages; activate/expand/support/advocate are the 4 gated ones. `mini-stage-rail.tsx` (Overview tab, still fully mock/unwired) was updated for the `metric`→`metricValue` rename only, not redesigned — out of scope, tracked separately under "Per-stage screens" below. |
-| "Where the same root cause shows up · [event]" table | `RootCauseSpotlight`, `ROOT_CAUSE_ROWS` (stage/department/free-text symptom) | ~~`GET /lifecycle/changes/{changeId}/impact`~~ → **`GET /lifecycle/churn/chain`**, `stages[].symptom`/`.effect` | ⚠️ **not wired, but both blockers below are resolved 2026-09-04 — corrected target found, no longer open questions.** `GET /lifecycle/changes/{changeId}/impact` was the wrong candidate: its `stages[].effect` is only numeric (`delta`/`percentChange`/`status`), no narrative sentence. **`GET /lifecycle/churn/chain` is the real match** — its `stages[].symptom` is a backend-supplied narrative string per stage (nullable), no client-side templating needed, and `title` gives the section's own headline framing ("[event]"). **The changeId-discovery gap is also resolved by this same endpoint**, not by a separate list endpoint: `changeId` is an *optional* query param — omit it and the backend itself picks "the change whose effects reached the most stages," exactly the "one event, spotlight it" behavior this table needs. Service + hook already scaffolded (`get-churn-chain.ts` / `use-get-churn-chain.ts`). See that endpoint's own entry below for the full shape. |
-| "One change. Five teams." callout card | `RootCauseSpotlight`'s static copy | ~~`GET /lifecycle/changes/{changeId}/impact`~~ → **`GET /lifecycle/churn/chain`**, `stagesThatMoved`/`stagesThatNoticed`/`callouts[]` | ⚠️ **not wired, same corrected target as the row above.** `stagesThatMoved` is exactly the "Five teams" count; `callouts[]` (stages that moved with nobody writing anything down, fastest/slowest desk to notice, stages that moved with no owner) covers this card's copy directly — no separate templating needed here either. |
+| "Where the same root cause shows up · [event]" table | `RootCauseSpotlight`, `ROOT_CAUSE_ROWS` (stage/department/free-text symptom) | ~~`GET /lifecycle/changes/{changeId}/impact`~~ → **`GET /lifecycle/churn/chain`**, `stages[].symptom`/`.effect` | ✅ **wired** (`root-cause-spotlight.tsx`, called with no `changeId` — the backend auto-picks the change reaching the most stages). |
+| "One change. Five teams." callout card | `RootCauseSpotlight`'s static copy | ~~`GET /lifecycle/changes/{changeId}/impact`~~ → **`GET /lifecycle/churn/chain`**, `stagesThatMoved`/`stagesThatNoticed`/`callouts[]` | ✅ **wired**, same component/endpoint as the row above. `stagesThatMoved` is the "Five teams" count; `callouts[]` covers the card's copy. |
 | Teal "Advocacy feeds acquisition…" banner | `ADVOCACY_LOOP_NOTE` | `GET /lifecycle/map` → `callouts[]` | ✅ **wired** (`index.tsx`/`stage-rail.tsx`) — matched by content (`/advoc/i` against headline/body) since the doc doesn't document a `key` value for this callout. Per [[feedback_no_hardcoded_fallback]]: no match found → the banner doesn't render at all, it no longer falls back to the mock copy. Verify the real key on first live paste and switch to matching on it. |
 | "Owner, lead agent and review cadence… on stage ownership" footer link | link only, no data | n/a | ✅ (just a `<Link>`, settings page is its own screen) |
 
@@ -353,7 +353,7 @@ wired** — verify with a real 409/400 test against churn before trusting either
 - **Auth:** Bearer token.
 - **Request:** path `changeId`.
 - **Response `data`:** `{ changeId, title, occurredOnUtc, team, source, kind, affectedStageKeys, sourceRoomId, stages: [{stageKey, stageName, effect: {status, delta, percentChange, caveat}}], callouts: [...] }` (all 10 stages always returned, in spine order). **`kind` added 2026-09-04**, same field as `POST /changes`.
-- **Used by:** service + hook exist (`get-change-impact.ts` / `use-get-change-impact.ts`), not wired — target `activate/release-impact-route.tsx` (`/lifecycle/:stage/changes/:id`, already has a live `:id` param) and, pending the routing fix noted in the coverage tracker, `stage/chain/chain-route.tsx`. Service file predates `kind`, needs updating.
+- **Used by:** service + hook exist (`get-change-impact.ts` / `use-get-change-impact.ts`), not wired — target `activate/release-impact-route.tsx` (`/lifecycle/:stage/changes/:id`, already has a live `:id` param). **Correction 2026-09-05:** `stage/chain/chain-route.tsx` is NOT this endpoint's target — Chain is wired to `GET /lifecycle/churn/chain` instead (see that endpoint's entry), which is the real match for "the whole-chain view." Service file predates `kind`, needs updating.
 - **Status:** service/hook ready (stale — missing `kind`), not wired.
 - **Notes:** 404 if the change isn't in this workspace's registry. **The stages that did NOT move are part of the finding** — all 10 always come back, not just the affected ones. "Moved-where-nobody-expected" callout names stages that moved but weren't in `affectedStageKeys` — one release reading as five unrelated symptoms from five desks is exactly the failure this screen exists to catch early. Every figure here is a movement around a date, **never an attribution** — nothing has a held-back comparison group, and the callouts say so explicitly.
 
@@ -523,7 +523,7 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 
 - **Purpose:** Price's Plans tab — which tiers people are actually on, and what each is worth, from a mapped subscription book.
 - **Response `data`:** `{ plans: [{plan, currency, customers, value, valuePerCustomer, shareOfCustomers}], customers, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/price/plans-tab.tsx`. This doc's "not scaffolded" line was stale — service+hook already existed.
 - **Notes:** **Live subscriptions only** — counting every subscription that ever existed would make a retired tier look permanently popular. One row per plan **per currency**, nothing sums across them. A book with no amount mapped reports `value` unavailable, never zero — unpriced plans are not free ones.
 
 ### GET /lifecycle/renew/renewal-book
@@ -591,7 +591,6 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 - **Purpose:** Support's Deflection tab — which help content is followed by a ticket anyway, per topic, over 90 days.
 - **Response `data`:** `{ topics: [{topic, readers, contacted, contactedAnyway}], grain, readings, contactedAnyway, contactWindowDays, computedAtUtc, callouts }`.
 - **Status:** **✅ wired 2026-09-05** — `stage/support/deflection-tab.tsx`. No cost-saved, repeat-rate-after, or "vs contacting a human" field, so those are dropped.
-- **Status:** documented, not scaffolded.
 - **Notes:** **This counts help that FAILED, not help that worked** — someone who read an article and never came back may have been helped, given up, or gone to a competitor; all three leave an identical record, so counting them "deflected" would invent a difference this data can't see. What's directly observable is the reverse: who read help and raised a ticket anyway, within 7 days. Needs **both** product events (help reading) and a helpdesk (tickets) — refuses entirely with either missing, since the whole question is about the relationship between the two, not either alone.
 
 ### GET /lifecycle/renew/pauses
@@ -612,7 +611,7 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 
 - **Purpose:** Price's Margin tab — revenue net of delivery cost, per complete month per currency, over 13 months.
 - **Response `data`:** `{ months: [{period, currency, orders, revenue, cost, margin, marginRate, marginPerOrder}], trend: [{currency, from, to, fromRate, toRate, change}], components: string[], excludesReturns, currencies: string[], computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/price/margin-tab.tsx`. The old mock assumed this was permanently blocked pending a COGS source; the real endpoint returns full monthly data regardless — that assumption was wrong.
 - **Notes:** **Measured at the order, never the line** — an order's total is unambiguous revenue; an item price is a unit price on some schemas and a line total on others, so there's deliberately no per-product breakdown rather than a plausibly-wrong one. `components` names which cost-of-sale parts are netted off — cost of goods required, shipping/fees optional; a margin missing the largest component would otherwise read as a healthier business than it is. `excludesReturns: false` means failed/cancelled/refunded orders are counted at **full revenue while keeping their cost** (no status mapped to exclude them) — margin is overstated by roughly the return rate, and the response says so. Movement is reported in **percentage points** (40%→30% is "ten points," never "25% down"). Payback is deliberately absent here — that's Unit economics' figure; quoting it from two different windows on two screens would be worse than quoting it on one.
 
 ### GET /lifecycle/expand/accounts
@@ -626,7 +625,7 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 
 - **Purpose:** Price's Discounting tab — customers banded by how much of their buying was discounted over 365 days (always/mostly/occasionally/never).
 - **Response `data`:** `{ bands: [{band, currency, customers, orders, shareOfCustomers, discountedOrders, revenue, discount, depth, contribution, contributionPerCustomer, paidFullPriceFirst}], components: string[], hasCost, minimumOrders, currencies: string[], computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/price/discounting-tab.tsx`.
 - **Notes:** **Says who buys on discount, never who needed one** — whether someone would've bought at full price is a counterfactual needing a holdout, not a column, and this has no holdout. Two things it CAN say instead: a band with negative `contribution` loses money on every order regardless of whether the discount was "needed" (the one reading of "undeserved" that needs no counterfactual), and `paidFullPriceFirst` counts customers whose own history shows full-price orders before their first discount — evidence, not proof. **"Too few orders" is its own band, not an exclusion** — one discounted order is trivially "100% discounted," and scattering those into the extremes would fill both ends of a habit screen with people who've shown no habit; they're held apart and excluded from the share denominator. Depth (how deep) and frequency (how often) are reported separately on purpose. Per currency, never blended.
 
 ### GET /lifecycle/churn/chain
@@ -634,23 +633,34 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 - **Purpose:** Churn's Chain tab — one dated cause traced across all 10 stages, the product's core thesis made checkable. **Also confirmed 2026-09-04 as the real target for the map page's "Where the same root cause shows up" table and "One change. Five teams." callout** — see the coverage tracker above; `GET /lifecycle/changes/{changeId}/impact` was the wrong candidate for both.
 - **Request:** query `changeId` (uuid, optional).
 - **Response `data`:** `{ changeId, title, occurredOnUtc, team, kind, affectedStageKeys, stages: [{stageKey, stageName, owningTeam, symptom, effect: {status, delta, percentChange, caveat}, calledIt: {kind, words, atUtc, reference}, daysToDetect, valueAtStake: [{currency, amount}], owner}], stagesThatMoved, stagesThatNoticed, slowestDetectionDays, callouts }`. 404 if `changeId` doesn't resolve; refuses (separately) when nothing has moved at least 2 stages, since that isn't a chain.
-- **Used by:** service + hook exist (`get-churn-chain.ts` / `use-get-churn-chain.ts`), not wired — target `stage/chain/chain-route.tsx` (Churn's own Chain tab) and, per the correction above, the map page's root-cause spotlight section.
-- **Status:** service/hook ready, not wired.
+- **Used by:** `stage/chain/chain-route.tsx` (Churn's own Chain tab, wired 2026-09-05, called with no `changeId` so the backend auto-picks the change reaching the most stages) and the map page's root-cause spotlight section (`root-cause-spotlight.tsx`, also no `changeId` — this one was already wired before Chain was, which is how the "changeId routing gap" theory below was disproved).
+- **Status:** wired (both consumers).
+- **Correction, 2026-09-05:** an earlier note here claimed Chain was blocked on a missing `:changeId` route param. That was wrong — `changeId` is optional (see below) and `root-cause-spotlight.tsx` was already calling this same endpoint with none. The real state was just "not wired yet," not "can't be wired." `/lifecycle/:stage/chain` (generic per-stage route, confirmed in `route/route.tsx`) needs no id in the URL at all.
 - **Notes:** **`changeId` is optional** — omit it and the product picks the change worth showing: the one whose effects reached the **most stages**, not the one that moved any single stage furthest (a change one desk already owns isn't what this screen is for). Per stage, `calledIt` is **what that desk called it at the time, verbatim** — the earliest claim/room/condition firing after the change, deliberately never normalised, because "five desks naming one thing five ways" IS the finding this screen exists to surface. `daysToDetect` measures from the change date. **Nothing is summed and there is no lifecycle-wide total** — populations overlap across stages (one customer can appear in 3 stages' departures), so a sum would triple-count them. Callouts name stages that moved with nobody writing anything down, the spread between fastest/slowest desk to notice, and stages that moved with no owner.
 
 ## Churn routing, churn/support analytics, agents & governance (batch 4, 2026-09-04)
 
 23 endpoints — **the final batch**, closing out every endpoint in the original 74-route sidebar
 list first pasted 2026-09-04 (the 5 app-shell routes in [`app-shell.md`](app-shell.md) plus these
-69 lifecycle-scoped ones). No service/hook files yet, same standing "code waits until all batches
-are in" call.
+69 lifecycle-scoped ones). **Correction 2026-09-05:** the individual "documented, not scaffolded"
+status lines throughout this batch are stale — service+hook files for all 23 were in fact created
+in the later scaffolding pass (confirmed on disk: `route-churn-upstream.ts`, `get-churn-routings.ts`,
+`acknowledge-churn-routing.ts`, `get-lifecycle-teams.ts`, `update-team-lead.ts`,
+`get-watchable-metrics.ts`, `create-stage-condition.ts`, `update-condition.ts`, `decide-condition.ts`,
+`mute-condition.ts`, `backtest-stage-condition.ts`, `update-room-cap.ts`,
+`create-instrumentation-request.ts`, `close-instrumentation-request.ts`,
+`update-instrumentation-request-owner.ts`, all under `src/services/api/lifecycle/` with matching
+`use-*` hooks in `src/features/lifecycle/`). What's actually true is: **service/hook ready, no page
+built to consume most of them** — this is the "churn-routing/governance cluster" tracked as
+remaining work (see the bottom of this file). The one exception is `GET /lifecycle/instrumentation`,
+wired 2026-09-05 (read side only) — see its own entry below.
 
 ### POST /lifecycle/churn/route-upstream
 
 - **Purpose:** Sends a churn cause to the stage that actually owns it, with evidence attached.
 - **Request:** body `{ causeKey, targetStageKey, evidence: [{kind, reference (uuid), note}] | null, note }`.
 - **Response:** `{ data: routingId (uuid), messages, succeeded }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** `causeKey` comes from `GET /churn/reasons`. `targetStageKey` **cannot be `churn`** — Churn records the loss, it doesn't cause it. Each evidence item (a change, claim, or room) **must exist in this workspace or the whole routing is refused** — a reference the destination can't follow is worse than none. **If the target stage has no owner, the routing is still recorded pointing at that stage with an empty destination** — never silently redirected to whoever's nearest, since that would replace a finding about the organisation with a staffing accident; a separate triage flow then asks an admin to appoint an owner.
 
 ### GET /lifecycle/churn/routings
@@ -658,7 +668,7 @@ are in" call.
 - **Purpose:** Causes sent upstream, unanswered first then newest.
 - **Request:** query `stage` (string, optional) — filters to one destination stage.
 - **Response `data`:** `{ routings: [{id, causeKey, causeLabel, targetStageKey, targetStageName, targetUserId, isUndeliverable, evidence: [{kind, reference, note}], note, routedByUserId, routedAtUtc, acknowledgedAtUtc, acknowledgedByUserId, acknowledgementNote}], unanswered, undeliverable, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** `undeliverable` counts routings pointing at stages nobody owns — **the dead ends, left visible on purpose**, not hidden or auto-resolved.
 
 ### POST /lifecycle/churn/routings/{routingId}/acknowledge
@@ -666,7 +676,7 @@ are in" call.
 - **Purpose:** Says "I have it" on a routed cause.
 - **Request:** path `routingId`; body `{ note } | null`.
 - **Response:** `{ data: routingId, messages, succeeded }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** **Anybody in the workspace may acknowledge, including on a stage nobody owns** — requiring the recorded recipient would make every undeliverable routing permanently unanswerable; someone picking up an orphaned cause is exactly the outcome the empty destination is designed to provoke. Who took it is recorded either way. **A second acknowledgement is refused**, not silently overwritten — the first responder's answer stands.
 
 ### GET /lifecycle/churn/reasons
@@ -723,7 +733,7 @@ are in" call.
 
 - **Purpose:** The teams the 10 stages name, which stages each owns, and who leads each — the routing chain's second link.
 - **Response `data`:** `[{team, stages: string[], leadUserId, leadName}]` — a bare array, not wrapped in an object under `data`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** A `null` `leadUserId`/`leadName` is a **real, valid answer** — alerts on that team's stages fall through to an admin for triage, not an error state to special-case.
 
 ### PUT /lifecycle/instrumentation-requests/{obligationId}/owner
@@ -731,14 +741,14 @@ are in" call.
 - **Purpose:** Names the person on the hook for an instrumentation request.
 - **Request:** path `obligationId`; body `{ ownerUserId (uuid) }`.
 - **Response:** `{ data: obligationId, messages, succeeded }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** Deliberately **separate from raising the request** — who does the work is usually settled after the ask, and an unowned request is still worth having since the gap stays visible either way. Owner is **always a person, never a team**.
 
 ### GET /lifecycle/watchable-metrics
 
 - **Purpose:** What a stage condition may legally be written against.
 - **Response `data`:** `[{key, question, unit, needsSegmentation, hasHistory, readsFrom}]` — bare array.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** **Deliberately a small fixed catalog, not a formula language** — a named metric can be refused at authoring time if it can't be read, which is the difference between "a condition that never fires" and "a condition nobody knew had silently stopped working." `needsSegmentation` means the metric is meaningless unsliced (e.g. needs a departure or a currency named); `hasHistory` means a stored series exists to backtest against (see `.../conditions/backtest` below — a metric without history can't be backtested).
 
 ### POST /lifecycle/stages/{stageKey}/conditions
@@ -747,7 +757,7 @@ are in" call.
 - **Auth:** Bearer token; stage owner or workspace administrator.
 - **Request:** path `stageKey`; body `{ label, metricKey, comparison: "AtOrBelow"|"AtOrAbove", threshold (number), sustainReadings (int), agentKey?, routesToUserId? (uuid), segment? }`.
 - **Response:** `{ data: conditionId (uuid), messages, succeeded }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** Watches from the moment it's saved. `routesToUserId: null` uses the stage's own routing chain (owner → team lead → triage admin, see `GET .../agents` above) — **routing to a team or to a log is not offered at all**, since both are places an alert goes to become nobody's. `sustainReadings` is counted in daily evaluator passes — a pass that didn't run *delays* a firing, it never manufactures one early.
 
 ### PUT /lifecycle/conditions/{conditionId}
@@ -756,7 +766,7 @@ are in" call.
 - **Auth:** Bearer token; owner-or-admin, like a definition edit — a person only.
 - **Request:** path `conditionId`; body `{ threshold, sustainReadings, routesToUserId }`.
 - **Response:** `{ data: conditionId, messages, succeeded }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** **The only edit anybody may make** to a condition (create/mute/decide are separate endpoints). The breach count is **reset** on edit — what a condition counted against the old threshold says nothing about the new one, carrying it forward would let a rule fire on a sustain it never actually met under the new terms. **Refused on a still-proposed condition** — accept it via `.../decide` with the threshold you actually want instead of editing a proposal.
 
 ### POST /lifecycle/conditions/{conditionId}/decide
@@ -764,7 +774,7 @@ are in" call.
 - **Purpose:** Accepts or declines a condition an **agent** proposed.
 - **Request:** path `conditionId`; body `{ accept (bool), routesToUserId?, sustainReadings?, threshold? }`.
 - **Response:** `{ data: conditionId, messages, succeeded }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** Agents may **propose** thresholds but may **never set them** — a proposed condition isn't evaluated at all until a person accepts it, optionally adjusting threshold/sustain/routing in the same call. A **declined** proposal is kept, not deleted, so the same suggestion doesn't get re-proposed forever.
 
 ### POST /lifecycle/conditions/{conditionId}/mute
@@ -772,7 +782,7 @@ are in" call.
 - **Purpose:** Stops (or resumes) a condition being read.
 - **Request:** path `conditionId`; body `{ muted (bool) }`.
 - **Response:** `{ data: conditionId, messages, succeeded }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** Muting **keeps everything already found** and resets the breach run — the tool a person reaches for instead of deleting a rule that turned out to be noise, preserving history rather than discarding it.
 
 ### POST /lifecycle/stages/{stageKey}/conditions/backtest
@@ -780,7 +790,7 @@ are in" call.
 - **Purpose:** How often a proposed threshold would have fired against real kept history.
 - **Request:** path `stageKey`; body `{ metricKey, comparison, threshold, sustainReadings, segment? }`.
 - **Response `data`:** `{ stageKey, stageName, metricKey, metricQuestion, threshold, sustainReadings, firings, grain, points: [{periodStartUtc, reading, breaching, wouldHaveFired}], caveat }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** Only available for metrics with a **stored monthly series** (see `watchable-metrics`' `hasHistory`) — a current-state metric like money-at-risk returns `firings` unavailable, naming that, rather than fake-simulating over a single reading. `grain` is `"month"`, and `caveat` says plainly that the *live* sustain window is counted in **daily** readings — a month-grain backtest is a structurally coarser test than the rule it's previewing, don't present the backtest result as an exact prediction of live behavior.
 
 ### PUT /lifecycle/teams/{team}/lead
@@ -789,7 +799,7 @@ are in" call.
 - **Auth:** Bearer token; **administrator only** — it decides where other people's alerts land.
 - **Request:** path `team`; body `{ leadUserId (uuid) }`.
 - **Response:** `{ data: null, messages, succeeded }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** `team` must be one a stage actually names (from `GET /teams`'s `team` field) — not a free string.
 
 ### PUT /lifecycle/governance/room-cap
@@ -798,7 +808,7 @@ are in" call.
 - **Auth:** Bearer token; administrator only.
 - **Request:** body `{ cap (int) }`.
 - **Response:** `{ data: cap (int), messages, succeeded }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** A stage can only ever hold **one** auto-opened room, so this is effectively a cap on how many of the 10 stages may be worked unrequested simultaneously. Default 5; **0 means nothing opens on its own, every firing becomes a proposal instead.** Counts **auto-opened rooms only** — a person manually opening 5 rooms doesn't stop their agents. At the cap, nothing found is lost: firings are still recorded and proposed, and closing a room frees the next slot.
 
 ### GET /lifecycle/instrumentation
@@ -814,7 +824,7 @@ are in" call.
 - **Auth:** Bearer token; open to any member.
 - **Request:** body `{ gap, gapKey, neededByUtc (RFC 3339), blocks?: string[], ownerUserId? (uuid), requiredEventSchemas?: string[] }`.
 - **Response:** `{ data: obligationId (uuid), messages, succeeded }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** **`requiredEventSchemas` is the point, and required** — "please instrument loyalty" is a conversation; `loyalty.tier_shown` / `loyalty.tier_changed` / `loyalty.reward_redeemed` is a contract an engineer can actually satisfy. A `neededByUtc` already in the past is refused. **One live request per gap** — a second `POST` for the same `gapKey` presumably conflicts (exact behavior unconfirmed, worth testing before wiring a "raise again" button). Raising is open to anyone; closing (below) is gated.
 
 ### POST /lifecycle/instrumentation-requests/{obligationId}/close
@@ -822,5 +832,74 @@ are in" call.
 - **Purpose:** Closes an instrumentation request — delivered, or withdrawn.
 - **Request:** path `obligationId`; body `{ resolved (bool), note }`.
 - **Response:** `{ data: obligationId, messages, succeeded }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready, not wired — no page consumes this yet.
 - **Notes:** **A withdrawal (`resolved: false`) needs a reason** (`note`) or the next person just raises the same request again — enforce a non-empty note client-side on the withdraw path even though the type marks it nullable. Closeable by whoever raised it, its assigned owner (`PUT .../owner` above), or an administrator.
+
+## Session wrap-up, 2026-09-05 — full sweep closed out, remaining work tracked below
+
+This closes out the multi-day push to wire every lifecycle-domain screen against real endpoints
+instead of `data.ts` mocks. Saved here (rather than left in chat) because the conversation this was
+done in is being deleted — this section, plus the memory file
+[[flolyt_lifecycle_endpoints]], is the continuity record going forward.
+
+**What got wired this pass, on top of everything already recorded per-endpoint above:**
+- The shared **Definition** tab (`GET /stages/{stageKey}/definition`), one component for all 10
+  stages, replacing 8 bespoke per-stage files.
+- Acquire's **Unit economics** tab, plus a new shared `Sparkline` component
+  (`stage/sparkline.tsx`) extracted after a second tab needed the same inline-SVG curve.
+- Every remaining per-stage tab across the other 8 stages — **Retain** (repeat curve, segments,
+  reactivation), **Price** (plans, margin, discounting), **Adopt** (features, depth, blind spots),
+  **Advocate** (referrers, quality), **Renew** (renewal book, dunning, pauses), **Expand** (upgrade
+  paths, basket, accounts), **Support** (deflection, contact drivers, resolution, silent failures),
+  **Churn** (reasons, prediction, win-back) — one commit per stage, each following the same
+  pattern: real DTO → reshaped UI → unbacked fields dropped with a `❌ Backend does NOT provide:`
+  comment → `data.ts` cleaned → `npx tsc -b` → Playwright smoke test → commit.
+- **Chain** (`stage/chain/chain-route.tsx`), wired to `GET /lifecycle/churn/chain` with no
+  `changeId` (optional — backend auto-picks the change reaching the most stages). Discovered mid-way
+  that the map page's root-cause spotlight banner (`root-cause-spotlight.tsx`) was **already**
+  calling this same endpoint the same way — disproving an earlier (wrong) claim in this same doc
+  that Chain was blocked on a missing `:changeId` route param. Verified both the success state and
+  the refusal state (via Playwright, with a long-enough wait to clear the app's global 5-retry/1s
+  React Query config before checking `isError`).
+- Fixed acquire overview's fabricated "Volume is up 31% and quality is down 11 points" bar-row
+  comparison (`ACQUIRE_OVERVIEW_BAR_ROWS`) — pure mock content with no backing field anywhere;
+  removed, and the leak-table render (previously duplicated across two conditional branches just to
+  accommodate this one Acquire-only section) collapsed to one unconditional render.
+- Audited this doc itself for staleness while doing the above: several endpoints already wired
+  during earlier sessions (Price's plans/margin/discounting, Support's deflection, Acquire's unit
+  economics) still carried a leftover "documented, not scaffolded" status line — corrected. The
+  entire batch-4 governance/churn-routing cluster's status lines were also stale in the other
+  direction: they claimed "no service/hook files yet" when in fact all 23 were scaffolded in a later
+  pass — corrected to "service/hook ready, not wired" (verified against what's actually on disk in
+  `src/services/api/lifecycle/` and `src/features/lifecycle/`, not just the doc's own prior claims).
+
+**Recurring bug class this whole project, seen again several times this pass:** a field scaffolded
+as a bare `number | null` when the live response actually returns the 4-field measured-value
+wrapper (`{value, state, missingSource, wouldUnlock}`). Live-caught this session on: Retain's
+repeat-curve (5 fields), Retain's segments (4 fields, plus a genuine `claim: null` crash), Adopt's
+features (3 fields), Adopt's depth (3 fields). Always check a field's real shape against a pasted
+live response before trusting a scaffolded type, even one that "looks" like it should be a plain
+number.
+
+### Remaining, unrelated to this sweep — pick up fresh in a new chat
+
+1. **The churn-routing / governance cluster — 15 endpoints, service+hook ready, no UI built at
+   all** (not a wiring gap, a missing-page gap): `POST /churn/route-upstream`, `GET
+   /churn/routings`, `POST /churn/routings/{id}/acknowledge`, `GET /teams`, `PUT
+   /teams/{team}/lead`, `GET /watchable-metrics`, `POST /stages/{stageKey}/conditions`, `PUT
+   /conditions/{conditionId}`, `POST /conditions/{conditionId}/decide`, `POST
+   /conditions/{conditionId}/mute`, `POST /stages/{stageKey}/conditions/backtest`, `PUT
+   /governance/room-cap`, `POST /instrumentation-requests`, `POST
+   /instrumentation-requests/{obligationId}/close`, `PUT
+   /instrumentation-requests/{obligationId}/owner`. These would need actual page/screen design
+   work, not just data-wiring, since no Figma screen in this codebase's build history targets most
+   of them.
+2. **Definition's edit flow** — `PUT /stages/{stageKey}/conversion` and the redefinition/blast-radius
+   endpoints are documented but genuinely unscaffolded (no service/hook file exists), unlike the
+   governance cluster above. The read-only Definition tab itself is fully wired and shipped.
+3. **The map's `?market=` filter** — not investigated this pass, still open.
+4. **Open, undecided offer**: whether to build a proper workspace-wide home (e.g. a governance page)
+   for the "gaps nobody asked about" instrumentation callout that was dropped from Adopt's Blind
+   spots tab (it's composed over the whole unfiltered gap list, not scoped to one stage, so showing
+   it under a per-stage table was misleading — see `GET /lifecycle/instrumentation`'s entry above).
+   Not declined, not confirmed — raise it again if it comes up.
