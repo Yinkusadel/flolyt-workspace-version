@@ -15,8 +15,12 @@ export function formatCompactMoney(value: number, currencyCode: string): string 
   // Billion breakpoint added 2026-09-05 after a live cohort response returned a lifetime-revenue
   // figure north of ₦2B — without it this rendered as "₦2178M" instead of "₦2.18B".
   if (abs >= 1_000_000_000) return `${prefix}${round(value / 1_000_000_000, 2)}B`;
-  if (abs >= 1_000_000) return `${prefix}${Math.round(value / 1_000_000)}M`;
-  if (abs >= 1_000) return `${prefix}${Math.round(value / 1_000)}k`;
+  // 1dp added same day, same fix pass: whole-number rounding here was flattening two real,
+  // meaningfully different per-customer cohort figures (₦4.27M and ₦3.48M, ~23% apart) into
+  // "₦4M"/"₦3M" — a 33%-looking jump that threw away real precision. Matches formatHeadlineValue's
+  // own 1dp convention for the same M/k breakpoints.
+  if (abs >= 1_000_000) return `${prefix}${round(value / 1_000_000, 1)}M`;
+  if (abs >= 1_000) return `${prefix}${round(value / 1_000, 1)}k`;
   return `${prefix}${value}`;
 }
 
