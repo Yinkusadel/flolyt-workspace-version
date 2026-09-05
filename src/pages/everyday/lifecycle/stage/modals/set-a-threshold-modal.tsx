@@ -1,6 +1,7 @@
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogBody,
@@ -10,45 +11,95 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { SearchableSelect, SearchableSelectSkeleton, type SearchableSelectOption } from "@/components/ui/searchable-select";
+import { BacktestPreview } from "@/pages/everyday/lifecycle/stage/modals/backtest-preview";
+import useCreateStageCondition from "@/features/lifecycle/use-create-stage-condition";
+import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
+import { useGetWatchableMetrics } from "@/features/lifecycle/use-get-watchable-metrics";
+import type { StageAgentDto } from "@/services/api/lifecycle/get-stage-agents";
 
-export type ThresholdField = { label: string; value: string; note: string };
+const NO_ROUTE_OVERRIDE = "__stage_routing_chain__";
+const NO_AGENT = "__no_agent__";
 
-export type ThresholdPreset = {
-  condition: ThresholdField;
-  byMoreThan: ThresholdField;
-  sustainedFor: ThresholdField;
-  segmentedBy: ThresholdField;
-  routesTo: { name: string; note?: string };
-  simulation: { title: string; body: string };
-};
+const COMPARISON_OPTIONS: SearchableSelectOption[] = [
+  { value: "AtOrBelow", label: "At or below the threshold" },
+  { value: "AtOrAbove", label: "At or above the threshold" },
+];
 
-function Field({ field }: { field: ThresholdField }) {
-  return (
-    <div>
-      <p className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">{field.label}</p>
-      <div className="mt-1.5 rounded-panel border border-line bg-paper px-3.5 py-2.5">
-        <p className="text-[12px] font-semibold text-ink">{field.value}</p>
-        <p className="mt-0.5 text-[9px] text-ink-4">{field.note}</p>
-      </div>
-    </div>
-  );
-}
-
-/** A11 — "set a threshold" modal, shared by every stage's Agents tab. */
+/** A11 — "set a threshold" modal, shared by every stage's Agents tab. Creates a real condition via POST /lifecycle/stages/{stageKey}/conditions. */
 export function SetThresholdModal({
+  stageKey,
   stageName,
-  preset,
+  agents,
   open,
   onOpenChange,
 }: {
+  stageKey: string;
   stageName: string;
-  preset: ThresholdPreset;
+  agents: StageAgentDto[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const confirm = () => {
-    onOpenChange(false);
-    toast.success("Threshold added");
+  const [label, setLabel] = useState("");
+  const [metricKey, setMetricKey] = useState<string | null>(null);
+  const [comparison, setComparison] = useState<"AtOrBelow" | "AtOrAbove">("AtOrBelow");
+  const [threshold, setThreshold] = useState<number>(NaN);
+  const [sustainReadings, setSustainReadings] = useState(1);
+  const [segment, setSegment] = useState("");
+  const [agentKey, setAgentKey] = useState<string | null>(null);
+  const [routesToUserId, setRoutesToUserId] = useState<string | null>(null);
+
+  const { members, isLoading: membersLoading } = useGetWorkspaceMembers();
+  const { data: metricsData, isLoading: metricsLoading } = useGetWatchableMetrics();
+  const metrics = metricsData?.data ?? [];
+  const selectedMetric = metrics.find((m) => m.key === metricKey) ?? null;
+
+  const { createCondition, isPending } = useCreateStageCondition({
+    onSuccess: () => {
+      onOpenChange(false);
+    },
+  });
+
+  useEffect(() => {
+    if (!open) {
+      setLabel("");
+      setMetricKey(null);
+      setComparison("AtOrBelow");
+      setThreshold(NaN);
+      setSustainReadings(1);
+      setSegment("");
+      setAgentKey(null);
+      setRoutesToUserId(null);
+    }
+  }, [open]);
+
+  const metricOptions: SearchableSelectOption[] = metrics.map((m) => ({ value: m.key, label: m.question }));
+  const agentOptions: SearchableSelectOption[] = [
+    { value: NO_AGENT, label: "Not agent-specific" },
+    ...agents.map((a) => ({ value: a.key, label: a.name })),
+  ];
+  const routeOptions: SearchableSelectOption[] = [
+    { value: NO_ROUTE_OVERRIDE, label: "Stage's own routing chain (default)" },
+    ...members
+      .filter((m) => m.kind === "Human" && m.isActive)
+      .map((m) => ({ value: m.id, label: m.email ? `${m.displayName} · ${m.email}` : m.displayName })),
+  ];
+
+  const canSubmit = !!label.trim() && !!metricKey && Number.isFinite(threshold) && sustainReadings > 0;
+
+  const submit = () => {
+    if (!canSubmit || !metricKey) return;
+    createCondition({
+      stageKey,
+      label: label.trim(),
+      metricKey,
+      comparison,
+      threshold,
+      sustainReadings,
+      agentKey,
+      routesToUserId,
+      segment: selectedMetric?.needsSegmentation ? segment.trim() || null : null,
+    });
   };
 
   return (
@@ -60,33 +111,116 @@ export function SetThresholdModal({
         </DialogHeader>
 
         <DialogBody className="space-y-4 px-5 py-5 sm:px-7 sm:py-6">
-          <Field field={preset.condition} />
-          <Field field={preset.byMoreThan} />
-          <Field field={preset.sustainedFor} />
-          <Field field={preset.segmentedBy} />
+          <div>
+            <label className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">Label</label>
+            <Input
+              className="mt-1.5"
+              placeholder="e.g. Repeat rate drops sharply"
+              value={label}
+              onChange={(e) => setLabel(e.currentTarget.value)}
+            />
+          </div>
 
           <div>
-            <p className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">
-              And opens a room for
-            </p>
-            <div className="mt-1.5 rounded-panel border border-amber-border bg-amber-bg px-3.5 py-2.5">
-              <p className="text-[11.5px] font-semibold text-ink">{preset.routesTo.name}</p>
-              {preset.routesTo.note && <p className="mt-0.5 text-[9px] text-amber">{preset.routesTo.note}</p>}
+            <label className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">Watch</label>
+            {metricsLoading ? (
+              <SearchableSelectSkeleton className="mt-1.5" />
+            ) : (
+              <SearchableSelect
+                className="mt-1.5"
+                options={metricOptions}
+                value={metricKey}
+                onChange={setMetricKey}
+                placeholder="Pick a metric…"
+                emptyText="No watchable metrics"
+              />
+            )}
+          </div>
+
+          <div>
+            <label className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">Condition</label>
+            <SearchableSelect className="mt-1.5" options={COMPARISON_OPTIONS} value={comparison} onChange={(v) => setComparison(v as "AtOrBelow" | "AtOrAbove")} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">By more than</label>
+              <div className="mt-1.5 flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={Number.isFinite(threshold) ? threshold : ""}
+                  onChange={(e) => setThreshold(e.currentTarget.valueAsNumber)}
+                />
+                {selectedMetric?.unit && (
+                  <span className="shrink-0 text-[10.5px] text-ink-4">{selectedMetric.unit === "percent" ? "%" : selectedMetric.unit}</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">Sustained for</label>
+              <Input
+                type="number"
+                min={1}
+                step={1}
+                className="mt-1.5"
+                value={Number.isFinite(sustainReadings) ? sustainReadings : ""}
+                onChange={(e) => setSustainReadings(Math.max(1, Math.round(e.currentTarget.valueAsNumber || 1)))}
+              />
             </div>
           </div>
 
-          <div className="rounded-card border border-ultra-border bg-ultra-bg">
-            <div className="p-3.5">
-              <p className="text-[12px] font-semibold text-ink">{preset.simulation.title}</p>
-              <p className="mt-1.5 text-[10.5px] leading-relaxed text-ink-2">{preset.simulation.body}</p>
+          {selectedMetric?.needsSegmentation && (
+            <div>
+              <label className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">Segmented by</label>
+              <Input
+                className="mt-1.5"
+                placeholder="e.g. a departure, or a currency"
+                value={segment}
+                onChange={(e) => setSegment(e.currentTarget.value)}
+              />
+              <p className="mt-1 text-[9.5px] text-ink-4">This metric is meaningless unsliced — name what to slice it by.</p>
             </div>
+          )}
+
+          <div>
+            <label className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">Agent</label>
+            <SearchableSelect
+              className="mt-1.5"
+              options={agentOptions}
+              value={agentKey ?? NO_AGENT}
+              onChange={(v) => setAgentKey(v === NO_AGENT ? null : v)}
+            />
           </div>
+
+          <div>
+            <label className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">And opens a room for</label>
+            {membersLoading ? (
+              <SearchableSelectSkeleton className="mt-1.5" />
+            ) : (
+              <SearchableSelect
+                className="mt-1.5"
+                options={routeOptions}
+                value={routesToUserId ?? NO_ROUTE_OVERRIDE}
+                onChange={(v) => setRoutesToUserId(v === NO_ROUTE_OVERRIDE ? null : v)}
+              />
+            )}
+          </div>
+
+          <BacktestPreview
+            stageKey={stageKey}
+            metricKey={metricKey}
+            comparison={comparison}
+            threshold={threshold}
+            sustainReadings={sustainReadings}
+            segment={segment || null}
+            hasHistory={selectedMetric ? selectedMetric.hasHistory : null}
+          />
         </DialogBody>
 
         <DialogFooter>
           <div className="flex items-center gap-4">
-            <Button type="button" onClick={confirm}>
-              Add the threshold
+            <Button type="button" onClick={submit} disabled={!canSubmit || isPending}>
+              {isPending ? "Adding…" : "Add the threshold"}
             </Button>
             <button
               type="button"

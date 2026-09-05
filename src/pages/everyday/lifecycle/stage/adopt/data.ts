@@ -7,7 +7,6 @@
 
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
-import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 
@@ -142,18 +141,6 @@ export const ADOPT_FEATURE_DETAILS: Record<string, FeatureDetail> = {
 
 // ---- Agents (AD10) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
 // acquire/data.ts's Agents note and agents-tab.tsx.
-
-export const ADOPT_THRESHOLD_PRESET: ThresholdPreset = {
-  condition: { label: "When", value: "Average features per customer falls", note: "features used ÷ eligible customers" },
-  byMoreThan: { label: "By more than", value: "0.3 features", note: "against the trailing 28-day average" },
-  sustainedFor: { label: "Sustained for", value: "7 days", note: "one bad week is noise and will not open a room" },
-  segmentedBy: { label: "Segmented by", value: "market, feature", note: "so a single feature's drift is findable, not averaged away" },
-  routesTo: { name: "The Adopt stage owner · Zainab Yusuf" },
-  simulation: {
-    title: "Against the last twelve months, this would have fired once",
-    body: "On 4 March, when the delivery fee shipped and scheduled delivery broke — still open. No other week in the trailing year crossed the threshold.",
-  },
-};
 
 // ---- History (AD11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.

@@ -6,7 +6,6 @@
  */
 
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
-import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 import type { ReForecastBookPreset } from "@/pages/everyday/lifecycle/stage/modals/re-forecast-the-book-modal";
@@ -150,18 +149,6 @@ export const RENEW_PAUSES_OPEN_ROOM_PRESET: OpenRoomPreset = {
 
 // ---- Agents (RN09) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
 // acquire/data.ts's Agents note and agents-tab.tsx.
-
-export const RENEW_THRESHOLD_PRESET: ThresholdPreset = {
-  condition: { label: "When", value: "A fix is not rolled out to every market", note: "a change proven to work in one market has not reached another" },
-  byMoreThan: { label: "By more than", value: "14 days after the first", note: "the gap between when it worked somewhere and everywhere" },
-  sustainedFor: { label: "Sustained for", value: "0 days", note: "opens immediately once the 14-day window passes" },
-  segmentedBy: { label: "Segmented by", value: "market, fix", note: "so a single market's gap is findable, not averaged away" },
-  routesTo: { name: "The Renew stage owner · Ngozi Bello" },
-  simulation: {
-    title: "Against the last twelve months, this would have fired once",
-    body: "On 2 April, when the retry-window fix rolled out everywhere except Ghana — 134 days ago and still unrouted. It is why Ghana is still retrying cards at midnight.",
-  },
-};
 
 // ---- History (RN10) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.

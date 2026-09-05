@@ -5,7 +5,6 @@
  * id, e.g. "SU06 · Support · cohorts").
  */
 
-import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 
@@ -121,18 +120,6 @@ export const SUPPORT_RECLASSIFY_PRESET: ReclassifyPreset = {
 
 // ---- Agents (SU09) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
 // acquire/data.ts's Agents note and agents-tab.tsx.
-
-export const SUPPORT_THRESHOLD_PRESET: ThresholdPreset = {
-  condition: { label: "When", value: "A contact driver is reclassified as revenue", note: "Support Signal's own classification changes" },
-  byMoreThan: { label: "By more than", value: "any", note: "any reclassification is worth a look" },
-  sustainedFor: { label: "Sustained for", value: "0 days", note: "opens immediately · this is the one rule that fires on day one" },
-  segmentedBy: { label: "Segmented by", value: "driver, market", note: "so a single driver's reclassification is findable, not averaged away" },
-  routesTo: { name: "The Support stage owner · Amara Okeke" },
-  simulation: {
-    title: "Against the last twelve months, this would have fired twice",
-    body: "Once on 11 March, when “where is my order” was reclassified — 144 days before anyone acted. Once this month, on the payment-failed driver, which is why it opens now instead of waiting.",
-  },
-};
 
 // ---- History (SU10) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.

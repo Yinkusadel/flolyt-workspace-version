@@ -6,7 +6,6 @@
  */
 
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
-import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 import type { AssignOwnerPreset } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
@@ -221,18 +220,6 @@ export const ADVOCATE_REWARDS_OPEN_ROOM_PRESET: OpenRoomPreset = {
 
 // ---- Agents (AV09) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
 // acquire/data.ts's Agents note and agents-tab.tsx.
-
-export const ADVOCATE_THRESHOLD_PRESET: ThresholdPreset = {
-  condition: { label: "When", value: "A reward change runs without a holdout", note: "any change to the referral reward amount goes live with no measurement plan" },
-  byMoreThan: { label: "By more than", value: "any", note: "there is no tolerance — a reward change either has a holdout or it does not" },
-  sustainedFor: { label: "Sustained for", value: "0 days", note: "opens the moment the change ships" },
-  segmentedBy: { label: "Segmented by", value: "market, reward amount", note: "so a single market's change is findable, not averaged away" },
-  routesTo: { name: "The Advocate stage owner", note: "currently nobody — falls back to Ada" },
-  simulation: {
-    title: "Against the last twelve months, this would have fired once",
-    body: "On 18 April, when the reward was raised from ₦500 to ₦1,000 with no holdout — 117 days ago and still unrouted. It is why ₦278M has never been tested.",
-  },
-};
 
 // ---- History (AV10) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.

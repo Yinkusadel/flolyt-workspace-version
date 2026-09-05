@@ -6,7 +6,6 @@
  * id, e.g. "CH06 · Churn · cohorts").
  */
 
-import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 import type { AssignOwnerPreset } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
@@ -159,21 +158,6 @@ export const CHURN_WINBACK_OPEN_ROOM_PRESET: OpenRoomPreset = {
 
 // ---- Agents (CH09) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
 // acquire/data.ts's Agents note and agents-tab.tsx.
-
-export const CHURN_THRESHOLD_PRESET: ThresholdPreset = {
-  condition: { label: "When", value: "Predicted churn exceeds a threshold", note: "30-day prediction model output" },
-  byMoreThan: { label: "By more than", value: "50,000 customers", note: "against the trailing weekly list" },
-  sustainedFor: { label: "Sustained for", value: "0 days", note: "opens immediately once the weekly list is produced" },
-  segmentedBy: { label: "Segmented by", value: "market, reason", note: "so Ghana's blind spot is findable, not averaged away" },
-  routesTo: {
-    name: "The Churn stage owner",
-    note: "This rule currently has no destination — the stage has no owner",
-  },
-  simulation: {
-    title: "Against the last twelve months, this would have fired thirty-one times",
-    body: "Every week since 12 January, when the prediction model went live. It has never opened a room because the rule routes to a stage owner and that condition has no owner assigned.",
-  },
-};
 
 // ---- History (CH10) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.

@@ -8,7 +8,6 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
-import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 import type { RequestInstrumentationPreset } from "@/pages/everyday/lifecycle/stage/adopt/data";
@@ -196,18 +195,6 @@ export const EXPAND_REQUEST_INSTRUMENTATION_PRESET: RequestInstrumentationPreset
 
 // ---- Agents (EX10) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
 // acquire/data.ts's Agents note and agents-tab.tsx.
-
-export const EXPAND_THRESHOLD_PRESET: ThresholdPreset = {
-  condition: { label: "When", value: "Customers past plan break-even, unprompted", note: "6+ orders/month on pay-as-you-go ÷ never shown the plan page" },
-  byMoreThan: { label: "By more than", value: "10,000 customers", note: "against the trailing 28-day average" },
-  sustainedFor: { label: "Sustained for", value: "7 days", note: "one bad week is noise and will not open a room" },
-  segmentedBy: { label: "Segmented by", value: "order frequency tier, market", note: "so the heaviest tier is findable, not averaged away" },
-  routesTo: { name: "The Expand stage owner · Tunde Bakare" },
-  simulation: {
-    title: "Against the last twelve months, this would have fired once and stayed open",
-    body: "94,000 customers have been past break-even for the entire measured period, with no date it started — this is a standing condition, not a dated event.",
-  },
-};
 
 // ---- History (EX11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.

@@ -179,25 +179,9 @@ export const ACQUIRE_CHANNEL_DETAILS: Record<string, ChannelDetail> = {
 
 // ---- Shared modal presets (A11/A12/A13/A15) ---------------------------------
 
-import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { MapAFieldPreset } from "@/pages/everyday/lifecycle/stage/modals/map-a-field-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
-
-export const ACQUIRE_THRESHOLD_PRESET: ThresholdPreset = {
-  condition: { label: "When", value: "Verification rate falls", note: "identity.verified ÷ identity.created" },
-  byMoreThan: { label: "By more than", value: "2 percentage points", note: "against the trailing 28-day average" },
-  sustainedFor: { label: "Sustained for", value: "3 days", note: "one bad day is noise and will not open a room" },
-  segmentedBy: { label: "Segmented by", value: "carrier, market", note: "so “MTN Nigeria only” is findable, not averaged away" },
-  routesTo: {
-    name: "The Acquire stage owner · Tunde Bakare",
-    note: "This rule previously routed to “verification owner”, which nobody holds",
-  },
-  simulation: {
-    title: "Against the last twelve months, this would have fired twice",
-    body: "Once on 2 April, when the MTN route changed — ₦9M, still open and unowned. Once on 14 November last year, which resolved itself in two days. A threshold that would have fired forty times is a threshold that will be ignored.",
-  },
-};
 
 export const ACQUIRE_MAP_FIELD_PRESET: MapAFieldPreset = {
   needTitle: "Cost of goods, per order",

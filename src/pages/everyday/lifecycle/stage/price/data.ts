@@ -11,7 +11,6 @@
 
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { CheckedRow, ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
-import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 
@@ -152,18 +151,6 @@ export const PRICE_PLAN_DETAILS: Record<string, PlanDetail> = {
 
 // ---- Agents (PR10) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
 // acquire/data.ts's Agents note and agents-tab.tsx.
-
-export const PRICE_THRESHOLD_PRESET: ThresholdPreset = {
-  condition: { label: "When", value: "Discount depth rises", note: "discounted revenue ÷ gross revenue" },
-  byMoreThan: { label: "By more than", value: "2 percentage points", note: "against the trailing 28-day average" },
-  sustainedFor: { label: "Sustained for", value: "3 days", note: "one bad day is noise and will not open a room" },
-  segmentedBy: { label: "Segmented by", value: "plan, market", note: "so a single plan's drift is findable, not averaged away" },
-  routesTo: { name: "The Price stage owner · Ravi Mehta" },
-  simulation: {
-    title: "Against the last twelve months, this would have fired once",
-    body: "On 16 March, when discount depth was raised from 15% to 20% — still open. No other week in the trailing year crossed the threshold.",
-  },
-};
 
 // ---- History (PR11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.

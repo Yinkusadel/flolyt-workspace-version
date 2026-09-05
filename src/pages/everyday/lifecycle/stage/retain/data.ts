@@ -8,7 +8,6 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 
@@ -188,18 +187,6 @@ export const RETAIN_BUILD_AUDIENCE_PRESET: BuildAudiencePreset = {
 
 // ---- Agents (RT10) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
 // acquire/data.ts's Agents note and agents-tab.tsx.
-
-export const RETAIN_THRESHOLD_PRESET: ThresholdPreset = {
-  condition: { label: "When", value: "Repeat rate falls", note: "second orders ÷ acquired, 90-day window" },
-  byMoreThan: { label: "By more than", value: "2 percentage points", note: "against the trailing 28-day average" },
-  sustainedFor: { label: "Sustained for", value: "7 days", note: "one bad week is noise and will not open a room" },
-  segmentedBy: { label: "Segmented by", value: "market, cohort", note: "so a single market's drift is findable, not averaged away" },
-  routesTo: { name: "The Retain stage owner · Ifeoma Nwosu" },
-  simulation: {
-    title: "Against the last twelve months, this would have fired twice",
-    body: "Once on 4 March, when the delivery fee shipped — still open. Once on 9 June, when Kenya shipped the same change — still open. No other week in the trailing year crossed the threshold.",
-  },
-};
 
 // ---- History (RT11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.

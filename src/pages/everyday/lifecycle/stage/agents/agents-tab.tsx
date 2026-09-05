@@ -8,39 +8,25 @@ import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
 import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
-import { SetThresholdModal, type ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
+import { SetThresholdModal } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
+import { EditConditionModal, AcceptConditionModal } from "@/pages/everyday/lifecycle/stage/modals/edit-condition-modal";
+import { ConfirmActionModal } from "@/pages/everyday/lifecycle/stage/modals/confirm-action-modal";
 import { formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetStageAgents } from "@/features/lifecycle/use-get-stage-agents";
 import type { StageAgentConditionDto, StageAgentDto } from "@/services/api/lifecycle/get-stage-agents";
-import { ACQUIRE_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/acquire/data";
-import { ACTIVATE_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/activate/data";
-import { PRICE_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/price/data";
-import { ADOPT_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/adopt/data";
-import { RETAIN_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/retain/data";
-import { EXPAND_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/expand/data";
-import { SUPPORT_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/support/data";
-import { RENEW_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/renew/data";
-import { ADVOCATE_ASSIGN_OWNER_PRESET, ADVOCATE_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/advocate/data";
-import { CHURN_ASSIGN_OWNER_PRESET, CHURN_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/churn/data";
+import { ADVOCATE_ASSIGN_OWNER_PRESET } from "@/pages/everyday/lifecycle/stage/advocate/data";
+import { CHURN_ASSIGN_OWNER_PRESET } from "@/pages/everyday/lifecycle/stage/churn/data";
 import { AssignAnOwnerModal, type AssignOwnerPreset } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
+import useMuteCondition from "@/features/lifecycle/use-mute-condition";
+import useDecideCondition from "@/features/lifecycle/use-decide-condition";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
 import { createPortal } from "react-dom";
-
-// The "Add a threshold" preview dialog (condition/byMoreThan/sustainedFor/segmentedBy/routesTo/
-// simulation) is a static design mock, not backed by a live backtest — POST /lifecycle/stages/
-// {stageKey}/conditions/backtest would be the real endpoint for that preview and is out of scope
-// here. Kept per-stage so the dialog still shows plausible, stage-specific example copy.
-const THRESHOLD_PRESET: Record<string, ThresholdPreset> = {
-  acquire: ACQUIRE_THRESHOLD_PRESET,
-  activate: ACTIVATE_THRESHOLD_PRESET,
-  price: PRICE_THRESHOLD_PRESET,
-  adopt: ADOPT_THRESHOLD_PRESET,
-  retain: RETAIN_THRESHOLD_PRESET,
-  expand: EXPAND_THRESHOLD_PRESET,
-  support: SUPPORT_THRESHOLD_PRESET,
-  renew: RENEW_THRESHOLD_PRESET,
-  advocate: ADVOCATE_THRESHOLD_PRESET,
-  churn: CHURN_THRESHOLD_PRESET,
-};
 
 // Advocate and Churn have no stage owner in the mock data, so their Agents tab keeps the
 // "Assign an owner" header action — unrelated to the live conditions table above.
@@ -57,6 +43,22 @@ function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "n
 const READINESS_LABEL: Record<string, string> = { ready: "ready", reading: "reading", "not-ready": "not ready" };
 const READINESS_TONE: Record<string, ChipTone> = { ready: "teal", reading: "amber", "not-ready": "neutral" };
 
+// The real enum, confirmed 2026-09-05 from the endpoint's own prose description (the JSON example
+// truncates the condition object and never names it) — proposed/watching/muted/declined. An
+// unrecognized value still falls back to a plain neutral chip rather than crashing on a lookup miss.
+const STATUS_LABEL: Record<string, string> = {
+  proposed: "Proposed",
+  watching: "Watching",
+  muted: "Muted",
+  declined: "Declined",
+};
+const STATUS_TONE: Record<string, ChipTone> = {
+  proposed: "amber",
+  watching: "teal",
+  muted: "neutral",
+  declined: "rose",
+};
+
 function thresholdText(condition: StageAgentConditionDto): string {
   const unitSuffix = condition.unit === "percent" ? "%" : ` ${condition.unit}`;
   const parts = [`${condition.comparison} ${condition.threshold}${unitSuffix}`];
@@ -66,18 +68,6 @@ function thresholdText(condition: StageAgentConditionDto): string {
 }
 
 type ConditionRow = { id: string; agentName: string; condition: StageAgentConditionDto };
-
-const COLUMNS: Column<ConditionRow>[] = [
-  { key: "agent", header: "Agent", render: (row) => <span className="text-ink-3">{row.agentName}</span> },
-  { key: "condition", header: "Condition", render: (row) => <span className="font-semibold text-ink-2">{row.condition.label}</span> },
-  { key: "threshold", header: "Threshold", align: "right", render: (row) => <span className="font-mono text-ink-4">{thresholdText(row.condition)}</span> },
-  {
-    key: "status",
-    header: "Status",
-    align: "right",
-    render: (row) => <Chip tone="neutral">{row.condition.status}</Chip>,
-  },
-];
 
 function AgentsSkeleton() {
   return (
@@ -105,6 +95,67 @@ export function AgentsTab() {
   const [thresholdOpen, setThresholdOpen] = useState(false);
   const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
   const assignOwnerPreset = ASSIGN_OWNER_PRESET[stage.slug];
+
+  const [conditionToEdit, setConditionToEdit] = useState<StageAgentConditionDto | null>(null);
+  const [conditionToAccept, setConditionToAccept] = useState<StageAgentConditionDto | null>(null);
+  const [conditionToDecline, setConditionToDecline] = useState<StageAgentConditionDto | null>(null);
+
+  const { muteCondition } = useMuteCondition();
+  const { decideCondition, isPending: isDeclining } = useDecideCondition({ onSuccess: () => setConditionToDecline(null) });
+
+  const COLUMNS: Column<ConditionRow>[] = [
+    { key: "agent", header: "Agent", render: (row) => <span className="text-ink-3">{row.agentName}</span> },
+    { key: "condition", header: "Condition", render: (row) => <span className="font-semibold text-ink-2">{row.condition.label}</span> },
+    { key: "threshold", header: "Threshold", align: "right", render: (row) => <span className="font-mono text-ink-4">{thresholdText(row.condition)}</span> },
+    {
+      key: "status",
+      header: "Status",
+      align: "right",
+      render: (row) => (
+        <Chip tone={STATUS_TONE[row.condition.status] ?? "neutral"}>{STATUS_LABEL[row.condition.status] ?? row.condition.status}</Chip>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      render: (row) => {
+        const status = row.condition.status;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="rounded-control p-1 text-ink-4 hover:bg-paper-2 hover:text-ink" aria-label="Condition actions">
+                <MoreVertical className="size-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {status === "proposed" && (
+                <>
+                  <DropdownMenuItem onClick={() => setConditionToAccept(row.condition)}>Accept…</DropdownMenuItem>
+                  <DropdownMenuItem variant="destructive" onClick={() => setConditionToDecline(row.condition)}>
+                    Decline
+                  </DropdownMenuItem>
+                </>
+              )}
+              {status === "watching" && (
+                <>
+                  <DropdownMenuItem onClick={() => setConditionToEdit(row.condition)}>Edit</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => muteCondition({ conditionId: row.condition.id, muted: true })}>Mute</DropdownMenuItem>
+                </>
+              )}
+              {status === "muted" && (
+                <>
+                  <DropdownMenuItem onClick={() => setConditionToEdit(row.condition)}>Edit</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => muteCondition({ conditionId: row.condition.id, muted: false })}>Unmute</DropdownMenuItem>
+                </>
+              )}
+              {status === "declined" && <DropdownMenuItem disabled>No actions — kept for record</DropdownMenuItem>}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="space-y-8">
@@ -216,10 +267,33 @@ export function AgentsTab() {
       ))}
 
       <SetThresholdModal
+        stageKey={stage.slug}
         stageName={stage.name}
-        preset={THRESHOLD_PRESET[stage.slug] ?? ACQUIRE_THRESHOLD_PRESET}
+        agents={agents}
         open={thresholdOpen}
         onOpenChange={setThresholdOpen}
+      />
+      <EditConditionModal
+        stageKey={stage.slug}
+        condition={conditionToEdit}
+        open={!!conditionToEdit}
+        onOpenChange={(next) => !next && setConditionToEdit(null)}
+      />
+      <AcceptConditionModal
+        stageKey={stage.slug}
+        condition={conditionToAccept}
+        open={!!conditionToAccept}
+        onOpenChange={(next) => !next && setConditionToAccept(null)}
+      />
+      <ConfirmActionModal
+        open={!!conditionToDecline}
+        onOpenChange={(next) => !next && setConditionToDecline(null)}
+        title="Decline this condition?"
+        description={`"${conditionToDecline?.label ?? ""}" will be kept on record as declined, not deleted — it won't be re-proposed.`}
+        confirmLabel="Decline"
+        pendingLabel="Declining…"
+        isPending={isDeclining}
+        onConfirm={() => conditionToDecline && decideCondition({ conditionId: conditionToDecline.id, accept: false })}
       />
       {assignOwnerPreset && (
         <AssignAnOwnerModal preset={assignOwnerPreset} open={assignOwnerOpen} onOpenChange={setAssignOwnerOpen} />
