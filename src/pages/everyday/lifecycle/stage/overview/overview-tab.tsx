@@ -33,37 +33,31 @@ import {
 } from "@/pages/everyday/lifecycle/stage/activate/data";
 import {
   PRICE_OPEN_ROOM_PRESET,
-  PRICE_OVERVIEW_KPIS,
   PRICE_OVERVIEW_LEAK_ROWS,
   PRICE_SHARE_EXPORT_PRESET,
 } from "@/pages/everyday/lifecycle/stage/price/data";
 import {
   ADOPT_OPEN_ROOM_PRESET,
-  ADOPT_OVERVIEW_KPIS,
   ADOPT_OVERVIEW_LEAK_ROWS,
   ADOPT_SHARE_EXPORT_PRESET,
 } from "@/pages/everyday/lifecycle/stage/adopt/data";
 import {
   RETAIN_OPEN_ROOM_PRESET,
-  RETAIN_OVERVIEW_KPIS,
   RETAIN_OVERVIEW_LEAK_ROWS,
   RETAIN_SHARE_EXPORT_PRESET,
 } from "@/pages/everyday/lifecycle/stage/retain/data";
 import {
   EXPAND_OPEN_ROOM_PRESET,
-  EXPAND_OVERVIEW_KPIS,
   EXPAND_OVERVIEW_LEAK_ROWS,
   EXPAND_SHARE_EXPORT_PRESET,
 } from "@/pages/everyday/lifecycle/stage/expand/data";
 import {
   SUPPORT_OPEN_ROOM_PRESET,
-  SUPPORT_OVERVIEW_KPIS,
   SUPPORT_OVERVIEW_LEAK_ROWS,
   SUPPORT_SHARE_EXPORT_PRESET,
 } from "@/pages/everyday/lifecycle/stage/support/data";
 import {
   RENEW_OPEN_ROOM_PRESET,
-  RENEW_OVERVIEW_KPIS,
   RENEW_OVERVIEW_LEAK_ROWS,
   RENEW_SHARE_EXPORT_PRESET,
 } from "@/pages/everyday/lifecycle/stage/renew/data";
@@ -71,7 +65,6 @@ import {
   ADVOCATE_ASSIGN_OWNER_PRESET,
   ADVOCATE_OPEN_ROOM_PRESET,
   ADVOCATE_OVERVIEW_INSIGHT,
-  ADVOCATE_OVERVIEW_KPIS,
   ADVOCATE_OVERVIEW_LEAD,
   ADVOCATE_OVERVIEW_LEAK_ROWS,
   ADVOCATE_SHARE_EXPORT_PRESET,
@@ -80,15 +73,12 @@ import {
   CHURN_ASSIGN_OWNER_PRESET,
   CHURN_OPEN_ROOM_PRESET,
   CHURN_OVERVIEW_INSIGHT,
-  CHURN_OVERVIEW_KPIS,
   CHURN_OVERVIEW_LEAD,
   CHURN_OVERVIEW_LEAK_ROWS,
   CHURN_SHARE_EXPORT_PRESET,
 } from "@/pages/everyday/lifecycle/stage/churn/data";
 
 type OverviewData = {
-  /** Omit when a stage builds its KPI row live instead (see buildAcquireKpis below). */
-  kpis?: Kpi[];
   /** A callout shown before the KPI cards, for a finding urgent enough to lead the page (e.g. Advocate's "no owner" banner). */
   leadTitle?: string;
   leadBody?: string;
@@ -139,7 +129,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     shareExportPreset: ACTIVATE_SHARE_EXPORT_PRESET,
   },
   price: {
-    kpis: PRICE_OVERVIEW_KPIS,
     insightTitle: "Two of the five largest items on this screen cannot be valued at all",
     insightBody:
       "Legacy Unlimited and absorbed delivery fees are almost certainly losing money — 3,100 customers on a 2022 price and 41,000 subscriptions eating a fee introduced in 2026. Neither can be priced without cost of goods, so neither is in the ₦46M, and neither has a room.",
@@ -153,7 +142,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     shareExportPreset: PRICE_SHARE_EXPORT_PRESET,
   },
   adopt: {
-    kpis: ADOPT_OVERVIEW_KPIS,
     insightTitle: "An entire feature is invisible to this stage",
     insightBody:
       "Loyalty tiers were renamed in April and have never emitted an event. Flolyt cannot say how many customers use them, whether the rename helped or hurt, or whether the feature does anything at all. It is listed as unavailable rather than left off the table.",
@@ -167,7 +155,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     shareExportPreset: ADOPT_SHARE_EXPORT_PRESET,
   },
   retain: {
-    kpis: RETAIN_OVERVIEW_KPIS,
     insightTitle: "142,000 of these customers cannot be contacted by anybody, ever",
     insightBody:
       "No email, no consent, no push — they checked out as guests. They are inside the 148,000 in the reactivation room and will be silently dropped at send time. The only fix for them was upstream, in Activate, at the moment the account was offered and was not.",
@@ -182,7 +169,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     shareExportPreset: RETAIN_SHARE_EXPORT_PRESET,
   },
   expand: {
-    kpis: EXPAND_OVERVIEW_KPIS,
     insightTitle: "This is the only stage whose own numbers improved this quarter, and it means less than it looks",
     insightBody:
       "Expansion rate rose 0.7 points while the eligible population fell 11%. Expansion works on customers who stay, and Retain is producing fewer of them. A healthy rate applied to a shrinking base is how a stage can be doing its job and still be worth less every quarter.",
@@ -196,7 +182,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     shareExportPreset: EXPAND_SHARE_EXPORT_PRESET,
   },
   support: {
-    kpis: SUPPORT_OVERVIEW_KPIS,
     insightTitle: "The ₦9M is what Support can fix. The ₦38M is what Support can only see.",
     insightBody:
       "This stage's own number is small because most of what it detects belongs to Delivery, Product or Engineering. Support is the earliest and cheapest sensor in the lifecycle and the one with the least ability to act on what it senses.",
@@ -210,7 +195,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     shareExportPreset: SUPPORT_SHARE_EXPORT_PRESET,
   },
   renew: {
-    kpis: RENEW_OVERVIEW_KPIS,
     insightTitle: "Nobody in the ₦88M decided to leave",
     insightBody:
       "61,400 cards failed on renewal night because they were presented at midnight, when balances are lowest. These customers wanted the service, were willing to pay for it, and were lost to an implementation detail. It is the only ₦88M in this lifecycle that needed no persuasion, no discount and no product change.",
@@ -224,7 +208,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     shareExportPreset: RENEW_SHARE_EXPORT_PRESET,
   },
   advocate: {
-    kpis: ADVOCATE_OVERVIEW_KPIS,
     leadTitle: ADVOCATE_OVERVIEW_LEAD.title,
     leadBody: ADVOCATE_OVERVIEW_LEAD.body,
     leadTone: "amber",
@@ -241,7 +224,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     assignOwnerPreset: ADVOCATE_ASSIGN_OWNER_PRESET,
   },
   churn: {
-    kpis: CHURN_OVERVIEW_KPIS,
     leadTitle: CHURN_OVERVIEW_LEAD.title,
     leadBody: CHURN_OVERVIEW_LEAD.body,
     leadTone: "amber",
@@ -271,26 +253,64 @@ const LEAK_TREND_TONE_CLASS: Record<LeakRow["trendTone"], string> = {
   neutral: "text-ink-4",
 };
 
-// Acquire's KPI row is wired to GET /lifecycle/stages/{stageKey} — see docs/endpoints/lifecycle.md's
-// coverage tracker. Of the design's original 4 cards, only 3 have a backing field at all:
-// population ("Acquired · 12 months") and its yearOverYear note, atStake ("At stake"), and
-// primaryConversion ("Reach a second order") — each the same measured-value wrapper as
-// GET /map's atStake, rendered unavailable via the same InfoTooltip icon when its value is null.
-// Every note/value below is one field, formatted alone — never combined with another field.
-// 4th card added 2026-09-04: rateOfChange ("how fast Acquire is moving") — a real field on the
-// same response, unused until now (a live response confirmed it's currently unavailable for
-// Acquire, same missingSource pattern as the other three).
-function buildAcquireKpis(stageData: StageData | undefined): Kpi[] {
+// Every stage's KPI row is wired to the same GET /lifecycle/stages/{stageKey} endpoint — it
+// returns the identical 4 generic measured-value fields (population/atStake/rateOfChange/
+// primaryConversion) for every stage, unlike Cohorts/Markets where the real endpoint's shape
+// didn't match most stages' bespoke designs at all. What differs per stage is only the CARD
+// LABEL, drawn from that stage's own original mock language where one naturally fits (e.g.
+// Retain's population card was already called "Acquired · 12 months" in its own mock; Adopt's
+// primaryConversion card reuses its own "Adopting · 2+ features" framing). Each stage's other
+// bespoke 3rd/4th KPI ideas (Price's "Contribution margin", Expand's "ARPU multiple", Advocate's
+// "Effective CAC", etc.) have no backing field and are dropped, same treatment as Acquire's
+// "Blended CAC" and Activate's "Median time to value" (which lives on a different endpoint).
+const POPULATION_LABEL: Record<string, string> = {
+  acquire: "Acquired · 12 months",
+  activate: "Acquired · 12 months",
+  price: "Customers with revenue",
+  adopt: "Customers who could adopt",
+  retain: "Acquired · 12 months",
+  expand: "Eligible to expand",
+  support: "Something went wrong",
+  renew: "Coming up for renewal",
+  advocate: "Referrers",
+  churn: "Churned · 12 months",
+};
+
+const PRIMARY_CONVERSION_LABEL: Record<string, string> = {
+  acquire: "Reach a second order",
+  activate: "Reach value",
+  price: "Primary conversion",
+  adopt: "Adopting · 2+ features",
+  retain: "Placed a second order in 90 days",
+  expand: "Expanded",
+  support: "Told us about it",
+  renew: "Projected renewal rate",
+  advocate: "Referral rate",
+  churn: "Ever won back",
+};
+
+// Only Acquire/Activate had an established note on this card before this pass — kept verbatim
+// rather than inventing similar-sounding notes for the other 8, which would need context (a
+// prior-period comparison, a definition nuance) this single live field doesn't carry.
+const PRIMARY_CONVERSION_NOTE: Partial<Record<string, string>> = {
+  acquire: "the number that decides if this is good",
+  activate: "activation, not just a first order",
+};
+
+function buildStageKpis(stageData: StageData | undefined, stageSlug: string): Kpi[] {
   if (!stageData) return [];
   const { population, rateOfChange, yearOverYear, atStake, primaryConversion } = stageData;
+  const populationLabel = POPULATION_LABEL[stageSlug] ?? "Population · 12 months";
+  const conversionLabel = PRIMARY_CONVERSION_LABEL[stageSlug] ?? "Primary conversion";
+  const conversionNote = PRIMARY_CONVERSION_NOTE[stageSlug];
 
-  const acquiredNote =
+  const populationNote =
     yearOverYear.value !== null ? `${yearOverYear.value >= 0 ? "+" : ""}${formatPercent(yearOverYear.value)} on last year` : undefined;
 
   return [
     population.value !== null
-      ? { eyebrow: "Acquired · 12 months", value: formatCount(population.value), tone: "teal", note: acquiredNote }
-      : { eyebrow: "Acquired · 12 months", unavailable: { missingSource: population.missingSource, wouldUnlock: population.wouldUnlock } },
+      ? { eyebrow: populationLabel, value: formatCount(population.value), tone: "teal", note: populationNote }
+      : { eyebrow: populationLabel, unavailable: { missingSource: population.missingSource, wouldUnlock: population.wouldUnlock } },
     atStake.value !== null
       ? { eyebrow: "At stake", value: formatCompactCurrency(atStake.value), tone: "rose", note: "in this stage alone" }
       : { eyebrow: "At stake", unavailable: { missingSource: atStake.missingSource, wouldUnlock: atStake.wouldUnlock } },
@@ -298,45 +318,8 @@ function buildAcquireKpis(stageData: StageData | undefined): Kpi[] {
       ? { eyebrow: "Rate of change", value: `${rateOfChange.value >= 0 ? "+" : ""}${formatPercent(rateOfChange.value)}`, tone: rateOfChange.value >= 0 ? "teal" : "rose", note: "month over month" }
       : { eyebrow: "Rate of change", unavailable: { missingSource: rateOfChange.missingSource, wouldUnlock: rateOfChange.wouldUnlock } },
     primaryConversion.value !== null
-      ? { eyebrow: "Reach a second order", value: formatPercent(primaryConversion.value), tone: "rose", note: "the number that decides if this is good" }
-      : {
-          eyebrow: "Reach a second order",
-          unavailable: { missingSource: primaryConversion.missingSource, wouldUnlock: primaryConversion.wouldUnlock },
-        },
-  ];
-}
-
-// Activate's KPI row is wired to the same GET /lifecycle/stages/{stageKey} endpoint as Acquire's,
-// same 4-card shape for consistency: population, atStake, rateOfChange, primaryConversion. Of the
-// design's original 4 cards, "Median time to value" is the one with no field here — it lives on
-// GET /lifecycle/activate/time-to-value instead (medianBand, deliberately a band not a day count).
-function buildActivateKpis(stageData: StageData | undefined): Kpi[] {
-  if (!stageData) return [];
-  const { population, rateOfChange, yearOverYear, atStake, primaryConversion } = stageData;
-
-  const acquiredNote =
-    yearOverYear.value !== null ? `${yearOverYear.value >= 0 ? "+" : ""}${formatPercent(yearOverYear.value)} on last year` : undefined;
-
-  return [
-    population.value !== null
-      ? { eyebrow: "Acquired · 12 months", value: formatCount(population.value), tone: "teal", note: acquiredNote }
-      : { eyebrow: "Acquired · 12 months", unavailable: { missingSource: population.missingSource, wouldUnlock: population.wouldUnlock } },
-    atStake.value !== null
-      ? { eyebrow: "At stake", value: formatCompactCurrency(atStake.value), tone: "rose", note: "in this stage alone" }
-      : { eyebrow: "At stake", unavailable: { missingSource: atStake.missingSource, wouldUnlock: atStake.wouldUnlock } },
-    rateOfChange.value !== null
-      ? { eyebrow: "Rate of change", value: `${rateOfChange.value >= 0 ? "+" : ""}${formatPercent(rateOfChange.value)}`, tone: rateOfChange.value >= 0 ? "teal" : "rose", note: "month over month" }
-      : { eyebrow: "Rate of change", unavailable: { missingSource: rateOfChange.missingSource, wouldUnlock: rateOfChange.wouldUnlock } },
-    primaryConversion.value !== null
-      ? { eyebrow: "Reach value", value: formatPercent(primaryConversion.value), tone: "rose", note: "activation, not just a first order" }
-      : {
-          eyebrow: "Reach value",
-          unavailable: { missingSource: primaryConversion.missingSource, wouldUnlock: primaryConversion.wouldUnlock },
-        },
-    // ❌ Not provided by GET /lifecycle/stages/{stageKey}: "Median time to value" — that figure
-    // lives on GET /lifecycle/activate/time-to-value instead. Pulling a second endpoint just for
-    // this one Overview card is deferred rather than composed here — unlike Acquire's "Blended
-    // CAC" this field does exist, just elsewhere, so a 5th card is dropped, not this one.
+      ? { eyebrow: conversionLabel, value: formatPercent(primaryConversion.value), tone: "rose", note: conversionNote }
+      : { eyebrow: conversionLabel, unavailable: { missingSource: primaryConversion.missingSource, wouldUnlock: primaryConversion.wouldUnlock } },
   ];
 }
 
@@ -347,22 +330,14 @@ export function OverviewTab() {
   const [shareOpen, setShareOpen] = useState(false);
   const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
 
-  const isAcquire = stage.slug === "acquire";
-  const isActivate = stage.slug === "activate";
-  const acquireStageQuery = useGetStage(isAcquire ? "acquire" : "");
-  const activateStageQuery = useGetStage(isActivate ? "activate" : "");
-  const wiredStageQuery = isAcquire ? acquireStageQuery : isActivate ? activateStageQuery : undefined;
+  const stageQuery = useGetStage(stage.slug);
 
   if (!stage.isDefined) return <StageEmptyState stageName={stage.name} />;
 
   const data = OVERVIEW_DATA[stage.slug];
   if (!data) return null;
 
-  const kpis = isAcquire
-    ? buildAcquireKpis(acquireStageQuery.data?.data)
-    : isActivate
-      ? buildActivateKpis(activateStageQuery.data?.data)
-      : (data.kpis ?? []);
+  const kpis = buildStageKpis(stageQuery.data?.data, stage.slug);
 
   const columns: Column<LeakRow>[] = [
     {
@@ -461,9 +436,9 @@ export function OverviewTab() {
 
       <KpiCards
         items={kpis}
-        isLoading={wiredStageQuery?.isLoading ?? false}
-        isError={wiredStageQuery?.isError ?? false}
-        onRetry={wiredStageQuery ? () => wiredStageQuery.refetch() : undefined}
+        isLoading={stageQuery.isLoading}
+        isError={stageQuery.isError}
+        onRetry={() => stageQuery.refetch()}
       />
 
       {data.barEyebrow && data.barRows && (

@@ -85,9 +85,12 @@ export const SUPPORT_DEFINITION: SupportDefinitionData = {
     "Failed delivery plus a complaint retains at 31.4%, above the base rate — because we refunded and apologised. Failed delivery in silence retains at 0.4%. The 8,200 people who did not bother to tell us are the most expensive group in this stage and they are invisible to every support tool in the building.",
 };
 
-// ---- Overview (SU02) ---------------------------------------------------
+// ---- Overview (SU02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
+// overview-tab.tsx's buildStageKpis. The mock 4-card set below is kept only for the
+// silent-failures drilldown (SU03b), which still reuses it — renamed since it's no longer the
+// Overview tab's own data.
 
-export const SUPPORT_OVERVIEW_KPIS: Kpi[] = [
+export const SUPPORT_SILENT_FAILURES_KPIS: Kpi[] = [
   { eyebrow: "Something went wrong", value: "61,000 / mo", note: "5.5% of active customers" },
   { eyebrow: "Told us about it", value: "21,400 / mo", tone: "amber", note: "35% · the rest stay silent" },
   { eyebrow: "At stake", value: "₦9M", tone: "amber", note: "smallest figure, largest early signal" },

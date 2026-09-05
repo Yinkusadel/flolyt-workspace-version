@@ -108,12 +108,8 @@ export const CHURN_OVERVIEW_LEAD = {
   body: "1.02M customers left in twelve months. Nothing here is a cause — every reason on this screen was decided in one of the nine stages before it.",
 };
 
-export const CHURN_OVERVIEW_KPIS: Kpi[] = [
-  { eyebrow: "Churned · 12 months", value: "1.02M", note: "3.1% a month" },
-  { eyebrow: "At stake", value: "₦124M", tone: "rose", note: "the recoverable share" },
-  { eyebrow: "Reason known", value: "31.4%", tone: "amber", note: "the rest is inferred or blank" },
-  { eyebrow: "Ever won back", value: "4.2%", tone: "rose", note: "of those contacted" },
-];
+// KPI row is wired to the shared GET /lifecycle/stages/{stageKey} — see overview-tab.tsx's
+// buildStageKpis.
 
 export const CHURN_OVERVIEW_LEAK_ROWS: LeakRow[] = [
   {

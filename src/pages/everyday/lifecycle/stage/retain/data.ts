@@ -83,14 +83,8 @@ export const RETAIN_DEFINITION: RetainDefinitionData = {
     "Response falls from 16.1% to 4.2% between day 90 and day 91-plus. That is not a gradual decay, it is a cliff — and it is the single most consequential number in this stage, because it turns “we should get to that” into “about 4,100 customers become unreachable every day”.",
 };
 
-// ---- Overview (RT02) ---------------------------------------------------
-
-export const RETAIN_OVERVIEW_KPIS: Kpi[] = [
-  { eyebrow: "Acquired · 12 months", value: "894,000", note: "enter this stage" },
-  { eyebrow: "Placed a second order in 90 days", value: "243,000", tone: "rose", note: "27.2% · was 38.1%" },
-  { eyebrow: "At stake", value: "₦412M", tone: "rose", note: "the largest leak in the lifecycle" },
-  { eyebrow: "Ageing out", value: "≈4,100 / day", tone: "rose", note: "past 90 days, unreachable" },
-];
+// ---- Overview (RT02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
+// overview-tab.tsx's buildStageKpis.
 
 export const RETAIN_OVERVIEW_LEAK_ROWS: LeakRow[] = [
   {

@@ -76,14 +76,8 @@ export const PRICE_DEFINITION: PriceDefinitionData = {
     "Price exists to tell you whether what you charge covers what it costs. Without cost of goods it can tell you what you charge, what you discount and what you collect — and it says so on every screen rather than quietly reporting revenue where margin belongs.",
 };
 
-// ---- Overview (PR02) ---------------------------------------------------
-
-export const PRICE_OVERVIEW_KPIS: Kpi[] = [
-  { eyebrow: "Customers with revenue", value: "1.10M", note: "active in 90 days" },
-  { eyebrow: "Revenue per active customer", value: "₦3,020", tone: "rose", note: "was ₦4,180" },
-  { eyebrow: "At stake", value: "₦46M", tone: "rose", note: "identified · margin figures excluded" },
-  { eyebrow: "Contribution margin", value: "Unavailable", tone: "amber", note: "no COGS source" },
-];
+// ---- Overview (PR02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
+// overview-tab.tsx's buildStageKpis.
 
 export const PRICE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
   {

@@ -6,9 +6,9 @@ import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { StageSubpageHeader } from "@/pages/everyday/lifecycle/stage/stage-subpage-header";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import {
-  SUPPORT_OVERVIEW_KPIS,
   SUPPORT_SILENT_CLOSING_CARDS,
   SUPPORT_SILENT_FAILURE_ROWS,
+  SUPPORT_SILENT_FAILURES_KPIS,
   type SilentFailureRow,
 } from "@/pages/everyday/lifecycle/stage/support/data";
 
@@ -53,7 +53,7 @@ const SupportSilentFailuresRoute = () => {
         }
       />
 
-      <KpiCards items={SUPPORT_OVERVIEW_KPIS} />
+      <KpiCards items={SUPPORT_SILENT_FAILURES_KPIS} />
 
       <section className="space-y-3">
         <p className={EYEBROW_CLASS}>What went wrong, and whether they told us</p>

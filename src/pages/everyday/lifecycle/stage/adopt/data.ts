@@ -83,14 +83,8 @@ export const ADOPT_DEFINITION: AdoptDefinitionData = {
     "That is where the definition sits, and it is the only line on this table that is not a smooth curve. Two features is not a target anybody set — it is where the data changes shape, which is the only defensible place to put a threshold.",
 };
 
-// ---- Overview (AD02) ---------------------------------------------------
-
-export const ADOPT_OVERVIEW_KPIS: Kpi[] = [
-  { eyebrow: "Customers who could adopt", value: "1.19M", note: "have ordered more than once" },
-  { eyebrow: "Adopting · 2+ features", value: "411,000", tone: "rose", note: "34.5% · was 41.2%" },
-  { eyebrow: "Features per customer", value: "2.1", tone: "rose", note: "was 2.6" },
-  { eyebrow: "At stake", value: "₦112M", tone: "rose", note: "third-largest leak" },
-];
+// ---- Overview (AD02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
+// overview-tab.tsx's buildStageKpis.
 
 export const ADOPT_OVERVIEW_LEAK_ROWS: LeakRow[] = [
   {

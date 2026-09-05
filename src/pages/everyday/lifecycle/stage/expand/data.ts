@@ -85,14 +85,8 @@ export const EXPAND_DEFINITION: ExpandDefinitionData = {
     "The same missing `order_lines` field that blocks margin in Price blocks this row entirely. 94,000 customers ordered outside their usual category and Flolyt can count them but cannot say what it was worth. One field, three stages.",
 };
 
-// ---- Overview (EX02) ---------------------------------------------------
-
-export const EXPAND_OVERVIEW_KPIS: Kpi[] = [
-  { eyebrow: "Eligible to expand", value: "1.10M", note: "active in 90 days" },
-  { eyebrow: "Expanded", value: "218,000", tone: "teal", note: "19.8% · was 19.1%" },
-  { eyebrow: "ARPU multiple", value: "1.4×", tone: "teal", note: "unchanged for four quarters" },
-  { eyebrow: "At stake", value: "₦61M", tone: "amber", note: "smallest leak of the ten stages" },
-];
+// ---- Overview (EX02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
+// overview-tab.tsx's buildStageKpis.
 
 export const EXPAND_OVERVIEW_LEAK_ROWS: LeakRow[] = [
   {

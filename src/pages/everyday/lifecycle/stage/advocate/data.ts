@@ -103,12 +103,8 @@ export const ADVOCATE_OVERVIEW_LEAD = {
   body: "It produced 31% of last year's new customers at the lowest CAC and the highest repeat rate in the company. Rooms opened here have nobody's name on them and escalate to Ada by default.",
 };
 
-export const ADVOCATE_OVERVIEW_KPIS: Kpi[] = [
-  { eyebrow: "Referrers", value: "124,000", note: "2.9% of the base" },
-  { eyebrow: "Customers referred", value: "278,000", tone: "teal", note: "31% of acquisition" },
-  { eyebrow: "Effective CAC", value: "₦1,000", tone: "teal", note: "against ₦1,840 blended" },
-  { eyebrow: "Referral rate", value: "falling", tone: "rose", note: "first time in two years" },
-];
+// KPI row is wired to the shared GET /lifecycle/stages/{stageKey} — see overview-tab.tsx's
+// buildStageKpis.
 
 export const ADVOCATE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
   {

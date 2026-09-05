@@ -71,14 +71,8 @@ export const RENEW_DEFINITION = {
     "Their subscription simply ends and no event explains why. It is ₦41M and it has no owner because nobody can say which of the four rows above it actually belongs to. Flolyt lists it as its own outcome rather than distributing it across the others.",
 };
 
-// ---- Overview (RN02) ----------------------------------------------------
-
-export const RENEW_OVERVIEW_KPIS: Kpi[] = [
-  { eyebrow: "Coming up for renewal", value: "1.11M / yr", note: "on paid plans" },
-  { eyebrow: "Projected renewal rate", value: "88.4%", tone: "rose", note: "was 91.1%" },
-  { eyebrow: "At stake", value: "₦88M", tone: "rose", note: "involuntary only · recoverable" },
-  { eyebrow: "Recovered so far", value: "₦62M", tone: "teal", note: "against a holdout" },
-];
+// ---- Overview (RN02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
+// overview-tab.tsx's buildStageKpis.
 
 export const RENEW_OVERVIEW_LEAK_ROWS: LeakRow[] = [
   {
