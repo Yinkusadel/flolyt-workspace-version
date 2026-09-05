@@ -9,7 +9,7 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
@@ -514,46 +514,8 @@ export const RETAIN_MARKET_PREVENT_ROWS: { label: string; value: string; percent
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
 // — no mock export here anymore.
 
-// ---- Agents (RT10) ----------------------------------------------------------
-
-export const RETAIN_AGENT_CARDS: AgentCard[] = [
-  {
-    id: "repeat-and-decay",
-    initials: "RD",
-    status: "Lead agent · reading since 12 Jan",
-    name: "Repeat & Decay",
-    body: "Watches repeat rate, the second-order curve, segment drift and reactivation response. It opened room 8f2c and produced the causal finding that connected five stages.",
-    footnote: "11 rooms · 7 closed",
-    tone: "ultra",
-  },
-  {
-    id: "acquisition-quality",
-    initials: "AQ",
-    status: "Supporting",
-    name: "Acquisition Quality",
-    body: "Joins because half of this stage's segments are decided upstream. It contributed the channel-mix component of the March break and disagreed with Repeat & Decay on the size of it.",
-    footnote: "disagreement recorded, not resolved",
-    tone: "ultra",
-  },
-  {
-    id: "orchestrator",
-    initials: "MO",
-    status: "Arbitrating",
-    name: "Orchestrator",
-    body: "Present only because two agents disagreed. It raised the growth-versus-finance conflict in room 8f2c and did not pick a side — it named the trade and handed it to Ifeoma.",
-    footnote: "raised 1 conflict, resolved 0",
-    tone: "amber",
-    footnoteTone: "amber",
-  },
-];
-
-export const RETAIN_THRESHOLD_ROWS: ThresholdRow[] = [
-  { id: "repeat-rate-falls", condition: "Repeat rate falls", threshold: "more than 2 pts, 7 days", currently: "−10.9", currentlyTone: "rose", status: "already-open", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" } },
-  { id: "cohort-breaks", condition: "A cohort breaks from the one before", threshold: "more than 5 pts", currently: "March −10.2", currentlyTone: "rose", status: "already-open", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" } },
-  { id: "ageing-past-window", condition: "Customers ageing past the window", threshold: "more than 2,000 / day", currently: "4,100 / day", currentlyTone: "rose", status: "already-open", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" } },
-  { id: "release-ships-lost-market", condition: "A release ships in a market that lost this before", threshold: "any", currently: "Ghana · 14 Sep", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "reactivation-response-falls", condition: "Reactivation response falls", threshold: "more than 3 pts", currently: "−2.7", currentlyTone: "amber", status: "no", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" } },
-];
+// ---- Agents (RT10) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
+// acquire/data.ts's Agents note and agents-tab.tsx.
 
 export const RETAIN_THRESHOLD_PRESET: ThresholdPreset = {
   condition: { label: "When", value: "Repeat rate falls", note: "second orders ÷ acquired, 90-day window" },
@@ -570,13 +532,5 @@ export const RETAIN_THRESHOLD_PRESET: ThresholdPreset = {
 // ---- History (RT11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.
 
-// ---- Compare periods (RT12) -----------------------------------------------
-
-export const RETAIN_COMPARE_ROWS: CompareRow[] = [
-  { id: "90-day-repeat-rate", metric: "90-day repeat rate", before: "37.4%", after: "27.2%", change: "−10.2 pts", changeTone: "rose", whatMovedIt: "The fee (−7.1) and discount depth (−3.1)" },
-  { id: "median-days-second-order", metric: "Median days to second order", before: "15", after: "24", change: "+60.0%", changeTone: "rose", whatMovedIt: "Hesitation · matches Activate's +2.7 days" },
-  { id: "second-orders-placed", metric: "Second orders placed", before: "16,793/mo", after: "14,171/mo", change: "−15.6%", changeTone: "rose", whatMovedIt: "Rate fell faster than volume rose" },
-  { id: "customers-entering", metric: "Customers entering the stage", before: "64,900/mo", after: "78,500/mo", change: "+21.0%", changeTone: "teal", whatMovedIt: "Acquisition spend up 31%" },
-  { id: "revenue-per-customer", metric: "Revenue per customer", before: "₦4,180", after: "₦3,020", change: "−27.8%", changeTone: "rose", whatMovedIt: "Fewer second orders, same basket" },
-  { id: "reactivable-population", metric: "Reactivable population", before: "94,000", after: "218,000", change: "+132%", changeTone: "rose", whatMovedIt: "More people to win back is not good news" },
-];
+// ---- Compare periods (RT12) is wired to the shared GET /lifecycle/stages/{stageKey}/compare —
+// see acquire/data.ts's Compare note and compare-route.tsx.

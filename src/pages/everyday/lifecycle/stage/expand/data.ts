@@ -9,7 +9,7 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -505,46 +505,8 @@ export const EXPAND_MARKET_FINAL_CLOSING = {
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
 // — no mock export here anymore.
 
-// ---- Agents (EX10) ----------------------------------------------------------
-
-export const EXPAND_AGENT_CARDS: AgentCard[] = [
-  {
-    id: "expansion",
-    initials: "EX",
-    status: "Lead agent · reading since 12 Jan",
-    name: "Expansion",
-    body: "Watches plan movement, ARPU multiple, seat utilisation and account health. It found the 94,000 who are past break-even on pay-as-you-go and has surfaced them in three consecutive weekly reviews.",
-    footnote: "2 rooms · 1 closed",
-    tone: "ultra",
-  },
-  {
-    id: "price-margin",
-    initials: "PX",
-    status: "Supporting",
-    name: "Price & Margin",
-    body: "Joins because every upgrade is a price change. It is the agent that flagged the Student plan downgrades and it cannot value any upgrade properly without cost of goods.",
-    footnote: "partially blocked",
-    tone: "ultra",
-  },
-  {
-    id: "expansion-accounts",
-    initials: "EX",
-    status: "Watching in accounts mode",
-    name: "Expansion, again",
-    body: "The same agent reads 1,204 businesses instead of 1.10M consumers. It reports 312 at renewal risk and 119 with no owner — and cannot open a room for the 119 because a room needs an owner.",
-    footnote: "119 accounts, nobody to route to",
-    tone: "amber",
-    footnoteTone: "amber",
-  },
-];
-
-export const EXPAND_THRESHOLD_ROWS: ThresholdRow[] = [
-  { id: "past-break-even-unprompted", condition: "Customers past plan break-even, unprompted", threshold: "more than 10,000", currently: "94,000", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "net-plan-movement-negative", condition: "Net plan movement turns negative", threshold: "any month", currently: "−2,100 in Feb", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "arpu-multiple-falls", condition: "ARPU multiple falls", threshold: "more than 0.1×", currently: "−0.01×", currentlyTone: "teal", status: "no", owner: { name: "Tunde", initials: "TB", color: "#B4568F" } },
-  { id: "seat-utilisation-falls", condition: "An account's seat utilisation falls", threshold: "below 40%", currently: "188 accounts", currentlyTone: "rose", status: "already-open", owner: { name: "Tunde", initials: "TB", color: "#B4568F" } },
-  { id: "renews-unowned", condition: "An account renews within 60 days unowned", threshold: "any", currently: "119 accounts", currentlyTone: "rose", status: "not-opened", noOwner: true },
-];
+// ---- Agents (EX10) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
+// acquire/data.ts's Agents note and agents-tab.tsx.
 
 export const EXPAND_THRESHOLD_PRESET: ThresholdPreset = {
   condition: { label: "When", value: "Customers past plan break-even, unprompted", note: "6+ orders/month on pay-as-you-go ÷ never shown the plan page" },
@@ -561,16 +523,8 @@ export const EXPAND_THRESHOLD_PRESET: ThresholdPreset = {
 // ---- History (EX11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.
 
-// ---- Compare periods (EX12) -----------------------------------------------
-
-export const EXPAND_COMPARE_ROWS: CompareRow[] = [
-  { id: "expansion-rate", metric: "Expansion rate", before: "19.3%", after: "19.9%", change: "+0.6 pts", changeTone: "teal", whatMovedIt: "Nothing · unaffected by everything" },
-  { id: "arpu-multiple", metric: "ARPU multiple", before: "1.40×", after: "1.41×", change: "+0.01×", changeTone: "teal", whatMovedIt: "Unchanged for four quarters" },
-  { id: "eligible-population", metric: "Eligible population", before: "24,300/mo", after: "21,000/mo", change: "−13.6%", changeTone: "rose", whatMovedIt: "Retain delivers fewer survivors" },
-  { id: "customers-expanding", metric: "Customers expanding", before: "4,700/mo", after: "4,200/mo", change: "−10.6%", changeTone: "rose", whatMovedIt: "Same rate, smaller base" },
-  { id: "conversion-to-paid-plan", metric: "Conversion to a paid plan", before: "30.9%", after: "21.8%", change: "−9.1 pts", changeTone: "rose", whatMovedIt: "Student plan and weaker cohorts" },
-  { id: "median-basket", metric: "Median basket", before: "₦2,140", after: "₦2,140", change: "0.0%", changeTone: "neutral", whatMovedIt: "Has never responded to anything" },
-];
+// ---- Compare periods (EX12) is wired to the shared GET /lifecycle/stages/{stageKey}/compare —
+// see acquire/data.ts's Compare note and compare-route.tsx.
 
 // ---- Model an upgrade offer (EX13, stage-specific modal) -------------------
 

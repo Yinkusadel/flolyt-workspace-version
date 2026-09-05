@@ -14,7 +14,7 @@ import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { CheckedRow, ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -503,45 +503,8 @@ export const PRICE_MARKET_CLOSING = {
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
 // — no mock export here anymore.
 
-// ---- Agents (PR10) --------------------------------------------------------
-
-export const PRICE_AGENT_CARDS: AgentCard[] = [
-  {
-    id: "price-margin",
-    initials: "PX",
-    status: "Lead agent · reading since 4 Feb",
-    name: "Price & Margin",
-    body: "Watches price, discount depth, plan mix and FX drift. It cannot watch margin, which is the thing it is named after — and it says so on every run rather than substituting revenue silently.",
-    footnote: "3 rooms · 1 closed",
-    tone: "ultra",
-  },
-  {
-    id: "what-still-works",
-    initials: "",
-    status: "What it can still do",
-    name: "Four of its five conditions work",
-    body: "Discount depth, plan downgrades, FX drift and effective-price changes are all computable from connected sources. Only the margin floor is blocked.",
-    footnote: "4 of 5 thresholds live",
-    tone: "teal",
-  },
-  {
-    id: "what-nobody-watches",
-    initials: "",
-    status: "What nobody watches",
-    name: "Price changes made outside Finance",
-    body: "The 4 March fee changed the effective price of 61% of orders and no threshold caught it, because it arrived as a release rather than a price. That rule now exists and is the last row below.",
-    footnote: "added 2 August",
-    tone: "rose",
-  },
-];
-
-export const PRICE_THRESHOLD_ROWS: ThresholdRow[] = [
-  { id: "discount-depth-rises", condition: "Discount depth rises", threshold: "more than 2 pts", currently: "+5 pts", currentlyTone: "rose", status: "already-open", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" } },
-  { id: "customers-downgrade", condition: "Customers downgrade plans", threshold: "more than 1,000 / month", currently: "6,200 to Student", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "fx-drift", condition: "FX drift against the base market", threshold: "more than 10%", currently: "Ghana +22%", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "margin-below-floor", condition: "Contribution margin below a floor", threshold: "15%", currently: "Unavailable", currentlyTone: "neutral", status: "blocked", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" } },
-  { id: "effective-price-outside-review", condition: "Effective price changes outside a price review", threshold: "any", currently: "1 · the 4 Mar fee", currentlyTone: "rose", status: "opens-automatically", statusLabel: "would open now", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" } },
-];
+// ---- Agents (PR10) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
+// acquire/data.ts's Agents note and agents-tab.tsx.
 
 export const PRICE_THRESHOLD_PRESET: ThresholdPreset = {
   condition: { label: "When", value: "Discount depth rises", note: "discounted revenue ÷ gross revenue" },
@@ -558,16 +521,8 @@ export const PRICE_THRESHOLD_PRESET: ThresholdPreset = {
 // ---- History (PR11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.
 
-// ---- Compare periods (PR12) --------------------------------------------
-
-export const PRICE_COMPARE_ROWS: CompareRow[] = [
-  { id: "revenue-per-active-customer", metric: "Revenue per active customer", before: "₦4,180", after: "₦3,020", change: "−27.8%", changeTone: "rose", whatMovedIt: "Order frequency, not basket size" },
-  { id: "basket-size", metric: "Basket size", before: "₦2,140", after: "₦2,140", change: "0.0%", changeTone: "neutral", whatMovedIt: "Unchanged · rules out a pricing cause" },
-  { id: "effective-price-per-order", metric: "Effective price per order", before: "₦2,140", after: "₦2,490", change: "+16.4%", changeTone: "rose", whatMovedIt: "The ₦350 delivery fee on 61% of orders" },
-  { id: "discounted-share-of-orders", metric: "Discounted share of orders", before: "19.8%", after: "28.4%", change: "+8.6 pts", changeTone: "rose", whatMovedIt: "Discount depth raised on 16 March" },
-  { id: "conversion-to-a-paid-plan", metric: "Conversion to a paid plan", before: "30.9%", after: "21.9%", change: "−9.0 pts", changeTone: "rose", whatMovedIt: "Student plan and weaker cohorts" },
-  { id: "contribution-margin", metric: "Contribution margin", before: "Unavailable", after: "Unavailable", change: "—", changeTone: "neutral", whatMovedIt: "No COGS source, before or after" },
-];
+// ---- Compare periods (PR12) is wired to the shared GET /lifecycle/stages/{stageKey}/compare —
+// see acquire/data.ts's Compare note and compare-route.tsx.
 
 // ---- Connect a COGS source (PR13, stage-specific modal) -----------------
 

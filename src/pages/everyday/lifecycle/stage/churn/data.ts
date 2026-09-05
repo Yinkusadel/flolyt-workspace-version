@@ -9,7 +9,7 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -642,52 +642,8 @@ export const CHURN_MARKETS_OPEN_ROOM_PRESET: OpenRoomPreset = {
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
 // — no mock export here anymore.
 
-// ---- Agents (CH09) -------------------------------------------------------------
-
-export const CHURN_AGENT_CARDS: AgentCard[] = [
-  {
-    id: "churn-reason-lead",
-    initials: "CH",
-    status: "Lead agent · reading since 12 Jan",
-    name: "Churn Reason",
-    body: "Attributes every churn to a stage, runs the 30-day prediction weekly, and refuses to distribute the 196,000 unexplained across the known reasons. 22 findings in seven months.",
-    footnote: "0 rooms · no owner",
-    tone: "ultra",
-  },
-  {
-    id: "sending-upstream",
-    initials: "CH",
-    status: "What it is best at",
-    name: "Sending the reason back upstream",
-    body: "Four of five churn reasons are attributed to a specific stage with a specific owner. Those attributions are cited in rooms in Activate, Retain and Renew — this stage's findings are used, they just are not used here.",
-    footnote: "the work escapes, the stage does not",
-    tone: "teal",
-    footnoteTone: "teal",
-  },
-  {
-    id: "will-not-guess",
-    initials: "CH",
-    status: "What it will not do",
-    name: "Guess at the 19.2%",
-    body: "196,000 customers with no explanation. Distributing them proportionally would produce a complete-looking picture and inflate every other category by roughly a quarter.",
-    footnote: "left as its own category",
-    tone: "amber",
-    footnoteTone: "amber",
-  },
-];
-
-export const CHURN_THRESHOLD_ROWS: ThresholdRow[] = [
-  { id: "churn-rate-rises", condition: "Churn rate rises", threshold: "more than 0.5 pts", currently: "+1.3", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "predicted-churn-exceeds", condition: "Predicted churn exceeds a threshold", threshold: "more than 50,000", currently: "118,000", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "median-days-alive-falls", condition: "Median days alive falls", threshold: "more than 10 days", currently: "−22", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "market-has-no-reason-data", condition: "A market has no reason data", threshold: "any", currently: "Ghana", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "unexplained-churn-rises", condition: "Unexplained churn rises", threshold: "more than 5 pts", currently: "−3.4", currentlyTone: "teal", status: "no", noOwner: true },
-];
-
-export const CHURN_AGENTS_INSIGHT = {
-  title: "Both unowned stages have the same failure and it is not the routing gap",
-  body: "Advocate and Churn have five and four breached conditions respectively, all routing correctly to a field that is empty. Twelve other unrouted conditions across eight stages are genuine cross-stage problems needing a fallback rule. These nine need one thing: a name.",
-};
+// ---- Agents (CH09) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
+// acquire/data.ts's Agents note and agents-tab.tsx.
 
 export const CHURN_THRESHOLD_PRESET: ThresholdPreset = {
   condition: { label: "When", value: "Predicted churn exceeds a threshold", note: "30-day prediction model output" },
@@ -707,18 +663,5 @@ export const CHURN_THRESHOLD_PRESET: ThresholdPreset = {
 // ---- History (CH10) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.
 
-// ---- Compare periods (CH11) -----------------------------------------------------
-
-export const CHURN_COMPARE_ROWS: CompareRow[] = [
-  { id: "monthly-churn-rate", metric: "Monthly churn rate", before: "2.6%", after: "3.1%", change: "+0.5 pts", changeTone: "rose", whatMovedIt: "The fee, through Activate" },
-  { id: "churn-by-180-days", metric: "Churn by 180 days", before: "57.2%", after: "67.6%", change: "+10.4 pts", changeTone: "rose", whatMovedIt: "+8.1 never activated, +1.7 fee complaints" },
-  { id: "median-days-alive", metric: "Median days alive", before: "70", after: "48", change: "−31.4%", changeTone: "rose", whatMovedIt: "They leave sooner · still reachable" },
-  { id: "reason-known", metric: "Reason known", before: "34.8%", after: "31.4%", change: "−3.4 pts", changeTone: "amber", whatMovedIt: "More silent leavers" },
-  { id: "ever-contacted-after-churn", metric: "Ever contacted after churn", before: "11.9%", after: "11.6%", change: "−0.3 pts", changeTone: "neutral", whatMovedIt: "Win-back capacity did not move" },
-  { id: "payment-failure-churn", metric: "Payment-failure churn", before: "2.5%", after: "1.4%", change: "−1.1 pts", changeTone: "teal", whatMovedIt: "The retry window · the one improvement" },
-];
-
-export const CHURN_COMPARE_INSIGHT = {
-  title: "Every row here was decided somewhere else, which is what this stage is",
-  body: "Five of six moved because of the 4 March release and one moved because Ravi changed a retry hour. Nothing on this screen was caused by anything anyone did in Churn — and nothing on it can be fixed here either. It is the ledger, not the lever.",
-};
+// ---- Compare periods (CH11) is wired to the shared GET /lifecycle/stages/{stageKey}/compare —
+// see acquire/data.ts's Compare note and compare-route.tsx.

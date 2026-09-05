@@ -1,205 +1,177 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
+import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { StageSubpageHeader } from "@/pages/everyday/lifecycle/stage/stage-subpage-header";
-import { ACQUIRE_COMPARE_BUILD_ROWS, ACQUIRE_COMPARE_ROWS, type CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
-import { ACTIVATE_COMPARE_ROWS } from "@/pages/everyday/lifecycle/stage/activate/data";
-import { PRICE_COMPARE_ROWS } from "@/pages/everyday/lifecycle/stage/price/data";
-import { ADOPT_COMPARE_ROWS } from "@/pages/everyday/lifecycle/stage/adopt/data";
-import { RETAIN_COMPARE_ROWS } from "@/pages/everyday/lifecycle/stage/retain/data";
-import { EXPAND_COMPARE_ROWS } from "@/pages/everyday/lifecycle/stage/expand/data";
-import { SUPPORT_COMPARE_ROWS } from "@/pages/everyday/lifecycle/stage/support/data";
-import { RENEW_COMPARE_ROWS } from "@/pages/everyday/lifecycle/stage/renew/data";
-import { ADVOCATE_COMPARE_INSIGHT, ADVOCATE_COMPARE_ROWS } from "@/pages/everyday/lifecycle/stage/advocate/data";
-import { CHURN_COMPARE_INSIGHT, CHURN_COMPARE_ROWS } from "@/pages/everyday/lifecycle/stage/churn/data";
+import { formatCount, formatPercent, formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetStageCompare } from "@/features/lifecycle/use-get-stage-compare";
 
-type CompareData = {
-  headline: string;
-  periodLabel: string;
-  periodOptions: string[];
-  rows: CompareRow[];
-  insightTitle: string;
-  insightBody: string;
-  /** Overrides the closing callout's tone — defaults to "rose" (e.g. Churn's CH11 closing callout is ultra, not rose). */
-  insightTone?: "rose" | "ultra" | "amber" | "teal";
-  buildEyebrow?: string;
-  buildRows?: { label: string; value: string; tone: "neutral" | "amber" }[];
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
+
+// Real preset windows this endpoint actually supports (query `months`, 1-12) — "Custom"/"Year on
+// year"/named market splits from the old mock have no backing param (no from/to date range, no
+// market filter on this endpoint) and are dropped rather than wired to nothing.
+const MONTH_OPTIONS = [3, 6, 12];
+
+type CompareRowData = {
+  id: string;
+  metric: string;
+  before: number | null;
+  after: number | null;
+  valueFormat: "count" | "percent";
+  change: number | null;
+  changeFormat: "count" | "percent";
 };
-
-const COMPARE_DATA: Record<string, CompareData> = {
-  acquire: {
-    headline: "Before and after 4 March · every quality measure down, volume up 21%",
-    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
-    periodOptions: ["This quarter vs last", "Year on year", "Custom"],
-    rows: ACQUIRE_COMPARE_ROWS,
-    insightTitle: "Everything on this screen got worse except the one number anyone was targeted on",
-    insightBody:
-      "Volume is up 21% and every quality measure is down. The acquisition team hit its goal every month of this period. That is not a people problem — it is what happens when a stage is measured on its output and damaged by something four stages away.",
-    buildEyebrow: "How this comparison is built",
-    buildRows: ACQUIRE_COMPARE_BUILD_ROWS,
-  },
-  activate: {
-    headline: "Before and after 4 March · 21% more in, 4% fewer through",
-    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
-    periodOptions: ["This quarter vs last", "Year on year", "Nigeria vs Kenya", "Custom"],
-    rows: ACTIVATE_COMPARE_ROWS,
-    insightTitle: "21% more customers entered this stage and 4% fewer came out of it",
-    insightBody:
-      "That is the whole quarter in one line. Acquisition delivered exactly what it was asked for, activation was damaged by a release nobody held against revenue, and the two facts sat in separate dashboards owned by separate teams for twenty weeks.",
-  },
-  price: {
-    headline: "Effective price up 16.4% · basket size unchanged · nobody in Finance changed a price",
-    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
-    periodOptions: ["This quarter vs last", "Year on year", "Ghana vs Nigeria", "Custom"],
-    rows: PRICE_COMPARE_ROWS,
-    insightTitle: "The effective price rose 16% in a quarter in which nobody in Finance changed a price",
-    insightBody:
-      "A delivery fee shipped by Engineering, a discount depth raised by Marketing, and a plan launched without verification. Three teams, three reasonable decisions, one price nobody set. That is what this stage exists to make visible, and it took twenty weeks.",
-  },
-  adopt: {
-    headline: "One feature fell 26 points · another moved 0.4 · that contrast is the finding",
-    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
-    periodOptions: ["This quarter vs last", "Year on year", "Kenya vs Nigeria", "Custom"],
-    rows: ADOPT_COMPARE_ROWS,
-    insightTitle: "One feature moved 26 points and one moved 0.4, and that is the finding",
-    insightBody:
-      "If the March change had made the whole product worse, saved addresses would have fallen too. It did not move at all. A single feature took the entire hit, and it was the one that meets the checkout most often — which is what makes this a specific, fixable cause rather than a vague decline.",
-  },
-  retain: {
-    headline: "Repeat rate −10.2 points · second orders −15.6% while acquisition rose 21%",
-    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
-    periodOptions: ["This quarter vs last", "Year on year", "Nigeria vs Kenya", "Custom"],
-    rows: RETAIN_COMPARE_ROWS,
-    insightTitle: "The last row is the one that looks like growth and is not",
-    insightBody:
-      "The reactivable population more than doubled. That is not a bigger opportunity, it is a bigger hole — 124,000 additional customers who bought once and stopped. Any dashboard that reports “reactivation audience” as a positive number is reporting the size of the failure.",
-  },
-  expand: {
-    headline: "Rate up 0.6 points · 10.6% fewer customers expanding · both are true",
-    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
-    periodOptions: ["This quarter vs last", "Year on year", "Consumer vs accounts", "Custom"],
-    rows: EXPAND_COMPARE_ROWS,
-    insightTitle: "A stage can hit every one of its own targets and be worth 10% less",
-    insightBody:
-      "The rate is up, the multiple is flat, and 500 fewer customers expand every month. Nobody in this stage did anything wrong and nobody in this stage can fix it. Expansion is downstream of survival, and this quarter there were fewer survivors.",
-  },
-  support: {
-    headline: "Every support metric improved · revenue lost after contact rose 663%",
-    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
-    periodOptions: ["This quarter vs last", "Year on year", "Cost vs revenue view", "Custom"],
-    rows: SUPPORT_COMPARE_ROWS,
-    insightTitle: "Every support metric improved and the stage got eight times more expensive",
-    insightBody:
-      "Faster, cheaper, better resolved, higher satisfaction — and ₦53M more revenue lost per cohort. This is the clearest case in the lifecycle of a stage being genuinely excellent at the thing it was asked to be excellent at, while the thing that mattered went unmeasured for twenty weeks.",
-  },
-  renew: {
-    headline: "Voluntary churn worse, involuntary dramatically better · one rate would hide both",
-    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
-    periodOptions: ["Before vs after the retry fix", "Year on year", "Voluntary vs involuntary", "Custom"],
-    rows: RENEW_COMPARE_ROWS,
-    insightTitle: "Two problems, one stage, opposite directions",
-    insightBody:
-      "Voluntary churn got worse because of something four stages upstream that this team does not control. Involuntary churn got dramatically better because of something this team does control and fixed in nine days. Reporting a single renewal rate would have averaged the two into a mild decline and hidden both stories.",
-  },
-  advocate: {
-    headline: "Referred customers per month −51% · cost per one +100% · same six months",
-    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
-    periodOptions: ["Before vs after the reward rise", "Year on year", "Kenya vs Nigeria", "Custom"],
-    rows: ADVOCATE_COMPARE_ROWS,
-    insightTitle: ADVOCATE_COMPARE_INSIGHT.title,
-    insightBody: ADVOCATE_COMPARE_INSIGHT.body,
-  },
-  churn: {
-    headline: "Churn +10.4 points · every row decided in another stage · it is the ledger, not the lever",
-    periodLabel: "4 Feb – 3 Mar  vs  4 Mar – 2 Aug",
-    periodOptions: ["This quarter vs last", "Year on year", "Ghana vs Nigeria", "Custom"],
-    rows: CHURN_COMPARE_ROWS,
-    insightTitle: CHURN_COMPARE_INSIGHT.title,
-    insightBody: CHURN_COMPARE_INSIGHT.body,
-    insightTone: "ultra",
-  },
-};
-
-const CHANGE_TONE_CLASS: Record<CompareRow["changeTone"], string> = { teal: "text-teal", rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
-const BUILD_TONE_CLASS: Record<"neutral" | "amber", string> = { neutral: "text-ink-2", amber: "text-amber" };
 
 /** Screen A16 (and the shared Compare-periods template for every stage) — has its own header, never shows the tab bar. */
 const CompareRoute = () => {
   const { stage } = useStageContext();
-  const [activePeriod, setActivePeriod] = useState<"custom" | number>("custom");
-  const data = COMPARE_DATA[stage.slug];
-  if (!data) return null;
+  const [months, setMonths] = useState(3);
+  const { data, isLoading, isError, refetch } = useGetStageCompare(stage.slug, { months });
+  const compare = data?.data;
 
-  const columns: Column<CompareRow>[] = [
+  const rows: CompareRowData[] = compare
+    ? [
+        {
+          id: "population",
+          metric: "Population",
+          before: compare.before.endPopulation,
+          after: compare.after.endPopulation,
+          valueFormat: "count",
+          // changePercent is preferred; falls back to the raw count delta (not a percent) only
+          // when changePercent itself is unavailable — never format a raw count as a percentage.
+          change: compare.changePercent ?? compare.change,
+          changeFormat: compare.changePercent !== null ? "percent" : "count",
+        },
+        {
+          id: "conversion",
+          metric: "Primary conversion",
+          before: compare.before.endConversion,
+          after: compare.after.endConversion,
+          valueFormat: "percent",
+          change: compare.conversionChange,
+          changeFormat: "percent",
+        },
+      ]
+    : [];
+
+  const columns: Column<CompareRowData>[] = [
     { key: "metric", header: "Metric", render: (row) => <span className="font-semibold text-ink-2">{row.metric}</span> },
-    { key: "before", header: "Before 4 Mar", align: "right", render: (row) => <span className="font-mono text-ink">{row.before}</span> },
-    { key: "after", header: "After", align: "right", render: (row) => <span className="font-mono text-ink">{row.after}</span> },
-    { key: "change", header: "Change", align: "right", render: (row) => <span className={CHANGE_TONE_CLASS[row.changeTone]}>{row.change}</span> },
-    { key: "whatMovedIt", header: "What moved it", align: "right", render: (row) => <span className="text-ink-2">{row.whatMovedIt}</span> },
+    {
+      key: "before",
+      header: "Before",
+      align: "right",
+      render: (row) =>
+        row.before !== null ? (
+          <span className="font-mono text-ink">{row.valueFormat === "percent" ? formatPercent(row.before) : formatCount(row.before)}</span>
+        ) : (
+          <InfoTooltip />
+        ),
+    },
+    {
+      key: "after",
+      header: "After",
+      align: "right",
+      render: (row) =>
+        row.after !== null ? (
+          <span className="font-mono text-ink">{row.valueFormat === "percent" ? formatPercent(row.after) : formatCount(row.after)}</span>
+        ) : (
+          <InfoTooltip />
+        ),
+    },
+    {
+      key: "change",
+      header: "Change",
+      align: "right",
+      render: (row) =>
+        row.change !== null ? (
+          <span className={row.change >= 0 ? "text-teal" : "text-rose"}>
+            {row.change >= 0 ? "+" : ""}
+            {row.changeFormat === "percent" ? formatPercent(row.change) : formatCount(row.change)}
+          </span>
+        ) : (
+          <InfoTooltip />
+        ),
+    },
+    // ❌ Backend does NOT provide: "What moved it" — GET .../compare only reports population and
+    // conversion movement, never an attributed cause. Dropped rather than shown against a
+    // fabricated value.
   ];
+
+  const periodLabel = compare
+    ? `${formatShortDate(compare.before.fromUtc)} – ${formatShortDate(compare.before.toUtc)}  vs  ${formatShortDate(compare.after.fromUtc)} – ${formatShortDate(compare.after.toUtc)}`
+    : undefined;
 
   return (
     <div className="space-y-6">
       <StageSubpageHeader
         crumbs={[{ label: "Lifecycle", to: "/lifecycle" }, { label: stage.name, to: `/lifecycle/${stage.slug}` }, { label: "Compare" }]}
         title={`${stage.name} · compare`}
-        subtitle={data.headline}
-        action={
-          <Button type="button" size="sm">
-            Change period
-          </Button>
-        }
+        subtitle={periodLabel ?? `Last ${months} months vs the ${months} before`}
       />
 
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setActivePeriod("custom")}
-          className={cn(
-            "rounded-panel border px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap",
-            activePeriod === "custom" ? "border-ultra-border bg-ultra-bg text-ultra" : "border-line bg-paper-2 text-ink-3"
-          )}
-        >
-          {data.periodLabel}
-        </button>
-        {data.periodOptions.map((option, i) => (
+        {MONTH_OPTIONS.map((option) => (
           <button
             key={option}
             type="button"
-            onClick={() => setActivePeriod(i)}
+            onClick={() => setMonths(option)}
             className={cn(
-              "rounded-panel border px-3 py-1.5 text-[11px] whitespace-nowrap",
-              activePeriod === i ? "border-ultra-border bg-ultra-bg font-semibold text-ultra" : "border-line bg-paper-2 text-ink-3"
+              "rounded-panel border px-3 py-1.5 text-[11px] font-semibold whitespace-nowrap",
+              months === option ? "border-ultra-border bg-ultra-bg text-ultra" : "border-line bg-paper-2 text-ink-3"
             )}
           >
-            {option}
+            Last {option} months
           </button>
         ))}
       </div>
 
-      <DataTable columns={columns} rows={data.rows} />
-
-      <Callout tone={data.insightTone ?? "rose"} title={data.insightTitle}>
-        {data.insightBody}
-      </Callout>
-
-      {data.buildEyebrow && data.buildRows && (
-        <section className="space-y-1">
-          <p className="pb-2 font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.buildEyebrow}</p>
-          <div className="divide-y divide-line rounded-card border border-line bg-paper">
-            {data.buildRows.map((row) => (
-              <div key={row.label} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-                <span className="text-[11.5px] text-ink-2">{row.label}</span>
-                <span className={cn("font-mono text-[11px]", BUILD_TONE_CLASS[row.tone])}>{row.value}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+      {isError ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+          <p className="text-[12px] text-rose">Couldn't load this comparison.</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : isLoading ? (
+        <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <div key={index} className="flex items-center justify-between gap-4">
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <DataTable columns={columns} rows={rows} />
       )}
+
+      {compare?.definitionChangedInside && (
+        <Callout tone="amber" title="This stage's definition changed inside the comparison window">
+          Part of any movement here is the meaning moving, not the business — read the accompanying callouts below for where to read the delta from instead.
+        </Callout>
+      )}
+
+      {compare?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
+
+      {/* ❌ Backend does NOT provide: the fuller CAC/repeat-rate/value-per-customer table or the
+          per-stage "how this comparison is built" notes (Acquire's original design) — this
+          endpoint only ever compares population and conversion, and says so rather than faking
+          the rest of the row set. */}
     </div>
   );
 };

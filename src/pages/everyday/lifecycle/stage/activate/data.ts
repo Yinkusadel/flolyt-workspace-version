@@ -405,66 +405,8 @@ export const ACTIVATE_RELEASE_IMPACT: Record<string, ReleaseImpactDetail> = {
   },
 };
 
-// ---- Agents (AC10) --------------------------------------------------------
-
-export type ActivateAgentCard = {
-  id: string;
-  initials: string;
-  status: string;
-  name: string;
-  body: string;
-  footnote: string;
-  tone: "ultra" | "amber";
-};
-
-export const ACTIVATE_AGENT_CARDS: ActivateAgentCard[] = [
-  {
-    id: "product-reason",
-    initials: "PR",
-    status: "Lead agent · reading since 12 Jan",
-    name: "Product Reason",
-    body: "Watches activation rate, time to value and path mix. It holds every release against this stage for fourteen days automatically — which is how the 4 March finding was made without anyone asking.",
-    footnote: "6 rooms · 4 closed",
-    tone: "ultra",
-  },
-  {
-    id: "support-signal",
-    initials: "SS",
-    status: "Supporting · reading since 12 Jan",
-    name: "Support Signal",
-    body: "Reclassifies contact drivers as activation blockers. It found that “where is my order” was a revenue signal, not a support volume problem, in the first week of March.",
-    footnote: "found it, nobody escalated",
-    tone: "ultra",
-  },
-  {
-    id: "ghana-delivery-feed",
-    initials: "PR",
-    status: "Blocked",
-    name: "Ghana has no delivery feed",
-    body: "Product Reason cannot measure late-delivery effects in Ghana because no delivery source exists there. It reports Ghana's delivery figures as unavailable rather than assuming Nigeria's.",
-    footnote: "one market, partially blind",
-    tone: "amber",
-  },
-];
-
-export type ActivateThresholdRow = {
-  id: string;
-  condition: string;
-  threshold: string;
-  currently: string;
-  currentlyTone: "teal" | "rose" | "amber";
-  status: "already-open" | "not-opened" | "opens-automatically";
-  owner?: { name: string; initials: string; color: string };
-  noOwner?: boolean;
-};
-
-export const ACTIVATE_THRESHOLD_ROWS: ActivateThresholdRow[] = [
-  { id: "activation-falls", condition: "Activation rate falls", threshold: "more than 2 pts, 7 days", currently: "−10.6", currentlyTone: "rose", status: "already-open", owner: { name: "Zainab", initials: "ZY", color: "#7A5AA8" } },
-  { id: "ttv-rises", condition: "Median time to value rises", threshold: "more than 1 day", currently: "+2.7 days", currentlyTone: "rose", status: "already-open", owner: { name: "Zainab", initials: "ZY", color: "#7A5AA8" } },
-  { id: "release-moves-stage", condition: "A release moves this stage", threshold: "any measurable effect, 14 days", currently: "2 this quarter", currentlyTone: "amber", status: "opens-automatically", owner: { name: "Zainab", initials: "ZY", color: "#7A5AA8" } },
-  { id: "guest-share-rises", condition: "Guest share rises", threshold: "more than 3 pts", currently: "+7.2 pts", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "path-below-floor", condition: "A path falls below 20% activation", threshold: "hard floor", currently: "guest at 12.1%", currentlyTone: "rose", status: "not-opened", noOwner: true },
-];
+// ---- Agents (AC10) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
+// acquire/data.ts's Agents note and agents-tab.tsx.
 
 export const ACTIVATE_THRESHOLD_PRESET: ThresholdPreset = {
   condition: { label: "When", value: "Activation rate falls", note: "activated ÷ entered this stage" },
@@ -481,23 +423,5 @@ export const ACTIVATE_THRESHOLD_PRESET: ThresholdPreset = {
 // ---- History (AC11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.
 
-// ---- Compare periods (AC12) -----------------------------------------------
-
-export type ActivateCompareRow = {
-  id: string;
-  metric: string;
-  before: string;
-  after: string;
-  change: string;
-  changeTone: "teal" | "rose";
-  whatMovedIt: string;
-};
-
-export const ACTIVATE_COMPARE_ROWS: ActivateCompareRow[] = [
-  { id: "activation-rate", metric: "Activation rate", before: "52.1%", after: "41.5%", change: "−10.6 pts", changeTone: "rose", whatMovedIt: "The fee (−7.4) and guest share (−3.2)" },
-  { id: "median-ttv", metric: "Median time to value", before: "3.4 days", after: "6.1 days", change: "+79.4%", changeTone: "rose", whatMovedIt: "Same cause · slower decisions" },
-  { id: "same-day-activation", metric: "Same-day activation", before: "13.8%", after: "11.2%", change: "−2.6 pts", changeTone: "rose", whatMovedIt: "The fee step interrupts the first session" },
-  { id: "guest-checkout-share", metric: "Guest checkout share", before: "18.9%", after: "24.9%", change: "+6.0 pts", changeTone: "rose", whatMovedIt: "Web-heavy Ghana and paid social" },
-  { id: "customers-entering", metric: "Customers entering the stage", before: "64,900/mo", after: "78,500/mo", change: "+21.0%", changeTone: "teal", whatMovedIt: "Acquisition spend up 31%" },
-  { id: "customers-reaching-value", metric: "Customers reaching value", before: "33,800/mo", after: "32,400/mo", change: "−4.1%", changeTone: "rose", whatMovedIt: "More in, fewer through" },
-];
+// ---- Compare periods (AC12) is wired to the shared GET /lifecycle/stages/{stageKey}/compare —
+// see acquire/data.ts's Compare note and compare-route.tsx.

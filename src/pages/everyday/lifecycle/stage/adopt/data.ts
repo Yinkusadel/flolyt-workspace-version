@@ -10,7 +10,7 @@ import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -483,45 +483,8 @@ export const ADOPT_MARKET_CLOSING = {
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
 // — no mock export here anymore.
 
-// ---- Agents (AD10) ----------------------------------------------------------
-
-export const ADOPT_AGENT_CARDS: AgentCard[] = [
-  {
-    id: "product-reason",
-    initials: "PR",
-    status: "Lead agent · reading since 12 Jan",
-    name: "Product Reason",
-    body: "The same agent that leads Activate. It watches feature adoption, depth and second-feature progression, and it holds every release against this stage for fourteen days.",
-    footnote: "shares one memory with Activate",
-    tone: "ultra",
-  },
-  {
-    id: "scheduled-delivery-break",
-    initials: "PR",
-    status: "What it found unprompted",
-    name: "The scheduled-delivery break",
-    body: "Nobody asked it to check whether a checkout change would affect a recurring feature. It held the 4 March release against every stage automatically and this is where the second-largest effect landed.",
-    footnote: "found 2 August, 151 days late",
-    tone: "ultra",
-  },
-  {
-    id: "what-it-cannot-see",
-    initials: "",
-    status: "What it cannot see",
-    name: "One feature entirely",
-    body: "Loyalty tiers emit no event. The agent reports the feature as unavailable on every run rather than omitting it, which is why it appears on four screens in this stage as a gap.",
-    footnote: "blocked on Engineering",
-    tone: "rose",
-  },
-];
-
-export const ADOPT_THRESHOLD_ROWS: ThresholdRow[] = [
-  { id: "avg-features-falls", condition: "Average features per customer falls", threshold: "more than 0.3", currently: "−0.5", currentlyTone: "rose", status: "already-open", owner: { name: "Zainab", initials: "ZY", color: "#7A5AA8" } },
-  { id: "second-use-falls", condition: "A feature's second use falls", threshold: "more than 10 pts", currently: "scheduled −26 pts", currentlyTone: "rose", status: "already-open", owner: { name: "Zainab", initials: "ZY", color: "#7A5AA8" } },
-  { id: "shipped-feature-no-events", condition: "A shipped feature emits no events", threshold: "14 days after release", currently: "loyalty tiers · 118 days", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "release-moves-stage", condition: "A release moves this stage", threshold: "any effect, 14 days", currently: "2 this quarter", currentlyTone: "amber", status: "opens-automatically", owner: { name: "Zainab", initials: "ZY", color: "#7A5AA8" } },
-  { id: "feature-funded-abandoned", condition: "A feature is funded and abandoned", threshold: "second use below 40%", currently: "wallet at 30.4%", currentlyTone: "rose", status: "not-opened", noOwner: true },
-];
+// ---- Agents (AD10) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
+// acquire/data.ts's Agents note and agents-tab.tsx.
 
 export const ADOPT_THRESHOLD_PRESET: ThresholdPreset = {
   condition: { label: "When", value: "Average features per customer falls", note: "features used ÷ eligible customers" },
@@ -538,16 +501,8 @@ export const ADOPT_THRESHOLD_PRESET: ThresholdPreset = {
 // ---- History (AD11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.
 
-// ---- Compare periods (AD12) -----------------------------------------------
-
-export const ADOPT_COMPARE_ROWS: CompareRow[] = [
-  { id: "avg-features-per-customer", metric: "Average features per customer", before: "2.6", after: "2.1", change: "−0.5", changeTone: "rose", whatMovedIt: "Scheduled delivery, almost entirely" },
-  { id: "adopting-2-or-more", metric: "Adopting · 2 or more", before: "41.1%", after: "34.4%", change: "−6.7 pts", changeTone: "rose", whatMovedIt: "−4.1 scheduling, −1.9 guest dilution" },
-  { id: "scheduled-delivery-second-use", metric: "Scheduled delivery · second use", before: "71.4%", after: "45.2%", change: "−26.2 pts", changeTone: "rose", whatMovedIt: "The fee, met weekly instead of occasionally" },
-  { id: "saved-addresses-second-use", metric: "Saved addresses · second use", before: "90.1%", after: "90.5%", change: "+0.4 pts", changeTone: "teal", whatMovedIt: "Unaffected · rules out a general cause" },
-  { id: "order-again-second-use", metric: "Order again · second use", before: "—", after: "78.6%", change: "new", changeTone: "teal", whatMovedIt: "Shipped 18 March" },
-  { id: "loyalty-tiers-compare", metric: "Loyalty tiers", before: "Unavailable", after: "Unavailable", change: "—", changeTone: "neutral", whatMovedIt: "No event, before or after" },
-];
+// ---- Compare periods (AD12) is wired to the shared GET /lifecycle/stages/{stageKey}/compare —
+// see acquire/data.ts's Compare note and compare-route.tsx.
 
 // ---- Request instrumentation (AD13, stage-specific modal) -----------------
 

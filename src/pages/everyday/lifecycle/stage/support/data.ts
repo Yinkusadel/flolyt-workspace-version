@@ -9,7 +9,7 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
@@ -466,47 +466,8 @@ export const SUPPORT_MARKET_GHANA_ROWS: { label: string; value: string }[] = [
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
 // — no mock export here anymore.
 
-// ---- Agents (SU09) ----------------------------------------------------------
-
-export const SUPPORT_AGENT_CARDS: AgentCard[] = [
-  {
-    id: "support-signal",
-    initials: "SS",
-    status: "Lead agent · reading since 12 Jan",
-    name: "Support Signal",
-    body: "Reclassifies contact drivers by what they cost in revenue rather than what they cost to handle. It produced the first correct reading of the delivery-fee problem anywhere in the company, on 11 March.",
-    footnote: "4 rooms · 2 closed",
-    tone: "ultra",
-  },
-  {
-    id: "march-reclassification",
-    initials: "SS",
-    status: "What it got right and nobody used",
-    name: "The 11 March reclassification",
-    body: "It labelled “where is my order” a revenue driver in week one and wrote it to the log. There was no rule that sent a reclassified driver to a person, so it sat there for 144 days.",
-    footnote: "the cost of an unrouted signal",
-    tone: "rose",
-    footnoteTone: "rose",
-  },
-  {
-    id: "ghana-silent-failures",
-    initials: "SS",
-    status: "What it cannot see",
-    name: "Ghana's silent failures",
-    body: "No delivery feed for Ghana means the agent can count complaints and cannot count problems. It reports the difference as unavailable rather than assuming Ghana looks like Nigeria.",
-    footnote: "one market, half blind",
-    tone: "amber",
-    footnoteTone: "amber",
-  },
-];
-
-export const SUPPORT_THRESHOLD_ROWS: ThresholdRow[] = [
-  { id: "driver-reclassified-as-revenue", condition: "A contact driver is reclassified as revenue", threshold: "any", currently: "2 this year", currentlyTone: "rose", status: "opens-automatically", statusLabel: "opens now", owner: { name: "Amara", initials: "AO", color: "#C56A2E" } },
-  { id: "contact-rate-rises", condition: "Contact rate rises", threshold: "more than 2 pts", currently: "+5.6", currentlyTone: "rose", status: "already-open", owner: { name: "Amara", initials: "AO", color: "#C56A2E" } },
-  { id: "deflection-lowers-retention", condition: "Deflection lowers retention", threshold: "more than 3 pts vs human", currently: "2 flows, −5 and −9", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "silent-failures-rise", condition: "Silent failures rise", threshold: "more than 10%", currently: "Unavailable in Ghana", currentlyTone: "neutral", status: "blocked", statusLabel: "partially blocked", owner: { name: "Amara", initials: "AO", color: "#C56A2E" } },
-  { id: "resolution-time-doubles", condition: "Resolution time doubles in a market", threshold: "2×", currently: "Ghana 3.4×", currentlyTone: "rose", status: "not-opened", noOwner: true },
-];
+// ---- Agents (SU09) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
+// acquire/data.ts's Agents note and agents-tab.tsx.
 
 export const SUPPORT_THRESHOLD_PRESET: ThresholdPreset = {
   condition: { label: "When", value: "A contact driver is reclassified as revenue", note: "Support Signal's own classification changes" },
@@ -523,13 +484,5 @@ export const SUPPORT_THRESHOLD_PRESET: ThresholdPreset = {
 // ---- History (SU10) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.
 
-// ---- Compare periods (SU11) -----------------------------------------------
-
-export const SUPPORT_COMPARE_ROWS: CompareRow[] = [
-  { id: "contact-rate", metric: "Contact rate", before: "11.7%", after: "17.3%", change: "+5.6 pts", changeTone: "rose", whatMovedIt: "The fee · 18,400 new tickets a month" },
-  { id: "first-contact-resolution", metric: "First-contact resolution", before: "71.4%", after: "78.1%", change: "+6.7 pts", changeTone: "teal", whatMovedIt: "The fee question is easy to answer" },
-  { id: "median-resolution-time", metric: "Median resolution time", before: "2.1 hrs", after: "41 min", change: "−67%", changeTone: "teal", whatMovedIt: "Same · a simpler queue resolves faster" },
-  { id: "cost-per-contact", metric: "Cost per contact", before: "₦51", after: "₦48", change: "−5.9%", changeTone: "teal", whatMovedIt: "Deflection and a simpler queue" },
-  { id: "repeat-rate-after-contact", metric: "Repeat rate after contact", before: "29.8%", after: "21.4%", change: "−8.4 pts", changeTone: "rose", whatMovedIt: "Satisfied and gone" },
-  { id: "revenue-lost-after-contact", metric: "Revenue lost after contact", before: "₦8M/cohort", after: "₦61M/cohort", change: "+663%", changeTone: "rose", whatMovedIt: "Volume × a worse outcome" },
-];
+// ---- Compare periods (SU11) is wired to the shared GET /lifecycle/stages/{stageKey}/compare —
+// see acquire/data.ts's Compare note and compare-route.tsx.

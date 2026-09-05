@@ -292,71 +292,10 @@ export const ACQUIRE_MARKET_SPOTLIGHTS: { id: string; eyebrow: string; tone: "te
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
 // — no mock export here anymore, same for every other stage's *_CHANGE_ROWS.
 
-// ---- Agents (A10) ----------------------------------------------------------
-
-export type AgentCard = {
-  id: string;
-  /** Empty string omits the avatar — some stages' cards are a capability/gap note rather than a named agent. */
-  initials: string;
-  status: string;
-  name: string;
-  body: string;
-  footnote: string;
-  tone: "ultra" | "neutral" | "amber" | "teal" | "rose";
-  /** Overrides the footnote text's color — defaults to "ultra" (the color every card used before Retain's third card needed amber). */
-  footnoteTone?: "ultra" | "neutral" | "amber" | "teal" | "rose";
-};
-
-export const ACQUIRE_AGENT_CARDS: AgentCard[] = [
-  {
-    id: "acquisition-quality",
-    initials: "AQ",
-    status: "Lead agent · reading since 12 Jan",
-    name: "Acquisition Quality",
-    body: "Watches conversion by channel, cohort and market. Opened 9 rooms this quarter, 6 of which closed with money recovered. It reads orders, identity and ad spend.",
-    footnote: "9 rooms · 6 closed",
-    tone: "ultra",
-  },
-  {
-    id: "price-margin",
-    initials: "PX",
-    status: "Supporting · reading since 4 Feb",
-    name: "Price & Margin",
-    body: "Watches CAC against value per customer. It cannot compute payback because no COGS source exists, and it reports that rather than estimating around it.",
-    footnote: "1 room · partially blocked",
-    tone: "ultra",
-  },
-  {
-    id: "referral",
-    initials: "RF",
-    status: "Not watching",
-    name: "Referral",
-    body: "The referral agent belongs to Advocate, which has no owner. Referral is this stage's best channel and nobody is watching the agent that understands it.",
-    footnote: "unowned stage upstream",
-    tone: "neutral",
-  },
-];
-
-export type ThresholdRow = {
-  id: string;
-  condition: string;
-  threshold: string;
-  currently: string;
-  currentlyTone: "teal" | "rose" | "amber" | "neutral";
-  status: "already-open" | "not-opened" | "no" | "opens-automatically" | "blocked";
-  /** Overrides the default chip text for `status` (e.g. "would open now" instead of "opens automatically") — tone still follows `status`. */
-  statusLabel?: string;
-  owner?: { name: string; initials: string; color: string };
-  noOwner?: boolean;
-};
-
-export const ACQUIRE_THRESHOLD_ROWS: ThresholdRow[] = [
-  { id: "conversion-falls", condition: "Conversion falls in any channel", threshold: "more than 3 pts, 7 days", currently: "Ghana −20 pts", currentlyTone: "rose", status: "already-open", owner: { name: "Tunde", initials: "TB", color: "#B4568F" } },
-  { id: "cac-rises", condition: "CAC rises against value per customer", threshold: "ratio below 3×", currently: "Ghana 0.19×", currentlyTone: "rose", status: "already-open", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" } },
-  { id: "cohort-breaks", condition: "A cohort breaks from the one before it", threshold: "more than 5 pts", currently: "March −10.2", currentlyTone: "rose", status: "already-open", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" } },
-  { id: "verification-falls", condition: "Verification rate falls", threshold: "more than 2 pts", currently: "−8.1 for MTN", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "spend-rises", condition: "Spend rises with no volume change", threshold: "more than 15%", currently: "+4%", currentlyTone: "teal", status: "no", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" } },
-];
+// ---- Agents (A10) is wired to GET /lifecycle/stages/{stageKey}/agents (shared across all 10
+// stages) — see agents-tab.tsx and docs/endpoints/lifecycle.md. The agent cards and conditions
+// table now read the endpoint's own `agents[]`/`conditions[]`; "Currently" and "who it goes to"
+// are dropped since neither is a confirmed field on the (spec-marked-truncated) condition object.
 
 // ---- History (A14) is wired to GET /lifecycle/stages/{stageKey}/history (shared across all 10
 // stages) — see history-tab.tsx and docs/endpoints/lifecycle.md. The "goals that depend on this
@@ -365,34 +304,10 @@ export const ACQUIRE_THRESHOLD_ROWS: ThresholdRow[] = [
 // learningState vocabulary (validated/observation/constraint/superseded/rejected/room-open), not
 // the ~20 freeform labels these mocks used.
 
-// ---- Compare periods (A16) --------------------------------------------------
-
-export type CompareRow = {
-  id: string;
-  metric: string;
-  before: string;
-  after: string;
-  change: string;
-  /** "amber" added for Churn's CH11 "Reason known" row — a mild negative that isn't rose. */
-  changeTone: "teal" | "rose" | "amber" | "neutral";
-  whatMovedIt: string;
-};
-
-export const ACQUIRE_COMPARE_ROWS: CompareRow[] = [
-  { id: "acquired-per-month", metric: "Acquired per month", before: "64,900", after: "78,500", change: "+21.0%", changeTone: "teal", whatMovedIt: "Ghana campaign and paid social Nigeria" },
-  { id: "blended-cac", metric: "Blended CAC", before: "₦1,466", after: "₦1,988", change: "+35.6%", changeTone: "rose", whatMovedIt: "Ghana at ₦6,026 pulls the blend up" },
-  { id: "reach-second-order", metric: "Reach a second order", before: "37.4%", after: "27.2%", change: "−10.2 pts", changeTone: "rose", whatMovedIt: "The delivery fee, three stages downstream" },
-  { id: "value-per-customer", metric: "Value per customer", before: "₦9,200", after: "₦6,600", change: "−28.3%", changeTone: "rose", whatMovedIt: "Fewer second orders, same basket size" },
-  { id: "verification-rate", metric: "Verification rate", before: "81.4%", after: "73.3%", change: "−8.1 pts", changeTone: "rose", whatMovedIt: "MTN Nigeria SMS route, 2 April" },
-  { id: "contribution-margin", metric: "Contribution margin", before: "Unavailable", after: "Unavailable", change: "—", changeTone: "neutral", whatMovedIt: "No COGS source" },
-];
-
-export const ACQUIRE_COMPARE_BUILD_ROWS: { label: string; value: string; tone: "neutral" | "amber" }[] = [
-  { label: "Aligned on", value: "days since acquisition, not calendar date", tone: "neutral" },
-  { label: "Excluded", value: "UK and Ghana for the fee comparison — it shipped there in June", tone: "amber" },
-  { label: "Seasonality adjustment", value: "none applied, and none available", tone: "neutral" },
-  { label: "Cohorts younger than 90 days", value: "shown, but not included in any 90-day figure", tone: "neutral" },
-];
+// ---- Compare periods (A16) is wired to GET /lifecycle/stages/{stageKey}/compare (shared across
+// all 10 stages) — see compare-route.tsx and docs/endpoints/lifecycle.md. That endpoint only ever
+// compares population and conversion, never CAC/repeat-rate/value-per-customer, so the fuller
+// mock table (and Acquire's "how this comparison is built" notes) is dropped rather than faked.
 
 // ---- Shared modal presets (A11/A12/A13/A15) ---------------------------------
 

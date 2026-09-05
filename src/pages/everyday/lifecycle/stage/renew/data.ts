@@ -8,7 +8,7 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
@@ -451,46 +451,8 @@ export const RENEW_MARKET_GHANA_ROWS: { label: string; value: string }[] = [
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
 // — no mock export here anymore.
 
-// ---- Agents (RN09) ----------------------------------------------------------
-
-export const RENEW_AGENT_CARDS: AgentCard[] = [
-  {
-    id: "involuntary-churn",
-    initials: "IC",
-    status: "Lead agent · reading since 12 Jan",
-    name: "Involuntary Churn",
-    body: "Watches card failures, retry windows and recovery by hour. It found the midnight retry problem in February and its room closed in nine days with ₦62M recovered against a holdout.",
-    footnote: "3 rooms · 2 closed · fastest in the workspace",
-    tone: "ultra",
-  },
-  {
-    id: "churn-reason",
-    initials: "CH",
-    status: "Supporting",
-    name: "Churn Reason",
-    body: "Reads cancellation and pause reasons, including the 68% who leave the field blank. It flagged “too expensive” doubling in the week of 4 March, twelve days after Support Signal flagged its own version of the same thing.",
-    footnote: "second signal, also unrouted",
-    tone: "ultra",
-  },
-  {
-    id: "chase-a-person",
-    initials: "",
-    status: "WHAT NEITHER CAN DO",
-    name: "Chase a person",
-    body: "Both agents know the renewal book is overstated by ₦88M and that the correction is four days overdue. Neither can escalate an obligation — that rule now exists in handoff settings and did not on 9 August.",
-    footnote: "the gap that let it slip",
-    tone: "amber",
-    footnoteTone: "amber",
-  },
-];
-
-export const RENEW_THRESHOLD_ROWS: ThresholdRow[] = [
-  { id: "card-failure-rises", condition: "Card failure rate rises", threshold: "more than 1 pt", currently: "Ghana +2.5", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "fix-not-rolled-out", condition: "A fix is not rolled out to every market", threshold: "14 days after the first", currently: "Ghana · 134 days", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "pause-return-falls", condition: "Pause return rate falls", threshold: "more than 5 pts", currently: "−26.7", currentlyTone: "rose", status: "already-open", owner: { name: "Kunle", initials: "KO", color: "#2E8B7F" } },
-  { id: "forecast-input-stale", condition: "A forecast input is known to be stale", threshold: "any", currently: "repeat rate · since 2 Aug", currentlyTone: "rose", status: "opens-automatically", statusLabel: "opens now", owner: { name: "Kunle", initials: "KO", color: "#2E8B7F" } },
-  { id: "cancellation-reasons-shift", condition: "Cancellation reasons shift", threshold: "more than 10 pts share", currently: "+18 · too expensive", currentlyTone: "rose", status: "already-open", owner: { name: "Kunle", initials: "KO", color: "#2E8B7F" } },
-];
+// ---- Agents (RN09) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
+// acquire/data.ts's Agents note and agents-tab.tsx.
 
 export const RENEW_THRESHOLD_PRESET: ThresholdPreset = {
   condition: { label: "When", value: "A fix is not rolled out to every market", note: "a change proven to work in one market has not reached another" },
@@ -507,16 +469,8 @@ export const RENEW_THRESHOLD_PRESET: ThresholdPreset = {
 // ---- History (RN10) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.
 
-// ---- Compare periods (RN11) -----------------------------------------------
-
-export const RENEW_COMPARE_ROWS: CompareRow[] = [
-  { id: "renewal-rate", metric: "Renewal rate", before: "90.9%", after: "87.7%", change: "−3.2 pts", changeTone: "rose", whatMovedIt: "Cancellations and pauses, not cards" },
-  { id: "cancellations", metric: "Cancellations", before: "4.2%", after: "5.9%", change: "+1.7 pts", changeTone: "rose", whatMovedIt: "“Too expensive” · the delivery fee" },
-  { id: "pauses", metric: "Pauses", before: "2.9%", after: "4.4%", change: "+1.5 pts", changeTone: "rose", whatMovedIt: "Same cause · pauses became exits" },
-  { id: "pause-return-rate", metric: "Pause return rate", before: "58.1%", after: "31.4%", change: "−26.7 pts", changeTone: "rose", whatMovedIt: "A pause is no longer a delay" },
-  { id: "card-failure-rate", metric: "Card failure rate", before: "2.0%", after: "2.0%", change: "0.0 pts", changeTone: "teal", whatMovedIt: "A mechanism, not a decision" },
-  { id: "involuntary-churn-recovered", metric: "Involuntary churn recovered", before: "25.0%", after: "70.5%", change: "+45.5 pts", changeTone: "teal", whatMovedIt: "The retry window · the one win" },
-];
+// ---- Compare periods (RN11) is wired to the shared GET /lifecycle/stages/{stageKey}/compare —
+// see acquire/data.ts's Compare note and compare-route.tsx.
 
 // ---- One account (RN13, /lifecycle/renew/book/:id) -------------------------
 

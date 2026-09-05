@@ -8,7 +8,7 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { LeakRow, AgentCard, ThresholdRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -522,52 +522,8 @@ export const ADVOCATE_MARKETS_OPEN_ROOM_PRESET: OpenRoomPreset = {
 // Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
 // — no mock export here anymore.
 
-// ---- Agents (AV09) ----------------------------------------------------------
-
-export const ADVOCATE_AGENT_CARDS: AgentCard[] = [
-  {
-    id: "referral-lead",
-    initials: "RF",
-    status: "Lead agent · reading since 12 Jan",
-    name: "Referral",
-    body: "Watches referral rate, referrer cohorts, reward economics and referred-customer quality. It has produced 14 findings in seven months and opened zero rooms.",
-    footnote: "0 rooms · not for lack of findings",
-    tone: "ultra",
-  },
-  {
-    id: "why-zero",
-    initials: "RF",
-    status: "Why zero",
-    name: "A room needs an owner",
-    body: "Every threshold in this stage routes to the Advocate stage owner, which is nobody, and falls back to Ada. Ada owns 118 teams. Nothing has ever been picked up.",
-    footnote: "14 findings, 0 rooms",
-    tone: "rose",
-    footnoteTone: "rose",
-  },
-  {
-    id: "fifth-signal",
-    initials: "RF",
-    status: "What it found on 11 March",
-    name: "The fifth signal",
-    body: "Referral rate falling for the first time in two years, dated to the week of 4 March. Correct, in week one, and cited in room 8f2c five months later as evidence somebody else assembled.",
-    footnote: "right, and unheard",
-    tone: "rose",
-    footnoteTone: "rose",
-  },
-];
-
-export const ADVOCATE_THRESHOLD_ROWS: ThresholdRow[] = [
-  { id: "referral-rate-falls", condition: "Referral rate falls", threshold: "more than 1 pt", currently: "−3.8", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "referrers-stop-referring", condition: "Referrers stop referring", threshold: "more than 5,000", currently: "18,000", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "reward-cost-rises", condition: "Reward cost per referral rises", threshold: "more than 20%", currently: "+100%", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "reward-change-no-holdout", condition: "A reward change runs without a holdout", threshold: "any", currently: "1 · 18 April", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "referral-share-falls", condition: "Referral share of acquisition falls", threshold: "more than 3 pts", currently: "−4.1", currentlyTone: "rose", status: "not-opened", noOwner: true },
-];
-
-export const ADVOCATE_AGENTS_INSIGHT = {
-  title: "Five conditions, five breaches, five with no owner — and this time it is not the routing gap",
-  body: "Everywhere else the problem was a condition spanning two stages with no natural destination. Here the destination exists and is simply empty. It is a one-line fix that has been available for seven months, and it is the single cheapest thing anyone could do in this workspace today.",
-};
+// ---- Agents (AV09) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
+// acquire/data.ts's Agents note and agents-tab.tsx.
 
 export const ADVOCATE_THRESHOLD_PRESET: ThresholdPreset = {
   condition: { label: "When", value: "A reward change runs without a holdout", note: "any change to the referral reward amount goes live with no measurement plan" },
@@ -584,21 +540,8 @@ export const ADVOCATE_THRESHOLD_PRESET: ThresholdPreset = {
 // ---- History (AV10) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
 // acquire/data.ts's History note and history-tab.tsx.
 
-// ---- Compare periods (AV11) -----------------------------------------------
-
-export const ADVOCATE_COMPARE_ROWS: CompareRow[] = [
-  { id: "referral-rate", metric: "Referral rate", before: "13.2%", after: "9.3%", change: "−3.9 pts", changeTone: "rose", whatMovedIt: "The fee · first fall in two years" },
-  { id: "referrals-per-referrer", metric: "Referrals per referrer", before: "2.4", after: "1.9", change: "−20.8%", changeTone: "rose", whatMovedIt: "Same cause · less enthusiasm" },
-  { id: "referred-customers-per-month", metric: "Referred customers per month", before: "7,680", after: "3,730", change: "−51.4%", changeTone: "rose", whatMovedIt: "Both effects compounding" },
-  { id: "referral-share", metric: "Referral share of acquisition", before: "34.1%", after: "30.0%", change: "−4.1 pts", changeTone: "rose", whatMovedIt: "Paid social filled the gap" },
-  { id: "reward-paid-per-month", metric: "Reward paid per month", before: "₦10.7M", after: "₦26.1M", change: "+144%", changeTone: "rose", whatMovedIt: "The April increase" },
-  { id: "cost-per-referred-customer", metric: "Cost per referred customer", before: "₦500", after: "₦1,000", change: "+100%", changeTone: "rose", whatMovedIt: "Paying twice as much for half as many" },
-];
-
-export const ADVOCATE_COMPARE_INSIGHT = {
-  title: "Half as many referrals, at twice the price, in the same six months",
-  body: "Referred customers per month fell 51% and the cost per one doubled. Neither of those two facts caused the other and nobody has seen them on the same screen before — the fee is not in this stage and the reward increase was a Marketing decision reviewed against its own volume number.",
-};
+// ---- Compare periods (AV11) is wired to the shared GET /lifecycle/stages/{stageKey}/compare —
+// see acquire/data.ts's Compare note and compare-route.tsx.
 
 // ---- One referrer group (AV13, /lifecycle/advocate/referrers/:id) ---------
 
