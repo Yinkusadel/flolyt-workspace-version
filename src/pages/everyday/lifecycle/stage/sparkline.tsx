@@ -26,12 +26,19 @@ export function Sparkline({
   emptyLabel?: string;
 }) {
   const pad = 3;
-  const usable = series.map((s) => ({ ...s, points: s.points.filter((p) => p.y !== null) as { x: number; y: number }[] }));
+  // A caller mid-reset (e.g. a form field briefly reverting to NaN while a stale backtest result
+  // is still mounted during a dialog's close animation) can hand this a non-finite y — filter it
+  // out rather than let it poison the domain into NaN, which renders as an invalid SVG attribute.
+  const usable = series.map((s) => ({
+    ...s,
+    points: s.points.filter((p) => p.y !== null && Number.isFinite(p.y)) as { x: number; y: number }[],
+  }));
+  const finiteReferenceLines = referenceLines.filter((r) => Number.isFinite(r.y));
   const allPoints = usable.flatMap((s) => s.points);
   if (allPoints.length === 0) return <span className="font-mono text-[10px] text-ink-4">{emptyLabel}</span>;
 
   const xs = allPoints.map((p) => p.x);
-  const ys = [...allPoints.map((p) => p.y), ...referenceLines.map((r) => r.y), 0];
+  const ys = [...allPoints.map((p) => p.y), ...finiteReferenceLines.map((r) => r.y), 0];
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
   const domainMax = Math.max(...ys);
@@ -44,7 +51,7 @@ export function Sparkline({
 
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
-      {referenceLines.map((line, index) => (
+      {finiteReferenceLines.map((line, index) => (
         <line
           key={index}
           x1={pad}
