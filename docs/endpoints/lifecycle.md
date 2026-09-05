@@ -474,14 +474,14 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 
 - **Purpose:** Retain's Segments tab — every active segment intersected with Retain's population, overlaps resolved.
 - **Response `data`:** `{ stageKey, stageName, basis, basisCaveat, retainPopulation, segments: [{segmentId, name, matched, reachable, repeating, decaying, pastBoundary, repeatShare, reachableShare, values: [{currency, amount}], claim: {statement, grade, type, confidence}, roomOpen}], distinctAcrossSegments, sumOfMatched, distinctValues: [{currency, amount}], overlaps: [{segmentA, nameA, segmentB, nameB, shared}], valueWindowDays, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
-- **Notes:** `matched` and `reachable` are always both shown per segment — `reachable` means active, with an address, not suppressed. `pastBoundary` members (crossed the boundary and left the stage) are counted and marked, never silently dropped. `distinctAcrossSegments` vs `sumOfMatched` is the dedup: a person in two segments is one person; `distinctValues` is each person's money counted once, never per-segment-double-counted. `values`/`distinctValues` never summed across currencies.
+- **Status:** **✅ wired 2026-09-05** — `stage/retain/segments-tab.tsx`.
+- **Notes:** `matched` and `reachable` are always both shown per segment — `reachable` means active, with an address, not suppressed. `pastBoundary` members (crossed the boundary and left the stage) are counted and marked, never silently dropped. `distinctAcrossSegments` vs `sumOfMatched` is the dedup: a person in two segments is one person; `distinctValues` is each person's money counted once, never per-segment-double-counted. `values`/`distinctValues` never summed across currencies. **Correction, live-confirmed 2026-09-05** (a real workspace's 2-segment response): `retainPopulation`, `distinctAcrossSegments`, `repeatShare` and `reachableShare` are all the measured-value wrapper (`{value, state, missingSource, wouldUnlock}`), not bare `number | null` as this entry previously said — the pre-fix UI rendered `NaN%` on the share columns. **Separately, `claim` is nullable** (`RetainSegmentClaimDto | null`), not always a populated object as first assumed — a segment can be too new for business memory to have a claim about it yet; the pre-fix UI crashed outright reading `claim.grade` on a null claim. Both fixed in `get-retain-segments.ts` and `segments-tab.tsx` the same day, verified against the exact pasted payload.
 
 ### GET /lifecycle/retain/reactivation
 
 - **Purpose:** Retain's Reactivation tab — campaigns whose enrolled audience was mostly dormant at signup, recognised by who they reached rather than by campaign name.
 - **Response `data`:** `{ stageKey, stageName, basis, basisCaveat, dormancyDays, waves: [{campaignId, name, state, startedAtUtc, audience, holdout, dormantAtEnrolment, treatmentReactivationShare, holdoutReactivationShare, liftPoints, attribution, unattributableBecause, medianDaysSinceLastOrderAtEnrolment}], campaignsConsidered, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/retain/reactivation-tab.tsx`.
 - **Notes:** `liftPoints` is only available when `attribution === "holdout"` — an `"unattributable"` wave shows its raw share, no lift, and names why (`unattributableBecause`). `medianDaysSinceLastOrderAtEnrolment` feeds a timing-mismatch callout comparing when the wave reached people against where `repeat-curve` says second orders actually concentrate — worth cross-referencing both tabs' `callouts[]` if both get wired.
 
 ### GET /lifecycle/adopt/features
@@ -590,6 +590,7 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 
 - **Purpose:** Support's Deflection tab — which help content is followed by a ticket anyway, per topic, over 90 days.
 - **Response `data`:** `{ topics: [{topic, readers, contacted, contactedAnyway}], grain, readings, contactedAnyway, contactWindowDays, computedAtUtc, callouts }`.
+- **Status:** **✅ wired 2026-09-05** — `stage/support/deflection-tab.tsx`. No cost-saved, repeat-rate-after, or "vs contacting a human" field, so those are dropped.
 - **Status:** documented, not scaffolded.
 - **Notes:** **This counts help that FAILED, not help that worked** — someone who read an article and never came back may have been helped, given up, or gone to a competitor; all three leave an identical record, so counting them "deflected" would invent a difference this data can't see. What's directly observable is the reverse: who read help and raised a ticket anyway, within 7 days. Needs **both** product events (help reading) and a helpdesk (tickets) — refuses entirely with either missing, since the whole question is about the relationship between the two, not either alone.
 
@@ -693,21 +694,21 @@ are in" call.
 
 - **Purpose:** Support's Contact drivers tab — what customers contact you about, over 90 days.
 - **Response `data`:** `{ drivers: [{driver, tickets, customers, shareOfTickets, ticketsPerCustomer, refunded}], tickets, windowDays, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/support/contact-drivers-tab.tsx`. No handle time, vs-prior-period, repeat-rate-after, or "really a ___" field, so those are dropped.
 - **Notes:** Every driver carries **both** a ticket count and a customer count — 10 tickets from one furious person is a retention problem, 10 units of queue work from 10 people is an operations problem, and a volume-only view sends attention after the loudest driver rather than the widest; `ticketsPerCustomer` is what tells them apart. Reads a warehouse ticket table or a synced Zendesk/Freshdesk identically. `refunded` is summed where the helpdesk records it, unavailable where it doesn't, never zero.
 
 ### GET /lifecycle/support/resolution
 
 - **Purpose:** Support's Resolution tab — how long answering takes, and how much of the queue is still open.
 - **Response `data`:** `{ bands: [{driver, tickets, resolved, open, averageHours, resolvedShare}], averageHours, resolvedShare, windowDays, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/support/resolution-tab.tsx`. No "resolved fast"/"customer satisfied"/repeat-rate-after/verdict field, so those are dropped.
 - **Notes:** **Read the two figures together, always** — `averageHours` is computed over resolved tickets only, so the more of a queue that stays open, the better its average looks (a team that clears the easy half in an hour and abandons the rest reports "an excellent hour"). Every row carries `resolvedShare` for exactly that reason — a callout fires when a fifth of the window is still open. Resolution time is read from a mapped column or computed from raised/resolved timestamps, **never inferred from status** — treating "closed" as instantly resolved would fabricate the figure being measured.
 
 ### GET /lifecycle/support/silent-failures
 
 - **Purpose:** Support's Silent failures tab — customers whose orders went wrong who may never have said anything.
 - **Response `data`:** `{ stageKey, stageName, couldBeSilent, customersInWindow, share, confirmedSilent, windowDays, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/support/silent-failures-route.tsx` (SU13, reached from Overview's KPI card, not the tab bar). This is four workspace-wide scalars, not a per-outcome table — the old mock's breakdown by "what happened" has no matching field at all, dropped.
 - **Notes:** **Every figure here is an upper bound.** `couldBeSilent` counts distinct customers with a failed/cancelled/refunded/undelivered order in the trailing window — which includes everyone who DID complain. `confirmedSilent` is therefore **always unavailable**, and says why (no helpdesk means no contact record for a complaint to be absent from) — returned rather than omitted, so the gap between "asked" and "known" stays visible rather than silently dropped. Order statuses matched by case-insensitive substring; an unrecognised status reads as fine — the safe direction, never assume a failure.
 
 ### GET /lifecycle/stages/{stageKey}/agents

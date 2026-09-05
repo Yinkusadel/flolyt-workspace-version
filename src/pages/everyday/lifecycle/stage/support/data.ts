@@ -5,10 +5,6 @@
  * id, e.g. "SU06 · Support · cohorts").
  */
 
-import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
-import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
-import type { ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
@@ -18,16 +14,7 @@ import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modal
 // outcome breakdown below, so it isn't reproducible from live data; dropped.
 
 // ---- Overview (SU02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
-// overview-tab.tsx's buildStageKpis. The mock 4-card set below is kept only for the
-// silent-failures drilldown (SU03b), which still reuses it — renamed since it's no longer the
-// Overview tab's own data.
-
-export const SUPPORT_SILENT_FAILURES_KPIS: Kpi[] = [
-  { eyebrow: "Something went wrong", value: "61,000 / mo", note: "5.5% of active customers" },
-  { eyebrow: "Told us about it", value: "21,400 / mo", tone: "amber", note: "35% · the rest stay silent" },
-  { eyebrow: "At stake", value: "₦9M", tone: "amber", note: "smallest figure, largest early signal" },
-  { eyebrow: "Revenue behind silent failures", value: "₦38M", tone: "rose", note: "not counted in the ₦9M", href: "/lifecycle/support/silent" },
-];
+// overview-tab.tsx's buildStageKpis.
 
 // Overview (SU02) leak table is wired to GET /lifecycle/stages/{stageKey}'s `departures[]` —
 // see overview-tab.tsx.
@@ -70,60 +57,9 @@ export const SUPPORT_SHARE_EXPORT_PRESET: ShareOrExportPreset = {
 
 // ---- Contact drivers (SU03, route path "drivers") --------------------------
 
-export type ContactDriverRow = {
-  id: string;
-  driver: string;
-  ticketsPerMo: string;
-  share: string;
-  shareTone: "teal" | "amber" | "rose" | "neutral";
-  vsFeb: string;
-  vsFebTone: "teal" | "amber" | "rose" | "neutral";
-  handleTime: string;
-  handleTimeTone: "teal" | "amber";
-  repeatRateAfter: string;
-  repeatRateAfterTone: "teal" | "amber" | "rose";
-  reallyA: string;
-  reallyATone: ChipTone;
-};
-
-export const SUPPORT_CONTACT_DRIVER_ROWS: ContactDriverRow[] = [
-  { id: "where-is-my-order", driver: "Where is my order", ticketsPerMo: "18,400", share: "36.1%", shareTone: "rose", vsFeb: "+41%", vsFebTone: "rose", handleTime: "4.1 min", handleTimeTone: "teal", repeatRateAfter: "21.1%", repeatRateAfterTone: "rose", reallyA: "revenue signal", reallyATone: "ultra" },
-  { id: "delivery-fee-question", driver: "Delivery fee question", ticketsPerMo: "6,100", share: "12.0%", shareTone: "amber", vsFeb: "new", vsFebTone: "rose", handleTime: "2.8 min", handleTimeTone: "teal", repeatRateAfter: "19.4%", repeatRateAfterTone: "rose", reallyA: "revenue signal", reallyATone: "ultra" },
-  { id: "refund-request", driver: "Refund request", ticketsPerMo: "5,400", share: "10.6%", shareTone: "amber", vsFeb: "+11%", vsFebTone: "amber", handleTime: "6.9 min", handleTimeTone: "amber", repeatRateAfter: "28.1%", repeatRateAfterTone: "amber", reallyA: "support issue", reallyATone: "neutral" },
-  { id: "wrong-or-missing-item", driver: "Wrong or missing item", ticketsPerMo: "4,900", share: "9.6%", shareTone: "amber", vsFeb: "−2%", vsFebTone: "teal", handleTime: "8.1 min", handleTimeTone: "amber", repeatRateAfter: "26.4%", repeatRateAfterTone: "amber", reallyA: "supplier issue", reallyATone: "amber" },
-  { id: "payment-failed", driver: "Payment failed", ticketsPerMo: "4,100", share: "8.0%", shareTone: "amber", vsFeb: "+22%", vsFebTone: "rose", handleTime: "3.1 min", handleTimeTone: "teal", repeatRateAfter: "11.4%", repeatRateAfterTone: "rose", reallyA: "belongs in Renew", reallyATone: "ultra" },
-  { id: "account-or-password", driver: "Account or password", ticketsPerMo: "3,800", share: "7.5%", shareTone: "neutral", vsFeb: "+4%", vsFebTone: "neutral", handleTime: "2.1 min", handleTimeTone: "teal", repeatRateAfter: "29.1%", repeatRateAfterTone: "teal", reallyA: "support issue", reallyATone: "neutral" },
-  { id: "everything-else", driver: "Everything else", ticketsPerMo: "8,300", share: "16.2%", shareTone: "neutral", vsFeb: "+3%", vsFebTone: "neutral", handleTime: "5.4 min", handleTimeTone: "amber", repeatRateAfter: "28.4%", repeatRateAfterTone: "teal", reallyA: "mixed", reallyATone: "neutral" },
-];
-
-export const SUPPORT_DRIVER_TIMELINE_CARDS: InsightCard[] = [
-  {
-    id: "support-signal-flagged",
-    agentTag: "SS",
-    meta: "11 March",
-    title: "Support Signal flagged it",
-    body: "“Where is my order” rose 41% in one week with no change in delivery performance. The agent labelled it a revenue driver, not a volume problem, and wrote it to the log.",
-    footnote: "correct on day seven",
-    tone: "teal",
-  },
-  {
-    id: "nobody-read-the-log",
-    meta: "March to July",
-    title: "Nobody read the log",
-    body: "There was no rule that sent a reclassified contact driver anywhere. Support's own dashboards showed volume and handle time, both of which looked manageable because handle time is 4.1 minutes.",
-    footnote: "the signal existed, unrouted",
-    tone: "amber",
-  },
-  {
-    id: "room-connected-it",
-    agentTag: "RD",
-    meta: "2 August",
-    title: "A room connected it",
-    body: "Repeat & Decay pulled the support reclassification in as evidence when it built the delivery-fee case. It is cited in room 8f2c as the first signal, dated 11 March.",
-    footnote: "144 days late",
-    tone: "teal",
-  },
-];
+// GET /lifecycle/support/contact-drivers has no handle-time, vs-prior-period, repeat-rate-after,
+// or "really a ___" reclassification field — the old mock's table and timeline cards above aren't
+// reproducible from live data; dropped. See contact-drivers-tab.tsx.
 
 export type ReclassifyOption = { id: string; title: string; body: string; selected?: boolean };
 
@@ -161,115 +97,17 @@ export const SUPPORT_RECLASSIFY_PRESET: ReclassifyPreset = {
 
 // ---- Resolution (SU04) -----------------------------------------------------
 
-export const SUPPORT_RESOLUTION_KPIS: Kpi[] = [
-  { eyebrow: "Resolved first contact", value: "78.1%", tone: "teal", note: "up from 71.4%" },
-  { eyebrow: "Median resolution", value: "41 min", tone: "teal", note: "down from 2.1 hrs" },
-  { eyebrow: "Customer still here at 90 days", value: "22.4%", tone: "rose", note: "against 27.2% base" },
-  { eyebrow: "Resolution that changed the outcome", value: "31.4%", tone: "teal", note: "failed deliveries only" },
-];
+// GET /lifecycle/support/resolution has no "resolved fast"/"customer satisfied"/repeat-rate-after/
+// verdict field — only ticket/resolved/open counts and timing per driver. The old mock's KPIs and
+// table above aren't reproducible from live data; dropped. See resolution-tab.tsx.
 
-export type ResolutionRow = {
-  id: string;
-  resolutionType: string;
-  ticketsPerMo: string;
-  resolvedFast: string;
-  resolvedFastTone: "teal" | "amber";
-  customerSatisfied: string;
-  customerSatisfiedTone: "teal" | "amber";
-  repeatRateAfter: string;
-  repeatRateAfterTone: "teal" | "amber" | "rose";
-  verdict: string;
-  verdictTone: ChipTone;
-};
+// GET /lifecycle/support/deflection has no cost-saved, repeat-rate-after, or "vs contacting a
+// human" field — the old mock's KPIs and table above aren't reproducible from live data; dropped.
+// See deflection-tab.tsx.
 
-export const SUPPORT_RESOLUTION_ROWS: ResolutionRow[] = [
-  { id: "refund-apology-failed-delivery", resolutionType: "Refund and apology · failed delivery", ticketsPerMo: "1,200", resolvedFast: "94%", resolvedFastTone: "teal", customerSatisfied: "81%", customerSatisfiedTone: "teal", repeatRateAfter: "31.4%", repeatRateAfterTone: "teal", verdict: "genuinely worked", verdictTone: "teal" },
-  { id: "explained-delivery-fee", resolutionType: "Explained the delivery fee", ticketsPerMo: "6,100", resolvedFast: "98%", resolvedFastTone: "teal", customerSatisfied: "74%", customerSatisfiedTone: "teal", repeatRateAfter: "19.4%", repeatRateAfterTone: "rose", verdict: "satisfied and gone", verdictTone: "rose" },
-  { id: "located-the-order", resolutionType: "Located the order", ticketsPerMo: "18,400", resolvedFast: "91%", resolvedFastTone: "teal", customerSatisfied: "77%", customerSatisfiedTone: "teal", repeatRateAfter: "21.1%", repeatRateAfterTone: "rose", verdict: "satisfied and gone", verdictTone: "rose" },
-  { id: "reset-a-password", resolutionType: "Reset a password", ticketsPerMo: "3,800", resolvedFast: "99%", resolvedFastTone: "teal", customerSatisfied: "88%", customerSatisfiedTone: "teal", repeatRateAfter: "29.1%", repeatRateAfterTone: "teal", verdict: "genuinely worked", verdictTone: "teal" },
-  { id: "retried-a-payment", resolutionType: "Retried a payment", ticketsPerMo: "4,100", resolvedFast: "62%", resolvedFastTone: "amber", customerSatisfied: "51%", customerSatisfiedTone: "amber", repeatRateAfter: "11.4%", repeatRateAfterTone: "rose", verdict: "belongs in Renew", verdictTone: "amber" },
-];
-
-// ---- Deflection (SU05) ------------------------------------------------------
-
-export const SUPPORT_DEFLECTION_KPIS: Kpi[] = [
-  { eyebrow: "Deflected by self-serve", value: "31,400 / mo", tone: "teal", note: "59% of attempted contacts" },
-  { eyebrow: "Cost saved", value: "₦18M / yr", tone: "teal", note: "at ₦48 per contact" },
-  { eyebrow: "Deflected and still left", value: "9,100 / mo", tone: "rose", note: "29% of deflections" },
-  { eyebrow: "Revenue behind those", value: "₦12M", tone: "rose", note: "not on any support dashboard" },
-];
-
-export type DeflectionRow = {
-  id: string;
-  deflectedBy: string;
-  contactsPerMo: string;
-  costSaved: string;
-  repeatRateAfter: string;
-  repeatRateAfterTone: "teal" | "amber" | "rose";
-  vsHuman: string;
-  vsHumanTone: "teal" | "rose";
-  verdict: string;
-  verdictTone: ChipTone;
-};
-
-export const SUPPORT_DEFLECTION_ROWS: DeflectionRow[] = [
-  { id: "order-tracking-page", deflectedBy: "Order tracking page", contactsPerMo: "14,100", costSaved: "₦8.1M/yr", repeatRateAfter: "22.4%", repeatRateAfterTone: "amber", vsHuman: "+1.3 pts", vsHumanTone: "teal", verdict: "good deflection", verdictTone: "teal" },
-  { id: "help-centre-fee-article", deflectedBy: "Help centre · delivery fee article", contactsPerMo: "6,900", costSaved: "₦4.0M/yr", repeatRateAfter: "14.1%", repeatRateAfterTone: "rose", vsHuman: "−5.3 pts", vsHumanTone: "rose", verdict: "bad deflection", verdictTone: "rose" },
-  { id: "chatbot-refund-flow", deflectedBy: "Chatbot · refund flow", contactsPerMo: "4,200", costSaved: "₦2.4M/yr", repeatRateAfter: "19.1%", repeatRateAfterTone: "rose", vsHuman: "−9.0 pts", vsHumanTone: "rose", verdict: "bad deflection", verdictTone: "rose" },
-  { id: "password-self-reset", deflectedBy: "Password self-reset", contactsPerMo: "3,900", costSaved: "₦2.2M/yr", repeatRateAfter: "29.4%", repeatRateAfterTone: "teal", vsHuman: "+0.3 pts", vsHumanTone: "teal", verdict: "good deflection", verdictTone: "teal" },
-  { id: "abandoned-before-reaching-anyone", deflectedBy: "Abandoned before reaching anyone", contactsPerMo: "2,300", costSaved: "₦1.3M/yr", repeatRateAfter: "8.1%", repeatRateAfterTone: "rose", vsHuman: "−20.0 pts", vsHumanTone: "rose", verdict: "not deflection", verdictTone: "rose" },
-];
-
-// ---- Silent failures (SU13, route path "silent", linked from Overview) -----
-
-export type SilentFailureRow = {
-  id: string;
-  whatHappened: string;
-  totalPerMo: string;
-  toldUs: string;
-  stayedSilent: string;
-  stayedSilentTone: "teal" | "amber" | "rose";
-  repeatVocal: string;
-  repeatVocalTone: "teal" | "amber" | "rose";
-  repeatSilent: string;
-  repeatSilentTone: "teal" | "amber" | "rose";
-  gap: string;
-  gapTone: "teal" | "amber" | "rose";
-};
-
-export const SUPPORT_SILENT_FAILURE_ROWS: SilentFailureRow[] = [
-  { id: "delivery-late", whatHappened: "Delivery late", totalPerMo: "43,500", toldUs: "12,100", stayedSilent: "31,400", stayedSilentTone: "rose", repeatVocal: "24.1%", repeatVocalTone: "amber", repeatSilent: "18.4%", repeatSilentTone: "rose", gap: "−5.7", gapTone: "rose" },
-  { id: "delivery-failed", whatHappened: "Delivery failed", totalPerMo: "9,400", toldUs: "1,200", stayedSilent: "8,200", stayedSilentTone: "rose", repeatVocal: "31.4%", repeatVocalTone: "teal", repeatSilent: "0.4%", repeatSilentTone: "rose", gap: "−31.0", gapTone: "rose" },
-  { id: "wrong-item", whatHappened: "Wrong item", totalPerMo: "6,100", toldUs: "4,900", stayedSilent: "1,200", stayedSilentTone: "amber", repeatVocal: "26.4%", repeatVocalTone: "amber", repeatSilent: "14.1%", repeatSilentTone: "rose", gap: "−12.3", gapTone: "rose" },
-  { id: "payment-failed", whatHappened: "Payment failed", totalPerMo: "61,400", toldUs: "4,100", stayedSilent: "57,300", stayedSilentTone: "rose", repeatVocal: "11.4%", repeatVocalTone: "rose", repeatSilent: "8.1%", repeatSilentTone: "rose", gap: "−3.3", gapTone: "amber" },
-];
-
-export const SUPPORT_SILENT_CLOSING_CARDS: ActionCard[] = [
-  {
-    id: "proactive-outreach-running",
-    eyebrow: "Running since March",
-    tone: "teal",
-    title: "Proactive outreach on failed deliveries",
-    body: "Amara's team contacts the 1,200 who complain. Retention 31.4%, +22 points against a holdout. It is the best measured intervention in the lifecycle.",
-    footnote: "1,200 of 9,400 reached",
-  },
-  {
-    id: "obvious-extension",
-    eyebrow: "The obvious extension",
-    tone: "rose",
-    title: "Contact the 8,200 who did not complain",
-    body: "The delivery feed knows the order failed. Nobody has to wait for a ticket. At even half the measured lift this is worth ₦4M a month and it has never been proposed.",
-    footnote: "₦48M a year, untried",
-  },
-  {
-    id: "why-it-never-was",
-    eyebrow: "Why it never was",
-    tone: "amber",
-    title: "It raises cost per contact",
-    body: "Reaching out to 8,200 people who did not ask creates 8,200 contacts. On Amara's goal that is a 16% increase in volume and a worse number. She would be penalised for the highest-return action available to her.",
-    footnote: "the goal, again",
-  },
-];
+// GET /lifecycle/support/silent-failures returns four workspace-wide scalars, not a per-outcome
+// breakdown — the old mock's table (by "what happened") and closing cards above have no matching
+// field at all; dropped. See silent-failures-route.tsx.
 
 // ---- Cohorts (SU06) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
 // acquire/data.ts's Cohorts note and cohorts-tab.tsx.
