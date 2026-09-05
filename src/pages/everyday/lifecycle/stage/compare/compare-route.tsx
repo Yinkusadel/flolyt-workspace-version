@@ -8,7 +8,7 @@ import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-ta
 import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { StageSubpageHeader } from "@/pages/everyday/lifecycle/stage/stage-subpage-header";
-import { formatCount, formatPercent, formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
+import { formatCount, formatPercent, formatShortDateWithYear } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetStageCompare } from "@/features/lifecycle/use-get-stage-compare";
 import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
@@ -111,7 +111,7 @@ const CompareRoute = () => {
   ];
 
   const periodLabel = compare
-    ? `${formatShortDate(compare.before.fromUtc)} – ${formatShortDate(compare.before.toUtc)}  vs  ${formatShortDate(compare.after.fromUtc)} – ${formatShortDate(compare.after.toUtc)}`
+    ? `${formatShortDateWithYear(compare.before.fromUtc)} – ${formatShortDateWithYear(compare.before.toUtc)}  vs  ${formatShortDateWithYear(compare.after.fromUtc)} – ${formatShortDateWithYear(compare.after.toUtc)}`
     : undefined;
 
   return (

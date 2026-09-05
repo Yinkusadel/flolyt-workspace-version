@@ -39,6 +39,15 @@ export function formatShortDate(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString("en-US", { day: "numeric", month: "short" });
 }
 
+/**
+ * An ISO datetime to a "4 Mar 2025" style date, year included — for a window that can span
+ * calendar years (e.g. Compare's before/after periods), where the year-less form can render two
+ * genuinely different dates as identical text (both landing on the same month and day).
+ */
+export function formatShortDateWithYear(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+}
+
 /** An ISO datetime to a "Aug 2026" style month, for a cohort's arrival period. */
 export function formatMonthYear(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString("en-US", { month: "short", year: "numeric" });
