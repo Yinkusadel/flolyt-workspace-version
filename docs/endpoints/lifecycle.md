@@ -488,14 +488,14 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 
 - **Purpose:** Adopt's Features tab — which features people use, return to, and abandon.
 - **Response `data`:** `{ features: [{feature, customers, returned, abandonedCustomers, kept, abandoned}], customersSeen, windowDays, abandonedAfterDays, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/adopt/features-tab.tsx`. No field for orders/month-after, ship date, or a verdict per feature, so those and the old mock's per-feature drilldown link are dropped.
 - **Notes:** Counted in **customers, never events** — one person firing an event 900 times is one adopter. `returned` (used more than once) and `abandonedCustomers` (not touched since the cutoff) are **not complements** — someone can return to a feature twice and still later abandon it, both can be true of the same person. A feature nobody touched has no retention share at all, not a zero one. Read over a fixed 90-day window from a mapped product-events table, refreshed daily.
 
 ### GET /lifecycle/adopt/depth
 
 - **Purpose:** Adopt's Depth tab — how many features each customer used, and what share at each depth stayed active.
 - **Response `data`:** `{ bands: [{features, customers, stillActive, stillActiveShare}], medianFeatures, lift, windowDays, activeWithinDays, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/adopt/depth-tab.tsx`. No first/second-feature pairing field, so the old mock's "which second feature matters most" table is dropped.
 - **Notes:** **Correlation, not causation, and the payload says so in a callout** — in most products the people who were going to stay anyway use more of the product, so this can't distinguish "using more features causes retention" from "people who'd stay anyway explore more." What it's actually good for: finding which features stayers reach and leavers never do. Bands under 20 customers report no share (not a noisy one). `medianFeatures` is a median deliberately, not a mean — one power user would drag a mean somewhere no real customer sits.
 
 ### GET /lifecycle/advocate/referrers
@@ -804,7 +804,7 @@ are in" call.
 
 - **Purpose:** What this workspace can't measure at all, and who owes fixing it.
 - **Response `data`:** `{ gaps: [{gapKey, name, gap, wouldUnlock, blockedStages: string[], state, obligationId, requiredEventSchemas: string[], blocks: string[], requestedAtUtc, neededByUtc, daysOverdue, ownerUserId, ownerName}], overdueCount, unrequestedCount, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05, read side only** — `stage/adopt/blind-spots-tab.tsx`, filtered to `gaps` whose `blockedStages` includes the current stage's slug (this endpoint is workspace-wide, not stage-scoped by URL, unlike most of this domain). "Request instrumentation" still opens the pre-existing static preset dialog rather than a real `POST /instrumentation-requests` call — that mutation, `PUT .../owner`, and `POST .../close` all stay unwired.
 - **Notes:** Gaps are **derived from the agent roster's readiness, never stored** — a stored copy would disagree with reality the moment a source got connected. Each gap's `state` includes `"no-request"` (nobody has asked about this gap yet) alongside whatever request-lifecycle states an actual `instrumentation-requests` entry carries. `daysOverdue` is likewise **derived, not stored** — a stored overdue flag would be wrong every day after the one it was written. `blockedStages` names which of the 10 stages go without because an agent can't read this gap.
 
 ### POST /lifecycle/instrumentation-requests

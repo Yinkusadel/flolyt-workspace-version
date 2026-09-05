@@ -1,46 +1,82 @@
-import { Link } from "react-router-dom";
-
-import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { InsightCards } from "@/pages/everyday/lifecycle/stage/activate/insight-cards";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import { ADOPT_FEATURE_DETAILS, ADOPT_FEATURE_INSIGHT_CARDS, ADOPT_FEATURE_ROWS, type FeatureRow } from "@/pages/everyday/lifecycle/stage/adopt/data";
+import { formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetAdoptFeatures } from "@/features/lifecycle/use-get-adopt-features";
+import type { AdoptFeatureDto } from "@/services/api/lifecycle/get-adopt-features";
 
-const USED_TWICE_TONE_CLASS: Record<FeatureRow["usedTwiceTone"], string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose" };
-const STILL_USING_TONE_CLASS: Record<FeatureRow["stillUsingTone"], string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose" };
-const ORDERS_TONE_CLASS: Record<FeatureRow["ordersTone"], string> = { ink: "text-ink", teal: "text-teal" };
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
+
+type FeatureRow = AdoptFeatureDto & { id: string };
 
 const COLUMNS: Column<FeatureRow>[] = [
-  {
-    key: "feature",
-    header: "Feature",
-    render: (row) =>
-      ADOPT_FEATURE_DETAILS[row.id] ? (
-        <Link to={`/lifecycle/adopt/features/${row.id}`} className="font-semibold text-ultra hover:underline">
-          {row.feature}
-        </Link>
-      ) : (
-        <span className="font-semibold text-ink-2">{row.feature}</span>
-      ),
-  },
-  { key: "everUsed", header: "Ever used", align: "right", render: (row) => <span className="font-mono text-ink">{row.everUsed}</span> },
-  { key: "usedTwice", header: "Used twice", align: "right", render: (row) => <span className={USED_TWICE_TONE_CLASS[row.usedTwiceTone]}>{row.usedTwice}</span> },
-  { key: "stillUsing", header: "Still using", align: "right", render: (row) => <span className={STILL_USING_TONE_CLASS[row.stillUsingTone]}>{row.stillUsing}</span> },
-  { key: "ordersPerMonthAfter", header: "Orders / month after", align: "right", render: (row) => <span className={`font-mono ${ORDERS_TONE_CLASS[row.ordersTone]}`}>{row.ordersPerMonthAfter}</span> },
-  { key: "shipped", header: "Shipped", align: "right", render: (row) => <span className="font-mono text-ink-4">{row.shipped}</span> },
-  { key: "verdict", header: "Verdict", align: "right", render: (row) => <Chip tone={row.verdictTone}>{row.verdict}</Chip> },
+  { key: "feature", header: "Feature", render: (row) => <span className="font-semibold text-ink-2">{row.feature}</span> },
+  { key: "customers", header: "Ever used", align: "right", render: (row) => <span className="font-mono text-ink">{formatCount(row.customers)}</span> },
+  { key: "returned", header: "Returned", align: "right", render: (row) => <span className="text-teal">{formatCount(row.returned)}</span> },
+  { key: "abandonedCustomers", header: "Abandoned", align: "right", render: (row) => <span className="text-rose">{formatCount(row.abandonedCustomers)}</span> },
+  { key: "kept", header: "Kept", align: "right", render: (row) => <span className="text-ink-2">{row.kept !== null ? formatPercent(row.kept) : <span className="text-ink-4">Unavailable</span>}</span> },
+  { key: "abandoned", header: "Abandoned share", align: "right", render: (row) => <span className="text-ink-4">{row.abandoned !== null ? formatPercent(row.abandoned) : "Unavailable"}</span> },
 ];
 
-/** AD03 — Adopt's Features tab, and the list side of the features/:id drilldown (AD04). */
+function FeaturesSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** AD03 — Adopt's own Features tab, wired to GET /lifecycle/adopt/features. */
 const AdoptFeaturesTab = () => {
+  const { data, isLoading, isError, refetch } = useGetAdoptFeatures();
+  const features = data?.data;
+  const rows: FeatureRow[] = (features?.features ?? []).map((f) => ({ ...f, id: f.feature }));
+
   return (
     <div className="space-y-8">
-      <DataTable columns={COLUMNS} rows={ADOPT_FEATURE_ROWS} />
+      <p className={EYEBROW_CLASS}>
+        {features
+          ? `${rows.length} features · read over a ${features.windowDays}-day window · abandoned after ${features.abandonedAfterDays} days of no use${features.customersSeen !== null ? ` · ${formatCount(features.customersSeen)} customers seen` : ""}`
+          : "Which features people use, return to, and abandon"}
+      </p>
 
-      <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>The two that are worth an hour each</p>
-        <InsightCards cards={ADOPT_FEATURE_INSIGHT_CARDS} />
-      </section>
+      {isError ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+          <p className="text-[12px] text-rose">Couldn't load Adopt's features.</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : isLoading ? (
+        <FeaturesSkeleton />
+      ) : (
+        <DataTable columns={COLUMNS} rows={rows} emptyTitle="No features measured yet" emptyBody="Feature usage will appear here once enough product-events history exists." />
+      )}
+
+      {/* ❌ Backend does NOT provide: orders/month after adoption, a ship date, or a verdict chip
+          per feature — this endpoint only returns usage/return/abandonment counts. Dropped rather
+          than shown against fabricated figures. The old per-feature drilldown link (features/:id)
+          is also dropped — ADOPT_FEATURE_DETAILS was keyed by a few specific mock feature ids, not
+          a general per-feature endpoint; see [[flag_unreachable_routes]], now unreachable, same
+          accepted state as Acquire's channel-detail. */}
+
+      {features?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
     </div>
   );
 };

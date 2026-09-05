@@ -7,9 +7,6 @@
 
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
-import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
-import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
@@ -59,61 +56,11 @@ export const ADOPT_SHARE_EXPORT_PRESET: ShareOrExportPreset = {
     "Loyalty tiers is unavailable everywhere on this screen — it travels with the file rather than being dropped from it, an export where the gaps quietly vanish is how an unavailable becomes a zero in someone else's deck.",
 };
 
-// ---- Features (AD03) + one-feature drilldown (AD04) ----------------------
-
-export type FeatureRow = {
-  id: string;
-  feature: string;
-  everUsed: string;
-  usedTwice: string;
-  usedTwiceTone: "teal" | "amber" | "rose";
-  stillUsing: string;
-  stillUsingTone: "teal" | "amber" | "rose";
-  ordersPerMonthAfter: string;
-  ordersTone: "ink" | "teal";
-  shipped: string;
-  verdict: string;
-  verdictTone: ChipTone;
-};
-
-export const ADOPT_FEATURE_ROWS: FeatureRow[] = [
-  { id: "order-again", feature: "Order again · one tap", everUsed: "612,000", usedTwice: "481,000", usedTwiceTone: "teal", stillUsing: "78.6%", stillUsingTone: "teal", ordersPerMonthAfter: "6.1", ordersTone: "teal", shipped: "18 Mar", verdict: "works", verdictTone: "teal" },
-  { id: "saved-addresses", feature: "Saved addresses", everUsed: "598,000", usedTwice: "541,000", usedTwiceTone: "teal", stillUsing: "90.5%", stillUsingTone: "teal", ordersPerMonthAfter: "4.8", ordersTone: "teal", shipped: "2022", verdict: "works", verdictTone: "teal" },
-  { id: "scheduled-delivery", feature: "Scheduled delivery", everUsed: "241,000", usedTwice: "109,000", usedTwiceTone: "amber", stillUsing: "45.2%", stillUsingTone: "rose", ordersPerMonthAfter: "8.9", ordersTone: "teal", shipped: "2023", verdict: "broke in March", verdictTone: "rose" },
-  { id: "wallet", feature: "Wallet", everUsed: "184,000", usedTwice: "56,000", usedTwiceTone: "rose", stillUsing: "30.4%", stillUsingTone: "rose", ordersPerMonthAfter: "5.1", ordersTone: "teal", shipped: "Nov 2025", verdict: "no reason to return", verdictTone: "rose" },
-  { id: "group-ordering", feature: "Group ordering", everUsed: "94,000", usedTwice: "71,000", usedTwiceTone: "teal", stillUsing: "75.5%", stillUsingTone: "teal", ordersPerMonthAfter: "11.4", ordersTone: "teal", shipped: "2024", verdict: "small and excellent", verdictTone: "teal" },
-  { id: "ratings", feature: "Ratings", everUsed: "241,000", usedTwice: "112,000", usedTwiceTone: "amber", stillUsing: "46.5%", stillUsingTone: "amber", ordersPerMonthAfter: "4.2", ordersTone: "ink", shipped: "2022", verdict: "declining", verdictTone: "amber" },
-  { id: "loyalty-tiers", feature: "Loyalty tiers", everUsed: "Unavailable", usedTwice: "Unavailable", usedTwiceTone: "amber", stillUsing: "Unavailable", stillUsingTone: "amber", ordersPerMonthAfter: "Unavailable", ordersTone: "ink", shipped: "Apr", verdict: "not instrumented", verdictTone: "rose" },
-];
-
-export const ADOPT_FEATURE_INSIGHT_CARDS: InsightCard[] = [
-  {
-    id: "scheduled-delivery-broke",
-    agentTag: "PR",
-    meta: "94,000 customers · ₦24M",
-    title: "Scheduled delivery broke in March",
-    body: "Second use fell from 71% to 45% in the week of 4 March. A scheduled order shows the delivery fee every single week, where a one-off order shows it once — the same change, felt seven times harder.",
-    footnote: "causal · the highest-value feature",
-    tone: "rose",
-  },
-  {
-    id: "wallet-funded-forgotten",
-    agentTag: "PR",
-    meta: "128,000 customers · ₦9M",
-    title: "The wallet is funded once and forgotten",
-    body: "184,000 funded it, 56,000 used it twice. There is no balance reminder, no auto-top-up and no reason to open it. It is not broken — nothing ever brings anyone back to it.",
-    footnote: "shipped Nov 2025, never followed up",
-    tone: "amber",
-  },
-  {
-    id: "group-ordering-unmarketed",
-    meta: "94,000 CUSTOMERS",
-    title: "Group ordering is the best feature nobody has",
-    body: "11.4 orders a month, 75% second use, highest of anything here. It is 8% of the base and has never been promoted to the other 92%.",
-    footnote: "small, excellent, unmarketed",
-    tone: "teal",
-  },
-];
+// ---- Features (AD03) is now wired to GET /lifecycle/adopt/features — see features-tab.tsx. That
+// endpoint has no orders/month-after, ship date, or verdict field per feature, so those columns
+// and the narrative "insight cards" below aren't reproducible from live data. One-feature
+// drilldown (AD04) below keeps its own unrelated mock — see [[flag_unreachable_routes]], now
+// unreachable (no per-feature endpoint to key it off).
 
 export type AdoptOutcomeRow = {
   id: string;
@@ -174,87 +121,14 @@ export const ADOPT_FEATURE_DETAILS: Record<string, FeatureDetail> = {
   },
 };
 
-// ---- Depth (AD05) -----------------------------------------------------
+// ---- Depth (AD05) is now wired to GET /lifecycle/adopt/depth — see depth-tab.tsx. That endpoint
+// bands customers by total feature count only, with no first/second-feature pairing field, so the
+// old mock's "which second feature matters most" table isn't reproducible from live data.
 
-export const ADOPT_DEPTH_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "0 features · ordering only", value: "781,000 · 65.5%", percent: 66, tone: "rose" },
-  { label: "1 feature", value: "371,000 · 31.2%", percent: 31, tone: "amber" },
-  { label: "2 features", value: "218,000 · 18.3%", percent: 18, tone: "teal" },
-  { label: "3 features", value: "131,000 · 11.0%", percent: 11, tone: "teal" },
-  { label: "4 or more", value: "62,000 · 5.2%", percent: 5, tone: "teal" },
-];
-
-export type SecondFeatureRow = {
-  id: string;
-  firstFeature: string;
-  mostCommonSecond: string;
-  customers: string;
-  retentionAt2: string;
-  retentionTone: "teal" | "amber";
-  liftOver1: string;
-  liftTone: "teal" | "amber" | "neutral";
-  prompted: string;
-  promptedTone: "teal" | "rose";
-};
-
-export const ADOPT_SECOND_FEATURE_ROWS: SecondFeatureRow[] = [
-  { id: "saved-addresses-order-again", firstFeature: "Saved addresses", mostCommonSecond: "Order again", customers: "184,000", retentionAt2: "64.1%", retentionTone: "teal", liftOver1: "+31 pts", liftTone: "teal", prompted: "yes · in-app", promptedTone: "teal" },
-  { id: "order-again-scheduled", firstFeature: "Order again", mostCommonSecond: "Scheduled delivery", customers: "71,000", retentionAt2: "71.4%", retentionTone: "teal", liftOver1: "+38 pts", liftTone: "teal", prompted: "no prompt", promptedTone: "rose" },
-  { id: "saved-addresses-wallet", firstFeature: "Saved addresses", mostCommonSecond: "Wallet", customers: "41,000", retentionAt2: "48.1%", retentionTone: "amber", liftOver1: "+15 pts", liftTone: "amber", prompted: "yes · at checkout", promptedTone: "teal" },
-  { id: "order-again-group", firstFeature: "Order again", mostCommonSecond: "Group ordering", customers: "19,000", retentionAt2: "78.9%", retentionTone: "teal", liftOver1: "+45 pts", liftTone: "teal", prompted: "no prompt", promptedTone: "rose" },
-  { id: "any-ratings", firstFeature: "Any", mostCommonSecond: "Ratings", customers: "112,000", retentionAt2: "39.4%", retentionTone: "amber", liftOver1: "+6 pts", liftTone: "neutral", prompted: "yes · after delivery", promptedTone: "teal" },
-];
-
-// ---- Not instrumented / blind spots (AD06) --------------------------------
-
-export type BlindSpotRow = {
-  id: string;
-  what: string;
-  shipped: string;
-  whyInvisible: string;
-  whyInvisibleTone: "rose" | "amber";
-  whoCouldFix?: { name: string; color: string };
-  noOwner?: boolean;
-  requested: string;
-  requestedTone: "neutral" | "amber";
-  state: string;
-  stateTone: ChipTone;
-};
-
-export const ADOPT_BLIND_SPOT_ROWS: BlindSpotRow[] = [
-  { id: "loyalty-tiers", what: "Loyalty tiers", shipped: "Apr 2026", whyInvisible: "renamed, event never updated", whyInvisibleTone: "rose", whoCouldFix: { name: "Engineering", color: "#4E7080" }, requested: "2 Aug", requestedTone: "neutral", state: "34 days overdue", stateTone: "rose" },
-  { id: "basket-contents", what: "Basket contents", shipped: "2022", whyInvisible: "order_lines not in the feed", whyInvisibleTone: "rose", whoCouldFix: { name: "Engineering", color: "#4E7080" }, requested: "28 Jul", requestedTone: "neutral", state: "41 days overdue", stateTone: "rose" },
-  { id: "in-app-search", what: "In-app search", shipped: "2023", whyInvisible: "never instrumented", whyInvisibleTone: "amber", whoCouldFix: { name: "Engineering", color: "#4E7080" }, requested: "never asked", requestedTone: "amber", state: "no request", stateTone: "amber" },
-  { id: "push-notification-opens", what: "Push notification opens", shipped: "2024", whyInvisible: "provider reports sends, not opens", whyInvisibleTone: "amber", whoCouldFix: { name: "Engineering", color: "#4E7080" }, requested: "never asked", requestedTone: "amber", state: "no request", stateTone: "amber" },
-  { id: "referral-link-shares", what: "Referral link shares", shipped: "2024", whyInvisible: "attribution only on redemption", whyInvisibleTone: "amber", noOwner: true, requested: "never asked", requestedTone: "amber", state: "Advocate unowned", stateTone: "rose" },
-];
-
-export const ADOPT_BLIND_SPOT_COST_CARDS: ActionCard[] = [
-  {
-    id: "loyalty-tiers-cost",
-    eyebrow: "Loyalty tiers",
-    tone: "rose",
-    title: "A rename that cannot be evaluated",
-    body: "It shipped in April and may have helped, hurt or done nothing. Four months of a live feature with no reading. The instrumentation request has sat with Engineering for 34 days.",
-    footnote: "second-largest overdue obligation",
-  },
-  {
-    id: "basket-contents-cost",
-    eyebrow: "Basket contents",
-    tone: "rose",
-    title: "Blocks cost of goods entirely",
-    body: "Without order lines there is no per-item cost, which is why margin is unavailable across the whole product. One field in one feed unblocks six figures in four stages.",
-    footnote: "the root of the Price problem",
-  },
-  {
-    id: "nobody-asked-for",
-    eyebrow: "The two nobody asked for",
-    tone: "amber",
-    title: "Search and push opens",
-    body: "Not overdue — never requested. Both would be small asks. They are listed here because “nobody asked” is a different failure from “nobody delivered”, and only one of them is Engineering's.",
-    footnote: "our omission, not theirs",
-  },
-];
+// ---- Not instrumented / blind spots (AD06) is now wired to GET /lifecycle/instrumentation — see
+// blind-spots-tab.tsx. That's a workspace-wide endpoint (every gap names which stages it blocks),
+// filtered there to this stage. No field estimates a per-gap cost the way the old mock's cards
+// claimed to, so those aren't reproducible from live data.
 
 // ---- Cohorts (AD07) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
 // acquire/data.ts's Cohorts note and cohorts-tab.tsx.
