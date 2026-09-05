@@ -213,51 +213,28 @@ type DepartureRow = StageDepartureDto & { id: string };
 // primaryConversion) for every stage, unlike Cohorts/Markets where the real endpoint's shape
 // didn't match most stages' bespoke designs at all.
 //
-// Corrected 2026-09-06, caught by the user: an earlier pass here reused every stage's OLD MOCK
-// card label assuming it still described what the live field measures — it does not, and this
-// doc's own coverage-tracker note above (written 2026-08-31, before that pass) already said so:
-// "Acquire/Activate's 'Acquired · 12 months' card is a real population match; Retain's identical
-// card is NOT its own population — it's echoing Acquire's top-of-funnel number for context, a
-// different concept than 'who's in Retain now'." Price's "Customers with revenue" (really a
-// 90-day revenue filter) and Support's "Something went wrong"/"Told us about it" (monthly
-// incident rates against active-customer count) are flagged the same way. No live check has ever
-// confirmed what `primaryConversion` measures for any stage besides Acquire/Activate either —
-// "Adopting · 2+ features", "Ever won back", etc. were invented labels, not verified ones.
-// Only Acquire and Activate's labels are kept (both live-checked, both previously reviewed);
-// every other stage now shows the plain, honest field name rather than a fabricated-sounding
-// per-stage claim — a generic label that's actually true beats a specific one that might not be.
-const POPULATION_LABEL: Record<string, string> = {
-  acquire: "Acquired · 12 months",
-  activate: "Acquired · 12 months",
-};
-
-const PRIMARY_CONVERSION_LABEL: Record<string, string> = {
-  acquire: "Reach a second order",
-  activate: "Reach value",
-};
-
-// Only Acquire/Activate had a live-checked note on this card — kept verbatim rather than
-// inventing similar-sounding notes for the other 8, which would need context (a prior-period
-// comparison, a definition nuance) this single live field doesn't carry.
-const PRIMARY_CONVERSION_NOTE: Partial<Record<string, string>> = {
-  acquire: "the number that decides if this is good",
-  activate: "activation, not just a first order",
-};
-
-function buildStageKpis(stageData: StageData | undefined, stageSlug: string): Kpi[] {
+// Corrected 2026-09-06 (twice, both caught by the user). First pass: every stage reused its OLD
+// MOCK card label assuming it still described the live field — the doc's own coverage-tracker
+// note (2026-08-31, above) already said that's unsafe for 8 of 10 stages. Second pass, on closer
+// reading: that same note does NOT actually settle Acquire/Activate either. Every "confirmed
+// 2026-08-31" note anywhere in this doc is about the measured-value WRAPPER SHAPE
+// (`{value,state,missingSource,wouldUnlock}` vs. a bare number) — never about what time window
+// `population` covers. "Acquired · 12 months" is Figma mock copy, not a backend-confirmed window;
+// nothing in any live response has ever named a 12-month period. The note itself ends "❓ open —
+// this needs the same per-stage audit the metric line got before wiring anything," meaning even
+// its own author left this unsettled. So: no stage gets a specific label. Every card shows the
+// plain field name — true for all 10, unlike any specific-sounding alternative.
+function buildStageKpis(stageData: StageData | undefined): Kpi[] {
   if (!stageData) return [];
   const { population, rateOfChange, yearOverYear, atStake, primaryConversion } = stageData;
-  const populationLabel = POPULATION_LABEL[stageSlug] ?? "Population";
-  const conversionLabel = PRIMARY_CONVERSION_LABEL[stageSlug] ?? "Primary conversion";
-  const conversionNote = PRIMARY_CONVERSION_NOTE[stageSlug];
 
   const populationNote =
     yearOverYear.value !== null ? `${yearOverYear.value >= 0 ? "+" : ""}${formatPercent(yearOverYear.value)} on last year` : undefined;
 
   return [
     population.value !== null
-      ? { eyebrow: populationLabel, value: formatCount(population.value), tone: "teal", note: populationNote }
-      : { eyebrow: populationLabel, unavailable: { missingSource: population.missingSource, wouldUnlock: population.wouldUnlock } },
+      ? { eyebrow: "Population", value: formatCount(population.value), tone: "teal", note: populationNote }
+      : { eyebrow: "Population", unavailable: { missingSource: population.missingSource, wouldUnlock: population.wouldUnlock } },
     atStake.value !== null
       ? { eyebrow: "At stake", value: formatCompactCurrency(atStake.value), tone: "rose", note: "in this stage alone" }
       : { eyebrow: "At stake", unavailable: { missingSource: atStake.missingSource, wouldUnlock: atStake.wouldUnlock } },
@@ -265,8 +242,8 @@ function buildStageKpis(stageData: StageData | undefined, stageSlug: string): Kp
       ? { eyebrow: "Rate of change", value: `${rateOfChange.value >= 0 ? "+" : ""}${formatPercent(rateOfChange.value)}`, tone: rateOfChange.value >= 0 ? "teal" : "rose", note: "month over month" }
       : { eyebrow: "Rate of change", unavailable: { missingSource: rateOfChange.missingSource, wouldUnlock: rateOfChange.wouldUnlock } },
     primaryConversion.value !== null
-      ? { eyebrow: conversionLabel, value: formatPercent(primaryConversion.value), tone: "rose", note: conversionNote }
-      : { eyebrow: conversionLabel, unavailable: { missingSource: primaryConversion.missingSource, wouldUnlock: primaryConversion.wouldUnlock } },
+      ? { eyebrow: "Primary conversion", value: formatPercent(primaryConversion.value), tone: "rose" }
+      : { eyebrow: "Primary conversion", unavailable: { missingSource: primaryConversion.missingSource, wouldUnlock: primaryConversion.wouldUnlock } },
   ];
 }
 
@@ -284,7 +261,7 @@ export function OverviewTab() {
   const data = OVERVIEW_DATA[stage.slug];
   if (!data) return null;
 
-  const kpis = buildStageKpis(stageQuery.data?.data, stage.slug);
+  const kpis = buildStageKpis(stageQuery.data?.data);
   const departures: DepartureRow[] = (stageQuery.data?.data.departures ?? []).map((departure) => ({ ...departure, id: departure.cause }));
 
   const columns: Column<DepartureRow>[] = [
