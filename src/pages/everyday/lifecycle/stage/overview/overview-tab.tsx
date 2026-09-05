@@ -79,7 +79,7 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightBody:
       "It is the third-largest group in the stage and the only one with no reading behind it. Everything Flolyt can see about them looks normal. That is a real answer and it is stated as one — a plausible story would be worse than an admitted gap.",
     insightTone: "amber",
-    leakEyebrow: "Where the 528,000 who never activate are lost",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where they stop",
     showStageRail: true,
     openRoomPreset: ACTIVATE_OPEN_ROOM_PRESET,
@@ -101,7 +101,7 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightBody:
       "Loyalty tiers were renamed in April and have never emitted an event. Flolyt cannot say how many customers use them, whether the rename helped or hurt, or whether the feature does anything at all. It is listed as unavailable rather than left off the table.",
     insightTone: "rose",
-    leakEyebrow: "Where the 781,000 who use nothing are",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Group",
     showStageRail: true,
     openRoomPreset: ADOPT_OPEN_ROOM_PRESET,
@@ -112,7 +112,7 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightBody:
       "No email, no consent, no push — they checked out as guests. They are inside the 148,000 in the reactivation room and will be silently dropped at send time. The only fix for them was upstream, in Activate, at the moment the account was offered and was not.",
     insightTone: "rose",
-    leakEyebrow: "The 651,000 who never came back",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Group",
     showStageRail: true,
     openRoomPreset: RETAIN_OPEN_ROOM_PRESET,
@@ -123,7 +123,7 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightBody:
       "Expansion rate rose 0.7 points while the eligible population fell 11%. Expansion works on customers who stay, and Retain is producing fewer of them. A healthy rate applied to a shrinking base is how a stage can be doing its job and still be worth less every quarter.",
     insightTone: "amber",
-    leakEyebrow: "Where the ₦61M is",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where",
     showStageRail: true,
     openRoomPreset: EXPAND_OPEN_ROOM_PRESET,
@@ -134,7 +134,7 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightBody:
       "This stage's own number is small because most of what it detects belongs to Delivery, Product or Engineering. Support is the earliest and cheapest sensor in the lifecycle and the one with the least ability to act on what it senses.",
     insightTone: "amber",
-    leakEyebrow: "Where the ₦9M is",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where",
     showStageRail: true,
     openRoomPreset: SUPPORT_OPEN_ROOM_PRESET,
@@ -145,7 +145,7 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightBody:
       "61,400 cards failed on renewal night because they were presented at midnight, when balances are lowest. These customers wanted the service, were willing to pay for it, and were lost to an implementation detail. It is the only ₦88M in this lifecycle that needed no persuasion, no discount and no product change.",
     insightTone: "teal",
-    leakEyebrow: "Where the ₦88M is, and why it is the cheapest money in the company",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where",
     showStageRail: true,
     openRoomPreset: RENEW_OPEN_ROOM_PRESET,
@@ -171,7 +171,7 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     leadTone: "amber",
     insightTitle: CHURN_OVERVIEW_INSIGHT.title,
     insightBody: CHURN_OVERVIEW_INSIGHT.body,
-    leakEyebrow: "Where the ₦124M is",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where",
     showStageRail: true,
     openRoomPreset: CHURN_OPEN_ROOM_PRESET,
@@ -211,42 +211,34 @@ type DepartureRow = StageDepartureDto & { id: string };
 // Every stage's KPI row is wired to the same GET /lifecycle/stages/{stageKey} endpoint — it
 // returns the identical 4 generic measured-value fields (population/atStake/rateOfChange/
 // primaryConversion) for every stage, unlike Cohorts/Markets where the real endpoint's shape
-// didn't match most stages' bespoke designs at all. What differs per stage is only the CARD
-// LABEL, drawn from that stage's own original mock language where one naturally fits (e.g.
-// Retain's population card was already called "Acquired · 12 months" in its own mock; Adopt's
-// primaryConversion card reuses its own "Adopting · 2+ features" framing). Each stage's other
-// bespoke 3rd/4th KPI ideas (Price's "Contribution margin", Expand's "ARPU multiple", Advocate's
-// "Effective CAC", etc.) have no backing field and are dropped, same treatment as Acquire's
-// "Blended CAC" and Activate's "Median time to value" (which lives on a different endpoint).
+// didn't match most stages' bespoke designs at all.
+//
+// Corrected 2026-09-06, caught by the user: an earlier pass here reused every stage's OLD MOCK
+// card label assuming it still described what the live field measures — it does not, and this
+// doc's own coverage-tracker note above (written 2026-08-31, before that pass) already said so:
+// "Acquire/Activate's 'Acquired · 12 months' card is a real population match; Retain's identical
+// card is NOT its own population — it's echoing Acquire's top-of-funnel number for context, a
+// different concept than 'who's in Retain now'." Price's "Customers with revenue" (really a
+// 90-day revenue filter) and Support's "Something went wrong"/"Told us about it" (monthly
+// incident rates against active-customer count) are flagged the same way. No live check has ever
+// confirmed what `primaryConversion` measures for any stage besides Acquire/Activate either —
+// "Adopting · 2+ features", "Ever won back", etc. were invented labels, not verified ones.
+// Only Acquire and Activate's labels are kept (both live-checked, both previously reviewed);
+// every other stage now shows the plain, honest field name rather than a fabricated-sounding
+// per-stage claim — a generic label that's actually true beats a specific one that might not be.
 const POPULATION_LABEL: Record<string, string> = {
   acquire: "Acquired · 12 months",
   activate: "Acquired · 12 months",
-  price: "Customers with revenue",
-  adopt: "Customers who could adopt",
-  retain: "Acquired · 12 months",
-  expand: "Eligible to expand",
-  support: "Something went wrong",
-  renew: "Coming up for renewal",
-  advocate: "Referrers",
-  churn: "Churned · 12 months",
 };
 
 const PRIMARY_CONVERSION_LABEL: Record<string, string> = {
   acquire: "Reach a second order",
   activate: "Reach value",
-  price: "Primary conversion",
-  adopt: "Adopting · 2+ features",
-  retain: "Placed a second order in 90 days",
-  expand: "Expanded",
-  support: "Told us about it",
-  renew: "Projected renewal rate",
-  advocate: "Referral rate",
-  churn: "Ever won back",
 };
 
-// Only Acquire/Activate had an established note on this card before this pass — kept verbatim
-// rather than inventing similar-sounding notes for the other 8, which would need context (a
-// prior-period comparison, a definition nuance) this single live field doesn't carry.
+// Only Acquire/Activate had a live-checked note on this card — kept verbatim rather than
+// inventing similar-sounding notes for the other 8, which would need context (a prior-period
+// comparison, a definition nuance) this single live field doesn't carry.
 const PRIMARY_CONVERSION_NOTE: Partial<Record<string, string>> = {
   acquire: "the number that decides if this is good",
   activate: "activation, not just a first order",
@@ -255,7 +247,7 @@ const PRIMARY_CONVERSION_NOTE: Partial<Record<string, string>> = {
 function buildStageKpis(stageData: StageData | undefined, stageSlug: string): Kpi[] {
   if (!stageData) return [];
   const { population, rateOfChange, yearOverYear, atStake, primaryConversion } = stageData;
-  const populationLabel = POPULATION_LABEL[stageSlug] ?? "Population · 12 months";
+  const populationLabel = POPULATION_LABEL[stageSlug] ?? "Population";
   const conversionLabel = PRIMARY_CONVERSION_LABEL[stageSlug] ?? "Primary conversion";
   const conversionNote = PRIMARY_CONVERSION_NOTE[stageSlug];
 
