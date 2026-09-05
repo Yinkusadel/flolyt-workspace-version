@@ -8,7 +8,6 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
@@ -72,66 +71,8 @@ export const RENEW_DEFINITION = {
 };
 
 // ---- Overview (RN02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
-// overview-tab.tsx's buildStageKpis.
-
-export const RENEW_OVERVIEW_LEAK_ROWS: LeakRow[] = [
-  {
-    id: "cards-retried-midnight",
-    where: "Cards retried at midnight local",
-    customers: "61,400",
-    value: "₦88M",
-    valueTone: "rose",
-    trend: "improving",
-    trendTone: "teal",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "closed · ₦62M", tone: "teal" },
-  },
-  {
-    id: "pauses-after-delivery-fee",
-    where: "Pauses after the delivery fee",
-    customers: "9,100",
-    value: "₦22M",
-    valueTone: "amber",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "causal · 4 Mar", tone: "ultra" },
-    room: { label: "open", tone: "amber" },
-  },
-  {
-    id: "expired-cards-never-prompted",
-    where: "Expired cards, never prompted",
-    customers: "14,200",
-    value: "₦19M",
-    valueTone: "amber",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "book-built-on-old-repeat-rate",
-    where: "Renewal book built on the old repeat rate",
-    customers: "—",
-    value: "₦88M overstated",
-    valueTone: "rose",
-    trend: "—",
-    trendTone: "neutral",
-    causeKnown: { label: "causal · 2 Aug", tone: "ultra" },
-    room: { label: "obligation overdue", tone: "rose" },
-    detailHref: "/lifecycle/renew/book",
-  },
-  {
-    id: "lapsed-silently-leak",
-    where: "Lapsed silently",
-    customers: "18,000",
-    value: "₦41M",
-    valueTone: "rose",
-    trend: "unknown",
-    trendTone: "neutral",
-    causeKnown: { label: "nothing found", tone: "amber" },
-    room: { label: "none", tone: "neutral" },
-  },
-];
+// overview-tab.tsx's buildStageKpis. Its leak table is wired too, to the same endpoint's
+// `departures[]`.
 
 export const RENEW_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Pauses after the delivery fee",

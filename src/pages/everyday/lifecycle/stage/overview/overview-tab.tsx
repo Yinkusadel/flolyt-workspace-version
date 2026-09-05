@@ -3,11 +3,12 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
-import { PersonAvatar } from "@/components/person-avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { WideBarRow, type BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { CHIP_INTERACTIVE_CLASS, Chip } from "@/pages/everyday/lifecycle/stage/chip";
+import { CHIP_INTERACTIVE_CLASS, Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
+import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { KpiCards, type Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { StageEmptyState } from "@/pages/everyday/lifecycle/stage/overview/empty-state";
@@ -18,55 +19,20 @@ import { AssignAnOwnerModal, type AssignOwnerPreset } from "@/pages/everyday/lif
 import { STAGES } from "@/pages/everyday/lifecycle/data";
 import { formatCompactCurrency, formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetStage } from "@/features/lifecycle/use-get-stage";
-import type { StageData } from "@/services/api/lifecycle/get-stage";
-import {
-  ACQUIRE_OPEN_ROOM_PRESET,
-  ACQUIRE_OVERVIEW_BAR_ROWS,
-  ACQUIRE_OVERVIEW_LEAK_ROWS,
-  ACQUIRE_SHARE_EXPORT_PRESET,
-  type LeakRow,
-} from "@/pages/everyday/lifecycle/stage/acquire/data";
-import {
-  ACTIVATE_OPEN_ROOM_PRESET,
-  ACTIVATE_OVERVIEW_LEAK_ROWS,
-  ACTIVATE_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/activate/data";
-import {
-  PRICE_OPEN_ROOM_PRESET,
-  PRICE_OVERVIEW_LEAK_ROWS,
-  PRICE_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/price/data";
-import {
-  ADOPT_OPEN_ROOM_PRESET,
-  ADOPT_OVERVIEW_LEAK_ROWS,
-  ADOPT_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/adopt/data";
-import {
-  RETAIN_OPEN_ROOM_PRESET,
-  RETAIN_OVERVIEW_LEAK_ROWS,
-  RETAIN_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/retain/data";
-import {
-  EXPAND_OPEN_ROOM_PRESET,
-  EXPAND_OVERVIEW_LEAK_ROWS,
-  EXPAND_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/expand/data";
-import {
-  SUPPORT_OPEN_ROOM_PRESET,
-  SUPPORT_OVERVIEW_LEAK_ROWS,
-  SUPPORT_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/support/data";
-import {
-  RENEW_OPEN_ROOM_PRESET,
-  RENEW_OVERVIEW_LEAK_ROWS,
-  RENEW_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/renew/data";
+import type { StageData, StageDepartureDto } from "@/services/api/lifecycle/get-stage";
+import { ACQUIRE_OPEN_ROOM_PRESET, ACQUIRE_OVERVIEW_BAR_ROWS, ACQUIRE_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import { ACTIVATE_OPEN_ROOM_PRESET, ACTIVATE_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/activate/data";
+import { PRICE_OPEN_ROOM_PRESET, PRICE_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/price/data";
+import { ADOPT_OPEN_ROOM_PRESET, ADOPT_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/adopt/data";
+import { RETAIN_OPEN_ROOM_PRESET, RETAIN_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/retain/data";
+import { EXPAND_OPEN_ROOM_PRESET, EXPAND_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/expand/data";
+import { SUPPORT_OPEN_ROOM_PRESET, SUPPORT_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/support/data";
+import { RENEW_OPEN_ROOM_PRESET, RENEW_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/renew/data";
 import {
   ADVOCATE_ASSIGN_OWNER_PRESET,
   ADVOCATE_OPEN_ROOM_PRESET,
   ADVOCATE_OVERVIEW_INSIGHT,
   ADVOCATE_OVERVIEW_LEAD,
-  ADVOCATE_OVERVIEW_LEAK_ROWS,
   ADVOCATE_SHARE_EXPORT_PRESET,
 } from "@/pages/everyday/lifecycle/stage/advocate/data";
 import {
@@ -74,7 +40,6 @@ import {
   CHURN_OPEN_ROOM_PRESET,
   CHURN_OVERVIEW_INSIGHT,
   CHURN_OVERVIEW_LEAD,
-  CHURN_OVERVIEW_LEAK_ROWS,
   CHURN_SHARE_EXPORT_PRESET,
 } from "@/pages/everyday/lifecycle/stage/churn/data";
 
@@ -90,10 +55,6 @@ type OverviewData = {
   insightTone?: "ultra" | "amber" | "rose" | "teal" | "neutral";
   leakEyebrow: string;
   leakWhereHeader: string;
-  /** Overrides the leak table's 4th column header — defaults to "Trend" (e.g. Retain's "Still reachable"). */
-  leakTrendHeader?: string;
-  leakColumnKind: "owner" | "cause";
-  leakRows: LeakRow[];
   showStageRail?: boolean;
   openRoomPreset: OpenRoomPreset;
   shareExportPreset: ShareOrExportPreset;
@@ -110,8 +71,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
       "Acquisition rose 212,000 while second orders fell 17,000. Read either alone and you get the opposite answer about whether this stage is working — which is why the headline figure on this screen is a rate, not a count.",
     leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where",
-    leakColumnKind: "owner",
-    leakRows: ACQUIRE_OVERVIEW_LEAK_ROWS,
     openRoomPreset: ACQUIRE_OPEN_ROOM_PRESET,
     shareExportPreset: ACQUIRE_SHARE_EXPORT_PRESET,
   },
@@ -122,8 +81,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightTone: "amber",
     leakEyebrow: "Where the 528,000 who never activate are lost",
     leakWhereHeader: "Where they stop",
-    leakColumnKind: "cause",
-    leakRows: ACTIVATE_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: ACTIVATE_OPEN_ROOM_PRESET,
     shareExportPreset: ACTIVATE_SHARE_EXPORT_PRESET,
@@ -135,8 +92,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightTone: "rose",
     leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where",
-    leakColumnKind: "cause",
-    leakRows: PRICE_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: PRICE_OPEN_ROOM_PRESET,
     shareExportPreset: PRICE_SHARE_EXPORT_PRESET,
@@ -148,8 +103,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightTone: "rose",
     leakEyebrow: "Where the 781,000 who use nothing are",
     leakWhereHeader: "Group",
-    leakColumnKind: "cause",
-    leakRows: ADOPT_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: ADOPT_OPEN_ROOM_PRESET,
     shareExportPreset: ADOPT_SHARE_EXPORT_PRESET,
@@ -161,9 +114,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightTone: "rose",
     leakEyebrow: "The 651,000 who never came back",
     leakWhereHeader: "Group",
-    leakTrendHeader: "Still reachable",
-    leakColumnKind: "cause",
-    leakRows: RETAIN_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: RETAIN_OPEN_ROOM_PRESET,
     shareExportPreset: RETAIN_SHARE_EXPORT_PRESET,
@@ -175,8 +125,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightTone: "amber",
     leakEyebrow: "Where the ₦61M is",
     leakWhereHeader: "Where",
-    leakColumnKind: "cause",
-    leakRows: EXPAND_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: EXPAND_OPEN_ROOM_PRESET,
     shareExportPreset: EXPAND_SHARE_EXPORT_PRESET,
@@ -188,8 +136,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightTone: "amber",
     leakEyebrow: "Where the ₦9M is",
     leakWhereHeader: "Where",
-    leakColumnKind: "cause",
-    leakRows: SUPPORT_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: SUPPORT_OPEN_ROOM_PRESET,
     shareExportPreset: SUPPORT_SHARE_EXPORT_PRESET,
@@ -201,8 +147,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightTone: "teal",
     leakEyebrow: "Where the ₦88M is, and why it is the cheapest money in the company",
     leakWhereHeader: "Where",
-    leakColumnKind: "cause",
-    leakRows: RENEW_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: RENEW_OPEN_ROOM_PRESET,
     shareExportPreset: RENEW_SHARE_EXPORT_PRESET,
@@ -216,8 +160,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightTone: "rose",
     leakEyebrow: "Where the value is, and where it is going",
     leakWhereHeader: "Where",
-    leakColumnKind: "cause",
-    leakRows: ADVOCATE_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: ADVOCATE_OPEN_ROOM_PRESET,
     shareExportPreset: ADVOCATE_SHARE_EXPORT_PRESET,
@@ -231,8 +173,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightBody: CHURN_OVERVIEW_INSIGHT.body,
     leakEyebrow: "Where the ₦124M is",
     leakWhereHeader: "Where",
-    leakColumnKind: "cause",
-    leakRows: CHURN_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: CHURN_OPEN_ROOM_PRESET,
     shareExportPreset: CHURN_SHARE_EXPORT_PRESET,
@@ -240,18 +180,33 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
   },
 };
 
-const LEAK_VALUE_TONE_CLASS: Record<LeakRow["valueTone"], string> = {
-  rose: "text-rose",
-  amber: "text-amber",
-  ink: "text-ink",
+const TREND_TONE_CLASS: Record<string, string> = {
+  worsening: "text-rose",
+  improving: "text-teal",
+  flat: "text-ink-4",
 };
 
-const LEAK_TREND_TONE_CLASS: Record<LeakRow["trendTone"], string> = {
-  rose: "text-rose",
-  amber: "text-amber",
-  teal: "text-teal",
-  neutral: "text-ink-4",
-};
+// `claim.grade`'s real enum values aren't confirmed by any live response (departures have only
+// ever come back empty) — matched defensively by keyword, same pattern as safeCalloutTone
+// elsewhere in this domain, rather than assuming an exact string.
+function claimTone(grade: string): ChipTone {
+  const normalized = grade.toLowerCase();
+  if (normalized.includes("causal")) return "ultra";
+  if (normalized.includes("correlat")) return "amber";
+  return "neutral";
+}
+
+// The leak table (all 10 stages, shared) is wired to GET /lifecycle/stages/{stageKey}'s
+// `departures[]` — grouped by exit-rule cause, the same field every stage's own Overview KPIs
+// already read from. Every live response seen so far returned `departures: []` (empty, not
+// populated rows), so the empty state below is what every stage currently shows — that's this
+// endpoint's own honest answer, not a loading or wiring bug. `observedValue`/`reachability` are a
+// plain `number | string | null` paired with their own `*Caveat` string here, NOT the 4-field
+// `{value,state,missingSource,wouldUnlock}` wrapper used elsewhere in this domain — confirm this
+// shape against a live response with real rows before trusting it further; nothing has confirmed
+// `claim.grade`'s real values either, hence `claimTone`'s defensive keyword match above. The old
+// per-stage "owner" column (Acquire only) is dropped — no owner field exists on a departure.
+type DepartureRow = StageDepartureDto & { id: string };
 
 // Every stage's KPI row is wired to the same GET /lifecycle/stages/{stageKey} endpoint — it
 // returns the identical 4 generic measured-value fields (population/atStake/rateOfChange/
@@ -338,70 +293,87 @@ export function OverviewTab() {
   if (!data) return null;
 
   const kpis = buildStageKpis(stageQuery.data?.data, stage.slug);
+  const departures: DepartureRow[] = (stageQuery.data?.data.departures ?? []).map((departure) => ({ ...departure, id: departure.cause }));
 
-  const columns: Column<LeakRow>[] = [
-    {
-      key: "where",
-      header: data.leakWhereHeader,
-      render: (row) =>
-        row.detailHref ? (
-          <Link to={row.detailHref} className="font-semibold text-ultra hover:underline">
-            {row.where}
-          </Link>
-        ) : (
-          <span className="font-semibold text-ink-2">{row.where}</span>
-        ),
-    },
+  const columns: Column<DepartureRow>[] = [
+    { key: "where", header: data.leakWhereHeader, render: (row) => <span className="font-semibold text-ink-2">{row.cause}</span> },
     {
       key: "customers",
       header: "Customers",
       align: "right",
-      render: (row) => <span className="font-mono text-ink">{row.customers}</span>,
+      render: (row) => (row.size !== null ? <span className="font-mono text-ink">{formatCount(row.size)}</span> : <InfoTooltip />),
     },
     {
       key: "value",
       header: "Value",
       align: "right",
-      render: (row) => <span className={LEAK_VALUE_TONE_CLASS[row.valueTone]}>{row.value}</span>,
+      render: (row) =>
+        row.observedValue !== null ? (
+          <span className="text-rose">{formatCompactCurrency(row.observedValue)}</span>
+        ) : (
+          <InfoTooltip missingSource={row.observedValueCaveat ?? undefined} />
+        ),
     },
     {
       key: "trend",
-      header: data.leakTrendHeader ?? "Trend",
+      header: "Trend",
       align: "right",
-      render: (row) => <span className={LEAK_TREND_TONE_CLASS[row.trendTone]}>{row.trend}</span>,
+      render: (row) =>
+        row.trend.direction !== null ? (
+          <span className={TREND_TONE_CLASS[row.trend.direction] ?? "text-ink-4"}>
+            {row.trend.direction}
+            {row.trend.shareChange !== null && ` · ${row.trend.shareChange >= 0 ? "+" : ""}${formatPercent(row.trend.shareChange)}`}
+          </span>
+        ) : (
+          <InfoTooltip missingSource={row.trend.missingSource ?? undefined} />
+        ),
     },
-    data.leakColumnKind === "owner"
-      ? {
-          key: "owner",
-          header: "Owner",
-          render: (row) =>
-            row.owner ? (
-              <span className="flex items-center gap-2 whitespace-nowrap text-ink-2">
-                <PersonAvatar kind="human" initials={row.owner.initials} size="sm" />
-                {row.owner.name}
-              </span>
-            ) : (
-              <Chip tone="amber">No owner</Chip>
-            ),
-        }
-      : {
-          key: "causeKnown",
-          header: "Cause known?",
-          render: (row) => (row.causeKnown ? <Chip tone={row.causeKnown.tone}>{row.causeKnown.label}</Chip> : null),
-        },
+    {
+      key: "causeKnown",
+      header: "Cause known?",
+      render: (row) => <Chip tone={claimTone(row.claim.grade)}>{row.claim.grade}</Chip>,
+    },
     {
       key: "room",
       header: "Room",
       align: "right",
       render: (row) => (
         <button type="button" onClick={() => setOpenRoomFor(row.id)}>
-          <Chip tone={row.room.tone} className={CHIP_INTERACTIVE_CLASS}>
-            {row.room.label}
+          <Chip tone={row.roomOpen ? "amber" : "neutral"} className={CHIP_INTERACTIVE_CLASS}>
+            {row.roomOpen ? "open" : "none"}
           </Chip>
         </button>
       ),
     },
   ];
+
+  const leakTable = stageQuery.isError ? (
+    <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+      <p className="text-[12px] text-rose">Couldn't load what's leaking in this stage.</p>
+      <Button type="button" variant="outline" size="sm" onClick={() => stageQuery.refetch()}>
+        Retry
+      </Button>
+    </div>
+  ) : stageQuery.isLoading ? (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-4 w-16 rounded-chip" />
+        </div>
+      ))}
+    </div>
+  ) : (
+    <DataTable
+      columns={columns}
+      rows={departures}
+      emptyTitle="No departures measured yet"
+      emptyBody="Dated exit causes for this stage will appear here once Flolyt has enough history to group them."
+    />
+  );
 
   return (
     <div className="space-y-8">
@@ -459,7 +431,7 @@ export function OverviewTab() {
           <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
             {data.leakEyebrow}
           </p>
-          <DataTable columns={columns} rows={data.leakRows} />
+          {leakTable}
         </section>
       )}
 
@@ -472,7 +444,7 @@ export function OverviewTab() {
           <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
             {data.leakEyebrow}
           </p>
-          <DataTable columns={columns} rows={data.leakRows} />
+          {leakTable}
         </section>
       )}
 

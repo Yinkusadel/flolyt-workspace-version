@@ -9,7 +9,6 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
@@ -84,66 +83,8 @@ export const RETAIN_DEFINITION: RetainDefinitionData = {
 };
 
 // ---- Overview (RT02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
-// overview-tab.tsx's buildStageKpis.
-
-export const RETAIN_OVERVIEW_LEAK_ROWS: LeakRow[] = [
-  {
-    id: "acquired-mar-may",
-    where: "Acquired Mar–May · the fee cohort",
-    customers: "148,000",
-    value: "₦412M",
-    valueTone: "rose",
-    trend: "94%",
-    trendTone: "teal",
-    causeKnown: { label: "causal · 4 Mar", tone: "ultra" },
-    room: { label: "open · 8f2c", tone: "amber" },
-    detailHref: "/lifecycle/retain/segments/acquired-mar-may",
-  },
-  {
-    id: "guest-checkout",
-    where: "Guest checkout · no contact details",
-    customers: "142,000",
-    value: "₦38M",
-    valueTone: "rose",
-    trend: "0%",
-    trendTone: "rose",
-    causeKnown: { label: "causal · Activate", tone: "ultra" },
-    room: { label: "cannot act", tone: "rose" },
-  },
-  {
-    id: "first-delivery-late-failed",
-    where: "First delivery late or failed",
-    customers: "71,000",
-    value: "₦29M",
-    valueTone: "rose",
-    trend: "91%",
-    trendTone: "teal",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "open", tone: "amber" },
-  },
-  {
-    id: "discount-only",
-    where: "Discount-only · bought once at 20% off",
-    customers: "94,000",
-    value: "₦19M",
-    valueTone: "amber",
-    trend: "88%",
-    trendTone: "teal",
-    causeKnown: { label: "causal · Price", tone: "ultra" },
-    room: { label: "open", tone: "amber" },
-  },
-  {
-    id: "no-reading",
-    where: "No reading",
-    customers: "196,000",
-    value: "₦31M",
-    valueTone: "amber",
-    trend: "87%",
-    trendTone: "teal",
-    causeKnown: { label: "nothing found", tone: "amber" },
-    room: { label: "none", tone: "neutral" },
-  },
-];
+// overview-tab.tsx's buildStageKpis. Its leak table is wired too, to the same endpoint's
+// `departures[]`.
 
 export const RETAIN_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Acquired Mar–May · the fee cohort",

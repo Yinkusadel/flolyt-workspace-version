@@ -9,7 +9,6 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -86,66 +85,8 @@ export const EXPAND_DEFINITION: ExpandDefinitionData = {
 };
 
 // ---- Overview (EX02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
-// overview-tab.tsx's buildStageKpis.
-
-export const EXPAND_OVERVIEW_LEAK_ROWS: LeakRow[] = [
-  {
-    id: "never-prompted-high-frequency",
-    where: "Never prompted to upgrade · high-frequency",
-    customers: "94,000",
-    value: "₦31M",
-    valueTone: "rose",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "no prompt exists", tone: "amber" },
-    room: { label: "none", tone: "neutral" },
-    detailHref: "/lifecycle/expand/upgrade-paths/pay-as-you-go-lagos-plus",
-  },
-  {
-    id: "downgraded-student-unverified",
-    where: "Downgraded to Student without verification",
-    customers: "6,200",
-    value: "₦9M",
-    valueTone: "amber",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "causal · Price", tone: "ultra" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "business-households-consumer-plans",
-    where: "Business-sized households on consumer plans",
-    customers: "11,000",
-    value: "₦12M",
-    valueTone: "amber",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "group-ordering-never-offered-family",
-    where: "Group ordering users never offered Family",
-    customers: "19,000",
-    value: "₦9M",
-    valueTone: "amber",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "no prompt exists", tone: "amber" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "category-expansion",
-    where: "Category expansion",
-    customers: "94,000",
-    value: "Unavailable",
-    valueTone: "ink",
-    trend: "unknown",
-    trendTone: "neutral",
-    causeKnown: { label: "needs order_lines", tone: "amber" },
-    room: { label: "blocked", tone: "rose" },
-  },
-];
+// overview-tab.tsx's buildStageKpis. Its leak table is wired too, to the same endpoint's
+// `departures[]`.
 
 export const EXPAND_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Never prompted to upgrade · high-frequency",

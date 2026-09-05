@@ -10,7 +10,6 @@ import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -84,65 +83,8 @@ export const ADOPT_DEFINITION: AdoptDefinitionData = {
 };
 
 // ---- Overview (AD02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
-// overview-tab.tsx's buildStageKpis.
-
-export const ADOPT_OVERVIEW_LEAK_ROWS: LeakRow[] = [
-  {
-    id: "guest-checkout-no-features",
-    where: "Guest checkout · no account, so no features",
-    customers: "186,000",
-    value: "₦41M",
-    valueTone: "rose",
-    trend: "structurally excluded",
-    trendTone: "rose",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "open · Activate", tone: "amber" },
-  },
-  {
-    id: "ordered-twice-never-explored",
-    where: "Ordered twice, never explored",
-    customers: "312,000",
-    value: "₦38M",
-    valueTone: "rose",
-    trend: "no prompt exists",
-    trendTone: "amber",
-    causeKnown: { label: "no reading", tone: "amber" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "scheduled-orders-abandoned",
-    where: "Scheduled orders abandoned after the fee",
-    customers: "94,000",
-    value: "₦24M",
-    valueTone: "rose",
-    trend: "the 4 March change",
-    trendTone: "rose",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "wallet-funded-once",
-    where: "Wallet · funded once, never reused",
-    customers: "128,000",
-    value: "₦9M",
-    valueTone: "amber",
-    trend: "no reason to return to it",
-    trendTone: "amber",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "loyalty-tiers",
-    where: "Loyalty tiers",
-    customers: "Unavailable",
-    value: "Unavailable",
-    valueTone: "ink",
-    trend: "never instrumented",
-    trendTone: "rose",
-    causeKnown: { label: "cannot say", tone: "amber" },
-    room: { label: "blocked", tone: "rose" },
-  },
-];
+// overview-tab.tsx's buildStageKpis. Its leak table is wired too, to the same endpoint's
+// `departures[]`.
 
 export const ADOPT_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Ordered twice, never explored a second feature",

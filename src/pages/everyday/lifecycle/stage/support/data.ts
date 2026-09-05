@@ -9,7 +9,6 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
@@ -97,52 +96,8 @@ export const SUPPORT_SILENT_FAILURES_KPIS: Kpi[] = [
   { eyebrow: "Revenue behind silent failures", value: "₦38M", tone: "rose", note: "not counted in the ₦9M", href: "/lifecycle/support/silent" },
 ];
 
-export const SUPPORT_OVERVIEW_LEAK_ROWS: LeakRow[] = [
-  {
-    id: "failed-delivery-no-outreach",
-    where: "Failed delivery, no proactive outreach",
-    customers: "8,200",
-    value: "₦5M",
-    valueTone: "rose",
-    trend: "improving",
-    trendTone: "teal",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "closed", tone: "teal" },
-  },
-  {
-    id: "late-delivery-no-acknowledgement",
-    where: "Late delivery, no acknowledgement",
-    customers: "31,400",
-    value: "₦3M",
-    valueTone: "amber",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "open", tone: "amber" },
-  },
-  {
-    id: "resolved-never-returned",
-    where: "Resolved but customer never returned",
-    customers: "4,100",
-    value: "₦1M",
-    valueTone: "amber",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "no reading", tone: "amber" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "driver-misclassified",
-    where: "Contact driver misclassified as support",
-    customers: "18,400",
-    value: "in Retain",
-    valueTone: "rose",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "causal · 11 Mar", tone: "ultra" },
-    room: { label: "open · 8f2c", tone: "amber" },
-  },
-];
+// Overview (SU02) leak table is wired to GET /lifecycle/stages/{stageKey}'s `departures[]` —
+// see overview-tab.tsx.
 
 export const SUPPORT_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Late delivery, no acknowledgement",

@@ -19,59 +19,8 @@ export const ACQUIRE_OVERVIEW_BAR_ROWS: { label: string; value: string; percent:
   { label: "Second orders · this year", value: "243,000", percent: 24, tone: "rose" },
 ];
 
-export type RoomBadge = { label: string; tone: "teal" | "amber" | "rose" | "neutral" | "ultra" };
-
-export type LeakRow = {
-  id: string;
-  where: string;
-  customers: string;
-  value: string;
-  valueTone: "rose" | "amber" | "ink";
-  trend: string;
-  trendTone: "rose" | "amber" | "teal" | "neutral";
-  /** Present on stages whose leak table has an Owner column (e.g. Acquire). */
-  owner?: { name: string; initials: string };
-  /** Present on stages whose leak table has a "Cause known?" column instead (e.g. Activate). */
-  causeKnown?: { label: string; tone: "ultra" | "amber" };
-  room: RoomBadge;
-  /** When set, the row's "where" label links out (e.g. Retain's Overview row linking to its segments/:id drilldown). */
-  detailHref?: string;
-};
-
-export const ACQUIRE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
-  {
-    id: "signed-up-never-verified",
-    where: "Signed up, never verified",
-    customers: "412,000",
-    value: "₦31M",
-    valueTone: "rose",
-    trend: "worsening",
-    trendTone: "rose",
-    owner: { name: "Tunde", initials: "TB" },
-    room: { label: "open one", tone: "ultra" },
-  },
-  {
-    id: "verified-never-ordered",
-    where: "Verified, never ordered",
-    customers: "146,000",
-    value: "₦24M",
-    valueTone: "rose",
-    trend: "flat",
-    trendTone: "neutral",
-    owner: { name: "Tunde", initials: "TB" },
-    room: { label: "open one", tone: "ultra" },
-  },
-  {
-    id: "accra-campaign",
-    where: "Accra campaign · converts at 4%",
-    customers: "31,200",
-    value: "₦19M",
-    valueTone: "amber",
-    trend: "worsening",
-    trendTone: "rose",
-    room: { label: "open · unowned", tone: "amber" },
-  },
-];
+// The leak table (all 10 stages, shared) is wired to GET /lifecycle/stages/{stageKey}'s
+// `departures[]` — see overview-tab.tsx. No per-stage mock row list here anymore.
 
 // ---- Funnel (A03) ------------------------------------------------------
 // Steps are wired live (see funnel-tab.tsx, GET /lifecycle/acquire/funnel) — no mock export

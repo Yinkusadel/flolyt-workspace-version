@@ -8,62 +8,14 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { CheckedRow, ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
-import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 import type { DefinitionData } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
 
 // ---- Overview (AC02) --------------------------------------------------
-// KPI row wired to GET /lifecycle/stages/activate (buildActivateKpis in overview-tab.tsx) —
-// see docs/endpoints/lifecycle.md.
-
-export const ACTIVATE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
-  {
-    id: "abandoned-delivery-fee",
-    where: "Abandoned at the delivery-fee step",
-    customers: "308,000",
-    value: "₦124M",
-    valueTone: "rose",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "causal · 4 Mar", tone: "ultra" },
-    room: { label: "open", tone: "amber" },
-  },
-  {
-    id: "order-delivered-late-cold",
-    where: "Order delivered late or cold",
-    customers: "71,000",
-    value: "₦29M",
-    valueTone: "rose",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "open", tone: "amber" },
-  },
-  {
-    id: "delivered-never-returned",
-    where: "Delivered fine, never returned",
-    customers: "116,000",
-    value: "₦31M",
-    valueTone: "amber",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "no reading", tone: "amber" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "first-order-failed",
-    where: "First order failed entirely",
-    customers: "33,000",
-    value: "₦4M",
-    valueTone: "amber",
-    trend: "improving",
-    trendTone: "teal",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "closed", tone: "teal" },
-  },
-];
+// KPI row and leak table both wired to GET /lifecycle/stages/activate (buildStageKpis +
+// departures[] in overview-tab.tsx) — see docs/endpoints/lifecycle.md.
 
 export const ACTIVATE_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Abandoned at the delivery-fee step",

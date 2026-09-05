@@ -9,7 +9,6 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -108,66 +107,8 @@ export const CHURN_OVERVIEW_LEAD = {
   body: "1.02M customers left in twelve months. Nothing here is a cause — every reason on this screen was decided in one of the nine stages before it.",
 };
 
-// KPI row is wired to the shared GET /lifecycle/stages/{stageKey} — see overview-tab.tsx's
-// buildStageKpis.
-
-export const CHURN_OVERVIEW_LEAK_ROWS: LeakRow[] = [
-  {
-    id: "never-activated-left-inside-90-days",
-    where: "Never activated · left inside 90 days",
-    customers: "528,000",
-    value: "₦61M",
-    valueTone: "rose",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "causal · Activate", tone: "ultra" },
-    room: { label: "open · Activate", tone: "amber" },
-  },
-  {
-    id: "churned-after-a-fee-complaint",
-    where: "Churned after a fee complaint",
-    customers: "94,000",
-    value: "₦31M",
-    valueTone: "rose",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "causal · 4 Mar", tone: "ultra" },
-    room: { label: "open · 8f2c", tone: "amber" },
-  },
-  {
-    id: "silent-failure-never-told-us",
-    where: "Silent failure · never told us",
-    customers: "39,600",
-    value: "₦18M",
-    valueTone: "rose",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "causal · Support", tone: "ultra" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "card-failed-never-recovered",
-    where: "Card failed, never recovered",
-    customers: "14,200",
-    value: "₦9M",
-    valueTone: "amber",
-    trend: "improving",
-    trendTone: "teal",
-    causeKnown: { label: "causal · Renew", tone: "ultra" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "no-reason-found",
-    where: "No reason found",
-    customers: "196,000",
-    value: "₦5M",
-    valueTone: "amber",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "nothing", tone: "amber" },
-    room: { label: "No owner", tone: "amber" },
-  },
-];
+// KPI row and leak table are both wired to the shared GET /lifecycle/stages/{stageKey} — see
+// overview-tab.tsx's buildStageKpis and its `departures[]`-driven table.
 
 export const CHURN_OVERVIEW_INSIGHT = {
   title: "Four of five rows point at another stage, and that is the correct answer",

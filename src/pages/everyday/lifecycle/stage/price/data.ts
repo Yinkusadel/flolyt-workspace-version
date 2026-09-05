@@ -13,7 +13,6 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { CheckedRow, ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -77,65 +76,8 @@ export const PRICE_DEFINITION: PriceDefinitionData = {
 };
 
 // ---- Overview (PR02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
-// overview-tab.tsx's buildStageKpis.
-
-export const PRICE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
-  {
-    id: "discount-only-buyers",
-    where: "Discount-only buyers",
-    customers: "94,000",
-    value: "₦31M",
-    valueTone: "rose",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "open", tone: "amber" },
-  },
-  {
-    id: "ghana-priced-above-naira",
-    where: "Ghana priced 22% above naira equivalent",
-    customers: "94,000",
-    value: "GHS 2.1M",
-    valueTone: "amber",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "legacy-unlimited-2022-price",
-    where: "Legacy Unlimited · 2022 price",
-    customers: "3,100",
-    value: "Unavailable",
-    valueTone: "ink",
-    trend: "unknown",
-    trendTone: "neutral",
-    causeKnown: { label: "needs COGS", tone: "amber" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "student-plan-no-verification",
-    where: "Student plan · no verification",
-    customers: "11,400",
-    value: "₦9M",
-    valueTone: "amber",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "delivery-fee-absorbed",
-    where: "Delivery fee absorbed on subscriptions",
-    customers: "41,000",
-    value: "Unavailable",
-    valueTone: "ink",
-    trend: "unknown",
-    trendTone: "neutral",
-    causeKnown: { label: "needs COGS", tone: "amber" },
-    room: { label: "none", tone: "neutral" },
-  },
-];
+// overview-tab.tsx's buildStageKpis. Its leak table is wired too, to the same endpoint's
+// `departures[]`.
 
 export const PRICE_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Discount-only buyers pay less every time",

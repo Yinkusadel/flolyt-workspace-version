@@ -8,7 +8,6 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { LeakRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -103,67 +102,8 @@ export const ADVOCATE_OVERVIEW_LEAD = {
   body: "It produced 31% of last year's new customers at the lowest CAC and the highest repeat rate in the company. Rooms opened here have nobody's name on them and escalate to Ada by default.",
 };
 
-// KPI row is wired to the shared GET /lifecycle/stages/{stageKey} — see overview-tab.tsx's
-// buildStageKpis.
-
-export const ADVOCATE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
-  {
-    id: "referral-rate-falling",
-    where: "Referral rate falling since March",
-    customers: "—",
-    value: "₦31M CAC lost",
-    valueTone: "rose",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "causal · 4 Mar", tone: "ultra" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "referrers-stopped",
-    where: "Referrers who stopped referring",
-    customers: "18,000",
-    value: "₦18M CAC lost",
-    valueTone: "rose",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "No owner", tone: "amber" },
-  },
-  {
-    id: "rewards-would-have-come-anyway",
-    where: "Rewards paid to referrals that would have come anyway",
-    customers: "41,000",
-    value: "₦41M",
-    valueTone: "amber",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "never tested", tone: "amber" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "legacy-unlimited-holders",
-    where: "Legacy Unlimited holders · 4.1× referral rate",
-    customers: "3,100",
-    value: "₦12M",
-    valueTone: "ink",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "conflicts with Price", tone: "rose" },
-    detailHref: "/lifecycle/advocate/referrers/legacy-unlimited-holders",
-  },
-  {
-    id: "referral-link-shares",
-    where: "Referral link shares",
-    customers: "Unavailable",
-    value: "Unavailable",
-    valueTone: "ink",
-    trend: "unknown",
-    trendTone: "neutral",
-    causeKnown: { label: "not instrumented", tone: "amber" },
-    room: { label: "blocked", tone: "rose" },
-  },
-];
+// KPI row and leak table are both wired to the shared GET /lifecycle/stages/{stageKey} — see
+// overview-tab.tsx's buildStageKpis and its `departures[]`-driven table.
 
 export const ADVOCATE_OVERVIEW_INSIGHT = {
   title: "The fourth row is a direct conflict with a decision Price is trying to make",
