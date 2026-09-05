@@ -349,11 +349,9 @@ export function OverviewTab() {
       {headerActionsEl &&
         createPortal(
           <>
-            {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain" || stage.slug === "expand" || stage.slug === "support" || stage.slug === "renew" || stage.slug === "advocate" || stage.slug === "churn") && (
-              <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
-                How this stage is defined
-              </Link>
-            )}
+            <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
+              How this stage is defined
+            </Link>
             <Link to={`/lifecycle/${stage.slug}/compare`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
               Compare periods
             </Link>
