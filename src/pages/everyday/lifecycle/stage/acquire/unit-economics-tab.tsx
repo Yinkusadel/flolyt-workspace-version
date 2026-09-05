@@ -5,66 +5,30 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
 import { MapAFieldModal } from "@/pages/everyday/lifecycle/stage/modals/map-a-field-modal";
+import { Sparkline } from "@/pages/everyday/lifecycle/stage/sparkline";
 import { formatCompactMoney } from "@/pages/everyday/lifecycle/format-measured-value";
 import { ACQUIRE_MAP_FIELD_PRESET } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import { useGetAcquireUnitEconomics } from "@/features/lifecycle/use-get-acquire-unit-economics";
-import type { UnitEconomicsCohortDto, UnitEconomicsPointDto } from "@/services/api/lifecycle/get-acquire-unit-economics";
+import type { UnitEconomicsCohortDto } from "@/services/api/lifecycle/get-acquire-unit-economics";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
   return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
 }
 
-function buildPath(points: { x: number; y: number }[]): string {
-  return points.map((p, index) => `${index === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-}
+type CohortRow = UnitEconomicsCohortDto & { id: string };
 
-/**
- * A compact cumulative revenue/margin curve, per cohort — no charting library in this project, and
- * this is the one place a per-cohort curve is needed. Deliberately shows the shape rather than
- * collapsing it to one number, per the endpoint's own emphasis ("the shape is the point").
- */
-function CohortCurve({ points, acquisitionCost, hasMargin }: { points: UnitEconomicsPointDto[]; acquisitionCost: number | null; hasMargin: boolean }) {
-  const width = 120;
-  const height = 32;
-  const pad = 3;
-
-  const revenuePoints = points.filter((p) => p.cumulativeRevenue !== null);
-  const marginPoints = hasMargin ? points.filter((p) => p.cumulativeMargin !== null) : [];
-  if (revenuePoints.length === 0) return <span className="font-mono text-[10px] text-ink-4">No curve yet</span>;
-
-  const months = points.map((p) => p.month);
-  const minMonth = Math.min(...months);
-  const maxMonth = Math.max(...months);
-
-  const values = [
-    ...revenuePoints.map((p) => p.cumulativeRevenue as number),
-    ...marginPoints.map((p) => p.cumulativeMargin as number),
-    ...(acquisitionCost !== null ? [acquisitionCost] : []),
-  ];
-  const domainMax = Math.max(...values, 0);
-  const domainMin = Math.min(...values, 0);
-  const span = domainMax - domainMin || 1;
-  const monthSpan = maxMonth - minMonth || 1;
-
-  const scaleX = (month: number) => pad + ((month - minMonth) / monthSpan) * (width - 2 * pad);
-  const scaleY = (value: number) => height - pad - ((value - domainMin) / span) * (height - 2 * pad);
-
-  const revenuePath = buildPath(revenuePoints.map((p) => ({ x: scaleX(p.month), y: scaleY(p.cumulativeRevenue as number) })));
-  const marginPath = buildPath(marginPoints.map((p) => ({ x: scaleX(p.month), y: scaleY(p.cumulativeMargin as number) })));
-
+function CohortCurve({ row, hasMargin }: { row: CohortRow; hasMargin: boolean }) {
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
-      {acquisitionCost !== null && (
-        <line x1={pad} x2={width - pad} y1={scaleY(acquisitionCost)} y2={scaleY(acquisitionCost)} className="stroke-ink-4" strokeWidth={1} strokeDasharray="2,2" />
-      )}
-      {hasMargin && marginPoints.length > 0 && <path d={marginPath} className="stroke-amber" fill="none" strokeWidth={1.5} />}
-      <path d={revenuePath} className="stroke-teal" fill="none" strokeWidth={1.5} />
-    </svg>
+    <Sparkline
+      series={[
+        { points: row.points.map((p) => ({ x: p.month, y: p.cumulativeRevenue })), toneClass: "stroke-teal" },
+        ...(hasMargin ? [{ points: row.points.map((p) => ({ x: p.month, y: p.cumulativeMargin })), toneClass: "stroke-amber" }] : []),
+      ]}
+      referenceLines={row.acquisitionCost !== null ? [{ y: row.acquisitionCost }] : []}
+    />
   );
 }
-
-type CohortRow = UnitEconomicsCohortDto & { id: string };
 
 function paybackCell(month: number | null) {
   return month !== null ? (
@@ -109,7 +73,7 @@ function buildColumns(hasMargin: boolean): Column<CohortRow>[] {
     key: "curve",
     header: "Revenue" + (hasMargin ? " / margin" : ""),
     align: "right",
-    render: (row) => <CohortCurve points={row.points} acquisitionCost={row.acquisitionCost} hasMargin={hasMargin} />,
+    render: (row) => <CohortCurve row={row} hasMargin={hasMargin} />,
   });
 
   return columns;
