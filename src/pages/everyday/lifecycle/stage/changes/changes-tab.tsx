@@ -16,7 +16,8 @@ function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "n
 
 // Colors match the palette every stage's mock data already used for these team names — kept as
 // a shared lookup now that the rows come from the live registry instead of per-stage mocks.
-const TEAM_COLORS: Record<string, string> = {
+// Exported for chain-route.tsx, the only other consumer of this same team-name/effect shape.
+export const TEAM_COLORS: Record<string, string> = {
   Engineering: "#4E7080",
   Marketing: "#79883A",
   Product: "#7A5AA8",
@@ -25,9 +26,9 @@ const TEAM_COLORS: Record<string, string> = {
   Support: "#C56A2E",
   "Customer Success": "#2E8B7F",
 };
-const NO_TEAM_COLOR = "#98A0AF";
+export const NO_TEAM_COLOR = "#98A0AF";
 
-const EFFECT_BADGE: Record<string, { label: string; tone: ChipTone }> = {
+export const EFFECT_BADGE: Record<string, { label: string; tone: ChipTone }> = {
   measured: { label: "causal finding", tone: "ultra" },
   no_effect: { label: "no effect", tone: "neutral" },
   too_recent: { label: "measuring", tone: "ultra" },
@@ -43,8 +44,9 @@ const EFFECT_TEXT_TONE_CLASS: Record<"teal" | "rose" | "amber" | "neutral", stri
 };
 
 /** The concrete number behind `effect`, without inventing a metric name the API doesn't give — see
- * docs/endpoints/lifecycle.md's open question on whether a templated sentence is ever supplied. */
-function effectLine(effect: StageChangeEffectDto): { text: string; tone: "teal" | "rose" | "amber" | "neutral" } {
+ * docs/endpoints/lifecycle.md's open question on whether a templated sentence is ever supplied.
+ * Exported for chain-route.tsx, which reads the same `StageChangeEffectDto` shape. */
+export function effectLine(effect: StageChangeEffectDto): { text: string; tone: "teal" | "rose" | "amber" | "neutral" } {
   if (effect.status === "measured") {
     const primary = effect.percentChange ?? effect.delta;
     if (primary === null) return { text: "Measured, magnitude unavailable", tone: "neutral" };
