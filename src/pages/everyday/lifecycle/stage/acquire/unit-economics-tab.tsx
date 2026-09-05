@@ -1,73 +1,200 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { MapAFieldModal } from "@/pages/everyday/lifecycle/stage/modals/map-a-field-modal";
-import {
-  ACQUIRE_MAP_FIELD_PRESET,
-  ACQUIRE_UNIT_ECON_KPIS,
-  ACQUIRE_UNIT_ECON_ROWS,
-  ACQUIRE_UNIT_ECON_UNLOCK_ROWS,
-  type UnitEconRow,
-} from "@/pages/everyday/lifecycle/stage/acquire/data";
+import { formatCompactMoney } from "@/pages/everyday/lifecycle/format-measured-value";
+import { ACQUIRE_MAP_FIELD_PRESET } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import { useGetAcquireUnitEconomics } from "@/features/lifecycle/use-get-acquire-unit-economics";
+import type { UnitEconomicsCohortDto, UnitEconomicsPointDto } from "@/services/api/lifecycle/get-acquire-unit-economics";
 
-const TONE_CLASS: Record<"teal" | "amber" | "rose", string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose" };
-const UNLOCK_TONE_CLASS: Record<"teal" | "amber" | "neutral", string> = { teal: "text-teal", amber: "text-amber", neutral: "text-ink-2" };
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
 
-const COLUMNS: Column<UnitEconRow>[] = [
-  { key: "channel", header: "Channel", render: (row) => <span className="font-semibold text-ink-2">{row.channel}</span> },
-  { key: "cac", header: "CAC", align: "right", render: (row) => <span className={TONE_CLASS[row.cacTone]}>{row.cac}</span> },
-  { key: "revenuePerCustomer", header: "Revenue / customer", align: "right", render: (row) => <span className="font-mono text-ink">{row.revenuePerCustomer}</span> },
-  { key: "ratio", header: "Ratio", align: "right", render: (row) => <span className={TONE_CLASS[row.ratioTone]}>{row.ratio}</span> },
-  { key: "contributionMargin", header: "Contribution margin", align: "right", render: () => <span className="font-mono text-ink-4">Unavailable</span> },
-  { key: "truePayback", header: "True payback", align: "right", render: () => <span className="font-mono text-ink-4">Unavailable</span> },
-];
+function buildPath(points: { x: number; y: number }[]): string {
+  return points.map((p, index) => `${index === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+}
 
-/** A07 — Acquire's unique Unit economics tab. */
+/**
+ * A compact cumulative revenue/margin curve, per cohort — no charting library in this project, and
+ * this is the one place a per-cohort curve is needed. Deliberately shows the shape rather than
+ * collapsing it to one number, per the endpoint's own emphasis ("the shape is the point").
+ */
+function CohortCurve({ points, acquisitionCost, hasMargin }: { points: UnitEconomicsPointDto[]; acquisitionCost: number | null; hasMargin: boolean }) {
+  const width = 120;
+  const height = 32;
+  const pad = 3;
+
+  const revenuePoints = points.filter((p) => p.cumulativeRevenue !== null);
+  const marginPoints = hasMargin ? points.filter((p) => p.cumulativeMargin !== null) : [];
+  if (revenuePoints.length === 0) return <span className="font-mono text-[10px] text-ink-4">No curve yet</span>;
+
+  const months = points.map((p) => p.month);
+  const minMonth = Math.min(...months);
+  const maxMonth = Math.max(...months);
+
+  const values = [
+    ...revenuePoints.map((p) => p.cumulativeRevenue as number),
+    ...marginPoints.map((p) => p.cumulativeMargin as number),
+    ...(acquisitionCost !== null ? [acquisitionCost] : []),
+  ];
+  const domainMax = Math.max(...values, 0);
+  const domainMin = Math.min(...values, 0);
+  const span = domainMax - domainMin || 1;
+  const monthSpan = maxMonth - minMonth || 1;
+
+  const scaleX = (month: number) => pad + ((month - minMonth) / monthSpan) * (width - 2 * pad);
+  const scaleY = (value: number) => height - pad - ((value - domainMin) / span) * (height - 2 * pad);
+
+  const revenuePath = buildPath(revenuePoints.map((p) => ({ x: scaleX(p.month), y: scaleY(p.cumulativeRevenue as number) })));
+  const marginPath = buildPath(marginPoints.map((p) => ({ x: scaleX(p.month), y: scaleY(p.cumulativeMargin as number) })));
+
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
+      {acquisitionCost !== null && (
+        <line x1={pad} x2={width - pad} y1={scaleY(acquisitionCost)} y2={scaleY(acquisitionCost)} className="stroke-ink-4" strokeWidth={1} strokeDasharray="2,2" />
+      )}
+      {hasMargin && marginPoints.length > 0 && <path d={marginPath} className="stroke-amber" fill="none" strokeWidth={1.5} />}
+      <path d={revenuePath} className="stroke-teal" fill="none" strokeWidth={1.5} />
+    </svg>
+  );
+}
+
+type CohortRow = UnitEconomicsCohortDto & { id: string };
+
+function paybackCell(month: number | null) {
+  return month !== null ? (
+    <span className="font-mono text-teal">Month {month}</span>
+  ) : (
+    <span className="font-mono text-amber">Not yet crossed</span>
+  );
+}
+
+function buildColumns(hasMargin: boolean): Column<CohortRow>[] {
+  const columns: Column<CohortRow>[] = [
+    {
+      key: "cohort",
+      header: "Cohort",
+      render: (row) => (
+        <div>
+          <p className="font-semibold text-ink-2">{row.cohort}</p>
+          <p className="mt-0.5 font-mono text-[10px] text-ink-4">
+            {row.customers.toLocaleString("en-US")} customers · {row.monthsObserved}mo observed
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: "acquisitionCost",
+      header: "Acquisition cost",
+      align: "right",
+      render: (row) => (
+        <span className="font-mono text-ink">
+          {row.acquisitionCost !== null ? formatCompactMoney(row.acquisitionCost, row.currency) : <span className="text-ink-4">Unavailable</span>}
+        </span>
+      ),
+    },
+    { key: "revenuePayback", header: "Revenue payback", align: "right", render: (row) => paybackCell(row.revenuePaybackMonth) },
+  ];
+
+  if (hasMargin) {
+    columns.push({ key: "marginPayback", header: "Margin payback", align: "right", render: (row) => paybackCell(row.marginPaybackMonth) });
+  }
+
+  columns.push({
+    key: "curve",
+    header: "Revenue" + (hasMargin ? " / margin" : ""),
+    align: "right",
+    render: (row) => <CohortCurve points={row.points} acquisitionCost={row.acquisitionCost} hasMargin={hasMargin} />,
+  });
+
+  return columns;
+}
+
+function UnitEconomicsSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-8 w-28" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** A07 — Acquire's own Unit economics tab, wired to GET /lifecycle/acquire/unit-economics. */
 const AcquireUnitEconomicsTab = () => {
   const [mapFieldOpen, setMapFieldOpen] = useState(false);
+  const { data, isLoading, isError, refetch } = useGetAcquireUnitEconomics();
+  const econ = data?.data;
+  const hasMargin = econ?.hasMargin ?? false;
+  const rows: CohortRow[] = (econ?.cohorts ?? []).map((cohort) => ({ ...cohort, id: cohort.cohort }));
 
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-          CAC and revenue per customer · payback is unavailable and says why
+          Cost to acquire against what a customer returns, as a curve per cohort
+          {econ?.monthsObserved ? ` · ${econ.monthsObserved} months observed` : ""}
         </p>
-        <Button type="button" size="sm" className="shrink-0" onClick={() => setMapFieldOpen(true)}>
-          Connect a COGS source
-        </Button>
+        {!hasMargin && !isLoading && (
+          <Button type="button" size="sm" className="shrink-0" onClick={() => setMapFieldOpen(true)}>
+            Connect a COGS source
+          </Button>
+        )}
       </div>
 
-      <KpiCards items={ACQUIRE_UNIT_ECON_KPIS} />
+      {!isLoading && !isError && !hasMargin && (
+        <Callout tone="amber" title="Every figure below is revenue, not margin, and that is a limitation not a choice">
+          Margin payback needs cost of goods, which no connected source currently maps. Flolyt could estimate it from a
+          category benchmark. It will not — a payback period built on a guessed margin is the kind of number that gets
+          quoted in a board deck for two years.
+        </Callout>
+      )}
 
-      <Callout tone="amber" title="Every figure on this screen is revenue, not margin, and that is a limitation not a choice">
-        Payback and true unit economics need cost of goods, which no connected source provides. Flolyt could
-        estimate it from a category benchmark. It will not — a payback period built on a guessed margin is the
-        kind of number that gets quoted in a board deck for two years.
-      </Callout>
+      {!isLoading && !isError && hasMargin && econ && econ.costComponents.length > 0 && (
+        <p className="text-[11px] text-ink-3">Margin includes: {econ.costComponents.join(", ")}.</p>
+      )}
 
       <section className="space-y-3">
-        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-          What is available, by channel
-        </p>
-        <DataTable columns={COLUMNS} rows={ACQUIRE_UNIT_ECON_ROWS} />
+        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">Cohorts, oldest observed first</p>
+
+        {isError ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+            <p className="text-[12px] text-rose">Couldn't load Acquire's unit economics.</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
+        ) : isLoading ? (
+          <UnitEconomicsSkeleton />
+        ) : (
+          <DataTable
+            columns={buildColumns(hasMargin)}
+            rows={rows}
+            emptyTitle="No cohorts measured yet"
+            emptyBody="Per-cohort acquisition cost and payback will appear here once Flolyt has enough history to curve them."
+          />
+        )}
       </section>
 
-      <section className="space-y-1">
-        <p className="pb-2 font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-          What connecting a COGS source would unlock
-        </p>
-        <div className="divide-y divide-line rounded-card border border-line bg-paper">
-          {ACQUIRE_UNIT_ECON_UNLOCK_ROWS.map((row) => (
-            <div key={row.label} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-              <span className="text-[11.5px] text-ink-2">{row.label}</span>
-              <span className={`font-mono text-[11px] ${UNLOCK_TONE_CLASS[row.tone]}`}>{row.value}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* ❌ Backend does NOT provide: a per-channel breakdown (CAC / revenue per customer / ratio
+          by channel) — this endpoint has no channel dimension at all, only cohorts. The old mock's
+          per-channel table was fabricated; dropped rather than reproduced with a wrong grouping. */}
+
+      {econ?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
 
       <MapAFieldModal
         metricLabel="Payback"

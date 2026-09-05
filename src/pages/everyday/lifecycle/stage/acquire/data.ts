@@ -147,40 +147,9 @@ export const ACQUIRE_CHANNEL_DETAILS: Record<string, ChannelDetail> = {
 // generic age-aligned shape (entered/stillInStageShare/values), not the per-stage CAC/day30-90
 // or repeat-rate/ARPU-style columns every stage's old bespoke mock had.
 
-// ---- Unit economics (A07) ------------------------------------------------
-
-export const ACQUIRE_UNIT_ECON_KPIS: Kpi[] = [
-  { eyebrow: "Blended CAC", value: "₦1,840", note: "was ₦1,410" },
-  { eyebrow: "Revenue per customer · 12mo", value: "₦7,100", tone: "rose", note: "was ₦9,200" },
-  { eyebrow: "Payback", value: "Unavailable", tone: "amber", note: "needs contribution margin" },
-  { eyebrow: "Ratio", value: "3.9×", note: "on revenue, not margin" },
-];
-
-export type UnitEconRow = {
-  id: string;
-  channel: string;
-  cac: string;
-  cacTone: "teal" | "amber" | "rose";
-  revenuePerCustomer: string;
-  ratio: string;
-  ratioTone: "teal" | "amber" | "rose";
-};
-
-export const ACQUIRE_UNIT_ECON_ROWS: UnitEconRow[] = [
-  { id: "referral", channel: "Referral", cac: "₦0", cacTone: "teal", revenuePerCustomer: "₦11,400", ratio: "∞", ratioTone: "teal" },
-  { id: "partner-fuel-stations", channel: "Partner · fuel stations", cac: "₦649", cacTone: "teal", revenuePerCustomer: "₦8,100", ratio: "12.5×", ratioTone: "teal" },
-  { id: "paid-search", channel: "Paid search", cac: "₦1,213", cacTone: "teal", revenuePerCustomer: "₦7,800", ratio: "6.4×", ratioTone: "teal" },
-  { id: "paid-social-nigeria", channel: "Paid social · Nigeria", cac: "₦1,925", cacTone: "amber", revenuePerCustomer: "₦6,900", ratio: "3.6×", ratioTone: "amber" },
-  { id: "paid-social-ghana", channel: "Paid social · Ghana", cac: "₦6,026", cacTone: "rose", revenuePerCustomer: "₦1,140", ratio: "0.19×", ratioTone: "rose" },
-];
-
-export const ACQUIRE_UNIT_ECON_UNLOCK_ROWS: { label: string; value: string; tone: "teal" | "amber" | "neutral" }[] = [
-  { label: "This screen", value: "true payback per channel, and margin-based ratios", tone: "teal" },
-  { label: "Price stage", value: "a margin baseline, which currently blocks one company goal", tone: "amber" },
-  { label: "Goals", value: "the contribution-margin goal, currently unsettable", tone: "amber" },
-  { label: "Value ledger", value: "recovered margin rather than recovered revenue", tone: "neutral" },
-  { label: "Estimated effort", value: "one CSV export a month would be enough to start", tone: "teal" },
-];
+// ---- Unit economics (A07) is now wired to GET /lifecycle/acquire/unit-economics — see
+// unit-economics-tab.tsx. That endpoint has no channel dimension at all (only cohorts), so the
+// old mock's per-channel CAC/revenue-per-customer/ratio table isn't reproducible from live data.
 
 // ---- Markets (A08) --------------------------------------------------------
 
