@@ -6,8 +6,6 @@
  */
 
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
-import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
@@ -94,61 +92,12 @@ export const ADVOCATE_SHARE_EXPORT_PRESET: ShareOrExportPreset = {
     "The referral-link-share figure travels as \"unavailable\" rather than being dropped from the file — an export where the gaps quietly vanish is how an unavailable becomes a zero in someone else's deck.",
 };
 
-// ---- Referrers (AV03, route path "referrers") ------------------------------
-
-export type AdvocateReferrerRow = {
-  id: string;
-  group: string;
-  customers: string;
-  referralsEach: string;
-  referralsEachTone: "teal" | "amber";
-  totalReferred: string;
-  totalReferredTone: "ink" | "rose";
-  repeatRate: string;
-  repeatRateTone: "teal" | "amber" | "rose";
-  stillReferring: string;
-  stillReferringTone: "teal" | "rose";
-  verdict: string;
-  verdictTone: ChipTone;
-  detailHref?: string;
-};
-
-export const ADVOCATE_REFERRER_ROWS: AdvocateReferrerRow[] = [
-  { id: "legacy-unlimited-holders", group: "Legacy Unlimited holders", customers: "3,100", referralsEach: "9.2", referralsEachTone: "teal", totalReferred: "28,500", totalReferredTone: "ink", repeatRate: "81.1%", repeatRateTone: "teal", stillReferring: "94%", stillReferringTone: "teal", verdict: "the best, by far", verdictTone: "teal", detailHref: "/lifecycle/advocate/referrers/legacy-unlimited-holders" },
-  { id: "group-ordering-users", group: "Group ordering users", customers: "19,000", referralsEach: "4.1", referralsEachTone: "teal", totalReferred: "77,900", totalReferredTone: "ink", repeatRate: "71.4%", repeatRateTone: "teal", stillReferring: "88%", stillReferringTone: "teal", verdict: "excellent", verdictTone: "teal" },
-  { id: "lagos-plus-subscribers", group: "Lagos Plus subscribers", customers: "61,000", referralsEach: "2.2", referralsEachTone: "teal", totalReferred: "134,200", totalReferredTone: "ink", repeatRate: "61.1%", repeatRateTone: "teal", stillReferring: "74%", stillReferringTone: "teal", verdict: "the volume", verdictTone: "teal" },
-  { id: "pay-as-you-go-referred-once", group: "Pay as you go · referred once", customers: "38,000", referralsEach: "1.0", referralsEachTone: "amber", totalReferred: "38,000", totalReferredTone: "ink", repeatRate: "31.4%", repeatRateTone: "amber", stillReferring: "21%", stillReferringTone: "rose", verdict: "one and done", verdictTone: "amber" },
-  { id: "stopped-referring-since-march", group: "Stopped referring since March", customers: "18,000", referralsEach: "was 2.8", referralsEachTone: "amber", totalReferred: "−50,400", totalReferredTone: "rose", repeatRate: "24.1%", repeatRateTone: "rose", stillReferring: "0%", stillReferringTone: "rose", verdict: "the loss", verdictTone: "rose" },
-];
-
-export const ADVOCATE_WHO_STOPPED_CARDS: InsightCard[] = [
-  {
-    id: "stopped-week-of-4-march",
-    agentTag: "RF",
-    meta: "18,000 referrers · ₦18M of CAC",
-    title: "They stopped in the week of 4 March",
-    body: "Not gradually. Referral volume from this group fell 71% in seven days and has not recovered. 14,200 of them are still active customers who simply stopped recommending us.",
-    footnote: "causal · dated",
-    tone: "rose",
-  },
-  {
-    id: "why-they-stopped",
-    agentTag: "RF",
-    meta: "Why",
-    title: "You do not refer a service you are unsure about",
-    body: "The overlap is almost exact — 16,100 of the 18,000 had a delivery-fee complaint, a late delivery or a paused subscription in the same window. Advocacy is the first thing to go and the last thing anyone checks.",
-    footnote: "strong association",
-    tone: "amber",
-  },
-  {
-    id: "what-nobody-did",
-    meta: "WHAT NOBODY DID",
-    title: "Nothing, for 151 days",
-    body: "The referral rate falling for the first time in two years was one of the five signals in the delivery-fee chain. It was the only one of the five with no team looking at it, because this stage has no owner.",
-    footnote: "the fifth signal",
-    tone: "rose",
-  },
-];
+// ---- Referrers (AV03, route path "referrers") is now wired to
+// GET /lifecycle/advocate/referrers — see referrers-tab.tsx. That endpoint bands advocates by
+// referral count only (referrers/lapsed/lapsedShare), with no per-group customers/repeat-rate/
+// verdict field and no per-group drilldown, so those and the "who stopped" insight cards aren't
+// reproducible from live data. one-referrer-group-route.tsx below keeps its own unrelated mock —
+// see [[flag_unreachable_routes]], now unreachable.
 
 export const ADVOCATE_REFERRERS_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Referrers stopped referring since March",
@@ -168,52 +117,12 @@ export const ADVOCATE_REFERRERS_OPEN_ROOM_PRESET: OpenRoomPreset = {
   participantsNote: "Referral leads · no stage owner, escalated to Ada by default",
 };
 
-// ---- Referral quality (AV04, route path "quality") --------------------------
-
-export const ADVOCATE_QUALITY_KPIS: Kpi[] = [
-  { eyebrow: "Referred customers", value: "278,000", note: "31% of acquisition" },
-  { eyebrow: "Repeat rate", value: "41.2%", tone: "teal", note: "against 27.2% base" },
-  { eyebrow: "Value per customer", value: "₦11,400", tone: "teal", note: "against ₦7,100 base" },
-  { eyebrow: "Effective CAC", value: "₦1,000", tone: "teal", note: "against ₦1,840" },
-];
-
-export type AdvocateQualityChannelRow = {
-  id: string;
-  channel: string;
-  acquired: string;
-  cac: string;
-  cacTone: "teal" | "amber" | "rose" | "ink";
-  repeatRate: string;
-  repeatRateTone: "teal" | "amber" | "rose" | "ink";
-  valuePerCustomer: string;
-  valuePerCustomerTone: "teal" | "amber" | "rose" | "ink";
-  featuresUsed: string;
-  featuresUsedTone: "teal" | "amber" | "rose" | "ink";
-  ratio: string;
-  ratioTone: "teal" | "amber" | "rose" | "ink";
-};
-
-export const ADVOCATE_QUALITY_CHANNEL_ROWS: AdvocateQualityChannelRow[] = [
-  { id: "referral", channel: "Referral", acquired: "278,000", cac: "₦1,000", cacTone: "teal", repeatRate: "41.2%", repeatRateTone: "teal", valuePerCustomer: "₦11,400", valuePerCustomerTone: "teal", featuresUsed: "2.9", featuresUsedTone: "teal", ratio: "11.4×", ratioTone: "teal" },
-  { id: "organic-search", channel: "Organic search", acquired: "184,000", cac: "₦0", cacTone: "teal", repeatRate: "31.1%", repeatRateTone: "teal", valuePerCustomer: "₦8,600", valuePerCustomerTone: "teal", featuresUsed: "2.4", featuresUsedTone: "teal", ratio: "∞", ratioTone: "teal" },
-  { id: "partner-fuel-stations", channel: "Partner · fuel stations", acquired: "94,000", cac: "₦649", cacTone: "teal", repeatRate: "29.4%", repeatRateTone: "teal", valuePerCustomer: "₦8,100", valuePerCustomerTone: "teal", featuresUsed: "2.1", featuresUsedTone: "ink", ratio: "12.5×", ratioTone: "teal" },
-  { id: "paid-search", channel: "Paid search", acquired: "61,000", cac: "₦1,213", cacTone: "teal", repeatRate: "28.1%", repeatRateTone: "ink", valuePerCustomer: "₦7,800", valuePerCustomerTone: "ink", featuresUsed: "2.0", featuresUsedTone: "ink", ratio: "6.4×", ratioTone: "teal" },
-  { id: "paid-social-nigeria", channel: "Paid social · Nigeria", acquired: "214,000", cac: "₦1,925", cacTone: "amber", repeatRate: "24.8%", repeatRateTone: "amber", valuePerCustomer: "₦6,900", valuePerCustomerTone: "amber", featuresUsed: "1.8", featuresUsedTone: "amber", ratio: "3.6×", ratioTone: "amber" },
-  { id: "paid-social-ghana", channel: "Paid social · Ghana", acquired: "31,200", cac: "₦6,026", cacTone: "rose", repeatRate: "4.1%", repeatRateTone: "rose", valuePerCustomer: "₦1,140", valuePerCustomerTone: "rose", featuresUsed: "0.9", featuresUsedTone: "rose", ratio: "0.19×", ratioTone: "rose" },
-];
-
-export const ADVOCATE_QUALITY_INSIGHT = {
-  title: "Referral is better than paid social on every measure and 2.4 times smaller",
-  body: "₦188M went to a Ghana campaign returning 0.19×. ₦278M of rewards went to the channel returning 11.4×. Nobody has ever proposed moving budget between them, because one has a campaign manager, a dashboard and a weekly review, and the other has no owner.",
-};
-
-export const ADVOCATE_QUALITY_WHY_ROWS: { label: string; value: string; tone: "teal" | "amber" }[] = [
-  { label: "They arrive with an expectation set by a person", value: "not by a creative · no promise mismatch", tone: "teal" },
-  { label: "They are usually in the same city as their referrer", value: "delivery is already known to work there", tone: "teal" },
-  { label: "They adopt 2.9 features against 2.1", value: "the referrer shows them how", tone: "teal" },
-  { label: "They are referred into group ordering 3.1× more often", value: "the highest-lift feature in Adopt", tone: "teal" },
-  { label: "What we cannot say", value: "whether the reward causes any of this · never tested", tone: "amber" },
-];
+// ---- Referral quality (AV04, route path "quality") is now wired to
+// GET /lifecycle/advocate/referral-quality — see quality-tab.tsx. That endpoint compares referred
+// customers only against "everybody else who bought" (never a named channel, never claims a free
+// acquisition), with no features-used field and no per-channel table, so the old mock's
+// channel-comparison table, KPIs and "why referred customers behave better" narrative rows aren't
+// reproducible from live data.
 
 export const ADVOCATE_QUALITY_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Referral outperforms paid social on every measure and gets no budget conversation",

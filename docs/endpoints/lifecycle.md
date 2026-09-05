@@ -502,21 +502,21 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 
 - **Purpose:** Advocate's Referrers tab — who refers, how concentrated it is, who's stopped.
 - **Response `data`:** `{ bands: [{referrals, referrers, lapsed, lapsedShare}], referrers, referred, lapsed, concentration, windowDays, lapsedAfterDays, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/advocate/referrers-tab.tsx`. No per-group customers/repeat-rate/verdict field and no per-group drilldown, so those and the old mock's drilldown link are dropped.
 - **Notes:** Counted in **advocates, not referrals** — one person who brought 9 referrals is one advocate; the shape of that distribution (a programme carried by 4 people vs 400) is the whole point of the tab. `concentration` (share of referrals from the busiest decile) is an approximation taken at a band boundary — good enough to distinguish "a programme" from "a set of relationships," not precise. Silent 90 days = counted as lapsed (still customers — that's what makes them worth messaging). Bands under 20 report no share.
 
 ### GET /lifecycle/advocate/referral-quality
 
 - **Purpose:** Advocate's Referral quality tab — whether referred customers behave differently from everybody else who bought.
 - **Response `data`:** `{ cohorts: [{cohort, customers, ordersPerCustomer}], byCurrency: [{currency, referredPerCustomer, otherPerCustomer, lift}], orderLift, windowDays, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/advocate/quality-tab.tsx`. No per-channel comparison field, so the old mock's channel table is dropped.
 - **Notes:** **The comparison group is "everybody else who bought," not "acquired customers"** — without an acquisition source mapped, Flolyt can't tell a paid arrival from an organic one, so naming the other side "non-referred acquisitions" would be an attribution claim nothing here supports. Order behaviour (`orderLift`) is one figure; money (`byCurrency`) is **one per currency, never blended** — a 4-currency workspace gets 4 separate comparisons, not one blended lift. Groups under 20 customers report no figure. A programme can plausibly bring customers who order more often *and* spend less each time — both figures exist because either alone would mislead.
 
 ### GET /lifecycle/advocate/viral-compounding
 
 - **Purpose:** Advocate's Viral compounding tab — how much referring is done by people who were themselves referred.
 - **Response `data`:** `{ generations: [{generation, referrers, referred, referredPerReferrer}], secondGenerationShare, windowDays, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** service/hook ready (`get-advocate-viral-compounding.ts` / `use-get-advocate-viral-compounding.ts`), not wired — **and no UI to wire it into at all**, unlike every other per-stage tab in this doc. There's no `viral-compounding` tab in `stage-tabs-config.ts` and no mock screen anywhere under `stage/advocate/` — this would need a brand-new screen built from scratch (layout, table shape, copy), not a reshape of an existing design. Flagged 2026-09-05 rather than silently inventing a layout with no design precedent.
 - **Notes:** **Measured, not projected** — the natural next question ("what does losing a referrer cost in referrals they'd have made") is a forecast needing an experiment nobody has run; this returns the observed chain only and leaves the conclusion to the reader. `secondGenerationShare` is taken **over advocates, not over referrals** — one prolific second-generation referrer can't imply a compounding programme on its own. This is Advocate's permanently-gated Rewards tab's sibling, not a substitute for it — see [`lifecycle-reference.md`](lifecycle-reference.md) §3 for why Rewards can't close the same way.
 
 ### GET /lifecycle/price/plans
