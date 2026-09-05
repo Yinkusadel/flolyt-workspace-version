@@ -673,21 +673,21 @@ are in" call.
 
 - **Purpose:** Why customers left, as far as imported order history can say, recomputed daily.
 - **Response `data`:** `{ stageKey, stageName, basis, basisCaveat, lapsedCustomers, reasons: [{key, label, customers, share, attribution, upstreamStage}], unexplainedCustomers, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/churn/reasons-tab.tsx`. No "vs Feb" trend field and no per-row "send upstream" action, so those are dropped; the now-orphaned `send-reason-upstream-modal.tsx` was deleted.
 - **Notes:** Two shapes are **inferred and counted**: "never activated" (lapsed with ≤1 order — an Activate failure surfacing late) and "stopped after repeating" (lapsed with 2+ — a Retain failure); each names `upstreamStage`, since Churn records the loss and another stage causes it. Stated reasons (price, product fit, competitor) plus service failure and involuntary payment failure are **listed with an unavailable count and the source that would count them, rather than omitted** — so a reader can tell "this didn't happen" from "we can't see this." `unexplainedCustomers` is the residual and is **never distributed across the counted rows**.
 
 ### GET /lifecycle/churn/prediction
 
 - **Purpose:** Leading churn signals — named individually, never fused into a score.
 - **Response `data`:** `{ stageKey, stageName, basis, basisCaveat, lapsedCustomers, signals: [{key, name, precededShare, leadTimeDays, customersTripping}], computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/churn/prediction-tab.tsx`. No weight, availability chip, or per-signal stage attribution, so those are dropped — this endpoint deliberately has no fused score at all.
 - **Notes:** **There is no risk score, deliberately** — one number can't say which input moved it, and half the candidate signals are unreadable here anyway. 3 signals are measured from order history against each customer's **own habit**, not a global threshold: quiet longer than their usual gap, cadence slowing across 3 gaps, last order well below their usual size. `precededShare` is **prevalence among departures, not a fitted weight** — don't render it like a model coefficient. `leadTimeDays` is the measured median warning, so a signal too late to act on reads as visibly too late. Support contact, delivery failure, and feature-usage decline are listed as unreadable, naming the source that would read them.
 
 ### GET /lifecycle/churn/win-back
 
 - **Purpose:** What's being aimed at customers already gone.
 - **Response `data`:** `{ stageKey, stageName, basis, basisCaveat, lapsedCustomers, reachableNeverContacted, unreachable, waves: [{campaignId, name, state, startedAtUtc, audience, holdout, targetedPastBoundary, treatmentRecoveryShare, holdoutRecoveryShare, liftPoints, attribution, unattributableBecause}], computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/churn/win-back-tab.tsx`. No days-since-last-order, offer description, or per-wave cost-per-recovery/verdict, so those are dropped.
 - **Notes:** A wave is recognised by **who it reached** (participants mostly past the lapse boundary at enrolment), not by campaign name — the same recognition rule `retain/reactivation` uses, measured at the lapse boundary instead of the dormancy window. `liftPoints` only available when `attribution === "holdout"`, same pattern as `retain/reactivation`. `reachableNeverContacted` (lapsed nobody's tried) vs `unreachable` (lapsed nobody *can* try) are a useful pair to render together — one's an opportunity, the other names a data gap.
 
 ### GET /lifecycle/support/contact-drivers

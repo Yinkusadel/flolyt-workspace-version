@@ -2,49 +2,71 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
-import { InsightCards } from "@/pages/everyday/lifecycle/stage/activate/insight-cards";
 import { OpenARoomModal } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import {
-  CHURN_PREDICTION_CARDS,
-  CHURN_PREDICTION_INSIGHT,
-  CHURN_PREDICTION_KPIS,
-  CHURN_PREDICTION_OPEN_ROOM_PRESET,
-  CHURN_PREDICTION_SIGNAL_ROWS,
-  type ChurnPredictionSignalRow,
-} from "@/pages/everyday/lifecycle/stage/churn/data";
+import { formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
+import { CHURN_PREDICTION_OPEN_ROOM_PRESET } from "@/pages/everyday/lifecycle/stage/churn/data";
+import { useGetChurnPrediction } from "@/features/lifecycle/use-get-churn-prediction";
+import type { ChurnSignalDto } from "@/services/api/lifecycle/get-churn-prediction";
 
-const LEAD_TIME_TONE_CLASS: Record<ChurnPredictionSignalRow["leadTimeTone"], string> = { teal: "text-teal", rose: "text-rose", neutral: "text-ink-4" };
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  if (CALLOUT_TONES.has(tone)) return tone as "amber" | "teal" | "rose" | "ultra" | "neutral";
+  const normalized = tone.toLowerCase();
+  if (normalized.includes("attention")) return "amber";
+  if (normalized.includes("insight")) return "teal";
+  return "neutral";
+}
 
-const COLUMNS: Column<ChurnPredictionSignalRow>[] = [
-  { key: "signal", header: "Signal", render: (row) => <span className="font-semibold text-ink-2">{row.signal}</span> },
-  { key: "weight", header: "Weight", align: "right", render: (row) => <span className={row.weight === "—" ? "font-mono text-ink-4" : "font-mono text-ink"}>{row.weight}</span> },
-  { key: "available", header: "Available?", align: "right", render: (row) => <Chip tone={row.availableTone}>{row.available}</Chip> },
+type SignalRow = ChurnSignalDto & { id: string };
+
+const COLUMNS: Column<SignalRow>[] = [
+  { key: "name", header: "Signal", render: (row) => <span className="font-semibold text-ink-2">{row.name}</span> },
   {
-    key: "stage",
-    header: "Stage it comes from",
-    render: (row) =>
-      row.department ? (
-        <span className="flex items-center gap-2 whitespace-nowrap text-ink-2">
-          <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: row.department.color }} aria-hidden />
-          <span className="font-medium" style={{ color: row.department.color }}>{row.department.name}</span>
-        </span>
-      ) : row.departmentChip ? (
-        <Chip tone={row.departmentChip.tone}>{row.departmentChip.label}</Chip>
-      ) : null,
+    key: "precededShare",
+    header: "Preceded departure",
+    align: "right",
+    render: (row) => <span className="text-ink-2">{row.precededShare !== null ? formatPercent(row.precededShare) : <span className="text-ink-4">Unavailable</span>}</span>,
   },
-  { key: "leadTime", header: "Lead time", align: "right", render: (row) => <span className={LEAD_TIME_TONE_CLASS[row.leadTimeTone]}>{row.leadTime}</span> },
+  {
+    key: "leadTimeDays",
+    header: "Lead time",
+    align: "right",
+    render: (row) => <span className="font-mono text-ink-2">{row.leadTimeDays !== null ? `${row.leadTimeDays}d` : <span className="text-ink-4">Unavailable</span>}</span>,
+  },
+  {
+    key: "customersTripping",
+    header: "Customers tripping",
+    align: "right",
+    render: (row) => <span className="font-mono text-ink">{row.customersTripping !== null ? formatCount(row.customersTripping) : <span className="text-ink-4">Unavailable</span>}</span>,
+  },
 ];
 
-/** CH04 — Churn's unique Prediction tab. */
+function PredictionSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** CH04 — Churn's own Prediction tab, wired to GET /lifecycle/churn/prediction. */
 const ChurnPredictionTab = () => {
   const { headerActionsEl } = useStageContext();
   const [openRoom, setOpenRoom] = useState(false);
+  const { data, isLoading, isError, refetch } = useGetChurnPrediction();
+  const prediction = data?.data;
+  const rows: SignalRow[] = (prediction?.signals ?? []).map((signal) => ({ ...signal, id: signal.key }));
 
   return (
     <div className="space-y-8">
@@ -56,21 +78,36 @@ const ChurnPredictionTab = () => {
           headerActionsEl
         )}
 
-      <KpiCards items={CHURN_PREDICTION_KPIS} />
+      <p className={EYEBROW_CLASS}>
+        {prediction ? `${formatCount(prediction.lapsedCustomers)} lapsed customers · no fused risk score, signals named individually` : "Leading churn signals, never fused into a score"}
+      </p>
 
-      <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>What the prediction is actually built from</p>
-        <DataTable columns={COLUMNS} rows={CHURN_PREDICTION_SIGNAL_ROWS} />
-      </section>
+      {isError ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+          <p className="text-[12px] text-rose">Couldn't load Churn's prediction signals.</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : isLoading ? (
+        <PredictionSkeleton />
+      ) : (
+        <DataTable columns={COLUMNS} rows={rows} emptyTitle="No signals measured yet" emptyBody="Leading indicators will appear here once enough order history exists to read them." />
+      )}
 
-      <Callout tone="rose" title={CHURN_PREDICTION_INSIGHT.title}>
-        {CHURN_PREDICTION_INSIGHT.body}
-      </Callout>
+      <p className="text-[10.5px] text-ink-4">
+        `Preceded departure` is prevalence among past departures, not a fitted weight — read it as "how often this showed up before someone left," not a model coefficient.
+      </p>
 
-      <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>A prediction nobody has ever acted on</p>
-        <InsightCards cards={CHURN_PREDICTION_CARDS} />
-      </section>
+      {/* ❌ Backend does NOT provide: a "weight", an "available?" chip, or the stage each signal
+          comes from — this endpoint only names each signal with its prevalence, lead time and
+          trip count. Dropped rather than fabricated. */}
+
+      {prediction?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
 
       <OpenARoomModal preset={CHURN_PREDICTION_OPEN_ROOM_PRESET} open={openRoom} onOpenChange={setOpenRoom} />
     </div>

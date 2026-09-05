@@ -6,14 +6,10 @@
  * id, e.g. "CH06 · Churn · cohorts").
  */
 
-import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
-import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 import type { AssignOwnerPreset } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
-import type { SendReasonUpstreamPreset } from "@/pages/everyday/lifecycle/stage/modals/send-reason-upstream-modal";
 
 // ---- Shared across Definition/Overview/Agents (CH01/CH02/CH09) -----------
 
@@ -98,229 +94,17 @@ export const CHURN_SHARE_EXPORT_PRESET: ShareOrExportPreset = {
 // Declared ahead of the Reasons rows below so the "Never activated" row can
 // reference it directly.
 
-export const CHURN_SEND_UPSTREAM_PRESET: SendReasonUpstreamPreset = {
-  description: "Churn cannot fix anything · it can name what left and tell the right stage",
-  findingTitle: "528,000 churned without ever activating",
-  findingMeta: "58.5% of post-March cohorts · median 48 days alive · ₦61M",
-  sendToEyebrow: "Send it to",
-  recipients: [
-    { id: "activate-zainab", color: "#4C5FD5", name: "Activate · Zainab Yusuf", reason: "Owns the stage where these customers were lost", selected: true },
-    { id: "retain-ifeoma", color: "#CFD4DF", name: "Retain · Ifeoma Nwosu", reason: "Owns the 90-day window · they never reached it" },
-    { id: "room-8f2c", color: "#CFD4DF", name: "Room 8f2c", reason: "Already open on the same cause · add as evidence" },
-  ],
-  arrivesEyebrow: "What it arrives as",
-  arrivesRows: [
-    { label: "A finding, not a ticket", value: "evidence in their stage, with this stage cited" },
-    { label: "Carrying the customers", value: "528,000 · still 61% reachable", tone: "teal" },
-    { label: "And the counterfactual", value: "Jan–Feb cohorts churned at 47.9% on the same measure" },
-    { label: "Logged both ends", value: "visible here and there · neither side can lose it" },
-  ],
-  closingTitle: "This is the only action that genuinely belongs in Churn",
-  closingBody:
-    "Nothing here can be fixed here. The work of this stage is to name what left, attribute it honestly, and get that back to the stage that can act — which is why the primary control on the reasons screen sends a finding upstream rather than starting a campaign.",
-  confirmLabel: "Send to Activate",
-};
+// ---- Reasons (CH03, unique tab) is now wired to GET /lifecycle/churn/reasons — see
+// reasons-tab.tsx. That endpoint has no "vs Feb" trend field and no per-row "send upstream" action
+// (the send-reason-upstream-modal.tsx preset below was seeded with a specific mock finding, not
+// real data), so those aren't reproducible from live data; dropped, and the now-orphaned modal
+// deleted.
 
-// ---- Reasons (CH03, unique tab) ---------------------------------------------
-
-export type ChurnReasonRow = {
-  id: string;
-  reason: string;
-  customers: string;
-  share: string;
-  shareTone: "rose" | "amber" | "neutral";
-  howWeKnow: string;
-  howWeKnowTone: "ultra" | "teal" | "rose" | "amber";
-  department?: { name: string; color: string };
-  departmentChip?: { label: string; tone: ChipTone };
-  vsFeb: string;
-  vsFebTone: "rose" | "teal" | "neutral";
-  actionable: string;
-  actionableTone: ChipTone;
-  /** Only "Never activated" has a modal preset — CH12 sends that exact finding upstream. */
-  sendUpstreamPreset?: SendReasonUpstreamPreset;
-};
-
-export const CHURN_REASON_ROWS: ChurnReasonRow[] = [
-  {
-    id: "never-activated",
-    reason: "Never activated",
-    customers: "528,000",
-    share: "51.8%",
-    shareTone: "rose",
-    howWeKnow: "inferred · order history",
-    howWeKnowTone: "ultra",
-    department: { name: "Product", color: "#7A5AA8" },
-    vsFeb: "+8.1",
-    vsFebTone: "rose",
-    actionable: "yes · upstream",
-    actionableTone: "teal",
-    sendUpstreamPreset: CHURN_SEND_UPSTREAM_PRESET,
-  },
-  {
-    id: "price-or-fee",
-    reason: "Price or fee",
-    customers: "94,000",
-    share: "9.2%",
-    shareTone: "amber",
-    howWeKnow: "stated · pause reasons",
-    howWeKnowTone: "teal",
-    department: { name: "Engineering", color: "#4E7080" },
-    vsFeb: "+4.9",
-    vsFebTone: "rose",
-    actionable: "yes · shipped Aug",
-    actionableTone: "teal",
-  },
-  {
-    id: "delivery-experience",
-    reason: "Delivery experience",
-    customers: "71,000",
-    share: "7.0%",
-    shareTone: "amber",
-    howWeKnow: "inferred · delivery feed",
-    howWeKnowTone: "ultra",
-    department: { name: "Support", color: "#C56A2E" },
-    vsFeb: "+0.4",
-    vsFebTone: "neutral",
-    actionable: "yes",
-    actionableTone: "teal",
-  },
-  {
-    id: "payment-failure",
-    reason: "Payment failure",
-    customers: "14,200",
-    share: "1.4%",
-    shareTone: "neutral",
-    howWeKnow: "stated · billing",
-    howWeKnowTone: "teal",
-    department: { name: "Finance", color: "#5D6BB8" },
-    vsFeb: "−1.1",
-    vsFebTone: "teal",
-    actionable: "yes",
-    actionableTone: "teal",
-  },
-  {
-    id: "moved-away-or-stopped-needing-it",
-    reason: "Moved away or stopped needing it",
-    customers: "41,000",
-    share: "4.0%",
-    shareTone: "neutral",
-    howWeKnow: "stated · cancellation",
-    howWeKnowTone: "teal",
-    departmentChip: { label: "nobody", tone: "neutral" },
-    vsFeb: "−0.2",
-    vsFebTone: "neutral",
-    actionable: "no",
-    actionableTone: "neutral",
-  },
-  {
-    id: "competitor",
-    reason: "Competitor",
-    customers: "Unavailable",
-    share: "Unavailable",
-    shareTone: "neutral",
-    howWeKnow: "no source",
-    howWeKnowTone: "rose",
-    departmentChip: { label: "nobody", tone: "neutral" },
-    vsFeb: "—",
-    vsFebTone: "neutral",
-    actionable: "unknown",
-    actionableTone: "amber",
-  },
-  {
-    id: "no-reason-found",
-    reason: "No reason found",
-    customers: "196,000",
-    share: "19.2%",
-    shareTone: "amber",
-    howWeKnow: "nothing matched",
-    howWeKnowTone: "amber",
-    departmentChip: { label: "No owner", tone: "amber" },
-    vsFeb: "−3.4",
-    vsFebTone: "teal",
-    actionable: "not yet",
-    actionableTone: "amber",
-  },
-];
-
-export const CHURN_REASONS_INSIGHT = {
-  title: "19.2% has no reason and Flolyt will not give it one",
-  body: "196,000 customers left and nothing in any connected source explains it. It would be easy to distribute them proportionally across the known reasons and produce a tidy pie chart. That would make the largest single category disappear into the others and quietly overstate every one of them.",
-};
-
-export const CHURN_REASONS_SPLIT_ROWS: { label: string; value: string; tone: "teal" | "ultra" | "amber" | "neutral" }[] = [
-  { label: "Stated · the customer told us", value: "149,200 · 14.6% · cancellation and pause reasons", tone: "teal" },
-  { label: "Inferred · behaviour we can read", value: "670,800 · 65.8% · order, delivery and billing history", tone: "ultra" },
-  { label: "Neither", value: "196,000 · 19.2%", tone: "amber" },
-  { label: "Why they are never merged", value: "a stated reason is evidence · an inferred one is a hypothesis", tone: "neutral" },
-  { label: "Where the two disagree", value: "8,100 customers said “moved away” and kept ordering elsewhere in the app", tone: "amber" },
-];
-
-// ---- Prediction (CH04, unique tab) ------------------------------------------
-
-export const CHURN_PREDICTION_KPIS: Kpi[] = [
-  { eyebrow: "Predicted to churn in 30 days", value: "118,000", note: "at 71% precision" },
-  { eyebrow: "Value behind them", value: "₦188M", tone: "rose", note: "if none are reached" },
-  { eyebrow: "Currently being contacted", value: "0", tone: "rose", note: "no play, no owner" },
-  { eyebrow: "Predicted last month", value: "112,000", tone: "amber", note: "of which 79,400 did churn" },
-];
-
-export type ChurnPredictionSignalRow = {
-  id: string;
-  signal: string;
-  weight: string;
-  available: string;
-  availableTone: ChipTone;
-  department?: { name: string; color: string };
-  departmentChip?: { label: string; tone: ChipTone };
-  leadTime: string;
-  leadTimeTone: "teal" | "rose" | "neutral";
-};
-
-export const CHURN_PREDICTION_SIGNAL_ROWS: ChurnPredictionSignalRow[] = [
-  { id: "days-since-last-order", signal: "Days since last order", weight: "31%", available: "yes", availableTone: "teal", department: { name: "Marketing", color: "#79883A" }, leadTime: "14 days", leadTimeTone: "teal" },
-  { id: "scheduled-delivery-cancelled", signal: "Scheduled delivery cancelled", weight: "22%", available: "yes", availableTone: "teal", department: { name: "Product", color: "#7A5AA8" }, leadTime: "31 days", leadTimeTone: "teal" },
-  { id: "feature-usage-falling", signal: "Feature usage falling", weight: "18%", available: "yes", availableTone: "teal", department: { name: "Product", color: "#7A5AA8" }, leadTime: "28 days", leadTimeTone: "teal" },
-  { id: "support-contact-fees-delivery", signal: "Support contact about fees or delivery", weight: "14%", available: "yes", availableTone: "teal", department: { name: "Support", color: "#C56A2E" }, leadTime: "41 days", leadTimeTone: "teal" },
-  { id: "referral-activity-stopping", signal: "Referral activity stopping", weight: "9%", available: "yes", availableTone: "teal", departmentChip: { label: "No owner", tone: "amber" }, leadTime: "47 days", leadTimeTone: "teal" },
-  { id: "basket-composition-change", signal: "Basket composition change", weight: "—", available: "no · order_lines", availableTone: "rose", department: { name: "Engineering", color: "#4E7080" }, leadTime: "—", leadTimeTone: "neutral" },
-  { id: "competitor-app-installed", signal: "Competitor app installed", weight: "—", available: "no source", availableTone: "rose", departmentChip: { label: "nobody", tone: "neutral" }, leadTime: "—", leadTimeTone: "neutral" },
-];
-
-export const CHURN_PREDICTION_INSIGHT = {
-  title: "The earliest signal in the model comes from the stage with no owner",
-  body: "Referral activity stopping predicts churn 47 days out — the longest lead time of anything available. It is 9% of the model's weight and it is produced by a stage nobody watches. The single best early-warning signal in this company arrives at an empty desk.",
-};
-
-export const CHURN_PREDICTION_CARDS: InsightCard[] = [
-  {
-    id: "predicted-ranked-untouched",
-    agentTag: "CH",
-    meta: "118,000 customers · ₦188M",
-    title: "Predicted, ranked, and untouched",
-    body: "The model has run weekly since January at 71% precision. It has produced 31 weekly lists. No play has ever been built from one, because building a play needs an owner.",
-    footnote: "31 lists, 0 actions",
-    tone: "rose",
-  },
-  {
-    id: "what-71-percent-means",
-    agentTag: "CH",
-    meta: "What 71% precision means here",
-    title: "Good enough to act, not to automate",
-    body: "Contacting all 118,000 would reach 33,000 people who were never going to leave. At a ₦140 cost per contact inside the window that is defensible — it is a judgement, and it needs a person to make it.",
-    footnote: "the judgement nobody owns",
-    tone: "amber",
-  },
-  {
-    id: "the-cheapest-version",
-    agentTag: "CH",
-    meta: "The cheapest version",
-    title: "The top decile only",
-    body: "11,800 customers at 91% precision, ₦31M at stake, ₦1.7M to contact. It would take one approval and one wave and has never been proposed.",
-    footnote: "₦31M · one approval",
-    tone: "teal",
-  },
-];
+// ---- Prediction (CH04, unique tab) is now wired to GET /lifecycle/churn/prediction — see
+// prediction-tab.tsx. That endpoint has no risk-score "weight", "available?" chip, or per-signal
+// stage attribution — there is deliberately no fused score at all, per the endpoint's own note —
+// so the old mock's KPIs, table and insight cards above aren't reproducible from live data;
+// dropped.
 
 export const CHURN_PREDICTION_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Predicted to churn in 30 days",
@@ -337,48 +121,11 @@ export const CHURN_PREDICTION_OPEN_ROOM_PRESET: OpenRoomPreset = {
   participantsNote: "Churn Reason leads · no owner assigned since 12 January",
 };
 
-// ---- Win-back (CH05, unique tab) --------------------------------------------
-
-export const CHURN_WINBACK_KPIS: Kpi[] = [
-  { eyebrow: "Churned and reachable", value: "812,000", tone: "amber", note: "of 1.02M" },
-  { eyebrow: "Contacted in 12 months", value: "94,000", tone: "rose", note: "11.6% of them" },
-  { eyebrow: "Won back", value: "3,900", tone: "rose", note: "4.2% of those contacted" },
-  { eyebrow: "Cost per recovery", value: "₦8,100", tone: "rose", note: "against ₦1,840 CAC" },
-];
-
-export const CHURN_WINBACK_COST_INSIGHT = {
-  title: "Winning back a churned customer costs 4.4 times more than acquiring a new one",
-  body: "That is not an argument against win-back — a recovered customer knows the product and repeats better. It is an argument for doing it before day 90, which is Retain's job, and for treating anything after that as expensive salvage rather than a growth channel.",
-};
-
-export type ChurnWinbackRow = {
-  id: string;
-  campaign: string;
-  sent: string;
-  daysSince: string;
-  daysSinceTone: "rose" | "amber" | "neutral";
-  offer: string;
-  offerTone: "rose" | "teal" | "neutral";
-  wonBack: string;
-  wonBackTone: "rose" | "teal" | "amber" | "neutral";
-  costPerRecovery: string;
-  costPerRecoveryTone: "rose" | "teal" | "neutral";
-  verdict: string;
-  verdictTone: ChipTone;
-};
-
-export const CHURN_WINBACK_ROWS: ChurnWinbackRow[] = [
-  { id: "annual-we-miss-you", campaign: "Annual “we miss you”", sent: "61,000", daysSince: "180+", daysSinceTone: "rose", offer: "30% off", offerTone: "rose", wonBack: "2.1%", wonBackTone: "rose", costPerRecovery: "₦14,200", costPerRecoveryTone: "rose", verdict: "stop it", verdictTone: "rose" },
-  { id: "post-fee-fix-outreach-aug", campaign: "Post-fee-fix outreach · Aug", sent: "18,900", daysSince: "90–150", daysSinceTone: "amber", offer: "none · a fix notice", offerTone: "teal", wonBack: "9.4%", wonBackTone: "teal", costPerRecovery: "₦1,490", costPerRecoveryTone: "teal", verdict: "best result", verdictTone: "teal" },
-  { id: "failed-delivery-apology-late", campaign: "Failed-delivery apology · late", sent: "8,200", daysSince: "90–120", daysSinceTone: "amber", offer: "refund + credit", offerTone: "teal", wonBack: "11.1%", wonBackTone: "teal", costPerRecovery: "₦2,100", costPerRecoveryTone: "teal", verdict: "works", verdictTone: "teal" },
-  { id: "expired-card-prompt", campaign: "Expired card prompt", sent: "5,900", daysSince: "90+", daysSinceTone: "amber", offer: "none", offerTone: "teal", wonBack: "6.1%", wonBackTone: "amber", costPerRecovery: "₦900", costPerRecoveryTone: "teal", verdict: "cheapest", verdictTone: "teal" },
-  { id: "everyone-else", campaign: "Everyone else", sent: "718,000", daysSince: "any", daysSinceTone: "neutral", offer: "never contacted", offerTone: "rose", wonBack: "—", wonBackTone: "neutral", costPerRecovery: "—", costPerRecoveryTone: "neutral", verdict: "untouched", verdictTone: "amber" },
-];
-
-export const CHURN_WINBACK_CLOSING = {
-  title: "The one campaign with a discount performed worst by a factor of five",
-  body: "“We miss you, here is 30% off” recovers 2.1% at ₦14,200 each. Telling people the specific thing they complained about has been fixed recovers 9.4% at ₦1,490. Business memory has held “fee transparency beats discounting on reactivation” since August and this table is the second, independent confirmation of it.",
-};
+// ---- Win-back (CH05, unique tab) is now wired to GET /lifecycle/churn/win-back — see
+// win-back-tab.tsx. That endpoint has no days-since-last-order, offer description, or per-wave
+// cost-per-recovery/verdict — waves are recognised by who they reached, not by offer or campaign
+// metadata — so the old mock's KPIs, table and closing narrative above aren't reproducible from
+// live data; dropped.
 
 export const CHURN_WINBACK_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Annual “we miss you” campaign underperforming",
