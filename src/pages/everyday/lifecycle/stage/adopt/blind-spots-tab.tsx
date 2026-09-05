@@ -14,11 +14,6 @@ import { ADOPT_REQUEST_INSTRUMENTATION_PRESET } from "@/pages/everyday/lifecycle
 import { useGetInstrumentation } from "@/features/lifecycle/use-get-instrumentation";
 import type { InstrumentationGapDto } from "@/services/api/lifecycle/get-instrumentation";
 
-const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
-function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
-  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
-}
-
 // `state`'s only documented value is "no-request" — everything else is an unconfirmed
 // request-lifecycle state, matched defensively by keyword.
 function stateTone(state: string): ChipTone {
@@ -100,7 +95,10 @@ const AdoptBlindSpotsTab = () => {
   const [requestOpen, setRequestOpen] = useState(false);
   const { data, isLoading, isError, refetch } = useGetInstrumentation();
   const instrumentation = data?.data;
-  const gaps = (instrumentation?.gaps ?? []).filter((gap) => gap.blockedStages.includes(stage.slug));
+  // `blockedStages` carries each stage's display name ("Advocate"), confirmed 2026-09-05 live —
+  // not its slug. Comparing against `stage.slug` (always lowercase) never matched anything, for
+  // any stage; matched case-insensitively against `stage.name` here instead.
+  const gaps = (instrumentation?.gaps ?? []).filter((gap) => gap.blockedStages.some((blocked) => blocked.toLowerCase() === stage.name.toLowerCase()));
   const rows: GapRow[] = gaps.map((gap) => ({ ...gap, id: gap.gapKey }));
 
   return (
@@ -141,13 +139,13 @@ const AdoptBlindSpotsTab = () => {
           sentence, which is shown in the table above; dropped rather than fabricated. The "Request
           instrumentation" button still opens the existing static preset dialog, not a real
           POST /instrumentation-requests call — that mutation (and PUT .../owner, POST .../close)
-          stays unwired, same treatment as every other "open a form" CTA in this project so far. */}
-
-      {instrumentation?.callouts.map((callout) => (
-        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
-          {callout.body}
-        </Callout>
-      ))}
+          stays unwired, same treatment as every other "open a form" CTA in this project so far.
+          `instrumentation.callouts[]` is also NOT shown here — confirmed live 2026-09-05 that it's
+          composed over the whole, unfiltered `gaps[]` list ("2 gaps nobody has asked about" when
+          neither gap blocked this stage), not scoped to what this stage's own table just filtered
+          to. Showing a workspace-wide count under a "blind spots in this stage" heading read as
+          the same number disagreeing with itself; there's no way to re-scope pre-composed callout
+          text to one stage without fabricating it, so it's dropped on this view specifically. */}
 
       <RequestInstrumentationModal preset={ADOPT_REQUEST_INSTRUMENTATION_PRESET} open={requestOpen} onOpenChange={setRequestOpen} />
     </div>
