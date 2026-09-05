@@ -467,8 +467,8 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 
 - **Purpose:** Retain's Repeat Curve tab — second-order purchase timing among mature first-time buyers, plus the return-probability curve and the daily rate of loss across the slipping boundary.
 - **Response `data`:** `{ stageKey, stageName, basis, basisCaveat, boundaryDays, matureFirstTimeBuyers, tooYoungFirstTimeBuyers, buckets: [{fromDay, toDay, customers, share}], repeatShareWithinBoundary, neverReturned, points: [{daysSince, reached, returnProbability}], dailyBoundaryCrossings, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
-- **Notes:** Only counts buyers whose first order is at least `boundaryDays` old (the workspace's own slipping threshold) — younger ones sit in `tooYoungFirstTimeBuyers`, excluded from every rate, never projected. The return-probability curve counts gaps that *reached* N days quiet — an open gap counts as not-yet-returned, so the reading is conservative near today by construction. `basis`/`basisCaveat` flag these figures as coming from imported order history, not the warehouse a defined Retain counts in — a different basis than the stage's own Overview population. Every share is unavailable below a readable sample, naming it.
+- **Status:** **✅ wired 2026-09-05** — `stage/retain/repeat-curve-tab.tsx`.
+- **Notes:** Only counts buyers whose first order is at least `boundaryDays` old (the workspace's own slipping threshold) — younger ones sit in `tooYoungFirstTimeBuyers`, excluded from every rate, never projected. The return-probability curve counts gaps that *reached* N days quiet — an open gap counts as not-yet-returned, so the reading is conservative near today by construction. `basis`/`basisCaveat` flag these figures as coming from imported order history, not the warehouse a defined Retain counts in — a different basis than the stage's own Overview population. Every share is unavailable below a readable sample, naming it. **Correction, live-confirmed 2026-09-05:** `matureFirstTimeBuyers`, `tooYoungFirstTimeBuyers`, `repeatShareWithinBoundary`, `neverReturned` and `dailyBoundaryCrossings` are the measured-value wrapper (`{value, state, missingSource, wouldUnlock}`), not bare `number | null` as this entry previously said — a fresh workspace with no order history returned every one of them as the wrapper, and the pre-fix UI rendered `[object Object]`/`NaN%`. `buckets[].share` and `points[].returnProbability` remain **unconfirmed** (both arrays were empty in the response that caught this) — likely also the wrapper given this endpoint's 100% hit rate so far, but don't assume; check a response with real rows before trusting either.
 
 ### GET /lifecycle/retain/segments
 
@@ -530,14 +530,14 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 
 - **Purpose:** Renew's Renewal book tab — what's coming up for renewal in the next 90 days, banded 0-30/31-60/61-90, split by whether it's already cancelled.
 - **Response `data`:** `{ slices: [{band, state, currency, customers, value}], comingUp, alreadyCancelled, horizonDays, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/renew/renewal-book-tab.tsx`. No projected-rate/confidence/basis/owner field and no per-row drilldown, so those and the old mock's drilldown link are dropped.
 - **Notes:** **The cancelled split is the whole point** — a subscription cancelled last week is still on the book with a real renewal date and is certain not to renew; a "book" that counts it is a pipeline wearing a forecast's name. `alreadyCancelled` is the gap between the two readings. Value per currency, never blended.
 
 ### GET /lifecycle/renew/dunning
 
 - **Purpose:** Renew's Dunning tab — whether a failed payment ever clears, and how long it took.
 - **Response `data`:** `{ bands: [{band, customers, share}], failed, recovered, computedAtUtc, callouts }` — bands: within-a-day / within-a-week / later / **never**.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/renew/dunning-tab.tsx`. No per-retry-window attempts/rate breakdown, so the old mock's table and recovery bars are dropped.
 - **Notes:** **"Never" is a band, not an exclusion** — dropping never-recovered customers would compute a clearing time over exactly the payments that DID clear, then call it a recovery rate. Failure statuses matched narrowly (`failed`/`declined`/`unpaid`/`past due`/`insufficient`) and **deliberately exclude refunds/returns** — those are orders that went wrong *after* being paid, a different concept. Reads the order stream, not the subscription book.
 
 ### GET /lifecycle/expand/upgrade-paths
@@ -597,7 +597,7 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 
 - **Purpose:** Renew's Pauses tab — who lapsed, how long for, and whether they came back.
 - **Response `data`:** `{ bands: [{band, lapses, share}], lapses, returned, renewalGraceDays, maturityDays, computedAtUtc, callouts }` — bands include **never**.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/renew/pauses-tab.tsx`. No pause reason/status field exists at all (a pause is a gap, not a recorded event, per this endpoint's own note), so the old mock's entire reason-based breakdown is dropped.
 - **Notes:** **A pause is not something a subscription book records — a gap is.** Nothing in the schema carries a pause status or reason, so "who paused and why" is not read or guessed at, only the gap length. **A gap under 7 days is a renewal, not a lapse** — without that grace threshold, every monthly subscriber would appear to lapse-and-return 12 times a year. Lapses newer than 90 days are excluded — a subscription that ended last week hasn't failed to return, it hasn't had the chance yet. Counted as **lapse events, not customers** — one person can lapse twice and return once, and both facts matter here.
 
 ### GET /lifecycle/acquire/unit-economics

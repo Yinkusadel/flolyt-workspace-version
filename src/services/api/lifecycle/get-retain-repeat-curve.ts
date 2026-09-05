@@ -2,18 +2,22 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
-import type { LifecycleCalloutDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import type { LifecycleCalloutDto, LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
 export interface RepeatCurveBucketDto {
   fromDay: number;
   toDay: number | null;
   customers: number;
+  /** Unconfirmed live with real rows — may also be the measured-value wrapper, matching every
+   * other numeric field on this endpoint confirmed 2026-09-05. Verify before trusting further. */
   share: number | null;
 }
 
 export interface RepeatCurvePointDto {
   daysSince: number;
   reached: number;
+  /** Unconfirmed live with real rows — may also be the measured-value wrapper, matching every
+   * other numeric field on this endpoint confirmed 2026-09-05. Verify before trusting further. */
   returnProbability: number | null;
 }
 
@@ -23,15 +27,17 @@ export interface RetainRepeatCurveData {
   basis: string;
   basisCaveat: string;
   boundaryDays: number;
-  matureFirstTimeBuyers: number | null;
+  /** Confirmed 2026-09-05 live (a fresh workspace with no order history): a measured value, not a
+   * bare number, same wrapper as GET /map's atStake. */
+  matureFirstTimeBuyers: LifecycleMeasuredValueDto<number>;
   /** Younger-than-boundary first-time buyers — excluded from every rate, never projected. */
-  tooYoungFirstTimeBuyers: number | null;
+  tooYoungFirstTimeBuyers: LifecycleMeasuredValueDto<number>;
   buckets: RepeatCurveBucketDto[];
-  repeatShareWithinBoundary: number | null;
-  neverReturned: number | null;
+  repeatShareWithinBoundary: LifecycleMeasuredValueDto<number>;
+  neverReturned: LifecycleMeasuredValueDto<number>;
   /** An open gap counts as not-yet-returned, so this reads conservative near today by construction. */
   points: RepeatCurvePointDto[];
-  dailyBoundaryCrossings: number | null;
+  dailyBoundaryCrossings: LifecycleMeasuredValueDto<number>;
   computedAtUtc: string | null;
   callouts: LifecycleCalloutDto[];
 }

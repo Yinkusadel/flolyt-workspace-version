@@ -3,9 +3,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { WideBarRow } from "@/pages/everyday/lifecycle/stage/bar";
 import { Sparkline } from "@/pages/everyday/lifecycle/stage/sparkline";
+import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetRetainRepeatCurve } from "@/features/lifecycle/use-get-retain-repeat-curve";
+import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
+
+function measuredCell(measured: LifecycleMeasuredValueDto<number>, format: (value: number) => string) {
+  return measured.value !== null ? (
+    format(measured.value)
+  ) : (
+    <InfoTooltip missingSource={measured.missingSource} wouldUnlock={measured.wouldUnlock} />
+  );
+}
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
@@ -42,7 +52,14 @@ const RetainRepeatCurveTab = () => {
         <>
           <section className="space-y-4">
             <p className={EYEBROW_CLASS}>
-              When the second order happens · {curve.matureFirstTimeBuyers !== null ? `${formatCount(curve.matureFirstTimeBuyers)} mature first-time buyers` : "mature first-time buyers unavailable"}
+              When the second order happens ·{" "}
+              {curve.matureFirstTimeBuyers.value !== null ? (
+                `${formatCount(curve.matureFirstTimeBuyers.value)} mature first-time buyers`
+              ) : (
+                <>
+                  mature first-time buyers <InfoTooltip missingSource={curve.matureFirstTimeBuyers.missingSource} wouldUnlock={curve.matureFirstTimeBuyers.wouldUnlock} />
+                </>
+              )}
             </p>
             {curve.buckets.length > 0 ? (
               <div className="space-y-5">
@@ -64,17 +81,15 @@ const RetainRepeatCurveTab = () => {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-card border border-line bg-paper p-3.5">
               <p className="font-mono text-[9.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">Repeat share within boundary</p>
-              <p className="mt-1.5 text-[16px] font-semibold text-ink">
-                {curve.repeatShareWithinBoundary !== null ? formatPercent(curve.repeatShareWithinBoundary) : "Unavailable"}
-              </p>
+              <p className="mt-1.5 text-[16px] font-semibold text-ink">{measuredCell(curve.repeatShareWithinBoundary, formatPercent)}</p>
             </div>
             <div className="rounded-card border border-line bg-paper p-3.5">
               <p className="font-mono text-[9.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">Never returned</p>
-              <p className="mt-1.5 text-[16px] font-semibold text-ink">{curve.neverReturned !== null ? formatCount(curve.neverReturned) : "Unavailable"}</p>
+              <p className="mt-1.5 text-[16px] font-semibold text-ink">{measuredCell(curve.neverReturned, formatCount)}</p>
             </div>
             <div className="rounded-card border border-line bg-paper p-3.5">
               <p className="font-mono text-[9.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">Daily boundary crossings</p>
-              <p className="mt-1.5 text-[16px] font-semibold text-ink">{curve.dailyBoundaryCrossings !== null ? formatCount(curve.dailyBoundaryCrossings) : "Unavailable"}</p>
+              <p className="mt-1.5 text-[16px] font-semibold text-ink">{measuredCell(curve.dailyBoundaryCrossings, formatCount)}</p>
             </div>
           </div>
 
@@ -90,7 +105,8 @@ const RetainRepeatCurveTab = () => {
           </section>
 
           <p className="text-[10.5px] text-ink-4">
-            {curve.basisCaveat} · younger-than-{curve.boundaryDays}-day buyers ({curve.tooYoungFirstTimeBuyers !== null ? formatCount(curve.tooYoungFirstTimeBuyers) : "unavailable"}) excluded from every rate above.
+            {curve.basisCaveat} · younger-than-{curve.boundaryDays}-day buyers (
+            {curve.tooYoungFirstTimeBuyers.value !== null ? formatCount(curve.tooYoungFirstTimeBuyers.value) : "unavailable"}) excluded from every rate above.
           </p>
 
           {/* ❌ Backend does NOT provide: a before/after comparison of the curve across two time
