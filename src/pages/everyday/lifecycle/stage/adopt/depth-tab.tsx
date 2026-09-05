@@ -1,14 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { WideBarRow } from "@/pages/everyday/lifecycle/stage/bar";
+import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetAdoptDepth } from "@/features/lifecycle/use-get-adopt-depth";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
-  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+  if (CALLOUT_TONES.has(tone)) return tone as "amber" | "teal" | "rose" | "ultra" | "neutral";
+  // "attention"/"insight"/"context" confirmed live 2026-09-05 across Adopt's own endpoints — not
+  // in the original tone vocabulary, matched defensively by keyword.
+  const normalized = tone.toLowerCase();
+  if (normalized.includes("attention")) return "amber";
+  if (normalized.includes("insight")) return "teal";
+  return "neutral";
 }
 
 function DepthSkeleton() {
@@ -31,7 +37,7 @@ const AdoptDepthTab = () => {
       <section className="space-y-5">
         <p className={EYEBROW_CLASS}>
           How many features each customer uses
-          {depth?.medianFeatures !== null && depth?.medianFeatures !== undefined ? ` · median ${depth.medianFeatures}` : ""}
+          {depth?.medianFeatures.value !== null && depth?.medianFeatures.value !== undefined ? ` · median ${depth.medianFeatures.value}` : ""}
           {depth ? ` · active within ${depth.activeWithinDays} days, over a ${depth.windowDays}-day window` : ""}
         </p>
 
@@ -47,17 +53,27 @@ const AdoptDepthTab = () => {
         ) : depth && depth.bands.length > 0 ? (
           <div className="space-y-5">
             {depth.bands.map((band) => (
-              <WideBarRow
-                key={band.features}
-                label={`${band.features} feature${band.features === 1 ? "" : "s"}`}
-                value={
-                  band.stillActiveShare !== null
-                    ? `${formatCount(band.customers)} · ${formatPercent(band.stillActiveShare)} still active`
-                    : `${formatCount(band.customers)} · still-active share unavailable`
-                }
-                percent={band.stillActiveShare !== null ? band.stillActiveShare * 100 : 0}
-                tone="teal"
-              />
+              <div key={band.features} className="space-y-1.5">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <span className="text-[12px] font-semibold text-ink">{`${band.features} feature${band.features === 1 ? "" : "s"}`}</span>
+                  <span className="flex items-center gap-1.5 font-mono text-[10.5px] text-ink-3">
+                    {formatCount(band.customers)} ·{" "}
+                    {band.stillActiveShare.value !== null ? (
+                      `${formatPercent(band.stillActiveShare.value)} still active`
+                    ) : (
+                      <>
+                        still-active share <InfoTooltip missingSource={band.stillActiveShare.missingSource} wouldUnlock={band.stillActiveShare.wouldUnlock} />
+                      </>
+                    )}
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-paper">
+                  <div
+                    className="h-1.5 rounded-full bg-teal"
+                    style={{ width: `${Math.min(100, Math.max(0, band.stillActiveShare.value !== null ? band.stillActiveShare.value * 100 : 0))}%` }}
+                  />
+                </div>
+              </div>
             ))}
           </div>
         ) : (
@@ -65,9 +81,9 @@ const AdoptDepthTab = () => {
         )}
       </section>
 
-      {depth?.lift !== null && depth?.lift !== undefined && (
+      {depth?.lift.value !== null && depth?.lift.value !== undefined && (
         <p className="text-[10.5px] text-ink-4">
-          Lift between the top and bottom band: {formatPercent(depth.lift)} — a correlation worth reading alongside this endpoint's own callouts, not proof that using more features causes retention.
+          Lift between the top and bottom band: {formatPercent(depth.lift.value)} — a correlation worth reading alongside this endpoint's own callouts, not proof that using more features causes retention.
         </p>
       )}
 

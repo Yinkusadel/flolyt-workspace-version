@@ -2,22 +2,26 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
-import type { LifecycleCalloutDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import type { LifecycleCalloutDto, LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
 export interface AdoptDepthBandDto {
   features: number;
   customers: number;
   stillActive: number;
-  stillActiveShare: number | null;
+  /** Confirmed 2026-09-05 live: a measured value, not a bare number — refused below a readable
+   * sample (~20 customers at that depth), named as such. */
+  stillActiveShare: LifecycleMeasuredValueDto<number>;
 }
 
 export interface AdoptDepthData {
   bands: AdoptDepthBandDto[];
-  /** Median, deliberately not a mean — one power user would drag a mean nowhere real. */
-  medianFeatures: number | null;
+  /** Median, deliberately not a mean — one power user would drag a mean nowhere real. Confirmed
+   * 2026-09-05 live: a measured value, not a bare number. */
+  medianFeatures: LifecycleMeasuredValueDto<number>;
   /** Correlation, not causation — see this endpoint's callouts. Good for finding which features
-   * stayers reach and leavers never do, not for proving feature use causes retention. */
-  lift: number | null;
+   * stayers reach and leavers never do, not for proving feature use causes retention. Confirmed
+   * 2026-09-05 live: a measured value, not a bare number. */
+  lift: LifecycleMeasuredValueDto<number>;
   windowDays: number;
   activeWithinDays: number;
   computedAtUtc: string | null;

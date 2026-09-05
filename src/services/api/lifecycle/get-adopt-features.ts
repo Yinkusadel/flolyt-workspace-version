@@ -2,7 +2,7 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
-import type { LifecycleCalloutDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import type { LifecycleCalloutDto, LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
 export interface AdoptFeatureDto {
   feature: string;
@@ -11,13 +11,15 @@ export interface AdoptFeatureDto {
   /** Used more than once. Not a complement of abandonedCustomers — both can be true of one person. */
   returned: number;
   abandonedCustomers: number;
-  kept: number | null;
-  abandoned: number | null;
+  /** Confirmed 2026-09-05 live: a measured value, not a bare number. */
+  kept: LifecycleMeasuredValueDto<number>;
+  abandoned: LifecycleMeasuredValueDto<number>;
 }
 
 export interface AdoptFeaturesData {
   features: AdoptFeatureDto[];
-  customersSeen: number | null;
+  /** Confirmed 2026-09-05 live: a measured value, not a bare number. */
+  customersSeen: LifecycleMeasuredValueDto<number>;
   windowDays: number;
   abandonedAfterDays: number;
   computedAtUtc: string | null;

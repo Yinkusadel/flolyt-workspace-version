@@ -2,14 +2,30 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
+import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetAdoptFeatures } from "@/features/lifecycle/use-get-adopt-features";
 import type { AdoptFeatureDto } from "@/services/api/lifecycle/get-adopt-features";
+import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
-  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+  if (CALLOUT_TONES.has(tone)) return tone as "amber" | "teal" | "rose" | "ultra" | "neutral";
+  // "attention"/"insight" confirmed live 2026-09-05 — not in the original tone vocabulary,
+  // matched defensively by keyword rather than left to fall through to neutral.
+  const normalized = tone.toLowerCase();
+  if (normalized.includes("attention")) return "amber";
+  if (normalized.includes("insight")) return "teal";
+  return "neutral";
+}
+
+function measuredPercent(measured: LifecycleMeasuredValueDto<number>) {
+  return measured.value !== null ? (
+    formatPercent(measured.value)
+  ) : (
+    <InfoTooltip missingSource={measured.missingSource} wouldUnlock={measured.wouldUnlock} />
+  );
 }
 
 type FeatureRow = AdoptFeatureDto & { id: string };
@@ -19,8 +35,8 @@ const COLUMNS: Column<FeatureRow>[] = [
   { key: "customers", header: "Ever used", align: "right", render: (row) => <span className="font-mono text-ink">{formatCount(row.customers)}</span> },
   { key: "returned", header: "Returned", align: "right", render: (row) => <span className="text-teal">{formatCount(row.returned)}</span> },
   { key: "abandonedCustomers", header: "Abandoned", align: "right", render: (row) => <span className="text-rose">{formatCount(row.abandonedCustomers)}</span> },
-  { key: "kept", header: "Kept", align: "right", render: (row) => <span className="text-ink-2">{row.kept !== null ? formatPercent(row.kept) : <span className="text-ink-4">Unavailable</span>}</span> },
-  { key: "abandoned", header: "Abandoned share", align: "right", render: (row) => <span className="text-ink-4">{row.abandoned !== null ? formatPercent(row.abandoned) : "Unavailable"}</span> },
+  { key: "kept", header: "Kept", align: "right", render: (row) => <span className="text-ink-2">{measuredPercent(row.kept)}</span> },
+  { key: "abandoned", header: "Abandoned share", align: "right", render: (row) => <span className="text-ink-4">{measuredPercent(row.abandoned)}</span> },
 ];
 
 function FeaturesSkeleton() {
@@ -48,7 +64,7 @@ const AdoptFeaturesTab = () => {
     <div className="space-y-8">
       <p className={EYEBROW_CLASS}>
         {features
-          ? `${rows.length} features · read over a ${features.windowDays}-day window · abandoned after ${features.abandonedAfterDays} days of no use${features.customersSeen !== null ? ` · ${formatCount(features.customersSeen)} customers seen` : ""}`
+          ? `${rows.length} features · read over a ${features.windowDays}-day window · abandoned after ${features.abandonedAfterDays} days of no use${features.customersSeen.value !== null ? ` · ${formatCount(features.customersSeen.value)} customers seen` : ""}`
           : "Which features people use, return to, and abandon"}
       </p>
 
