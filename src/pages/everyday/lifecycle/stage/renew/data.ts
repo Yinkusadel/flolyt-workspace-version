@@ -6,8 +6,6 @@
  */
 
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
-import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
-import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
@@ -60,47 +58,10 @@ export const RENEW_SHARE_EXPORT_PRESET: ShareOrExportPreset = {
 
 // ---- Renewal book (RN03, route path "book") ------------------------------
 
-export const RENEW_BOOK_KPIS: Kpi[] = [
-  { eyebrow: "Renewing in 90 days", value: "281,000", note: "₦688M" },
-  { eyebrow: "Projected to renew", value: "88.4%", tone: "amber", note: "₦608M" },
-  { eyebrow: "Book built on", value: "the pre-March repeat rate", tone: "rose", note: "overstated" },
-  { eyebrow: "Re-forecast", value: "4 days overdue", tone: "rose", note: "with Kunle Ade" },
-];
-
-export const RENEW_BOOK_WARNING = {
-  title: "This book is overstated by roughly ₦88M and everyone downstream is using it",
-  body: "It was built in July on a 37.4% repeat rate. The actual rate is 27.2%. The re-forecast was obliged by room 8f2c on 2 August, accepted by Kunle, due 9 August, and has not started.",
-};
-
-export type RenewBookRow = {
-  id: string;
-  renewing: string;
-  customers: string;
-  value: string;
-  projectedRate: string;
-  projectedRateTone: "amber" | "rose";
-  confidence: string;
-  confidenceTone: "teal" | "amber" | "rose" | "neutral";
-  basis: string;
-  basisTone: "teal" | "amber" | "rose" | "neutral";
-  owner?: { name: string; initials: string; color: string };
-  noOwner?: boolean;
-  /** When set, the row's "renewing" label links to its own account drilldown (e.g. RN13's Kano Textiles). */
-  detailHref?: string;
-};
-
-export const RENEW_BOOK_ROWS: RenewBookRow[] = [
-  { id: "within-30-days", renewing: "Within 30 days", customers: "94,000", value: "₦231M", projectedRate: "88.9%", projectedRateTone: "amber", confidence: "low", confidenceTone: "rose", basis: "old repeat rate", basisTone: "rose", owner: { name: "Kunle", initials: "KO", color: "#2E8B7F" } },
-  { id: "31-60-days", renewing: "31–60 days", customers: "91,000", value: "₦224M", projectedRate: "88.4%", projectedRateTone: "amber", confidence: "low", confidenceTone: "rose", basis: "old repeat rate", basisTone: "rose", owner: { name: "Kunle", initials: "KO", color: "#2E8B7F" } },
-  { id: "61-90-days", renewing: "61–90 days", customers: "96,000", value: "₦233M", projectedRate: "87.9%", projectedRateTone: "amber", confidence: "low", confidenceTone: "rose", basis: "old repeat rate", basisTone: "rose", owner: { name: "Kunle", initials: "KO", color: "#2E8B7F" } },
-  { id: "business-90-days", renewing: "Business accounts · 90 days", customers: "212", value: "₦31M", projectedRate: "74.1%", projectedRateTone: "rose", confidence: "medium", confidenceTone: "amber", basis: "seat utilisation", basisTone: "amber", owner: { name: "Tunde", initials: "TB", color: "#B4568F" }, detailHref: "/lifecycle/renew/book/kano-textiles" },
-  { id: "business-unowned", renewing: "Business accounts · unowned", customers: "119", value: "₦18M", projectedRate: "Unavailable", projectedRateTone: "rose", confidence: "none", confidenceTone: "rose", basis: "nobody has looked", basisTone: "rose", noOwner: true },
-];
-
-export const RENEW_BOOK_CLOSING = {
-  title: "Three quarters of a billion naira is being forecast on a number known to be wrong since 2 August",
-  body: "The correction is a four-day-overdue obligation held by one person. Until it lands, Finance, the board pack and Ada's projection all carry the same ₦88M error — and none of them can see that they do, because a forecast does not show its own inputs.",
-};
+// GET /lifecycle/renew/renewal-book has no projected-rate/confidence/basis/owner field and no
+// per-row drilldown — only raw customer/value counts per band+state+currency. The old KPIs,
+// per-row breakdown and warning/closing narrative above aren't reproducible from live data;
+// dropped. See renewal-book-tab.tsx.
 
 export const RENEW_REFORECAST_PRESET: ReForecastBookPreset = {
   description: "Four days overdue · everyone downstream is using the old figure",
@@ -129,44 +90,10 @@ export const RENEW_REFORECAST_PRESET: ReForecastBookPreset = {
 
 // ---- Dunning (RN04) ------------------------------------------------------
 
-export const RENEW_DUNNING_KPIS: Kpi[] = [
-  { eyebrow: "Cards failing", value: "61,400 / yr", tone: "rose", note: "on renewal night" },
-  { eyebrow: "Recovered", value: "₦62M", tone: "teal", note: "of ₦88M · measured" },
-  { eyebrow: "Still failing", value: "₦26M", tone: "amber", note: "expired cards, mostly" },
-  { eyebrow: "Retry window", value: "09:00 local", tone: "teal", note: "was midnight" },
-];
-
-export type RenewDunningRow = {
-  id: string;
-  window: string;
-  attempts: string;
-  cleared: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  note: string;
-  state: string;
-  stateTone: ChipTone;
-};
-
-export const RENEW_DUNNING_ROWS: RenewDunningRow[] = [
-  { id: "midnight-until-april", window: "00:00 local · until April", attempts: "12,400", cleared: "3,100", rate: "25.0%", rateTone: "rose", note: "Balance is lowest just after midnight", state: "retired", stateTone: "neutral" },
-  { id: "0900-march-test", window: "09:00 local · March test", attempts: "12,400", cleared: "8,900", rate: "71.8%", rateTone: "teal", note: "Same cards, same amounts, nine hours later", state: "adopted", stateTone: "teal" },
-  { id: "0900-in-production", window: "09:00 local · in production", attempts: "61,400", cleared: "43,300", rate: "70.5%", rateTone: "teal", note: "Held up at full scale", state: "live", stateTone: "teal" },
-  { id: "payday-plus-1", window: "Payday +1 · proposed", attempts: "—", cleared: "Unavailable", rate: "—", rateTone: "rose", note: "Would need a payday calendar per market", state: "awaiting approval", stateTone: "amber" },
-  { id: "expired-cards-any-window", window: "Expired cards · any window", attempts: "14,200", cleared: "0", rate: "0%", rateTone: "rose", note: "A retry cannot fix an expired card", state: "needs a prompt", stateTone: "rose" },
-];
-
-export const RENEW_DUNNING_CLOSING = {
-  title: "The 14,200 expired cards are the remaining ₦19M and no retry will ever recover them",
-  body: "They need a customer to update a card, which needs a message, which needs a person to approve one. It is the cheapest outstanding recovery in the lifecycle and it has no room, no owner and no play — it survived only because the dunning room closed once the retry window was fixed.",
-};
-
-export const RENEW_DUNNING_RECOVERY_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "At risk when the room opened", value: "₦88M · 61,400 cards", percent: 100, tone: "rose" },
-  { label: "Recovered · retry window change", value: "₦62M · measured against a 10% holdout", percent: 70, tone: "teal" },
-  { label: "Still failing · expired cards", value: "₦19M · needs a different action", percent: 22, tone: "amber" },
-  { label: "Genuinely unrecoverable", value: "₦7M · closed accounts, dead cards", percent: 8, tone: "ink" },
-];
+// GET /lifecycle/renew/dunning has no per-retry-window attempts/cleared/rate breakdown and no
+// "what the closed room recovered" figure — only failed payments banded by how long they took to
+// clear (or never). The old KPIs, per-window table and recovery bars above aren't reproducible
+// from live data; dropped. See dunning-tab.tsx.
 
 export const RENEW_DUNNING_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Expired cards, never prompted",
@@ -188,51 +115,10 @@ export const RENEW_DUNNING_OPEN_ROOM_PRESET: OpenRoomPreset = {
 
 // ---- Pauses (RN05) --------------------------------------------------------
 
-export const RENEW_PAUSES_KPIS: Kpi[] = [
-  { eyebrow: "Paused", value: "41,000", tone: "rose", note: "up 22% since March" },
-  { eyebrow: "Returned within 90 days", value: "31.4%", tone: "rose", note: "was 58.1%" },
-  { eyebrow: "At stake", value: "₦22M", tone: "amber", note: "on the ones who will not return" },
-  { eyebrow: "Reason given", value: "optional", tone: "amber", note: "68% skip it" },
-];
-
-export const RENEW_PAUSES_RETURN_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Paused before 4 March · returned in 90 days", value: "58.1%", percent: 58, tone: "teal" },
-  { label: "Paused after 4 March · returned", value: "31.4%", percent: 31, tone: "rose" },
-  { label: "Paused after 4 March, gave a reason", value: "44.1%", percent: 44, tone: "amber" },
-  { label: "Paused after 4 March, gave no reason", value: "24.8%", percent: 25, tone: "rose" },
-];
-
-export const RENEW_PAUSES_INSIGHT = {
-  title: "A customer who tells you why they paused is nearly twice as likely to come back",
-  body: "44.1% against 24.8%. The reason field is optional and 68% skip it. That single design decision costs visibility on 27,900 customers a year — and the correlation is not causal, but it makes the reason field the cheapest diagnostic available in this stage.",
-};
-
-export type RenewPauseReasonRow = {
-  id: string;
-  reason: string;
-  customers: string;
-  share: string;
-  shareTone: "teal" | "amber" | "rose" | "neutral";
-  returned90: string;
-  returned90Tone: "teal" | "amber" | "rose";
-  vsFeb: string;
-  vsFebTone: "teal" | "amber" | "rose" | "neutral";
-  reallyA: string;
-  reallyATone: ChipTone;
-};
-
-export const RENEW_PAUSE_REASON_ROWS: RenewPauseReasonRow[] = [
-  { id: "too-expensive", reason: "Too expensive", customers: "4,900", share: "37.3%", shareTone: "rose", returned90: "31.1%", returned90Tone: "amber", vsFeb: "+18 pts share", vsFebTone: "rose", reallyA: "the fee", reallyATone: "ultra" },
-  { id: "travelling-away", reason: "Travelling or away", customers: "3,100", share: "23.6%", shareTone: "teal", returned90: "71.4%", returned90Tone: "teal", vsFeb: "−4 pts", vsFebTone: "teal", reallyA: "a real pause", reallyATone: "teal" },
-  { id: "delivery-problems", reason: "Delivery problems", customers: "2,400", share: "18.3%", shareTone: "amber", returned90: "22.1%", returned90Tone: "rose", vsFeb: "+6 pts", vsFebTone: "amber", reallyA: "Support", reallyATone: "amber" },
-  { id: "not-using-enough", reason: "Not using it enough", customers: "1,900", share: "14.5%", shareTone: "amber", returned90: "18.4%", returned90Tone: "rose", vsFeb: "+2 pts", vsFebTone: "amber", reallyA: "Adopt", reallyATone: "amber" },
-  { id: "other", reason: "Other", customers: "820", share: "6.3%", shareTone: "neutral", returned90: "41.1%", returned90Tone: "teal", vsFeb: "−1 pt", vsFebTone: "neutral", reallyA: "mixed", reallyATone: "neutral" },
-];
-
-export const RENEW_PAUSES_CLOSING = {
-  title: "“Too expensive” went from 19% of stated reasons to 37% in the week of 4 March",
-  body: "Nobody changed the subscription price. The customers saying this are describing a delivery fee that appears at checkout on every order, which they experience as the service costing more. The word customers use and the field that changed are in two different stages.",
-};
+// GET /lifecycle/renew/pauses's own doc note is explicit: "nothing in the schema carries a pause
+// status or reason" — a pause is a gap, not a recorded event, so the old mock's entire
+// reason-based breakdown (KPIs, return-rate bars, per-reason table, closing narrative) is
+// fabricated for this endpoint and isn't reproducible from live data; dropped. See pauses-tab.tsx.
 
 export const RENEW_PAUSES_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Paused, cited “too expensive” since 4 March",
