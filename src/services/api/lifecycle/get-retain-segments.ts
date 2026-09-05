@@ -2,7 +2,7 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
-import type { LifecycleCalloutDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import type { LifecycleCalloutDto, LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
 export interface CurrencyAmountDto {
   currency: string;
@@ -26,11 +26,13 @@ export interface RetainSegmentDto {
   decaying: number;
   /** Crossed the boundary and left the stage — counted and marked, never dropped. */
   pastBoundary: number;
-  repeatShare: number | null;
-  reachableShare: number | null;
+  repeatShare: LifecycleMeasuredValueDto<number>;
+  reachableShare: LifecycleMeasuredValueDto<number>;
   /** Never summed across currencies. */
   values: CurrencyAmountDto[];
-  claim: RetainSegmentClaimDto;
+  /** Confirmed 2026-09-05 live: genuinely null (not just an unavailable measured value) when
+   * business memory has no claim about this segment yet — a segment can be too new to have one. */
+  claim: RetainSegmentClaimDto | null;
   roomOpen: boolean;
 }
 
@@ -47,10 +49,12 @@ export interface RetainSegmentsData {
   stageName: string;
   basis: string;
   basisCaveat: string;
-  retainPopulation: number | null;
+  /** Confirmed 2026-09-05 live: a measured value, not a bare number. */
+  retainPopulation: LifecycleMeasuredValueDto<number>;
   segments: RetainSegmentDto[];
-  /** A person in two segments is one person — dedup against sumOfMatched. */
-  distinctAcrossSegments: number | null;
+  /** A person in two segments is one person — dedup against sumOfMatched. Confirmed 2026-09-05
+   * live: a measured value, not a bare number. */
+  distinctAcrossSegments: LifecycleMeasuredValueDto<number>;
   sumOfMatched: number;
   distinctValues: CurrencyAmountDto[];
   overlaps: RetainSegmentOverlapDto[];

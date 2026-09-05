@@ -3,10 +3,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
+import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { formatCompactMoney, formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetRetainSegments } from "@/features/lifecycle/use-get-retain-segments";
 import type { RetainSegmentDto } from "@/services/api/lifecycle/get-retain-segments";
+import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
+
+function measuredPercent(measured: LifecycleMeasuredValueDto<number>) {
+  return measured.value !== null ? (
+    formatPercent(measured.value)
+  ) : (
+    <InfoTooltip missingSource={measured.missingSource} wouldUnlock={measured.wouldUnlock} />
+  );
+}
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
@@ -33,8 +43,7 @@ const COLUMNS: Column<SegmentRow>[] = [
     align: "right",
     render: (row) => (
       <span className="font-mono text-ink-2">
-        {formatCount(row.reachable)}
-        {row.reachableShare !== null && <span className="text-ink-4"> · {formatPercent(row.reachableShare)}</span>}
+        {formatCount(row.reachable)} <span className="text-ink-4">· {measuredPercent(row.reachableShare)}</span>
       </span>
     ),
   },
@@ -42,7 +51,7 @@ const COLUMNS: Column<SegmentRow>[] = [
     key: "repeatShare",
     header: "Repeat share",
     align: "right",
-    render: (row) => <span className="text-ink-2">{row.repeatShare !== null ? formatPercent(row.repeatShare) : <span className="text-ink-4">Unavailable</span>}</span>,
+    render: (row) => <span className="text-ink-2">{measuredPercent(row.repeatShare)}</span>,
   },
   { key: "pastBoundary", header: "Past boundary", align: "right", render: (row) => <span className="font-mono text-ink-4">{formatCount(row.pastBoundary)}</span> },
   {
@@ -62,7 +71,12 @@ const COLUMNS: Column<SegmentRow>[] = [
         <span className="font-mono text-ink-4">Unavailable</span>
       ),
   },
-  { key: "claim", header: "Claim", align: "right", render: (row) => <Chip tone={claimTone(row.claim.grade)}>{row.claim.statement}</Chip> },
+  {
+    key: "claim",
+    header: "Claim",
+    align: "right",
+    render: (row) => (row.claim ? <Chip tone={claimTone(row.claim.grade)}>{row.claim.statement}</Chip> : <span className="text-ink-4">No claim yet</span>),
+  },
 ];
 
 function SegmentsSkeleton() {
@@ -90,8 +104,8 @@ const RetainSegmentsTab = () => {
     <div className="space-y-8">
       <p className={EYEBROW_CLASS}>
         {segments
-          ? segments.distinctAcrossSegments !== null
-            ? `${formatCount(segments.distinctAcrossSegments)} distinct customers across ${rows.length} segments · ${formatCount(segments.sumOfMatched)} counted before dedup`
+          ? segments.distinctAcrossSegments.value !== null
+            ? `${formatCount(segments.distinctAcrossSegments.value)} distinct customers across ${rows.length} segments · ${formatCount(segments.sumOfMatched)} counted before dedup`
             : `Dedup unavailable · ${formatCount(segments.sumOfMatched)} counted across ${rows.length} segments before dedup`
           : "Every active segment intersected with Retain's population"}
       </p>
