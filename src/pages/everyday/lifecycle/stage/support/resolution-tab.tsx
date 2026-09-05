@@ -1,49 +1,97 @@
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import {
-  SUPPORT_RESOLUTION_KPIS,
-  SUPPORT_RESOLUTION_ROWS,
-  type ResolutionRow,
-} from "@/pages/everyday/lifecycle/stage/support/data";
+import { formatCount, formatPercent, round } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetSupportResolution } from "@/features/lifecycle/use-get-support-resolution";
+import type { SupportResolutionBandDto } from "@/services/api/lifecycle/get-support-resolution";
 
-const RESOLVED_FAST_TONE_CLASS: Record<ResolutionRow["resolvedFastTone"], string> = { teal: "text-teal", amber: "text-amber" };
-const SATISFIED_TONE_CLASS: Record<ResolutionRow["customerSatisfiedTone"], string> = { teal: "text-teal", amber: "text-amber" };
-const REPEAT_TONE_CLASS: Record<ResolutionRow["repeatRateAfterTone"], string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose" };
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
 
-const COLUMNS: Column<ResolutionRow>[] = [
-  { key: "resolutionType", header: "Resolution type", render: (row) => <span className="font-semibold text-ink-2">{row.resolutionType}</span> },
-  { key: "ticketsPerMo", header: "Tickets / mo", align: "right", render: (row) => <span className="font-mono text-ink">{row.ticketsPerMo}</span> },
-  { key: "resolvedFast", header: "Resolved fast", align: "right", render: (row) => <span className={RESOLVED_FAST_TONE_CLASS[row.resolvedFastTone]}>{row.resolvedFast}</span> },
-  { key: "customerSatisfied", header: "Customer satisfied", align: "right", render: (row) => <span className={SATISFIED_TONE_CLASS[row.customerSatisfiedTone]}>{row.customerSatisfied}</span> },
-  { key: "repeatRateAfter", header: "Repeat rate after", align: "right", render: (row) => <span className={REPEAT_TONE_CLASS[row.repeatRateAfterTone]}>{row.repeatRateAfter}</span> },
-  { key: "verdict", header: "Verdict", align: "right", render: (row) => <Chip tone={row.verdictTone}>{row.verdict}</Chip> },
+type BandRow = SupportResolutionBandDto & { id: string };
+
+const COLUMNS: Column<BandRow>[] = [
+  { key: "driver", header: "Driver", render: (row) => <span className="font-semibold text-ink-2">{row.driver}</span> },
+  { key: "tickets", header: "Tickets", align: "right", render: (row) => <span className="font-mono text-ink">{formatCount(row.tickets)}</span> },
+  { key: "resolved", header: "Resolved", align: "right", render: (row) => <span className="font-mono text-teal">{formatCount(row.resolved)}</span> },
+  { key: "open", header: "Open", align: "right", render: (row) => <span className="font-mono text-amber">{formatCount(row.open)}</span> },
+  {
+    key: "averageHours",
+    header: "Avg hours (resolved only)",
+    align: "right",
+    render: (row) => <span className="text-ink-2">{row.averageHours !== null ? round(row.averageHours, 1) : <span className="text-ink-4">Unavailable</span>}</span>,
+  },
+  {
+    key: "resolvedShare",
+    header: "Resolved share",
+    align: "right",
+    render: (row) => (
+      <span className={row.resolvedShare !== null && row.resolvedShare < 0.8 ? "text-rose" : "text-ink-2"}>
+        {row.resolvedShare !== null ? formatPercent(row.resolvedShare) : <span className="text-ink-4">Unavailable</span>}
+      </span>
+    ),
+  },
 ];
 
-/** SU04 — Support's unique Resolution tab. */
+function ResolutionSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** SU04 — Support's own Resolution tab, wired to GET /lifecycle/support/resolution. */
 const SupportResolutionTab = () => {
+  const { data, isLoading, isError, refetch } = useGetSupportResolution();
+  const resolution = data?.data;
+  const rows: BandRow[] = (resolution?.bands ?? []).map((band) => ({ ...band, id: band.driver }));
+
   return (
     <div className="space-y-8">
-      <KpiCards items={SUPPORT_RESOLUTION_KPIS} />
+      <p className={EYEBROW_CLASS}>
+        {resolution
+          ? `${resolution.averageHours !== null ? round(resolution.averageHours, 1) : "?"}h average · ${resolution.resolvedShare !== null ? formatPercent(resolution.resolvedShare) : "an unknown share"} resolved, over ${resolution.windowDays} days`
+          : "How long answering takes, and how much of the queue is still open"}
+      </p>
 
-      <Callout tone="rose" title="Support got faster at everything and the customers still left">
-        First-contact resolution rose 6.7 points and median time fell by two thirds. Retention after contact fell
-        anyway, because the thing customers were contacting about was not fixed by the conversation — it was fixed,
-        eventually, by a release in August.
-      </Callout>
+      {isError ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+          <p className="text-[12px] text-rose">Couldn't load Support's resolution.</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : isLoading ? (
+        <ResolutionSkeleton />
+      ) : (
+        <DataTable columns={COLUMNS} rows={rows} emptyTitle="No resolution data measured yet" emptyBody="Resolution time by driver will appear here once enough tickets have closed." />
+      )}
 
-      <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>Resolution quality against what happened next</p>
-        <DataTable columns={COLUMNS} rows={SUPPORT_RESOLUTION_ROWS} />
-      </section>
+      <p className="text-[10.5px] text-ink-4">
+        Average hours is computed over resolved tickets only — always read it alongside resolved share, since a driver that abandons half its queue can still report an excellent average.
+      </p>
 
-      <Callout tone="rose" title="Satisfied and gone is the most important pattern on this screen">
-        24,500 customers a month rate their support experience positively and then do not come back. Every support
-        metric in the company reports these as successes. They are successes — the agent did their job. The
-        customer&apos;s problem was the fee, and no conversation was ever going to fix that.
-      </Callout>
+      {/* ❌ Backend does NOT provide: "resolved fast", "customer satisfied", repeat rate after
+          contact, or a verdict per driver — this endpoint only carries ticket/resolved/open counts
+          and timing. Dropped rather than fabricated. */}
+
+      {resolution?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
     </div>
   );
 };

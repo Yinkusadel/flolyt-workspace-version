@@ -2,67 +2,53 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { CHIP_INTERACTIVE_CLASS, Chip } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { OpenARoomModal } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
-import { SendReasonUpstreamModal } from "@/pages/everyday/lifecycle/stage/modals/send-reason-upstream-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import {
-  CHURN_OPEN_ROOM_PRESET,
-  CHURN_REASON_ROWS,
-  CHURN_REASONS_INSIGHT,
-  CHURN_REASONS_SPLIT_ROWS,
-  type ChurnReasonRow,
-} from "@/pages/everyday/lifecycle/stage/churn/data";
+import { formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
+import { CHURN_OPEN_ROOM_PRESET } from "@/pages/everyday/lifecycle/stage/churn/data";
+import { useGetChurnReasons } from "@/features/lifecycle/use-get-churn-reasons";
+import type { ChurnReasonDto } from "@/services/api/lifecycle/get-churn-reasons";
 
-const SHARE_TONE_CLASS: Record<ChurnReasonRow["shareTone"], string> = { rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
-const HOW_WE_KNOW_TONE_CLASS: Record<ChurnReasonRow["howWeKnowTone"], string> = { ultra: "text-ultra", teal: "text-teal", rose: "text-rose", amber: "text-amber" };
-const VS_FEB_TONE_CLASS: Record<ChurnReasonRow["vsFebTone"], string> = { rose: "text-rose", teal: "text-teal", neutral: "text-ink-4" };
-const SPLIT_VALUE_TONE_CLASS: Record<"teal" | "ultra" | "amber" | "neutral", string> = { teal: "text-teal", ultra: "text-ultra", amber: "text-amber", neutral: "text-ink-2" };
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
 
-/** CH03 — Churn's unique Reasons tab (route path "reasons", matches its tab label). */
+type ReasonRow = ChurnReasonDto & { id: string };
+
+const COLUMNS: Column<ReasonRow>[] = [
+  { key: "reason", header: "Reason", render: (row) => <span className="font-semibold text-ink-2">{row.label}</span> },
+  { key: "customers", header: "Customers", align: "right", render: (row) => <span className="font-mono text-ink">{row.customers !== null ? formatCount(row.customers) : <span className="text-ink-4">Unavailable</span>}</span> },
+  { key: "share", header: "Share", align: "right", render: (row) => <span className="text-ink-2">{row.share !== null ? formatPercent(row.share) : <span className="text-ink-4">Unavailable</span>}</span> },
+  { key: "attribution", header: "Attribution", align: "right", render: (row) => <span className="text-ink-4">{row.attribution}</span> },
+  { key: "upstreamStage", header: "Stage that owns it", align: "right", render: (row) => <span className="text-ink-2">{row.upstreamStage ?? "—"}</span> },
+];
+
+function ReasonsSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** CH03 — Churn's own Reasons tab, wired to GET /lifecycle/churn/reasons. */
 const ChurnReasonsTab = () => {
   const { headerActionsEl } = useStageContext();
   const [openRoom, setOpenRoom] = useState(false);
-  const [upstreamRow, setUpstreamRow] = useState<ChurnReasonRow | null>(null);
-
-  const columns: Column<ChurnReasonRow>[] = [
-    { key: "reason", header: "Reason", render: (row) => <span className="font-semibold text-ink-2">{row.reason}</span> },
-    { key: "customers", header: "Customers", align: "right", render: (row) => <span className={row.customers === "Unavailable" ? "font-mono text-ink-4" : "font-mono text-ink"}>{row.customers}</span> },
-    { key: "share", header: "Share", align: "right", render: (row) => <span className={row.share === "Unavailable" ? "font-mono text-ink-4" : SHARE_TONE_CLASS[row.shareTone]}>{row.share}</span> },
-    { key: "howWeKnow", header: "How we know", align: "right", render: (row) => <span className={HOW_WE_KNOW_TONE_CLASS[row.howWeKnowTone]}>{row.howWeKnow}</span> },
-    {
-      key: "stage",
-      header: "Stage that owns it",
-      render: (row) =>
-        row.department ? (
-          <span className="flex items-center gap-2 whitespace-nowrap text-ink-2">
-            <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: row.department.color }} aria-hidden />
-            <span className="font-medium" style={{ color: row.department.color }}>{row.department.name}</span>
-          </span>
-        ) : row.departmentChip ? (
-          <Chip tone={row.departmentChip.tone}>{row.departmentChip.label}</Chip>
-        ) : null,
-    },
-    { key: "vsFeb", header: "vs Feb", align: "right", render: (row) => <span className={row.vsFeb === "—" ? "font-mono text-ink-4" : VS_FEB_TONE_CLASS[row.vsFebTone]}>{row.vsFeb}</span> },
-    {
-      key: "actionable",
-      header: "Actionable",
-      align: "right",
-      render: (row) =>
-        row.sendUpstreamPreset ? (
-          <button type="button" onClick={() => setUpstreamRow(row)}>
-            <Chip tone={row.actionableTone} className={CHIP_INTERACTIVE_CLASS}>
-              {row.actionable}
-            </Chip>
-          </button>
-        ) : (
-          <Chip tone={row.actionableTone}>{row.actionable}</Chip>
-        ),
-    },
-  ];
+  const { data, isLoading, isError, refetch } = useGetChurnReasons();
+  const reasons = data?.data;
+  const rows: ReasonRow[] = (reasons?.reasons ?? []).map((reason) => ({ ...reason, id: reason.key }));
 
   return (
     <div className="space-y-8">
@@ -74,28 +60,37 @@ const ChurnReasonsTab = () => {
           headerActionsEl
         )}
 
-      <DataTable columns={columns} rows={CHURN_REASON_ROWS} />
+      <p className={EYEBROW_CLASS}>
+        {reasons
+          ? `${formatCount(reasons.lapsedCustomers)} lapsed customers · ${formatCount(reasons.unexplainedCustomers)} unexplained, never distributed across the rows below`
+          : "Why customers left, as far as imported order history can say"}
+      </p>
 
-      <Callout tone="amber" title={CHURN_REASONS_INSIGHT.title}>
-        {CHURN_REASONS_INSIGHT.body}
-      </Callout>
-
-      <section className="space-y-1">
-        <p className={`pb-2 ${EYEBROW_CLASS}`}>Stated against inferred, and why both are kept separate</p>
-        <div className="divide-y divide-line rounded-card border border-line bg-paper">
-          {CHURN_REASONS_SPLIT_ROWS.map((row) => (
-            <div key={row.label} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-              <span className="text-[11.5px] text-ink-2">{row.label}</span>
-              <span className={`font-mono text-[11px] ${SPLIT_VALUE_TONE_CLASS[row.tone]}`}>{row.value}</span>
-            </div>
-          ))}
+      {isError ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+          <p className="text-[12px] text-rose">Couldn't load Churn's reasons.</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
         </div>
-      </section>
+      ) : isLoading ? (
+        <ReasonsSkeleton />
+      ) : (
+        <DataTable columns={COLUMNS} rows={rows} emptyTitle="No reasons measured yet" emptyBody="Inferred and stated reasons will appear here once enough lapsed customers exist." />
+      )}
+
+      {/* ❌ Backend does NOT provide: a "vs Feb" comparison or a per-row "send reason upstream"
+          action — this endpoint has no trend field, and the old mock's upstream-escalation modal
+          was seeded with a per-row preset that has no real data behind it. Dropped rather than
+          fabricated. */}
+
+      {reasons?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
 
       <OpenARoomModal preset={CHURN_OPEN_ROOM_PRESET} open={openRoom} onOpenChange={setOpenRoom} />
-      {upstreamRow?.sendUpstreamPreset && (
-        <SendReasonUpstreamModal preset={upstreamRow.sendUpstreamPreset} open={upstreamRow !== null} onOpenChange={(open) => setUpstreamRow(open ? upstreamRow : null)} />
-      )}
     </div>
   );
 };

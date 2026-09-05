@@ -1,267 +1,114 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
+import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
+import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { SetThresholdModal, type ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
+import { formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetStageAgents } from "@/features/lifecycle/use-get-stage-agents";
+import type { StageAgentConditionDto, StageAgentDto } from "@/services/api/lifecycle/get-stage-agents";
+import { ACQUIRE_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import { ACTIVATE_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/activate/data";
+import { PRICE_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/price/data";
+import { ADOPT_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/adopt/data";
+import { RETAIN_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/retain/data";
+import { EXPAND_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/expand/data";
+import { SUPPORT_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/support/data";
+import { RENEW_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/renew/data";
+import { ADVOCATE_ASSIGN_OWNER_PRESET, ADVOCATE_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/advocate/data";
+import { CHURN_ASSIGN_OWNER_PRESET, CHURN_THRESHOLD_PRESET } from "@/pages/everyday/lifecycle/stage/churn/data";
 import { AssignAnOwnerModal, type AssignOwnerPreset } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
-import {
-  ACQUIRE_AGENT_CARDS,
-  ACQUIRE_THRESHOLD_PRESET,
-  ACQUIRE_THRESHOLD_ROWS,
-  type AgentCard,
-  type ThresholdRow,
-} from "@/pages/everyday/lifecycle/stage/acquire/data";
-import {
-  ACTIVATE_AGENT_CARDS,
-  ACTIVATE_THRESHOLD_PRESET,
-  ACTIVATE_THRESHOLD_ROWS,
-} from "@/pages/everyday/lifecycle/stage/activate/data";
-import {
-  PRICE_AGENT_CARDS,
-  PRICE_THRESHOLD_PRESET,
-  PRICE_THRESHOLD_ROWS,
-} from "@/pages/everyday/lifecycle/stage/price/data";
-import {
-  ADOPT_AGENT_CARDS,
-  ADOPT_THRESHOLD_PRESET,
-  ADOPT_THRESHOLD_ROWS,
-} from "@/pages/everyday/lifecycle/stage/adopt/data";
-import {
-  RETAIN_AGENT_CARDS,
-  RETAIN_THRESHOLD_PRESET,
-  RETAIN_THRESHOLD_ROWS,
-} from "@/pages/everyday/lifecycle/stage/retain/data";
-import {
-  EXPAND_AGENT_CARDS,
-  EXPAND_THRESHOLD_PRESET,
-  EXPAND_THRESHOLD_ROWS,
-} from "@/pages/everyday/lifecycle/stage/expand/data";
-import {
-  SUPPORT_AGENT_CARDS,
-  SUPPORT_THRESHOLD_PRESET,
-  SUPPORT_THRESHOLD_ROWS,
-} from "@/pages/everyday/lifecycle/stage/support/data";
-import {
-  RENEW_AGENT_CARDS,
-  RENEW_THRESHOLD_PRESET,
-  RENEW_THRESHOLD_ROWS,
-} from "@/pages/everyday/lifecycle/stage/renew/data";
-import {
-  ADVOCATE_AGENT_CARDS,
-  ADVOCATE_AGENTS_INSIGHT,
-  ADVOCATE_ASSIGN_OWNER_PRESET,
-  ADVOCATE_THRESHOLD_PRESET,
-  ADVOCATE_THRESHOLD_ROWS,
-} from "@/pages/everyday/lifecycle/stage/advocate/data";
-import {
-  CHURN_AGENT_CARDS,
-  CHURN_AGENTS_INSIGHT,
-  CHURN_ASSIGN_OWNER_PRESET,
-  CHURN_THRESHOLD_PRESET,
-  CHURN_THRESHOLD_ROWS,
-} from "@/pages/everyday/lifecycle/stage/churn/data";
+import { createPortal } from "react-dom";
 
-type AgentsData = {
-  eyebrow: string;
-  cards: AgentCard[];
-  tableEyebrow: string;
-  rows: ThresholdRow[];
-  insightTitle: string;
-  insightBody: string;
-  threshold: ThresholdPreset;
-  /** Renders an "Assign an owner" header button, for a stage with no owner (Advocate only). */
-  assignOwnerPreset?: AssignOwnerPreset;
+// The "Add a threshold" preview dialog (condition/byMoreThan/sustainedFor/segmentedBy/routesTo/
+// simulation) is a static design mock, not backed by a live backtest — POST /lifecycle/stages/
+// {stageKey}/conditions/backtest would be the real endpoint for that preview and is out of scope
+// here. Kept per-stage so the dialog still shows plausible, stage-specific example copy.
+const THRESHOLD_PRESET: Record<string, ThresholdPreset> = {
+  acquire: ACQUIRE_THRESHOLD_PRESET,
+  activate: ACTIVATE_THRESHOLD_PRESET,
+  price: PRICE_THRESHOLD_PRESET,
+  adopt: ADOPT_THRESHOLD_PRESET,
+  retain: RETAIN_THRESHOLD_PRESET,
+  expand: EXPAND_THRESHOLD_PRESET,
+  support: SUPPORT_THRESHOLD_PRESET,
+  renew: RENEW_THRESHOLD_PRESET,
+  advocate: ADVOCATE_THRESHOLD_PRESET,
+  churn: CHURN_THRESHOLD_PRESET,
 };
 
-const AGENTS_DATA: Record<string, AgentsData> = {
-  acquire: {
-    eyebrow: "Agents watching this stage · 2",
-    cards: ACQUIRE_AGENT_CARDS,
-    tableEyebrow: "What would make an agent open a room here",
-    rows: ACQUIRE_THRESHOLD_ROWS,
-    insightTitle: "One threshold has been breached for four months and never opened a room",
-    insightBody:
-      "The MTN verification drop crossed its threshold on 2 April. It did not open a room because the rule routes to a stage owner and that condition has no owner assigned — so it queued, silently, for 134 days. This is the screen where that becomes visible.",
-    threshold: ACQUIRE_THRESHOLD_PRESET,
-  },
-  activate: {
-    eyebrow: "Agents watching this stage · 2",
-    cards: ACTIVATE_AGENT_CARDS,
-    tableEyebrow: "What would make an agent open a room here",
-    rows: ACTIVATE_THRESHOLD_ROWS,
-    insightTitle: "Two conditions have been breached for months with nowhere to route",
-    insightBody:
-      "Guest share and path floor both cross the Acquire/Activate boundary — the cause is in acquisition channel mix and the symptom is in activation. Neither stage owner considers it theirs, so the rule has no destination and the room never opens. This is the third instance of the same routing gap in two stages.",
-    threshold: ACTIVATE_THRESHOLD_PRESET,
-  },
-  price: {
-    eyebrow: "Agents watching this stage · 1, and it is partially blind",
-    cards: PRICE_AGENT_CARDS,
-    tableEyebrow: "What would make an agent open a room here",
-    rows: PRICE_THRESHOLD_ROWS,
-    insightTitle: "Two more breached thresholds with no owner — the same routing gap, fourth and fifth instance",
-    insightBody:
-      "Plan downgrades and FX drift both breached months ago. Both route to “Price stage owner” for the condition but to Marketing and a departed employee for the cause. This is now consistent enough across Acquire, Activate and Price to be a product problem rather than three configuration mistakes.",
-    threshold: PRICE_THRESHOLD_PRESET,
-  },
-  adopt: {
-    eyebrow: "Agents watching this stage · 1",
-    cards: ADOPT_AGENT_CARDS,
-    tableEyebrow: "What would make an agent open a room here",
-    rows: ADOPT_THRESHOLD_ROWS,
-    insightTitle: "The third row is the one that would have caught the loyalty rename in two weeks instead of four months",
-    insightBody:
-      "“A shipped feature emits no events after 14 days” has been breached for 118 days. It has no owner because instrumentation sits between Product, who ships the feature, and Engineering, who owns the event. Seventh instance of the same routing gap.",
-    threshold: ADOPT_THRESHOLD_PRESET,
-  },
-  retain: {
-    eyebrow: "Agents watching this stage · 3 · the most of any stage",
-    cards: RETAIN_AGENT_CARDS,
-    tableEyebrow: "What would make an agent open a room here",
-    rows: RETAIN_THRESHOLD_ROWS,
-    insightTitle: "The fourth condition is the most valuable rule in the workspace and it has nowhere to route",
-    insightBody:
-      "“A release ships in a market that lost this before” is precisely the rule that would have caught Kenya in June and would catch Ghana next month. It has no owner because a release is Engineering's, a market is nobody's, and the stage is Marketing's. Eighth instance.",
-    threshold: RETAIN_THRESHOLD_PRESET,
-  },
-  expand: {
-    eyebrow: "Agents watching this stage · 2",
-    cards: EXPAND_AGENT_CARDS,
-    tableEyebrow: "What would make an agent open a room here",
-    rows: EXPAND_THRESHOLD_ROWS,
-    insightTitle: "Three breached thresholds, three with no owner — and one of them is circular",
-    insightBody:
-      "An account renewing unowned cannot open a room, because a room needs an owner and the reason the condition fired is that there is no owner. Ninth instance of the routing gap, and the first one that cannot be fixed by assigning the rule better. It needs a fallback, not a destination.",
-    threshold: EXPAND_THRESHOLD_PRESET,
-  },
-  support: {
-    eyebrow: "Agents watching this stage · 1",
-    cards: SUPPORT_AGENT_CARDS,
-    tableEyebrow: "What would make an agent open a room here",
-    rows: SUPPORT_THRESHOLD_ROWS,
-    insightTitle: "The first rule now exists because of what it cost when it did not",
-    insightBody:
-      "“A contact driver is reclassified as revenue” was added on 2 August, the day room 8f2c connected five stages. Had it existed on 11 March, Amara would have had a room on her desk in week one and the ₦412M would have been ₦20M. Two more rules on this screen still have nowhere to route — tenth and eleventh instance.",
-    threshold: SUPPORT_THRESHOLD_PRESET,
-  },
-  renew: {
-    eyebrow: "Agents watching this stage · 2",
-    cards: RENEW_AGENT_CARDS,
-    tableEyebrow: "What would make an agent open a room here",
-    rows: RENEW_THRESHOLD_ROWS,
-    insightTitle: "The second rule is the one that would have caught Ghana, and it is the twelfth unrouted condition",
-    insightBody:
-      "“A fix is not rolled out to every market within fourteen days” has been breached for 134 days. It has no owner because a rollout belongs to whoever deployed it, a market belongs to nobody, and the stage belongs to Customer Success. Same shape as the eleven before it, in the eighth stage running.",
-    threshold: RENEW_THRESHOLD_PRESET,
-  },
-  advocate: {
-    eyebrow: "Agents watching this stage · 1 · with nowhere to send anything",
-    cards: ADVOCATE_AGENT_CARDS,
-    tableEyebrow: "What would make an agent open a room here",
-    rows: ADVOCATE_THRESHOLD_ROWS,
-    insightTitle: ADVOCATE_AGENTS_INSIGHT.title,
-    insightBody: ADVOCATE_AGENTS_INSIGHT.body,
-    threshold: ADVOCATE_THRESHOLD_PRESET,
-    assignOwnerPreset: ADVOCATE_ASSIGN_OWNER_PRESET,
-  },
-  churn: {
-    eyebrow: "Agents watching this stage · 1",
-    cards: CHURN_AGENT_CARDS,
-    tableEyebrow: "What would make an agent open a room here",
-    rows: CHURN_THRESHOLD_ROWS,
-    insightTitle: CHURN_AGENTS_INSIGHT.title,
-    insightBody: CHURN_AGENTS_INSIGHT.body,
-    threshold: CHURN_THRESHOLD_PRESET,
-    assignOwnerPreset: CHURN_ASSIGN_OWNER_PRESET,
-  },
+// Advocate and Churn have no stage owner in the mock data, so their Agents tab keeps the
+// "Assign an owner" header action — unrelated to the live conditions table above.
+const ASSIGN_OWNER_PRESET: Partial<Record<string, AssignOwnerPreset>> = {
+  advocate: ADVOCATE_ASSIGN_OWNER_PRESET,
+  churn: CHURN_ASSIGN_OWNER_PRESET,
 };
 
-const CARD_FOOTNOTE_TEXT_CLASS: Record<NonNullable<AgentCard["footnoteTone"]>, string> = {
-  ultra: "text-ultra",
-  neutral: "text-ink-4",
-  amber: "text-amber",
-  teal: "text-teal",
-  rose: "text-rose",
-};
-const CURRENTLY_TONE_CLASS: Record<ThresholdRow["currentlyTone"], string> = {
-  teal: "text-teal",
-  rose: "text-rose",
-  amber: "text-amber",
-  neutral: "text-ink-4",
-};
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
+
+const READINESS_LABEL: Record<string, string> = { ready: "ready", reading: "reading", "not-ready": "not ready" };
+const READINESS_TONE: Record<string, ChipTone> = { ready: "teal", reading: "amber", "not-ready": "neutral" };
+
+function thresholdText(condition: StageAgentConditionDto): string {
+  const unitSuffix = condition.unit === "percent" ? "%" : ` ${condition.unit}`;
+  const parts = [`${condition.comparison} ${condition.threshold}${unitSuffix}`];
+  if (condition.segment) parts.push(condition.segment);
+  if (condition.sustainReadings > 1) parts.push(`sustained ${condition.sustainReadings}×`);
+  return parts.join(" · ");
+}
+
+type ConditionRow = { id: string; agentName: string; condition: StageAgentConditionDto };
+
+const COLUMNS: Column<ConditionRow>[] = [
+  { key: "agent", header: "Agent", render: (row) => <span className="text-ink-3">{row.agentName}</span> },
+  { key: "condition", header: "Condition", render: (row) => <span className="font-semibold text-ink-2">{row.condition.label}</span> },
+  { key: "threshold", header: "Threshold", align: "right", render: (row) => <span className="font-mono text-ink-4">{thresholdText(row.condition)}</span> },
+  {
+    key: "status",
+    header: "Status",
+    align: "right",
+    render: (row) => <Chip tone="neutral">{row.condition.status}</Chip>,
+  },
+];
+
+function AgentsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      {Array.from({ length: 2 }).map((_, index) => (
+        <div key={index} className="space-y-2.5 rounded-card border border-line bg-paper p-4">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-8 w-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** The shared Agents tab template (e.g. A10) — which agents watch this stage, and what would make one open a room. */
 export function AgentsTab() {
   const { stage, headerActionsEl } = useStageContext();
-  const data = AGENTS_DATA[stage.slug];
+  const { data, isLoading, isError, refetch } = useGetStageAgents(stage.slug);
+  const agentsData = data?.data;
+  const agents: StageAgentDto[] = agentsData?.agents ?? [];
+  const conditionRows: ConditionRow[] = agents.flatMap((agent) =>
+    agent.conditions.map((condition) => ({ id: `${agent.key}::${condition.id}`, agentName: agent.name, condition }))
+  );
   const [thresholdOpen, setThresholdOpen] = useState(false);
   const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
-
-  if (!data) return null;
-
-  const columns: Column<ThresholdRow>[] = [
-    { key: "condition", header: "Condition", render: (row) => <span className="font-semibold text-ink-2">{row.condition}</span> },
-    { key: "threshold", header: "Threshold", align: "right", render: (row) => <span className="font-mono text-ink-4">{row.threshold}</span> },
-    {
-      key: "currently",
-      header: "Currently",
-      align: "right",
-      render: (row) => <span className={CURRENTLY_TONE_CLASS[row.currentlyTone]}>{row.currently}</span>,
-    },
-    {
-      key: "status",
-      header: "Would open",
-      align: "right",
-      render: (row) =>
-        row.status === "already-open" ? (
-          <Chip tone="amber">{row.statusLabel ?? "already open"}</Chip>
-        ) : row.status === "not-opened" ? (
-          <Chip tone="rose">{row.statusLabel ?? "not opened"}</Chip>
-        ) : row.status === "blocked" ? (
-          <Chip tone="amber">{row.statusLabel ?? "blocked"}</Chip>
-        ) : row.status === "opens-automatically" ? (
-          <Chip tone="ultra">{row.statusLabel ?? "opens automatically"}</Chip>
-        ) : (
-          <Chip tone="neutral">{row.statusLabel ?? "no"}</Chip>
-        ),
-    },
-    {
-      key: "owner",
-      header: "Who it goes to",
-      render: (row) =>
-        row.owner ? (
-          <span className="flex items-center gap-2 whitespace-nowrap text-ink-2">
-            <PersonAvatar kind="human" initials={row.owner.initials} size="sm" style={{ backgroundColor: row.owner.color }} />
-            {row.owner.name}
-          </span>
-        ) : row.noOwner ? (
-          <Chip tone="amber">No owner</Chip>
-        ) : null,
-    },
-    {
-      key: "edit",
-      header: "Edit",
-      align: "right",
-      render: () => (
-        <button
-          type="button"
-          onClick={() => setThresholdOpen(true)}
-          className="font-semibold text-ultra hover:underline"
-        >
-          edit
-        </button>
-      ),
-    },
-  ];
+  const assignOwnerPreset = ASSIGN_OWNER_PRESET[stage.slug];
 
   return (
     <div className="space-y-8">
-      {data.assignOwnerPreset &&
+      {assignOwnerPreset &&
         headerActionsEl &&
         createPortal(
           <Button type="button" size="sm" onClick={() => setAssignOwnerOpen(true)}>
@@ -271,50 +118,111 @@ export function AgentsTab() {
         )}
 
       <section className="space-y-3">
-        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.eyebrow}</p>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {data.cards.map((card) => (
-            <div key={card.id} className="rounded-card border border-line bg-paper">
-              <div className="space-y-2.5 p-4">
-                <div className="flex items-center gap-2">
-                  {card.initials && <PersonAvatar kind="agent" initials={card.initials} size="sm" />}
-                  <p className="font-mono text-[9.5px] font-medium text-ink-4">{card.status}</p>
+        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
+          Agents watching this stage{agents.length > 0 ? ` · ${agents.length}` : ""}
+        </p>
+
+        {isError ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+            <p className="text-[12px] text-rose">Couldn't load this stage's agents.</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
+        ) : isLoading ? (
+          <AgentsSkeleton />
+        ) : agents.length === 0 ? (
+          <div className="rounded-card border border-line bg-paper px-4 py-10 text-center">
+            <p className="text-[12px] font-semibold text-ink">No agent watches this stage yet</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {agents.map((agent) => (
+              <div key={agent.key} className="rounded-card border border-line bg-paper">
+                <div className="space-y-2.5 p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <PersonAvatar kind="agent" initials={agent.initials} size="sm" />
+                      <span className="font-mono text-[9.5px] font-medium text-ink-4">{agent.role}</span>
+                    </div>
+                    <Chip tone={READINESS_TONE[agent.readiness] ?? "neutral"}>{READINESS_LABEL[agent.readiness] ?? agent.readiness}</Chip>
+                  </div>
+                  <h3 className="text-[13px] font-semibold text-ink">{agent.name}</h3>
+                  {agent.reads.length > 0 && <p className="text-[10.5px] leading-relaxed text-ink-3">Reads: {agent.reads.join(", ")}</p>}
+                  {agent.readiness !== "ready" && (agent.needs || agent.wouldUnlock) ? (
+                    <div className="flex items-center gap-2 border-t border-line pt-2.5">
+                      <InfoTooltip missingSource={agent.needs ?? undefined} wouldUnlock={agent.wouldUnlock ?? undefined} />
+                      <span className="font-mono text-[10px] font-semibold text-ink-4">not fully ready</span>
+                    </div>
+                  ) : (
+                    <p className="border-t border-line pt-2.5 font-mono text-[10px] font-semibold text-ink-4">
+                      watching {agent.conditions.length} condition{agent.conditions.length === 1 ? "" : "s"}
+                    </p>
+                  )}
                 </div>
-                <h3 className="text-[13px] font-semibold text-ink">{card.name}</h3>
-                <p className="text-[10.5px] leading-relaxed text-ink-3">{card.body}</p>
-                <p className={`border-t border-line pt-2.5 font-mono text-[10px] font-semibold ${CARD_FOOTNOTE_TEXT_CLASS[card.footnoteTone ?? "ultra"]}`}>
-                  {card.footnote}
-                </p>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-            {data.tableEyebrow}
+            What would make an agent open a room here
           </p>
           <Button type="button" size="sm" className="shrink-0" onClick={() => setThresholdOpen(true)}>
             Add a threshold
           </Button>
         </div>
-        <DataTable columns={columns} rows={data.rows} />
+        {/* Dropped "Currently" and "Who it goes to" — the condition object's real shape is marked
+            truncated in the spec (it has additional undocumented properties), and neither a live
+            reading nor a resolved owner name is among the fields actually documented. The
+            resolved routing chain (stage owner → team lead → triage admin) is prose in the
+            endpoint's notes, not a field on the condition itself — confirm against a real
+            response before adding either column back. */}
+        {!isLoading && !isError && (
+          <DataTable
+            columns={COLUMNS}
+            rows={conditionRows}
+            emptyTitle="No thresholds set for this stage yet"
+            emptyBody="Conditions that would make an agent open a room here will appear once one is added."
+          />
+        )}
       </section>
 
-      <Callout tone="rose" title={data.insightTitle}>
-        {data.insightBody}
-      </Callout>
+      {agentsData && agentsData.recentFirings.length > 0 && (
+        <section className="space-y-2">
+          <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">Recent firings</p>
+          <div className="space-y-1.5 rounded-card border border-line bg-paper p-4">
+            {agentsData.recentFirings.map((firing) => (
+              <div key={firing.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+                <span className="text-[10.5px] text-ink-2">
+                  {firing.label} <span className="text-ink-4">· {formatShortDate(firing.firedAtUtc)}</span>
+                </span>
+                <span className="font-mono text-[10px] text-ink-4">
+                  {firing.reading} vs {firing.threshold} · {firing.outcome} · routed via {firing.routedVia}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {agentsData?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
 
       <SetThresholdModal
         stageName={stage.name}
-        preset={data.threshold}
+        preset={THRESHOLD_PRESET[stage.slug] ?? ACQUIRE_THRESHOLD_PRESET}
         open={thresholdOpen}
         onOpenChange={setThresholdOpen}
       />
-      {data.assignOwnerPreset && (
-        <AssignAnOwnerModal preset={data.assignOwnerPreset} open={assignOwnerOpen} onOpenChange={setAssignOwnerOpen} />
+      {assignOwnerPreset && (
+        <AssignAnOwnerModal preset={assignOwnerPreset} open={assignOwnerOpen} onOpenChange={setAssignOwnerOpen} />
       )}
     </div>
   );

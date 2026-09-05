@@ -1,122 +1,139 @@
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
+import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
-import ActivateMarketsTab from "@/pages/everyday/lifecycle/stage/activate/markets-tab";
-import PriceMarketsTab from "@/pages/everyday/lifecycle/stage/price/markets-tab";
-import AdoptMarketsTab from "@/pages/everyday/lifecycle/stage/adopt/markets-tab";
-import RetainMarketsTab from "@/pages/everyday/lifecycle/stage/retain/markets-tab";
-import ExpandMarketsTab from "@/pages/everyday/lifecycle/stage/expand/markets-tab";
-import SupportMarketsTab from "@/pages/everyday/lifecycle/stage/support/markets-tab";
-import RenewMarketsTab from "@/pages/everyday/lifecycle/stage/renew/markets-tab";
-import AdvocateMarketsTab from "@/pages/everyday/lifecycle/stage/advocate/markets-tab";
-import ChurnMarketsTab from "@/pages/everyday/lifecycle/stage/churn/markets-tab";
-import { ACQUIRE_MARKET_ROWS, ACQUIRE_MARKET_SPOTLIGHTS, type MarketRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import { formatCompactMoney, formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetStageMarkets } from "@/features/lifecycle/use-get-stage-markets";
+import type { StageMarketDto } from "@/services/api/lifecycle/get-stage-markets";
 
-type MarketsData = {
-  eyebrow: string;
-  rows: MarketRow[];
-  insightTitle: string;
-  insightBody: string;
-  spotlightEyebrow: string;
-  spotlights: { id: string; eyebrow: string; tone: "teal" | "rose"; title: string; body: string; footnote: string }[];
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
+
+// A presentational label for known country codes — the endpoint only ever returns the raw ISO
+// code, never a display name. Unknown codes fall back to the raw code rather than guessing.
+const COUNTRY_LABEL: Record<string, string> = {
+  NG: "Nigeria",
+  KE: "Kenya",
+  GH: "Ghana",
+  GB: "United Kingdom",
+  UK: "United Kingdom",
+  US: "United States",
+  ZA: "South Africa",
 };
 
-const MARKETS_DATA: Record<string, MarketsData> = {
-  acquire: {
-    eyebrow: "Four markets, four currencies · no combined figure on this screen",
-    rows: ACQUIRE_MARKET_ROWS,
-    insightTitle: "Four currencies, four rows, and no total",
-    insightBody:
-      "There is no combined CAC on this screen because there is no such thing as a combined CAC. Where a cross-market figure is genuinely needed — an exec digest, a board export — the rate and the date it was taken are printed beside it.",
-    spotlightEyebrow: "The same question in four places",
-    spotlights: ACQUIRE_MARKET_SPOTLIGHTS,
-  },
-};
-
-const TREND_CLASS: Record<MarketRow["trend"], string> = {
-  worsening: "text-rose",
-  flat: "text-ink-4",
-  improving: "text-teal",
-};
-
-const CAC_TONE_CLASS: Record<"teal" | "rose", string> = { teal: "text-teal", rose: "text-rose" };
-const STAKE_TONE_CLASS: Record<MarketRow["atStakeTone"], string> = { rose: "text-rose", neutral: "text-ink-4" };
-
+type MarketRow = StageMarketDto & { id: string };
 
 const COLUMNS: Column<MarketRow>[] = [
-  { key: "market", header: "Market", render: (row) => <span className="font-semibold text-ink-2">{row.market}</span> },
-  { key: "acquired", header: "Acquired", align: "right", render: (row) => <span className="font-mono text-ink">{row.acquired}</span> },
-  { key: "spend", header: "Spend", align: "right", render: (row) => <span className="font-mono text-ink">{row.spend}</span> },
-  { key: "cac", header: "CAC", align: "right", render: (row) => <span className={CAC_TONE_CLASS[row.cacTone]}>{row.cac}</span> },
   {
-    key: "reach2nd",
-    header: "Reach 2nd order",
-    align: "right",
-    render: (row) => <span className={CAC_TONE_CLASS[row.reach2ndTone]}>{row.reach2nd}</span>,
+    key: "market",
+    header: "Market",
+    render: (row) => (
+      <span className="flex items-center gap-2 font-semibold text-ink-2">
+        {COUNTRY_LABEL[row.countryCode] ?? row.countryCode}
+        {row.isPrimary && <Chip tone="ultra">Primary</Chip>}
+      </span>
+    ),
   },
-  { key: "atStake", header: "At stake", align: "right", render: (row) => <span className={STAKE_TONE_CLASS[row.atStakeTone]}>{row.atStake}</span> },
-  { key: "trend", header: "Trend", align: "right", render: (row) => <span className={TREND_CLASS[row.trend]}>{row.trend}</span> },
+  {
+    key: "population",
+    header: "Population",
+    align: "right",
+    render: (row) =>
+      row.population.value !== null ? (
+        <span className="font-mono text-ink">{formatCount(row.population.value)}</span>
+      ) : (
+        <InfoTooltip missingSource={row.population.missingSource} wouldUnlock={row.population.wouldUnlock} />
+      ),
+  },
+  {
+    key: "atStake",
+    header: "At stake",
+    align: "right",
+    render: (row) =>
+      row.atStake.value !== null ? (
+        <span className="text-rose">{formatCompactMoney(row.atStake.value, row.currencyCode)}</span>
+      ) : (
+        <InfoTooltip missingSource={row.atStake.missingSource} wouldUnlock={row.atStake.wouldUnlock} />
+      ),
+  },
+  {
+    key: "primaryConversion",
+    header: "Primary conversion",
+    align: "right",
+    render: (row) =>
+      row.primaryConversion.value !== null ? (
+        <span className="text-ink-2">{formatPercent(row.primaryConversion.value)}</span>
+      ) : (
+        <InfoTooltip missingSource={row.primaryConversion.missingSource} wouldUnlock={row.primaryConversion.wouldUnlock} />
+      ),
+  },
 ];
+
+function MarketsSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-28" />
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** The shared Markets tab template (e.g. A08) — every stage's per-market breakout, no combined total by design. */
 export function MarketsTab() {
   const { stage } = useStageContext();
-
-  // Activate's Markets screen (AC07) uses a different column set (activation
-  // rate/guest share, not spend/CAC) — routed to its own component rather
-  // than forcing this template's Acquire-shaped columns onto it.
-  if (stage.slug === "activate") return <ActivateMarketsTab />;
-  // Price's PR08 uses FX-drift/repricing columns, not Acquire's spend/CAC.
-  if (stage.slug === "price") return <PriceMarketsTab />;
-  // Adopt's AD08 uses eligible/2+features/top-second-feature columns, not spend/CAC.
-  if (stage.slug === "adopt") return <AdoptMarketsTab />;
-  // Retain's RT08 uses repeat-rate/median-days/reactivable-now/fee-shipped columns, not spend/CAC.
-  if (stage.slug === "retain") return <RetainMarketsTab />;
-  // Expand's EX08 uses expansion-rate/ARPU-multiple/business-accounts columns, not spend/CAC.
-  if (stage.slug === "expand") return <ExpandMarketsTab />;
-  // Support's SU07 uses contact-rate/resolution/silent-failures/delivery-feed columns, not spend/CAC.
-  if (stage.slug === "support") return <SupportMarketsTab />;
-  // Renew's RN07 uses rate/card-failure/retry-window/paused columns, not spend/CAC.
-  if (stage.slug === "renew") return <RenewMarketsTab />;
-  // Advocate's AV07 uses referrers/referral-rate/share-of-acquisition/reward columns, not spend/CAC.
-  if (stage.slug === "advocate") return <AdvocateMarketsTab />;
-  // Churn's CH07 uses churned/reason-known/reachable/ever-contacted columns, not spend/CAC, plus a
-  // "Ghana across all ten stages" cross-stage table instead of the shared spotlight-card section.
-  if (stage.slug === "churn") return <ChurnMarketsTab />;
-
-  const data = MARKETS_DATA[stage.slug];
-  if (!data) return null;
+  const { data, isLoading, isError, refetch } = useGetStageMarkets(stage.slug);
+  const marketsData = data?.data;
+  const rows: MarketRow[] = (marketsData?.markets ?? []).map((market) => ({ ...market, id: market.countryCode }));
 
   return (
     <div className="space-y-8">
       <section className="space-y-3">
-        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.eyebrow}</p>
-        <DataTable columns={COLUMNS} rows={data.rows} />
-      </section>
-
-      <Callout tone="amber" title={data.insightTitle}>
-        {data.insightBody}
-      </Callout>
-
-      <section className="space-y-3">
         <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-          {data.spotlightEyebrow}
+          {rows.length > 0 ? `${rows.length} markets · no combined figure on this screen` : "No combined figure on this screen, by design"}
         </p>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {data.spotlights.map((spot) => (
-            <div key={spot.id} className="rounded-card border border-line bg-paper">
-              <div className="space-y-2.5 p-4">
-                <p className="font-mono text-[9px] font-medium tracking-[0.85px] text-ink-4 uppercase">{spot.eyebrow}</p>
-                <h3 className="text-[13px] font-semibold text-ink">{spot.title}</h3>
-                <p className="text-[10.5px] leading-relaxed text-ink-3">{spot.body}</p>
-                <p className={`border-t border-dashed border-line pt-2.5 font-mono text-[10px] font-semibold ${CAC_TONE_CLASS[spot.tone]}`}>
-                  {spot.footnote}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+
+        {isError ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+            <p className="text-[12px] text-rose">Couldn't load this stage's markets.</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
+        ) : isLoading ? (
+          <MarketsSkeleton />
+        ) : (
+          <DataTable
+            columns={COLUMNS}
+            rows={rows}
+            emptyTitle="No markets declared yet"
+            emptyBody="Per-market figures will appear here once this workspace has declared which markets it sells in."
+          />
+        )}
       </section>
+
+      {/* ❌ Backend does NOT provide: the per-market spend/CAC/reach-a-second-order columns and
+          narrative spotlight cards every stage's old mock design had — this endpoint only ever
+          returns population/atStake/primaryConversion per market, the same three measured values
+          every stage's Overview KPI row already uses, just sliced by market instead of workspace-
+          wide. Dropped rather than shown against fabricated per-market CAC/repeat-rate/ARPU
+          figures. */}
+
+      {marketsData?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
     </div>
   );
 }

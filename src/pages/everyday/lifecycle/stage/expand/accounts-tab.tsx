@@ -1,76 +1,137 @@
-import { PersonAvatar } from "@/components/person-avatar";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import {
-  EXPAND_ACCOUNTS_BANNER,
-  EXPAND_ACCOUNTS_KPIS,
-  EXPAND_ACCOUNTS_RISK_ROWS,
-  EXPAND_ACCOUNT_ROWS,
-  type ExpandAccountRow,
-} from "@/pages/everyday/lifecycle/stage/expand/data";
+import { formatCompactMoney, formatCount, formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetExpandAccounts } from "@/features/lifecycle/use-get-expand-accounts";
+import type { ExpandAtRiskAccountDto } from "@/services/api/lifecycle/get-expand-accounts";
 
-const ANNUAL_VALUE_TONE_CLASS: Record<ExpandAccountRow["annualValueTone"], string> = { teal: "text-teal", amber: "text-amber" };
-const ORDERS_TONE_CLASS: Record<ExpandAccountRow["ordersPerMonthTone"], string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose" };
-const RENEWS_TONE_CLASS: Record<ExpandAccountRow["renewsTone"], string> = { ink: "text-ink", amber: "text-amber", rose: "text-rose", neutral: "text-ink-4" };
-const RISK_TONE_CLASS: Record<"rose" | "amber", string> = { rose: "text-rose", amber: "text-amber" };
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
 
-const COLUMNS: Column<ExpandAccountRow>[] = [
-  { key: "account", header: "Account", render: (row) => <span className="font-semibold text-ink-2">{row.account}</span> },
-  { key: "seats", header: "Seats", align: "right", render: (row) => <span className="font-mono text-ink">{row.seats}</span> },
-  { key: "annualValue", header: "Annual value", align: "right", render: (row) => <span className={ANNUAL_VALUE_TONE_CLASS[row.annualValueTone]}>{row.annualValue}</span> },
-  { key: "ordersPerMonth", header: "Orders / mo", align: "right", render: (row) => <span className={ORDERS_TONE_CLASS[row.ordersPerMonthTone]}>{row.ordersPerMonth}</span> },
-  { key: "renews", header: "Renews", align: "right", render: (row) => <span className={RENEWS_TONE_CLASS[row.renewsTone]}>{row.renews}</span> },
-  { key: "health", header: "Health", align: "right", render: (row) => <Chip tone={row.healthTone}>{row.health}</Chip> },
+type AccountRow = ExpandAtRiskAccountDto & { id: string };
+
+const COLUMNS: Column<AccountRow>[] = [
   {
-    key: "owner",
-    header: "Owner",
-    render: (row) =>
-      row.owner ? (
-        <span className="flex items-center gap-2 whitespace-nowrap text-ink-2">
-          <PersonAvatar kind="human" initials={row.owner.initials} size="sm" style={{ backgroundColor: row.owner.color }} />
-          {row.owner.name}
-        </span>
-      ) : row.noOwner ? (
-        <Chip tone="amber">No owner</Chip>
-      ) : null,
+    key: "customer",
+    header: "Customer",
+    render: (row) => (
+      <div>
+        <p className="font-semibold text-ink-2">{row.customer}</p>
+        <p className="mt-0.5 text-[10px] text-ink-4">{row.plan ?? "No plan on record"}</p>
+      </div>
+    ),
+  },
+  {
+    key: "renewal",
+    header: "Renews",
+    align: "right",
+    render: (row) => (
+      <span className="font-mono text-ink">
+        {row.daysToRenewal}d <span className="text-ink-4">· {formatShortDate(row.endsAtUtc)}</span>
+      </span>
+    ),
+  },
+  {
+    key: "value",
+    header: "Value",
+    align: "right",
+    render: (row) => <span className="font-mono text-ink">{row.value !== null && row.currency !== null ? formatCompactMoney(row.value, row.currency) : <span className="text-ink-4">Unavailable</span>}</span>,
+  },
+  {
+    key: "signals",
+    header: "Signals",
+    render: (row) => (
+      <div className="flex flex-wrap justify-end gap-1">
+        {row.signals.map((signal) => (
+          <Chip key={signal} tone="amber">
+            {signal}
+          </Chip>
+        ))}
+      </div>
+    ),
+  },
+  {
+    key: "paymentsFailed",
+    header: "Payments failed",
+    align: "right",
+    render: (row) => <span className="font-mono text-rose">{row.paymentsFailed !== null ? formatCount(row.paymentsFailed) : <span className="text-ink-4">Unavailable</span>}</span>,
+  },
+  {
+    key: "tickets",
+    header: "Tickets",
+    align: "right",
+    render: (row) => <span className="font-mono text-ink-4">{row.tickets !== null ? formatCount(row.tickets) : "Unavailable"}</span>,
   },
 ];
 
-/** EX06 — Expand's unique Accounts tab, the same product read in "accounts mode" instead of consumer mode. */
+function AccountsSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-4 w-20 rounded-chip" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * EX06 — Expand's own Accounts tab, wired to GET /lifecycle/expand/accounts. Narrower than the old
+ * mock's "whole business book in accounts mode" — this endpoint only covers subscriptions renewing
+ * soon that carry a visible risk signal, since nothing in the semantic layer groups customers into
+ * a corporate account (no seats/headcount concept exists here at all).
+ */
 const ExpandAccountsTab = () => {
+  const { data, isLoading, isError, refetch } = useGetExpandAccounts();
+  const accounts = data?.data;
+  const rows: AccountRow[] = (accounts?.atRisk ?? []).map((account) => ({ ...account, id: account.customer }));
+
   return (
     <div className="space-y-8">
-      <span className="inline-flex rounded-chip border border-ultra-border bg-ultra-bg px-3 py-1.5 font-mono text-[9.5px] font-semibold text-ultra">
-        {EXPAND_ACCOUNTS_BANNER}
-      </span>
+      <p className={EYEBROW_CLASS}>
+        {accounts
+          ? `${accounts.atRiskCount !== null ? formatCount(accounts.atRiskCount) : rows.length} subscriptions renewing in ${accounts.horizonDays} days carry a risk signal · owner ${accounts.owner ?? "unassigned"}`
+          : "Subscriptions renewing soon that carry a visible risk signal"}
+      </p>
 
-      <KpiCards items={EXPAND_ACCOUNTS_KPIS} />
-
-      <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>The whole business book, on one screen</p>
-        <DataTable columns={COLUMNS} rows={EXPAND_ACCOUNT_ROWS} />
-      </section>
-
-      <Callout tone="ultra" title="The same product, read a completely different way">
-        In consumer mode this stage is 1.10M people and a 1.4× multiple. In accounts mode it is 1,204 named
-        businesses, each with seats, a renewal date and a person. Nothing about the data changed — only the unit
-        that a question is asked in. Switching modes never re-computes a number, it re-frames one.
-      </Callout>
-
-      <section className="space-y-1">
-        <p className={`pb-2 ${EYEBROW_CLASS}`}>Why 312 accounts are at risk, and what it has to do with the rest of the lifecycle</p>
-        <div className="divide-y divide-line rounded-card border border-line bg-paper">
-          {EXPAND_ACCOUNTS_RISK_ROWS.map((row) => (
-            <div key={row.label} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-              <span className="text-[11.5px] text-ink-2">{row.label}</span>
-              <span className={`font-mono text-[11px] ${RISK_TONE_CLASS[row.tone]}`}>{row.value}</span>
-            </div>
-          ))}
+      {isError ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+          <p className="text-[12px] text-rose">Couldn't load Expand's at-risk accounts.</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
         </div>
-      </section>
+      ) : isLoading ? (
+        <AccountsSkeleton />
+      ) : (
+        <DataTable columns={COLUMNS} rows={rows} emptyTitle="No accounts at risk right now" emptyBody="Renewals carrying a payment-failure or support-ticket signal will appear here." />
+      )}
+
+      {accounts && accounts.checked.length > 0 && (
+        <p className="text-[10.5px] text-ink-4">
+          Only evaluated for: {accounts.checked.join(", ")} — a renewal absent above has been cleared on just these signals, not every possible one.
+        </p>
+      )}
+
+      {/* ❌ Backend does NOT provide: seats, a blended "health" score, or the full business-account
+          book — the old mock's "accounts mode" reframing of the entire consumer base (1,204 named
+          businesses with seats and a renewal date each) has no matching concept on this endpoint.
+          Only at-risk renewals with a real signal are shown; nothing here is a fused score, per
+          this endpoint's own note. */}
+
+      {accounts?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
     </div>
   );
 };

@@ -2,49 +2,104 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
+import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { RequestInstrumentationModal } from "@/pages/everyday/lifecycle/stage/modals/request-instrumentation-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import {
-  ADOPT_BLIND_SPOT_COST_CARDS,
-  ADOPT_BLIND_SPOT_ROWS,
-  ADOPT_REQUEST_INSTRUMENTATION_PRESET,
-  type BlindSpotRow,
-} from "@/pages/everyday/lifecycle/stage/adopt/data";
+import { formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
+import { ADOPT_REQUEST_INSTRUMENTATION_PRESET } from "@/pages/everyday/lifecycle/stage/adopt/data";
+import { useGetInstrumentation } from "@/features/lifecycle/use-get-instrumentation";
+import type { InstrumentationGapDto } from "@/services/api/lifecycle/get-instrumentation";
 
-const WHY_INVISIBLE_TONE_CLASS: Record<BlindSpotRow["whyInvisibleTone"], string> = { rose: "text-rose", amber: "text-amber" };
-const REQUESTED_TONE_CLASS: Record<BlindSpotRow["requestedTone"], string> = { neutral: "text-ink-4", amber: "text-amber" };
-const CARD_EYEBROW_CLASS: Record<"teal" | "amber" | "neutral" | "rose", string> = { teal: "text-teal", amber: "text-amber", neutral: "text-ink-4", rose: "text-rose" };
+// `state`'s only documented value is "no-request" — everything else is an unconfirmed
+// request-lifecycle state, matched defensively by keyword.
+function stateTone(state: string): ChipTone {
+  if (state === "no-request") return "neutral";
+  const normalized = state.toLowerCase();
+  if (normalized.includes("close") || normalized.includes("delivered") || normalized.includes("resolved")) return "teal";
+  if (normalized.includes("withdraw") || normalized.includes("reject")) return "rose";
+  return "amber";
+}
 
-const COLUMNS: Column<BlindSpotRow>[] = [
-  { key: "what", header: "What", render: (row) => <span className="font-semibold text-ink-2">{row.what}</span> },
-  { key: "shipped", header: "Shipped", render: (row) => <span className="text-ink-2">{row.shipped}</span> },
-  { key: "whyInvisible", header: "Why it is invisible", align: "right", render: (row) => <span className={WHY_INVISIBLE_TONE_CLASS[row.whyInvisibleTone]}>{row.whyInvisible}</span> },
+const STATE_LABEL: Record<string, string> = { "no-request": "Not requested" };
+
+type GapRow = InstrumentationGapDto & { id: string };
+
+const COLUMNS: Column<GapRow>[] = [
   {
-    key: "whoCouldFix",
+    key: "what",
+    header: "What",
+    render: (row) => (
+      <div>
+        <p className="font-semibold text-ink-2">{row.name}</p>
+        <p className="mt-0.5 text-[10px] text-ink-4">{row.gap}</p>
+      </div>
+    ),
+  },
+  {
+    key: "wouldUnlock",
+    header: "Would unlock",
+    render: (row) => <span className="text-ink-2">{row.wouldUnlock ?? <span className="text-ink-4">Unavailable</span>}</span>,
+  },
+  {
+    key: "owner",
     header: "Who could fix it",
     align: "right",
-    render: (row) =>
-      row.whoCouldFix ? (
-        <span className="flex items-center justify-end gap-1.5 whitespace-nowrap text-ink-2">
-          <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: row.whoCouldFix.color }} aria-hidden />
-          {row.whoCouldFix.name}
-        </span>
-      ) : row.noOwner ? (
-        <Chip tone="amber">No owner</Chip>
-      ) : null,
+    render: (row) => (row.ownerName ? <span className="text-ink-2">{row.ownerName}</span> : <Chip tone="amber">No owner</Chip>),
   },
-  { key: "requested", header: "Requested", align: "right", render: (row) => <span className={REQUESTED_TONE_CLASS[row.requestedTone]}>{row.requested}</span> },
-  { key: "state", header: "State", align: "right", render: (row) => <Chip tone={row.stateTone}>{row.state}</Chip> },
+  {
+    key: "overdue",
+    header: "Overdue",
+    align: "right",
+    render: (row) =>
+      row.daysOverdue !== null && row.daysOverdue > 0 ? (
+        <span className="font-mono text-rose">{row.daysOverdue}d overdue</span>
+      ) : row.neededByUtc ? (
+        <span className="font-mono text-ink-4">needed by {formatShortDate(row.neededByUtc)}</span>
+      ) : (
+        <span className="text-ink-4">—</span>
+      ),
+  },
+  {
+    key: "state",
+    header: "State",
+    align: "right",
+    render: (row) => <Chip tone={stateTone(row.state)}>{STATE_LABEL[row.state] ?? row.state}</Chip>,
+  },
 ];
 
-/** AD06 — Adopt's "Not instrumented" tab (route path blind-spots per the SVG footer). */
+function BlindSpotsSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-4 w-16 rounded-chip" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * AD06 — Adopt's "Not instrumented" tab, wired to GET /lifecycle/instrumentation — a workspace-
+ * wide endpoint (every gap names which of the 10 stages it blocks via `blockedStages`), filtered
+ * here to gaps that block this stage specifically.
+ */
 const AdoptBlindSpotsTab = () => {
-  const { headerActionsEl } = useStageContext();
+  const { stage, headerActionsEl } = useStageContext();
   const [requestOpen, setRequestOpen] = useState(false);
+  const { data, isLoading, isError, refetch } = useGetInstrumentation();
+  const instrumentation = data?.data;
+  // `blockedStages` carries each stage's display name ("Advocate"), confirmed 2026-09-05 live —
+  // not its slug. Comparing against `stage.slug` (always lowercase) never matched anything, for
+  // any stage; matched case-insensitively against `stage.name` here instead.
+  const gaps = (instrumentation?.gaps ?? []).filter((gap) => gap.blockedStages.some((blocked) => blocked.toLowerCase() === stage.name.toLowerCase()));
+  const rows: GapRow[] = gaps.map((gap) => ({ ...gap, id: gap.gapKey }));
 
   return (
     <div className="space-y-8">
@@ -63,27 +118,34 @@ const AdoptBlindSpotsTab = () => {
       </Callout>
 
       <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>Blind spots in this stage · 5</p>
-        <DataTable columns={COLUMNS} rows={ADOPT_BLIND_SPOT_ROWS} />
+        <p className={EYEBROW_CLASS}>Blind spots in this stage · {isLoading ? "…" : rows.length}</p>
+
+        {isError ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+            <p className="text-[12px] text-rose">Couldn't load instrumentation gaps.</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
+        ) : isLoading ? (
+          <BlindSpotsSkeleton />
+        ) : (
+          <DataTable columns={COLUMNS} rows={rows} emptyTitle="No blind spots on this stage" emptyBody="Every gap Flolyt knows about for this stage has been instrumented." />
+        )}
       </section>
 
-      <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>What each blind spot costs, as far as anyone can tell</p>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {ADOPT_BLIND_SPOT_COST_CARDS.map((card) => (
-            <div key={card.id} className="rounded-card border border-line bg-paper">
-              <div className="flex h-full flex-col gap-2.5 p-4">
-                <p className={`font-mono text-[9px] font-medium tracking-[0.85px] uppercase ${CARD_EYEBROW_CLASS[card.tone]}`}>{card.eyebrow}</p>
-                <h3 className="text-[13px] font-semibold text-ink">{card.title}</h3>
-                <p className="flex-1 text-[10.5px] leading-relaxed text-ink-3">{card.body}</p>
-                <p className={`border-t border-dashed border-line pt-2.5 font-mono text-[10px] font-semibold ${CARD_EYEBROW_CLASS[card.tone]}`}>
-                  {card.footnote}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* ❌ Backend does NOT provide: the "what each blind spot costs" narrative cards — no field
+          on this endpoint estimates a cost or value figure per gap beyond `wouldUnlock`'s own
+          sentence, which is shown in the table above; dropped rather than fabricated. The "Request
+          instrumentation" button still opens the existing static preset dialog, not a real
+          POST /instrumentation-requests call — that mutation (and PUT .../owner, POST .../close)
+          stays unwired, same treatment as every other "open a form" CTA in this project so far.
+          `instrumentation.callouts[]` is also NOT shown here — confirmed live 2026-09-05 that it's
+          composed over the whole, unfiltered `gaps[]` list ("2 gaps nobody has asked about" when
+          neither gap blocked this stage), not scoped to what this stage's own table just filtered
+          to. Showing a workspace-wide count under a "blind spots in this stage" heading read as
+          the same number disagreeing with itself; there's no way to re-scope pre-composed callout
+          text to one stage without fabricating it, so it's dropped on this view specifically. */}
 
       <RequestInstrumentationModal preset={ADOPT_REQUEST_INSTRUMENTATION_PRESET} open={requestOpen} onOpenChange={setRequestOpen} />
     </div>

@@ -6,152 +6,20 @@
  */
 
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
-import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
-import type { LeakRow, ChangeRow, AgentCard, ThresholdRow, GoalRow, TriedRow, CompareRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 import type { RequestInstrumentationPreset } from "@/pages/everyday/lifecycle/stage/adopt/data";
 
-// ---- Definition (EX01) -----------------------------------------------
+// ---- Definition (EX01) is now the shared DefinitionRoute template — see
+// stage/definition/definition-route.tsx. GET .../definition has no field for the basket/plan/
+// account/category breakdown below, so it isn't reproducible from live data; dropped.
 
-export type ExpandKindRow = {
-  id: string;
-  kind: string;
-  customers: string;
-  valueAdded: string;
-  valueAddedTone: "teal" | "amber" | "neutral";
-  medianLift: string;
-  medianLiftTone: "teal" | "neutral";
-  reversible: string;
-  reversibleTone: ChipTone;
-  ownedBy: string;
-  ownedByColor: string;
-};
-
-export type ExpandDefinitionData = {
-  title: string;
-  subtitle: string;
-  insightTitle: string;
-  insightBody: string;
-  candidatesEyebrow: string;
-  candidates: DefinitionCandidate[];
-  tableEyebrow: string;
-  rows: ExpandKindRow[];
-  closingTitle: string;
-  closingBody: string;
-};
-
-export const EXPAND_DEFINITION: ExpandDefinitionData = {
-  title: "What counts as expansion",
-  subtitle: "Expand · owned by Sales · last changed 12 January by Tunde Bakare",
-  insightTitle: "Expansion is a customer becoming worth more, not a customer buying more often",
-  insightBody:
-    "Ordering twice as much because you order twice as often is Retain's number, and counting it here would double-count the same recovery in two stages. Expansion is revenue per order, per basket or per plan — the same customer, at a higher value.",
-  candidatesEyebrow: "A customer has expanded when",
-  candidates: [
-    {
-      id: "orders-more-frequently",
-      label: "They order more frequently",
-      description: "That is Retain. Counting it here double-counts every recovery.",
-      field: "orders · 411,000",
-    },
-    {
-      id: "spends-more-per-year",
-      label: "They spend more per year",
-      description: "True of anyone who orders more often. Same problem, one layer up.",
-      field: "billing · 612,000",
-    },
-    {
-      id: "revenue-per-order-rises",
-      label: "Their revenue per order rises, or they move to a higher plan",
-      description: "Isolates value from frequency. The only definition that does not borrow Retain's win.",
-      field: "orders + billing · 218,000 · 1.4× ARPU",
-      selected: true,
-    },
-  ],
-  tableEyebrow: "The two ways a customer expands here",
-  rows: [
-    { id: "basket", kind: "Basket · spends more per order", customers: "176,000", valueAdded: "₦41M", valueAddedTone: "amber", medianLift: "+22%", medianLiftTone: "teal", reversible: "yes · any order", reversibleTone: "amber", ownedBy: "Marketing", ownedByColor: "#79883A" },
-    { id: "plan", kind: "Plan · moves to a paid tier", customers: "42,000", valueAdded: "₦188M", valueAddedTone: "teal", medianLift: "+312%", medianLiftTone: "teal", reversible: "on cancellation", reversibleTone: "teal", ownedBy: "Sales", ownedByColor: "#B4568F" },
-    { id: "account", kind: "Account · a household becomes a business", customers: "1,204", valueAdded: "₦74M", valueAddedTone: "teal", medianLift: "+1,100%", medianLiftTone: "teal", reversible: "on renewal", reversibleTone: "teal", ownedBy: "Sales", ownedByColor: "#B4568F" },
-    { id: "category", kind: "Category · orders outside their usual", customers: "94,000", valueAdded: "Unavailable", valueAddedTone: "neutral", medianLift: "Unavailable", medianLiftTone: "neutral", reversible: "—", reversibleTone: "neutral", ownedBy: "Marketing", ownedByColor: "#79883A" },
-  ],
-  closingTitle: "Category expansion cannot be measured because basket contents are not in the feed",
-  closingBody:
-    "The same missing `order_lines` field that blocks margin in Price blocks this row entirely. 94,000 customers ordered outside their usual category and Flolyt can count them but cannot say what it was worth. One field, three stages.",
-};
-
-// ---- Overview (EX02) ---------------------------------------------------
-
-export const EXPAND_OVERVIEW_KPIS: Kpi[] = [
-  { eyebrow: "Eligible to expand", value: "1.10M", note: "active in 90 days" },
-  { eyebrow: "Expanded", value: "218,000", tone: "teal", note: "19.8% · was 19.1%" },
-  { eyebrow: "ARPU multiple", value: "1.4×", tone: "teal", note: "unchanged for four quarters" },
-  { eyebrow: "At stake", value: "₦61M", tone: "amber", note: "smallest leak of the ten stages" },
-];
-
-export const EXPAND_OVERVIEW_LEAK_ROWS: LeakRow[] = [
-  {
-    id: "never-prompted-high-frequency",
-    where: "Never prompted to upgrade · high-frequency",
-    customers: "94,000",
-    value: "₦31M",
-    valueTone: "rose",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "no prompt exists", tone: "amber" },
-    room: { label: "none", tone: "neutral" },
-    detailHref: "/lifecycle/expand/upgrade-paths/pay-as-you-go-lagos-plus",
-  },
-  {
-    id: "downgraded-student-unverified",
-    where: "Downgraded to Student without verification",
-    customers: "6,200",
-    value: "₦9M",
-    valueTone: "amber",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "causal · Price", tone: "ultra" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "business-households-consumer-plans",
-    where: "Business-sized households on consumer plans",
-    customers: "11,000",
-    value: "₦12M",
-    valueTone: "amber",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "group-ordering-never-offered-family",
-    where: "Group ordering users never offered Family",
-    customers: "19,000",
-    value: "₦9M",
-    valueTone: "amber",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "no prompt exists", tone: "amber" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "category-expansion",
-    where: "Category expansion",
-    customers: "94,000",
-    value: "Unavailable",
-    valueTone: "ink",
-    trend: "unknown",
-    trendTone: "neutral",
-    causeKnown: { label: "needs order_lines", tone: "amber" },
-    room: { label: "blocked", tone: "rose" },
-  },
-];
+// ---- Overview (EX02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
+// overview-tab.tsx's buildStageKpis. Its leak table is wired too, to the same endpoint's
+// `departures[]`.
 
 export const EXPAND_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Never prompted to upgrade · high-frequency",
@@ -191,58 +59,10 @@ export const EXPAND_SHARE_EXPORT_PRESET: ShareOrExportPreset = {
 
 // ---- Upgrade paths (EX03) + one-path drilldown (EX04) ---------------------
 
-export type UpgradePathRow = {
-  id: string;
-  fromTo: string;
-  eligible: string;
-  upgraded: string;
-  rate: string;
-  rateTone: "teal" | "amber" | "rose" | "neutral";
-  valuePerUpgrade: string;
-  valuePerUpgradeTone: "teal" | "rose" | "neutral";
-  prompted: string;
-  promptedTone: ChipTone;
-  verdict: string;
-  verdictTone: ChipTone;
-};
-
-export const EXPAND_UPGRADE_PATH_ROWS: UpgradePathRow[] = [
-  { id: "pay-as-you-go-lagos-plus", fromTo: "Pay as you go → Lagos Plus", eligible: "612,000", upgraded: "31,000", rate: "5.1%", rateTone: "amber", valuePerUpgrade: "₦79,200/yr", valuePerUpgradeTone: "teal", prompted: "plan page only", promptedTone: "rose", verdict: "the big one", verdictTone: "rose" },
-  { id: "lagos-plus-family", fromTo: "Lagos Plus → Family", eligible: "841,000", upgraded: "8,400", rate: "1.0%", rateTone: "rose", valuePerUpgrade: "₦20,400/yr", valuePerUpgradeTone: "teal", prompted: "no prompt", promptedTone: "rose", verdict: "untouched", verdictTone: "rose" },
-  { id: "family-business", fromTo: "Family → Business", eligible: "218,000", upgraded: "1,204", rate: "0.6%", rateTone: "rose", valuePerUpgrade: "₦93,600/yr", valuePerUpgradeTone: "teal", prompted: "sales-led", promptedTone: "amber", verdict: "works, tiny", verdictTone: "amber" },
-  { id: "any-student", fromTo: "Any → Student", eligible: "—", upgraded: "11,400", rate: "—", rateTone: "neutral", valuePerUpgrade: "−₦19,200/yr", valuePerUpgradeTone: "rose", prompted: "self-serve, unverified", promptedTone: "rose", verdict: "a downgrade path", verdictTone: "rose" },
-  { id: "legacy-unlimited-anything", fromTo: "Legacy Unlimited → anything", eligible: "3,100", upgraded: "0", rate: "0%", rateTone: "rose", valuePerUpgrade: "Unavailable", valuePerUpgradeTone: "neutral", prompted: "never attempted", promptedTone: "rose", verdict: "frozen since 2022", verdictTone: "rose" },
-];
-
-export const EXPAND_UPGRADE_PATH_CARDS: InsightCard[] = [
-  {
-    id: "pay-as-you-go-lagos-plus",
-    agentTag: "EX",
-    meta: "612,000 eligible · ₦31M",
-    title: "Pay as you go → Lagos Plus",
-    body: "The upgrade with the highest value and the largest eligible pool converts at 5.1%. The only place it is offered is the plan page, which 91% of customers have never opened.",
-    footnote: "no behavioural prompt exists",
-    tone: "rose",
-  },
-  {
-    id: "already-order-enough",
-    agentTag: "EX",
-    meta: "94,000 of them",
-    title: "Already order enough to save money",
-    body: "At 6 or more orders a month, Lagos Plus is cheaper than paying per order. 94,000 customers are past that line and paying more than they need to. None of them have been told.",
-    footnote: "the offer sells itself",
-    tone: "amber",
-  },
-  {
-    id: "uncomfortable-one",
-    agentTag: "PX",
-    meta: "The uncomfortable one",
-    title: "11,400 went the other way",
-    body: "The Student plan is self-serve and unverified. 6,200 of these came down from Lagos Plus. It is the only fully-automated path in this stage and it runs in reverse.",
-    footnote: "the only prompt that works",
-    tone: "rose",
-  },
-];
+// GET /lifecycle/expand/upgrade-paths has no eligible/upgraded/rate/value-per-upgrade/prompted/
+// verdict field, and can't tell an upgrade from a downgrade without plan pricing (its own callout
+// says so) — the old mock's table and insight cards above aren't reproducible from live data;
+// dropped. See upgrade-paths-tab.tsx.
 
 export type UpgradePathDetailRow = {
   id: string;
@@ -327,28 +147,11 @@ export const EXPAND_UPGRADE_PATH_DETAILS: Record<string, UpgradePathDetail> = {
 
 // ---- Basket (EX05) ---------------------------------------------------------
 
-export const EXPAND_BASKET_KPIS: Kpi[] = [
-  { eyebrow: "Median basket", value: "₦2,140", note: "unchanged for 3 quarters" },
-  { eyebrow: "Baskets that grew", value: "176,000", tone: "teal", note: "16.0% of active" },
-  { eyebrow: "Value added", value: "₦41M", tone: "amber", note: "at face value" },
-  { eyebrow: "Margin added", value: "Unavailable", tone: "amber", note: "needs order_lines" },
-];
-
-export const EXPAND_BASKET_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Jan–Feb · before the fee", value: "₦2,140 median", percent: 31, tone: "teal" },
-  { label: "Mar–May · after the fee", value: "₦2,140", percent: 31, tone: "teal" },
-  { label: "Jun–Aug", value: "₦2,150", percent: 31, tone: "teal" },
-  { label: "Lagos Plus customers", value: "₦2,410", percent: 35, tone: "teal" },
-  { label: "Group ordering customers", value: "₦6,890", percent: 100, tone: "teal" },
-];
-
-export const EXPAND_BASKET_INSIDE_ROWS: { label: string; value: string; tone: "teal" | "rose" | "amber" }[] = [
-  { label: "Median basket", value: "₦2,140 · from order totals", tone: "teal" },
-  { label: "Items per basket", value: "Unavailable · order_lines not in the feed", tone: "rose" },
-  { label: "Categories per basket", value: "Unavailable", tone: "rose" },
-  { label: "Attach rate on sides and drinks", value: "Unavailable", tone: "rose" },
-  { label: "What could be answered with one field", value: "all four rows above, plus margin and category expansion", tone: "amber" },
-];
+// GET /lifecycle/expand/basket actually returns a real monthly revenue/basket-size/order-
+// frequency trend (months[]/movement[]) independently of order_lines — only item-level
+// composition (lines[]) needs that field. The old mock treated the whole screen as blocked, which
+// this endpoint contradicts; its specific "before/after the fee" narrative numbers above aren't
+// reproducible from live data either way. See basket-tab.tsx.
 
 export const EXPAND_REQUEST_INSTRUMENTATION_PRESET: RequestInstrumentationPreset = {
   subtitle: "order_lines · 41 days overdue, blocks four stages",
@@ -374,184 +177,25 @@ export const EXPAND_REQUEST_INSTRUMENTATION_PRESET: RequestInstrumentationPreset
 
 // ---- Accounts (EX06) --------------------------------------------------------
 
-export const EXPAND_ACCOUNTS_BANNER = "Accounts mode · 1,204 businesses, not 4.2M consumers";
+// GET /lifecycle/expand/accounts has no seats, blended "health" score, or general business-
+// account book — it's narrower than the old mock's "accounts mode" reframing of the whole
+// consumer base: only subscriptions renewing soon with a real risk signal, since nothing in the
+// semantic layer groups customers into a corporate account (confirmed by this endpoint's own
+// note — no seat/headcount concept exists at all). The banner, KPIs, per-account table and risk
+// breakdown above aren't reproducible from live data; dropped. See accounts-tab.tsx.
 
-export const EXPAND_ACCOUNTS_KPIS: Kpi[] = [
-  { eyebrow: "Business accounts", value: "1,204", note: "0.03% of customers" },
-  { eyebrow: "Revenue", value: "₦74M/yr", tone: "teal", note: "6.1% of company revenue" },
-  { eyebrow: "Revenue per account", value: "₦61,400", tone: "teal", note: "20× a consumer" },
-  { eyebrow: "At renewal risk", value: "312", tone: "rose", note: "26% of accounts" },
-];
+// ---- Cohorts (EX07) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
+// acquire/data.ts's Cohorts note and cohorts-tab.tsx.
 
-export type ExpandAccountRow = {
-  id: string;
-  account: string;
-  seats: string;
-  annualValue: string;
-  annualValueTone: "teal" | "amber";
-  ordersPerMonth: string;
-  ordersPerMonthTone: "teal" | "amber" | "rose";
-  renews: string;
-  renewsTone: "ink" | "amber" | "rose" | "neutral";
-  health: string;
-  healthTone: ChipTone;
-  owner?: { name: string; initials: string; color: string };
-  noOwner?: boolean;
-};
-
-export const EXPAND_ACCOUNT_ROWS: ExpandAccountRow[] = [
-  { id: "kano-textiles", account: "Kano Textiles", seats: "120", annualValue: "₦2.1M", annualValueTone: "teal", ordersPerMonth: "410", ordersPerMonthTone: "teal", renews: "14 Sep", renewsTone: "amber", health: "at risk", healthTone: "rose", owner: { name: "Tunde", initials: "TB", color: "#B4568F" } },
-  { id: "lagos-legal-partners", account: "Lagos Legal Partners", seats: "64", annualValue: "₦1.4M", annualValueTone: "teal", ordersPerMonth: "188", ordersPerMonthTone: "teal", renews: "2 Oct", renewsTone: "neutral", health: "healthy", healthTone: "teal", owner: { name: "Tunde", initials: "TB", color: "#B4568F" } },
-  { id: "ikeja-tech-park", account: "Ikeja Tech Park", seats: "310", annualValue: "₦4.8M", annualValueTone: "teal", ordersPerMonth: "1,120", ordersPerMonthTone: "teal", renews: "11 Nov", renewsTone: "neutral", health: "healthy", healthTone: "teal", owner: { name: "Tunde", initials: "TB", color: "#B4568F" } },
-  { id: "nairobi-media-group", account: "Nairobi Media Group", seats: "41", annualValue: "KES 890k", annualValueTone: "teal", ordersPerMonth: "94", ordersPerMonthTone: "amber", renews: "28 Aug", renewsTone: "rose", health: "at risk", healthTone: "rose", noOwner: true },
-  { id: "accra-logistics", account: "Accra Logistics", seats: "88", annualValue: "GHS 210k", annualValueTone: "amber", ordersPerMonth: "31", ordersPerMonthTone: "rose", renews: "19 Sep", renewsTone: "rose", health: "at risk", healthTone: "rose", noOwner: true },
-];
-
-export const EXPAND_ACCOUNTS_RISK_ROWS: { label: string; value: string; tone: "rose" | "amber" }[] = [
-  { label: "Seat utilisation below 40%", value: "188 accounts · people were added and never ordered", tone: "rose" },
-  { label: "Order frequency fell after 4 March", value: "94 accounts · the delivery fee, at scale", tone: "rose" },
-  { label: "No named owner", value: "119 accounts · all outside Nigeria", tone: "rose" },
-  { label: "Renewing within 60 days", value: "212 accounts · ₦31M", tone: "amber" },
-  { label: "Accounts with a room open", value: "0 · none of this has a room", tone: "rose" },
-];
-
-// ---- Cohorts (EX07, stage-specific layout) --------------------------------
-
-export type ExpandCohortRow = {
-  id: string;
-  cohort: string;
-  reached180Days: string;
-  expanded: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  arpuMultiple: string;
-  arpuMultipleTone: "teal" | "rose";
-  onPaidPlan: string;
-  onPaidPlanTone: "teal" | "rose";
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
-
-export const EXPAND_COHORT_ROWS: ExpandCohortRow[] = [
-  { id: "january", cohort: "January", reached180Days: "23,300", expanded: "4,600", rate: "19.7%", rateTone: "teal", arpuMultiple: "1.41×", arpuMultipleTone: "teal", onPaidPlan: "31.4%", onPaidPlanTone: "teal", vsFeb: "+0.4", vsFebTone: "teal" },
-  { id: "february", cohort: "February", reached180Days: "24,300", expanded: "4,700", rate: "19.3%", rateTone: "teal", arpuMultiple: "1.40×", arpuMultipleTone: "teal", onPaidPlan: "30.9%", onPaidPlanTone: "teal", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", reached180Days: "22,300", expanded: "4,400", rate: "19.7%", rateTone: "teal", arpuMultiple: "1.42×", arpuMultipleTone: "teal", onPaidPlan: "22.1%", onPaidPlanTone: "rose", vsFeb: "+0.4", vsFebTone: "teal" },
-  { id: "april", cohort: "April", reached180Days: "21,000", expanded: "4,200", rate: "20.0%", rateTone: "teal", arpuMultiple: "1.41×", arpuMultipleTone: "teal", onPaidPlan: "21.4%", onPaidPlanTone: "rose", vsFeb: "+0.7", vsFebTone: "teal" },
-  { id: "may", cohort: "May", reached180Days: "21,000", expanded: "4,200", rate: "20.0%", rateTone: "teal", arpuMultiple: "1.40×", arpuMultipleTone: "teal", onPaidPlan: "21.9%", onPaidPlanTone: "rose", vsFeb: "+0.7", vsFebTone: "teal" },
-  { id: "june", cohort: "June", reached180Days: "Unavailable", expanded: "Unavailable", rate: "Unavailable", rateTone: "rose", arpuMultiple: "Unavailable", arpuMultipleTone: "rose", onPaidPlan: "21.1%", onPaidPlanTone: "rose", vsFeb: "—", vsFebTone: "neutral" },
-];
-
-export const EXPAND_COHORT_CLOSING = {
-  title: "The expansion rate is identical across every cohort and the population it applies to fell 14%",
-  body: "March through May expanded at 19.7–20.0%, the same as January and February. Nothing damaged this stage. Fewer people reached it — 24,300 in February against 21,000 in May — because Retain stopped delivering them. Expand is the clearest case in the lifecycle of a stage whose number is fine and whose value fell anyway.",
-};
-
-export const EXPAND_COHORT_MOVED_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "On a paid plan · Jan–Feb cohorts", value: "31.2%", percent: 31, tone: "teal" },
-  { label: "On a paid plan · Mar–May cohorts", value: "21.8%", percent: 22, tone: "rose" },
-  { label: "Of which, Student plan", value: "6.1% · unverified, self-serve", percent: 6, tone: "rose" },
-];
-
-export const EXPAND_COHORT_MOVED_CLOSING = {
-  title: "Plan conversion fell 9 points and expansion rate did not move",
-  body: "Because a customer who upgrades still upgrades by the same amount — there are simply fewer of them and more of the ones there are chose Student. Two facts on one screen that would look contradictory in any report that only carried the headline rate.",
-};
-
-// ---- Markets (EX08, stage-specific layout) --------------------------------
-
-export type ExpandMarketRow = {
-  id: string;
-  market: string;
-  eligible: string;
-  expanded: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  arpuMultiple: string;
-  arpuMultipleTone: "teal" | "rose";
-  businessAccounts: string;
-  atStake: string;
-  atStakeTone: "amber" | "neutral";
-  trend: "flat" | "improving" | "worsening";
-};
-
-export const EXPAND_MARKET_ROWS: ExpandMarketRow[] = [
-  { id: "nigeria", market: "Nigeria", eligible: "781,000", expanded: "151,000", rate: "19.3%", rateTone: "teal", arpuMultiple: "1.39×", arpuMultipleTone: "teal", businessAccounts: "1,041", atStake: "₦48M", atStakeTone: "amber", trend: "flat" },
-  { id: "kenya", market: "Kenya", eligible: "218,000", expanded: "48,000", rate: "22.0%", rateTone: "teal", arpuMultiple: "1.51×", arpuMultipleTone: "teal", businessAccounts: "94", atStake: "KES 3.1M", atStakeTone: "amber", trend: "improving" },
-  { id: "ghana", market: "Ghana", eligible: "112,000", expanded: "14,000", rate: "12.5%", rateTone: "rose", arpuMultiple: "1.18×", arpuMultipleTone: "rose", businessAccounts: "41", atStake: "GHS 1.4M", atStakeTone: "amber", trend: "worsening" },
-  { id: "uk", market: "United Kingdom", eligible: "79,000", expanded: "18,000", rate: "22.8%", rateTone: "teal", arpuMultiple: "1.61×", arpuMultipleTone: "teal", businessAccounts: "28", atStake: "£21k", atStakeTone: "neutral", trend: "improving" },
-];
-
-export const EXPAND_MARKET_CLOSING = {
-  title: "Ghana expands at 12.5% against 19.3% in Nigeria, and price is the obvious candidate nobody has checked",
-  body: "Ghanaian customers already pay a 22% premium against every other market because the price has not been revised since August 2024. Asking them to move up a tier is asking them to move up from a base that is already too high. No room has ever connected these two facts.",
-};
-
-export const EXPAND_MARKET_GHANA_ROWS: { label: string; value: string }[] = [
-  { label: "Acquire", value: "CAC ₦6,026 · conversion 4.1%" },
-  { label: "Activate", value: "33.0% · slowest time to value" },
-  { label: "Price", value: "22% above every other market since 2024" },
-  { label: "Adopt", value: "1.6 features · lowest" },
-  { label: "Retain", value: "the fee ships there 14 September" },
-  { label: "Expand", value: "12.5% · lowest ARPU multiple" },
-  { label: "Rooms open about Ghana", value: "1 · about a campaign · no owner since 10 August" },
-];
-
-export const EXPAND_MARKET_FINAL_CLOSING = {
-  title: "Six stages, six worst-in-class readings, one unowned room about a campaign",
-  body: "No individual stage owner is wrong to treat Ghana as a small market with a local problem. Only the lifecycle view shows that every one of them independently flagged the same market, and that the thing they have in common — a price nobody revised — sits in a stage none of them own.",
-};
+// ---- Markets (EX08) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
+// acquire/data.ts's Markets note and markets-tab.tsx.
 
 // ---- What changed (EX09) ---------------------------------------------------
+// Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
+// — no mock export here anymore.
 
-export const EXPAND_CHANGE_ROWS: ChangeRow[] = [
-  { id: "student-plan-launched", date: "14 Feb", team: "Finance", teamColor: "#5D6BB8", title: "Student plan launched · self-serve, unverified", effect: "6,200 downgraded from Lagos Plus", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "delivery-fee-checkout", date: "4 Mar", team: "Engineering", teamColor: "#4E7080", title: "Delivery fee moved to checkout", effect: "No effect on expansion rate · population −14%", effectTone: "amber", badge: "no effect", badgeTone: "neutral" },
-  { id: "group-ordering-launched", date: "2024", team: "Product", teamColor: "#7A5AA8", title: "Group ordering launched", effect: "94,000 users · ₦6,890 baskets · never cross-sold", effectTone: "amber", badge: "causal finding", badgeTone: "ultra" },
-  { id: "business-plan-sales-motion", date: "Jan", team: "Sales", teamColor: "#B4568F", title: "Business plan sales motion started", effect: "1,204 accounts · ₦74M · works and is tiny", effectTone: "teal", badge: "causal finding", badgeTone: "ultra" },
-  { id: "legacy-unlimited-closed", date: "Mar 2022", team: "Finance", teamColor: "#5D6BB8", title: "Legacy Unlimited closed to new customers", effect: "3,100 frozen · never migrated", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "behavioural-upgrade-prompt", date: "—", team: "nobody", teamColor: "#98A0AF", title: "A behavioural upgrade prompt", effect: "Never built · ₦31M identified", effectTone: "rose", badge: "not instrumented", badgeTone: "amber" },
-];
-
-// ---- Agents (EX10) ----------------------------------------------------------
-
-export const EXPAND_AGENT_CARDS: AgentCard[] = [
-  {
-    id: "expansion",
-    initials: "EX",
-    status: "Lead agent · reading since 12 Jan",
-    name: "Expansion",
-    body: "Watches plan movement, ARPU multiple, seat utilisation and account health. It found the 94,000 who are past break-even on pay-as-you-go and has surfaced them in three consecutive weekly reviews.",
-    footnote: "2 rooms · 1 closed",
-    tone: "ultra",
-  },
-  {
-    id: "price-margin",
-    initials: "PX",
-    status: "Supporting",
-    name: "Price & Margin",
-    body: "Joins because every upgrade is a price change. It is the agent that flagged the Student plan downgrades and it cannot value any upgrade properly without cost of goods.",
-    footnote: "partially blocked",
-    tone: "ultra",
-  },
-  {
-    id: "expansion-accounts",
-    initials: "EX",
-    status: "Watching in accounts mode",
-    name: "Expansion, again",
-    body: "The same agent reads 1,204 businesses instead of 1.10M consumers. It reports 312 at renewal risk and 119 with no owner — and cannot open a room for the 119 because a room needs an owner.",
-    footnote: "119 accounts, nobody to route to",
-    tone: "amber",
-    footnoteTone: "amber",
-  },
-];
-
-export const EXPAND_THRESHOLD_ROWS: ThresholdRow[] = [
-  { id: "past-break-even-unprompted", condition: "Customers past plan break-even, unprompted", threshold: "more than 10,000", currently: "94,000", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "net-plan-movement-negative", condition: "Net plan movement turns negative", threshold: "any month", currently: "−2,100 in Feb", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "arpu-multiple-falls", condition: "ARPU multiple falls", threshold: "more than 0.1×", currently: "−0.01×", currentlyTone: "teal", status: "no", owner: { name: "Tunde", initials: "TB", color: "#B4568F" } },
-  { id: "seat-utilisation-falls", condition: "An account's seat utilisation falls", threshold: "below 40%", currently: "188 accounts", currentlyTone: "rose", status: "already-open", owner: { name: "Tunde", initials: "TB", color: "#B4568F" } },
-  { id: "renews-unowned", condition: "An account renews within 60 days unowned", threshold: "any", currently: "119 accounts", currentlyTone: "rose", status: "not-opened", noOwner: true },
-];
+// ---- Agents (EX10) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
+// acquire/data.ts's Agents note and agents-tab.tsx.
 
 export const EXPAND_THRESHOLD_PRESET: ThresholdPreset = {
   condition: { label: "When", value: "Customers past plan break-even, unprompted", note: "6+ orders/month on pay-as-you-go ÷ never shown the plan page" },
@@ -565,31 +209,11 @@ export const EXPAND_THRESHOLD_PRESET: ThresholdPreset = {
   },
 };
 
-// ---- History (EX11) ----------------------------------------------------------
+// ---- History (EX11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
+// acquire/data.ts's History note and history-tab.tsx.
 
-export const EXPAND_GOAL_ROWS: GoalRow[] = [
-  { id: "net-revenue", goal: "Net revenue", owner: { name: "Ada", initials: "AD", color: "#2E8B7F" }, target: "₦4.90B", today: "₦4.71B proj", todayTone: "amber", paceLabel: "94% of pace", paceTone: "amber", part: "₦61M identified, none actioned", partTone: "amber" },
-  { id: "contribution-margin", goal: "Contribution margin", owner: { name: "Ravi", initials: "RM", color: "#5D6BB8" }, target: "Unavailable", today: "Unavailable", todayTone: "neutral", paceLabel: "no baseline", paceTone: "amber", part: "every upgrade is unpriceable", partTone: "rose" },
-];
-
-export const EXPAND_TRIED_ROWS: TriedRow[] = [
-  { id: "business-plan-sales-motion", what: "Business plan sales motion", when: "Jan", result: "1,204 accounts · ₦74M", resultTone: "teal", measuredHow: "no holdout · sales-led", learningKept: "works at small scale" },
-  { id: "group-ordering-launch", what: "Group ordering launch", when: "2024", result: "94,000 · ₦6,890 baskets", resultTone: "teal", measuredHow: "no holdout", learningKept: "never cross-sold" },
-  { id: "student-plan-launch", what: "Student plan launch", when: "14 Feb", result: "6,200 downgrades from full price", resultTone: "rose", measuredHow: "no holdout", learningKept: "net negative" },
-  { id: "annual-billing-discount", what: "Annual billing discount · 2024", when: "Jun 2024", result: "+11% plan conversion, −8% ARPU", resultTone: "amber", measuredHow: "holdout · 20%", learningKept: "validated · a wash" },
-  { id: "behavioural-upgrade-prompt", what: "Behavioural upgrade prompt", when: "never", whenTone: "amber", result: "untried · ₦31M identified", resultTone: "rose", measuredHow: "—", learningKept: "never proposed" },
-];
-
-// ---- Compare periods (EX12) -----------------------------------------------
-
-export const EXPAND_COMPARE_ROWS: CompareRow[] = [
-  { id: "expansion-rate", metric: "Expansion rate", before: "19.3%", after: "19.9%", change: "+0.6 pts", changeTone: "teal", whatMovedIt: "Nothing · unaffected by everything" },
-  { id: "arpu-multiple", metric: "ARPU multiple", before: "1.40×", after: "1.41×", change: "+0.01×", changeTone: "teal", whatMovedIt: "Unchanged for four quarters" },
-  { id: "eligible-population", metric: "Eligible population", before: "24,300/mo", after: "21,000/mo", change: "−13.6%", changeTone: "rose", whatMovedIt: "Retain delivers fewer survivors" },
-  { id: "customers-expanding", metric: "Customers expanding", before: "4,700/mo", after: "4,200/mo", change: "−10.6%", changeTone: "rose", whatMovedIt: "Same rate, smaller base" },
-  { id: "conversion-to-paid-plan", metric: "Conversion to a paid plan", before: "30.9%", after: "21.8%", change: "−9.1 pts", changeTone: "rose", whatMovedIt: "Student plan and weaker cohorts" },
-  { id: "median-basket", metric: "Median basket", before: "₦2,140", after: "₦2,140", change: "0.0%", changeTone: "neutral", whatMovedIt: "Has never responded to anything" },
-];
+// ---- Compare periods (EX12) is wired to the shared GET /lifecycle/stages/{stageKey}/compare —
+// see acquire/data.ts's Compare note and compare-route.tsx.
 
 // ---- Model an upgrade offer (EX13, stage-specific modal) -------------------
 

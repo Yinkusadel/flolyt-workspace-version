@@ -27,40 +27,43 @@ export const DEPARTMENT_COLORS: Record<Department, string> = {
   Engineering: "#4E7080",
 };
 
+/** For validating a live `owningTeam`/`team` string against the known department palette before casting it to `Department`. */
+export const KNOWN_DEPARTMENTS = new Set(Object.keys(DEPARTMENT_COLORS));
+
 export type Stage = {
   name: string;
   /** Path segment under /lifecycle/ for this stage's detail page. */
   slug: string;
   department: Department | null;
-  metric: string;
+  /** GET /lifecycle/map's headline.value (added 2026-09-04), compact-formatted — e.g. "3", "95.7%". Undefined for the 4 gated stages, which render the InfoTooltip in its place — see `metricLabel`. */
+  metricValue?: string;
+  /** headline.label — a small caption under `metricValue`, e.g. "plans in use", "buy again". Always present when live (all 10 stages carry a label, computed or not), so the gated state still names the concept rather than showing a bare, unlabeled icon. */
+  metricLabel?: string;
+  /** Why `metricValue` is unavailable — headline.missingSource, when the API named one. */
+  metricCaveat?: string;
+  /** What connecting the missing source would unlock — headline.wouldUnlock. */
+  metricWouldUnlock?: string;
   amount: string;
   amountLabel: "at stake" | "referred";
+  /** Why `amount` is "Unavailable" — GET /lifecycle/map's atStake.missingSource, when the API named one. */
+  amountCaveat?: string;
+  /** What connecting the missing source would unlock — GET /lifecycle/map's atStake.wouldUnlock. */
+  amountWouldUnlock?: string;
   /** False renders the A01-style "not defined yet" empty state instead of tabs/content. */
   isDefined: boolean;
-  /** Shown under the stage name in the tab-bar header, e.g. "894,000 acquired in twelve months · ₦74M at stake · owned by Marketing". */
-  headline: string;
 };
 
 export const STAGES: Stage[] = [
-  {
-    name: "Acquire",
-    slug: "acquire",
-    department: "Marketing",
-    metric: "894k / yr",
-    amount: "₦74M",
-    amountLabel: "at stake",
-    isDefined: true,
-    headline: "894,000 acquired in twelve months · ₦74M at stake · owned by Marketing",
-  },
-  { name: "Activate", slug: "activate", department: "Product", metric: "41% reach value", amount: "₦188M", amountLabel: "at stake", isDefined: true, headline: "894,000 enter · 366,000 reach value · ₦188M at stake · owned by Product" },
-  { name: "Price", slug: "price", department: "Finance", metric: "6 plans", amount: "₦46M", amountLabel: "at stake", isDefined: true, headline: "Six plans · ₦46M at stake · owned by Finance" },
-  { name: "Adopt", slug: "adopt", department: "Product", metric: "2.1 features avg", amount: "₦112M", amountLabel: "at stake", isDefined: true, headline: "2.1 features adopted on average · ₦112M at stake · owned by Product" },
-  { name: "Retain", slug: "retain", department: "Marketing", metric: "27% repeat", amount: "₦412M", amountLabel: "at stake", isDefined: true, headline: "27% repeat rate · ₦412M at stake · owned by Marketing" },
-  { name: "Expand", slug: "expand", department: "Sales", metric: "1.4× ARPU", amount: "₦61M", amountLabel: "at stake", isDefined: true, headline: "1.4× ARPU on expansion · ₦61M at stake · owned by Sales" },
-  { name: "Support", slug: "support", department: "Support", metric: "12.8k tickets", amount: "₦9M", amountLabel: "at stake", isDefined: true, headline: "12.8k tickets · ₦9M at stake · owned by Support" },
-  { name: "Renew", slug: "renew", department: "Customer Success", metric: "88.4% projected", amount: "₦88M", amountLabel: "at stake", isDefined: true, headline: "88.4% projected to renew · ₦88M at stake · owned by Customer Success" },
-  { name: "Advocate", slug: "advocate", department: "Marketing", metric: "124k referrers", amount: "₦0 CAC", amountLabel: "referred", isDefined: true, headline: "124k referrers · ₦0 CAC · owned by Marketing" },
-  { name: "Churn", slug: "churn", department: "Customer Success", metric: "3.1%/mo", amount: "₦124M", amountLabel: "at stake", isDefined: true, headline: "3.1% monthly churn · ₦124M at stake · owned by Customer Success" },
+  { name: "Acquire", slug: "acquire", department: "Marketing", metricValue: "894k / yr", amount: "₦74M", amountLabel: "at stake", isDefined: true },
+  { name: "Activate", slug: "activate", department: "Product", metricValue: "41% reach value", amount: "₦188M", amountLabel: "at stake", isDefined: true },
+  { name: "Price", slug: "price", department: "Finance", metricValue: "6 plans", amount: "₦46M", amountLabel: "at stake", isDefined: true },
+  { name: "Adopt", slug: "adopt", department: "Product", metricValue: "2.1 features avg", amount: "₦112M", amountLabel: "at stake", isDefined: true },
+  { name: "Retain", slug: "retain", department: "Marketing", metricValue: "27% repeat", amount: "₦412M", amountLabel: "at stake", isDefined: true },
+  { name: "Expand", slug: "expand", department: "Sales", metricValue: "1.4× ARPU", amount: "₦61M", amountLabel: "at stake", isDefined: true },
+  { name: "Support", slug: "support", department: "Support", metricValue: "12.8k tickets", amount: "₦9M", amountLabel: "at stake", isDefined: true },
+  { name: "Renew", slug: "renew", department: "Customer Success", metricValue: "88.4% projected", amount: "₦88M", amountLabel: "at stake", isDefined: true },
+  { name: "Advocate", slug: "advocate", department: "Marketing", metricValue: "124k referrers", amount: "₦0 CAC", amountLabel: "at stake", isDefined: true },
+  { name: "Churn", slug: "churn", department: "Customer Success", metricValue: "3.1%/mo", amount: "₦124M", amountLabel: "at stake", isDefined: true },
 ];
 
 export const ADVOCACY_LOOP_NOTE =
@@ -68,19 +71,9 @@ export const ADVOCACY_LOOP_NOTE =
 
 export type RootCauseRow = {
   stage: string;
-  department: Department;
+  department: Department | null;
   detail: string;
 };
-
-export const ROOT_CAUSE_HEADLINE = "THE 4 MARCH DELIVERY-FEE CHANGE";
-
-export const ROOT_CAUSE_ROWS: RootCauseRow[] = [
-  { stage: "Activate", department: "Product", detail: "abandonment at the fee step rose 3.1×" },
-  { stage: "Retain", department: "Marketing", detail: "second-order rate fell 11 points" },
-  { stage: "Support", department: "Support", detail: "“where is my order” became the top contact driver" },
-  { stage: "Renew", department: "Customer Success", detail: "subscription pauses up 22%" },
-  { stage: "Advocate", department: "Marketing", detail: "referral rate fell for the first time in two years" },
-];
 
 export type Trend = "steady" | "worsening" | "improving";
 

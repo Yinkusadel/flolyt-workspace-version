@@ -8,67 +8,13 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { CheckedRow, ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
-import type { LeakRow, ChangeRow } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
-import type { DefinitionData } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
 
 // ---- Overview (AC02) --------------------------------------------------
-
-export const ACTIVATE_OVERVIEW_KPIS: Kpi[] = [
-  { eyebrow: "Acquired · 12 months", value: "894,000", note: "enter this stage" },
-  { eyebrow: "Reach value", value: "366,000", tone: "rose", note: "41.0% · was 52.1%" },
-  { eyebrow: "At stake", value: "₦188M", tone: "rose", note: "second-largest leak in the lifecycle" },
-  { eyebrow: "Median time to value", value: "6.1 days", tone: "rose", note: "was 3.4 days" },
-];
-
-export const ACTIVATE_OVERVIEW_LEAK_ROWS: LeakRow[] = [
-  {
-    id: "abandoned-delivery-fee",
-    where: "Abandoned at the delivery-fee step",
-    customers: "308,000",
-    value: "₦124M",
-    valueTone: "rose",
-    trend: "worsening",
-    trendTone: "rose",
-    causeKnown: { label: "causal · 4 Mar", tone: "ultra" },
-    room: { label: "open", tone: "amber" },
-  },
-  {
-    id: "order-delivered-late-cold",
-    where: "Order delivered late or cold",
-    customers: "71,000",
-    value: "₦29M",
-    valueTone: "rose",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "open", tone: "amber" },
-  },
-  {
-    id: "delivered-never-returned",
-    where: "Delivered fine, never returned",
-    customers: "116,000",
-    value: "₦31M",
-    valueTone: "amber",
-    trend: "flat",
-    trendTone: "neutral",
-    causeKnown: { label: "no reading", tone: "amber" },
-    room: { label: "none", tone: "neutral" },
-  },
-  {
-    id: "first-order-failed",
-    where: "First order failed entirely",
-    customers: "33,000",
-    value: "₦4M",
-    valueTone: "amber",
-    trend: "improving",
-    trendTone: "teal",
-    causeKnown: { label: "causal", tone: "ultra" },
-    room: { label: "closed", tone: "teal" },
-  },
-];
+// KPI row and leak table both wired to GET /lifecycle/stages/activate (buildStageKpis +
+// departures[] in overview-tab.tsx) — see docs/endpoints/lifecycle.md.
 
 export const ACTIVATE_OPEN_ROOM_PRESET: OpenRoomPreset = {
   condition: "Abandoned at the delivery-fee step",
@@ -107,107 +53,17 @@ export const ACTIVATE_SHARE_EXPORT_PRESET: ShareOrExportPreset = {
     "116,000 customers with no reading behind them travel with the file rather than being dropped from it — an export where the gaps quietly vanish is how an unavailable becomes a zero in someone else's deck.",
 };
 
-// ---- Definition (AC01) -------------------------------------------------
+// ---- Definition (AC01) is now the shared DefinitionRoute template — see
+// stage/definition/definition-route.tsx. GET .../definition has no field for the candidate-signal
+// verdict table it used to render (reach/predictive/verdict columns), so it isn't reproducible
+// from live data; dropped.
 
-export const ACTIVATE_DEFINITION: DefinitionData = {
-  title: "What counts as activated",
-  subtitle: "Activate · owned by Product · last changed 12 January by Zainab Yusuf",
-  insightTitle: "Activation is the moment a customer learns the product works",
-  insightBody:
-    "Not the moment they pay. A first order that arrives late, cold or not at all is a transaction, not an activation — and every downstream stage behaves as though it never happened. This definition is why Retain's numbers are what they are.",
-  candidatesEyebrow: "A customer is activated when",
-  candidates: [
-    {
-      id: "first-order",
-      label: "They place a first order",
-      description: "The weakest definition. It counts the 71,000 whose order never arrived.",
-      field: "orders.first_order · 894,000",
-    },
-    {
-      id: "first-order-delivered",
-      label: "Their first order is delivered",
-      description: "Better. Still counts the 187,000 who never came back after it.",
-      field: "delivery.completed · 823,000",
-    },
-    {
-      id: "delivered-and-returned",
-      label: "Delivered, and they return within 14 days",
-      description: "41% of acquired. The only one of the three that predicts a second order.",
-      field: "delivery.completed + session · 366,000",
-      selected: true,
-    },
-  ],
-  verdictEyebrow: "How the third definition was chosen",
-  verdictRows: [
-    { id: "placed-first-order", signal: "Placed a first order", customers: "894,000", reach: "27.2%", reachTone: "ink", predictive: "barely", predictiveTone: "amber", verdict: "too weak", verdictTone: "amber" },
-    { id: "first-order-delivered", signal: "First order delivered", customers: "823,000", reach: "29.6%", reachTone: "ink", predictive: "weak", predictiveTone: "amber", verdict: "too weak", verdictTone: "amber" },
-    { id: "delivered-returned-14", signal: "Delivered + returned in 14 days", customers: "366,000", reach: "61.4%", reachTone: "teal", predictive: "strong", predictiveTone: "teal", verdict: "chosen", verdictTone: "teal" },
-    { id: "delivered-rated-4", signal: "Delivered + rated 4 or better", customers: "241,000", reach: "64.1%", reachTone: "teal", predictive: "strong", predictiveTone: "teal", verdict: "too few rate", verdictTone: "amber" },
-    { id: "two-orders-30", signal: "Two orders in 30 days", customers: "198,000", reach: "100%", reachTone: "neutral", predictive: "circular", predictiveTone: "rose", verdict: "measures itself", verdictTone: "rose" },
-  ],
-  mistakeTitle: "The last row is the mistake most activation definitions make",
-  mistakeBody:
-    "“Two orders in 30 days” predicts a second order perfectly, because it is a second order. A definition that contains its own outcome cannot be used to find out what causes it — it just renames the thing you were trying to explain.",
-};
+// ---- Time to value (AC03) and Paths (AC04) are wired to
+// GET /lifecycle/activate/time-to-value and GET /lifecycle/activate/paths — see
+// docs/endpoints/lifecycle.md. Neither endpoint has a cohort-by-month or per-route
+// median-days/at-stake/verdict shape, so those mock rows were dropped rather than kept unused.
 
-// ---- Time to value (AC03) -----------------------------------------------
-
-export const ACTIVATE_TIME_TO_VALUE_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Same day", value: "41,000 · 11.2%", percent: 11, tone: "teal" },
-  { label: "1–3 days", value: "128,000 · 35.0%", percent: 35, tone: "teal" },
-  { label: "4–7 days", value: "94,000 · 25.7%", percent: 26, tone: "teal" },
-  { label: "8–14 days", value: "103,000 · 28.1%", percent: 28, tone: "amber" },
-  { label: "Never · 528,000 did not activate", value: "59.0% of everyone acquired", percent: 59, tone: "rose" },
-];
-
-export type TimeToValueCohortRow = {
-  id: string;
-  cohort: string;
-  activated: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  medianDays: string;
-  medianTone: "teal" | "rose" | "neutral";
-  sameDay: string;
-  sameDayTone: "ink" | "amber";
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
-
-export const ACTIVATE_TIME_TO_VALUE_COHORT_ROWS: TimeToValueCohortRow[] = [
-  { id: "january", cohort: "January", activated: "31,900", rate: "52.1%", rateTone: "teal", medianDays: "3.2", medianTone: "teal", sameDay: "14.1%", sameDayTone: "ink", vsFeb: "+0.4", vsFebTone: "teal" },
-  { id: "february", cohort: "February", activated: "33,800", rate: "52.1%", rateTone: "teal", medianDays: "3.4", medianTone: "teal", sameDay: "13.8%", sameDayTone: "ink", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", activated: "34,100", rate: "41.5%", rateTone: "rose", medianDays: "6.0", medianTone: "rose", sameDay: "11.4%", sameDayTone: "amber", vsFeb: "−10.6", vsFebTone: "rose" },
-  { id: "april", cohort: "April", activated: "32,200", rate: "41.1%", rateTone: "rose", medianDays: "6.2", medianTone: "rose", sameDay: "11.1%", sameDayTone: "amber", vsFeb: "−11.0", vsFebTone: "rose" },
-  { id: "may", cohort: "May", activated: "32,600", rate: "42.0%", rateTone: "rose", medianDays: "6.1", medianTone: "rose", sameDay: "11.2%", sameDayTone: "amber", vsFeb: "−10.1", vsFebTone: "rose" },
-  { id: "june", cohort: "June", activated: "30,900", rate: "40.6%", rateTone: "rose", medianDays: "Unavailable", medianTone: "neutral", sameDay: "11.0%", sameDayTone: "ink", vsFeb: "—", vsFebTone: "neutral" },
-];
-
-// ---- Paths (AC04) + one-path drilldown (AC05) ----------------------------
-
-export type PathRow = {
-  id: string;
-  path: string;
-  customers: string;
-  activate: string;
-  activateTone: "teal" | "amber" | "rose";
-  medianDays: string;
-  medianTone: "teal" | "amber" | "rose";
-  secondOrder: string;
-  secondOrderTone: "teal" | "amber" | "rose";
-  atStake: string;
-  atStakeTone: "neutral" | "amber" | "rose";
-  verdict: string;
-  verdictTone: "teal" | "amber" | "rose";
-};
-
-export const ACTIVATE_PATH_ROWS: PathRow[] = [
-  { id: "referral-link", path: "Referral link → app → order", customers: "218,000", activate: "61.4%", activateTone: "teal", medianDays: "2.1", medianTone: "teal", secondOrder: "48.1%", secondOrderTone: "teal", atStake: "₦18M", atStakeTone: "neutral", verdict: "best", verdictTone: "teal" },
-  { id: "app-signup", path: "App signup → browse → order", customers: "264,000", activate: "44.2%", activateTone: "amber", medianDays: "5.8", medianTone: "amber", secondOrder: "29.4%", secondOrderTone: "amber", atStake: "₦61M", atStakeTone: "amber", verdict: "typical", verdictTone: "amber" },
-  { id: "partner-qr", path: "Partner QR → app → order", customers: "94,000", activate: "46.1%", activateTone: "amber", medianDays: "4.2", medianTone: "teal", secondOrder: "31.1%", secondOrderTone: "teal", atStake: "₦19M", atStakeTone: "amber", verdict: "good", verdictTone: "teal" },
-  { id: "guest-checkout", path: "Guest checkout → no account", customers: "186,000", activate: "12.1%", activateTone: "rose", medianDays: "11.4", medianTone: "rose", secondOrder: "8.4%", secondOrderTone: "rose", atStake: "₦74M", atStakeTone: "rose", verdict: "the problem", verdictTone: "rose" },
-  { id: "paid-ad", path: "Paid ad → web → order", customers: "132,000", activate: "38.4%", activateTone: "amber", medianDays: "6.9", medianTone: "amber", secondOrder: "24.1%", secondOrderTone: "amber", atStake: "₦16M", atStakeTone: "amber", verdict: "typical", verdictTone: "amber" },
-];
+// ---- One-path drilldown (AC05) -------------------------------------------
 
 export type InsightCard = {
   id: string;
@@ -218,35 +74,6 @@ export type InsightCard = {
   footnote: string;
   tone: "teal" | "amber" | "rose";
 };
-
-export const ACTIVATE_PATH_INSIGHT_CARDS: InsightCard[] = [
-  {
-    id: "guest-checkout-activates-low",
-    agentTag: "PR",
-    meta: "₦74M · 186,000 customers",
-    title: "Guest checkout activates at 12%",
-    body: "No account means no push, no saved address and no order history. 88% never return. It is the single worst path into the product and it is the default on web.",
-    footnote: "the default, not a choice",
-    tone: "rose",
-  },
-  {
-    id: "counter-argument",
-    meta: "THE COUNTER-ARGUMENT",
-    title: "Removing it costs first orders",
-    body: "Guest checkout was added in 2024 and lifted first-order completion by 9 points. Forcing signup would very likely give some of that back — which is the trade nobody has priced.",
-    footnote: "no test has been run",
-    tone: "amber",
-  },
-  {
-    id: "untried-middle",
-    agentTag: "PR",
-    meta: "The untried middle",
-    title: "Account after the order, not before",
-    body: "Offer the account at the confirmation screen, when the customer already has a reason to want one. No holdout has ever tested this and it is cheap to test.",
-    footnote: "suggested, never tried",
-    tone: "teal",
-  },
-];
 
 export type PathDetail = {
   path: string;
@@ -330,109 +157,17 @@ export const ACTIVATE_PATH_OPEN_ROOM_PRESET: OpenRoomPreset = {
   participantsNote: "Product Reason leads · Acquisition Quality joins, the cause is upstream",
 };
 
-// ---- Cohorts (AC06, stage-specific layout) -------------------------------
+// ---- Cohorts (AC06) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
+// acquire/data.ts's Cohorts note and cohorts-tab.tsx.
 
-export type ActivateCohortRow = {
-  id: string;
-  cohort: string;
-  acquired: string;
-  activated: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  medianDays: string;
-  medianTone: "teal" | "rose" | "neutral";
-  guestShare: string;
-  guestShareTone: "ink" | "amber";
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
+// ---- Markets (AC07) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
+// acquire/data.ts's Markets note and markets-tab.tsx.
 
-export const ACTIVATE_COHORT_ROWS: ActivateCohortRow[] = [
-  { id: "january", cohort: "January", acquired: "61,200", activated: "31,900", rate: "52.1%", rateTone: "teal", medianDays: "3.2", medianTone: "teal", guestShare: "18.1%", guestShareTone: "ink", vsFeb: "+0.4", vsFebTone: "teal" },
-  { id: "february", cohort: "February", acquired: "64,900", activated: "33,800", rate: "52.1%", rateTone: "teal", medianDays: "3.4", medianTone: "teal", guestShare: "18.9%", guestShareTone: "ink", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", acquired: "82,100", activated: "34,100", rate: "41.5%", rateTone: "rose", medianDays: "6.0", medianTone: "rose", guestShare: "24.1%", guestShareTone: "amber", vsFeb: "−10.6", vsFebTone: "rose" },
-  { id: "april", cohort: "April", acquired: "78,300", activated: "32,200", rate: "41.1%", rateTone: "rose", medianDays: "6.2", medianTone: "rose", guestShare: "25.4%", guestShareTone: "amber", vsFeb: "−11.0", vsFebTone: "rose" },
-  { id: "may", cohort: "May", acquired: "77,600", activated: "32,600", rate: "42.0%", rateTone: "rose", medianDays: "6.1", medianTone: "rose", guestShare: "24.9%", guestShareTone: "amber", vsFeb: "−10.1", vsFebTone: "rose" },
-  { id: "june", cohort: "June", acquired: "76,100", activated: "30,900", rate: "40.6%", rateTone: "rose", medianDays: "Unavailable", medianTone: "neutral", guestShare: "26.1%", guestShareTone: "amber", vsFeb: "—", vsFebTone: "neutral" },
-];
+// ---- What changed (AC08) -------------------------------------------------
+// Wired live (see stage/changes/changes-tab.tsx, GET /lifecycle/stages/{stageKey}/change-registry)
+// — no mock export here anymore.
 
-export const ACTIVATE_COHORT_CAUSE_CARDS: InsightCard[] = [
-  {
-    id: "cause-one-fee",
-    agentTag: "PR",
-    meta: "Cause one · the fee",
-    title: "−7.4 points of the −10.6",
-    body: "Measured against the UK and Ghana, where the fee did not ship until June. Those markets held at 51.8% through the same period.",
-    footnote: "causal · high confidence",
-    tone: "rose",
-  },
-  {
-    id: "cause-two-channel-mix",
-    agentTag: "AQ",
-    meta: "Cause two · the channel mix",
-    title: "−3.2 points of the −10.6",
-    body: "Guest share rose from 18.9% to 24.1% because the Ghana campaign and paid social both land on web, where guest checkout is the default. Guests activate at 12%.",
-    footnote: "causal · from Acquire",
-    tone: "amber",
-  },
-  {
-    id: "what-is-left",
-    meta: "WHAT IS LEFT",
-    title: "Nothing unexplained",
-    body: "−7.4 and −3.2 account for the full −10.6 within measurement error. This is unusual and worth saying — most cohort breaks leave a residual nobody can name.",
-    footnote: "fully attributed",
-    tone: "teal",
-  },
-];
-
-// ---- Markets (AC07, stage-specific layout) --------------------------------
-
-export type ActivateMarketRow = {
-  id: string;
-  market: string;
-  enter: string;
-  activate: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  medianDays: string;
-  medianTone: "teal" | "rose";
-  guestShare: string;
-  guestShareTone: "teal" | "amber" | "rose";
-  atStake: string;
-  atStakeTone: "teal" | "amber" | "rose" | "neutral";
-  trend: "worsening" | "improving" | "flat";
-};
-
-export const ACTIVATE_MARKET_ROWS: ActivateMarketRow[] = [
-  { id: "nigeria", market: "Nigeria", enter: "610,000", activate: "241,000", rate: "39.5%", rateTone: "rose", medianDays: "6.4", medianTone: "rose", guestShare: "24.8%", guestShareTone: "amber", atStake: "₦148M", atStakeTone: "rose", trend: "worsening" },
-  { id: "kenya", market: "Kenya", enter: "121,000", activate: "62,900", rate: "52.0%", rateTone: "teal", medianDays: "3.9", medianTone: "teal", guestShare: "14.1%", guestShareTone: "teal", atStake: "KES 9.4M", atStakeTone: "amber", trend: "improving" },
-  { id: "ghana", market: "Ghana", enter: "94,000", activate: "31,000", rate: "33.0%", rateTone: "rose", medianDays: "8.1", medianTone: "rose", guestShare: "31.2%", guestShareTone: "rose", atStake: "GHS 4.1M", atStakeTone: "rose", trend: "worsening" },
-  { id: "uk", market: "United Kingdom", enter: "69,000", activate: "31,100", rate: "45.1%", rateTone: "teal", medianDays: "4.1", medianTone: "teal", guestShare: "11.9%", guestShareTone: "teal", atStake: "£31k", atStakeTone: "neutral", trend: "flat" },
-];
-
-export const ACTIVATE_MARKET_KENYA_INSIGHT = {
-  title: "Kenya activates 12.5 points better than Nigeria and nobody has ever asked why",
-  body: "Lower guest share, faster delivery windows and a market where the fee did not ship until June. Two of those three are copyable into Nigeria today. Kenya is 14% of the base and is currently treated as a smaller version of the main market rather than as the working example.",
-};
-
-export const ACTIVATE_MARKET_GHANA_ROWS: { label: string; value: string; tone: "amber" | "rose" }[] = [
-  { label: "Guest share", value: "31.2% · the highest of any market · web-heavy acquisition", tone: "rose" },
-  { label: "Median time to value", value: "8.1 days · slowest · delivery windows are 2–4 hours wider", tone: "rose" },
-  { label: "Delivery feed", value: "not connected · so late-delivery effects cannot be measured here", tone: "amber" },
-  { label: "Fee ships here", value: "14 September · the only market where this is still preventable", tone: "amber" },
-  { label: "Rooms open in Ghana", value: "1 · the Accra acquisition room, with no owner", tone: "rose" },
-];
-
-// ---- What changed (AC08) + release impact drilldown (AC09) ---------------
-
-export const ACTIVATE_CHANGE_ROWS: ChangeRow[] = [
-  { id: "delivery-fee-checkout", date: "4 Mar", team: "Engineering", teamColor: "#4E7080", title: "Delivery fee moved to checkout", effect: "Activation −7.4 pts · time to value +2.6 days", effectTone: "rose", badge: "causal finding", badgeTone: "ultra", hasDetail: true },
-  { id: "ghana-paid-social", date: "11 Mar", team: "Marketing", teamColor: "#79883A", title: "Ghana paid social launched · web-heavy", effect: "Guest share +5.2 pts · activation −3.2 pts", effectTone: "rose", badge: "causal finding", badgeTone: "ultra" },
-  { id: "one-tap-reorder", date: "18 Mar", team: "Product", teamColor: "#7A5AA8", title: "One-tap reorder shipped", effect: "Activation +2.1 pts for app users only", effectTone: "teal", badge: "causal finding", badgeTone: "ultra" },
-  { id: "new-address-picker", date: "2 Apr", team: "Product", teamColor: "#7A5AA8", title: "New address picker", effect: "No measurable effect", effectTone: "neutral", badge: "no effect", badgeTone: "neutral" },
-  { id: "loyalty-tiers-renamed", date: "19 Apr", team: "Marketing", teamColor: "#79883A", title: "Loyalty tiers renamed", effect: "Not instrumented", effectTone: "amber", badge: "not instrumented", badgeTone: "amber" },
-  { id: "fee-shown-at-basket", date: "7 Aug", team: "Engineering", teamColor: "#4E7080", title: "Fee shown at basket", effect: "Too early · 18,900 customers so far", effectTone: "ultra", badge: "measuring", badgeTone: "ultra" },
-];
+// ---- Release impact drilldown (AC09) --------------------------------------
 
 export type StageImpactRow = {
   id: string;
@@ -496,66 +231,8 @@ export const ACTIVATE_RELEASE_IMPACT: Record<string, ReleaseImpactDetail> = {
   },
 };
 
-// ---- Agents (AC10) --------------------------------------------------------
-
-export type ActivateAgentCard = {
-  id: string;
-  initials: string;
-  status: string;
-  name: string;
-  body: string;
-  footnote: string;
-  tone: "ultra" | "amber";
-};
-
-export const ACTIVATE_AGENT_CARDS: ActivateAgentCard[] = [
-  {
-    id: "product-reason",
-    initials: "PR",
-    status: "Lead agent · reading since 12 Jan",
-    name: "Product Reason",
-    body: "Watches activation rate, time to value and path mix. It holds every release against this stage for fourteen days automatically — which is how the 4 March finding was made without anyone asking.",
-    footnote: "6 rooms · 4 closed",
-    tone: "ultra",
-  },
-  {
-    id: "support-signal",
-    initials: "SS",
-    status: "Supporting · reading since 12 Jan",
-    name: "Support Signal",
-    body: "Reclassifies contact drivers as activation blockers. It found that “where is my order” was a revenue signal, not a support volume problem, in the first week of March.",
-    footnote: "found it, nobody escalated",
-    tone: "ultra",
-  },
-  {
-    id: "ghana-delivery-feed",
-    initials: "PR",
-    status: "Blocked",
-    name: "Ghana has no delivery feed",
-    body: "Product Reason cannot measure late-delivery effects in Ghana because no delivery source exists there. It reports Ghana's delivery figures as unavailable rather than assuming Nigeria's.",
-    footnote: "one market, partially blind",
-    tone: "amber",
-  },
-];
-
-export type ActivateThresholdRow = {
-  id: string;
-  condition: string;
-  threshold: string;
-  currently: string;
-  currentlyTone: "teal" | "rose" | "amber";
-  status: "already-open" | "not-opened" | "opens-automatically";
-  owner?: { name: string; initials: string; color: string };
-  noOwner?: boolean;
-};
-
-export const ACTIVATE_THRESHOLD_ROWS: ActivateThresholdRow[] = [
-  { id: "activation-falls", condition: "Activation rate falls", threshold: "more than 2 pts, 7 days", currently: "−10.6", currentlyTone: "rose", status: "already-open", owner: { name: "Zainab", initials: "ZY", color: "#7A5AA8" } },
-  { id: "ttv-rises", condition: "Median time to value rises", threshold: "more than 1 day", currently: "+2.7 days", currentlyTone: "rose", status: "already-open", owner: { name: "Zainab", initials: "ZY", color: "#7A5AA8" } },
-  { id: "release-moves-stage", condition: "A release moves this stage", threshold: "any measurable effect, 14 days", currently: "2 this quarter", currentlyTone: "amber", status: "opens-automatically", owner: { name: "Zainab", initials: "ZY", color: "#7A5AA8" } },
-  { id: "guest-share-rises", condition: "Guest share rises", threshold: "more than 3 pts", currently: "+7.2 pts", currentlyTone: "rose", status: "not-opened", noOwner: true },
-  { id: "path-below-floor", condition: "A path falls below 20% activation", threshold: "hard floor", currently: "guest at 12.1%", currentlyTone: "rose", status: "not-opened", noOwner: true },
-];
+// ---- Agents (AC10) is wired to the shared GET /lifecycle/stages/{stageKey}/agents — see
+// acquire/data.ts's Agents note and agents-tab.tsx.
 
 export const ACTIVATE_THRESHOLD_PRESET: ThresholdPreset = {
   condition: { label: "When", value: "Activation rate falls", note: "activated ÷ entered this stage" },
@@ -569,62 +246,8 @@ export const ACTIVATE_THRESHOLD_PRESET: ThresholdPreset = {
   },
 };
 
-// ---- History (AC11) -------------------------------------------------------
+// ---- History (AC11) is wired to the shared GET /lifecycle/stages/{stageKey}/history — see
+// acquire/data.ts's History note and history-tab.tsx.
 
-export type ActivateGoalRow = {
-  id: string;
-  goal: string;
-  owner: { name: string; initials: string; color: string };
-  target: string;
-  today: string;
-  todayTone: "amber";
-  paceLabel: string;
-  paceTone: "rose" | "amber";
-  part: string;
-  partTone: "rose";
-};
-
-export const ACTIVATE_GOAL_ROWS: ActivateGoalRow[] = [
-  { id: "repeat-rate", goal: "90-day repeat rate", owner: { name: "Ifeoma", initials: "IN", color: "#79883A" }, target: "36.4%", today: "29.2%", todayTone: "amber", paceLabel: "7.2 behind", paceTone: "rose", part: "activation is the upstream cause", partTone: "rose" },
-  { id: "net-revenue", goal: "Net revenue", owner: { name: "Ada", initials: "AD", color: "#2E8B7F" }, target: "₦4.90B", today: "₦4.71B proj", todayTone: "amber", paceLabel: "94% of pace", paceTone: "amber", part: "₦188M of the ₦186M gap", partTone: "rose" },
-];
-
-export type ActivateTriedRow = {
-  id: string;
-  what: string;
-  when: string;
-  whenTone?: "neutral" | "amber";
-  result: string;
-  resultTone: "teal" | "amber" | "neutral";
-  measuredHow: string;
-  learningKept: "validated" | "superseded" | "validated · no effect" | "suggested twice";
-};
-
-export const ACTIVATE_TRIED_ROWS: ActivateTriedRow[] = [
-  { id: "one-tap-reorder", what: "One-tap reorder", when: "18 Mar", result: "+2.1 pts, app users only", resultTone: "teal", measuredHow: "before/after · 14 days", learningKept: "validated" },
-  { id: "welcome-sequence", what: "Welcome sequence · 3 emails", when: "Feb", result: "+0.4 pts · not significant", resultTone: "neutral", measuredHow: "holdout · 20%", learningKept: "validated · no effect" },
-  { id: "free-first-delivery", what: "Free first delivery · 2024", when: "Sep 2024", result: "+11 pts activation, −6 pts margin", resultTone: "amber", measuredHow: "holdout · 15%", learningKept: "superseded" },
-  { id: "new-address-picker", what: "New address picker", when: "2 Apr", result: "no measurable effect", resultTone: "neutral", measuredHow: "A/B · 50/50", learningKept: "validated" },
-  { id: "account-after-checkout", what: "Account after checkout", when: "never", whenTone: "amber", result: "untried", resultTone: "amber", measuredHow: "—", learningKept: "suggested twice" },
-];
-
-// ---- Compare periods (AC12) -----------------------------------------------
-
-export type ActivateCompareRow = {
-  id: string;
-  metric: string;
-  before: string;
-  after: string;
-  change: string;
-  changeTone: "teal" | "rose";
-  whatMovedIt: string;
-};
-
-export const ACTIVATE_COMPARE_ROWS: ActivateCompareRow[] = [
-  { id: "activation-rate", metric: "Activation rate", before: "52.1%", after: "41.5%", change: "−10.6 pts", changeTone: "rose", whatMovedIt: "The fee (−7.4) and guest share (−3.2)" },
-  { id: "median-ttv", metric: "Median time to value", before: "3.4 days", after: "6.1 days", change: "+79.4%", changeTone: "rose", whatMovedIt: "Same cause · slower decisions" },
-  { id: "same-day-activation", metric: "Same-day activation", before: "13.8%", after: "11.2%", change: "−2.6 pts", changeTone: "rose", whatMovedIt: "The fee step interrupts the first session" },
-  { id: "guest-checkout-share", metric: "Guest checkout share", before: "18.9%", after: "24.9%", change: "+6.0 pts", changeTone: "rose", whatMovedIt: "Web-heavy Ghana and paid social" },
-  { id: "customers-entering", metric: "Customers entering the stage", before: "64,900/mo", after: "78,500/mo", change: "+21.0%", changeTone: "teal", whatMovedIt: "Acquisition spend up 31%" },
-  { id: "customers-reaching-value", metric: "Customers reaching value", before: "33,800/mo", after: "32,400/mo", change: "−4.1%", changeTone: "rose", whatMovedIt: "More in, fewer through" },
-];
+// ---- Compare periods (AC12) is wired to the shared GET /lifecycle/stages/{stageKey}/compare —
+// see acquire/data.ts's Compare note and compare-route.tsx.

@@ -1,48 +1,126 @@
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { WideBarRow } from "@/pages/everyday/lifecycle/stage/bar";
-import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
+import { Sparkline } from "@/pages/everyday/lifecycle/stage/sparkline";
+import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import { RETAIN_CURVE_COMPARE_ROWS, RETAIN_CURVE_ROWS, type RetainCurveCompareRow } from "@/pages/everyday/lifecycle/stage/retain/data";
+import { formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetRetainRepeatCurve } from "@/features/lifecycle/use-get-retain-repeat-curve";
+import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
-const CHANGE_TONE_CLASS: Record<RetainCurveCompareRow["changeTone"], string> = { teal: "text-teal", rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
+function measuredCell(measured: LifecycleMeasuredValueDto<number>, format: (value: number) => string) {
+  return measured.value !== null ? (
+    format(measured.value)
+  ) : (
+    <InfoTooltip missingSource={measured.missingSource} wouldUnlock={measured.wouldUnlock} />
+  );
+}
 
-const COLUMNS: Column<RetainCurveCompareRow>[] = [
-  { key: "window", header: "Window", render: (row) => <span className="font-semibold text-ink-2">{row.window}</span> },
-  { key: "before", header: "Before · share", align: "right", render: (row) => <span className="font-mono text-ink">{row.before}</span> },
-  { key: "after", header: "After · share", align: "right", render: (row) => <span className="font-mono text-ink">{row.after}</span> },
-  { key: "change", header: "Change", align: "right", render: (row) => <span className={CHANGE_TONE_CLASS[row.changeTone]}>{row.change}</span> },
-  { key: "meaning", header: "What it means", align: "right", render: (row) => <span className="text-ink-2">{row.meaning}</span> },
-];
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
 
-/** RT03 — Retain's unique Repeat curve tab. */
+function RepeatCurveSkeleton() {
+  return (
+    <div className="space-y-4 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Skeleton key={index} className="h-4 w-full" />
+      ))}
+    </div>
+  );
+}
+
+/** RT03 — Retain's own Repeat curve tab, wired to GET /lifecycle/retain/repeat-curve. */
 const RetainRepeatCurveTab = () => {
+  const { data, isLoading, isError, refetch } = useGetRetainRepeatCurve();
+  const curve = data?.data;
+
   return (
     <div className="space-y-8">
-      <section className="space-y-4">
-        <p className={EYEBROW_CLASS}>When the second order happens · 243,000 who placed one</p>
-        <div className="space-y-5">
-          {RETAIN_CURVE_ROWS.map((row) => (
-            <WideBarRow key={row.label} label={row.label} value={row.value} percent={row.percent} tone={row.tone} />
-          ))}
+      {isError ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+          <p className="text-[12px] text-rose">Couldn't load Retain's repeat curve.</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
         </div>
-      </section>
+      ) : isLoading ? (
+        <RepeatCurveSkeleton />
+      ) : curve ? (
+        <>
+          <section className="space-y-4">
+            <p className={EYEBROW_CLASS}>
+              When the second order happens ·{" "}
+              {curve.matureFirstTimeBuyers.value !== null ? (
+                `${formatCount(curve.matureFirstTimeBuyers.value)} mature first-time buyers`
+              ) : (
+                <>
+                  mature first-time buyers <InfoTooltip missingSource={curve.matureFirstTimeBuyers.missingSource} wouldUnlock={curve.matureFirstTimeBuyers.wouldUnlock} />
+                </>
+              )}
+            </p>
+            {curve.buckets.length > 0 ? (
+              <div className="space-y-5">
+                {curve.buckets.map((bucket) => (
+                  <WideBarRow
+                    key={`${bucket.fromDay}-${bucket.toDay ?? "plus"}`}
+                    label={bucket.toDay !== null ? `Day ${bucket.fromDay}–${bucket.toDay}` : `Day ${bucket.fromDay}+`}
+                    value={bucket.share !== null ? `${formatCount(bucket.customers)} · ${formatPercent(bucket.share)}` : `${formatCount(bucket.customers)} · unavailable`}
+                    percent={bucket.share !== null ? bucket.share * 100 : 0}
+                    tone="teal"
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-[11.5px] text-ink-3">No day-window buckets measured yet.</p>
+            )}
+          </section>
 
-      <Callout tone="amber" title="Two thirds of all second orders happen within thirty days">
-        Which means reactivation aimed at the 31–90 day window is fishing in a shrinking pool, and anything aimed
-        past 90 days is fishing in an empty one. The company&apos;s only reactivation campaign currently starts at
-        day 60.
-      </Callout>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-card border border-line bg-paper p-3.5">
+              <p className="font-mono text-[9.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">Repeat share within boundary</p>
+              <p className="mt-1.5 text-[16px] font-semibold text-ink">{measuredCell(curve.repeatShareWithinBoundary, formatPercent)}</p>
+            </div>
+            <div className="rounded-card border border-line bg-paper p-3.5">
+              <p className="font-mono text-[9.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">Never returned</p>
+              <p className="mt-1.5 text-[16px] font-semibold text-ink">{measuredCell(curve.neverReturned, formatCount)}</p>
+            </div>
+            <div className="rounded-card border border-line bg-paper p-3.5">
+              <p className="font-mono text-[9.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">Daily boundary crossings</p>
+              <p className="mt-1.5 text-[16px] font-semibold text-ink">{measuredCell(curve.dailyBoundaryCrossings, formatCount)}</p>
+            </div>
+          </div>
 
-      <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>The curve before and after 4 March</p>
-        <DataTable columns={COLUMNS} rows={RETAIN_CURVE_COMPARE_ROWS} />
-      </section>
+          <section className="space-y-3">
+            <p className={EYEBROW_CLASS}>Return-probability curve · days since first order</p>
+            <div className="rounded-card border border-line bg-paper p-4">
+              <Sparkline
+                width={400}
+                height={80}
+                series={[{ points: curve.points.map((p) => ({ x: p.daysSince, y: p.returnProbability })), toneClass: "stroke-teal" }]}
+              />
+            </div>
+          </section>
 
-      <Callout tone="ultra" title="The customers who still come back take longer to decide">
-        The shape shifted as well as the level. Before March, a third of second orders came within a week. Now they
-        arrive later and in smaller numbers — which is what hesitation looks like in a dataset, and it matches the
-        2.7 extra days Activate reports on time to value.
-      </Callout>
+          <p className="text-[10.5px] text-ink-4">
+            {curve.basisCaveat} · younger-than-{curve.boundaryDays}-day buyers (
+            {curve.tooYoungFirstTimeBuyers.value !== null ? formatCount(curve.tooYoungFirstTimeBuyers.value) : "unavailable"}) excluded from every rate above.
+          </p>
+
+          {/* ❌ Backend does NOT provide: a before/after comparison of the curve across two time
+              windows — this endpoint returns one snapshot, no trend/comparison field. Dropped
+              rather than faked; GET .../compare (a different endpoint, shared across all 10
+              stages) is the only real comparison-over-time surface in this domain. */}
+
+          {curve.callouts.map((callout) => (
+            <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+              {callout.body}
+            </Callout>
+          ))}
+        </>
+      ) : null}
     </div>
   );
 };

@@ -3,11 +3,12 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
-import { PersonAvatar } from "@/components/person-avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { WideBarRow, type BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { CHIP_INTERACTIVE_CLASS, Chip } from "@/pages/everyday/lifecycle/stage/chip";
+import { CHIP_INTERACTIVE_CLASS, Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
+import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { KpiCards, type Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { StageEmptyState } from "@/pages/everyday/lifecycle/stage/overview/empty-state";
@@ -16,77 +17,33 @@ import { OpenARoomModal, type OpenRoomPreset } from "@/pages/everyday/lifecycle/
 import { ShareOrExportModal, type ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 import { AssignAnOwnerModal, type AssignOwnerPreset } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
 import { STAGES } from "@/pages/everyday/lifecycle/data";
-import {
-  ACQUIRE_OPEN_ROOM_PRESET,
-  ACQUIRE_OVERVIEW_BAR_ROWS,
-  ACQUIRE_OVERVIEW_KPIS,
-  ACQUIRE_OVERVIEW_LEAK_ROWS,
-  ACQUIRE_SHARE_EXPORT_PRESET,
-  type LeakRow,
-} from "@/pages/everyday/lifecycle/stage/acquire/data";
-import {
-  ACTIVATE_OPEN_ROOM_PRESET,
-  ACTIVATE_OVERVIEW_KPIS,
-  ACTIVATE_OVERVIEW_LEAK_ROWS,
-  ACTIVATE_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/activate/data";
-import {
-  PRICE_OPEN_ROOM_PRESET,
-  PRICE_OVERVIEW_KPIS,
-  PRICE_OVERVIEW_LEAK_ROWS,
-  PRICE_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/price/data";
-import {
-  ADOPT_OPEN_ROOM_PRESET,
-  ADOPT_OVERVIEW_KPIS,
-  ADOPT_OVERVIEW_LEAK_ROWS,
-  ADOPT_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/adopt/data";
-import {
-  RETAIN_OPEN_ROOM_PRESET,
-  RETAIN_OVERVIEW_KPIS,
-  RETAIN_OVERVIEW_LEAK_ROWS,
-  RETAIN_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/retain/data";
-import {
-  EXPAND_OPEN_ROOM_PRESET,
-  EXPAND_OVERVIEW_KPIS,
-  EXPAND_OVERVIEW_LEAK_ROWS,
-  EXPAND_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/expand/data";
-import {
-  SUPPORT_OPEN_ROOM_PRESET,
-  SUPPORT_OVERVIEW_KPIS,
-  SUPPORT_OVERVIEW_LEAK_ROWS,
-  SUPPORT_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/support/data";
-import {
-  RENEW_OPEN_ROOM_PRESET,
-  RENEW_OVERVIEW_KPIS,
-  RENEW_OVERVIEW_LEAK_ROWS,
-  RENEW_SHARE_EXPORT_PRESET,
-} from "@/pages/everyday/lifecycle/stage/renew/data";
+import { formatCompactCurrency, formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetStage } from "@/features/lifecycle/use-get-stage";
+import type { StageData, StageDepartureDto } from "@/services/api/lifecycle/get-stage";
+import { ACQUIRE_OPEN_ROOM_PRESET, ACQUIRE_OVERVIEW_BAR_ROWS, ACQUIRE_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import { ACTIVATE_OPEN_ROOM_PRESET, ACTIVATE_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/activate/data";
+import { PRICE_OPEN_ROOM_PRESET, PRICE_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/price/data";
+import { ADOPT_OPEN_ROOM_PRESET, ADOPT_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/adopt/data";
+import { RETAIN_OPEN_ROOM_PRESET, RETAIN_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/retain/data";
+import { EXPAND_OPEN_ROOM_PRESET, EXPAND_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/expand/data";
+import { SUPPORT_OPEN_ROOM_PRESET, SUPPORT_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/support/data";
+import { RENEW_OPEN_ROOM_PRESET, RENEW_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/renew/data";
 import {
   ADVOCATE_ASSIGN_OWNER_PRESET,
   ADVOCATE_OPEN_ROOM_PRESET,
   ADVOCATE_OVERVIEW_INSIGHT,
-  ADVOCATE_OVERVIEW_KPIS,
   ADVOCATE_OVERVIEW_LEAD,
-  ADVOCATE_OVERVIEW_LEAK_ROWS,
   ADVOCATE_SHARE_EXPORT_PRESET,
 } from "@/pages/everyday/lifecycle/stage/advocate/data";
 import {
   CHURN_ASSIGN_OWNER_PRESET,
   CHURN_OPEN_ROOM_PRESET,
   CHURN_OVERVIEW_INSIGHT,
-  CHURN_OVERVIEW_KPIS,
   CHURN_OVERVIEW_LEAD,
-  CHURN_OVERVIEW_LEAK_ROWS,
   CHURN_SHARE_EXPORT_PRESET,
 } from "@/pages/everyday/lifecycle/stage/churn/data";
 
 type OverviewData = {
-  kpis: Kpi[];
   /** A callout shown before the KPI cards, for a finding urgent enough to lead the page (e.g. Advocate's "no owner" banner). */
   leadTitle?: string;
   leadBody?: string;
@@ -98,10 +55,6 @@ type OverviewData = {
   insightTone?: "ultra" | "amber" | "rose" | "teal" | "neutral";
   leakEyebrow: string;
   leakWhereHeader: string;
-  /** Overrides the leak table's 4th column header — defaults to "Trend" (e.g. Retain's "Still reachable"). */
-  leakTrendHeader?: string;
-  leakColumnKind: "owner" | "cause";
-  leakRows: LeakRow[];
   showStageRail?: boolean;
   openRoomPreset: OpenRoomPreset;
   shareExportPreset: ShareOrExportPreset;
@@ -111,7 +64,6 @@ type OverviewData = {
 
 const OVERVIEW_DATA: Record<string, OverviewData> = {
   acquire: {
-    kpis: ACQUIRE_OVERVIEW_KPIS,
     barEyebrow: "Volume is up 31% and quality is down 11 points",
     barRows: ACQUIRE_OVERVIEW_BAR_ROWS,
     insightTitle: "More customers, fewer second orders, and both numbers are correct",
@@ -119,112 +71,87 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
       "Acquisition rose 212,000 while second orders fell 17,000. Read either alone and you get the opposite answer about whether this stage is working — which is why the headline figure on this screen is a rate, not a count.",
     leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where",
-    leakColumnKind: "owner",
-    leakRows: ACQUIRE_OVERVIEW_LEAK_ROWS,
     openRoomPreset: ACQUIRE_OPEN_ROOM_PRESET,
     shareExportPreset: ACQUIRE_SHARE_EXPORT_PRESET,
   },
   activate: {
-    kpis: ACTIVATE_OVERVIEW_KPIS,
     insightTitle: "116,000 customers had a perfectly good first order and never came back, and nobody knows why",
     insightBody:
       "It is the third-largest group in the stage and the only one with no reading behind it. Everything Flolyt can see about them looks normal. That is a real answer and it is stated as one — a plausible story would be worse than an admitted gap.",
     insightTone: "amber",
-    leakEyebrow: "Where the 528,000 who never activate are lost",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where they stop",
-    leakColumnKind: "cause",
-    leakRows: ACTIVATE_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: ACTIVATE_OPEN_ROOM_PRESET,
     shareExportPreset: ACTIVATE_SHARE_EXPORT_PRESET,
   },
   price: {
-    kpis: PRICE_OVERVIEW_KPIS,
     insightTitle: "Two of the five largest items on this screen cannot be valued at all",
     insightBody:
       "Legacy Unlimited and absorbed delivery fees are almost certainly losing money — 3,100 customers on a 2022 price and 41,000 subscriptions eating a fee introduced in 2026. Neither can be priced without cost of goods, so neither is in the ₦46M, and neither has a room.",
     insightTone: "rose",
     leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where",
-    leakColumnKind: "cause",
-    leakRows: PRICE_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: PRICE_OPEN_ROOM_PRESET,
     shareExportPreset: PRICE_SHARE_EXPORT_PRESET,
   },
   adopt: {
-    kpis: ADOPT_OVERVIEW_KPIS,
     insightTitle: "An entire feature is invisible to this stage",
     insightBody:
       "Loyalty tiers were renamed in April and have never emitted an event. Flolyt cannot say how many customers use them, whether the rename helped or hurt, or whether the feature does anything at all. It is listed as unavailable rather than left off the table.",
     insightTone: "rose",
-    leakEyebrow: "Where the 781,000 who use nothing are",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Group",
-    leakColumnKind: "cause",
-    leakRows: ADOPT_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: ADOPT_OPEN_ROOM_PRESET,
     shareExportPreset: ADOPT_SHARE_EXPORT_PRESET,
   },
   retain: {
-    kpis: RETAIN_OVERVIEW_KPIS,
     insightTitle: "142,000 of these customers cannot be contacted by anybody, ever",
     insightBody:
       "No email, no consent, no push — they checked out as guests. They are inside the 148,000 in the reactivation room and will be silently dropped at send time. The only fix for them was upstream, in Activate, at the moment the account was offered and was not.",
     insightTone: "rose",
-    leakEyebrow: "The 651,000 who never came back",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Group",
-    leakTrendHeader: "Still reachable",
-    leakColumnKind: "cause",
-    leakRows: RETAIN_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: RETAIN_OPEN_ROOM_PRESET,
     shareExportPreset: RETAIN_SHARE_EXPORT_PRESET,
   },
   expand: {
-    kpis: EXPAND_OVERVIEW_KPIS,
     insightTitle: "This is the only stage whose own numbers improved this quarter, and it means less than it looks",
     insightBody:
       "Expansion rate rose 0.7 points while the eligible population fell 11%. Expansion works on customers who stay, and Retain is producing fewer of them. A healthy rate applied to a shrinking base is how a stage can be doing its job and still be worth less every quarter.",
     insightTone: "amber",
-    leakEyebrow: "Where the ₦61M is",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where",
-    leakColumnKind: "cause",
-    leakRows: EXPAND_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: EXPAND_OPEN_ROOM_PRESET,
     shareExportPreset: EXPAND_SHARE_EXPORT_PRESET,
   },
   support: {
-    kpis: SUPPORT_OVERVIEW_KPIS,
     insightTitle: "The ₦9M is what Support can fix. The ₦38M is what Support can only see.",
     insightBody:
       "This stage's own number is small because most of what it detects belongs to Delivery, Product or Engineering. Support is the earliest and cheapest sensor in the lifecycle and the one with the least ability to act on what it senses.",
     insightTone: "amber",
-    leakEyebrow: "Where the ₦9M is",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where",
-    leakColumnKind: "cause",
-    leakRows: SUPPORT_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: SUPPORT_OPEN_ROOM_PRESET,
     shareExportPreset: SUPPORT_SHARE_EXPORT_PRESET,
   },
   renew: {
-    kpis: RENEW_OVERVIEW_KPIS,
     insightTitle: "Nobody in the ₦88M decided to leave",
     insightBody:
       "61,400 cards failed on renewal night because they were presented at midnight, when balances are lowest. These customers wanted the service, were willing to pay for it, and were lost to an implementation detail. It is the only ₦88M in this lifecycle that needed no persuasion, no discount and no product change.",
     insightTone: "teal",
-    leakEyebrow: "Where the ₦88M is, and why it is the cheapest money in the company",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where",
-    leakColumnKind: "cause",
-    leakRows: RENEW_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: RENEW_OPEN_ROOM_PRESET,
     shareExportPreset: RENEW_SHARE_EXPORT_PRESET,
   },
   advocate: {
-    kpis: ADVOCATE_OVERVIEW_KPIS,
     leadTitle: ADVOCATE_OVERVIEW_LEAD.title,
     leadBody: ADVOCATE_OVERVIEW_LEAD.body,
     leadTone: "amber",
@@ -233,24 +160,19 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     insightTone: "rose",
     leakEyebrow: "Where the value is, and where it is going",
     leakWhereHeader: "Where",
-    leakColumnKind: "cause",
-    leakRows: ADVOCATE_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: ADVOCATE_OPEN_ROOM_PRESET,
     shareExportPreset: ADVOCATE_SHARE_EXPORT_PRESET,
     assignOwnerPreset: ADVOCATE_ASSIGN_OWNER_PRESET,
   },
   churn: {
-    kpis: CHURN_OVERVIEW_KPIS,
     leadTitle: CHURN_OVERVIEW_LEAD.title,
     leadBody: CHURN_OVERVIEW_LEAD.body,
     leadTone: "amber",
     insightTitle: CHURN_OVERVIEW_INSIGHT.title,
     insightBody: CHURN_OVERVIEW_INSIGHT.body,
-    leakEyebrow: "Where the ₦124M is",
+    leakEyebrow: "What is leaking, in order",
     leakWhereHeader: "Where",
-    leakColumnKind: "cause",
-    leakRows: CHURN_OVERVIEW_LEAK_ROWS,
     showStageRail: true,
     openRoomPreset: CHURN_OPEN_ROOM_PRESET,
     shareExportPreset: CHURN_SHARE_EXPORT_PRESET,
@@ -258,18 +180,72 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
   },
 };
 
-const LEAK_VALUE_TONE_CLASS: Record<LeakRow["valueTone"], string> = {
-  rose: "text-rose",
-  amber: "text-amber",
-  ink: "text-ink",
+const TREND_TONE_CLASS: Record<string, string> = {
+  worsening: "text-rose",
+  improving: "text-teal",
+  flat: "text-ink-4",
 };
 
-const LEAK_TREND_TONE_CLASS: Record<LeakRow["trendTone"], string> = {
-  rose: "text-rose",
-  amber: "text-amber",
-  teal: "text-teal",
-  neutral: "text-ink-4",
-};
+// `claim.grade`'s real enum values aren't confirmed by any live response (departures have only
+// ever come back empty) — matched defensively by keyword, same pattern as safeCalloutTone
+// elsewhere in this domain, rather than assuming an exact string.
+function claimTone(grade: string): ChipTone {
+  const normalized = grade.toLowerCase();
+  if (normalized.includes("causal")) return "ultra";
+  if (normalized.includes("correlat")) return "amber";
+  return "neutral";
+}
+
+// The leak table (all 10 stages, shared) is wired to GET /lifecycle/stages/{stageKey}'s
+// `departures[]` — grouped by exit-rule cause, the same field every stage's own Overview KPIs
+// already read from. Every live response seen so far returned `departures: []` (empty, not
+// populated rows), so the empty state below is what every stage currently shows — that's this
+// endpoint's own honest answer, not a loading or wiring bug. `observedValue`/`reachability` are a
+// plain `number | string | null` paired with their own `*Caveat` string here, NOT the 4-field
+// `{value,state,missingSource,wouldUnlock}` wrapper used elsewhere in this domain — confirm this
+// shape against a live response with real rows before trusting it further; nothing has confirmed
+// `claim.grade`'s real values either, hence `claimTone`'s defensive keyword match above. The old
+// per-stage "owner" column (Acquire only) is dropped — no owner field exists on a departure.
+type DepartureRow = StageDepartureDto & { id: string };
+
+// Every stage's KPI row is wired to the same GET /lifecycle/stages/{stageKey} endpoint — it
+// returns the identical 4 generic measured-value fields (population/atStake/rateOfChange/
+// primaryConversion) for every stage, unlike Cohorts/Markets where the real endpoint's shape
+// didn't match most stages' bespoke designs at all.
+//
+// Corrected 2026-09-06 (twice, both caught by the user). First pass: every stage reused its OLD
+// MOCK card label assuming it still described the live field — the doc's own coverage-tracker
+// note (2026-08-31, above) already said that's unsafe for 8 of 10 stages. Second pass, on closer
+// reading: that same note does NOT actually settle Acquire/Activate either. Every "confirmed
+// 2026-08-31" note anywhere in this doc is about the measured-value WRAPPER SHAPE
+// (`{value,state,missingSource,wouldUnlock}` vs. a bare number) — never about what time window
+// `population` covers. "Acquired · 12 months" is Figma mock copy, not a backend-confirmed window;
+// nothing in any live response has ever named a 12-month period. The note itself ends "❓ open —
+// this needs the same per-stage audit the metric line got before wiring anything," meaning even
+// its own author left this unsettled. So: no stage gets a specific label. Every card shows the
+// plain field name — true for all 10, unlike any specific-sounding alternative.
+function buildStageKpis(stageData: StageData | undefined): Kpi[] {
+  if (!stageData) return [];
+  const { population, rateOfChange, yearOverYear, atStake, primaryConversion } = stageData;
+
+  const populationNote =
+    yearOverYear.value !== null ? `${yearOverYear.value >= 0 ? "+" : ""}${formatPercent(yearOverYear.value)} on last year` : undefined;
+
+  return [
+    population.value !== null
+      ? { eyebrow: "Population", value: formatCount(population.value), tone: "teal", note: populationNote }
+      : { eyebrow: "Population", unavailable: { missingSource: population.missingSource, wouldUnlock: population.wouldUnlock } },
+    atStake.value !== null
+      ? { eyebrow: "At stake", value: formatCompactCurrency(atStake.value), tone: "rose", note: "in this stage alone" }
+      : { eyebrow: "At stake", unavailable: { missingSource: atStake.missingSource, wouldUnlock: atStake.wouldUnlock } },
+    rateOfChange.value !== null
+      ? { eyebrow: "Rate of change", value: `${rateOfChange.value >= 0 ? "+" : ""}${formatPercent(rateOfChange.value)}`, tone: rateOfChange.value >= 0 ? "teal" : "rose", note: "month over month" }
+      : { eyebrow: "Rate of change", unavailable: { missingSource: rateOfChange.missingSource, wouldUnlock: rateOfChange.wouldUnlock } },
+    primaryConversion.value !== null
+      ? { eyebrow: "Primary conversion", value: formatPercent(primaryConversion.value), tone: "rose" }
+      : { eyebrow: "Primary conversion", unavailable: { missingSource: primaryConversion.missingSource, wouldUnlock: primaryConversion.wouldUnlock } },
+  ];
+}
 
 /** Screen A02 (and the shared template for every stage's Overview tab). */
 export function OverviewTab() {
@@ -278,85 +254,104 @@ export function OverviewTab() {
   const [shareOpen, setShareOpen] = useState(false);
   const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
 
+  const stageQuery = useGetStage(stage.slug);
+
   if (!stage.isDefined) return <StageEmptyState stageName={stage.name} />;
 
   const data = OVERVIEW_DATA[stage.slug];
   if (!data) return null;
 
-  const columns: Column<LeakRow>[] = [
-    {
-      key: "where",
-      header: data.leakWhereHeader,
-      render: (row) =>
-        row.detailHref ? (
-          <Link to={row.detailHref} className="font-semibold text-ultra hover:underline">
-            {row.where}
-          </Link>
-        ) : (
-          <span className="font-semibold text-ink-2">{row.where}</span>
-        ),
-    },
+  const kpis = buildStageKpis(stageQuery.data?.data);
+  const departures: DepartureRow[] = (stageQuery.data?.data.departures ?? []).map((departure) => ({ ...departure, id: departure.cause }));
+
+  const columns: Column<DepartureRow>[] = [
+    { key: "where", header: data.leakWhereHeader, render: (row) => <span className="font-semibold text-ink-2">{row.cause}</span> },
     {
       key: "customers",
       header: "Customers",
       align: "right",
-      render: (row) => <span className="font-mono text-ink">{row.customers}</span>,
+      render: (row) => (row.size !== null ? <span className="font-mono text-ink">{formatCount(row.size)}</span> : <InfoTooltip />),
     },
     {
       key: "value",
       header: "Value",
       align: "right",
-      render: (row) => <span className={LEAK_VALUE_TONE_CLASS[row.valueTone]}>{row.value}</span>,
+      render: (row) =>
+        row.observedValue !== null ? (
+          <span className="text-rose">{formatCompactCurrency(row.observedValue)}</span>
+        ) : (
+          <InfoTooltip missingSource={row.observedValueCaveat ?? undefined} />
+        ),
     },
     {
       key: "trend",
-      header: data.leakTrendHeader ?? "Trend",
+      header: "Trend",
       align: "right",
-      render: (row) => <span className={LEAK_TREND_TONE_CLASS[row.trendTone]}>{row.trend}</span>,
+      render: (row) =>
+        row.trend.direction !== null ? (
+          <span className={TREND_TONE_CLASS[row.trend.direction] ?? "text-ink-4"}>
+            {row.trend.direction}
+            {row.trend.shareChange !== null && ` · ${row.trend.shareChange >= 0 ? "+" : ""}${formatPercent(row.trend.shareChange)}`}
+          </span>
+        ) : (
+          <InfoTooltip missingSource={row.trend.missingSource ?? undefined} />
+        ),
     },
-    data.leakColumnKind === "owner"
-      ? {
-          key: "owner",
-          header: "Owner",
-          render: (row) =>
-            row.owner ? (
-              <span className="flex items-center gap-2 whitespace-nowrap text-ink-2">
-                <PersonAvatar kind="human" initials={row.owner.initials} size="sm" />
-                {row.owner.name}
-              </span>
-            ) : (
-              <Chip tone="amber">No owner</Chip>
-            ),
-        }
-      : {
-          key: "causeKnown",
-          header: "Cause known?",
-          render: (row) => (row.causeKnown ? <Chip tone={row.causeKnown.tone}>{row.causeKnown.label}</Chip> : null),
-        },
+    {
+      key: "causeKnown",
+      header: "Cause known?",
+      render: (row) => <Chip tone={claimTone(row.claim.grade)}>{row.claim.grade}</Chip>,
+    },
     {
       key: "room",
       header: "Room",
       align: "right",
       render: (row) => (
         <button type="button" onClick={() => setOpenRoomFor(row.id)}>
-          <Chip tone={row.room.tone} className={CHIP_INTERACTIVE_CLASS}>
-            {row.room.label}
+          <Chip tone={row.roomOpen ? "amber" : "neutral"} className={CHIP_INTERACTIVE_CLASS}>
+            {row.roomOpen ? "open" : "none"}
           </Chip>
         </button>
       ),
     },
   ];
 
+  const leakTable = stageQuery.isError ? (
+    <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+      <p className="text-[12px] text-rose">Couldn't load what's leaking in this stage.</p>
+      <Button type="button" variant="outline" size="sm" onClick={() => stageQuery.refetch()}>
+        Retry
+      </Button>
+    </div>
+  ) : stageQuery.isLoading ? (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-40" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-4 w-16 rounded-chip" />
+        </div>
+      ))}
+    </div>
+  ) : (
+    <DataTable
+      columns={columns}
+      rows={departures}
+      emptyTitle="No departures measured yet"
+      emptyBody="Dated exit causes for this stage will appear here once Flolyt has enough history to group them."
+    />
+  );
+
   return (
     <div className="space-y-8">
       {headerActionsEl &&
         createPortal(
           <>
-            {(stage.slug === "activate" || stage.slug === "price" || stage.slug === "adopt" || stage.slug === "retain" || stage.slug === "expand" || stage.slug === "support" || stage.slug === "renew" || stage.slug === "advocate" || stage.slug === "churn") && (
-              <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
-                How this stage is defined
-              </Link>
-            )}
+            <Link to={`/lifecycle/${stage.slug}/definition`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
+              How this stage is defined
+            </Link>
             <Link to={`/lifecycle/${stage.slug}/compare`} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
               Compare periods
             </Link>
@@ -378,7 +373,12 @@ export function OverviewTab() {
         </Callout>
       )}
 
-      <KpiCards items={data.kpis} />
+      <KpiCards
+        items={kpis}
+        isLoading={stageQuery.isLoading}
+        isError={stageQuery.isError}
+        onRetry={() => stageQuery.refetch()}
+      />
 
       {data.barEyebrow && data.barRows && (
         <section className="space-y-3">
@@ -398,7 +398,7 @@ export function OverviewTab() {
           <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
             {data.leakEyebrow}
           </p>
-          <DataTable columns={columns} rows={data.leakRows} />
+          {leakTable}
         </section>
       )}
 
@@ -411,7 +411,7 @@ export function OverviewTab() {
           <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
             {data.leakEyebrow}
           </p>
-          <DataTable columns={columns} rows={data.leakRows} />
+          {leakTable}
         </section>
       )}
 
