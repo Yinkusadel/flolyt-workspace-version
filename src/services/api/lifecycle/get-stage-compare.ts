@@ -2,7 +2,7 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
-import type { LifecycleCalloutDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import type { LifecycleCalloutDto, LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
 export interface GetStageCompareParams {
   /** 1-12, default 3. */
@@ -14,10 +14,15 @@ export interface StageCompareWindowDto {
   toUtc: string;
   monthsInWindow: number;
   monthsMeasured: number;
-  endPopulation: number | null;
-  averagePopulation: number | null;
-  /** Added 2026-09-04. Reads the same primaryConversion binding PUT .../conversion sets, unconfirmed live. */
-  endConversion: number | null;
+  // Corrected 2026-09-05, confirmed live for `adopt`: every one of these is the same
+  // measured-value wrapper as GET /map's atStake, not a bare `number | null` as the spec's
+  // written example implied — same lesson as get-stage.ts's population/rateOfChange/
+  // primaryConversion fix. Rendering `.value` directly (without unwrapping) prints "[object
+  // Object]"/NaN, which is exactly the bug this correction fixes.
+  endPopulation: LifecycleMeasuredValueDto<number>;
+  averagePopulation: LifecycleMeasuredValueDto<number>;
+  /** Reads the same primaryConversion binding PUT .../conversion sets. */
+  endConversion: LifecycleMeasuredValueDto<number>;
   restatedMonths: number;
 }
 
@@ -27,10 +32,9 @@ export interface StageCompareData {
   windowMonths: number;
   before: StageCompareWindowDto;
   after: StageCompareWindowDto;
-  change: number | null;
-  changePercent: number | null;
-  /** Added 2026-09-04. */
-  conversionChange: number | null;
+  change: LifecycleMeasuredValueDto<number>;
+  changePercent: LifecycleMeasuredValueDto<number>;
+  conversionChange: LifecycleMeasuredValueDto<number>;
   definitionChangedInside: boolean;
   callouts: LifecycleCalloutDto[];
 }

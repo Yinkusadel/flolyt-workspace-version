@@ -10,6 +10,7 @@ import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { StageSubpageHeader } from "@/pages/everyday/lifecycle/stage/stage-subpage-header";
 import { formatCount, formatPercent, formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetStageCompare } from "@/features/lifecycle/use-get-stage-compare";
+import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
@@ -24,10 +25,10 @@ const MONTH_OPTIONS = [3, 6, 12];
 type CompareRowData = {
   id: string;
   metric: string;
-  before: number | null;
-  after: number | null;
+  before: LifecycleMeasuredValueDto<number>;
+  after: LifecycleMeasuredValueDto<number>;
   valueFormat: "count" | "percent";
-  change: number | null;
+  change: LifecycleMeasuredValueDto<number>;
   changeFormat: "count" | "percent";
 };
 
@@ -38,6 +39,9 @@ const CompareRoute = () => {
   const { data, isLoading, isError, refetch } = useGetStageCompare(stage.slug, { months });
   const compare = data?.data;
 
+  // Every one of these is the measured-value wrapper (`{value, state, missingSource,
+  // wouldUnlock}`), confirmed live 2026-09-05 for `adopt` — never render `.value` without
+  // checking it for null first, that's what printed "[object Object]"/NaN% before this fix.
   const rows: CompareRowData[] = compare
     ? [
         {
@@ -46,10 +50,10 @@ const CompareRoute = () => {
           before: compare.before.endPopulation,
           after: compare.after.endPopulation,
           valueFormat: "count",
-          // changePercent is preferred; falls back to the raw count delta (not a percent) only
-          // when changePercent itself is unavailable — never format a raw count as a percentage.
-          change: compare.changePercent ?? compare.change,
-          changeFormat: compare.changePercent !== null ? "percent" : "count",
+          // changePercent is preferred; falls back to the raw count delta only when
+          // changePercent itself is unavailable — never format a raw count as a percentage.
+          change: compare.changePercent.value !== null ? compare.changePercent : compare.change,
+          changeFormat: compare.changePercent.value !== null ? "percent" : "count",
         },
         {
           id: "conversion",
@@ -70,10 +74,10 @@ const CompareRoute = () => {
       header: "Before",
       align: "right",
       render: (row) =>
-        row.before !== null ? (
-          <span className="font-mono text-ink">{row.valueFormat === "percent" ? formatPercent(row.before) : formatCount(row.before)}</span>
+        row.before.value !== null ? (
+          <span className="font-mono text-ink">{row.valueFormat === "percent" ? formatPercent(row.before.value) : formatCount(row.before.value)}</span>
         ) : (
-          <InfoTooltip />
+          <InfoTooltip missingSource={row.before.missingSource} wouldUnlock={row.before.wouldUnlock} />
         ),
     },
     {
@@ -81,10 +85,10 @@ const CompareRoute = () => {
       header: "After",
       align: "right",
       render: (row) =>
-        row.after !== null ? (
-          <span className="font-mono text-ink">{row.valueFormat === "percent" ? formatPercent(row.after) : formatCount(row.after)}</span>
+        row.after.value !== null ? (
+          <span className="font-mono text-ink">{row.valueFormat === "percent" ? formatPercent(row.after.value) : formatCount(row.after.value)}</span>
         ) : (
-          <InfoTooltip />
+          <InfoTooltip missingSource={row.after.missingSource} wouldUnlock={row.after.wouldUnlock} />
         ),
     },
     {
@@ -92,13 +96,13 @@ const CompareRoute = () => {
       header: "Change",
       align: "right",
       render: (row) =>
-        row.change !== null ? (
-          <span className={row.change >= 0 ? "text-teal" : "text-rose"}>
-            {row.change >= 0 ? "+" : ""}
-            {row.changeFormat === "percent" ? formatPercent(row.change) : formatCount(row.change)}
+        row.change.value !== null ? (
+          <span className={row.change.value >= 0 ? "text-teal" : "text-rose"}>
+            {row.change.value >= 0 ? "+" : ""}
+            {row.changeFormat === "percent" ? formatPercent(row.change.value) : formatCount(row.change.value)}
           </span>
         ) : (
-          <InfoTooltip />
+          <InfoTooltip missingSource={row.change.missingSource} wouldUnlock={row.change.wouldUnlock} />
         ),
     },
     // ❌ Backend does NOT provide: "What moved it" — GET .../compare only reports population and
