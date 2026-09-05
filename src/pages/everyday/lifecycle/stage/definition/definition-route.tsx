@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,9 +12,12 @@ import { StageSubpageHeader } from "@/pages/everyday/lifecycle/stage/stage-subpa
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { formatCount, formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
 import { AssignAnOwnerModal } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
+import { PreviewDefinitionChangeModal } from "@/pages/everyday/lifecycle/stage/modals/preview-definition-change-modal";
 import { ADVOCATE_ASSIGN_OWNER_PRESET } from "@/pages/everyday/lifecycle/stage/advocate/data";
 import { CHURN_ASSIGN_OWNER_PRESET } from "@/pages/everyday/lifecycle/stage/churn/data";
 import { useGetStageDefinition } from "@/features/lifecycle/use-get-stage-definition";
+import usePreviewStageDefinition from "@/features/lifecycle/use-preview-stage-definition";
+import useUpdateStageDefinition from "@/features/lifecycle/use-update-stage-definition";
 import type { StageDefinitionCandidateDto } from "@/services/api/lifecycle/get-stage-definition";
 
 const OWNER_ASSIGN_PRESET = {
@@ -52,9 +56,65 @@ const DefinitionRoute = () => {
   const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
   const ownerPreset = OWNER_ASSIGN_PRESET[stage.slug as keyof typeof OWNER_ASSIGN_PRESET];
 
+  // A proposed pick, distinct from what's actually saved (`definition.current.entryEventKey`) —
+  // resets whenever the stage changes since the outlet's route param can change without
+  // remounting this component (react-router keeps the same element across sibling params).
+  const [selectedEventKey, setSelectedEventKey] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  useEffect(() => {
+    setSelectedEventKey(null);
+    setPreviewOpen(false);
+  }, [stage.slug]);
+
+  const currentEventKey = definition?.current?.entryEventKey ?? null;
+  const effectiveSelection = selectedEventKey ?? currentEventKey;
+  // Switching the entry event only works on a stage that's already defined — the backend refuses
+  // a null/empty exitRules outright ("a stage with no way out only ever grows"), and this flow
+  // only ever carries `current.exitRules` through unchanged, never builds them. Giving a stage its
+  // first-ever definition needs an exit-rule editor, which doesn't exist yet (see lifecycle.md).
+  const hasExitRulesToCarryForward = (definition?.current?.exitRules?.length ?? 0) > 0;
+  const canEdit = (definition?.canEdit ?? false) && hasExitRulesToCarryForward;
+  const hasProposedChange = selectedEventKey !== null && selectedEventKey !== currentEventKey;
+
   const selectedCandidate: StageDefinitionCandidateDto | undefined = definition?.candidates.find(
-    (candidate) => candidate.eventKey === definition.current?.entryEventKey
+    (candidate) => candidate.eventKey === effectiveSelection
   );
+
+  const { preview, previewData, isPending: isPreviewPending } = usePreviewStageDefinition({
+    onSuccess: () => setPreviewOpen(true),
+  });
+  const { saveDefinition, isPending: isSavePending } = useUpdateStageDefinition({
+    onSuccess: () => {
+      setPreviewOpen(false);
+      setSelectedEventKey(null);
+    },
+    onTokenMismatch: () => {
+      setPreviewOpen(false);
+      toast.error("This preview expired — preview the change again before saving.");
+    },
+  });
+
+  const handlePreviewClick = () => {
+    if (!hasProposedChange || !effectiveSelection) return;
+    preview({
+      stageKey: stage.slug,
+      entryEventKey: effectiveSelection,
+      exitRules: definition?.current?.exitRules ?? null,
+      exclusions: definition?.current?.exclusions ?? null,
+    });
+  };
+
+  const handleConfirmSave = () => {
+    if (!previewData || !effectiveSelection) return;
+    saveDefinition({
+      stageKey: stage.slug,
+      previewToken: previewData.previewToken,
+      entryEventKey: effectiveSelection,
+      exitRules: definition?.current?.exitRules ?? null,
+      exclusions: definition?.current?.exclusions ?? null,
+    });
+  };
 
   return (
     <div className="space-y-8">
@@ -73,11 +133,11 @@ const DefinitionRoute = () => {
             <Button type="button" size="sm" onClick={() => setAssignOwnerOpen(true)}>
               Assign an owner
             </Button>
-          ) : (
-            <Button type="button" size="sm">
-              Preview the change
+          ) : canEdit ? (
+            <Button type="button" size="sm" disabled={!hasProposedChange || isPreviewPending} onClick={handlePreviewClick}>
+              {isPreviewPending ? "Checking…" : "Preview the change"}
             </Button>
-          )
+          ) : null
         }
       />
 
@@ -102,7 +162,9 @@ const DefinitionRoute = () => {
             <div className="rounded-card border border-dashed border-line bg-paper p-4">
               <p className="text-[12.5px] font-semibold text-ink">No definition set yet</p>
               <p className="mt-1 text-[11px] text-ink-3">
-                Choose one of the candidate entry events below, then preview and save it, to give this stage a real definition.
+                Below are the candidate entry events Flolyt found, for reference. Saving a first definition also needs at least one
+                exit rule (how and when a customer leaves this stage), which isn&rsquo;t editable here yet — not available on this
+                screen until that&rsquo;s built.
               </p>
             </div>
           )}
@@ -120,12 +182,17 @@ const DefinitionRoute = () => {
               <div className="space-y-2.5">
                 {(definition?.candidates ?? []).map((candidate) => {
                   const isSelected = candidate.eventKey === selectedCandidate?.eventKey;
+                  const isDisabled = !canEdit || isPreviewPending || previewOpen;
                   return (
-                    <div
+                    <button
                       key={candidate.eventKey}
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={() => setSelectedEventKey(candidate.eventKey)}
                       className={cn(
-                        "flex flex-col gap-1 rounded-card border px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4",
-                        isSelected ? "border-2 border-ultra-border bg-ultra-bg" : "border-line bg-paper"
+                        "flex w-full flex-col gap-1 rounded-card border px-4 py-3 text-left sm:flex-row sm:items-center sm:justify-between sm:gap-4",
+                        isSelected ? "border-2 border-ultra-border bg-ultra-bg" : "border-line bg-paper",
+                        canEdit ? "disabled:cursor-not-allowed disabled:opacity-70" : "cursor-default"
                       )}
                     >
                       <div className="flex items-start gap-3">
@@ -151,7 +218,7 @@ const DefinitionRoute = () => {
                           </>
                         )}
                       </span>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -185,6 +252,16 @@ const DefinitionRoute = () => {
       )}
 
       {ownerPreset && <AssignAnOwnerModal preset={ownerPreset} open={assignOwnerOpen} onOpenChange={setAssignOwnerOpen} />}
+
+      <PreviewDefinitionChangeModal
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        stageName={definition?.stageName ?? stage.name}
+        candidateLabel={selectedCandidate?.description ?? selectedCandidate?.eventKey ?? ""}
+        preview={previewData}
+        onConfirm={handleConfirmSave}
+        isSaving={isSavePending}
+      />
     </div>
   );
 };

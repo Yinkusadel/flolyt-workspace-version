@@ -150,12 +150,38 @@ an amber callout for `fallbackNote` when `fallbackInUse`, an empty state when `!
 compact version-history list when `history.length > 1`. Every per-stage verdict table and every
 narrative insight/mistake/closing callout was dropped, not reproduced — none of that copy has a
 backing field. Advocate's and Churn's "Assign an owner" header CTA (a separate, still-unwired
-feature — see `PUT /lifecycle/map/{stageKey}/owner` above) was preserved as-is. The edit flow
-itself (`PUT /definition` + `POST /definition/preview`) is still unwired — "Preview the change"
-remains a non-functional button, same as before this pass; only the read/display side is done.
-Live-verified only via a network-mocked Playwright pass (real captured response shapes, not a real
-session) across defined/fallback/empty-candidates states — not yet checked against a real
-backend response.
+feature — see `PUT /lifecycle/map/{stageKey}/owner` above) was preserved as-is. Live-verified only
+via a network-mocked Playwright pass (real captured response shapes, not a real session) across
+defined/fallback/empty-candidates states — not yet checked against a real backend response.
+
+**Edit flow wired 2026-09-05 (separate pass, same day), scope narrowed live by the user catching a
+real bug.** "Preview the change" now works — click a different candidate (single-select, like a
+radio button; clicking a second one replaces the first, never adds to it), the button lights up
+only once the selection differs from what's actually saved, click it to call `POST .../definition/
+preview`, read the blast-radius report in a confirmation modal (`preview-definition-change-modal.tsx`
+— customers added/removed, figures/cohorts/goals/learnings affected), then "Confirm and save" calls
+`PUT .../definition` with the preview's token. `exitRules`/`exclusions` are never edited — always
+carried through unchanged from `current` — since neither has a documented `kind` enum anywhere
+(re-confirmed against the fresh full-schema spec paste the same day, which still only shows the
+generic placeholder `"string"`) and no Figma screen has ever shown a rule editor.
+
+**Real bug caught live by the user, same day, before it could ship broadly**: the very first live
+click against a real workspace 400'd — `"At least one exit rule is required — a stage with no way
+out only ever grows."` The flow as first built passed `exitRules: null` whenever `current` was
+null (i.e. any undefined stage, which is most of them in a fresh workspace), assuming a pass-
+through was always safe. **Fixed same day**: the whole edit affordance (button + clickable
+candidates) is now gated on `(current?.exitRules?.length ?? 0) > 0` in addition to `canEdit` — so
+it only ever activates on a stage that's already defined with real exit rules to carry forward.
+An undefined stage (`current: null` — e.g. Price, or Activate while `fallbackInUse`) shows the
+candidate list read-only with copy explaining a first definition needs exit rules, which aren't
+editable here. **This is a real, unresolved product gap, not just a UI restriction**: grepping this
+entire codebase found no path anywhere — no onboarding step, no other screen, nothing — that has
+ever called `PUT`/`POST .../definition`. A stage's first definition can currently only be created
+by hitting the backend directly (API/Postman/a backend tool), never through the product itself.
+Verified with `npx tsc -b` (clean) and two Playwright passes: an already-defined stage (synthetic
+fixture with a real exit rule) completes select→preview→confirm→save correctly end to end; an
+undefined stage (mirroring the user's real pasted Price/Activate responses) never renders the
+button and never reaches the preview call at all.
 
 ## Per-endpoint entries
 
@@ -366,9 +392,12 @@ wired** — verify with a real 409/400 test against churn before trusting either
   of the current definition's exit-rule `conditionKey`s (the Overview tab's departure groups carry
   them) — `null` clears the binding, and `primaryConversion` honestly reads unavailable again.
 - **Response:** `{ data: null, messages, succeeded }`.
-- **Used by:** not wired — no service/hook file exists yet (new endpoint as of the 2026-09-04 spec
-  paste, not one of the original 18).
-- **Status:** documented, not scaffolded.
+- **Used by:** service + hook exist (`update-stage-conversion.ts` / `use-update-stage-conversion.ts`)
+  — **correction 2026-09-05: this was already scaffolded**, the "not wired — no service/hook file
+  exists yet" line above was stale (the same staleness class flagged in the session wrap-up's
+  "audited this doc for staleness" note). Still not wired into a page — no UI target exists yet
+  (candidate binding lives on the Overview tab's departure rows, not the Definition screen).
+- **Status:** service/hook ready, not wired.
 - **Notes:** Deliberately **no blast-radius preview** the way a definition edit gets — binding a
   conversion moves no population and restates nothing, so it doesn't need one. A redefinition that
   drops the bound exit condition leaves the conversion unavailable, naming the dangling key —
@@ -380,7 +409,7 @@ wired** — verify with a real 409/400 test against churn before trusting either
 - **Auth:** Bearer token.
 - **Request:** path `stageKey`.
 - **Response `data`:** `{ stageKey, stageName, canEdit, isDefined, fallbackInUse, fallbackNote, current: {version, entryEventKey, exitRules: [{kind, eventKey, days, movesToStageKey}] | null, exclusions: [{kind, mergeKey}] | null, effectiveFromUtc, createdByUserId, createdBy, createdAtUtc} | null, history: [{version, createdAtUtc, createdByUserId, createdBy, isCurrent}], candidates: [{eventKey, description, datasourceId, estimatedRows, population}] }`. `candidates[].description`/`population` nullable per the spec's example. **Clarified 2026-09-04:** the spec's prose explicitly calls `candidates[].population` "a measured value — unavailable until counted, and never filled in from `estimatedRows`" — same wrapper as `GET /map`'s `atStake`, not a plain nullable number as the entry previously implied. `estimatedRows` counts rows, not people, and must never stand in for `population` in the UI even while it's unavailable.
-- **Used by:** **wired 2026-09-05, all 10 stages** — `stage/definition/definition-route.tsx` via `use-get-stage-definition.ts` / `get-stage-definition.ts`. `exitRules`/`exclusions`/`canEdit` fetched but not yet surfaced in the UI (no design precedent for them; the original mock never showed exit rules at all).
+- **Used by:** **wired 2026-09-05, all 10 stages** — `stage/definition/definition-route.tsx` via `use-get-stage-definition.ts` / `get-stage-definition.ts`. `canEdit` now gates the entry-event-switch edit flow (see `PUT .../definition`'s entry) — `current.exitRules`/`.exclusions` are read only to be carried through unchanged on save, never rendered or edited directly (no design precedent for a rule editor, and still no documented `kind` enum for either — re-confirmed 2026-09-05 against the fresh spec paste, which only shows the generic placeholder `"string"`).
 - **Status:** wired (all 10 stages, one shared component — see coverage tracker above), not yet live-verified against a real backend response.
 - **Notes:** New workspace has `isDefined: false`/`current: null` for all 10 — never seeded, since a definition is a claim about this tenant's own data. `fallbackInUse` marks activate/retain/churn using the classifier's recency thresholds until defined. **Type fix 2026-09-05:** `StageDefinitionCandidateDto.population` was typed as a bare `number | null` in the scaffolded service file, contradicting this entry's own 2026-09-04 clarification that it's the measured-value wrapper — same stale-shape bug class hit repeatedly elsewhere in this domain (`GET /map`, `GET /stages/{stageKey}`, `GET .../compare`, `GET .../cohorts`). Fixed to `LifecycleMeasuredValueDto<number>` before wiring, not after.
 
@@ -390,17 +419,18 @@ wired** — verify with a real 409/400 test against churn before trusting either
 - **Auth:** Bearer token.
 - **Request:** path `stageKey`; body `{ previewToken (uuid), entryEventKey, exitRules, exclusions }`.
 - **Response:** `{ data: {stageKey, version, supersededVersion, effectiveFromUtc}, messages, succeeded }`; `409` if the body doesn't match what the token was issued for.
-- **Used by:** service + hook exist (`update-stage-definition.ts` / `use-update-stage-definition.ts`, which surfaces the 409 as a distinct `onTokenMismatch` callback rather than a generic error), not wired.
-- **Status:** service/hook ready, not wired.
-- **Notes:** Token single-use, expires 30 min.
+- **Used by:** `update-stage-definition.ts` / `use-update-stage-definition.ts` — **wired 2026-09-05**, `stage/definition/definition-route.tsx`'s "Confirm and save" step (see the preview entry below for the full flow).
+- **Status:** wired (entry-event switching only, and only for already-defined stages — see Notes), not yet live-verified against a real backend response.
+- **Notes:** Token single-use, expires 30 min. **Scope of what's wired:** the edit flow only lets a user switch which candidate is the stage's entry event — `exitRules`/`exclusions` are always passed through unchanged from `definition.current`, never edited. There's no documented enum for `exitRules[].kind`/`exclusions[].kind` and no Figma screen has ever shown a rule editor, so building one would mean inventing a form against an unconfirmed shape — deliberately held, same treatment as Cohorts' row shape before its live confirmation. **Corrected 2026-09-05, caught live by the user**: the edit flow is disabled entirely on a stage with no current definition (`current: null`, e.g. a freshly-scaffolded Price) — see the preview endpoint's entry below for why a `null`/empty `exitRules` is refused outright, not just an unconfirmed shape to avoid guessing at. The `onTokenMismatch` callback (a stale preview re-selected against, or one that expired) closes the confirmation modal and toasts "preview again" rather than retrying silently.
 
 ### POST /lifecycle/stages/{stageKey}/definition/preview
 
 - **Purpose:** What a proposed definition would break — customers moved, figures restated, cohorts/goals invalidated — plus the save token.
 - **Auth:** Bearer token; only the stage's owner or a workspace administrator.
-- **Request:** path `stageKey`; body `{ entryEventKey, exitRules, exclusions }`.
+- **Request:** path `stageKey`; body `{ entryEventKey: string, exitRules: StageExitRuleInput[] | null, exclusions: StageExclusionInput[] | null }` — **full input shapes pasted by the user 2026-09-05** (previously only sketched from the GET response's output DTO, not the write-side input schema): `StageExitRuleInput { kind: string, eventKey: string | null, days: string | number | null, movesToStageKey: string }`, `StageExclusionInput { kind: string, mergeKey: string | null }`. Still no enum listed anywhere for either `kind` field.
 - **Response:** `{ data: {previewToken, expiresAtUtc, stageKey, wouldBeVersion, customersAdded, customersRemoved, figuresAffected, cohortsBroken, goalsInvalidated, learningsScoped}, messages, succeeded }` — corrected 2026-08-31, the first pass wrongly had this response unwrapped. `figuresAffected`/`cohortsBroken`/`goalsInvalidated`/`learningsScoped` all share one shape: `{measured, items: string[], unmeasuredReason}`. `customersAdded`/`customersRemoved` nullable per the spec's example.
-- **Used by:** service + hook exist (`preview-stage-definition.ts` / `use-preview-stage-definition.ts`), not wired.
+- **Used by:** service + hook exist (`preview-stage-definition.ts` / `use-preview-stage-definition.ts`) — **wired 2026-09-05** as part of `definition-route.tsx`'s entry-event-switch flow, gated to stages that already have a saved `current.exitRules` (see below).
+- **Real business rule, caught live 2026-09-05 (not previously documented anywhere in this file):** a `null` or empty `exitRules` is refused with `400` — `"At least one exit rule is required — a stage with no way out only ever grows."` This means the wired flow, which only ever carries `definition.current.exitRules` through unchanged, **cannot be used to give an undefined stage its first definition** (there's nothing in `current` to carry forward) — it only works for switching the entry event on a stage that's already defined. `definition-route.tsx` now disables the whole edit affordance when `current.exitRules` is null/empty, rather than letting the call 400. Giving a stage its first-ever definition needs an exit-rule editor — the same unbuilt piece flagged in the coverage tracker's Definition entry — not just a client-side pass-through.
 - **Status:** service/hook ready, not wired.
 
 ### POST /lifecycle/entry-events/measure
@@ -894,9 +924,18 @@ number.
    /instrumentation-requests/{obligationId}/owner`. These would need actual page/screen design
    work, not just data-wiring, since no Figma screen in this codebase's build history targets most
    of them.
-2. **Definition's edit flow** — `PUT /stages/{stageKey}/conversion` and the redefinition/blast-radius
-   endpoints are documented but genuinely unscaffolded (no service/hook file exists), unlike the
-   governance cluster above. The read-only Definition tab itself is fully wired and shipped.
+2. ~~**Definition's edit flow**~~ — **done 2026-09-05, in a later session.** Correction to this
+   line's original claim: `update-stage-conversion.ts`/`preview-stage-definition.ts`/
+   `update-stage-definition.ts` were all already scaffolded, contrary to what this line said — the
+   entry-event-switch flow (select a different candidate → preview the blast radius → confirm and
+   save) is now wired on `definition-route.tsx`, gated to stages that already have a saved
+   definition. **A bigger, still-open gap surfaced doing this**: nothing in this codebase — no
+   onboarding step, no other screen — has ever called `PUT`/`POST .../definition`, so no stage can
+   get its *first* definition from inside the product at all today; that only happens via direct
+   backend access. Also open: no documented enum for `exitRules[].kind`/`exclusions[].kind`
+   anywhere, even in the fullest schema paste seen so far — an exit-rule editor can't be safely
+   built until that's answered. `PUT /stages/{stageKey}/conversion` itself is separately still
+   unwired (no UI target — it binds off the Overview tab's departure rows, not Definition).
 3. **The map's `?market=` filter** — not investigated this pass, still open.
 4. **Open, undecided offer**: whether to build a proper workspace-wide home (e.g. a governance page)
    for the "gaps nobody asked about" instrumentation callout that was dropped from Adopt's Blind
