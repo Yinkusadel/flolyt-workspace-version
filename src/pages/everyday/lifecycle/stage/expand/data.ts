@@ -6,7 +6,6 @@
  */
 
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
-import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
@@ -60,58 +59,10 @@ export const EXPAND_SHARE_EXPORT_PRESET: ShareOrExportPreset = {
 
 // ---- Upgrade paths (EX03) + one-path drilldown (EX04) ---------------------
 
-export type UpgradePathRow = {
-  id: string;
-  fromTo: string;
-  eligible: string;
-  upgraded: string;
-  rate: string;
-  rateTone: "teal" | "amber" | "rose" | "neutral";
-  valuePerUpgrade: string;
-  valuePerUpgradeTone: "teal" | "rose" | "neutral";
-  prompted: string;
-  promptedTone: ChipTone;
-  verdict: string;
-  verdictTone: ChipTone;
-};
-
-export const EXPAND_UPGRADE_PATH_ROWS: UpgradePathRow[] = [
-  { id: "pay-as-you-go-lagos-plus", fromTo: "Pay as you go → Lagos Plus", eligible: "612,000", upgraded: "31,000", rate: "5.1%", rateTone: "amber", valuePerUpgrade: "₦79,200/yr", valuePerUpgradeTone: "teal", prompted: "plan page only", promptedTone: "rose", verdict: "the big one", verdictTone: "rose" },
-  { id: "lagos-plus-family", fromTo: "Lagos Plus → Family", eligible: "841,000", upgraded: "8,400", rate: "1.0%", rateTone: "rose", valuePerUpgrade: "₦20,400/yr", valuePerUpgradeTone: "teal", prompted: "no prompt", promptedTone: "rose", verdict: "untouched", verdictTone: "rose" },
-  { id: "family-business", fromTo: "Family → Business", eligible: "218,000", upgraded: "1,204", rate: "0.6%", rateTone: "rose", valuePerUpgrade: "₦93,600/yr", valuePerUpgradeTone: "teal", prompted: "sales-led", promptedTone: "amber", verdict: "works, tiny", verdictTone: "amber" },
-  { id: "any-student", fromTo: "Any → Student", eligible: "—", upgraded: "11,400", rate: "—", rateTone: "neutral", valuePerUpgrade: "−₦19,200/yr", valuePerUpgradeTone: "rose", prompted: "self-serve, unverified", promptedTone: "rose", verdict: "a downgrade path", verdictTone: "rose" },
-  { id: "legacy-unlimited-anything", fromTo: "Legacy Unlimited → anything", eligible: "3,100", upgraded: "0", rate: "0%", rateTone: "rose", valuePerUpgrade: "Unavailable", valuePerUpgradeTone: "neutral", prompted: "never attempted", promptedTone: "rose", verdict: "frozen since 2022", verdictTone: "rose" },
-];
-
-export const EXPAND_UPGRADE_PATH_CARDS: InsightCard[] = [
-  {
-    id: "pay-as-you-go-lagos-plus",
-    agentTag: "EX",
-    meta: "612,000 eligible · ₦31M",
-    title: "Pay as you go → Lagos Plus",
-    body: "The upgrade with the highest value and the largest eligible pool converts at 5.1%. The only place it is offered is the plan page, which 91% of customers have never opened.",
-    footnote: "no behavioural prompt exists",
-    tone: "rose",
-  },
-  {
-    id: "already-order-enough",
-    agentTag: "EX",
-    meta: "94,000 of them",
-    title: "Already order enough to save money",
-    body: "At 6 or more orders a month, Lagos Plus is cheaper than paying per order. 94,000 customers are past that line and paying more than they need to. None of them have been told.",
-    footnote: "the offer sells itself",
-    tone: "amber",
-  },
-  {
-    id: "uncomfortable-one",
-    agentTag: "PX",
-    meta: "The uncomfortable one",
-    title: "11,400 went the other way",
-    body: "The Student plan is self-serve and unverified. 6,200 of these came down from Lagos Plus. It is the only fully-automated path in this stage and it runs in reverse.",
-    footnote: "the only prompt that works",
-    tone: "rose",
-  },
-];
+// GET /lifecycle/expand/upgrade-paths has no eligible/upgraded/rate/value-per-upgrade/prompted/
+// verdict field, and can't tell an upgrade from a downgrade without plan pricing (its own callout
+// says so) — the old mock's table and insight cards above aren't reproducible from live data;
+// dropped. See upgrade-paths-tab.tsx.
 
 export type UpgradePathDetailRow = {
   id: string;
@@ -196,28 +147,11 @@ export const EXPAND_UPGRADE_PATH_DETAILS: Record<string, UpgradePathDetail> = {
 
 // ---- Basket (EX05) ---------------------------------------------------------
 
-export const EXPAND_BASKET_KPIS: Kpi[] = [
-  { eyebrow: "Median basket", value: "₦2,140", note: "unchanged for 3 quarters" },
-  { eyebrow: "Baskets that grew", value: "176,000", tone: "teal", note: "16.0% of active" },
-  { eyebrow: "Value added", value: "₦41M", tone: "amber", note: "at face value" },
-  { eyebrow: "Margin added", value: "Unavailable", tone: "amber", note: "needs order_lines" },
-];
-
-export const EXPAND_BASKET_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Jan–Feb · before the fee", value: "₦2,140 median", percent: 31, tone: "teal" },
-  { label: "Mar–May · after the fee", value: "₦2,140", percent: 31, tone: "teal" },
-  { label: "Jun–Aug", value: "₦2,150", percent: 31, tone: "teal" },
-  { label: "Lagos Plus customers", value: "₦2,410", percent: 35, tone: "teal" },
-  { label: "Group ordering customers", value: "₦6,890", percent: 100, tone: "teal" },
-];
-
-export const EXPAND_BASKET_INSIDE_ROWS: { label: string; value: string; tone: "teal" | "rose" | "amber" }[] = [
-  { label: "Median basket", value: "₦2,140 · from order totals", tone: "teal" },
-  { label: "Items per basket", value: "Unavailable · order_lines not in the feed", tone: "rose" },
-  { label: "Categories per basket", value: "Unavailable", tone: "rose" },
-  { label: "Attach rate on sides and drinks", value: "Unavailable", tone: "rose" },
-  { label: "What could be answered with one field", value: "all four rows above, plus margin and category expansion", tone: "amber" },
-];
+// GET /lifecycle/expand/basket actually returns a real monthly revenue/basket-size/order-
+// frequency trend (months[]/movement[]) independently of order_lines — only item-level
+// composition (lines[]) needs that field. The old mock treated the whole screen as blocked, which
+// this endpoint contradicts; its specific "before/after the fee" narrative numbers above aren't
+// reproducible from live data either way. See basket-tab.tsx.
 
 export const EXPAND_REQUEST_INSTRUMENTATION_PRESET: RequestInstrumentationPreset = {
   subtitle: "order_lines · 41 days overdue, blocks four stages",
@@ -243,46 +177,12 @@ export const EXPAND_REQUEST_INSTRUMENTATION_PRESET: RequestInstrumentationPreset
 
 // ---- Accounts (EX06) --------------------------------------------------------
 
-export const EXPAND_ACCOUNTS_BANNER = "Accounts mode · 1,204 businesses, not 4.2M consumers";
-
-export const EXPAND_ACCOUNTS_KPIS: Kpi[] = [
-  { eyebrow: "Business accounts", value: "1,204", note: "0.03% of customers" },
-  { eyebrow: "Revenue", value: "₦74M/yr", tone: "teal", note: "6.1% of company revenue" },
-  { eyebrow: "Revenue per account", value: "₦61,400", tone: "teal", note: "20× a consumer" },
-  { eyebrow: "At renewal risk", value: "312", tone: "rose", note: "26% of accounts" },
-];
-
-export type ExpandAccountRow = {
-  id: string;
-  account: string;
-  seats: string;
-  annualValue: string;
-  annualValueTone: "teal" | "amber";
-  ordersPerMonth: string;
-  ordersPerMonthTone: "teal" | "amber" | "rose";
-  renews: string;
-  renewsTone: "ink" | "amber" | "rose" | "neutral";
-  health: string;
-  healthTone: ChipTone;
-  owner?: { name: string; initials: string; color: string };
-  noOwner?: boolean;
-};
-
-export const EXPAND_ACCOUNT_ROWS: ExpandAccountRow[] = [
-  { id: "kano-textiles", account: "Kano Textiles", seats: "120", annualValue: "₦2.1M", annualValueTone: "teal", ordersPerMonth: "410", ordersPerMonthTone: "teal", renews: "14 Sep", renewsTone: "amber", health: "at risk", healthTone: "rose", owner: { name: "Tunde", initials: "TB", color: "#B4568F" } },
-  { id: "lagos-legal-partners", account: "Lagos Legal Partners", seats: "64", annualValue: "₦1.4M", annualValueTone: "teal", ordersPerMonth: "188", ordersPerMonthTone: "teal", renews: "2 Oct", renewsTone: "neutral", health: "healthy", healthTone: "teal", owner: { name: "Tunde", initials: "TB", color: "#B4568F" } },
-  { id: "ikeja-tech-park", account: "Ikeja Tech Park", seats: "310", annualValue: "₦4.8M", annualValueTone: "teal", ordersPerMonth: "1,120", ordersPerMonthTone: "teal", renews: "11 Nov", renewsTone: "neutral", health: "healthy", healthTone: "teal", owner: { name: "Tunde", initials: "TB", color: "#B4568F" } },
-  { id: "nairobi-media-group", account: "Nairobi Media Group", seats: "41", annualValue: "KES 890k", annualValueTone: "teal", ordersPerMonth: "94", ordersPerMonthTone: "amber", renews: "28 Aug", renewsTone: "rose", health: "at risk", healthTone: "rose", noOwner: true },
-  { id: "accra-logistics", account: "Accra Logistics", seats: "88", annualValue: "GHS 210k", annualValueTone: "amber", ordersPerMonth: "31", ordersPerMonthTone: "rose", renews: "19 Sep", renewsTone: "rose", health: "at risk", healthTone: "rose", noOwner: true },
-];
-
-export const EXPAND_ACCOUNTS_RISK_ROWS: { label: string; value: string; tone: "rose" | "amber" }[] = [
-  { label: "Seat utilisation below 40%", value: "188 accounts · people were added and never ordered", tone: "rose" },
-  { label: "Order frequency fell after 4 March", value: "94 accounts · the delivery fee, at scale", tone: "rose" },
-  { label: "No named owner", value: "119 accounts · all outside Nigeria", tone: "rose" },
-  { label: "Renewing within 60 days", value: "212 accounts · ₦31M", tone: "amber" },
-  { label: "Accounts with a room open", value: "0 · none of this has a room", tone: "rose" },
-];
+// GET /lifecycle/expand/accounts has no seats, blended "health" score, or general business-
+// account book — it's narrower than the old mock's "accounts mode" reframing of the whole
+// consumer base: only subscriptions renewing soon with a real risk signal, since nothing in the
+// semantic layer groups customers into a corporate account (confirmed by this endpoint's own
+// note — no seat/headcount concept exists at all). The banner, KPIs, per-account table and risk
+// breakdown above aren't reproducible from live data; dropped. See accounts-tab.tsx.
 
 // ---- Cohorts (EX07) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
 // acquire/data.ts's Cohorts note and cohorts-tab.tsx.

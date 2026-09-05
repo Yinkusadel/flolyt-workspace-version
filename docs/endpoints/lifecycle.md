@@ -544,7 +544,7 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 
 - **Purpose:** Expand's Upgrade paths tab — who moved between plans, and which way, over a year.
 - **Response `data`:** `{ moves: [{fromPlan, toPlan, customers, share}], movers, windowDays, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/expand/upgrade-paths-tab.tsx`. No eligible/rate/value-per-upgrade/prompted/verdict field, so those and the old mock's insight cards are dropped.
 - **Notes:** A "move" = one subscription starting after another for the same customer on a different plan (previous plan found by start date, not row order). **Cannot tell an upgrade from a downgrade** — a well-worn path to a cheaper tier looks identical to one going the other way; separating them needs a price on every plan the book may not carry. The payload says so via a callout rather than implying a direction it can't actually see — don't add an up/down arrow client-side without that price data.
 
 ### GET /lifecycle/activate/time-to-value
@@ -567,7 +567,7 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 
 - **Purpose:** Expand's Basket tab — whether revenue-per-customer moved because baskets got bigger or people ordered more often.
 - **Response `data`:** `{ months: [{period, currency, customers, orders, revenue, averageOrderValue, ordersPerCustomer, revenuePerCustomer}], movement: [{currency, from, to, revenuePerCustomerChange, averageOrderValueChange, ordersPerCustomerChange, driver}], lines: [{item, lines, units, share}], grain, currencies, caveat, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/expand/basket-tab.tsx`. Same surprise as Price's Margin tab: `months[]`/`movement[]` return real data independently of `order_lines`; only `lines[]` (item composition) needs it and is shown only when present, with a callout otherwise. The old mock's specific "before/after the fee" narrative numbers aren't reproducible either way.
 - **Notes:** **The decomposition is exact** — revenue/customer = average order value × orders/customer, no residual, movement attributed in full. Read over 13 **complete** months (13 so both window ends land on the same calendar month a year apart — 12 wouldn't; complete because an in-progress month has partial revenue against a valid average and would show a fake cliff every month). Size half (`months`/`movement`) needs only amount+date; composition half (`lines`) needs order lines and **refuses separately** rather than gating the whole screen on the rarer source. `lines`/`units` are counted, **never priced** — an item price is a unit price on some schemas, a line total on others, multiplying by quantity would silently inflate half of all workspaces.
 
 ### GET /lifecycle/acquire/funnel
@@ -618,7 +618,7 @@ file: `Result<T>`, money never blended across currencies, a `computedAtUtc`, and
 
 - **Purpose:** Expand's Accounts tab — subscriptions renewing in 90 days that carry a visible risk signal.
 - **Response `data`:** `{ atRisk: [{customer, plan, endsAtUtc, daysToRenewal, value, currency, signals: string[], paymentsFailed, tickets}], owner, checked: string[], atRiskCount, horizonDays, computedAtUtc, callouts }`.
-- **Status:** documented, not scaffolded.
+- **Status:** **✅ wired 2026-09-05** — `stage/expand/accounts-tab.tsx`. Much narrower than the old mock's "accounts mode" (seats, blended health score, the whole business book) — only at-risk renewals with a real signal are shown, per this endpoint's own note that no seat/account concept exists at all.
 - **Notes:** **Signals, never a score** — weighing 2 support tickets against 1 failed payment is a judgement call Flolyt has no basis for, so nothing is blended into one number; each row lists which signals fired. `checked` names which signals this workspace *could* be evaluated for at all — a renewal absent from `atRisk` has been cleared on only those, a weaker statement than it looks. **Narrowed from the design's original "account" concept** — nothing in the semantic layer groups customers into a corporate account, so the subscription's customer stands in for the account, and contract size is the subscription's own money (no seat/headcount concept exists). **Quiet product usage is deliberately NOT a signal** — it would be the strongest predictor, but a customer with zero events and one who was never instrumented look identical, so flagging silence would falsely flag every un-instrumented account.
 
 ### GET /lifecycle/price/discounting
