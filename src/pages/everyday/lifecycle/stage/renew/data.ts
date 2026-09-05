@@ -13,62 +13,10 @@ import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/ope
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 import type { ReForecastBookPreset } from "@/pages/everyday/lifecycle/stage/modals/re-forecast-the-book-modal";
 
-// ---- Definition (RN01) -------------------------------------------------
-
-export type RenewOutcomeRow = {
-  id: string;
-  outcome: string;
-  customersPerYr: string;
-  value: string;
-  valueTone: "teal" | "amber" | "rose";
-  choseIt: string;
-  choseItTone: ChipTone;
-  recoverable: string;
-  recoverableTone: "teal" | "amber" | "neutral";
-  owner?: { name: string; color: string };
-  noOwner?: boolean;
-};
-
-export const RENEW_DEFINITION = {
-  title: "What counts as renewal",
-  subtitle: "Renew · owned by Customer Success · last changed 12 January by Kunle Ade",
-  insightTitle: "Renewal separates the customers who decided to leave from the ones whose card failed",
-  insightBody:
-    "Both look identical in a revenue report and they are completely different problems. One needs a conversation, the other needs a retry at a different hour. Conflating them is why involuntary churn is the cheapest revenue in most companies and the last to be recovered.",
-  candidatesEyebrow: "A customer is in Renew when",
-  candidates: [
-    {
-      id: "subscription-comes-up",
-      label: "Their subscription comes up for renewal",
-      description: "Only the 1.11M on paid plans. Excludes 2.91M pay-as-you-go customers entirely.",
-      field: "billing · 1.11M / yr",
-    },
-    {
-      id: "recurring-payment-attempted",
-      label: "Any recurring payment is attempted",
-      description: "Includes saved-card reorders. Blurs subscription renewal with ordinary payment.",
-      field: "payments · 1.31M / yr",
-    },
-    {
-      id: "decision-or-payment-due",
-      label: "A renewal decision or a renewal payment is due",
-      description: "Both the decision and the mechanism, counted separately and never merged.",
-      field: "billing + payments · 1.11M · 88.4% projected",
-      selected: true,
-    },
-  ],
-  tableEyebrow: "The split that this stage exists to hold",
-  rows: [
-    { id: "renewed", outcome: "Renewed", customersPerYr: "981,000", value: "₦2.4B", valueTone: "teal", choseIt: "yes", choseItTone: "teal", recoverable: "—", recoverableTone: "neutral", owner: { name: "Customer Success", color: "#2E8B7F" } },
-    { id: "cancelled-deliberately", outcome: "Cancelled deliberately", customersPerYr: "67,000", value: "₦164M", valueTone: "rose", choseIt: "yes", choseItTone: "amber", recoverable: "hard · needs a reason", recoverableTone: "amber", owner: { name: "Customer Success", color: "#2E8B7F" } },
-    { id: "paused", outcome: "Paused", customersPerYr: "41,000", value: "₦88M", valueTone: "amber", choseIt: "yes", choseItTone: "amber", recoverable: "moderate · timing", recoverableTone: "amber", owner: { name: "Customer Success", color: "#2E8B7F" } },
-    { id: "card-failed", outcome: "Card failed · involuntary", customersPerYr: "61,400", value: "₦88M", valueTone: "rose", choseIt: "no", choseItTone: "rose", recoverable: "easy · a retry", recoverableTone: "teal", owner: { name: "Finance", color: "#5D6BB8" } },
-    { id: "lapsed-silently", outcome: "Lapsed silently", customersPerYr: "18,000", value: "₦41M", valueTone: "rose", choseIt: "unknown", choseItTone: "amber", recoverable: "unknown", recoverableTone: "neutral", noOwner: true },
-  ] satisfies RenewOutcomeRow[],
-  closingTitle: "18,000 customers a year lapse without a cancellation, a pause or a failed payment",
-  closingBody:
-    "Their subscription simply ends and no event explains why. It is ₦41M and it has no owner because nobody can say which of the four rows above it actually belongs to. Flolyt lists it as its own outcome rather than distributing it across the others.",
-};
+// ---- Definition (RN01) is now the shared DefinitionRoute template — see
+// stage/definition/definition-route.tsx. GET .../definition has no field for the renewed/
+// cancelled/paused/card-failed/lapsed-silently outcome breakdown below, so it isn't reproducible
+// from live data; dropped.
 
 // ---- Overview (RN02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
 // overview-tab.tsx's buildStageKpis. Its leak table is wired too, to the same endpoint's

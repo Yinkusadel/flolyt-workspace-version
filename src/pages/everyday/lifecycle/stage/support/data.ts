@@ -7,81 +7,15 @@
 
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 
-// ---- Definition (SU01) -----------------------------------------------
-
-export type SupportOutcomeRow = {
-  id: string;
-  whatHappened: string;
-  customersPerMo: string;
-  contactedUs: string;
-  contactedUsTone: "teal" | "rose";
-  repeatRateAfter: string;
-  repeatRateAfterTone: "teal" | "amber" | "rose";
-  vsBase: string;
-  vsBaseTone: "teal" | "amber" | "rose";
-  verdict: string;
-  verdictTone: ChipTone;
-};
-
-export type SupportDefinitionData = {
-  title: string;
-  subtitle: string;
-  insightTitle: string;
-  insightBody: string;
-  candidatesEyebrow: string;
-  candidates: DefinitionCandidate[];
-  tableEyebrow: string;
-  rows: SupportOutcomeRow[];
-  closingTitle: string;
-  closingBody: string;
-};
-
-export const SUPPORT_DEFINITION: SupportDefinitionData = {
-  title: "What counts as support",
-  subtitle: "Support · owned by Support · last changed 12 January by Amara Okeke",
-  insightTitle: "Support is in the lifecycle because contacting us is a revenue event",
-  insightBody:
-    "Every other tool in this company measures support as a cost — tickets, handle time, cost per contact. This stage measures the only thing the rest of the lifecycle cares about: what happens to a customer's revenue after they get in touch, and whether the reason they got in touch was our fault.",
-  candidatesEyebrow: "A customer is in support when",
-  candidates: [
-    {
-      id: "opens-a-ticket",
-      label: "They open a ticket",
-      description: "The support team's own definition. Excludes everyone who had a problem and did not bother.",
-      field: "helpdesk · 12,800 / month",
-    },
-    {
-      id: "contact-any-channel",
-      label: "They contact us by any channel",
-      description: "Truer to reality. Still only counts people who spoke.",
-      field: "helpdesk + chat + social · 21,400 / month",
-    },
-    {
-      id: "something-went-wrong",
-      label: "Something went wrong for them, whether or not they told us",
-      description: "Includes the 39,600 who had a failed or late delivery and never contacted anyone.",
-      field: "delivery + orders + helpdesk · 61,000 / month",
-      selected: true,
-    },
-  ],
-  tableEyebrow: "The 39,600 who never said anything",
-  rows: [
-    { id: "delivery-late-complained", whatHappened: "Delivery late, complained", customersPerMo: "12,100", contactedUs: "100%", contactedUsTone: "teal", repeatRateAfter: "24.1%", repeatRateAfterTone: "amber", vsBase: "−3.1", vsBaseTone: "amber", verdict: "recoverable", verdictTone: "amber" },
-    { id: "delivery-late-silent", whatHappened: "Delivery late, said nothing", customersPerMo: "31,400", contactedUs: "0%", contactedUsTone: "rose", repeatRateAfter: "18.4%", repeatRateAfterTone: "rose", vsBase: "−8.8", vsBaseTone: "rose", verdict: "silent and worse", verdictTone: "rose" },
-    { id: "delivery-failed-complained", whatHappened: "Delivery failed, complained", customersPerMo: "1,200", contactedUs: "100%", contactedUsTone: "teal", repeatRateAfter: "31.4%", repeatRateAfterTone: "teal", vsBase: "+4.2", vsBaseTone: "teal", verdict: "we fixed it", verdictTone: "teal" },
-    { id: "delivery-failed-silent", whatHappened: "Delivery failed, said nothing", customersPerMo: "8,200", contactedUs: "0%", contactedUsTone: "rose", repeatRateAfter: "0.4%", repeatRateAfterTone: "rose", vsBase: "−26.8", vsBaseTone: "rose", verdict: "total loss", verdictTone: "rose" },
-  ],
-  closingTitle: "A customer who complains is worth more than one who does not, and by a lot",
-  closingBody:
-    "Failed delivery plus a complaint retains at 31.4%, above the base rate — because we refunded and apologised. Failed delivery in silence retains at 0.4%. The 8,200 people who did not bother to tell us are the most expensive group in this stage and they are invisible to every support tool in the building.",
-};
+// ---- Definition (SU01) is now the shared DefinitionRoute template — see
+// stage/definition/definition-route.tsx. GET .../definition has no field for the silent-failure
+// outcome breakdown below, so it isn't reproducible from live data; dropped.
 
 // ---- Overview (SU02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
 // overview-tab.tsx's buildStageKpis. The mock 4-card set below is kept only for the

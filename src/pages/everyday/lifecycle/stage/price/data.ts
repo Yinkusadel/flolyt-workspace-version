@@ -12,68 +12,14 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { CheckedRow, ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
-import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 
-// ---- Definition (PR01) -----------------------------------------------
-
-export type PriceDefinitionData = {
-  title: string;
-  subtitle: string;
-  insightTitle: string;
-  insightBody: string;
-  candidatesEyebrow: string;
-  candidates: DefinitionCandidate[];
-  needsEyebrow: string;
-  needsRows: { label: string; value: string; tone: "teal" | "amber" | "rose" }[];
-  closingTitle: string;
-  closingBody: string;
-};
-
-export const PRICE_DEFINITION: PriceDefinitionData = {
-  title: "What counts as priced",
-  subtitle: "Price · owned by Finance · last changed 12 January by Ravi Mehta",
-  insightTitle: "Price is not a moment, it is a condition every customer is permanently in",
-  insightBody:
-    "Nobody passes through Price on their way somewhere else. Every one of the 4.2M customers is on a plan, at a price, at a margin, right now — which is why this stage has no funnel and no time-to-value, and why its numbers are stocks rather than flows.",
-  candidatesEyebrow: "A customer is in Price when",
-  candidates: [
-    {
-      id: "chosen-a-plan",
-      label: "They have chosen a plan",
-      description: "Excludes 2.9M pay-as-you-go customers, who are the majority.",
-      field: "billing.plan_id · 1.31M",
-    },
-    {
-      id: "seen-a-price",
-      label: "They have seen a price",
-      description: "Everyone. True, and too broad to compute anything against.",
-      field: "any order or plan view · 4.2M",
-    },
-    {
-      id: "paid-anything",
-      label: "They have paid anything",
-      description: "Everyone with revenue attached. The only definition that lets margin be computed per customer.",
-      field: "orders or billing · 894,000 ever · 1.1M active",
-      selected: true,
-    },
-  ],
-  needsEyebrow: "What this stage needs, and what it has",
-  needsRows: [
-    { label: "Plan and price per customer", value: "billing feed · connected 12 January", tone: "teal" },
-    { label: "Discounts applied", value: "orders feed · connected", tone: "teal" },
-    { label: "Currency and FX rate at time of order", value: "orders feed · rate stored per order", tone: "teal" },
-    { label: "Cost of goods per order", value: "nothing connected · every margin figure is unavailable", tone: "rose" },
-    { label: "Payment processing cost", value: "nothing connected · estimated at 1.9% and marked as an estimate", tone: "amber" },
-    { label: "Delivery cost per order", value: "Nigeria and Kenya only · Ghana and UK unavailable", tone: "amber" },
-  ],
-  closingTitle: "Four of six inputs are present and this stage still cannot answer its own question",
-  closingBody:
-    "Price exists to tell you whether what you charge covers what it costs. Without cost of goods it can tell you what you charge, what you discount and what you collect — and it says so on every screen rather than quietly reporting revenue where margin belongs.",
-};
+// ---- Definition (PR01) is now the shared DefinitionRoute template — see
+// stage/definition/definition-route.tsx. GET .../definition has no field for the "what this stage
+// needs, and what it has" checklist below, so it isn't reproducible from live data; dropped.
 
 // ---- Overview (PR02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
 // overview-tab.tsx's buildStageKpis. Its leak table is wired too, to the same endpoint's

@@ -8,79 +8,13 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 
-// ---- Definition (RT01) -----------------------------------------------
-
-export type RetainWindowRow = {
-  id: string;
-  window: string;
-  stillReachable: string;
-  stillReachableTone: "teal" | "amber";
-  reactivationResponse: string;
-  reactivationResponseTone: "teal" | "amber" | "rose";
-  costPerRecovery: string;
-  costPerRecoveryTone: "teal" | "amber" | "rose";
-  verdict: string;
-  verdictTone: ChipTone;
-};
-
-export type RetainDefinitionData = {
-  title: string;
-  subtitle: string;
-  insightTitle: string;
-  insightBody: string;
-  candidatesEyebrow: string;
-  candidates: DefinitionCandidate[];
-  windowEyebrow: string;
-  windowRows: RetainWindowRow[];
-  closingTitle: string;
-  closingBody: string;
-};
-
-export const RETAIN_DEFINITION: RetainDefinitionData = {
-  title: "What counts as retained",
-  subtitle: "Retain · owned by Marketing · last changed 12 January by Ifeoma Nwosu",
-  insightTitle: "Retention here is one specific event, not a state of mind",
-  insightBody:
-    "A customer is retained when they place a second order. Not when they open the app, not when they stay subscribed, not when they say they are satisfied. This is the strictest definition in the lifecycle and it is the one every other stage is ultimately judged against.",
-  candidatesEyebrow: "A customer is retained when",
-  candidates: [
-    {
-      id: "opens-app-again",
-      label: "They open the app again",
-      description: "Measures curiosity. 71% of these people never order again.",
-      field: "session · 2.14M",
-    },
-    {
-      id: "second-order-ever",
-      label: "They place a second order, ever",
-      description: "No window. A second order after eleven months counts the same as one after a week.",
-      field: "orders · 1.19M",
-    },
-    {
-      id: "second-order-90-days",
-      label: "They place a second order within 90 days",
-      description: "The window where reactivation still works. After it, almost nothing does.",
-      field: "orders · 1.02M · 27.2% of acquired",
-      selected: true,
-    },
-  ],
-  windowEyebrow: "Why ninety days, and not sixty or a hundred and twenty",
-  windowRows: [
-    { id: "0-30", window: "0–30", stillReachable: "100%", stillReachableTone: "teal", reactivationResponse: "31.4%", reactivationResponseTone: "teal", costPerRecovery: "₦140", costPerRecoveryTone: "teal", verdict: "cheap", verdictTone: "teal" },
-    { id: "31-60", window: "31–60", stillReachable: "98%", stillReachableTone: "teal", reactivationResponse: "22.1%", reactivationResponseTone: "teal", costPerRecovery: "₦210", costPerRecoveryTone: "teal", verdict: "cheap", verdictTone: "teal" },
-    { id: "61-90", window: "61–90", stillReachable: "94%", stillReachableTone: "teal", reactivationResponse: "16.1%", reactivationResponseTone: "amber", costPerRecovery: "₦380", costPerRecoveryTone: "amber", verdict: "the last useful window", verdictTone: "amber" },
-    { id: "91-120", window: "91–120", stillReachable: "89%", stillReachableTone: "amber", reactivationResponse: "4.2%", reactivationResponseTone: "rose", costPerRecovery: "₦1,940", costPerRecoveryTone: "rose", verdict: "collapses", verdictTone: "rose" },
-    { id: "121-plus", window: "121+", stillReachable: "81%", stillReachableTone: "amber", reactivationResponse: "1.1%", reactivationResponseTone: "rose", costPerRecovery: "₦8,100", costPerRecoveryTone: "rose", verdict: "not worth sending", verdictTone: "rose" },
-  ],
-  closingTitle: "The window is where the cliff is, not where the quarter ends",
-  closingBody:
-    "Response falls from 16.1% to 4.2% between day 90 and day 91-plus. That is not a gradual decay, it is a cliff — and it is the single most consequential number in this stage, because it turns “we should get to that” into “about 4,100 customers become unreachable every day”.",
-};
+// ---- Definition (RT01) is now the shared DefinitionRoute template — see
+// stage/definition/definition-route.tsx. GET .../definition has no field for the reachability-
+// by-window table below (0-30 through 121+ days), so it isn't reproducible from live data; dropped.
 
 // ---- Overview (RT02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
 // overview-tab.tsx's buildStageKpis. Its leak table is wired too, to the same endpoint's

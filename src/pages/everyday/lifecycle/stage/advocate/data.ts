@@ -39,60 +39,9 @@ export const ADVOCATE_ASSIGN_OWNER_PRESET: AssignOwnerPreset = {
   confirmLabel: "Assign Tunde",
 };
 
-// ---- Definition (AV01) ----------------------------------------------------
-
-export type AdvocateWorthRow = {
-  id: string;
-  measure: string;
-  figure: string;
-  figureTone: "ink" | "teal" | "amber" | "rose";
-  against: string;
-  againstTone: "teal" | "neutral" | "rose";
-  verdict: string;
-  verdictTone: ChipTone;
-};
-
-export const ADVOCATE_DEFINITION = {
-  title: "What counts as advocacy",
-  subtitle: "Advocate · owning team Marketing · no owner assigned since 12 January",
-  insightTitle: "Advocacy is the only stage that produces customers instead of consuming them",
-  insightBody:
-    "Every other stage spends money to keep or grow someone. This one turns an existing customer into an acquisition channel at zero cost. It is also the only stage in the lifecycle with no owner, which is a sentence worth reading twice.",
-  candidatesEyebrow: "A customer is advocating when",
-  candidates: [
-    {
-      id: "says-something-positive",
-      label: "They say something positive",
-      description: "Sentiment. Pleasant, and it has never been shown to produce a customer.",
-      field: "ratings + reviews · 241,000",
-    },
-    {
-      id: "shares-a-referral-link",
-      label: "They share a referral link",
-      description: "The truest definition and Flolyt cannot measure it. Shares emit no event.",
-      field: "Unavailable · not instrumented",
-    },
-    {
-      id: "referred-first-order",
-      label: "Someone they referred places a first order",
-      description: "Attribution only on redemption. Measurable, conservative, and the only defensible option today.",
-      field: "orders · 124,000 referrers · 278,000 referred",
-      selected: true,
-    },
-  ],
-  mistakeTitle: "The chosen definition undercounts advocacy and Flolyt says so rather than compensating",
-  mistakeBody:
-    "A customer who recommends us in a WhatsApp group without a link produces a real customer that this stage will never see. Referral shares are not instrumented, so the 124,000 is a floor, not a measurement. Nobody has ever asked Engineering to fix it.",
-  tableEyebrow: "What this stage is worth, conservatively",
-  rows: [
-    { id: "customers-referred", measure: "Customers referred in 12 months", figure: "278,000", figureTone: "ink", against: "31% of all acquisition", againstTone: "teal", verdict: "largest single channel", verdictTone: "teal" },
-    { id: "cac", measure: "CAC", figure: "₦0", figureTone: "teal", against: "₦1,840 blended", againstTone: "teal", verdict: "free", verdictTone: "teal" },
-    { id: "reward-paid", measure: "Reward paid", figure: "₦278M", figureTone: "amber", against: "₦1,000 per referral", againstTone: "neutral", verdict: "a real cost", verdictTone: "amber" },
-    { id: "effective-cac", measure: "Effective CAC after rewards", figure: "₦1,000", figureTone: "teal", against: "₦1,840 blended", againstTone: "teal", verdict: "still the cheapest", verdictTone: "teal" },
-    { id: "repeat-rate", measure: "Repeat rate of referred customers", figure: "41.2%", figureTone: "teal", against: "27.2% base", againstTone: "teal", verdict: "and the best quality", verdictTone: "teal" },
-    { id: "owner", measure: "Owner of this stage", figure: "Nobody", figureTone: "rose", against: "since 12 January", againstTone: "rose", verdict: "seven months", verdictTone: "rose" },
-  ] satisfies AdvocateWorthRow[],
-};
+// ---- Definition (AV01) is now the shared DefinitionRoute template — see
+// stage/definition/definition-route.tsx. GET .../definition has no field for the "what this stage
+// is worth, conservatively" breakdown below, so it isn't reproducible from live data; dropped.
 
 // ---- Overview (AV02) -------------------------------------------------------
 

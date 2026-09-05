@@ -8,81 +8,15 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
-import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 import type { RequestInstrumentationPreset } from "@/pages/everyday/lifecycle/stage/adopt/data";
 
-// ---- Definition (EX01) -----------------------------------------------
-
-export type ExpandKindRow = {
-  id: string;
-  kind: string;
-  customers: string;
-  valueAdded: string;
-  valueAddedTone: "teal" | "amber" | "neutral";
-  medianLift: string;
-  medianLiftTone: "teal" | "neutral";
-  reversible: string;
-  reversibleTone: ChipTone;
-  ownedBy: string;
-  ownedByColor: string;
-};
-
-export type ExpandDefinitionData = {
-  title: string;
-  subtitle: string;
-  insightTitle: string;
-  insightBody: string;
-  candidatesEyebrow: string;
-  candidates: DefinitionCandidate[];
-  tableEyebrow: string;
-  rows: ExpandKindRow[];
-  closingTitle: string;
-  closingBody: string;
-};
-
-export const EXPAND_DEFINITION: ExpandDefinitionData = {
-  title: "What counts as expansion",
-  subtitle: "Expand · owned by Sales · last changed 12 January by Tunde Bakare",
-  insightTitle: "Expansion is a customer becoming worth more, not a customer buying more often",
-  insightBody:
-    "Ordering twice as much because you order twice as often is Retain's number, and counting it here would double-count the same recovery in two stages. Expansion is revenue per order, per basket or per plan — the same customer, at a higher value.",
-  candidatesEyebrow: "A customer has expanded when",
-  candidates: [
-    {
-      id: "orders-more-frequently",
-      label: "They order more frequently",
-      description: "That is Retain. Counting it here double-counts every recovery.",
-      field: "orders · 411,000",
-    },
-    {
-      id: "spends-more-per-year",
-      label: "They spend more per year",
-      description: "True of anyone who orders more often. Same problem, one layer up.",
-      field: "billing · 612,000",
-    },
-    {
-      id: "revenue-per-order-rises",
-      label: "Their revenue per order rises, or they move to a higher plan",
-      description: "Isolates value from frequency. The only definition that does not borrow Retain's win.",
-      field: "orders + billing · 218,000 · 1.4× ARPU",
-      selected: true,
-    },
-  ],
-  tableEyebrow: "The two ways a customer expands here",
-  rows: [
-    { id: "basket", kind: "Basket · spends more per order", customers: "176,000", valueAdded: "₦41M", valueAddedTone: "amber", medianLift: "+22%", medianLiftTone: "teal", reversible: "yes · any order", reversibleTone: "amber", ownedBy: "Marketing", ownedByColor: "#79883A" },
-    { id: "plan", kind: "Plan · moves to a paid tier", customers: "42,000", valueAdded: "₦188M", valueAddedTone: "teal", medianLift: "+312%", medianLiftTone: "teal", reversible: "on cancellation", reversibleTone: "teal", ownedBy: "Sales", ownedByColor: "#B4568F" },
-    { id: "account", kind: "Account · a household becomes a business", customers: "1,204", valueAdded: "₦74M", valueAddedTone: "teal", medianLift: "+1,100%", medianLiftTone: "teal", reversible: "on renewal", reversibleTone: "teal", ownedBy: "Sales", ownedByColor: "#B4568F" },
-    { id: "category", kind: "Category · orders outside their usual", customers: "94,000", valueAdded: "Unavailable", valueAddedTone: "neutral", medianLift: "Unavailable", medianLiftTone: "neutral", reversible: "—", reversibleTone: "neutral", ownedBy: "Marketing", ownedByColor: "#79883A" },
-  ],
-  closingTitle: "Category expansion cannot be measured because basket contents are not in the feed",
-  closingBody:
-    "The same missing `order_lines` field that blocks margin in Price blocks this row entirely. 94,000 customers ordered outside their usual category and Flolyt can count them but cannot say what it was worth. One field, three stages.",
-};
+// ---- Definition (EX01) is now the shared DefinitionRoute template — see
+// stage/definition/definition-route.tsx. GET .../definition has no field for the basket/plan/
+// account/category breakdown below, so it isn't reproducible from live data; dropped.
 
 // ---- Overview (EX02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
 // overview-tab.tsx's buildStageKpis. Its leak table is wired too, to the same endpoint's

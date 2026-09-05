@@ -133,22 +133,29 @@ column), and `learnings[]` is business memory (`claimId`, `statement`, `grade`, 
 all and needs the [[feedback_backend_gap_comment_convention]] treatment, not a fetch. `GET .../changes`
 (population trend) genuinely has no UI target in this app — that finding stands, unrelated to History.
 
-**"Definition" screen** (`/lifecycle/price/definition`, reached via the Overview tab's "How this
-stage is defined" header link) — `GET /lifecycle/stages/{stageKey}/definition`. Partial, roughly
-half the screen. **Matches well:** the "A customer is in Price when" 3-option list ("They have
-chosen a plan" · billing.plan_id · 1.31M / "They have seen a price" · any order or plan view · 4.2M /
-"They have paid anything," selected · orders or billing · 894,000 ever, 1.1M active) maps cleanly
-onto `candidates: [{eventKey, description, datasourceId, estimatedRows, population}]`, with the
-selected option matching `current.entryEventKey`. The header's "last changed 12 January by Ravi
-Mehta" plausibly maps to `current.effectiveFromUtc`/`createdBy`. **Doesn't match at all:** the
-"What this stage needs, and what it has" table (6 rows: Plan and price per customer, Discounts
-applied, Currency and FX rate, Cost of goods per order, Payment processing cost, Delivery cost per
-order — each with a connection-status caption like "nothing connected · every margin figure is
-unavailable" or "Nigeria and Kenya only · Ghana and UK unavailable") has no corresponding field
-anywhere in the documented `GET /definition` shape — that response describes the stage's entry-event
-definition, not a per-input data-source readiness table. This is its own gap, same class as the
-metric-line one, not yet asked of backend. Both callouts (info box up top, red "Four of six inputs
-are present..." box at the bottom) are narrative copy with no backing field, as expected.
+**"Definition" screen** (`/lifecycle/:stage/definition`, reached via the Overview tab's "How this
+stage is defined" header link) — `GET /lifecycle/stages/{stageKey}/definition`. **✅ wired
+2026-09-05, all 10 stages, one shared component** (`stage/definition/definition-route.tsx`) —
+same "9 bespoke + endpoint matches none of them" shape already found for Markets/Cohorts: every
+one of the 9 previously-bespoke per-stage screens (Price's needs-vs-has checklist, Adopt's
+feature-count table, Retain's reachability windows, Advocate's worth breakdown, Churn's
+definition-window comparison, etc.) turned out to be a verdict-comparison table this endpoint has
+no field for at all, so all 9 bespoke files + their mock data were deleted rather than kept
+unused. What's actually wired: the candidate-entry-event list (`candidates[].description ??
+eventKey`, `.eventKey` as the mono code, `.population` — the measured-value wrapper, confirmed
+2026-09-04, not a bare number — rendered via `InfoTooltip` when unavailable, with `estimatedRows`
+shown alongside labelled as rows, never substituted for population), the selected marker
+(`current.entryEventKey`), the header subtitle (`current.version`/`effectiveFromUtc`/`createdBy`),
+an amber callout for `fallbackNote` when `fallbackInUse`, an empty state when `!isDefined`, and a
+compact version-history list when `history.length > 1`. Every per-stage verdict table and every
+narrative insight/mistake/closing callout was dropped, not reproduced — none of that copy has a
+backing field. Advocate's and Churn's "Assign an owner" header CTA (a separate, still-unwired
+feature — see `PUT /lifecycle/map/{stageKey}/owner` above) was preserved as-is. The edit flow
+itself (`PUT /definition` + `POST /definition/preview`) is still unwired — "Preview the change"
+remains a non-functional button, same as before this pass; only the read/display side is done.
+Live-verified only via a network-mocked Playwright pass (real captured response shapes, not a real
+session) across defined/fallback/empty-candidates states — not yet checked against a real
+backend response.
 
 ## Per-endpoint entries
 
@@ -373,9 +380,9 @@ wired** — verify with a real 409/400 test against churn before trusting either
 - **Auth:** Bearer token.
 - **Request:** path `stageKey`.
 - **Response `data`:** `{ stageKey, stageName, canEdit, isDefined, fallbackInUse, fallbackNote, current: {version, entryEventKey, exitRules: [{kind, eventKey, days, movesToStageKey}] | null, exclusions: [{kind, mergeKey}] | null, effectiveFromUtc, createdByUserId, createdBy, createdAtUtc} | null, history: [{version, createdAtUtc, createdByUserId, createdBy, isCurrent}], candidates: [{eventKey, description, datasourceId, estimatedRows, population}] }`. `candidates[].description`/`population` nullable per the spec's example. **Clarified 2026-09-04:** the spec's prose explicitly calls `candidates[].population` "a measured value — unavailable until counted, and never filled in from `estimatedRows`" — same wrapper as `GET /map`'s `atStake`, not a plain nullable number as the entry previously implied. `estimatedRows` counts rows, not people, and must never stand in for `population` in the UI even while it's unavailable.
-- **Used by:** service + hook exist (`get-stage-definition.ts` / `use-get-stage-definition.ts`), not wired — target `stage/definition/definition-route.tsx`.
-- **Status:** service/hook ready, not wired.
-- **Notes:** New workspace has `isDefined: false`/`current: null` for all 10 — never seeded, since a definition is a claim about this tenant's own data. `fallbackInUse` marks activate/retain/churn using the classifier's recency thresholds until defined.
+- **Used by:** **wired 2026-09-05, all 10 stages** — `stage/definition/definition-route.tsx` via `use-get-stage-definition.ts` / `get-stage-definition.ts`. `exitRules`/`exclusions`/`canEdit` fetched but not yet surfaced in the UI (no design precedent for them; the original mock never showed exit rules at all).
+- **Status:** wired (all 10 stages, one shared component — see coverage tracker above), not yet live-verified against a real backend response.
+- **Notes:** New workspace has `isDefined: false`/`current: null` for all 10 — never seeded, since a definition is a claim about this tenant's own data. `fallbackInUse` marks activate/retain/churn using the classifier's recency thresholds until defined. **Type fix 2026-09-05:** `StageDefinitionCandidateDto.population` was typed as a bare `number | null` in the scaffolded service file, contradicting this entry's own 2026-09-04 clarification that it's the measured-value wrapper — same stale-shape bug class hit repeatedly elsewhere in this domain (`GET /map`, `GET /stages/{stageKey}`, `GET .../compare`, `GET .../cohorts`). Fixed to `LifecycleMeasuredValueDto<number>` before wiring, not after.
 
 ### PUT /lifecycle/stages/{stageKey}/definition
 

@@ -41,63 +41,10 @@ export const CHURN_ASSIGN_OWNER_PRESET: AssignOwnerPreset = {
   confirmLabel: "Assign Ngozi",
 };
 
-// ---- Definition (CH01) -----------------------------------------------------
-
-export type ChurnDefinitionRow = {
-  id: string;
-  definition: string;
-  churnedYr: string;
-  churnedYrTone: "rose" | "amber" | "teal" | "ink";
-  monthlyRate: string;
-  monthlyRateTone: "rose" | "amber" | "teal" | "ink";
-  returnUnaided: string;
-  returnUnaidedTone: "rose" | "amber" | "teal";
-  winbackResponse: string;
-  winbackResponseTone: "rose" | "amber" | "teal";
-  verdict: string;
-  verdictTone: ChipTone;
-};
-
-export const CHURN_DEFINITION = {
-  title: "What counts as churned",
-  subtitle: "Churn · owning team Customer Success · no owner assigned since 12 January",
-  insightTitle: "Churn is a date somebody chose, not an event that happened",
-  insightBody:
-    "Almost nobody tells you they have left. A consumer stops ordering and at some point you decide they are gone. Where that line sits changes the churn rate, the win-back window, the forecast and the size of every cohort — which is why this is the most consequential definition in the lifecycle and the one most often set by accident.",
-  candidatesEyebrow: "A customer has churned when",
-  candidates: [
-    {
-      id: "cancel-or-delete",
-      label: "They cancel or delete their account",
-      description: "Honest, and it counts 5% of the people who actually left.",
-      field: "billing + identity · 67,000 / yr",
-    },
-    {
-      id: "60-days-no-order",
-      label: "60 days pass with no order",
-      description: "Too aggressive. 31% of these come back on their own within 90 days.",
-      field: "orders · 1.41M / yr",
-    },
-    {
-      id: "90-days-no-order",
-      label: "90 days pass with no order",
-      description: "Where the return rate collapses to 4.2%. The same cliff Retain uses, one stage later.",
-      field: "orders · 1.02M / yr · 3.1%/mo",
-      selected: true,
-    },
-  ],
-  tableEyebrow: "What moving the line by thirty days would do",
-  rows: [
-    { id: "30-days", definition: "30 days no order", churnedYr: "2.14M", churnedYrTone: "rose", monthlyRate: "6.1%", monthlyRateTone: "rose", returnUnaided: "48.1%", returnUnaidedTone: "rose", winbackResponse: "31.4%", winbackResponseTone: "teal", verdict: "counts живых customers", verdictTone: "rose" },
-    { id: "60-days", definition: "60 days", churnedYr: "1.41M", churnedYrTone: "amber", monthlyRate: "4.4%", monthlyRateTone: "amber", returnUnaided: "31.1%", returnUnaidedTone: "amber", winbackResponse: "16.1%", winbackResponseTone: "teal", verdict: "still too early", verdictTone: "amber" },
-    { id: "90-days-current", definition: "90 days · current", churnedYr: "1.02M", churnedYrTone: "ink", monthlyRate: "3.1%", monthlyRateTone: "ink", returnUnaided: "4.2%", returnUnaidedTone: "teal", winbackResponse: "4.2%", winbackResponseTone: "amber", verdict: "the cliff", verdictTone: "teal" },
-    { id: "120-days", definition: "120 days", churnedYr: "881,000", churnedYrTone: "teal", monthlyRate: "2.6%", monthlyRateTone: "teal", returnUnaided: "1.1%", returnUnaidedTone: "teal", winbackResponse: "1.1%", winbackResponseTone: "rose", verdict: "flatters the rate", verdictTone: "amber" },
-    { id: "180-days", definition: "180 days", churnedYr: "612,000", churnedYrTone: "teal", monthlyRate: "1.8%", monthlyRateTone: "teal", returnUnaided: "0.2%", returnUnaidedTone: "teal", winbackResponse: "0.4%", winbackResponseTone: "rose", verdict: "a vanity number", verdictTone: "rose" },
-  ] satisfies ChurnDefinitionRow[],
-  closingTitle: "Every row on this table is the same company",
-  closingBody:
-    "Churn is 1.8% a month or 6.1% a month depending only on where the line is drawn. Moving it to 180 days would halve the reported rate and change nothing about the business. Flolyt fixes it at the point where unaided return collapses — 90 days — and shows the alternatives so nobody can quietly move it later.",
-};
+// ---- Definition (CH01) is now the shared DefinitionRoute template — see
+// stage/definition/definition-route.tsx. GET .../definition has no field for the definition-
+// window comparison below (30/60/90/120/180 days), so it isn't reproducible from live data;
+// dropped.
 
 // ---- Overview (CH02) --------------------------------------------------------
 

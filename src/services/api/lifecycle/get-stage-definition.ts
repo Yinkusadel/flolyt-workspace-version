@@ -2,6 +2,7 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
+import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
 export interface StageExitRuleDto {
   kind: string;
@@ -39,8 +40,13 @@ export interface StageDefinitionCandidateDto {
   description: string | null;
   datasourceId: string;
   estimatedRows: number;
-  /** Measured count of distinct customers — unavailable until counted, never backfilled from estimatedRows. */
-  population: number | null;
+  /**
+   * A measured value, not a bare number — confirmed 2026-09-04 from the spec's own prose
+   * ("unavailable until counted, never filled in from estimatedRows"), same wrapper as GET
+   * /map's atStake. `estimatedRows` counts rows, not people, and must never substitute for this
+   * while it's unavailable.
+   */
+  population: LifecycleMeasuredValueDto<number>;
 }
 
 export interface StageDefinitionData {

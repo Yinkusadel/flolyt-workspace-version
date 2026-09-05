@@ -9,78 +9,15 @@ import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { ActionCard } from "@/pages/everyday/lifecycle/stage/detail/detail-drilldown";
-import type { DefinitionCandidate } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 
-// ---- Definition (AD01) -----------------------------------------------
-
-export type AdoptDefinitionVerdictRow = {
-  id: string;
-  featuresUsed: string;
-  customers: string;
-  stillOrdering90d: string;
-  stillOrderingTone: "rose" | "amber" | "teal";
-  ordersPerMonth: string;
-  verdict: string;
-  verdictTone: ChipTone;
-};
-
-export type AdoptDefinitionData = {
-  title: string;
-  subtitle: string;
-  insightTitle: string;
-  insightBody: string;
-  candidatesEyebrow: string;
-  candidates: DefinitionCandidate[];
-  verdictEyebrow: string;
-  verdictRows: AdoptDefinitionVerdictRow[];
-  closingTitle: string;
-  closingBody: string;
-};
-
-export const ADOPT_DEFINITION: AdoptDefinitionData = {
-  title: "What counts as adopting",
-  subtitle: "Adopt · owned by Product · last changed 12 January by Zainab Yusuf",
-  insightTitle: "Adoption is breadth, not usage",
-  insightBody:
-    "A customer who orders forty times and only ever taps “order again” has used one feature forty times. A customer who orders eight times using reorder, scheduled delivery, a saved address and the wallet has adopted the product. The second one stays. This stage measures the second thing.",
-  candidatesEyebrow: "A customer is adopting when",
-  candidates: [
-    {
-      id: "ordered-more-than-once",
-      label: "They have ordered more than once",
-      description: "That is Retain's question, not this one. It measures whether they came back, not what they use.",
-      field: "orders · 1.19M",
-    },
-    {
-      id: "any-feature-beyond-ordering",
-      label: "They use any feature beyond ordering",
-      description: "Too generous. Saving one address counts the same as running a weekly schedule.",
-      field: "events · 782,000",
-    },
-    {
-      id: "two-or-more-features",
-      label: "They use two or more features beyond ordering",
-      description: "The point at which the next order stops being a decision and starts being a habit.",
-      field: "events · 411,000 · 2.1 average",
-      selected: true,
-    },
-  ],
-  verdictEyebrow: "Why two, and not three or one",
-  verdictRows: [
-    { id: "0", featuresUsed: "0 · ordering only", customers: "781,000", stillOrdering90d: "18.1%", stillOrderingTone: "rose", ordersPerMonth: "1.1", verdict: "at risk", verdictTone: "rose" },
-    { id: "1", featuresUsed: "1", customers: "371,000", stillOrdering90d: "31.4%", stillOrderingTone: "amber", ordersPerMonth: "2.4", verdict: "fragile", verdictTone: "amber" },
-    { id: "2", featuresUsed: "2", customers: "218,000", stillOrdering90d: "61.1%", stillOrderingTone: "teal", ordersPerMonth: "4.9", verdict: "the step change", verdictTone: "teal" },
-    { id: "3", featuresUsed: "3", customers: "131,000", stillOrdering90d: "68.4%", stillOrderingTone: "teal", ordersPerMonth: "6.8", verdict: "strong", verdictTone: "teal" },
-    { id: "4", featuresUsed: "4 or more", customers: "62,000", stillOrdering90d: "74.1%", stillOrderingTone: "teal", ordersPerMonth: "9.1", verdict: "strongest", verdictTone: "teal" },
-  ],
-  closingTitle: "The jump from one feature to two is 30 points. Every jump after that is seven.",
-  closingBody:
-    "That is where the definition sits, and it is the only line on this table that is not a smooth curve. Two features is not a target anybody set — it is where the data changes shape, which is the only defensible place to put a threshold.",
-};
+// ---- Definition (AD01) is now the shared DefinitionRoute template — see
+// stage/definition/definition-route.tsx. GET .../definition has no field for the feature-count
+// verdict table below (0 through 4+ features vs. still-ordering-at-90-days), so it isn't
+// reproducible from live data; dropped.
 
 // ---- Overview (AD02) is wired to the shared GET /lifecycle/stages/{stageKey} — see
 // overview-tab.tsx's buildStageKpis. Its leak table is wired too, to the same endpoint's

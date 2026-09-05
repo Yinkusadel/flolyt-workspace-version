@@ -11,7 +11,6 @@ import type { CheckedRow, ActionCard } from "@/pages/everyday/lifecycle/stage/de
 import type { ThresholdPreset } from "@/pages/everyday/lifecycle/stage/modals/set-a-threshold-modal";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
-import type { DefinitionData } from "@/pages/everyday/lifecycle/stage/definition/definition-route";
 
 // ---- Overview (AC02) --------------------------------------------------
 // KPI row and leak table both wired to GET /lifecycle/stages/activate (buildStageKpis +
@@ -54,48 +53,10 @@ export const ACTIVATE_SHARE_EXPORT_PRESET: ShareOrExportPreset = {
     "116,000 customers with no reading behind them travel with the file rather than being dropped from it — an export where the gaps quietly vanish is how an unavailable becomes a zero in someone else's deck.",
 };
 
-// ---- Definition (AC01) -------------------------------------------------
-
-export const ACTIVATE_DEFINITION: DefinitionData = {
-  title: "What counts as activated",
-  subtitle: "Activate · owned by Product · last changed 12 January by Zainab Yusuf",
-  insightTitle: "Activation is the moment a customer learns the product works",
-  insightBody:
-    "Not the moment they pay. A first order that arrives late, cold or not at all is a transaction, not an activation — and every downstream stage behaves as though it never happened. This definition is why Retain's numbers are what they are.",
-  candidatesEyebrow: "A customer is activated when",
-  candidates: [
-    {
-      id: "first-order",
-      label: "They place a first order",
-      description: "The weakest definition. It counts the 71,000 whose order never arrived.",
-      field: "orders.first_order · 894,000",
-    },
-    {
-      id: "first-order-delivered",
-      label: "Their first order is delivered",
-      description: "Better. Still counts the 187,000 who never came back after it.",
-      field: "delivery.completed · 823,000",
-    },
-    {
-      id: "delivered-and-returned",
-      label: "Delivered, and they return within 14 days",
-      description: "41% of acquired. The only one of the three that predicts a second order.",
-      field: "delivery.completed + session · 366,000",
-      selected: true,
-    },
-  ],
-  verdictEyebrow: "How the third definition was chosen",
-  verdictRows: [
-    { id: "placed-first-order", signal: "Placed a first order", customers: "894,000", reach: "27.2%", reachTone: "ink", predictive: "barely", predictiveTone: "amber", verdict: "too weak", verdictTone: "amber" },
-    { id: "first-order-delivered", signal: "First order delivered", customers: "823,000", reach: "29.6%", reachTone: "ink", predictive: "weak", predictiveTone: "amber", verdict: "too weak", verdictTone: "amber" },
-    { id: "delivered-returned-14", signal: "Delivered + returned in 14 days", customers: "366,000", reach: "61.4%", reachTone: "teal", predictive: "strong", predictiveTone: "teal", verdict: "chosen", verdictTone: "teal" },
-    { id: "delivered-rated-4", signal: "Delivered + rated 4 or better", customers: "241,000", reach: "64.1%", reachTone: "teal", predictive: "strong", predictiveTone: "teal", verdict: "too few rate", verdictTone: "amber" },
-    { id: "two-orders-30", signal: "Two orders in 30 days", customers: "198,000", reach: "100%", reachTone: "neutral", predictive: "circular", predictiveTone: "rose", verdict: "measures itself", verdictTone: "rose" },
-  ],
-  mistakeTitle: "The last row is the mistake most activation definitions make",
-  mistakeBody:
-    "“Two orders in 30 days” predicts a second order perfectly, because it is a second order. A definition that contains its own outcome cannot be used to find out what causes it — it just renames the thing you were trying to explain.",
-};
+// ---- Definition (AC01) is now the shared DefinitionRoute template — see
+// stage/definition/definition-route.tsx. GET .../definition has no field for the candidate-signal
+// verdict table it used to render (reach/predictive/verdict columns), so it isn't reproducible
+// from live data; dropped.
 
 // ---- Time to value (AC03) and Paths (AC04) are wired to
 // GET /lifecycle/activate/time-to-value and GET /lifecycle/activate/paths — see
