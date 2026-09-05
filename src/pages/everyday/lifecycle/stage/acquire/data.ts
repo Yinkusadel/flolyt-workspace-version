@@ -6,18 +6,15 @@
  */
 
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
-import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 
 // ---- Overview (A02) --------------------------------------------------
 // The KPI row is wired live (see overview-tab.tsx's buildAcquireKpis) — no mock export here
-// anymore, per feedback_no_hardcoded_fallback.
-
-export const ACQUIRE_OVERVIEW_BAR_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Acquired · last year", value: "682,000 · 38.1% reached a second order", percent: 68, tone: "teal" },
-  { label: "Acquired · this year", value: "894,000 · 27.2% reached a second order", percent: 89, tone: "rose" },
-  { label: "Second orders · last year", value: "260,000", percent: 26, tone: "teal" },
-  { label: "Second orders · this year", value: "243,000", percent: 24, tone: "rose" },
-];
+// anymore, per feedback_no_hardcoded_fallback. The "Acquired last year vs this year / second
+// orders last year vs this year" bar-row comparison that used to live here (ACQUIRE_OVERVIEW_BAR_ROWS)
+// is gone too, 2026-09-05 — GET /lifecycle/stages/{stageKey} has no year-over-year population or
+// second-order breakdown field to back it (only the single `yearOverYear` scalar riding along on
+// `population`, already surfaced elsewhere), so it was pure fabricated content with no live
+// counterpart. See overview-tab.tsx.
 
 // The leak table (all 10 stages, shared) is wired to GET /lifecycle/stages/{stageKey}'s
 // `departures[]` — see overview-tab.tsx. No per-stage mock row list here anymore.

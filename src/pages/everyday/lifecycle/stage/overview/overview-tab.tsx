@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { WideBarRow, type BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { CHIP_INTERACTIVE_CLASS, Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
@@ -20,7 +19,7 @@ import { STAGES } from "@/pages/everyday/lifecycle/data";
 import { formatCompactCurrency, formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetStage } from "@/features/lifecycle/use-get-stage";
 import type { StageData, StageDepartureDto } from "@/services/api/lifecycle/get-stage";
-import { ACQUIRE_OPEN_ROOM_PRESET, ACQUIRE_OVERVIEW_BAR_ROWS, ACQUIRE_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/acquire/data";
+import { ACQUIRE_OPEN_ROOM_PRESET, ACQUIRE_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/acquire/data";
 import { ACTIVATE_OPEN_ROOM_PRESET, ACTIVATE_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/activate/data";
 import { PRICE_OPEN_ROOM_PRESET, PRICE_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/price/data";
 import { ADOPT_OPEN_ROOM_PRESET, ADOPT_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/adopt/data";
@@ -48,8 +47,6 @@ type OverviewData = {
   leadTitle?: string;
   leadBody?: string;
   leadTone?: "ultra" | "amber" | "rose" | "teal" | "neutral";
-  barEyebrow?: string;
-  barRows?: { label: string; value: string; percent: number; tone: BarTone }[];
   insightTitle: string;
   insightBody: string;
   insightTone?: "ultra" | "amber" | "rose" | "teal" | "neutral";
@@ -64,8 +61,6 @@ type OverviewData = {
 
 const OVERVIEW_DATA: Record<string, OverviewData> = {
   acquire: {
-    barEyebrow: "Volume is up 31% and quality is down 11 points",
-    barRows: ACQUIRE_OVERVIEW_BAR_ROWS,
     insightTitle: "More customers, fewer second orders, and both numbers are correct",
     insightBody:
       "Acquisition rose 212,000 while second orders fell 17,000. Read either alone and you get the opposite answer about whether this stage is working — which is why the headline figure on this screen is a rate, not a count.",
@@ -380,40 +375,16 @@ export function OverviewTab() {
         onRetry={() => stageQuery.refetch()}
       />
 
-      {data.barEyebrow && data.barRows && (
-        <section className="space-y-3">
-          <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-            {data.barEyebrow}
-          </p>
-          <div className="space-y-3">
-            {data.barRows.map((row) => (
-              <WideBarRow key={row.label} label={row.label} value={row.value} percent={row.percent} tone={row.tone} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {!data.barRows && (
-        <section className="space-y-3">
-          <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-            {data.leakEyebrow}
-          </p>
-          {leakTable}
-        </section>
-      )}
+      <section className="space-y-3">
+        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
+          {data.leakEyebrow}
+        </p>
+        {leakTable}
+      </section>
 
       <Callout tone={data.insightTone ?? "ultra"} title={data.insightTitle}>
         {data.insightBody}
       </Callout>
-
-      {data.barRows && (
-        <section className="space-y-3">
-          <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-            {data.leakEyebrow}
-          </p>
-          {leakTable}
-        </section>
-      )}
 
       {data.showStageRail && <OverviewStageRail stages={STAGES} activeSlug={stage.slug} />}
 
