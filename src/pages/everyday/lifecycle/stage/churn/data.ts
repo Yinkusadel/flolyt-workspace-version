@@ -512,57 +512,10 @@ export const CHURN_WINBACK_OPEN_ROOM_PRESET: OpenRoomPreset = {
   participantsNote: "Churn Reason leads · no owner assigned since 12 January",
 };
 
-// ---- Cohorts (CH06, stage-specific layout) ----------------------------------
-
-export type ChurnCohortRow = {
-  id: string;
-  cohort: string;
-  acquired: string;
-  churnedBy180d: string;
-  rate: string;
-  rateTone: "teal" | "rose" | "neutral";
-  neverActivated: string;
-  neverActivatedTone: "teal" | "rose" | "neutral";
-  medianDaysAlive: string;
-  medianDaysAliveTone: "teal" | "rose" | "neutral";
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
-
-export const CHURN_COHORT_ROWS: ChurnCohortRow[] = [
-  { id: "january", cohort: "January", acquired: "61,200", churnedBy180d: "34,900", rate: "57.0%", rateTone: "teal", neverActivated: "47.9%", neverActivatedTone: "teal", medianDaysAlive: "71", medianDaysAliveTone: "teal", vsFeb: "+0.4", vsFebTone: "teal" },
-  { id: "february", cohort: "February", acquired: "64,900", churnedBy180d: "37,100", rate: "57.2%", rateTone: "teal", neverActivated: "47.9%", neverActivatedTone: "teal", medianDaysAlive: "70", medianDaysAliveTone: "teal", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", acquired: "82,100", churnedBy180d: "55,500", rate: "67.6%", rateTone: "rose", neverActivated: "58.5%", neverActivatedTone: "rose", medianDaysAlive: "48", medianDaysAliveTone: "rose", vsFeb: "+10.4", vsFebTone: "rose" },
-  { id: "april", cohort: "April", acquired: "78,300", churnedBy180d: "53,300", rate: "68.1%", rateTone: "rose", neverActivated: "58.9%", neverActivatedTone: "rose", medianDaysAlive: "47", medianDaysAliveTone: "rose", vsFeb: "+10.9", vsFebTone: "rose" },
-  { id: "may", cohort: "May", acquired: "77,600", churnedBy180d: "52,600", rate: "67.8%", rateTone: "rose", neverActivated: "58.0%", neverActivatedTone: "rose", medianDaysAlive: "48", medianDaysAliveTone: "rose", vsFeb: "+10.6", vsFebTone: "rose" },
-  { id: "june", cohort: "June", acquired: "76,100", churnedBy180d: "Unavailable", rate: "Unavailable", rateTone: "neutral", neverActivated: "59.4%", neverActivatedTone: "rose", medianDaysAlive: "Unavailable", medianDaysAliveTone: "neutral", vsFeb: "—", vsFebTone: "neutral" },
-];
-
-export const CHURN_COHORT_CLOSING = {
-  title: "Median days alive fell from 70 to 48 in the week of 4 March",
-  body: "Post-March customers do not just churn more, they churn 22 days sooner — inside the win-back window rather than outside it. That is the one genuinely good thing on this screen: a customer who leaves at day 48 is still reachable, and 528,000 of them are sitting in the untouched row of the win-back table.",
-};
-
-export const CHURN_COHORT_ATTRIBUTION_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Never activated · the fee at checkout", value: "+8.1 pts", percent: 78, tone: "rose" },
-  { label: "Fee complaint after activating", value: "+1.7 pts", percent: 16, tone: "rose" },
-  { label: "Everything else", value: "+0.6 pts", percent: 6, tone: "amber" },
-];
-
-export const CHURN_COHORTS_OPEN_ROOM_PRESET: OpenRoomPreset = {
-  condition: "March cohort churn spike",
-  carriedIn: [
-    { label: "Stage", value: "Churn" },
-    { label: "Cohort", value: "March" },
-    { label: "Measured at", value: "180 days" },
-    { label: "Markets", value: "Nigeria" },
-    { label: "Excludes", value: "test accounts, merged duplicates" },
-  ],
-  countedSummary: "82,100 acquired · 67.6% churned by 180 days",
-  countedNote: "Counted 6 minutes ago · +10.4 pts vs February",
-  participants: [{ initials: "CH", kind: "agent" }],
-  participantsNote: "Churn Reason leads · no owner assigned since 12 January",
-};
+// ---- Cohorts (CH06) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
+// acquire/data.ts's Cohorts note and cohorts-tab.tsx. Its "Open a war room" header button is
+// dropped along with it, same reason as its Markets tab's — seeded with a hardcoded March-cohort
+// finding tied to the old fabricated mock, not a generic affordance.
 
 // ---- Markets (CH07) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
 // acquire/data.ts's Markets note and markets-tab.tsx. Churn's bespoke "Ghana across all ten

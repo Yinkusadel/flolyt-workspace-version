@@ -193,36 +193,10 @@ export const ACQUIRE_CHANNEL_DETAILS: Record<string, ChannelDetail> = {
   },
 };
 
-// ---- Cohorts (A06) ------------------------------------------------------
-
-export type CohortRow = {
-  id: string;
-  cohort: string;
-  acquired: string;
-  cac: string;
-  day30: string;
-  day60: string;
-  day90: string;
-  valuePerCustomer: string;
-  valueTone: "teal" | "rose" | "neutral";
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
-
-export const ACQUIRE_COHORT_ROWS: CohortRow[] = [
-  { id: "january", cohort: "January", acquired: "61,200", cac: "₦1,410", day30: "22.4%", day60: "33.8%", day90: "38.1%", valuePerCustomer: "₦9,400", valueTone: "teal", vsFeb: "+0.7", vsFebTone: "teal" },
-  { id: "february", cohort: "February", acquired: "64,900", cac: "₦1,466", day30: "21.9%", day60: "33.1%", day90: "37.4%", valuePerCustomer: "₦9,200", valueTone: "teal", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", acquired: "82,100", cac: "₦1,904", day30: "14.1%", day60: "22.6%", day90: "27.2%", valuePerCustomer: "₦6,700", valueTone: "rose", vsFeb: "−10.2", vsFebTone: "rose" },
-  { id: "april", cohort: "April", acquired: "78,300", cac: "₦2,011", day30: "13.8%", day60: "22.1%", day90: "26.8%", valuePerCustomer: "₦6,600", valueTone: "rose", vsFeb: "−10.6", vsFebTone: "rose" },
-  { id: "may", cohort: "May", acquired: "77,600", cac: "₦1,988", day30: "13.9%", day60: "22.4%", day90: "27.1%", valuePerCustomer: "₦6,600", valueTone: "rose", vsFeb: "−10.3", vsFebTone: "rose" },
-  { id: "june", cohort: "June", acquired: "76,100", cac: "₦1,940", day30: "14.2%", day60: "22.9%", day90: "Unavailable", valuePerCustomer: "Unavailable", valueTone: "neutral", vsFeb: "—", vsFebTone: "neutral" },
-];
-
-export const ACQUIRE_COHORT_BREAK_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Jan–Feb cohorts · before 4 March", value: "37.8% average", percent: 38, tone: "teal" },
-  { label: "Mar–May cohorts · after", value: "27.0% average", percent: 27, tone: "rose" },
-  { label: "UK and Ghana · fee not shipped until June", value: "37.6%", percent: 38, tone: "teal" },
-];
+// ---- Cohorts (A06) is wired to GET /lifecycle/stages/{stageKey}/cohorts (shared across all 10
+// stages) — see cohorts-tab.tsx and docs/endpoints/lifecycle.md. That endpoint returns one
+// generic age-aligned shape (entered/stillInStageShare/values), not the per-stage CAC/day30-90
+// or repeat-rate/ARPU-style columns every stage's old bespoke mock had.
 
 // ---- Unit economics (A07) ------------------------------------------------
 

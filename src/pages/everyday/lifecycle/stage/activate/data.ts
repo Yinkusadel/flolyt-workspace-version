@@ -244,60 +244,8 @@ export const ACTIVATE_PATH_OPEN_ROOM_PRESET: OpenRoomPreset = {
   participantsNote: "Product Reason leads · Acquisition Quality joins, the cause is upstream",
 };
 
-// ---- Cohorts (AC06, stage-specific layout) -------------------------------
-
-export type ActivateCohortRow = {
-  id: string;
-  cohort: string;
-  acquired: string;
-  activated: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  medianDays: string;
-  medianTone: "teal" | "rose" | "neutral";
-  guestShare: string;
-  guestShareTone: "ink" | "amber";
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
-
-export const ACTIVATE_COHORT_ROWS: ActivateCohortRow[] = [
-  { id: "january", cohort: "January", acquired: "61,200", activated: "31,900", rate: "52.1%", rateTone: "teal", medianDays: "3.2", medianTone: "teal", guestShare: "18.1%", guestShareTone: "ink", vsFeb: "+0.4", vsFebTone: "teal" },
-  { id: "february", cohort: "February", acquired: "64,900", activated: "33,800", rate: "52.1%", rateTone: "teal", medianDays: "3.4", medianTone: "teal", guestShare: "18.9%", guestShareTone: "ink", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", acquired: "82,100", activated: "34,100", rate: "41.5%", rateTone: "rose", medianDays: "6.0", medianTone: "rose", guestShare: "24.1%", guestShareTone: "amber", vsFeb: "−10.6", vsFebTone: "rose" },
-  { id: "april", cohort: "April", acquired: "78,300", activated: "32,200", rate: "41.1%", rateTone: "rose", medianDays: "6.2", medianTone: "rose", guestShare: "25.4%", guestShareTone: "amber", vsFeb: "−11.0", vsFebTone: "rose" },
-  { id: "may", cohort: "May", acquired: "77,600", activated: "32,600", rate: "42.0%", rateTone: "rose", medianDays: "6.1", medianTone: "rose", guestShare: "24.9%", guestShareTone: "amber", vsFeb: "−10.1", vsFebTone: "rose" },
-  { id: "june", cohort: "June", acquired: "76,100", activated: "30,900", rate: "40.6%", rateTone: "rose", medianDays: "Unavailable", medianTone: "neutral", guestShare: "26.1%", guestShareTone: "amber", vsFeb: "—", vsFebTone: "neutral" },
-];
-
-export const ACTIVATE_COHORT_CAUSE_CARDS: InsightCard[] = [
-  {
-    id: "cause-one-fee",
-    agentTag: "PR",
-    meta: "Cause one · the fee",
-    title: "−7.4 points of the −10.6",
-    body: "Measured against the UK and Ghana, where the fee did not ship until June. Those markets held at 51.8% through the same period.",
-    footnote: "causal · high confidence",
-    tone: "rose",
-  },
-  {
-    id: "cause-two-channel-mix",
-    agentTag: "AQ",
-    meta: "Cause two · the channel mix",
-    title: "−3.2 points of the −10.6",
-    body: "Guest share rose from 18.9% to 24.1% because the Ghana campaign and paid social both land on web, where guest checkout is the default. Guests activate at 12%.",
-    footnote: "causal · from Acquire",
-    tone: "amber",
-  },
-  {
-    id: "what-is-left",
-    meta: "WHAT IS LEFT",
-    title: "Nothing unexplained",
-    body: "−7.4 and −3.2 account for the full −10.6 within measurement error. This is unusual and worth saying — most cohort breaks leave a residual nobody can name.",
-    footnote: "fully attributed",
-    tone: "teal",
-  },
-];
+// ---- Cohorts (AC06) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
+// acquire/data.ts's Cohorts note and cohorts-tab.tsx.
 
 // ---- Markets (AC07) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
 // acquire/data.ts's Markets note and markets-tab.tsx.

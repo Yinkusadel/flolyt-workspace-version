@@ -410,60 +410,11 @@ export const ADVOCATE_REWARDS_OPEN_ROOM_PRESET: OpenRoomPreset = {
   participantsNote: "Referral leads · no stage owner, escalated to Ada by default",
 };
 
-// ---- Cohorts (AV06, stage-specific layout) ---------------------------------
-
-export type AdvocateCohortRow = {
-  id: string;
-  cohort: string;
-  reached180: string;
-  referredAnyone: string;
-  rate: string;
-  rateTone: "teal" | "rose" | "neutral";
-  referralsEach: string;
-  referralsEachTone: "teal" | "rose" | "neutral";
-  referredCustomers: string;
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
-
-export const ADVOCATE_COHORT_ROWS: AdvocateCohortRow[] = [
-  { id: "january", cohort: "January", reached180: "23,300", referredAnyone: "3,100", rate: "13.3%", rateTone: "teal", referralsEach: "2.4", referralsEachTone: "teal", referredCustomers: "7,440", vsFeb: "+0.3", vsFebTone: "teal" },
-  { id: "february", cohort: "February", reached180: "24,300", referredAnyone: "3,200", rate: "13.2%", rateTone: "teal", referralsEach: "2.4", referralsEachTone: "teal", referredCustomers: "7,680", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", reached180: "22,300", referredAnyone: "2,100", rate: "9.4%", rateTone: "rose", referralsEach: "1.9", referralsEachTone: "rose", referredCustomers: "3,990", vsFeb: "−3.8", vsFebTone: "rose" },
-  { id: "april", cohort: "April", reached180: "21,000", referredAnyone: "1,900", rate: "9.0%", rateTone: "rose", referralsEach: "1.9", referralsEachTone: "rose", referredCustomers: "3,610", vsFeb: "−4.2", vsFebTone: "rose" },
-  { id: "may", cohort: "May", reached180: "21,000", referredAnyone: "2,000", rate: "9.5%", rateTone: "rose", referralsEach: "1.8", referralsEachTone: "rose", referredCustomers: "3,600", vsFeb: "−3.7", vsFebTone: "rose" },
-  { id: "june", cohort: "June", reached180: "Unavailable", referredAnyone: "Unavailable", rate: "Unavailable", rateTone: "neutral", referralsEach: "Unavailable", referralsEachTone: "neutral", referredCustomers: "Unavailable", vsFeb: "—", vsFebTone: "neutral" },
-];
-
-export const ADVOCATE_COHORT_CLOSING = {
-  title: "The compounding loss nobody has costed",
-  body: "Cohorts acquired after March refer 3.8 points less often and each referral is 0.5 smaller. That is roughly 3,900 fewer referred customers per cohort — and referred customers refer at 13.3% themselves. A cohort that does not advocate does not just cost its own value, it costs the cohort behind it.",
-};
-
-export const ADVOCATE_COHORT_MARCH_BREAK_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Mar–May cohorts · referrals lost", value: "11,600 customers not acquired", percent: 100, tone: "rose" },
-  { label: "Second generation · their referrals", value: "1,540 more not acquired", percent: 13, tone: "rose" },
-  { label: "CAC value of both", value: "≈₦24M at blended CAC", percent: 21, tone: "rose" },
-  { label: "Counted anywhere in the ₦412M", value: "no · this is separate", percent: 0, tone: "amber" },
-];
-
-export const ADVOCATE_COHORTS_OPEN_ROOM_PRESET: OpenRoomPreset = {
-  condition: "Referral rate down 3.8 points since March, compounding across two generations",
-  carriedIn: [
-    { label: "Stage", value: "Advocate" },
-    { label: "Cohorts", value: "Mar–May" },
-    { label: "Measured at", value: "180 days" },
-    { label: "Markets", value: "Nigeria" },
-    { label: "Excludes", value: "test accounts, merged duplicates" },
-  ],
-  countedSummary: "11,600 customers not acquired · ≈₦24M at blended CAC",
-  countedNote: "Counted 6 minutes ago · a second-generation loss, not counted in the ₦412M",
-  participants: [
-    { initials: "AD", kind: "human", color: "#2E8B7F" },
-    { initials: "RF", kind: "agent" },
-  ],
-  participantsNote: "Referral leads · no stage owner, escalated to Ada by default",
-};
+// ---- Cohorts (AV06) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
+// acquire/data.ts's Cohorts note and cohorts-tab.tsx. The "Open a war room" header button this
+// tab used to show is dropped along with it, same reason as the Markets tab's — it was seeded
+// with a hardcoded finding (ADVOCATE_COHORTS_OPEN_ROOM_PRESET) tied to the old fabricated mock,
+// not a generic affordance.
 
 // ---- Markets (AV07) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
 // acquire/data.ts's Markets note and markets-tab.tsx. The "Open a war room" header button this

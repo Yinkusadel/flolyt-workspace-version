@@ -9,24 +9,44 @@ export interface GetStageCohortsParams {
   months?: number;
 }
 
-// Corrected 2026-09-05, confirmed live for `expand`: `cohorts` is ALSO the measured-value wrapper
-// (`{value, state, missingSource, wouldUnlock}`) — same recurring bug class as get-stage-compare.ts
-// had. Expand's live response came back unavailable (`missingSource`: "a definition for Expand —
-// nothing yet says who enters it"), which confirms the wrapper but NOT the per-cohort row shape
-// inside `.value` — that still isn't confirmed by any live response. `.value` is typed `unknown[]`
-// until one is seen; don't invent fields on it. Per the 2026-09-04 spec's prose (not a concrete
-// schema): each row should carry an arrival month, an `entered` measured value, one
-// `stillInStageShare` cell per `measurementAgeDays` entry, and a `values` array of
-// {currency, amount} observed-revenue-to-date figures — never at-stake, never a forecast.
+export interface StageCohortValueDto {
+  currency: string;
+  amount: number;
+  /** amount ÷ entered, provided by the API — null whenever entered is 0 (nothing to divide by). */
+  perCustomer: number | null;
+}
+
+export interface StageCohortAgeDto {
+  ageDays: number;
+  stillInStageShare: LifecycleMeasuredValueDto<number>;
+}
+
+export interface StageCohortRowDto {
+  /** The arrival month, e.g. "2026-08-01T00:00:00+00:00". */
+  periodStartUtc: string;
+  entered: LifecycleMeasuredValueDto<number>;
+  /** One entry per currency, never summed. `state`/`value` wrap the whole array, not each entry. */
+  values: LifecycleMeasuredValueDto<StageCohortValueDto[]>;
+  ages: StageCohortAgeDto[];
+}
+
+// Corrected 2026-09-05, confirmed live for `expand` (unavailable) then `activate`/`retain` (real
+// rows): `cohorts` is the measured-value wrapper (`{value, state, missingSource, wouldUnlock}`),
+// same recurring bug class as get-stage-compare.ts had — `.value` holds the row array below when
+// available. `stillInStageShare` reads unavailable throughout for both live responses seen so
+// far, confirmed exactly as the spec's prose predicted: a lifecycle-bridged stage (no explicit
+// definition) records where a customer is *now*, not where they stood at 30/60/90 days, so every
+// age cell is unavailable naming that. An `entered`/`values.amount` of 0 is a real "available"
+// measurement (the pass ran and found nobody that month), not a missing one — confirmed live,
+// never render a null/unavailable state for a genuine zero.
 export interface StageCohortsData {
   stageKey: string;
   stageName: string;
-  /** Added 2026-09-04. [30, 60, 90] for most stages, [180] for expand/advocate/churn — confirmed live for expand. */
+  /** [30, 60, 90] for most stages, [180] for expand/advocate/churn — confirmed live for both. */
   measurementAgeDays: number[];
-  cohorts: LifecycleMeasuredValueDto<unknown[]>;
+  cohorts: LifecycleMeasuredValueDto<StageCohortRowDto[]>;
   undatedCustomers: number | null;
   valueCaveat: string | null;
-  /** Added 2026-09-04. */
   caveat: string | null;
   callouts: LifecycleCalloutDto[];
 }

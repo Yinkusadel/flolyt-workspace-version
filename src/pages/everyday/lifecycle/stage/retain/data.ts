@@ -431,47 +431,8 @@ export const RETAIN_BUILD_AUDIENCE_PRESET: BuildAudiencePreset = {
     "The room header, the play, the approval and the result all say 100,000. Building an audience that quietly shrinks by a third between approval and send is how a campaign that worked gets reviewed as one that did not.",
 };
 
-// ---- Cohorts (RT07, stage-specific layout) -------------------------------
-
-export type RetainCohortRow = {
-  id: string;
-  cohort: string;
-  acquired: string;
-  day30: string;
-  day60: string;
-  day90: string;
-  day90Tone: "teal" | "rose" | "neutral";
-  medianDays: string;
-  medianDaysTone: "ink" | "rose";
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
-
-export const RETAIN_COHORT_ROWS: RetainCohortRow[] = [
-  { id: "january", cohort: "January", acquired: "61,200", day30: "22.4%", day60: "33.8%", day90: "38.1%", day90Tone: "teal", medianDays: "14", medianDaysTone: "ink", vsFeb: "+0.7", vsFebTone: "teal" },
-  { id: "february", cohort: "February", acquired: "64,900", day30: "21.9%", day60: "33.1%", day90: "37.4%", day90Tone: "teal", medianDays: "15", medianDaysTone: "ink", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", acquired: "82,100", day30: "14.1%", day60: "22.6%", day90: "27.2%", day90Tone: "rose", medianDays: "24", medianDaysTone: "rose", vsFeb: "−10.2", vsFebTone: "rose" },
-  { id: "april", cohort: "April", acquired: "78,300", day30: "13.8%", day60: "22.1%", day90: "26.8%", day90Tone: "rose", medianDays: "25", medianDaysTone: "rose", vsFeb: "−10.6", vsFebTone: "rose" },
-  { id: "may", cohort: "May", acquired: "77,600", day30: "13.9%", day60: "22.4%", day90: "27.1%", day90Tone: "rose", medianDays: "24", medianDaysTone: "rose", vsFeb: "−10.3", vsFebTone: "rose" },
-  { id: "june", cohort: "June", acquired: "76,100", day30: "14.2%", day60: "22.9%", day90: "Unavailable", day90Tone: "neutral", medianDays: "Unavailable", medianDaysTone: "ink", vsFeb: "—", vsFebTone: "neutral" },
-];
-
-export const RETAIN_COHORT_FOOTNOTE = {
-  title: "June has no 90-day figure and it is left blank",
-  body: "The cohort is 61 days old. Filling it with a projection would put an estimate in the same column as five measurements, and the column would stop meaning one thing.",
-};
-
-export const RETAIN_COHORT_BREAK_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Jan–Feb · before 4 March", value: "37.8% average", percent: 38, tone: "teal" },
-  { label: "Mar–May · after", value: "27.0% average", percent: 27, tone: "rose" },
-  { label: "UK and Ghana · fee shipped in June", value: "37.6%", percent: 38, tone: "teal" },
-  { label: "Kenya · fee shipped 9 June", value: "34.1% · falling since June", percent: 34, tone: "amber" },
-];
-
-export const RETAIN_COHORT_CLOSING = {
-  title: "Kenya is the same story, one quarter behind, and it is still happening",
-  body: "Kenya held at 37% until 9 June and has fallen 3 points since. It is the only market where this cause is currently in progress rather than historical — and Ghana ships the same release on 14 September with no room open about it.",
-};
+// ---- Cohorts (RT07) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
+// acquire/data.ts's Cohorts note and cohorts-tab.tsx.
 
 // ---- Markets (RT08) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
 // acquire/data.ts's Markets note and markets-tab.tsx.

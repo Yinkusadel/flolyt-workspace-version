@@ -12,6 +12,9 @@ export function formatCompactCurrency(value: number): string {
 export function formatCompactMoney(value: number, currencyCode: string): string {
   const prefix = currencyCode === "NGN" ? "₦" : `${currencyCode} `;
   const abs = Math.abs(value);
+  // Billion breakpoint added 2026-09-05 after a live cohort response returned a lifetime-revenue
+  // figure north of ₦2B — without it this rendered as "₦2178M" instead of "₦2.18B".
+  if (abs >= 1_000_000_000) return `${prefix}${round(value / 1_000_000_000, 2)}B`;
   if (abs >= 1_000_000) return `${prefix}${Math.round(value / 1_000_000)}M`;
   if (abs >= 1_000) return `${prefix}${Math.round(value / 1_000)}k`;
   return `${prefix}${value}`;
@@ -30,6 +33,11 @@ export function formatPercent(value: number): string {
 /** An ISO datetime to a short "4 Mar" style date, for a dated registry entry. */
 export function formatShortDate(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString("en-US", { day: "numeric", month: "short" });
+}
+
+/** An ISO datetime to a "Aug 2026" style month, for a cohort's arrival period. */
+export function formatMonthYear(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
 
 /**

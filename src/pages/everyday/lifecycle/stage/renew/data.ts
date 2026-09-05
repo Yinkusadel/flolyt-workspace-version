@@ -369,44 +369,8 @@ export const RENEW_PAUSES_OPEN_ROOM_PRESET: OpenRoomPreset = {
   participantsNote: "Churn Reason leads · Ngozi owns the stage, so she owns this",
 };
 
-// ---- Cohorts (RN06, stage-specific layout) --------------------------------
-
-export type RenewCohortRow = {
-  id: string;
-  cohort: string;
-  renewing: string;
-  renewed: string;
-  rate: string;
-  rateTone: "teal" | "rose" | "neutral";
-  cancelled: string;
-  cancelledTone: "teal" | "amber" | "neutral";
-  paused: string;
-  pausedTone: "teal" | "rose" | "neutral";
-  cardFailed: string;
-  cardFailedTone: "teal" | "neutral";
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
-
-export const RENEW_COHORT_ROWS: RenewCohortRow[] = [
-  { id: "january", cohort: "January", renewing: "18,900", renewed: "17,200", rate: "91.0%", rateTone: "teal", cancelled: "4.1%", cancelledTone: "teal", paused: "2.9%", pausedTone: "teal", cardFailed: "2.0%", cardFailedTone: "teal", vsFeb: "+0.2", vsFebTone: "teal" },
-  { id: "february", cohort: "February", renewing: "19,800", renewed: "18,000", rate: "90.9%", rateTone: "teal", cancelled: "4.2%", cancelledTone: "teal", paused: "2.9%", pausedTone: "teal", cardFailed: "2.0%", cardFailedTone: "teal", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", renewing: "18,100", renewed: "15,900", rate: "87.8%", rateTone: "rose", cancelled: "5.8%", cancelledTone: "amber", paused: "4.4%", pausedTone: "rose", cardFailed: "2.0%", cardFailedTone: "teal", vsFeb: "−3.1", vsFebTone: "rose" },
-  { id: "april", cohort: "April", renewing: "17,300", renewed: "15,100", rate: "87.3%", rateTone: "rose", cancelled: "6.1%", cancelledTone: "amber", paused: "4.6%", pausedTone: "rose", cardFailed: "2.0%", cardFailedTone: "teal", vsFeb: "−3.6", vsFebTone: "rose" },
-  { id: "may", cohort: "May", renewing: "17,100", renewed: "15,000", rate: "87.7%", rateTone: "rose", cancelled: "5.9%", cancelledTone: "amber", paused: "4.4%", pausedTone: "rose", cardFailed: "2.0%", cardFailedTone: "teal", vsFeb: "−3.2", vsFebTone: "rose" },
-  { id: "june", cohort: "June", renewing: "16,800", renewed: "Unavailable", rate: "Unavailable", rateTone: "neutral", cancelled: "Unavailable", cancelledTone: "neutral", paused: "Unavailable", pausedTone: "neutral", cardFailed: "2.0%", cardFailedTone: "teal", vsFeb: "—", vsFebTone: "neutral" },
-];
-
-export const RENEW_COHORT_CLOSING = {
-  title: "Card failure is 2.0% in every single cohort and that is the point",
-  body: "Involuntary churn does not care which month a customer was acquired in — it is a mechanism, not a decision. Cancellations and pauses moved with the March cohorts; card failures did not move at all. Two problems that look the same in a revenue report, separated cleanly by one column.",
-};
-
-export const RENEW_COHORT_ATTRIBUTION_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Cancellations · “too expensive”", value: "−1.7 pts", percent: 53, tone: "rose" },
-  { label: "Pauses that became exits", value: "−1.5 pts", percent: 47, tone: "rose" },
-  { label: "Card failures", value: "0.0 pts · unchanged", percent: 0, tone: "teal" },
-];
+// ---- Cohorts (RN06) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
+// acquire/data.ts's Cohorts note and cohorts-tab.tsx.
 
 // ---- Markets (RN07) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
 // acquire/data.ts's Markets note and markets-tab.tsx.

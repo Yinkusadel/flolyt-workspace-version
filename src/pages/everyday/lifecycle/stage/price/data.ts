@@ -405,59 +405,8 @@ export const PRICE_DISCOUNT_MEMORY_CARDS: PriceMemoryCard[] = [
   },
 ];
 
-// ---- Cohorts (PR07, stage-specific layout) -------------------------------
-
-export type PriceCohortRow = {
-  id: string;
-  cohort: string;
-  customers: string;
-  revenuePerCustomer: string;
-  revenueTone: "teal" | "rose";
-  discountedShare: string;
-  discountedTone: "teal" | "rose";
-  onPaidPlan: string;
-  onPaidPlanTone: "teal" | "rose";
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
-
-export const PRICE_COHORT_ROWS: PriceCohortRow[] = [
-  { id: "january", cohort: "January", customers: "61,200", revenuePerCustomer: "₦4,310", revenueTone: "teal", discountedShare: "19.1%", discountedTone: "teal", onPaidPlan: "31.4%", onPaidPlanTone: "teal", vsFeb: "+3.1%", vsFebTone: "teal" },
-  { id: "february", cohort: "February", customers: "64,900", revenuePerCustomer: "₦4,180", revenueTone: "teal", discountedShare: "19.8%", discountedTone: "teal", onPaidPlan: "30.9%", onPaidPlanTone: "teal", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", customers: "82,100", revenuePerCustomer: "₦3,020", revenueTone: "rose", discountedShare: "28.4%", discountedTone: "rose", onPaidPlan: "22.1%", onPaidPlanTone: "rose", vsFeb: "−27.8%", vsFebTone: "rose" },
-  { id: "april", cohort: "April", customers: "78,300", revenuePerCustomer: "₦2,960", revenueTone: "rose", discountedShare: "29.1%", discountedTone: "rose", onPaidPlan: "21.4%", onPaidPlanTone: "rose", vsFeb: "−29.2%", vsFebTone: "rose" },
-  { id: "may", cohort: "May", customers: "77,600", revenuePerCustomer: "₦3,010", revenueTone: "rose", discountedShare: "28.8%", discountedTone: "rose", onPaidPlan: "21.9%", onPaidPlanTone: "rose", vsFeb: "−28.0%", vsFebTone: "rose" },
-  { id: "june", cohort: "June", customers: "76,100", revenuePerCustomer: "Unavailable", revenueTone: "rose", discountedShare: "29.4%", discountedTone: "rose", onPaidPlan: "21.1%", onPaidPlanTone: "rose", vsFeb: "—", vsFebTone: "neutral" },
-];
-
-export const PRICE_COHORT_CAUSE_CARDS: InsightCard[] = [
-  {
-    id: "fewer-orders-not-smaller",
-    agentTag: "PX",
-    meta: "−28% revenue per customer",
-    title: "Fewer orders, not smaller ones",
-    body: "Basket size is flat at ₦2,140. The entire fall is order frequency — the same second-order collapse Retain reports, arriving here as a revenue figure.",
-    footnote: "not a pricing problem",
-    tone: "rose",
-  },
-  {
-    id: "discount-response",
-    meta: "+9 points discounted share",
-    title: "This one is",
-    body: "Marketing responded to falling volume by discounting harder from mid-March. It recovered some orders and grew the discount-only group by 31,000 customers.",
-    footnote: "a response, not a cause",
-    tone: "amber",
-  },
-  {
-    id: "expensive-conversion-drop",
-    agentTag: "PX",
-    meta: "−9 points on paid plans",
-    title: "The expensive one",
-    body: "Cohorts acquired after March convert to Lagos Plus at 22% against 31%. A customer who never subscribes is worth a quarter of one who does, permanently.",
-    footnote: "compounds every quarter",
-    tone: "rose",
-  },
-];
+// ---- Cohorts (PR07) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
+// acquire/data.ts's Cohorts note and cohorts-tab.tsx.
 
 // ---- Markets (PR08) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
 // acquire/data.ts's Markets note and markets-tab.tsx.

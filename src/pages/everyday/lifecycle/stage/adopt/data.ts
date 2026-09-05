@@ -383,60 +383,8 @@ export const ADOPT_BLIND_SPOT_COST_CARDS: ActionCard[] = [
   },
 ];
 
-// ---- Cohorts (AD07, stage-specific layout) --------------------------------
-
-export type AdoptCohortRow = {
-  id: string;
-  cohort: string;
-  eligible: string;
-  twoPlusFeatures: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  avgFeatures: string;
-  avgFeaturesTone: "teal" | "rose";
-  scheduledDelivery: string;
-  scheduledTone: "teal" | "rose";
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
-
-export const ADOPT_COHORT_ROWS: AdoptCohortRow[] = [
-  { id: "january", cohort: "January", eligible: "42,100", twoPlusFeatures: "17,400", rate: "41.3%", rateTone: "teal", avgFeatures: "2.6", avgFeaturesTone: "teal", scheduledDelivery: "21.1%", scheduledTone: "teal", vsFeb: "+0.2", vsFebTone: "teal" },
-  { id: "february", cohort: "February", eligible: "44,800", twoPlusFeatures: "18,400", rate: "41.1%", rateTone: "teal", avgFeatures: "2.6", avgFeaturesTone: "teal", scheduledDelivery: "20.8%", scheduledTone: "teal", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", eligible: "48,900", twoPlusFeatures: "16,800", rate: "34.4%", rateTone: "rose", avgFeatures: "2.1", avgFeaturesTone: "rose", scheduledDelivery: "11.4%", scheduledTone: "rose", vsFeb: "−6.7", vsFebTone: "rose" },
-  { id: "april", cohort: "April", eligible: "46,200", twoPlusFeatures: "15,700", rate: "34.0%", rateTone: "rose", avgFeatures: "2.1", avgFeaturesTone: "rose", scheduledDelivery: "10.9%", scheduledTone: "rose", vsFeb: "−7.1", vsFebTone: "rose" },
-  { id: "may", cohort: "May", eligible: "45,800", twoPlusFeatures: "15,800", rate: "34.5%", rateTone: "rose", avgFeatures: "2.1", avgFeaturesTone: "rose", scheduledDelivery: "11.2%", scheduledTone: "rose", vsFeb: "−6.6", vsFebTone: "rose" },
-  { id: "june", cohort: "June", eligible: "44,100", twoPlusFeatures: "Unavailable", rate: "Unavailable", rateTone: "rose", avgFeatures: "Unavailable", avgFeaturesTone: "rose", scheduledDelivery: "11.1%", scheduledTone: "rose", vsFeb: "—", vsFebTone: "neutral" },
-];
-
-export const ADOPT_COHORT_CAUSE_CARDS: InsightCard[] = [
-  {
-    id: "scheduled-delivery-cause",
-    agentTag: "PR",
-    meta: "−4.1 points",
-    title: "Scheduled delivery",
-    body: "The fee is met weekly rather than occasionally. Measured against the UK and Ghana, where scheduling held at 20.4% through the same period.",
-    footnote: "causal · high confidence",
-    tone: "rose",
-  },
-  {
-    id: "guest-share-rising",
-    agentTag: "AQ",
-    meta: "−1.9 points",
-    title: "Guest share rising",
-    body: "Guest customers have no account and therefore structurally cannot adopt anything. Guest share rose 6 points, so the eligible population got diluted.",
-    footnote: "causal · from Acquire",
-    tone: "amber",
-  },
-  {
-    id: "unattributed-residual",
-    meta: "−0.7 POINTS",
-    title: "Unattributed",
-    body: "Within measurement error and left as unexplained rather than assigned to the two causes above. Small residuals are stated, not absorbed.",
-    footnote: "honestly unexplained",
-    tone: "teal",
-  },
-];
+// ---- Cohorts (AD07) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
+// acquire/data.ts's Cohorts note and cohorts-tab.tsx.
 
 // ---- Markets (AD08) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
 // acquire/data.ts's Markets note and markets-tab.tsx.

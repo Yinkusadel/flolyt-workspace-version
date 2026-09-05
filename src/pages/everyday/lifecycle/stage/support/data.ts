@@ -380,47 +380,8 @@ export const SUPPORT_SILENT_CLOSING_CARDS: ActionCard[] = [
   },
 ];
 
-// ---- Cohorts (SU06, stage-specific layout) --------------------------------
-
-export type SupportCohortRow = {
-  id: string;
-  cohort: string;
-  acquired: string;
-  contactedUs: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  topDriver: string;
-  repeatAfterContact: string;
-  repeatAfterContactTone: "teal" | "rose";
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
-
-export const SUPPORT_COHORT_ROWS: SupportCohortRow[] = [
-  { id: "january", cohort: "January", acquired: "61,200", contactedUs: "7,100", rate: "11.6%", rateTone: "teal", topDriver: "Wrong item", repeatAfterContact: "30.1%", repeatAfterContactTone: "teal", vsFeb: "+0.4", vsFebTone: "teal" },
-  { id: "february", cohort: "February", acquired: "64,900", contactedUs: "7,600", rate: "11.7%", rateTone: "teal", topDriver: "Wrong item", repeatAfterContact: "29.8%", repeatAfterContactTone: "teal", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", acquired: "82,100", contactedUs: "14,200", rate: "17.3%", rateTone: "rose", topDriver: "Where is my order", repeatAfterContact: "21.4%", repeatAfterContactTone: "rose", vsFeb: "−8.4", vsFebTone: "rose" },
-  { id: "april", cohort: "April", acquired: "78,300", contactedUs: "13,900", rate: "17.8%", rateTone: "rose", topDriver: "Where is my order", repeatAfterContact: "21.1%", repeatAfterContactTone: "rose", vsFeb: "−8.7", vsFebTone: "rose" },
-  { id: "may", cohort: "May", acquired: "77,600", contactedUs: "13,600", rate: "17.5%", rateTone: "rose", topDriver: "Where is my order", repeatAfterContact: "21.4%", repeatAfterContactTone: "rose", vsFeb: "−8.4", vsFebTone: "rose" },
-  { id: "june", cohort: "June", acquired: "76,100", contactedUs: "13,200", rate: "17.3%", rateTone: "rose", topDriver: "Where is my order", repeatAfterContact: "Unavailable", repeatAfterContactTone: "rose", vsFeb: "—", vsFebTone: "neutral" },
-];
-
-export const SUPPORT_COHORT_CLOSING = {
-  title: "Contact rate rose 6 points in the same week the fee shipped, and the top driver changed",
-  body: "Two things happened at once and both were visible on 11 March: more customers contacted us, and they contacted us about something new. Either alone might be noise. Together, in the same week, with a dated release behind it, they are a causal finding — and this table existed all along.",
-};
-
-export const SUPPORT_COHORT_COST_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Handling cost · Jan–Feb cohorts", value: "₦3.4M per cohort", percent: 34, tone: "teal" },
-  { label: "Handling cost · Mar–May cohorts", value: "₦6.8M per cohort", percent: 68, tone: "amber" },
-  { label: "Revenue lost after contact · Jan–Feb", value: "₦8M per cohort", percent: 8, tone: "teal" },
-  { label: "Revenue lost after contact · Mar–May", value: "₦61M per cohort", percent: 61, tone: "rose" },
-];
-
-export const SUPPORT_COHORT_COST_CLOSING = {
-  title: "Handling cost doubled and everyone noticed. Revenue lost went up eight times and nobody did.",
-  body: "₦3.4M of extra support cost per cohort is a line item that appears in a monthly budget review. ₦53M of extra revenue loss per cohort appears nowhere, because no support system in this company has ever been connected to what the customer did next.",
-};
+// ---- Cohorts (SU06) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
+// acquire/data.ts's Cohorts note and cohorts-tab.tsx.
 
 // ---- Markets (SU07) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
 // acquire/data.ts's Markets note and markets-tab.tsx.

@@ -415,47 +415,8 @@ export const EXPAND_ACCOUNTS_RISK_ROWS: { label: string; value: string; tone: "r
   { label: "Accounts with a room open", value: "0 · none of this has a room", tone: "rose" },
 ];
 
-// ---- Cohorts (EX07, stage-specific layout) --------------------------------
-
-export type ExpandCohortRow = {
-  id: string;
-  cohort: string;
-  reached180Days: string;
-  expanded: string;
-  rate: string;
-  rateTone: "teal" | "rose";
-  arpuMultiple: string;
-  arpuMultipleTone: "teal" | "rose";
-  onPaidPlan: string;
-  onPaidPlanTone: "teal" | "rose";
-  vsFeb: string;
-  vsFebTone: "teal" | "rose" | "neutral";
-};
-
-export const EXPAND_COHORT_ROWS: ExpandCohortRow[] = [
-  { id: "january", cohort: "January", reached180Days: "23,300", expanded: "4,600", rate: "19.7%", rateTone: "teal", arpuMultiple: "1.41×", arpuMultipleTone: "teal", onPaidPlan: "31.4%", onPaidPlanTone: "teal", vsFeb: "+0.4", vsFebTone: "teal" },
-  { id: "february", cohort: "February", reached180Days: "24,300", expanded: "4,700", rate: "19.3%", rateTone: "teal", arpuMultiple: "1.40×", arpuMultipleTone: "teal", onPaidPlan: "30.9%", onPaidPlanTone: "teal", vsFeb: "baseline", vsFebTone: "neutral" },
-  { id: "march", cohort: "March", reached180Days: "22,300", expanded: "4,400", rate: "19.7%", rateTone: "teal", arpuMultiple: "1.42×", arpuMultipleTone: "teal", onPaidPlan: "22.1%", onPaidPlanTone: "rose", vsFeb: "+0.4", vsFebTone: "teal" },
-  { id: "april", cohort: "April", reached180Days: "21,000", expanded: "4,200", rate: "20.0%", rateTone: "teal", arpuMultiple: "1.41×", arpuMultipleTone: "teal", onPaidPlan: "21.4%", onPaidPlanTone: "rose", vsFeb: "+0.7", vsFebTone: "teal" },
-  { id: "may", cohort: "May", reached180Days: "21,000", expanded: "4,200", rate: "20.0%", rateTone: "teal", arpuMultiple: "1.40×", arpuMultipleTone: "teal", onPaidPlan: "21.9%", onPaidPlanTone: "rose", vsFeb: "+0.7", vsFebTone: "teal" },
-  { id: "june", cohort: "June", reached180Days: "Unavailable", expanded: "Unavailable", rate: "Unavailable", rateTone: "rose", arpuMultiple: "Unavailable", arpuMultipleTone: "rose", onPaidPlan: "21.1%", onPaidPlanTone: "rose", vsFeb: "—", vsFebTone: "neutral" },
-];
-
-export const EXPAND_COHORT_CLOSING = {
-  title: "The expansion rate is identical across every cohort and the population it applies to fell 14%",
-  body: "March through May expanded at 19.7–20.0%, the same as January and February. Nothing damaged this stage. Fewer people reached it — 24,300 in February against 21,000 in May — because Retain stopped delivering them. Expand is the clearest case in the lifecycle of a stage whose number is fine and whose value fell anyway.",
-};
-
-export const EXPAND_COHORT_MOVED_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "On a paid plan · Jan–Feb cohorts", value: "31.2%", percent: 31, tone: "teal" },
-  { label: "On a paid plan · Mar–May cohorts", value: "21.8%", percent: 22, tone: "rose" },
-  { label: "Of which, Student plan", value: "6.1% · unverified, self-serve", percent: 6, tone: "rose" },
-];
-
-export const EXPAND_COHORT_MOVED_CLOSING = {
-  title: "Plan conversion fell 9 points and expansion rate did not move",
-  body: "Because a customer who upgrades still upgrades by the same amount — there are simply fewer of them and more of the ones there are chose Student. Two facts on one screen that would look contradictory in any report that only carried the headline rate.",
-};
+// ---- Cohorts (EX07) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
+// acquire/data.ts's Cohorts note and cohorts-tab.tsx.
 
 // ---- Markets (EX08) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
 // acquire/data.ts's Markets note and markets-tab.tsx.
