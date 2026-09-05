@@ -1,48 +1,144 @@
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
+import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import { RETAIN_OVERLAP_ROWS, RETAIN_SEGMENT_ROWS, type RetainOverlapRow, type RetainSegmentRow } from "@/pages/everyday/lifecycle/stage/retain/data";
+import { formatCompactMoney, formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetRetainSegments } from "@/features/lifecycle/use-get-retain-segments";
+import type { RetainSegmentDto } from "@/services/api/lifecycle/get-retain-segments";
 
-const REPEAT_RATE_TONE_CLASS: Record<RetainSegmentRow["repeatRateTone"], string> = { teal: "text-teal", rose: "text-rose" };
-const VS_BASE_TONE_CLASS: Record<RetainSegmentRow["vsBaseTone"], string> = { teal: "text-teal", rose: "text-rose" };
-const REACHABLE_TONE_CLASS: Record<RetainSegmentRow["reachableTone"], string> = { teal: "text-teal", rose: "text-rose" };
-const AT_STAKE_TONE_CLASS: Record<RetainSegmentRow["atStakeTone"], string> = { rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
-const OVERLAP_TONE_CLASS: Record<RetainOverlapRow["tone"], string> = { amber: "text-amber", rose: "text-rose", muted: "text-ink-4", ink: "text-ink-2" };
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
 
-const COLUMNS: Column<RetainSegmentRow>[] = [
-  { key: "segment", header: "Segment", render: (row) => <span className="font-semibold text-ink-2">{row.segment}</span> },
-  { key: "customers", header: "Customers", align: "right", render: (row) => <span className="font-mono text-ink">{row.customers}</span> },
-  { key: "repeatRate", header: "Repeat rate", align: "right", render: (row) => <span className={REPEAT_RATE_TONE_CLASS[row.repeatRateTone]}>{row.repeatRate}</span> },
-  { key: "vsBase", header: "vs base", align: "right", render: (row) => <span className={VS_BASE_TONE_CLASS[row.vsBaseTone]}>{row.vsBase}</span> },
-  { key: "reachable", header: "Reachable", align: "right", render: (row) => <span className={REACHABLE_TONE_CLASS[row.reachableTone]}>{row.reachable}</span> },
-  { key: "atStake", header: "At stake", align: "right", render: (row) => <span className={AT_STAKE_TONE_CLASS[row.atStakeTone]}>{row.atStake}</span> },
-  { key: "verdict", header: "Verdict", align: "right", render: (row) => <Chip tone={row.verdictTone}>{row.verdict}</Chip> },
-];
+// `claim.grade`'s real enum values aren't confirmed by any live response — matched defensively by
+// keyword, same pattern used for the Overview leak table's own claim.grade (overview-tab.tsx).
+function claimTone(grade: string): ChipTone {
+  const normalized = grade.toLowerCase();
+  if (normalized.includes("causal")) return "ultra";
+  if (normalized.includes("correlat")) return "amber";
+  return "neutral";
+}
 
-/** RT04 — Retain's unique Segments tab. */
-const RetainSegmentsTab = () => {
-  return (
-    <div className="space-y-8">
-      <DataTable columns={COLUMNS} rows={RETAIN_SEGMENT_ROWS} />
+type SegmentRow = RetainSegmentDto & { id: string };
 
-      <Callout tone="rose" title="Every segment on this table was decided in a different stage">
-        Delivery outcome is Support. Feature depth is Adopt. Guest checkout is Activate. Discount is Price. Referral
-        is Advocate. Retain owns the number and owns none of the levers — which is the clearest single illustration
-        of why the ten stages sit on one page.
-      </Callout>
-
-      <section className="space-y-1">
-        <p className={`pb-2 ${EYEBROW_CLASS}`}>Segments that overlap, and the double-count that would follow</p>
-        <div className="divide-y divide-line rounded-card border border-line bg-paper">
-          {RETAIN_OVERLAP_ROWS.map((row) => (
-            <div key={row.label} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-              <span className="text-[11.5px] text-ink-2">{row.label}</span>
-              <span className={`font-mono text-[11px] ${OVERLAP_TONE_CLASS[row.tone]}`}>{row.value}</span>
+const COLUMNS: Column<SegmentRow>[] = [
+  { key: "segment", header: "Segment", render: (row) => <span className="font-semibold text-ink-2">{row.name}</span> },
+  { key: "matched", header: "Customers", align: "right", render: (row) => <span className="font-mono text-ink">{formatCount(row.matched)}</span> },
+  {
+    key: "reachable",
+    header: "Reachable",
+    align: "right",
+    render: (row) => (
+      <span className="font-mono text-ink-2">
+        {formatCount(row.reachable)}
+        {row.reachableShare !== null && <span className="text-ink-4"> · {formatPercent(row.reachableShare)}</span>}
+      </span>
+    ),
+  },
+  {
+    key: "repeatShare",
+    header: "Repeat share",
+    align: "right",
+    render: (row) => <span className="text-ink-2">{row.repeatShare !== null ? formatPercent(row.repeatShare) : <span className="text-ink-4">Unavailable</span>}</span>,
+  },
+  { key: "pastBoundary", header: "Past boundary", align: "right", render: (row) => <span className="font-mono text-ink-4">{formatCount(row.pastBoundary)}</span> },
+  {
+    key: "value",
+    header: "Value",
+    align: "right",
+    render: (row) =>
+      row.values.length > 0 ? (
+        <div className="text-right">
+          {row.values.map((v) => (
+            <div key={v.currency} className="font-mono text-ink">
+              {formatCompactMoney(v.amount, v.currency)}
             </div>
           ))}
         </div>
-      </section>
+      ) : (
+        <span className="font-mono text-ink-4">Unavailable</span>
+      ),
+  },
+  { key: "claim", header: "Claim", align: "right", render: (row) => <Chip tone={claimTone(row.claim.grade)}>{row.claim.statement}</Chip> },
+];
+
+function SegmentsSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** RT04 — Retain's own Segments tab, wired to GET /lifecycle/retain/segments. */
+const RetainSegmentsTab = () => {
+  const { data, isLoading, isError, refetch } = useGetRetainSegments();
+  const segments = data?.data;
+  const rows: SegmentRow[] = (segments?.segments ?? []).map((segment) => ({ ...segment, id: segment.segmentId }));
+
+  return (
+    <div className="space-y-8">
+      <p className={EYEBROW_CLASS}>
+        {segments
+          ? segments.distinctAcrossSegments !== null
+            ? `${formatCount(segments.distinctAcrossSegments)} distinct customers across ${rows.length} segments · ${formatCount(segments.sumOfMatched)} counted before dedup`
+            : `Dedup unavailable · ${formatCount(segments.sumOfMatched)} counted across ${rows.length} segments before dedup`
+          : "Every active segment intersected with Retain's population"}
+      </p>
+
+      {isError ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+          <p className="text-[12px] text-rose">Couldn't load Retain's segments.</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : isLoading ? (
+        <SegmentsSkeleton />
+      ) : (
+        <DataTable
+          columns={COLUMNS}
+          rows={rows}
+          emptyTitle="No segments matched yet"
+          emptyBody="Segments that intersect Retain's population will appear here once at least one is active."
+        />
+      )}
+
+      {/* ❌ Backend does NOT provide: a blended "vs base" comparison or a single "At stake" money
+          figure per segment — this endpoint has no baseline-repeat-rate field and no risk-value
+          field, only each segment's own repeatShare and values[]. Dropped rather than fabricated. */}
+
+      {!isLoading && !isError && segments && segments.overlaps.length > 0 && (
+        <section className="space-y-1">
+          <p className={`pb-2 ${EYEBROW_CLASS}`}>Segments that overlap, and the double-count that would follow</p>
+          <div className="divide-y divide-line rounded-card border border-line bg-paper">
+            {segments.overlaps.map((overlap) => (
+              <div key={`${overlap.segmentA}-${overlap.segmentB}`} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                <span className="text-[11.5px] text-ink-2">
+                  {overlap.nameA} × {overlap.nameB}
+                </span>
+                <span className="font-mono text-[11px] text-amber">{formatCount(overlap.shared)} shared</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {segments?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
     </div>
   );
 };

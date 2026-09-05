@@ -56,71 +56,14 @@ export const RETAIN_SHARE_EXPORT_PRESET: ShareOrExportPreset = {
     "142,000 of these customers cannot be contacted by anybody, ever — that travels with the file rather than being dropped from it. An export where the gaps quietly vanish is how an unavailable becomes a zero in someone else's deck.",
 };
 
-// ---- Repeat curve (RT03) -----------------------------------------------
+// ---- Repeat curve (RT03) is now wired to GET /lifecycle/retain/repeat-curve — see
+// repeat-curve-tab.tsx. That endpoint has no before/after comparison field, so the old mock's
+// "curve before and after 4 March" table isn't reproducible from live data.
 
-export const RETAIN_CURVE_ROWS: { label: string; value: string; percent: number; tone: BarTone }[] = [
-  { label: "Within 7 days", value: "71,000 · 29.2%", percent: 29, tone: "teal" },
-  { label: "8–30 days", value: "94,000 · 38.7%", percent: 39, tone: "teal" },
-  { label: "31–60 days", value: "51,000 · 21.0%", percent: 21, tone: "teal" },
-  { label: "61–90 days", value: "27,000 · 11.1%", percent: 11, tone: "amber" },
-  { label: "Never · 651,000 of those acquired", value: "72.8%", percent: 73, tone: "rose" },
-];
-
-export type RetainCurveCompareRow = {
-  id: string;
-  window: string;
-  before: string;
-  after: string;
-  change: string;
-  changeTone: "teal" | "rose" | "amber" | "neutral";
-  meaning: string;
-};
-
-export const RETAIN_CURVE_COMPARE_ROWS: RetainCurveCompareRow[] = [
-  { id: "within-7", window: "Within 7 days", before: "34.1%", after: "29.2%", change: "−4.9 pts", changeTone: "rose", meaning: "Fewer impulse repeats" },
-  { id: "8-30", window: "8–30 days", before: "39.4%", after: "38.7%", change: "−0.7 pts", changeTone: "neutral", meaning: "Broadly unchanged" },
-  { id: "31-60", window: "31–60 days", before: "18.1%", after: "21.0%", change: "+2.9 pts", changeTone: "amber", meaning: "Repeats are slower, not just fewer" },
-  { id: "61-90", window: "61–90 days", before: "8.4%", after: "11.1%", change: "+2.7 pts", changeTone: "amber", meaning: "Same · the tail got heavier" },
-  { id: "overall", window: "Overall repeat rate", before: "38.1%", after: "27.2%", change: "−10.9 pts", changeTone: "rose", meaning: "Fewer, and later" },
-];
-
-// ---- Segments (RT04) + one-segment drilldown (RT05) ---------------------
-
-export type RetainSegmentRow = {
-  id: string;
-  segment: string;
-  customers: string;
-  repeatRate: string;
-  repeatRateTone: "teal" | "rose";
-  vsBase: string;
-  vsBaseTone: "teal" | "rose";
-  reachable: string;
-  reachableTone: "teal" | "rose";
-  atStake: string;
-  atStakeTone: "rose" | "amber" | "neutral";
-  verdict: string;
-  verdictTone: ChipTone;
-};
-
-export const RETAIN_SEGMENT_ROWS: RetainSegmentRow[] = [
-  { id: "first-delivery-on-time", segment: "First delivery on time", customers: "761,000", repeatRate: "29.1%", repeatRateTone: "teal", vsBase: "+1.9", vsBaseTone: "teal", reachable: "94%", reachableTone: "teal", atStake: "—", atStakeTone: "neutral", verdict: "the baseline", verdictTone: "teal" },
-  { id: "first-delivery-late", segment: "First delivery late", customers: "62,000", repeatRate: "18.4%", repeatRateTone: "rose", vsBase: "−8.8", vsBaseTone: "rose", reachable: "91%", reachableTone: "teal", atStake: "₦24M", atStakeTone: "rose", verdict: "fixable", verdictTone: "amber" },
-  { id: "first-delivery-failed", segment: "First delivery failed", customers: "9,000", repeatRate: "0.4%", repeatRateTone: "rose", vsBase: "−26.8", vsBaseTone: "rose", reachable: "88%", reachableTone: "teal", atStake: "₦5M", atStakeTone: "amber", verdict: "near total loss", verdictTone: "rose" },
-  { id: "used-2-plus-features", segment: "Used 2+ features", customers: "218,000", repeatRate: "61.1%", repeatRateTone: "teal", vsBase: "+33.9", vsBaseTone: "teal", reachable: "97%", reachableTone: "teal", atStake: "—", atStakeTone: "neutral", verdict: "best", verdictTone: "teal" },
-  { id: "guest-checkout", segment: "Guest checkout", customers: "186,000", repeatRate: "8.4%", repeatRateTone: "rose", vsBase: "−18.8", vsBaseTone: "rose", reachable: "24%", reachableTone: "rose", atStake: "₦38M", atStakeTone: "rose", verdict: "mostly unreachable", verdictTone: "rose" },
-  { id: "bought-20-percent-discount", segment: "Bought with a 20% discount", customers: "94,000", repeatRate: "11.1%", repeatRateTone: "rose", vsBase: "−16.1", vsBaseTone: "rose", reachable: "88%", reachableTone: "teal", atStake: "₦19M", atStakeTone: "amber", verdict: "bought the discount", verdictTone: "rose" },
-  { id: "referred", segment: "Referred by another customer", customers: "278,000", repeatRate: "41.2%", repeatRateTone: "teal", vsBase: "+14.0", vsBaseTone: "teal", reachable: "96%", reachableTone: "teal", atStake: "—", atStakeTone: "neutral", verdict: "best channel", verdictTone: "teal" },
-];
-
-export type RetainOverlapRow = { label: string; value: string; tone: "amber" | "rose" | "muted" | "ink" };
-
-export const RETAIN_OVERLAP_ROWS: RetainOverlapRow[] = [
-  { label: "Guest checkout ∩ discounted", value: "31,000 customers · counted once, in guest", tone: "amber" },
-  { label: "Late delivery ∩ guest checkout", value: "14,000 · counted once, in late delivery", tone: "amber" },
-  { label: "Total at stake across segments", value: "₦86M · not ₦412M · these are subsets", tone: "muted" },
-  { label: "The ₦412M figure", value: "the Mar–May cohort · overlaps all of the above", tone: "rose" },
-  { label: "How Flolyt handles it", value: "each customer belongs to their most specific segment only", tone: "ink" },
-];
+// ---- Segments (RT04) is now wired to GET /lifecycle/retain/segments — see segments-tab.tsx.
+// That endpoint has no blended "vs base" baseline or single "At stake" money figure per segment,
+// so those columns aren't reproducible from live data. One-segment drilldown (RT05) below is
+// unrelated to this endpoint and stays its own mock.
 
 export type RetainSegmentDetailRow = {
   id: string;
@@ -183,77 +126,10 @@ export const RETAIN_SEGMENT_DETAILS: Record<string, RetainSegmentDetail> = {
   },
 };
 
-// ---- Reactivation (RT06) + build an audience (RT13) ----------------------
-
-export const RETAIN_REACTIVATION_KPIS: Kpi[] = [
-  { eyebrow: "Reactivable today", value: "218,000", note: "inside the 90-day window" },
-  { eyebrow: "Currently in a wave", value: "0", tone: "rose", note: "one is waiting on approval" },
-  { eyebrow: "Sent in the last 90 days", value: "412,000", note: "across four campaigns" },
-  { eyebrow: "Recovered", value: "9.4%", tone: "amber", note: "against a 12% target" },
-];
-
-export type RetainCampaignRow = {
-  id: string;
-  campaign: string;
-  sent: string;
-  window: string;
-  windowTone: "teal" | "amber";
-  offer: string;
-  offerTone: "teal" | "amber" | "rose";
-  recovered: string;
-  recoveredTone: "teal" | "amber" | "rose";
-  vsHoldout: string;
-  vsHoldoutTone: "teal" | "amber";
-  verdict: string;
-  verdictTone: ChipTone;
-};
-
-export const RETAIN_CAMPAIGN_ROWS: RetainCampaignRow[] = [
-  { id: "thursday-winback", campaign: "Thursday win-back · weekly", sent: "218,000", window: "60–90 days", windowTone: "amber", offer: "20% off", offerTone: "amber", recovered: "9.4%", recoveredTone: "amber", vsHoldout: "+4.1 pts", vsHoldoutTone: "teal", verdict: "works, aimed late", verdictTone: "amber" },
-  { id: "ghana-reactivation", campaign: "Ghana reactivation", sent: "41,000", window: "30–90 days", windowTone: "teal", offer: "free delivery", offerTone: "rose", recovered: "2.1%", recoveredTone: "rose", vsHoldout: "no holdout", vsHoldoutTone: "amber", verdict: "promised what we do not do", verdictTone: "rose" },
-  { id: "lagos-apology", campaign: "Lagos apology · failed delivery", sent: "9,000", window: "0–30 days", windowTone: "teal", offer: "refund + credit", offerTone: "teal", recovered: "31.4%", recoveredTone: "teal", vsHoldout: "+22 pts", vsHoldoutTone: "teal", verdict: "best result here", verdictTone: "teal" },
-  { id: "kenya-scheduled-nudge", campaign: "Kenya scheduled-order nudge", sent: "144,000", window: "0–60 days", windowTone: "teal", offer: "none", offerTone: "teal", recovered: "18.1%", recoveredTone: "teal", vsHoldout: "+11 pts", vsHoldoutTone: "teal", verdict: "works with no offer", verdictTone: "teal" },
-];
-
-export type RetainReactivationCard = {
-  id: string;
-  agentTag: string;
-  meta: string;
-  title: string;
-  body: string;
-  footnote: string;
-  tone: "teal" | "amber" | "ultra";
-};
-
-export const RETAIN_REACTIVATION_CARDS: RetainReactivationCard[] = [
-  {
-    id: "kenya-no-offer",
-    agentTag: "RD",
-    meta: "Kenya · 144,000 · no offer",
-    title: "18.1% recovered with nothing off",
-    body: "Twice the Thursday campaign's rate at a third of the cost, sent earlier and with no discount at all. The message was a reminder that scheduling exists, not a price.",
-    footnote: "+11 points against a holdout",
-    tone: "teal",
-  },
-  {
-    id: "thursday-aimed-late",
-    agentTag: "RD",
-    meta: "Thursday · 218,000 · 20% off",
-    title: "9.4%, and aimed at day 60–90",
-    body: "It works — 4.1 points above holdout — but it fires in the window where response is already halving, and it teaches 218,000 customers a week to wait for a discount.",
-    footnote: "the default campaign since 2024",
-    tone: "amber",
-  },
-  {
-    id: "no-offer-day-7-30",
-    agentTag: "RD",
-    meta: "What nobody has run",
-    title: "No offer, day 7–30",
-    body: "The window with the highest response and the message with the best economics have never been combined. Wave one of the pending play is exactly this test, which is why holding the discount matters.",
-    footnote: "the pending approval",
-    tone: "ultra",
-  },
-];
+// ---- Reactivation (RT06) is now wired to GET /lifecycle/retain/reactivation — see
+// reactivation-tab.tsx. That endpoint has no "sent"/"window"/"offer" fields or the three
+// narrative agent cards below, so those aren't reproducible from live data. Build an audience
+// (RT13) below is a separate, still-unwired mutation flow and stays its own mock.
 
 export type BuildAudienceCriteriaRow = { label: string; value: string };
 export type BuildAudienceExclusionRow = { label: string; value: string; note?: string; final?: boolean };
