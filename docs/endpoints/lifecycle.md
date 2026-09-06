@@ -690,7 +690,7 @@ wired 2026-09-05 (read side only) — see its own entry below.
 - **Purpose:** Sends a churn cause to the stage that actually owns it, with evidence attached.
 - **Request:** body `{ causeKey, targetStageKey, evidence: [{kind, reference (uuid), note}] | null, note }`.
 - **Response:** `{ data: routingId (uuid), messages, succeeded }`.
-- **Status:** service/hook ready, not wired — no page consumes this yet.
+- **Status:** wired 2026-09-06 — `reasons-tab.tsx`'s "Send upstream" action via `SendReasonUpstreamModal`.
 - **Notes:** `causeKey` comes from `GET /churn/reasons`. `targetStageKey` **cannot be `churn`** — Churn records the loss, it doesn't cause it. Each evidence item (a change, claim, or room) **must exist in this workspace or the whole routing is refused** — a reference the destination can't follow is worse than none. **If the target stage has no owner, the routing is still recorded pointing at that stage with an empty destination** — never silently redirected to whoever's nearest, since that would replace a finding about the organisation with a staffing accident; a separate triage flow then asks an admin to appoint an owner.
 
 ### GET /lifecycle/churn/routings
@@ -698,7 +698,9 @@ wired 2026-09-05 (read side only) — see its own entry below.
 - **Purpose:** Causes sent upstream, unanswered first then newest.
 - **Request:** query `stage` (string, optional) — filters to one destination stage.
 - **Response `data`:** `{ routings: [{id, causeKey, causeLabel, targetStageKey, targetStageName, targetUserId, isUndeliverable, evidence: [{kind, reference, note}], note, routedByUserId, routedAtUtc, acknowledgedAtUtc, acknowledgedByUserId, acknowledgementNote}], unanswered, undeliverable, callouts }`.
-- **Status:** service/hook ready, not wired — no page consumes this yet.
+- **Status:** wired 2026-09-06, read-only — `reasons-tab.tsx` fetches this unfiltered just to mark a
+  row "Already sent · unanswered" when its `causeKey` has an open routing; `unanswered`/
+  `undeliverable`/`callouts` and the `?stage=` filter aren't consumed anywhere yet.
 - **Notes:** `undeliverable` counts routings pointing at stages nobody owns — **the dead ends, left visible on purpose**, not hidden or auto-resolved.
 
 ### POST /lifecycle/churn/routings/{routingId}/acknowledge
@@ -992,6 +994,26 @@ number.
         required; a "heads up, nobody owns Activate" warning would need an extra `GET
         /lifecycle/map` fetch just for this one nicety, deferred as a future polish, not a
         blocker.
+
+   ~~**`POST /churn/route-upstream`**~~ — **done 2026-09-06, built exactly to the plan above.**
+   `reasons-tab.tsx`'s "Stage that owns it" column gained a 6th `action` column: a "Send upstream"
+   button per row where `upstreamStage !== null`, replaced by an amber "Already sent · unanswered"
+   `Chip` when `GET /churn/routings` (fetched unfiltered alongside the reasons, via the already-
+   scaffolded `useGetChurnRoutings`) already has an unacknowledged routing for that `causeKey`. New
+   `SendReasonUpstreamModal` (`stage/modals/send-reason-upstream-modal.tsx`) replaces the deleted
+   CH12 — no recipient list, just the finding summary, the resolved destination stage, and an
+   optional free-text note, confirming via the already-scaffolded `useRouteChurnUpstream`. **The
+   stage-key-vs-name uncertainty is resolved with a normalizer, not a guess**: `resolveStageKey`
+   (new export on `pages/everyday/lifecycle/data.ts`, next to the canonical `STAGES` list) matches
+   `upstreamStage` against either the slug or the display name and returns the canonical pair; an
+   unmatched value shows an inline error in the modal ("Couldn't match … to a known stage") and
+   disables the confirm button rather than sending garbage as `targetStageKey`. Evidence attachment
+   and target-stage-owner awareness stayed out of scope, per the plan. Verified with `npx tsc -b`
+   (clean), `npm run build` (clean), and a network-mocked Playwright pass covering all 4 row shapes
+   — no `upstreamStage` (no action shown), a resolvable key (`"activate"`), a resolvable display
+   name (`"Retain"`, also exercising the already-sent chip since that row was mocked with an open
+   routing), and an unresolvable string (button opens the modal, but confirm stays disabled) — plus
+   the happy-path submit, confirming the POST body's `causeKey`/`targetStageKey`/`note` shape.
 2. ~~**Definition's edit flow**~~ — **done 2026-09-05, in a later session.** Correction to this
    line's original claim: `update-stage-conversion.ts`/`preview-stage-definition.ts`/
    `update-stage-definition.ts` were all already scaffolded, contrary to what this line said — the

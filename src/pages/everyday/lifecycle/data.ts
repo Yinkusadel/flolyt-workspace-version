@@ -66,6 +66,19 @@ export const STAGES: Stage[] = [
   { name: "Churn", slug: "churn", department: "Customer Success", metricValue: "3.1%/mo", amount: "₦124M", amountLabel: "at stake", isDefined: true },
 ];
 
+/**
+ * Accepts either a stage key ("activate") or a display name ("Activate") and resolves both to
+ * the canonical pair — `GET /churn/reasons`' `upstreamStage` has never been confirmed live as one
+ * form or the other, so callers that need a real `stageKey` (e.g. `POST /churn/route-upstream`'s
+ * `targetStageKey`) should go through this rather than assuming.
+ */
+export function resolveStageKey(value: string): { key: string; name: string } | null {
+  const bySlug = STAGES.find((stage) => stage.slug === value);
+  if (bySlug) return { key: bySlug.slug, name: bySlug.name };
+  const byName = STAGES.find((stage) => stage.name.toLowerCase() === value.toLowerCase());
+  return byName ? { key: byName.slug, name: byName.name } : null;
+}
+
 export const ADVOCACY_LOOP_NOTE =
   "Advocacy feeds acquisition — 124,000 referrers brought 31% of last quarter's new customers at a CAC of ₦0";
 
