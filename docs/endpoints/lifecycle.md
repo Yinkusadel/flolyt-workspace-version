@@ -914,21 +914,84 @@ number.
 
 ### Remaining, unrelated to this sweep — pick up fresh in a new chat
 
-1. **The churn-routing / governance cluster — 9 endpoints remaining, service+hook ready, no UI
-   built at all** (not a wiring gap, a missing-page gap): `POST /churn/route-upstream`, `GET
-   /churn/routings`, `POST /churn/routings/{id}/acknowledge`, `GET /teams`, `PUT
-   /teams/{team}/lead`, `PUT /governance/room-cap`, `POST /instrumentation-requests`, `POST
-   /instrumentation-requests/{obligationId}/close`, `PUT
-   /instrumentation-requests/{obligationId}/owner`. These would need actual page/screen design
-   work, not just data-wiring, since no Figma screen in this codebase's build history targets most
-   of them. **Corrected 2026-09-05: the other 6 of the original 15 are wired** — `GET
-   /watchable-metrics`, `POST /stages/{stageKey}/conditions`, `PUT /conditions/{conditionId}`,
-   `POST /conditions/{conditionId}/decide`, `POST /conditions/{conditionId}/mute`, `POST
+1. **The churn-routing / governance cluster — 9 endpoints remaining.** **Corrected 2026-09-06,
+   after the user pushed back on the "no UI at all" framing** — checked git history and adjacent
+   already-wired screens instead of trusting the earlier claim, and it was wrong for 4 of the 9:
+
+   - **Genuinely no screen anywhere, confirmed by searching the whole codebase** (a real
+     missing-design gap): `GET /churn/routings`, `POST /churn/routings/{id}/acknowledge`, `GET
+     /teams`, `PUT /teams/{team}/lead`, `PUT /governance/room-cap`. Governance's own "GV14 Set a
+     cap" screen looked like a candidate for `room-cap` but isn't — it's a monthly ₦ spend budget,
+     a different concept from room-cap's "how many rooms may auto-open" integer.
+   - **`POST /churn/route-upstream` — HAD a real designed screen.** The pre-live-wiring Churn
+     Reasons tab (`reasons-tab.tsx`) had a per-row "Actionable" chip opening
+     `SendReasonUpstreamModal` (CH12: finding summary, a "send to" recipient list, an "arrives
+     with" section, confirm button) — deleted in commit `5e7d27e` when the tab was wired to the
+     real `GET /churn/reasons`, because that endpoint has no field to drive the recipient list.
+     **Design existed, just doesn't match the real contract** (the real API routes to a *stage*
+     via `targetStageKey`, not a named person) — this is "needs a redesign to match the API," not
+     "never designed." See the full build plan below — **this is the one to build next.**
+   - **`POST /instrumentation-requests` — already has a live, currently-open modal.**
+     `RequestInstrumentationModal` (AD13, `stage/modals/request-instrumentation-modal.tsx`),
+     opened from Adopt's Blind Spots tab's "Request instrumentation" button. Fully built (shows
+     missing events, what it'd unlock) but "Send to Engineering" just closes + toasts — a wiring
+     gap, not a missing-design one.
+   - **`POST .../close` and `PUT .../owner` — no dedicated modal, but a live table already
+     exists.** The Blind Spots tab already renders `GapRow[]` (from the already-wired `GET
+     /lifecycle/instrumentation`) with an `ownerName` and `state` column per gap
+     (`blind-spots-tab.tsx`) — the same shape of surface the Agents tab's conditions table got row
+     actions added to. Natural home for "Close"/"Assign owner" actions, not a blank page.
+
+   **Corrected 2026-09-05: 6 of the original 15 are wired** — `GET /watchable-metrics`, `POST
+   /stages/{stageKey}/conditions`, `PUT /conditions/{conditionId}`, `POST
+   /conditions/{conditionId}/decide`, `POST /conditions/{conditionId}/mute`, `POST
    /stages/{stageKey}/conditions/backtest` all now back the Agents tab's condition status
    chip/actions-dropdown and its create/edit/accept modals — see each endpoint's own entry above
    for exactly what shipped. The `status` enum used to drive this (`proposed`/`watching`/`muted`/
    `declined`) came from the endpoint's own prose description, not its truncated JSON example —
    see the `GET .../agents` correction above and [[feedback_stop_on_truncated_endpoint_fields]].
+
+   ### Build plan agreed for `POST /churn/route-upstream` (pick this up first)
+
+   - **Trigger:** a "Send upstream" action per reason row on Churn's Reasons tab
+     (`reasons-tab.tsx`), shown **only** when `row.upstreamStage !== null` — currently true for
+     exactly 2 of the reason rows ("never activated"/"stopped after repeating"; stated reasons
+     get `null`). The table already renders `upstreamStage` as plain text in a "Stage that owns
+     it" column — turn that into (or add next to it) the trigger.
+   - **Request mapping**, entirely from data already on the row — no new fetch needed to build
+     the request: `causeKey` = `row.key`, `targetStageKey` = `row.upstreamStage`, `evidence` =
+     `null` (see below), `note` = free text typed in the modal.
+   - **Open uncertainty, resolve before/while building:** `upstreamStage`'s live string value has
+     never been confirmed as a stage *key* (`"activate"`) vs a display *name* (`"Activate"`) — no
+     example exists in any spec paste so far. `targetStageKey` needs the key specifically. Agreed
+     fix: build a small normalizer against this app's own fixed 10-stage key↔name list (already
+     defined elsewhere, e.g. `STAGE_LABELS` in `app-layout.tsx`) that accepts either form, rather
+     than gambling on one and risking a silent mismatch.
+   - **Modal**, simplified from CH12 since the real API has no person/recipient concept: finding
+     summary (reason label, customer count/share), resolved destination stage name, an optional
+     free-text note field, confirm button → `POST /churn/route-upstream`, toast on success.
+   - **One extra fold-in, agreed as in-scope:** after wiring the send, also do a light,
+     unfiltered read of `GET /churn/routings` (Churn is always the *source*, never a valid
+     `targetStageKey`, so no `?stage=` filter needed) purely to mark a row **"Already sent ·
+     unanswered"** when its `causeKey` already has an open routing — prevents double-sends, costs
+     one extra read.
+   - **Explicitly out of scope for this pass** (each is its own separate task, explained in
+     detail to the user before deferring):
+     1. **`POST .../acknowledge`** — this is the *receiving* stage's action ("I have it"), and no
+        stage's tab bar has anywhere today to show "causes routed to me, needing acknowledgement."
+        Needs its own placement decision (new tab? a section on Overview?) across potentially all
+        10 stages before there's even a page to put an acknowledge button on.
+     2. **Evidence attachment** (`evidence: [{kind, reference (uuid), note}]`) — `reference` must
+        be a real UUID of an *existing* room/change/claim in the workspace, not free text. The
+        individual sources partly already exist (`GET /stages/{stageKey}/change-registry` for
+        changes, a separate rooms list elsewhere), but no component anywhere combines
+        searching across rooms + changes + claims and picking one — that's its own multi-part
+        feature, not something to build inside this modal. Sent as `null` (the field is optional).
+     3. **Target-stage owner awareness** — the endpoint tolerates routing to an unowned stage on
+        purpose (records it as a visible dead end rather than refusing), so no extra check is
+        required; a "heads up, nobody owns Activate" warning would need an extra `GET
+        /lifecycle/map` fetch just for this one nicety, deferred as a future polish, not a
+        blocker.
 2. ~~**Definition's edit flow**~~ — **done 2026-09-05, in a later session.** Correction to this
    line's original claim: `update-stage-conversion.ts`/`preview-stage-definition.ts`/
    `update-stage-definition.ts` were all already scaffolded, contrary to what this line said — the
