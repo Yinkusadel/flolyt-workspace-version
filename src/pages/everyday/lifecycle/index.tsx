@@ -122,7 +122,7 @@ function buildGapColumns(
           <Button type="button" variant="outline" size="sm" onClick={() => onRequest(row)}>
             Request
           </Button>
-        ) : row.obligationId ? (
+        ) : row.obligationId && !isGapClosed(row.state) ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button type="button" className="rounded-control p-1 text-ink-4 hover:bg-paper-2 hover:text-ink" aria-label="Request actions">
@@ -130,17 +130,11 @@ function buildGapColumns(
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              {isGapClosed(row.state) ? (
-                <DropdownMenuItem disabled>No actions — already closed</DropdownMenuItem>
-              ) : (
-                <>
-                  <DropdownMenuItem onClick={() => onChangeOwner(row)}>{row.ownerName ? "Change owner" : "Assign owner"}</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onMarkDelivered(row)}>Mark delivered</DropdownMenuItem>
-                  <DropdownMenuItem variant="destructive" onClick={() => onWithdraw(row)}>
-                    Withdraw
-                  </DropdownMenuItem>
-                </>
-              )}
+              <DropdownMenuItem onClick={() => onChangeOwner(row)}>{row.ownerName ? "Change owner" : "Assign owner"}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onMarkDelivered(row)}>Mark delivered</DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onClick={() => onWithdraw(row)}>
+                Withdraw
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null,

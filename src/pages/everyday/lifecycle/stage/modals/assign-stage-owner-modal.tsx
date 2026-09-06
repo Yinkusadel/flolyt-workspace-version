@@ -64,7 +64,7 @@ export function AssignStageOwnerModal({
           <DialogDescription>
             {hasOwner
               ? `Currently owned by ${currentOwnerName ?? "someone"}. Pick a different workspace member to hand ${stageName} to.`
-              : `Names the person accountable for ${stageName}. Must be a workspace member, and a person — never a team or an agent.`}
+              : `Names the person accountable for ${stageName}. Must be a workspace member and a person, never a team or an agent.`}
           </DialogDescription>
         </DialogHeader>
 

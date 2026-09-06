@@ -61,7 +61,7 @@ export function AssignInstrumentationOwnerModal({
           <DialogDescription>
             {hasOwner
               ? `Currently owned by ${currentOwnerName ?? "someone"}. Pick a different workspace member to hand "${gapName}" to.`
-              : `Names the person on the hook for "${gapName}". Must be a workspace member, and a person — never a team.`}
+              : `Names the person on the hook for "${gapName}". Must be a workspace member and a person, never a team.`}
           </DialogDescription>
         </DialogHeader>
 
