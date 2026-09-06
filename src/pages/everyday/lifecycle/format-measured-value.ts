@@ -29,6 +29,15 @@ export function formatCount(value: number): string {
   return value.toLocaleString("en-US");
 }
 
+/** Same M/k/B compaction as formatCompactMoney, without a currency prefix — for a plain count (e.g. total customers). */
+export function formatCompactCount(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000_000) return `${round(value / 1_000_000_000, 2)}B`;
+  if (abs >= 1_000_000) return `${round(value / 1_000_000, 1)}M`;
+  if (abs >= 1_000) return `${round(value / 1_000, 1)}k`;
+  return `${value}`;
+}
+
 /** Fraction (0-1) to a one-decimal percent string, for share/rate-style measured figures. */
 export function formatPercent(value: number): string {
   return `${round(value * 100, 1)}%`;

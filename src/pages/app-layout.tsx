@@ -4,6 +4,8 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { Sidebar, type ViewingAs } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { useGetLeakageMap } from "@/features/lifecycle/use-get-leakage-map";
+import { useGetLifecycleDistribution } from "@/features/lifecycle/use-get-lifecycle-distribution";
+import { formatCompactCount } from "@/pages/everyday/lifecycle/format-measured-value";
 import { BreadcrumbContext, type Crumb } from "@/components/breadcrumb-context";
 import { cn } from "@/lib/utils";
 import { getRoom } from "@/pages/everyday/rooms/room/data";
@@ -664,6 +666,9 @@ export const AppLayout = () => {
   const location = useLocation();
   const { data: leakageMapData, isLoading: isWorkspaceModeLoading } = useGetLeakageMap();
   const workspaceMode = WORKSPACE_MODE_LABEL[leakageMapData?.data.revenueModel ?? ""] ?? null;
+
+  const { data: distributionData, isLoading: isCustomerBaseLoading } = useGetLifecycleDistribution();
+  const customerBase = distributionData ? formatCompactCount(distributionData.data.totalCustomers) : undefined;
   const breadcrumbContextValue = React.useMemo(
     () => ({ setOverride: setBreadcrumbOverride }),
     []
@@ -698,8 +703,13 @@ export const AppLayout = () => {
         isWorkspaceModeLoading={isWorkspaceModeLoading}
         viewingAs={viewingAs}
         onViewingAsChange={setViewingAs}
-        customerBase="4.2M"
-        currencies={["₦", "KES", "GHS", "£"]}
+        customerBase={customerBase}
+        isCustomerBaseLoading={isCustomerBaseLoading}
+        /* ❌ Backend does NOT provide: a list of currencies this workspace's customer base
+           transacts in. No endpoint answers this — GET /currency/supported is Flolyt's global
+           supported list, not this workspace's markets; /workspace/proposed-markets and
+           /workspace/profile only carry a single reportingCurrency. Left unset (Sidebar's
+           `currencies` default is []) rather than hardcoded. */
         roster={[
           { initials: "RD", team: 1 },
           { initials: "AC", team: 2 },
