@@ -1,127 +1,147 @@
-import { WideBarRow } from "@/pages/everyday/lifecycle/stage/bar";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
+import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
-import ActivateCohortsTab from "@/pages/everyday/lifecycle/stage/activate/cohorts-tab";
-import PriceCohortsTab from "@/pages/everyday/lifecycle/stage/price/cohorts-tab";
-import AdoptCohortsTab from "@/pages/everyday/lifecycle/stage/adopt/cohorts-tab";
-import RetainCohortsTab from "@/pages/everyday/lifecycle/stage/retain/cohorts-tab";
-import ExpandCohortsTab from "@/pages/everyday/lifecycle/stage/expand/cohorts-tab";
-import SupportCohortsTab from "@/pages/everyday/lifecycle/stage/support/cohorts-tab";
-import RenewCohortsTab from "@/pages/everyday/lifecycle/stage/renew/cohorts-tab";
-import AdvocateCohortsTab from "@/pages/everyday/lifecycle/stage/advocate/cohorts-tab";
-import ChurnCohortsTab from "@/pages/everyday/lifecycle/stage/churn/cohorts-tab";
-import {
-  ACQUIRE_COHORT_BREAK_ROWS,
-  ACQUIRE_COHORT_ROWS,
-  type CohortRow,
-} from "@/pages/everyday/lifecycle/stage/acquire/data";
-import type { BarTone } from "@/pages/everyday/lifecycle/stage/bar";
+import { formatCompactMoney, formatCount, formatMonthYear, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetStageCohorts } from "@/features/lifecycle/use-get-stage-cohorts";
+import type { StageCohortRowDto } from "@/services/api/lifecycle/get-stage-cohorts";
 
-type CohortsData = {
-  eyebrow: string;
-  rows: CohortRow[];
-  footnoteTitle: string;
-  footnoteBody: string;
-  breakEyebrow: string;
-  breakRows: { label: string; value: string; percent: number; tone: BarTone }[];
-  insightTitle: string;
-  insightBody: string;
-};
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
 
-const COHORTS_DATA: Record<string, CohortsData> = {
-  acquire: {
-    eyebrow: "Every acquisition cohort, measured at the same ages",
-    rows: ACQUIRE_COHORT_ROWS,
-    footnoteTitle: "June has no 90-day figure and it is left blank",
-    footnoteBody:
-      "The cohort is 61 days old. Filling it with a projection would put an estimate in the same column as five measurements, and the column would stop meaning one thing.",
-    breakEyebrow: "The break is dated, not gradual",
-    breakRows: ACQUIRE_COHORT_BREAK_ROWS,
-    insightTitle: "Cost per customer rose 35% in the same quarter the customer became worth 29% less",
-    insightBody:
-      "CAC went from ₦1,466 to ₦1,988 while value per customer fell from ₦9,200 to ₦6,600. Acquisition did not get worse at its job — it got more expensive at a job whose output was being damaged three stages downstream.",
-  },
-};
+type CohortRow = StageCohortRowDto & { id: string };
 
-const VALUE_TONE_CLASS: Record<CohortRow["valueTone"], string> = {
-  teal: "text-teal",
-  rose: "text-rose",
-  neutral: "text-ink-4",
-};
+function buildColumns(measurementAgeDays: number[]): Column<CohortRow>[] {
+  return [
+    { key: "cohort", header: "Cohort", render: (row) => <span className="font-semibold text-ink-2">{formatMonthYear(row.periodStartUtc)}</span> },
+    {
+      key: "entered",
+      header: "Entered",
+      align: "right",
+      render: (row) =>
+        row.entered.value !== null ? (
+          <span className="font-mono text-ink">{formatCount(row.entered.value)}</span>
+        ) : (
+          <InfoTooltip missingSource={row.entered.missingSource} wouldUnlock={row.entered.wouldUnlock} />
+        ),
+    },
+    ...measurementAgeDays.map(
+      (ageDays): Column<CohortRow> => ({
+        key: `age-${ageDays}`,
+        header: `${ageDays} day`,
+        align: "right",
+        render: (row) => {
+          const age = row.ages.find((a) => a.ageDays === ageDays);
+          if (!age || age.stillInStageShare.value === null) {
+            return <InfoTooltip missingSource={age?.stillInStageShare.missingSource} wouldUnlock={age?.stillInStageShare.wouldUnlock} />;
+          }
+          return <span className="font-mono text-ink">{formatPercent(age.stillInStageShare.value)}</span>;
+        },
+      })
+    ),
+    {
+      key: "value",
+      header: "Value to date",
+      align: "right",
+      render: (row) =>
+        row.values.value !== null ? (
+          <div className="space-y-0.5">
+            {row.values.value.map((v) => (
+              <div key={v.currency} className="font-mono text-ink">
+                {formatCompactMoney(v.amount, v.currency)}
+                {v.perCustomer !== null && <span className="text-ink-4"> · {formatCompactMoney(v.perCustomer, v.currency)}/customer</span>}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <InfoTooltip missingSource={row.values.missingSource} wouldUnlock={row.values.wouldUnlock} />
+        ),
+    },
+  ];
+}
 
-const COLUMNS: Column<CohortRow>[] = [
-  { key: "cohort", header: "Cohort", render: (row) => <span className="font-semibold text-ink-2">{row.cohort}</span> },
-  { key: "acquired", header: "Acquired", align: "right", render: (row) => <span className="font-mono text-ink">{row.acquired}</span> },
-  { key: "cac", header: "CAC", align: "right", render: (row) => <span className="font-mono text-ink">{row.cac}</span> },
-  { key: "day30", header: "30 day", align: "right", render: (row) => <span className="font-mono text-ink">{row.day30}</span> },
-  { key: "day60", header: "60 day", align: "right", render: (row) => <span className="font-mono text-ink">{row.day60}</span> },
-  { key: "day90", header: "90 day", align: "right", render: (row) => <span className={row.day90 === "Unavailable" ? "font-mono text-ink-4" : "font-mono text-ink"}>{row.day90}</span> },
-  {
-    key: "valuePerCustomer",
-    header: "Value per customer",
-    align: "right",
-    render: (row) => <span className={VALUE_TONE_CLASS[row.valueTone]}>{row.valuePerCustomer}</span>,
-  },
-  {
-    key: "vsFeb",
-    header: "vs Feb",
-    align: "right",
-    render: (row) => <span className={VALUE_TONE_CLASS[row.vsFebTone]}>{row.vsFeb}</span>,
-  },
-];
+function CohortsSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-14" />
+          <Skeleton className="h-3 w-14" />
+          <Skeleton className="h-3 w-14" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
-/** Screen 06 in the export naming (e.g. A06) — the shared Cohorts tab template for every stage. */
+/** The shared Cohorts tab template (e.g. A06) — entry cohorts, age-aligned, measured at the stage's own standard ages. */
 export function CohortsTab() {
   const { stage } = useStageContext();
-
-  // Activate's Cohorts screen (AC06) uses a different column set (activation
-  // rate/guest share, not CAC/day30-90) — routed to its own component rather
-  // than forcing this template's Acquire-shaped columns onto it.
-  if (stage.slug === "activate") return <ActivateCohortsTab />;
-  // Price's PR07 uses revenue/discount/plan-mix columns, not CAC/day30-90.
-  if (stage.slug === "price") return <PriceCohortsTab />;
-  // Adopt's AD07 uses eligible/2+features/scheduled-delivery columns, not CAC/day30-90.
-  if (stage.slug === "adopt") return <AdoptCohortsTab />;
-  // Retain's RT07 uses 30/60/90-day repeat-rate + median-days columns, not CAC/day30-90.
-  if (stage.slug === "retain") return <RetainCohortsTab />;
-  // Expand's EX07 uses expansion-rate/ARPU-multiple/on-a-paid-plan columns, not CAC/day30-90.
-  if (stage.slug === "expand") return <ExpandCohortsTab />;
-  // Support's SU06 uses contact-rate/top-driver/repeat-after-contact columns, not CAC/day30-90.
-  if (stage.slug === "support") return <SupportCohortsTab />;
-  // Renew's RN06 uses cancelled/paused/card-failed columns, not CAC/day30-90.
-  if (stage.slug === "renew") return <RenewCohortsTab />;
-  // Advocate's AV06 uses reached-180-days/referred-anyone/referrals-each columns, not CAC/day30-90.
-  if (stage.slug === "advocate") return <AdvocateCohortsTab />;
-  // Churn's CH06 uses churned-by-180d/never-activated/median-days-alive columns, not CAC/day30-90.
-  if (stage.slug === "churn") return <ChurnCohortsTab />;
-
-  const data = COHORTS_DATA[stage.slug];
-  if (!data) return null;
+  const { data, isLoading, isError, refetch } = useGetStageCohorts(stage.slug);
+  const cohortsData = data?.data;
+  const cohorts = cohortsData?.cohorts;
+  const rows: CohortRow[] = (cohorts?.value ?? []).map((row) => ({ ...row, id: row.periodStartUtc }));
 
   return (
     <div className="space-y-8">
       <section className="space-y-3">
-        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.eyebrow}</p>
-        <DataTable columns={COLUMNS} rows={data.rows} />
+        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
+          Every arrival cohort, measured at the same ages
+        </p>
+
+        {isError ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+            <p className="text-[12px] text-rose">Couldn't load this stage's cohorts.</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
+        ) : isLoading ? (
+          <CohortsSkeleton />
+        ) : cohorts && cohorts.value === null ? (
+          <Callout tone="amber" title="This stage has no cohort matrix yet">
+            {cohorts.missingSource ? `Missing: ${cohorts.missingSource}.` : "Nothing here yet."}
+            {cohorts.wouldUnlock ? ` Would unlock: ${cohorts.wouldUnlock}.` : ""}
+          </Callout>
+        ) : (
+          <DataTable
+            columns={buildColumns(cohortsData?.measurementAgeDays ?? [])}
+            rows={rows}
+            emptyTitle="No cohorts measured yet"
+            emptyBody="Monthly arrival cohorts will appear here once this stage has been counted."
+          />
+        )}
       </section>
 
-      <Callout tone="neutral" title={data.footnoteTitle}>
-        {data.footnoteBody}
-      </Callout>
+      {cohortsData && cohortsData.undatedCustomers !== null && cohortsData.undatedCustomers > 0 && (
+        <p className="text-[10.5px] text-ink-4">
+          {formatCount(cohortsData.undatedCustomers)} customers excluded from this matrix — their entry was never dated.
+        </p>
+      )}
 
-      <section className="space-y-5">
-        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">{data.breakEyebrow}</p>
-        <div className="space-y-5">
-          {data.breakRows.map((row) => (
-            <WideBarRow key={row.label} label={row.label} value={row.value} percent={row.percent} tone={row.tone} />
-          ))}
-        </div>
-      </section>
+      {cohortsData?.valueCaveat && (
+        <Callout tone="neutral" title="How the value figures are built">
+          {cohortsData.valueCaveat}
+        </Callout>
+      )}
 
-      <Callout tone="ultra" title={data.insightTitle}>
-        {data.insightBody}
-      </Callout>
+      {cohortsData?.caveat && (
+        <Callout tone="amber" title="A caveat on this cohort matrix">
+          {cohortsData.caveat}
+        </Callout>
+      )}
+
+      {cohortsData?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
     </div>
   );
 }

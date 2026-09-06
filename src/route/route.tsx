@@ -43,7 +43,6 @@ import PriceDiscountingTab from "@/pages/everyday/lifecycle/stage/price/discount
 import AdoptFeaturesTab from "@/pages/everyday/lifecycle/stage/adopt/features-tab";
 import AdoptFeatureDetailRoute from "@/pages/everyday/lifecycle/stage/adopt/feature-detail-route";
 import AdoptDepthTab from "@/pages/everyday/lifecycle/stage/adopt/depth-tab";
-import AdoptBlindSpotsTab from "@/pages/everyday/lifecycle/stage/adopt/blind-spots-tab";
 import RetainSegmentDetailRoute from "@/pages/everyday/lifecycle/stage/retain/segment-detail-route";
 import RetainRepeatCurveTab from "@/pages/everyday/lifecycle/stage/retain/repeat-curve-tab";
 import RetainSegmentsTab from "@/pages/everyday/lifecycle/stage/retain/segments-tab";
@@ -448,7 +447,6 @@ export const routes = createBrowserRouter([
                           { path: "discounting", Component: PriceDiscountingTab },
                           { path: "features", Component: AdoptFeaturesTab },
                           { path: "depth", Component: AdoptDepthTab },
-                          { path: "blind-spots", Component: AdoptBlindSpotsTab },
                           { path: "repeat-curve", Component: RetainRepeatCurveTab },
                           { path: "segments", Component: RetainSegmentsTab },
                           { path: "reactivation", Component: RetainReactivationTab },

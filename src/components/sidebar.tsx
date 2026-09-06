@@ -48,6 +48,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getRoomsNeedingApproval } from "@/pages/everyday/rooms/data";
 import { INBOX_PENDING_COUNT } from "@/pages/everyday/inbox/data";
 import {
@@ -176,7 +177,12 @@ export type SidebarProps = {
   open: boolean;
   /** Called when the drawer should close — backdrop click, Escape, or a nav item was chosen. */
   onClose: () => void;
-  workspaceMode?: "Consumer" | "Accounts" | "Hybrid";
+  /** From GET /lifecycle/leakage-map's `revenueModel` (the only endpoint that currently surfaces
+   *  it — see [[flolyt_lifecycle_endpoints]]). `null` while loading or if it errors; also `null`
+   *  for a workspace that hasn't picked one yet, which are indistinguishable without a dedicated
+   *  loading flag — hence `isWorkspaceModeLoading` below. */
+  workspaceMode?: "Consumer" | "Accounts" | "Hybrid" | null;
+  isWorkspaceModeLoading?: boolean;
   /** Who the home route's numbers/content are scoped to. Controlled from the app shell. */
   viewingAs?: ViewingAs;
   onViewingAsChange?: (value: ViewingAs) => void;
@@ -193,7 +199,8 @@ export type SidebarProps = {
 function Sidebar({
   open,
   onClose,
-  workspaceMode = "Consumer",
+  workspaceMode = null,
+  isWorkspaceModeLoading = false,
   viewingAs = "Everyone",
   onViewingAsChange,
   onSearchClick,
@@ -224,9 +231,15 @@ function Sidebar({
       <div className="flex h-topbar shrink-0 items-center gap-2 border-b border-line px-4">
         <img src={flolytLogo} alt="Flolyt" className="size-page shrink-0 object-contain" />
         <span className="text-sm font-semibold text-ink">Flolyt</span>
-        <span className="ml-auto rounded-chip border border-ultra-border bg-ultra-bg px-2 py-1 text-[9.5px] font-semibold text-ultra">
-          {workspaceMode}
-        </span>
+        {isWorkspaceModeLoading ? (
+          <Skeleton className="ml-auto h-5 w-16 rounded-chip" />
+        ) : (
+          workspaceMode && (
+            <span className="ml-auto rounded-chip border border-ultra-border bg-ultra-bg px-2 py-1 text-[9.5px] font-semibold text-ultra">
+              {workspaceMode}
+            </span>
+          )
+        )}
       </div>
 
       {/* Viewing-as scope */}

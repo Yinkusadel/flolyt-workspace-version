@@ -2,41 +2,113 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
+import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { OpenARoomModal } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import {
-  CHURN_WINBACK_CLOSING,
-  CHURN_WINBACK_COST_INSIGHT,
-  CHURN_WINBACK_KPIS,
-  CHURN_WINBACK_OPEN_ROOM_PRESET,
-  CHURN_WINBACK_ROWS,
-  type ChurnWinbackRow,
-} from "@/pages/everyday/lifecycle/stage/churn/data";
+import { formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
+import { CHURN_WINBACK_OPEN_ROOM_PRESET } from "@/pages/everyday/lifecycle/stage/churn/data";
+import { useGetChurnWinBack } from "@/features/lifecycle/use-get-churn-win-back";
+import type { WinBackWaveDto } from "@/services/api/lifecycle/get-churn-win-back";
 
-const DAYS_SINCE_TONE_CLASS: Record<ChurnWinbackRow["daysSinceTone"], string> = { rose: "text-rose", amber: "text-amber", neutral: "text-ink-4" };
-const OFFER_TONE_CLASS: Record<ChurnWinbackRow["offerTone"], string> = { rose: "text-rose", teal: "text-teal", neutral: "text-ink-4" };
-const WON_BACK_TONE_CLASS: Record<ChurnWinbackRow["wonBackTone"], string> = { rose: "text-rose", teal: "text-teal", amber: "text-amber", neutral: "text-ink-4" };
-const COST_TONE_CLASS: Record<ChurnWinbackRow["costPerRecoveryTone"], string> = { rose: "text-rose", teal: "text-teal", neutral: "text-ink-4" };
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  if (CALLOUT_TONES.has(tone)) return tone as "amber" | "teal" | "rose" | "ultra" | "neutral";
+  const normalized = tone.toLowerCase();
+  if (normalized.includes("attention")) return "amber";
+  if (normalized.includes("insight")) return "teal";
+  return "neutral";
+}
 
-const COLUMNS: Column<ChurnWinbackRow>[] = [
-  { key: "campaign", header: "Campaign", render: (row) => <span className="font-semibold text-ink-2">{row.campaign}</span> },
-  { key: "sent", header: "Sent", align: "right", render: (row) => <span className="font-mono text-ink">{row.sent}</span> },
-  { key: "daysSince", header: "Days since last order", align: "right", render: (row) => <span className={row.daysSince === "any" ? "font-mono text-ink-4" : DAYS_SINCE_TONE_CLASS[row.daysSinceTone]}>{row.daysSince}</span> },
-  { key: "offer", header: "Offer", align: "right", render: (row) => <span className={OFFER_TONE_CLASS[row.offerTone]}>{row.offer}</span> },
-  { key: "wonBack", header: "Won back", align: "right", render: (row) => <span className={row.wonBack === "—" ? "font-mono text-ink-4" : WON_BACK_TONE_CLASS[row.wonBackTone]}>{row.wonBack}</span> },
-  { key: "costPerRecovery", header: "Cost per recovery", align: "right", render: (row) => <span className={row.costPerRecovery === "—" ? "font-mono text-ink-4" : COST_TONE_CLASS[row.costPerRecoveryTone]}>{row.costPerRecovery}</span> },
-  { key: "verdict", header: "Verdict", align: "right", render: (row) => <Chip tone={row.verdictTone}>{row.verdict}</Chip> },
+// `state`'s real enum values aren't confirmed by any live response — matched defensively by
+// keyword, same pattern as Retain's reactivation-tab.tsx (the closest sibling endpoint).
+function stateTone(state: string): ChipTone {
+  const normalized = state.toLowerCase();
+  if (normalized.includes("run") || normalized.includes("active")) return "teal";
+  if (normalized.includes("complet") || normalized.includes("end")) return "neutral";
+  if (normalized.includes("pause") || normalized.includes("draft")) return "amber";
+  return "neutral";
+}
+
+type WaveRow = WinBackWaveDto & { id: string };
+
+const COLUMNS: Column<WaveRow>[] = [
+  {
+    key: "campaign",
+    header: "Campaign",
+    render: (row) => (
+      <div>
+        <p className="font-semibold text-ink-2">{row.name}</p>
+        <Chip tone={stateTone(row.state)} className="mt-1">
+          {row.state}
+        </Chip>
+      </div>
+    ),
+  },
+  {
+    key: "audience",
+    header: "Audience",
+    align: "right",
+    render: (row) => (
+      <span className="font-mono text-ink">
+        {formatCount(row.audience)} <span className="text-ink-4">· {formatCount(row.targetedPastBoundary)} past boundary</span>
+      </span>
+    ),
+  },
+  {
+    key: "treatment",
+    header: "Recovered",
+    align: "right",
+    render: (row) => <span className="text-ink-2">{row.treatmentRecoveryShare !== null ? formatPercent(row.treatmentRecoveryShare) : <span className="text-ink-4">Unavailable</span>}</span>,
+  },
+  {
+    key: "holdout",
+    header: "Holdout recovered",
+    align: "right",
+    render: (row) => <span className="text-ink-4">{row.holdoutRecoveryShare !== null ? formatPercent(row.holdoutRecoveryShare) : "—"}</span>,
+  },
+  {
+    key: "lift",
+    header: "Lift",
+    align: "right",
+    render: (row) =>
+      row.attribution === "holdout" && row.liftPoints !== null ? (
+        <span className={row.liftPoints >= 0 ? "text-teal" : "text-rose"}>
+          {row.liftPoints >= 0 ? "+" : ""}
+          {row.liftPoints.toFixed(1)} pts
+        </span>
+      ) : (
+        <span className="text-ink-4" title={row.unattributableBecause ?? undefined}>
+          Unattributable
+        </span>
+      ),
+  },
 ];
 
-/** CH05 — Churn's unique Win-back tab (route path "win-back", matches its tab label). */
+function WinBackSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** CH05 — Churn's own Win-back tab, wired to GET /lifecycle/churn/win-back. */
 const ChurnWinBackTab = () => {
   const { headerActionsEl } = useStageContext();
   const [openRoom, setOpenRoom] = useState(false);
+  const { data, isLoading, isError, refetch } = useGetChurnWinBack();
+  const winBack = data?.data;
+  const rows: WaveRow[] = (winBack?.waves ?? []).map((wave) => ({ ...wave, id: wave.campaignId }));
 
   return (
     <div className="space-y-8">
@@ -48,20 +120,35 @@ const ChurnWinBackTab = () => {
           headerActionsEl
         )}
 
-      <KpiCards items={CHURN_WINBACK_KPIS} />
+      <p className={EYEBROW_CLASS}>
+        {winBack
+          ? `${formatCount(winBack.lapsedCustomers)} lapsed · ${formatCount(winBack.reachableNeverContacted)} reachable, never contacted · ${formatCount(winBack.unreachable)} unreachable`
+          : "What's being aimed at customers already gone"}
+      </p>
 
-      <Callout tone="amber" title={CHURN_WINBACK_COST_INSIGHT.title}>
-        {CHURN_WINBACK_COST_INSIGHT.body}
-      </Callout>
+      {isError ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+          <p className="text-[12px] text-rose">Couldn't load Churn's win-back waves.</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : isLoading ? (
+        <WinBackSkeleton />
+      ) : (
+        <DataTable columns={COLUMNS} rows={rows} emptyTitle="No win-back waves yet" emptyBody="Campaigns aimed at lapsed customers will appear here once at least one has run." />
+      )}
 
-      <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>Every win-back attempt, and what it returned</p>
-        <DataTable columns={COLUMNS} rows={CHURN_WINBACK_ROWS} />
-      </section>
+      {/* ❌ Backend does NOT provide: days-since-last-order, an offer description, or a per-wave
+          cost-per-recovery/verdict — this endpoint only carries audience/recovery-share/lift per
+          wave, recognised by who it reached (mostly past the lapse boundary at enrolment), not by
+          offer or campaign metadata. Dropped rather than fabricated. */}
 
-      <Callout tone="ultra" title={CHURN_WINBACK_CLOSING.title}>
-        {CHURN_WINBACK_CLOSING.body}
-      </Callout>
+      {winBack?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
 
       <OpenARoomModal preset={CHURN_WINBACK_OPEN_ROOM_PRESET} open={openRoom} onOpenChange={setOpenRoom} />
     </div>

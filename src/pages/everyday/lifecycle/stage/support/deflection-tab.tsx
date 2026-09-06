@@ -1,48 +1,81 @@
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import {
-  SUPPORT_DEFLECTION_KPIS,
-  SUPPORT_DEFLECTION_ROWS,
-  type DeflectionRow,
-} from "@/pages/everyday/lifecycle/stage/support/data";
+import { formatCount } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetSupportDeflection } from "@/features/lifecycle/use-get-support-deflection";
+import type { SupportDeflectionTopicDto } from "@/services/api/lifecycle/get-support-deflection";
 
-const REPEAT_TONE_CLASS: Record<DeflectionRow["repeatRateAfterTone"], string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose" };
-const VS_HUMAN_TONE_CLASS: Record<DeflectionRow["vsHumanTone"], string> = { teal: "text-teal", rose: "text-rose" };
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
 
-const COLUMNS: Column<DeflectionRow>[] = [
-  { key: "deflectedBy", header: "Deflected by", render: (row) => <span className="font-semibold text-ink-2">{row.deflectedBy}</span> },
-  { key: "contactsPerMo", header: "Contacts / mo", align: "right", render: (row) => <span className="font-mono text-ink">{row.contactsPerMo}</span> },
-  { key: "costSaved", header: "Cost saved", align: "right", render: (row) => <span className="text-teal">{row.costSaved}</span> },
-  { key: "repeatRateAfter", header: "Repeat rate after", align: "right", render: (row) => <span className={REPEAT_TONE_CLASS[row.repeatRateAfterTone]}>{row.repeatRateAfter}</span> },
-  { key: "vsHuman", header: "vs contacting a human", align: "right", render: (row) => <span className={VS_HUMAN_TONE_CLASS[row.vsHumanTone]}>{row.vsHuman}</span> },
-  { key: "verdict", header: "Verdict", align: "right", render: (row) => <Chip tone={row.verdictTone}>{row.verdict}</Chip> },
+type TopicRow = SupportDeflectionTopicDto & { id: string };
+
+const COLUMNS: Column<TopicRow>[] = [
+  { key: "topic", header: "Topic", render: (row) => <span className="font-semibold text-ink-2">{row.topic}</span> },
+  { key: "readers", header: "Readers", align: "right", render: (row) => <span className="font-mono text-ink">{formatCount(row.readers)}</span> },
+  { key: "contacted", header: "Contacted", align: "right", render: (row) => <span className="font-mono text-ink-2">{formatCount(row.contacted)}</span> },
+  {
+    key: "contactedAnyway",
+    header: "Contacted anyway",
+    align: "right",
+    render: (row) => <span className="text-rose">{row.contactedAnyway !== null ? formatCount(row.contactedAnyway) : <span className="text-ink-4">Unavailable</span>}</span>,
+  },
 ];
 
-/** SU05 — Support's unique Deflection tab. */
+function DeflectionSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** SU05 — Support's own Deflection tab, wired to GET /lifecycle/support/deflection. */
 const SupportDeflectionTab = () => {
+  const { data, isLoading, isError, refetch } = useGetSupportDeflection();
+  const deflection = data?.data;
+  const rows: TopicRow[] = (deflection?.topics ?? []).map((topic) => ({ ...topic, id: topic.topic }));
+
   return (
     <div className="space-y-8">
-      <KpiCards items={SUPPORT_DEFLECTION_KPIS} />
+      <p className={EYEBROW_CLASS}>
+        {deflection
+          ? `${deflection.readings !== null ? formatCount(deflection.readings) : "?"} help-article reads · ${deflection.contactedAnyway !== null ? formatCount(deflection.contactedAnyway) : "an unknown number"} contacted anyway · over ${deflection.contactWindowDays} days`
+          : "Which help content is followed by a ticket anyway, per topic"}
+      </p>
 
-      <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>Deflection, measured on cost and on revenue</p>
-        <DataTable columns={COLUMNS} rows={SUPPORT_DEFLECTION_ROWS} />
-      </section>
+      {isError ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+          <p className="text-[12px] text-rose">Couldn't load Support's deflection.</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : isLoading ? (
+        <DeflectionSkeleton />
+      ) : (
+        <DataTable columns={COLUMNS} rows={rows} emptyTitle="No topics measured yet" emptyBody="Help topics will appear here once enough reads and tickets exist to relate them." />
+      )}
 
-      <Callout tone="rose" title="Two of these save money and cost more than they save">
-        The fee article and the refund chatbot deflect successfully and the customer leaves anyway — 5 and 9 points
-        below the people who spoke to a human about the same thing. ₦6.4M saved in handling cost against ₦12M of
-        lost revenue. No support dashboard in this company reports the second number.
-      </Callout>
+      {/* ❌ Backend does NOT provide: cost saved, repeat rate after, a "vs contacting a human"
+          comparison, or a verdict per topic — this endpoint only relates readers to tickets raised
+          anyway. Dropped rather than fabricated. */}
 
-      <Callout tone="amber" title="The last row is not deflection and should never have been counted as it">
-        2,300 customers a month give up before reaching anyone and are recorded as deflected. They retain at 8.1%.
-        Counting abandonment as a success is the single clearest measurement error this stage inherited, and it is
-        stated rather than quietly corrected.
-      </Callout>
+      {deflection?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
     </div>
   );
 };

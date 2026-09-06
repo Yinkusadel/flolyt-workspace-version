@@ -1,66 +1,69 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
-import { PersonAvatar } from "@/components/person-avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
+import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { ReForecastTheBookModal } from "@/pages/everyday/lifecycle/stage/modals/re-forecast-the-book-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import {
-  RENEW_BOOK_CLOSING,
-  RENEW_BOOK_KPIS,
-  RENEW_BOOK_ROWS,
-  RENEW_BOOK_WARNING,
-  RENEW_REFORECAST_PRESET,
-  type RenewBookRow,
-} from "@/pages/everyday/lifecycle/stage/renew/data";
+import { formatCompactMoney, formatCount } from "@/pages/everyday/lifecycle/format-measured-value";
+import { RENEW_REFORECAST_PRESET } from "@/pages/everyday/lifecycle/stage/renew/data";
+import { useGetRenewalBook } from "@/features/lifecycle/use-get-renewal-book";
+import type { RenewalBookSliceDto } from "@/services/api/lifecycle/get-renew-renewal-book";
 
-const PROJECTED_RATE_TONE_CLASS: Record<RenewBookRow["projectedRateTone"], string> = { amber: "text-amber", rose: "text-rose" };
-const CONFIDENCE_TONE_CLASS: Record<RenewBookRow["confidenceTone"], string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose", neutral: "text-ink-4" };
-const BASIS_TONE_CLASS: Record<RenewBookRow["basisTone"], string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose", neutral: "text-ink-4" };
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
 
-const COLUMNS: Column<RenewBookRow>[] = [
+// `state`'s real enum values aren't confirmed by any live response — matched defensively by
+// keyword, same pattern as claimTone/stateTone elsewhere in this domain.
+function stateTone(state: string): ChipTone {
+  const normalized = state.toLowerCase();
+  if (normalized.includes("cancel")) return "rose";
+  if (normalized.includes("pend") || normalized.includes("due")) return "amber";
+  return "neutral";
+}
+
+type SliceRow = RenewalBookSliceDto & { id: string };
+
+const COLUMNS: Column<SliceRow>[] = [
+  { key: "band", header: "Renewing in", render: (row) => <span className="font-semibold text-ink-2">{row.band} days</span> },
+  { key: "state", header: "State", render: (row) => <Chip tone={stateTone(row.state)}>{row.state}</Chip> },
+  { key: "currency", header: "Currency", align: "right", render: (row) => <span className="font-mono text-ink-4">{row.currency}</span> },
+  { key: "customers", header: "Customers", align: "right", render: (row) => <span className="font-mono text-ink">{formatCount(row.customers)}</span> },
   {
-    key: "renewing",
-    header: "Renewing",
-    render: (row) =>
-      row.detailHref ? (
-        <Link to={row.detailHref} className="font-semibold text-ultra hover:underline">
-          {row.renewing}
-        </Link>
-      ) : (
-        <span className="font-semibold text-ink-2">{row.renewing}</span>
-      ),
-  },
-  { key: "customers", header: "Customers", align: "right", render: (row) => <span className="font-mono text-ink">{row.customers}</span> },
-  { key: "value", header: "Value", align: "right", render: (row) => <span className="font-mono text-ink">{row.value}</span> },
-  { key: "projectedRate", header: "Projected rate", align: "right", render: (row) => <span className={row.projectedRate === "Unavailable" ? "font-mono text-ink-4" : PROJECTED_RATE_TONE_CLASS[row.projectedRateTone]}>{row.projectedRate}</span> },
-  { key: "confidence", header: "Confidence", align: "right", render: (row) => <span className={CONFIDENCE_TONE_CLASS[row.confidenceTone]}>{row.confidence}</span> },
-  { key: "basis", header: "Basis", align: "right", render: (row) => <span className={BASIS_TONE_CLASS[row.basisTone]}>{row.basis}</span> },
-  {
-    key: "owner",
-    header: "Owner",
-    render: (row) =>
-      row.owner ? (
-        <span className="flex items-center gap-2 whitespace-nowrap text-ink-2">
-          <PersonAvatar kind="human" initials={row.owner.initials} size="sm" style={{ backgroundColor: row.owner.color }} />
-          {row.owner.name}
-        </span>
-      ) : row.noOwner ? (
-        <Chip tone="amber">No owner</Chip>
-      ) : null,
+    key: "value",
+    header: "Value",
+    align: "right",
+    render: (row) => <span className="font-mono text-ink">{row.value !== null ? formatCompactMoney(row.value, row.currency) : <span className="text-ink-4">Unavailable</span>}</span>,
   },
 ];
 
-/** RN03 — Renew's unique Renewal book tab (route path "book" per its own footer). */
+function BookSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-4 w-16 rounded-chip" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** RN03 — Renew's own Renewal book tab, wired to GET /lifecycle/renew/renewal-book. */
 const RenewRenewalBookTab = () => {
   const { headerActionsEl } = useStageContext();
   const [reforecastOpen, setReforecastOpen] = useState(false);
+  const { data, isLoading, isError, refetch } = useGetRenewalBook();
+  const book = data?.data;
+  const rows: SliceRow[] = (book?.slices ?? []).map((slice, index) => ({ ...slice, id: `${slice.band}-${slice.state}-${slice.currency}-${index}` }));
 
   return (
     <div className="space-y-8">
@@ -72,20 +75,34 @@ const RenewRenewalBookTab = () => {
           headerActionsEl
         )}
 
-      <KpiCards items={RENEW_BOOK_KPIS} />
+      <p className={EYEBROW_CLASS}>
+        {book
+          ? `${book.comingUp !== null ? formatCount(book.comingUp) : "?"} renewing in the next ${book.horizonDays} days · ${book.alreadyCancelled !== null ? formatCount(book.alreadyCancelled) : "an unknown number"} already cancelled and certain not to renew`
+          : "What's coming up for renewal, split by whether it's already cancelled"}
+      </p>
 
-      <Callout tone="rose" title={RENEW_BOOK_WARNING.title}>
-        {RENEW_BOOK_WARNING.body}
-      </Callout>
+      {isError ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+          <p className="text-[12px] text-rose">Couldn't load Renew's renewal book.</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : isLoading ? (
+        <BookSkeleton />
+      ) : (
+        <DataTable columns={COLUMNS} rows={rows} emptyTitle="Nothing on the book yet" emptyBody="Upcoming renewals will appear here banded by 0-30/31-60/61-90 days." />
+      )}
 
-      <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>What renews, when</p>
-        <DataTable columns={COLUMNS} rows={RENEW_BOOK_ROWS} />
-      </section>
+      {/* ❌ Backend does NOT provide: a projected renewal rate, a confidence chip, a basis
+          explanation, an owner, or a per-row drilldown — this endpoint only returns raw
+          customer/value counts per band, state and currency. Dropped rather than fabricated. */}
 
-      <Callout tone="rose" title={RENEW_BOOK_CLOSING.title}>
-        {RENEW_BOOK_CLOSING.body}
-      </Callout>
+      {book?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
 
       <ReForecastTheBookModal preset={RENEW_REFORECAST_PRESET} open={reforecastOpen} onOpenChange={setReforecastOpen} />
     </div>

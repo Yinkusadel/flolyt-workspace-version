@@ -10,6 +10,8 @@ export interface SearchableSelectOption {
   label: string;
   /** A flag icon or similar short leading glyph — purely decorative. */
   icon?: ReactNode;
+  /** Optional section header to cluster options under (e.g. a source category). Omit for a flat list. */
+  group?: string;
 }
 
 interface SearchableSelectProps {
@@ -61,6 +63,20 @@ export function SearchableSelect({
   const filtered = matches.slice(0, MAX_VISIBLE_RESULTS);
   const truncatedCount = matches.length - filtered.length;
 
+  const groups = useMemo(() => {
+    const order: string[] = [];
+    const byGroup = new Map<string, SearchableSelectOption[]>();
+    for (const option of filtered) {
+      const key = option.group ?? "";
+      if (!byGroup.has(key)) {
+        order.push(key);
+        byGroup.set(key, []);
+      }
+      byGroup.get(key)!.push(option);
+    }
+    return order.map((key) => ({ label: key, options: byGroup.get(key)! }));
+  }, [filtered]);
+
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
     if (!next) setQuery("");
@@ -107,20 +123,29 @@ export function SearchableSelect({
             <p className="px-2.5 py-3 text-center text-[11.5px] text-ink-4">{emptyText}</p>
           )}
 
-          {filtered.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => {
-                onChange(option.value);
-                handleOpenChange(false);
-              }}
-              className="flex w-full items-center gap-2 rounded-control px-2.5 py-1.75 text-left text-[12.5px] text-ink hover:bg-paper-2"
-            >
-              {option.icon && <span className="shrink-0">{option.icon}</span>}
-              <span className="min-w-0 flex-1 truncate">{option.label}</span>
-              {option.value === value && <Check className="size-3.5 shrink-0 text-ultra" />}
-            </button>
+          {groups.map((group, i) => (
+            <div key={group.label || "__ungrouped"} className={cn(i > 0 && group.label && "mt-1 border-t border-line pt-1")}>
+              {group.label && (
+                <p className="sticky top-0 z-10 bg-paper px-2.5 pt-1.5 pb-1 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase">
+                  {group.label}
+                </p>
+              )}
+              {group.options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(option.value);
+                    handleOpenChange(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-control px-2.5 py-1.75 text-left text-[12.5px] text-ink hover:bg-paper-2"
+                >
+                  {option.icon && <span className="shrink-0">{option.icon}</span>}
+                  <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                  {option.value === value && <Check className="size-3.5 shrink-0 text-ultra" />}
+                </button>
+              ))}
+            </div>
           ))}
 
           {truncatedCount > 0 && (

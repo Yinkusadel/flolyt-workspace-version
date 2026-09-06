@@ -33,7 +33,7 @@ export function OverviewStageRail({ stages, activeSlug }: { stages: Stage[]; act
                 aria-hidden
               />
               <p className={cn("mt-1.5 text-[12px] font-semibold", isActive ? "text-ink" : "text-ink-2")}>{stage.name}</p>
-              <p className="mt-0.5 truncate font-mono text-[8.5px] text-ink-4">{stage.metric}</p>
+              <p className="mt-0.5 truncate font-mono text-[8.5px] text-ink-4">{stage.metricValue}</p>
               <div className="my-2.5 border-t border-dashed border-line" />
               <p className={cn("text-[13px] font-semibold", stage.amountLabel === "referred" ? "text-teal" : "text-rose")}>
                 {stage.amount}

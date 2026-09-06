@@ -1,77 +1,129 @@
-import { useState } from "react";
-import { createPortal } from "react-dom";
-
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
-import { ConnectACogsSourceModal } from "@/pages/everyday/lifecycle/stage/modals/connect-a-cogs-source-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import { PRICE_CONNECT_COGS_PRESET, PRICE_MARGIN_BLOCKED_ROWS, PRICE_MARGIN_CARDS, type MarginBlockedRow } from "@/pages/everyday/lifecycle/stage/price/data";
+import { formatCompactMoney, formatCount, formatPercent, round } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetPriceMargin } from "@/features/lifecycle/use-get-price-margin";
+import type { PriceMarginMonthDto } from "@/services/api/lifecycle/get-price-margin";
 
-const CURRENTLY_TONE_CLASS: Record<MarginBlockedRow["currentlyTone"], string> = { amber: "text-amber", neutral: "text-ink-4" };
-const VALUE_TONE_CLASS: Record<MarginBlockedRow["valueTone"], string> = { amber: "text-amber", rose: "text-rose" };
-const CARD_EYEBROW_CLASS: Record<"teal" | "amber" | "neutral" | "rose", string> = { teal: "text-teal", amber: "text-amber", neutral: "text-ink-4", rose: "text-rose" };
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
 
-const COLUMNS: Column<MarginBlockedRow>[] = [
-  { key: "what", header: "What", render: (row) => <span className="font-semibold text-ink-2">{row.what}</span> },
-  { key: "where", header: "Where", render: (row) => <span className="text-ink-2">{row.where}</span> },
-  { key: "currentlyShows", header: "Currently shows", align: "right", render: (row) => <span className={`font-mono ${CURRENTLY_TONE_CLASS[row.currentlyTone]}`}>{row.currentlyShows}</span> },
-  { key: "wouldShow", header: "Would show", align: "right", render: (row) => <span className="text-teal">{row.wouldShow}</span> },
-  { key: "valueOfUnblocking", header: "Value of unblocking", align: "right", render: (row) => <span className={VALUE_TONE_CLASS[row.valueTone]}>{row.valueOfUnblocking}</span> },
+type MonthRow = PriceMarginMonthDto & { id: string };
+
+const COLUMNS: Column<MonthRow>[] = [
+  { key: "period", header: "Month", render: (row) => <span className="font-semibold text-ink-2">{row.period}</span> },
+  { key: "currency", header: "Currency", align: "right", render: (row) => <span className="font-mono text-ink-4">{row.currency}</span> },
+  { key: "orders", header: "Orders", align: "right", render: (row) => <span className="font-mono text-ink">{formatCount(row.orders)}</span> },
+  { key: "revenue", header: "Revenue", align: "right", render: (row) => <span className="font-mono text-ink">{formatCompactMoney(row.revenue, row.currency)}</span> },
+  { key: "cost", header: "Cost", align: "right", render: (row) => <span className="font-mono text-ink-4">{formatCompactMoney(row.cost, row.currency)}</span> },
+  { key: "margin", header: "Margin", align: "right", render: (row) => <span className={row.margin >= 0 ? "text-teal" : "text-rose"}>{formatCompactMoney(row.margin, row.currency)}</span> },
+  {
+    key: "marginRate",
+    header: "Margin rate",
+    align: "right",
+    render: (row) => <span className="text-ink-2">{row.marginRate !== null ? formatPercent(row.marginRate) : <span className="text-ink-4">Unavailable</span>}</span>,
+  },
+  {
+    key: "marginPerOrder",
+    header: "Margin / order",
+    align: "right",
+    render: (row) => <span className="text-ink-4">{row.marginPerOrder !== null ? formatCompactMoney(row.marginPerOrder, row.currency) : "Unavailable"}</span>,
+  },
 ];
 
-/** PR05 — Price's Margin tab, entirely blocked on a cost-of-goods source. */
+function MarginSkeleton() {
+  return (
+    <div className="space-y-3 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="flex items-center justify-between gap-4">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** PR05 — Price's own Margin tab, wired to GET /lifecycle/price/margin. */
 const PriceMarginTab = () => {
-  const { headerActionsEl } = useStageContext();
-  const [cogsOpen, setCogsOpen] = useState(false);
+  const { data, isLoading, isError, refetch } = useGetPriceMargin();
+  const margin = data?.data;
+  const rows: MonthRow[] = (margin?.months ?? []).map((month) => ({ ...month, id: `${month.period}-${month.currency}` }));
 
   return (
     <div className="space-y-8">
-      {headerActionsEl &&
-        createPortal(
-          <Button type="button" size="sm" onClick={() => setCogsOpen(true)}>
-            Connect a COGS source
-          </Button>,
-          headerActionsEl
-        )}
+      <p className={EYEBROW_CLASS}>
+        Revenue net of delivery cost, per complete month{margin && margin.components.length > 0 ? ` · nets off: ${margin.components.join(", ")}` : ""}
+      </p>
 
-      <div className="rounded-panel border-2 border-amber-border bg-amber-bg">
-        <div className="space-y-3 p-5">
-          <h2 className="text-[15px] font-semibold text-ink">Contribution margin is unavailable, everywhere in Flolyt</h2>
-          <p className="text-[11px] leading-relaxed text-ink-2">
-            No connected source provides cost of goods. Flolyt could estimate it from a category benchmark and will not —
-            a margin built on a guess ends up in a board deck and stays there for two years.
-          </p>
-          <p className="font-mono text-[10.5px] font-semibold text-amber">
-            One CSV of cost per SKU per month would unblock every figure on this page.
-          </p>
+      {margin && !margin.excludesReturns && (
+        <Callout tone="amber" title="Failed, cancelled and refunded orders are counted at full revenue, cost included">
+          No status is mapped to exclude them, so margin here is overstated by roughly the return rate. This is stated,
+          not hidden.
+        </Callout>
+      )}
+
+      {isError ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+          <p className="text-[12px] text-rose">Couldn't load Price's margin.</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+            Retry
+          </Button>
         </div>
-      </div>
+      ) : isLoading ? (
+        <MarginSkeleton />
+      ) : (
+        <DataTable
+          columns={COLUMNS}
+          rows={rows}
+          emptyTitle="No complete month measured yet"
+          emptyBody="A month's margin appears here once it has fully closed and its orders are netted against cost."
+        />
+      )}
 
-      <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>What is blocked by this, across the whole product</p>
-        <DataTable columns={COLUMNS} rows={PRICE_MARGIN_BLOCKED_ROWS} />
-      </section>
-
-      <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>What Flolyt will show instead, and what it refuses to</p>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {PRICE_MARGIN_CARDS.map((card) => (
-            <div key={card.id} className="rounded-card border border-line bg-paper">
-              <div className="flex h-full flex-col gap-2.5 p-4">
-                <p className={`font-mono text-[9px] font-medium tracking-[0.85px] uppercase ${CARD_EYEBROW_CLASS[card.tone]}`}>{card.eyebrow}</p>
-                <h3 className="text-[13px] font-semibold text-ink">{card.title}</h3>
-                <p className="flex-1 text-[10.5px] leading-relaxed text-ink-3">{card.body}</p>
-                <p className={`border-t border-dashed border-line pt-2.5 font-mono text-[10px] font-semibold ${CARD_EYEBROW_CLASS[card.tone]}`}>
-                  {card.footnote}
-                </p>
+      {!isLoading && !isError && margin && margin.trend.length > 0 && (
+        <section className="space-y-1">
+          <p className={`pb-2 ${EYEBROW_CLASS}`}>Margin rate, first month observed vs latest</p>
+          <div className="divide-y divide-line rounded-card border border-line bg-paper">
+            {margin.trend.map((trend) => (
+              <div key={trend.currency} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                <span className="text-[11.5px] text-ink-2">
+                  {trend.currency} · {trend.from} → {trend.to}
+                </span>
+                <span className="font-mono text-[11px]">
+                  {trend.fromRate !== null ? formatPercent(trend.fromRate) : "Unavailable"} → {trend.toRate !== null ? formatPercent(trend.toRate) : "Unavailable"}
+                  {trend.change !== null && (
+                    <span className={trend.change >= 0 ? "text-teal" : "text-rose"}>
+                      {" "}
+                      ({trend.change >= 0 ? "+" : ""}
+                      {round(trend.change, 1)} pts)
+                    </span>
+                  )}
+                </span>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
-      <ConnectACogsSourceModal preset={PRICE_CONNECT_COGS_PRESET} open={cogsOpen} onOpenChange={setCogsOpen} />
+      {/* ❌ Backend does NOT provide: a whole-product "what is blocked by missing margin" table or
+          business-memory cards about it — this endpoint returns real per-month margin (net of
+          delivery cost specifically, not full contribution margin) whenever complete months exist;
+          it isn't a permanently-blocked screen the way the old mock assumed. Payback (Unit
+          economics' figure) and full COGS-based contribution margin stay separate concerns,
+          per this endpoint's own note. */}
+
+      {margin?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
     </div>
   );
 };

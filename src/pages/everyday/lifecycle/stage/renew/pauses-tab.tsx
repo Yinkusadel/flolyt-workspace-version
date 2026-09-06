@@ -2,41 +2,37 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { WideBarRow } from "@/pages/everyday/lifecycle/stage/bar";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
-import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { OpenARoomModal } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import {
-  RENEW_PAUSES_CLOSING,
-  RENEW_PAUSES_INSIGHT,
-  RENEW_PAUSES_KPIS,
-  RENEW_PAUSES_OPEN_ROOM_PRESET,
-  RENEW_PAUSES_RETURN_ROWS,
-  RENEW_PAUSE_REASON_ROWS,
-  type RenewPauseReasonRow,
-} from "@/pages/everyday/lifecycle/stage/renew/data";
+import { formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
+import { RENEW_PAUSES_OPEN_ROOM_PRESET } from "@/pages/everyday/lifecycle/stage/renew/data";
+import { useGetRenewPauses } from "@/features/lifecycle/use-get-renew-pauses";
 
-const SHARE_TONE_CLASS: Record<RenewPauseReasonRow["shareTone"], string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose", neutral: "text-ink-4" };
-const RETURNED_TONE_CLASS: Record<RenewPauseReasonRow["returned90Tone"], string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose" };
-const VS_FEB_TONE_CLASS: Record<RenewPauseReasonRow["vsFebTone"], string> = { teal: "text-teal", amber: "text-amber", rose: "text-rose", neutral: "text-ink-4" };
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
 
-const COLUMNS: Column<RenewPauseReasonRow>[] = [
-  { key: "reason", header: "Reason", render: (row) => <span className="font-semibold text-ink-2">{row.reason}</span> },
-  { key: "customers", header: "Customers", align: "right", render: (row) => <span className="font-mono text-ink">{row.customers}</span> },
-  { key: "share", header: "Share", align: "right", render: (row) => <span className={SHARE_TONE_CLASS[row.shareTone]}>{row.share}</span> },
-  { key: "returned90", header: "Returned in 90 days", align: "right", render: (row) => <span className={RETURNED_TONE_CLASS[row.returned90Tone]}>{row.returned90}</span> },
-  { key: "vsFeb", header: "vs Feb", align: "right", render: (row) => <span className={VS_FEB_TONE_CLASS[row.vsFebTone]}>{row.vsFeb}</span> },
-  { key: "reallyA", header: "Really a", align: "right", render: (row) => <Chip tone={row.reallyATone}>{row.reallyA}</Chip> },
-];
+function PausesSkeleton() {
+  return (
+    <div className="space-y-4 rounded-card border border-line bg-paper p-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <Skeleton key={index} className="h-4 w-full" />
+      ))}
+    </div>
+  );
+}
 
-/** RN05 — Renew's unique Pauses tab. */
+/** RN05 — Renew's own Pauses tab, wired to GET /lifecycle/renew/pauses. */
 const RenewPausesTab = () => {
   const { headerActionsEl } = useStageContext();
   const [openRoom, setOpenRoom] = useState(false);
+  const { data, isLoading, isError, refetch } = useGetRenewPauses();
+  const pauses = data?.data;
 
   return (
     <div className="space-y-8">
@@ -48,29 +44,55 @@ const RenewPausesTab = () => {
           headerActionsEl
         )}
 
-      <KpiCards items={RENEW_PAUSES_KPIS} />
+      <section className="space-y-5">
+        <p className={EYEBROW_CLASS}>
+          {pauses
+            ? `${pauses.lapses !== null ? formatCount(pauses.lapses) : "?"} lapse events · ${pauses.returned !== null ? formatCount(pauses.returned) : "?"} returned · gaps under ${pauses.renewalGraceDays} days count as a renewal, not a lapse`
+            : "Who lapsed, how long for, and whether they came back"}
+        </p>
 
-      <section className="space-y-4">
-        <p className={EYEBROW_CLASS}>A pause used to be a delay. Now it is mostly an exit.</p>
-        <div className="space-y-5">
-          {RENEW_PAUSES_RETURN_ROWS.map((row) => (
-            <WideBarRow key={row.label} label={row.label} value={row.value} percent={row.percent} tone={row.tone} />
-          ))}
-        </div>
+        {isError ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+            <p className="text-[12px] text-rose">Couldn't load Renew's pauses.</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
+        ) : isLoading ? (
+          <PausesSkeleton />
+        ) : pauses && pauses.bands.length > 0 ? (
+          <div className="space-y-5">
+            {pauses.bands.map((band) => (
+              <WideBarRow
+                key={band.band}
+                label={band.band === "never" ? "Never returned" : band.band}
+                value={band.share !== null ? `${formatCount(band.lapses)} · ${formatPercent(band.share)}` : `${formatCount(band.lapses)} · no share reported`}
+                percent={band.share !== null ? band.share * 100 : 0}
+                tone={band.band === "never" ? "rose" : "teal"}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-[11.5px] text-ink-3">No lapse bands measured yet.</p>
+        )}
       </section>
 
-      <Callout tone="ultra" title={RENEW_PAUSES_INSIGHT.title}>
-        {RENEW_PAUSES_INSIGHT.body}
-      </Callout>
+      {pauses && (
+        <p className="text-[10.5px] text-ink-4">
+          Lapses newer than {pauses.maturityDays} days are excluded — a subscription that ended recently hasn't failed to return, it hasn't had the chance yet.
+        </p>
+      )}
 
-      <section className="space-y-3">
-        <p className={EYEBROW_CLASS}>Why the 32% who did give a reason paused</p>
-        <DataTable columns={COLUMNS} rows={RENEW_PAUSE_REASON_ROWS} />
-      </section>
+      {/* ❌ Backend does NOT provide: a pause reason or status at all — nothing in the schema
+          carries why a subscription lapsed, only the gap length. The old mock's reason-based
+          breakdown table ("financial", "moving", "dissatisfied", etc.) is entirely fabricated for
+          this endpoint and is dropped rather than reproduced. */}
 
-      <Callout tone="rose" title={RENEW_PAUSES_CLOSING.title}>
-        {RENEW_PAUSES_CLOSING.body}
-      </Callout>
+      {pauses?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
 
       <OpenARoomModal preset={RENEW_PAUSES_OPEN_ROOM_PRESET} open={openRoom} onOpenChange={setOpenRoom} />
     </div>
