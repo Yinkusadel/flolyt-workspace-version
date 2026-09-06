@@ -65,7 +65,7 @@ export function DetailDrilldown({
         subtitle={subtitle}
         action={
           <Button type="button" size="sm" onClick={onOpenRoom}>
-            Open a war room
+            Open a room
           </Button>
         }
       />

@@ -176,13 +176,13 @@ export const ADVOCATE_REWARDS_OPEN_ROOM_PRESET: OpenRoomPreset = {
 };
 
 // ---- Cohorts (AV06) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
-// acquire/data.ts's Cohorts note and cohorts-tab.tsx. The "Open a war room" header button this
+// acquire/data.ts's Cohorts note and cohorts-tab.tsx. The "Open a room" header button this
 // tab used to show is dropped along with it, same reason as the Markets tab's — it was seeded
 // with a hardcoded finding (ADVOCATE_COHORTS_OPEN_ROOM_PRESET) tied to the old fabricated mock,
 // not a generic affordance.
 
 // ---- Markets (AV07) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
-// acquire/data.ts's Markets note and markets-tab.tsx. The "Open a war room" header button this
+// acquire/data.ts's Markets note and markets-tab.tsx. The "Open a room" header button this
 // tab used to show is dropped along with it — it was seeded with a hardcoded Kenya-specific
 // finding (ADVOCATE_MARKETS_OPEN_ROOM_PRESET), not a generic affordance, and that finding has no
 // grounding once the underlying table is real per-market population/atStake/conversion instead.

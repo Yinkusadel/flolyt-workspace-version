@@ -63,7 +63,7 @@ const AdvocateOneReferrerGroupRoute = () => {
         subtitle={detail.subtitle}
         action={
           <Button type="button" size="sm" onClick={() => setOpenRoom(true)}>
-            Open a war room
+            Open a room
           </Button>
         }
       />

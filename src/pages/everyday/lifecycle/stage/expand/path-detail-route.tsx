@@ -64,7 +64,7 @@ const ExpandPathDetailRoute = () => {
         subtitle={detail.headline}
         action={
           <Button type="button" size="sm">
-            Open a war room
+            Open a room
           </Button>
         }
       />

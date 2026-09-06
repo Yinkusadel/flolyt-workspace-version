@@ -47,7 +47,7 @@ const SupportSilentFailuresRoute = () => {
         subtitle="Customers whose orders went wrong who may never have said anything"
         action={
           <Button type="button" size="sm">
-            Open a war room
+            Open a room
           </Button>
         }
       />

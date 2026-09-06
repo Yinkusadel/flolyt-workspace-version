@@ -44,7 +44,7 @@ export function OpenARoomModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Open a war room</DialogTitle>
+          <DialogTitle>Open a room</DialogTitle>
           <DialogDescription>Everything below was carried in from the stage — change any of it</DialogDescription>
         </DialogHeader>
 
