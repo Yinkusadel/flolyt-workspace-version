@@ -196,7 +196,7 @@ const Lifecycle = () => {
           </p>
         </div>
         <Button type="button" className="shrink-0">
-          Open a war room
+          Open a room
         </Button>
       </div>
 
