@@ -2,7 +2,7 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
-import type { LifecycleCalloutDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import type { LifecycleCalloutDto, LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
 export interface ExpandBasketMonthDto {
   period: string;
@@ -10,18 +10,18 @@ export interface ExpandBasketMonthDto {
   customers: number;
   orders: number;
   revenue: number;
-  averageOrderValue: number | null;
-  ordersPerCustomer: number | null;
-  revenuePerCustomer: number | null;
+  averageOrderValue: LifecycleMeasuredValueDto<number>;
+  ordersPerCustomer: LifecycleMeasuredValueDto<number>;
+  revenuePerCustomer: LifecycleMeasuredValueDto<number>;
 }
 
 export interface ExpandBasketMovementDto {
   currency: string;
   from: string;
   to: string;
-  revenuePerCustomerChange: number | null;
-  averageOrderValueChange: number | null;
-  ordersPerCustomerChange: number | null;
+  revenuePerCustomerChange: LifecycleMeasuredValueDto<number>;
+  averageOrderValueChange: LifecycleMeasuredValueDto<number>;
+  ordersPerCustomerChange: LifecycleMeasuredValueDto<number>;
   driver: string;
 }
 

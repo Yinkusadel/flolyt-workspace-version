@@ -7,8 +7,9 @@ import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
 import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { RequestInstrumentationModal } from "@/pages/everyday/lifecycle/stage/modals/request-instrumentation-modal";
+import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import { formatCompactMoney, formatCount, formatPercent, round } from "@/pages/everyday/lifecycle/format-measured-value";
+import { formatCompactMoney, formatCount, formatMonthYear, formatPercent, round } from "@/pages/everyday/lifecycle/format-measured-value";
 import { EXPAND_REQUEST_INSTRUMENTATION_PRESET } from "@/pages/everyday/lifecycle/stage/expand/data";
 import { useGetExpandBasket } from "@/features/lifecycle/use-get-expand-basket";
 import type { ExpandBasketLineDto, ExpandBasketMonthDto } from "@/services/api/lifecycle/get-expand-basket";
@@ -22,7 +23,7 @@ type MonthRow = ExpandBasketMonthDto & { id: string };
 type LineRow = ExpandBasketLineDto & { id: string };
 
 const MONTH_COLUMNS: Column<MonthRow>[] = [
-  { key: "period", header: "Month", render: (row) => <span className="font-semibold text-ink-2">{row.period}</span> },
+  { key: "period", header: "Month", render: (row) => <span className="font-semibold text-ink-2">{formatMonthYear(row.period)}</span> },
   { key: "currency", header: "Currency", align: "right", render: (row) => <span className="font-mono text-ink-4">{row.currency}</span> },
   { key: "customers", header: "Customers", align: "right", render: (row) => <span className="font-mono text-ink">{formatCount(row.customers)}</span> },
   { key: "orders", header: "Orders", align: "right", render: (row) => <span className="font-mono text-ink-2">{formatCount(row.orders)}</span> },
@@ -30,19 +31,34 @@ const MONTH_COLUMNS: Column<MonthRow>[] = [
     key: "averageOrderValue",
     header: "Avg order value",
     align: "right",
-    render: (row) => <span className="text-ink-2">{row.averageOrderValue !== null ? formatCompactMoney(row.averageOrderValue, row.currency) : <span className="text-ink-4">Unavailable</span>}</span>,
+    render: (row) =>
+      row.averageOrderValue.value !== null ? (
+        <span className="text-ink-2">{formatCompactMoney(row.averageOrderValue.value, row.currency)}</span>
+      ) : (
+        <InfoTooltip missingSource={row.averageOrderValue.missingSource} wouldUnlock={row.averageOrderValue.wouldUnlock} />
+      ),
   },
   {
     key: "ordersPerCustomer",
     header: "Orders / customer",
     align: "right",
-    render: (row) => <span className="text-ink-2">{row.ordersPerCustomer !== null ? round(row.ordersPerCustomer, 1) : <span className="text-ink-4">Unavailable</span>}</span>,
+    render: (row) =>
+      row.ordersPerCustomer.value !== null ? (
+        <span className="text-ink-2">{round(row.ordersPerCustomer.value, 1)}</span>
+      ) : (
+        <InfoTooltip missingSource={row.ordersPerCustomer.missingSource} wouldUnlock={row.ordersPerCustomer.wouldUnlock} />
+      ),
   },
   {
     key: "revenuePerCustomer",
     header: "Revenue / customer",
     align: "right",
-    render: (row) => <span className="font-mono text-ink">{row.revenuePerCustomer !== null ? formatCompactMoney(row.revenuePerCustomer, row.currency) : <span className="text-ink-4">Unavailable</span>}</span>,
+    render: (row) =>
+      row.revenuePerCustomer.value !== null ? (
+        <span className="font-mono text-ink">{formatCompactMoney(row.revenuePerCustomer.value, row.currency)}</span>
+      ) : (
+        <InfoTooltip missingSource={row.revenuePerCustomer.missingSource} wouldUnlock={row.revenuePerCustomer.wouldUnlock} />
+      ),
   },
 ];
 
@@ -120,10 +136,10 @@ const ExpandBasketTab = () => {
                 {basket.movement.map((row) => (
                   <div key={row.currency} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                     <span className="text-[11.5px] text-ink-2">
-                      {row.currency} · {row.from} → {row.to}
+                      {row.currency} · {formatMonthYear(row.from)} → {formatMonthYear(row.to)}
                     </span>
                     <span className="font-mono text-[11px] text-ink-2">
-                      revenue/customer {row.revenuePerCustomerChange !== null ? formatCompactMoney(row.revenuePerCustomerChange, row.currency) : "Unavailable"} · driven by{" "}
+                      revenue/customer {row.revenuePerCustomerChange.value !== null ? formatPercent(row.revenuePerCustomerChange.value) : "Unavailable"} · driven by{" "}
                       <span className="font-semibold text-ultra">{row.driver}</span>
                     </span>
                   </div>
