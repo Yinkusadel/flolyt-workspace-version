@@ -41,6 +41,22 @@ function gapStateTone(state: string): ChipTone {
   return "amber";
 }
 
+// Same keyword set gapStateTone uses for its teal/rose branches — a request in one of these
+// states has already been closed (delivered or withdrawn), so close/withdraw/reassign no longer
+// apply. Caught live: POST .../close on an already-closed obligation 400s ("This obligation is
+// already closed."), because the dropdown wasn't checking state, only that obligationId existed
+// (which stays non-null forever once a request has ever been raised).
+function isGapClosed(state: string): boolean {
+  const normalized = state.toLowerCase();
+  return (
+    normalized.includes("close") ||
+    normalized.includes("delivered") ||
+    normalized.includes("resolved") ||
+    normalized.includes("withdraw") ||
+    normalized.includes("reject")
+  );
+}
+
 const GAP_STATE_LABEL: Record<string, string> = { "no-request": "Not requested" };
 
 type GapRow = InstrumentationGapDto & { id: string };
@@ -114,11 +130,17 @@ function buildGapColumns(
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => onChangeOwner(row)}>{row.ownerName ? "Change owner" : "Assign owner"}</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onMarkDelivered(row)}>Mark delivered</DropdownMenuItem>
-              <DropdownMenuItem variant="destructive" onClick={() => onWithdraw(row)}>
-                Withdraw
-              </DropdownMenuItem>
+              {isGapClosed(row.state) ? (
+                <DropdownMenuItem disabled>No actions — already closed</DropdownMenuItem>
+              ) : (
+                <>
+                  <DropdownMenuItem onClick={() => onChangeOwner(row)}>{row.ownerName ? "Change owner" : "Assign owner"}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onMarkDelivered(row)}>Mark delivered</DropdownMenuItem>
+                  <DropdownMenuItem variant="destructive" onClick={() => onWithdraw(row)}>
+                    Withdraw
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null,
