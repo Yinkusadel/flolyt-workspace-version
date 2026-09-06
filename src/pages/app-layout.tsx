@@ -668,7 +668,8 @@ export const AppLayout = () => {
   const workspaceMode = WORKSPACE_MODE_LABEL[leakageMapData?.data.revenueModel ?? ""] ?? null;
 
   const { data: distributionData, isLoading: isCustomerBaseLoading } = useGetLifecycleDistribution();
-  const customerBase = distributionData ? formatCompactCount(distributionData.data.totalCustomers) : undefined;
+  const totalCustomers = distributionData?.data.totalCustomers;
+  const customerBase = typeof totalCustomers === "number" ? formatCompactCount(totalCustomers) : undefined;
   const breadcrumbContextValue = React.useMemo(
     () => ({ setOverride: setBreadcrumbOverride }),
     []
