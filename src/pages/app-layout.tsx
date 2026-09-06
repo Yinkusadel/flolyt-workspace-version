@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 
 import { Sidebar, type ViewingAs } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
+import { useGetLeakageMap } from "@/features/lifecycle/use-get-leakage-map";
 import { BreadcrumbContext, type Crumb } from "@/components/breadcrumb-context";
 import { cn } from "@/lib/utils";
 import { getRoom } from "@/pages/everyday/rooms/room/data";
@@ -31,6 +32,16 @@ import { SM_FIELD_TITLES } from "@/pages/data/schema/data";
 
 /** Shared with every route via <Outlet context>, so a screen can scope its own content to the sidebar's "viewing as" selection. */
 export type AppOutletContext = { viewingAs: ViewingAs };
+
+// GET /lifecycle/leakage-map's `revenueModel` is the closed vocabulary set by
+// PUT /workspace/revenue-model onboarding — see [[flolyt_lifecycle_endpoints]] for why this
+// endpoint (not a dedicated workspace one) is currently the only place it's readable. An
+// unrecognized value renders as no chip at all rather than guessing, same as everywhere else.
+const WORKSPACE_MODE_LABEL: Record<string, "Consumer" | "Accounts" | "Hybrid"> = {
+  consumer: "Consumer",
+  account_based: "Accounts",
+  both: "Hybrid",
+};
 
 const LEAK_DETAIL_TITLES: Record<string, string> = {
   "delivery-fee-checkout": "The delivery fee moved to checkout",
@@ -651,6 +662,8 @@ export const AppLayout = () => {
   const [viewingAs, setViewingAs] = React.useState<ViewingAs>("Everyone");
   const [breadcrumbOverride, setBreadcrumbOverride] = React.useState<Crumb[] | null>(null);
   const location = useLocation();
+  const { data: leakageMapData, isLoading: isWorkspaceModeLoading } = useGetLeakageMap();
+  const workspaceMode = WORKSPACE_MODE_LABEL[leakageMapData?.data.revenueModel ?? ""] ?? null;
   const breadcrumbContextValue = React.useMemo(
     () => ({ setOverride: setBreadcrumbOverride }),
     []
@@ -681,6 +694,8 @@ export const AppLayout = () => {
       <Sidebar
         open={navOpen}
         onClose={() => setNavOpen(false)}
+        workspaceMode={workspaceMode}
+        isWorkspaceModeLoading={isWorkspaceModeLoading}
         viewingAs={viewingAs}
         onViewingAsChange={setViewingAs}
         customerBase="4.2M"
