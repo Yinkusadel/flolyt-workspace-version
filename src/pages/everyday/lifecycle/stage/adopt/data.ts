@@ -124,10 +124,12 @@ export const ADOPT_FEATURE_DETAILS: Record<string, FeatureDetail> = {
 // bands customers by total feature count only, with no first/second-feature pairing field, so the
 // old mock's "which second feature matters most" table isn't reproducible from live data.
 
-// ---- Not instrumented / blind spots (AD06) is now wired to GET /lifecycle/instrumentation — see
-// blind-spots-tab.tsx. That's a workspace-wide endpoint (every gap names which stages it blocks),
-// filtered there to this stage. No field estimates a per-gap cost the way the old mock's cards
-// claimed to, so those aren't reproducible from live data.
+// ---- Not instrumented / blind spots (AD06) — removed 2026-09-06. `GET /lifecycle/instrumentation`
+// is workspace-wide (every gap names which of the 10 stages it blocks, several at once or none),
+// so filtering it down to one stage's tab left every gap that didn't block Adopt permanently
+// unreachable in the product. Moved to a single workspace-wide "Instrumentation gaps" section on
+// the /lifecycle map page instead — see index.tsx — which is also where `POST
+// /instrumentation-requests` is now wired for real, per gap row.
 
 // ---- Cohorts (AD07) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
 // acquire/data.ts's Cohorts note and cohorts-tab.tsx.
@@ -165,24 +167,3 @@ export type RequestInstrumentationPreset = {
   obligationBody: string;
 };
 
-export const ADOPT_REQUEST_INSTRUMENTATION_PRESET: RequestInstrumentationPreset = {
-  subtitle: "Loyalty tiers · live 118 days with no reading",
-  invisibleTitle: "Loyalty tiers · renamed 19 April",
-  invisibleBody: "118 days live · no event · cannot be evaluated at all",
-  needsEyebrow: "What Flolyt needs",
-  events: [
-    { id: "tier-shown", name: "loyalty.tier_shown", description: "when a customer sees their tier" },
-    { id: "tier-changed", name: "loyalty.tier_changed", description: "when they move between tiers" },
-    { id: "reward-redeemed", name: "loyalty.reward_redeemed", description: "when a tier benefit is used" },
-  ],
-  unblockEyebrow: "What this would unblock",
-  unblockRows: [
-    { label: "Adopt · features", value: "one of seven rows stops reading unavailable", tone: "neutral" },
-    { label: "Adopt · what changed", value: "the April rename becomes evaluable", tone: "amber" },
-    { label: "Advocate", value: "tier-driven referral behaviour, currently invisible", tone: "amber" },
-    { label: "A 2026 decision", value: "whether to keep the rename or revert it", tone: "rose" },
-  ],
-  obligationTitle: "This becomes an obligation, not a message",
-  obligationBody:
-    "It goes to Engineering with an owner, a date and a state, and it appears on their handoff load. Engineering currently holds 41 obligations, 14 of them overdue and 11 of those instrumentation — which is context this request will arrive with.",
-};

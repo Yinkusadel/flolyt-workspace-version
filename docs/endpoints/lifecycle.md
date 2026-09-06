@@ -848,7 +848,7 @@ wired 2026-09-05 (read side only) — see its own entry below.
 
 - **Purpose:** What this workspace can't measure at all, and who owes fixing it.
 - **Response `data`:** `{ gaps: [{gapKey, name, gap, wouldUnlock, blockedStages: string[], state, obligationId, requiredEventSchemas: string[], blocks: string[], requestedAtUtc, neededByUtc, daysOverdue, ownerUserId, ownerName}], overdueCount, unrequestedCount, callouts }`.
-- **Status:** **✅ wired 2026-09-05, read side only** — `stage/adopt/blind-spots-tab.tsx`, filtered to `gaps` whose `blockedStages` includes the current stage (this endpoint is workspace-wide, not stage-scoped by URL, unlike most of this domain). "Request instrumentation" still opens the pre-existing static preset dialog rather than a real `POST /instrumentation-requests` call — that mutation, `PUT .../owner`, and `POST .../close` all stay unwired. **Correction, live-confirmed 2026-09-05:** `blockedStages` carries each stage's **display name** ("Advocate"), not its slug ("advocate") — the first version of this filter compared against `stage.slug` and matched nothing, for any stage, ever; fixed to compare case-insensitively against `stage.name`. **Also confirmed live:** `callouts[]` is composed over the *entire unfiltered* `gaps[]` list, not scoped to the stage being viewed — rendering it under a per-stage "blind spots in this stage" heading produced a workspace-wide count that visually contradicted the stage-filtered table right above it (e.g. "0" in the table, "2 gaps" in the callout, for two gaps that didn't even block that stage). Dropped from this view entirely rather than shown misleadingly; there's no way to re-scope pre-composed callout text to one stage without fabricating it.
+- **Status:** **✅ moved and fully wired 2026-09-06.** Originally wired 2026-09-05 read-only into `stage/adopt/blind-spots-tab.tsx`, filtered to `gaps` whose `blockedStages` included Adopt specifically. **That tab is now deleted.** The filtering itself worked, but the architecture didn't: this endpoint is workspace-wide (a gap's `blockedStages` can name any of the 10 stages, several at once, or none), and Adopt's tab was the *only* screen anywhere that read it — so a gap blocking a different stage, or blocking none, was invisible in the product, not just miscounted. Replaced with a single **"What Flolyt can't see, workspace-wide"** section on the `/lifecycle` map page itself (`index.tsx`) showing every gap unfiltered, a new "Blocks" column listing each gap's `blockedStages` (or "No stage, currently"), and a per-row "Request" action wired to the real `POST /instrumentation-requests` (see that entry — previously only a static preset dialog). Because this section is now genuinely workspace-wide, `overdueCount`/`unrequestedCount`/`callouts[]` are finally renderable without the scoping contradiction described below — no re-scoping needed, they describe exactly what this section shows. `PUT .../owner` and `POST .../close` remain unwired — no row action for either yet. **Correction, live-confirmed 2026-09-05, still true:** `blockedStages` carries each stage's **display name** ("Advocate"), not its slug ("advocate").
 - **Notes:** Gaps are **derived from the agent roster's readiness, never stored** — a stored copy would disagree with reality the moment a source got connected. Each gap's `state` includes `"no-request"` (nobody has asked about this gap yet) alongside whatever request-lifecycle states an actual `instrumentation-requests` entry carries. `daysOverdue` is likewise **derived, not stored** — a stored overdue flag would be wrong every day after the one it was written. `blockedStages` names which of the 10 stages go without because an agent can't read this gap.
 
 ### POST /lifecycle/instrumentation-requests
@@ -857,7 +857,7 @@ wired 2026-09-05 (read side only) — see its own entry below.
 - **Auth:** Bearer token; open to any member.
 - **Request:** body `{ gap, gapKey, neededByUtc (RFC 3339), blocks?: string[], ownerUserId? (uuid), requiredEventSchemas?: string[] }`.
 - **Response:** `{ data: obligationId (uuid), messages, succeeded }`.
-- **Status:** service/hook ready, not wired — no page consumes this yet.
+- **Status:** **✅ wired 2026-09-06** — `RequestGapInstrumentationModal` (`pages/everyday/lifecycle/modals/request-gap-instrumentation-modal.tsx`), opened per-row from the new gaps section on `/lifecycle` (see `GET /lifecycle/instrumentation`'s entry above). `gap`/`gapKey`/`blocks`/`requiredEventSchemas` are all carried straight through from the gap row the backend already returned — the backend has already worked out which events would close this specific gap, so the modal shows them read-only rather than asking the user to type event names. Only `neededByUtc` is user input (a plain `<input type="date">`, confirm disabled until one is picked). `ownerUserId` sent `null` — assigning an owner stays a separate, unwired action (`PUT .../owner`). Distinct from the still-unwired, unrelated `stage/modals/request-instrumentation-modal.tsx` used by Expand's Basket tab, which opens on a fixed static preset (`EXPAND_REQUEST_INSTRUMENTATION_PRESET`) unconnected to any live gap — that one's own "Send to Engineering" still just toasts.
 - **Notes:** **`requiredEventSchemas` is the point, and required** — "please instrument loyalty" is a conversation; `loyalty.tier_shown` / `loyalty.tier_changed` / `loyalty.reward_redeemed` is a contract an engineer can actually satisfy. A `neededByUtc` already in the past is refused. **One live request per gap** — a second `POST` for the same `gapKey` presumably conflicts (exact behavior unconfirmed, worth testing before wiring a "raise again" button). Raising is open to anyone; closing (below) is gated.
 
 ### POST /lifecycle/instrumentation-requests/{obligationId}/close
@@ -933,16 +933,29 @@ number.
      **Design existed, just doesn't match the real contract** (the real API routes to a *stage*
      via `targetStageKey`, not a named person) — this is "needs a redesign to match the API," not
      "never designed." See the full build plan below — **this is the one to build next.**
-   - **`POST /instrumentation-requests` — already has a live, currently-open modal.**
-     `RequestInstrumentationModal` (AD13, `stage/modals/request-instrumentation-modal.tsx`),
-     opened from Adopt's Blind Spots tab's "Request instrumentation" button. Fully built (shows
-     missing events, what it'd unlock) but "Send to Engineering" just closes + toasts — a wiring
-     gap, not a missing-design one.
-   - **`POST .../close` and `PUT .../owner` — no dedicated modal, but a live table already
-     exists.** The Blind Spots tab already renders `GapRow[]` (from the already-wired `GET
-     /lifecycle/instrumentation`) with an `ownerName` and `state` column per gap
-     (`blind-spots-tab.tsx`) — the same shape of surface the Agents tab's conditions table got row
-     actions added to. Natural home for "Close"/"Assign owner" actions, not a blank page.
+   - ~~**`POST /instrumentation-requests`**~~ — **done 2026-09-06, but not where this line
+     originally pointed.** The old plan was to wire AD13's already-open `RequestInstrumentationModal`
+     on Adopt's Blind Spots tab. Before building it, the user asked whether `GET
+     /lifecycle/instrumentation`'s workspace-wide scoping (a gap can block any stage, several, or
+     none — see that endpoint's own entry) meant the request action shouldn't live only on Adopt.
+     It did: Adopt's Blind Spots tab was the *only* screen anywhere reading this endpoint, so a gap
+     not blocking Adopt would have stayed permanently unrequestable through the product even after
+     wiring the mutation. **Fixed by deleting Adopt's Blind Spots tab entirely** (route, tab-bar
+     entry, `blind-spots-tab.tsx`, the now-unused `ADOPT_REQUEST_INSTRUMENTATION_PRESET`) and
+     building a new workspace-wide **"What Flolyt can't see, workspace-wide"** section on the
+     `/lifecycle` map page (`index.tsx`) instead — every gap, unfiltered, with a new "Blocks"
+     column and a per-row "Request" action. New `RequestGapInstrumentationModal`
+     (`pages/everyday/lifecycle/modals/request-gap-instrumentation-modal.tsx`) replaces AD13's
+     static-preset dialog for this flow — `gap`/`gapKey`/`blocks`/`requiredEventSchemas` come
+     straight off the gap row (the backend already knows what would close it), only `neededByUtc`
+     is typed. Verified with `npx tsc -b`, `npm run build`, and a network-mocked Playwright pass
+     (3 gap shapes: no-request with multiple blocked stages, no-request blocking no stage at all,
+     and an already-requested/overdue row with no Request button) plus the submit flow. AD13's
+     modal file itself is untouched and still serves Expand's Basket tab, an unrelated, still-fully-
+     mock "Request instrumentation" CTA not tied to any live gap.
+   - **`POST .../close` and `PUT .../owner`** — still unwired, no row action for either yet. The
+     natural home is now the new workspace-wide gaps section above (same `state`/`ownerName`
+     columns that used to live on the deleted Blind Spots tab), not a per-stage table.
 
    **Corrected 2026-09-05: 6 of the original 15 are wired** — `GET /watchable-metrics`, `POST
    /stages/{stageKey}/conditions`, `PUT /conditions/{conditionId}`, `POST
