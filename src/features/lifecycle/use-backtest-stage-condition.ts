@@ -32,6 +32,7 @@ const useBacktestStageCondition = (options?: UseBacktestStageConditionOptions) =
     backtest: mutation.mutate,
     backtestResult: mutation.data?.data,
     isPending: mutation.isPending,
+    reset: mutation.reset,
   };
 };
 

@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Sparkline } from "@/pages/everyday/lifecycle/stage/sparkline";
 import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
@@ -29,7 +31,14 @@ export function BacktestPreview({
   segment?: string | null;
   hasHistory: boolean | null;
 }) {
-  const { backtest, backtestResult, isPending } = useBacktestStageCondition();
+  const { backtest, backtestResult, isPending, reset } = useBacktestStageCondition();
+
+  // A prior simulation's result stops matching the draft the instant any input it depended on
+  // changes — clear it rather than leave a stale preview on screen for values nobody asked about.
+  useEffect(() => {
+    reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metricKey, comparison, threshold, sustainReadings, segment]);
 
   const canSimulate = !!metricKey && Number.isFinite(threshold) && sustainReadings > 0 && hasHistory !== false;
 
