@@ -15,8 +15,11 @@ import { KNOWN_DEPARTMENTS, STAGES, type Department, type RootCauseRow, type Sta
 import useGetLifecycleMap from "@/features/lifecycle/use-get-lifecycle-map";
 import { useGetChurnChain } from "@/features/lifecycle/use-get-churn-chain";
 import { useGetInstrumentation } from "@/features/lifecycle/use-get-instrumentation";
+import { useGetChurnRoutings } from "@/features/lifecycle/use-get-churn-routings";
+import useAcknowledgeChurnRouting from "@/features/lifecycle/use-acknowledge-churn-routing";
 import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 import type { InstrumentationGapDto } from "@/services/api/lifecycle/get-instrumentation";
+import type { ChurnRoutingDto } from "@/services/api/lifecycle/get-churn-routings";
 import { formatCompactCurrency, formatHeadlineValue, formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
 import {
   DropdownMenu,
@@ -156,6 +159,61 @@ function GapsSkeleton() {
   );
 }
 
+type RoutingRow = ChurnRoutingDto & { id: string };
+
+function buildRoutingColumns(onAcknowledge: (row: RoutingRow) => void, isAcknowledging: boolean): Column<RoutingRow>[] {
+  return [
+    {
+      key: "cause",
+      header: "Cause",
+      render: (row) => <span className="font-semibold text-ink-2">{row.causeLabel}</span>,
+    },
+    {
+      key: "target",
+      header: "Routed to",
+      render: (row) => (
+        <div className="flex items-center gap-1.5">
+          <span className="text-ink-2">{row.targetStageName}</span>
+          {row.isUndeliverable && <Chip tone="rose">No owner</Chip>}
+        </div>
+      ),
+    },
+    {
+      key: "note",
+      header: "Note",
+      render: (row) => <span className="text-ink-3">{row.note ?? <span className="text-ink-4">No note</span>}</span>,
+    },
+    {
+      key: "routed",
+      header: "Routed",
+      align: "right",
+      render: (row) => <span className="font-mono text-ink-4">{formatShortDate(row.routedAtUtc)}</span>,
+    },
+    {
+      key: "status",
+      header: "Status",
+      align: "right",
+      render: (row) =>
+        row.acknowledgedAtUtc ? (
+          <Chip tone="teal">Acknowledged</Chip>
+        ) : (
+          <Chip tone="amber">Unanswered</Chip>
+        ),
+    },
+    {
+      key: "action",
+      header: "",
+      align: "right",
+      render: (row) =>
+        row.acknowledgedAtUtc ? null : (
+          <Button type="button" variant="outline" size="sm" disabled={isAcknowledging} onClick={() => onAcknowledge(row)}>
+            I have it
+          </Button>
+        ),
+    },
+  ];
+}
+
 // GET /lifecycle/map's atStake is a measured-value wrapper, not a bare number — confirmed
 // 2026-08-31 from a real response (see LifecycleMeasuredValueDto).
 function formatAtStake(atStake: LifecycleMeasuredValueDto<number>): string {
@@ -184,9 +242,11 @@ const Lifecycle = () => {
   const { stages: liveStages, callouts, isLoading, isError, refetch } = useGetLifecycleMap();
   const churnChainQuery = useGetChurnChain();
   const instrumentationQuery = useGetInstrumentation();
+  const routingsQuery = useGetChurnRoutings();
   const [gapToRequest, setGapToRequest] = useState<GapRow | null>(null);
   const [gapToClose, setGapToClose] = useState<{ row: GapRow; resolved: boolean } | null>(null);
   const [gapForOwner, setGapForOwner] = useState<GapRow | null>(null);
+  const { acknowledge, isPending: isAcknowledging } = useAcknowledgeChurnRouting();
 
   const liveByKey = new Map(liveStages.map((stage) => [stage.key, stage]));
 
@@ -237,6 +297,10 @@ const Lifecycle = () => {
     (row) => setGapToClose({ row, resolved: false }),
     setGapForOwner
   );
+
+  const routings = routingsQuery.data?.data;
+  const routingRows: RoutingRow[] = (routings?.routings ?? []).map((routing) => ({ ...routing, id: routing.id }));
+  const routingColumns = buildRoutingColumns((row) => acknowledge({ routingId: row.id, note: null }), isAcknowledging);
 
   return (
     <div className="space-y-8">
@@ -297,6 +361,39 @@ const Lifecycle = () => {
         )}
 
         {instrumentation?.callouts.map((callout) => (
+          <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+            {callout.body}
+          </Callout>
+        ))}
+      </section>
+
+      <section className="space-y-3">
+        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
+          Causes routed to a stage, workspace-wide
+          {routings ? ` · ${routingRows.length}` : ""}
+          {routings && routings.unanswered > 0 ? ` · ${routings.unanswered} unanswered` : ""}
+          {routings && routings.undeliverable > 0 ? ` · ${routings.undeliverable} undeliverable` : ""}
+        </p>
+
+        {routingsQuery.isError ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+            <p className="text-[12px] text-rose">Couldn't load routed causes.</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => routingsQuery.refetch()}>
+              Retry
+            </Button>
+          </div>
+        ) : routingsQuery.isLoading ? (
+          <GapsSkeleton />
+        ) : (
+          <DataTable
+            columns={routingColumns}
+            rows={routingRows}
+            emptyTitle="Nothing routed"
+            emptyBody="No churn cause has been sent to another stage yet."
+          />
+        )}
+
+        {routings?.callouts.map((callout) => (
           <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
             {callout.body}
           </Callout>
