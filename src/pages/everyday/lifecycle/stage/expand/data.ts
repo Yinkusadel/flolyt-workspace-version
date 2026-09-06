@@ -10,7 +10,6 @@ import type { ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import type { InsightCard } from "@/pages/everyday/lifecycle/stage/activate/data";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
-import type { RequestInstrumentationPreset } from "@/pages/everyday/lifecycle/stage/adopt/data";
 
 // ---- Definition (EX01) is now the shared DefinitionRoute template — see
 // stage/definition/definition-route.tsx. GET .../definition has no field for the basket/plan/
@@ -151,28 +150,11 @@ export const EXPAND_UPGRADE_PATH_DETAILS: Record<string, UpgradePathDetail> = {
 // composition (lines[]) needs that field. The old mock treated the whole screen as blocked, which
 // this endpoint contradicts; its specific "before/after the fee" narrative numbers above aren't
 // reproducible from live data either way. See basket-tab.tsx.
-
-export const EXPAND_REQUEST_INSTRUMENTATION_PRESET: RequestInstrumentationPreset = {
-  subtitle: "order_lines · 41 days overdue, blocks four stages",
-  invisibleTitle: "Basket composition · never instrumented",
-  invisibleBody: "No items feed · items, categories and attach rate all unavailable",
-  needsEyebrow: "What Flolyt needs",
-  events: [
-    { id: "order-line-item", name: "order_lines.item_id", description: "one row per item in a basket" },
-    { id: "order-line-category", name: "order_lines.category", description: "so category expansion becomes measurable" },
-    { id: "order-line-unit-cost", name: "order_lines.unit_cost", description: "shared with Price's margin request" },
-  ],
-  unblockEyebrow: "What this would unblock",
-  unblockRows: [
-    { label: "Expand · basket", value: "items, categories and attach rate stop reading unavailable", tone: "neutral" },
-    { label: "Expand · definition", value: "category expansion becomes measurable", tone: "amber" },
-    { label: "Price · margin", value: "the same field this stage already needs", tone: "amber" },
-    { label: "Acquire · payback", value: "true payback per channel", tone: "rose" },
-  ],
-  obligationTitle: "This becomes an obligation, not a message",
-  obligationBody:
-    "It goes to Engineering with an owner, a date and a state, and it appears on their handoff load. `order_lines` has been requested since 28 July and is already 41 days overdue — this adds Expand's name to a request that three other stages are also waiting on.",
-};
+//
+// The tab's old static "Request instrumentation" preset (order_lines, hardcoded "41 days
+// overdue") was removed 2026-09-06 — it duplicated the real order_lines gap now requestable for
+// real from the workspace-wide gaps section on the /lifecycle map page, and its "Send to
+// Engineering" never actually sent anything. Same treatment as Adopt's equivalent preset.
 
 // ---- Accounts (EX06) --------------------------------------------------------
 

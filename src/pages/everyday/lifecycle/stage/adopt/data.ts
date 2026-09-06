@@ -150,20 +150,8 @@ export const ADOPT_FEATURE_DETAILS: Record<string, FeatureDetail> = {
 // ---- Compare periods (AD12) is wired to the shared GET /lifecycle/stages/{stageKey}/compare —
 // see acquire/data.ts's Compare note and compare-route.tsx.
 
-// ---- Request instrumentation (AD13, stage-specific modal) -----------------
-
-export type ProposedEvent = { id: string; name: string; description: string };
-export type UnblockRow = { label: string; value: string; tone: "neutral" | "amber" | "rose" };
-
-export type RequestInstrumentationPreset = {
-  subtitle: string;
-  invisibleTitle: string;
-  invisibleBody: string;
-  needsEyebrow: string;
-  events: ProposedEvent[];
-  unblockEyebrow: string;
-  unblockRows: UnblockRow[];
-  obligationTitle: string;
-  obligationBody: string;
-};
+// ---- Request instrumentation (AD13, stage-specific modal) — removed 2026-09-06 along with
+// Expand's equivalent preset. Both were static, unwired duplicates of the real workspace-wide
+// gaps now requestable for real from the /lifecycle map page's own gaps section — see
+// pages/everyday/lifecycle/modals/request-gap-instrumentation-modal.tsx.
 

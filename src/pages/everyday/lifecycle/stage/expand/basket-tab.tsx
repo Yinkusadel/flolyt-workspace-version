@@ -1,16 +1,10 @@
-import { useState } from "react";
-import { createPortal } from "react-dom";
-
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
-import { RequestInstrumentationModal } from "@/pages/everyday/lifecycle/stage/modals/request-instrumentation-modal";
 import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { formatCompactMoney, formatCount, formatMonthYear, formatPercent, round } from "@/pages/everyday/lifecycle/format-measured-value";
-import { EXPAND_REQUEST_INSTRUMENTATION_PRESET } from "@/pages/everyday/lifecycle/stage/expand/data";
 import { useGetExpandBasket } from "@/features/lifecycle/use-get-expand-basket";
 import type { ExpandBasketLineDto, ExpandBasketMonthDto } from "@/services/api/lifecycle/get-expand-basket";
 
@@ -88,11 +82,13 @@ function BasketSkeleton() {
  * EX05 — Expand's own Basket tab, wired to GET /lifecycle/expand/basket. The old mock treated this
  * whole screen as blocked on `order_lines` — the real endpoint returns a full monthly revenue/
  * basket-size/order-frequency trend independently of that field; only item-level composition
- * (`lines[]`) needs it, same surprise this session already hit on Price's Margin tab.
+ * (`lines[]`) needs it, same surprise this session already hit on Price's Margin tab. The header's
+ * static "Request instrumentation" CTA (a hardcoded `order_lines` preset, unwired) was removed
+ * 2026-09-06 — it duplicated the real, workspace-wide gap now requestable for real from the
+ * `/lifecycle` map page's own gaps section (see index.tsx), and its "Send to Engineering" never
+ * actually sent anything.
  */
 const ExpandBasketTab = () => {
-  const { headerActionsEl } = useStageContext();
-  const [requestOpen, setRequestOpen] = useState(false);
   const { data, isLoading, isError, refetch } = useGetExpandBasket();
   const basket = data?.data;
   const monthRows: MonthRow[] = (basket?.months ?? []).map((month) => ({ ...month, id: `${month.period}-${month.currency}` }));
@@ -100,14 +96,6 @@ const ExpandBasketTab = () => {
 
   return (
     <div className="space-y-8">
-      {headerActionsEl &&
-        createPortal(
-          <Button type="button" size="sm" onClick={() => setRequestOpen(true)}>
-            Request instrumentation
-          </Button>,
-          headerActionsEl
-        )}
-
       <p className={EYEBROW_CLASS}>
         Whether revenue per customer moved because baskets got bigger or people ordered more often
         {basket?.grain ? ` · ${basket.grain}` : ""}
@@ -171,8 +159,6 @@ const ExpandBasketTab = () => {
           {callout.body}
         </Callout>
       ))}
-
-      <RequestInstrumentationModal preset={EXPAND_REQUEST_INSTRUMENTATION_PRESET} open={requestOpen} onOpenChange={setRequestOpen} />
     </div>
   );
 };

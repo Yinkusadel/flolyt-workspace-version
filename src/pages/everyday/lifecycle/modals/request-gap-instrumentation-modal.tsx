@@ -16,10 +16,11 @@ import type { InstrumentationGapDto } from "@/services/api/lifecycle/get-instrum
 
 /**
  * Raises `POST /instrumentation-requests` for one specific gap from the workspace-wide
- * `GET /lifecycle/instrumentation` list — replaces the old per-stage static-preset modal for this
- * flow (that one, `stage/modals/request-instrumentation-modal.tsx`, is still used unrelatedly by
- * Expand's Basket tab for its own fixed ask, unwired). `requiredEventSchemas`/`blocks` come
- * straight off the gap the backend already identified — only the deadline needs typing.
+ * `GET /lifecycle/instrumentation` list — replaces the old per-stage static-preset modal
+ * (`stage/modals/request-instrumentation-modal.tsx`, deleted 2026-09-06 along with its two
+ * unwired consumers, Adopt's Blind Spots tab and Expand's Basket tab). `requiredEventSchemas`/
+ * `blocks` come straight off the gap the backend already identified — only the deadline needs
+ * typing.
  */
 export function RequestGapInstrumentationModal({
   gap,
