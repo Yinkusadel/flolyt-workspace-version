@@ -2,6 +2,7 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
+import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
 export interface BacktestStageConditionPayload {
   stageKey: string;
@@ -26,8 +27,11 @@ export interface BacktestStageConditionData {
   metricQuestion: string;
   threshold: number;
   sustainReadings: number;
-  /** Unavailable, naming that, for a current-state metric with no stored series. */
-  firings: number | null;
+  /** The measured-value wrapper, confirmed live 2026-09-06 (a written `number | null` type had
+   *  shipped first and crashed rendering it directly — the recurring bug class for this domain,
+   *  see [[flolyt_lifecycle_endpoints]]). Unavailable, naming why, for a current-state metric with
+   *  no stored series. */
+  firings: LifecycleMeasuredValueDto<number>;
   /** "month" — the live sustain window is counted in daily readings, a coarser test than the rule. */
   grain: string | null;
   points: BacktestPointDto[];

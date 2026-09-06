@@ -1,13 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Sparkline } from "@/pages/everyday/lifecycle/stage/sparkline";
+import { InfoTooltip } from "@/pages/everyday/lifecycle/stage-rail";
 import useBacktestStageCondition from "@/features/lifecycle/use-backtest-stage-condition";
 
 /**
  * "How often would this have fired?" — POST /lifecycle/stages/{stageKey}/conditions/backtest,
  * shared by the create and edit/accept condition modals so a person previews against the exact
  * draft values before saving, replacing the old static mock "simulation" text. Only available for
- * metrics with a stored monthly series (`hasHistory`) — a current-state metric returns `firings:
- * null` naming why, rendered as a caveat rather than a fake simulated count.
+ * metrics with a stored monthly series (`hasHistory`) — a current-state metric returns an
+ * unavailable `firings`, rendered as an `InfoTooltip` naming why rather than a fake simulated count.
+ * `firings` is the measured-value wrapper, confirmed live 2026-09-06 (crashed rendering it as a
+ * bare number first — the recurring bug class for this domain, see [[flolyt_lifecycle_endpoints]]).
  */
 export function BacktestPreview({
   stageKey,
@@ -52,12 +55,17 @@ export function BacktestPreview({
         )}
 
         {backtestResult &&
-          (backtestResult.firings === null ? (
-            <p className="text-[10.5px] text-ink-4">{backtestResult.caveat ?? "Not available for this metric."}</p>
+          (backtestResult.firings.state === "unavailable" || backtestResult.firings.value === null ? (
+            <div className="flex items-center gap-2">
+              <InfoTooltip missingSource={backtestResult.firings.missingSource} wouldUnlock={backtestResult.firings.wouldUnlock} />
+              <span className="font-mono text-[10px] font-semibold text-ink-4">
+                {backtestResult.caveat ?? "Not available for this metric."}
+              </span>
+            </div>
           ) : (
             <>
               <p className="font-mono text-[10px] font-semibold text-ink-4">
-                Would have fired {backtestResult.firings} time{backtestResult.firings === 1 ? "" : "s"}
+                Would have fired {backtestResult.firings.value} time{backtestResult.firings.value === 1 ? "" : "s"}
                 {backtestResult.grain ? ` · by ${backtestResult.grain}` : ""}
               </p>
               <Sparkline
