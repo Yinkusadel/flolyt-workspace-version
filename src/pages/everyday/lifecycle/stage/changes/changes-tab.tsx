@@ -1,5 +1,3 @@
-import { createPortal } from "react-dom";
-
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
@@ -78,20 +76,15 @@ function ChangesSkeleton() {
 
 /** The shared "What changed" tab template (e.g. A09) — dated changes with a measured effect where one exists. */
 export function ChangesTab() {
-  const { stage, headerActionsEl } = useStageContext();
+  const { stage } = useStageContext();
   const { data, isLoading, isError, refetch } = useGetStageChangeRegistry(stage.slug);
   const registry = data?.data;
   const entries = registry?.entries ?? [];
 
   return (
     <div className="space-y-8">
-      {headerActionsEl &&
-        createPortal(
-          <Button type="button" size="sm">
-            Add a change
-          </Button>,
-          headerActionsEl
-        )}
+      {/* ❌ "Add a change" header CTA removed — POST /lifecycle/changes exists but nothing wires
+          this button to it (no create-change form built), so it was a dead no-op click. */}
 
       <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
         Dated changes that moved something in this stage
