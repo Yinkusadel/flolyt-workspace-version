@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { ReForecastTheBookModal } from "@/pages/everyday/lifecycle/stage/modals/re-forecast-the-book-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { formatCompactMoney, formatCount } from "@/pages/everyday/lifecycle/format-measured-value";
@@ -59,7 +57,6 @@ function BookSkeleton() {
 
 /** RN03 — Renew's own Renewal book tab, wired to GET /lifecycle/renew/renewal-book. */
 const RenewRenewalBookTab = () => {
-  const { headerActionsEl } = useStageContext();
   const [reforecastOpen, setReforecastOpen] = useState(false);
   const { data, isLoading, isError, refetch } = useGetRenewalBook();
   const book = data?.data;
@@ -67,13 +64,8 @@ const RenewRenewalBookTab = () => {
 
   return (
     <div className="space-y-8">
-      {headerActionsEl &&
-        createPortal(
-          <Button type="button" size="sm" onClick={() => setReforecastOpen(true)}>
-            Chase the re-forecast
-          </Button>,
-          headerActionsEl
-        )}
+      {/* "Chase the re-forecast" header button removed for now, per explicit request — this
+          modal is still a static preset with no real endpoint behind it (confirm just toasts). */}
 
       <p className={EYEBROW_CLASS}>
         {book

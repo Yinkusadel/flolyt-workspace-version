@@ -1,6 +1,5 @@
 import { Link, useParams } from "react-router-dom";
 
-import { Button } from "@/components/ui/button";
 import { WideBarRow } from "@/pages/everyday/lifecycle/stage/bar";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
@@ -60,11 +59,8 @@ const RetainSegmentDetailRoute = () => {
         ]}
         title={detail.title}
         subtitle={detail.headline}
-        action={
-          <Button type="button" size="sm">
-            Open the room
-          </Button>
-        }
+        // "Open the room" header button removed for now, per explicit request — it never even
+        // had an onClick handler, and there is no real endpoint to back it anyway.
       />
 
       <KpiCards items={detail.kpis} />

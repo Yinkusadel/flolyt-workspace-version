@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { ModelAnUpgradeModal } from "@/pages/everyday/lifecycle/stage/modals/model-an-upgrade-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
@@ -48,7 +46,6 @@ function PathsSkeleton() {
 
 /** EX03 — Expand's own Upgrade paths tab, wired to GET /lifecycle/expand/upgrade-paths. */
 const ExpandUpgradePathsTab = () => {
-  const { headerActionsEl } = useStageContext();
   const [modelOpen, setModelOpen] = useState(false);
   const { data, isLoading, isError, refetch } = useGetExpandUpgradePaths();
   const paths = data?.data;
@@ -56,13 +53,8 @@ const ExpandUpgradePathsTab = () => {
 
   return (
     <div className="space-y-8">
-      {headerActionsEl &&
-        createPortal(
-          <Button type="button" size="sm" onClick={() => setModelOpen(true)}>
-            Model an upgrade offer
-          </Button>,
-          headerActionsEl
-        )}
+      {/* "Model an upgrade offer" header button removed for now, per explicit request — this
+          modal is still a static preset with no real endpoint behind it (confirm just toasts). */}
 
       <p className={EYEBROW_CLASS}>
         {paths ? `${paths.movers !== null ? formatCount(paths.movers) : "?"} customers moved plans over ${paths.windowDays} days` : "Who moved between plans, and which way, over a year"}
