@@ -7,6 +7,7 @@ import {
   type UpdateStageOwnerResponse,
 } from "@/services/api/lifecycle/update-stage-owner";
 import { LIFECYCLE_MAP_QUERY_KEY } from "@/features/lifecycle/use-get-lifecycle-map";
+import { STAGE_QUERY_KEY } from "@/features/lifecycle/use-get-stage";
 
 interface UseUpdateStageOwnerOptions {
   onSuccess?: () => void;
@@ -17,7 +18,7 @@ const useUpdateStageOwner = (options?: UseUpdateStageOwnerOptions) => {
 
   const mutation = useMutation<UpdateStageOwnerResponse, Error, UpdateStageOwnerPayload>({
     mutationFn: updateStageOwner,
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       if (!data.succeeded) {
         toast.error(data.messages?.[0] || "Failed to assign the stage owner");
         return;
@@ -25,6 +26,7 @@ const useUpdateStageOwner = (options?: UseUpdateStageOwnerOptions) => {
 
       toast.success("Stage owner assigned");
       queryClient.invalidateQueries({ queryKey: LIFECYCLE_MAP_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: STAGE_QUERY_KEY(variables.stageKey) });
       options?.onSuccess?.();
     },
     onError: (error) => {

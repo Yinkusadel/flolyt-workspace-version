@@ -8,33 +8,6 @@
 import type { Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
-import type { AssignOwnerPreset } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
-
-// ---- Shared across Definition/Overview/Agents (AV01/AV02/AV09) -----------
-
-export const ADVOCATE_ASSIGN_OWNER_PRESET: AssignOwnerPreset = {
-  description: "Five rooms open the moment somebody's name is on this",
-  unownedTitle: "Unowned since 12 January · 214 days",
-  statsLine: "14 agent findings · 0 rooms · 5 breached thresholds · ₦278M of untested spend",
-  candidatesEyebrow: "Who should own it",
-  candidates: [
-    { id: "ifeoma-nwosu", initials: "IN", color: "#79883A", name: "Ifeoma Nwosu", reason: "Owns Retain · referral is a retention behaviour · 14 rooms already" },
-    { id: "tunde-bakare", initials: "TB", color: "#B4568F", name: "Tunde Bakare", reason: "Owns Acquire and Expand · referral is 31% of acquisition", selected: true },
-    { id: "kunle-ade", initials: "KO", color: "#2E8B7F", name: "Kunle Ade", reason: "Owns Renew · Kenya refers at 19.8% and he owns Kenya" },
-  ],
-  consequencesEyebrow: "What happens the moment you assign",
-  consequences: [
-    { label: "Five breached thresholds route somewhere", value: "and open five rooms tonight", tone: "amber" },
-    { label: "14 held findings are delivered", value: "in tomorrow's 06:00 digest", tone: "teal" },
-    { label: "The Legacy Unlimited conflict surfaces", value: "to Tunde and Ravi together, not separately", tone: "amber" },
-    { label: "A reward holdout becomes proposable", value: "₦278M · six weeks to an answer", tone: "teal" },
-    { label: "Their load", value: "Tunde already owns 2 stages and 11 rooms", tone: "amber" },
-  ],
-  closingTitle: "Assigning this is the cheapest action available in the workspace today",
-  closingBody:
-    "No engineering, no budget, no customer contact. One name against one stage, and the highest-return channel in the company stops being nobody's job. It has been available since 12 January.",
-  confirmLabel: "Assign Tunde",
-};
 
 // ---- Definition (AV01) is now the shared DefinitionRoute template — see
 // stage/definition/definition-route.tsx. GET .../definition has no field for the "what this stage

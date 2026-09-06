@@ -13,10 +13,9 @@ import { EditConditionModal, AcceptConditionModal } from "@/pages/everyday/lifec
 import { ConfirmActionModal } from "@/pages/everyday/lifecycle/stage/modals/confirm-action-modal";
 import { formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetStageAgents } from "@/features/lifecycle/use-get-stage-agents";
+import { useGetStage } from "@/features/lifecycle/use-get-stage";
 import type { StageAgentConditionDto, StageAgentDto } from "@/services/api/lifecycle/get-stage-agents";
-import { ADVOCATE_ASSIGN_OWNER_PRESET } from "@/pages/everyday/lifecycle/stage/advocate/data";
-import { CHURN_ASSIGN_OWNER_PRESET } from "@/pages/everyday/lifecycle/stage/churn/data";
-import { AssignAnOwnerModal, type AssignOwnerPreset } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
+import { AssignStageOwnerModal } from "@/pages/everyday/lifecycle/stage/modals/assign-stage-owner-modal";
 import useMuteCondition from "@/features/lifecycle/use-mute-condition";
 import useDecideCondition from "@/features/lifecycle/use-decide-condition";
 import {
@@ -27,13 +26,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
 import { createPortal } from "react-dom";
-
-// Advocate and Churn have no stage owner in the mock data, so their Agents tab keeps the
-// "Assign an owner" header action — unrelated to the live conditions table above.
-const ASSIGN_OWNER_PRESET: Partial<Record<string, AssignOwnerPreset>> = {
-  advocate: ADVOCATE_ASSIGN_OWNER_PRESET,
-  churn: CHURN_ASSIGN_OWNER_PRESET,
-};
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
@@ -94,7 +86,9 @@ export function AgentsTab() {
   );
   const [thresholdOpen, setThresholdOpen] = useState(false);
   const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
-  const assignOwnerPreset = ASSIGN_OWNER_PRESET[stage.slug];
+  const stageQuery = useGetStage(stage.slug);
+  const isUnowned = stageQuery.data?.data.ownershipStanding.isOwned === false;
+  const owner = stageQuery.data?.data.owner ?? null;
 
   const [conditionToEdit, setConditionToEdit] = useState<StageAgentConditionDto | null>(null);
   const [conditionToAccept, setConditionToAccept] = useState<StageAgentConditionDto | null>(null);
@@ -159,11 +153,11 @@ export function AgentsTab() {
 
   return (
     <div className="space-y-8">
-      {assignOwnerPreset &&
+      {stageQuery.data &&
         headerActionsEl &&
         createPortal(
-          <Button type="button" size="sm" onClick={() => setAssignOwnerOpen(true)}>
-            Assign an owner
+          <Button type="button" size="sm" variant={isUnowned ? "default" : "outline"} onClick={() => setAssignOwnerOpen(true)}>
+            {isUnowned ? "Assign an owner" : "Change owner"}
           </Button>,
           headerActionsEl
         )}
@@ -295,9 +289,14 @@ export function AgentsTab() {
         isPending={isDeclining}
         onConfirm={() => conditionToDecline && decideCondition({ conditionId: conditionToDecline.id, accept: false })}
       />
-      {assignOwnerPreset && (
-        <AssignAnOwnerModal preset={assignOwnerPreset} open={assignOwnerOpen} onOpenChange={setAssignOwnerOpen} />
-      )}
+      <AssignStageOwnerModal
+        stageKey={stage.slug}
+        stageName={stage.name}
+        currentOwnerId={owner?.ownerUserId ?? null}
+        currentOwnerName={owner?.displayName ?? null}
+        open={assignOwnerOpen}
+        onOpenChange={setAssignOwnerOpen}
+      />
     </div>
   );
 }

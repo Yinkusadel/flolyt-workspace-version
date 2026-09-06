@@ -14,7 +14,7 @@ import { StageEmptyState } from "@/pages/everyday/lifecycle/stage/overview/empty
 import { OverviewStageRail } from "@/pages/everyday/lifecycle/stage/overview/mini-stage-rail";
 import { OpenARoomModal, type OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import { ShareOrExportModal, type ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
-import { AssignAnOwnerModal, type AssignOwnerPreset } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
+import { AssignStageOwnerModal } from "@/pages/everyday/lifecycle/stage/modals/assign-stage-owner-modal";
 import { STAGES } from "@/pages/everyday/lifecycle/data";
 import { formatCompactCurrency, formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetStage } from "@/features/lifecycle/use-get-stage";
@@ -28,14 +28,12 @@ import { EXPAND_OPEN_ROOM_PRESET, EXPAND_SHARE_EXPORT_PRESET } from "@/pages/eve
 import { SUPPORT_OPEN_ROOM_PRESET, SUPPORT_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/support/data";
 import { RENEW_OPEN_ROOM_PRESET, RENEW_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/renew/data";
 import {
-  ADVOCATE_ASSIGN_OWNER_PRESET,
   ADVOCATE_OPEN_ROOM_PRESET,
   ADVOCATE_OVERVIEW_INSIGHT,
   ADVOCATE_OVERVIEW_LEAD,
   ADVOCATE_SHARE_EXPORT_PRESET,
 } from "@/pages/everyday/lifecycle/stage/advocate/data";
 import {
-  CHURN_ASSIGN_OWNER_PRESET,
   CHURN_OPEN_ROOM_PRESET,
   CHURN_OVERVIEW_INSIGHT,
   CHURN_OVERVIEW_LEAD,
@@ -55,8 +53,6 @@ type OverviewData = {
   showStageRail?: boolean;
   openRoomPreset: OpenRoomPreset;
   shareExportPreset: ShareOrExportPreset;
-  /** Renders an "Assign an owner" header button, for a stage with no owner (Advocate only). */
-  assignOwnerPreset?: AssignOwnerPreset;
 };
 
 const OVERVIEW_DATA: Record<string, OverviewData> = {
@@ -158,7 +154,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     showStageRail: true,
     openRoomPreset: ADVOCATE_OPEN_ROOM_PRESET,
     shareExportPreset: ADVOCATE_SHARE_EXPORT_PRESET,
-    assignOwnerPreset: ADVOCATE_ASSIGN_OWNER_PRESET,
   },
   churn: {
     leadTitle: CHURN_OVERVIEW_LEAD.title,
@@ -171,7 +166,6 @@ const OVERVIEW_DATA: Record<string, OverviewData> = {
     showStageRail: true,
     openRoomPreset: CHURN_OPEN_ROOM_PRESET,
     shareExportPreset: CHURN_SHARE_EXPORT_PRESET,
-    assignOwnerPreset: CHURN_ASSIGN_OWNER_PRESET,
   },
 };
 
@@ -250,6 +244,8 @@ export function OverviewTab() {
   const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
 
   const stageQuery = useGetStage(stage.slug);
+  const isUnowned = stageQuery.data?.data.ownershipStanding.isOwned === false;
+  const owner = stageQuery.data?.data.owner ?? null;
 
   if (!stage.isDefined) return <StageEmptyState stageName={stage.name} />;
 
@@ -353,16 +349,16 @@ export function OverviewTab() {
             <button type="button" onClick={() => setShareOpen(true)} className="text-[11px] font-semibold text-ink-3 hover:text-ink">
               Share or export
             </button>
-            {data.assignOwnerPreset && (
-              <Button type="button" size="sm" onClick={() => setAssignOwnerOpen(true)}>
-                Assign an owner
+            {stageQuery.data && (
+              <Button type="button" size="sm" variant={isUnowned ? "default" : "outline"} onClick={() => setAssignOwnerOpen(true)}>
+                {isUnowned ? "Assign an owner" : "Change owner"}
               </Button>
             )}
           </>,
           headerActionsEl
         )}
 
-      {data.leadTitle && data.leadBody && (
+      {data.leadTitle && data.leadBody && isUnowned && (
         <Callout tone={data.leadTone ?? "amber"} title={data.leadTitle}>
           {data.leadBody}
         </Callout>
@@ -394,9 +390,14 @@ export function OverviewTab() {
         onOpenChange={(open) => setOpenRoomFor(open ? openRoomFor : null)}
       />
       <ShareOrExportModal preset={data.shareExportPreset} open={shareOpen} onOpenChange={setShareOpen} />
-      {data.assignOwnerPreset && (
-        <AssignAnOwnerModal preset={data.assignOwnerPreset} open={assignOwnerOpen} onOpenChange={setAssignOwnerOpen} />
-      )}
+      <AssignStageOwnerModal
+        stageKey={stage.slug}
+        stageName={stage.name}
+        currentOwnerId={owner?.ownerUserId ?? null}
+        currentOwnerName={owner?.displayName ?? null}
+        open={assignOwnerOpen}
+        onOpenChange={setAssignOwnerOpen}
+      />
     </div>
   );
 }

@@ -11,19 +11,13 @@ import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { StageSubpageHeader } from "@/pages/everyday/lifecycle/stage/stage-subpage-header";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { formatCount, formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
-import { AssignAnOwnerModal } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
+import { AssignStageOwnerModal } from "@/pages/everyday/lifecycle/stage/modals/assign-stage-owner-modal";
 import { PreviewDefinitionChangeModal } from "@/pages/everyday/lifecycle/stage/modals/preview-definition-change-modal";
-import { ADVOCATE_ASSIGN_OWNER_PRESET } from "@/pages/everyday/lifecycle/stage/advocate/data";
-import { CHURN_ASSIGN_OWNER_PRESET } from "@/pages/everyday/lifecycle/stage/churn/data";
 import { useGetStageDefinition } from "@/features/lifecycle/use-get-stage-definition";
+import { useGetStage } from "@/features/lifecycle/use-get-stage";
 import usePreviewStageDefinition from "@/features/lifecycle/use-preview-stage-definition";
 import useUpdateStageDefinition from "@/features/lifecycle/use-update-stage-definition";
 import type { StageDefinitionCandidateDto } from "@/services/api/lifecycle/get-stage-definition";
-
-const OWNER_ASSIGN_PRESET = {
-  advocate: ADVOCATE_ASSIGN_OWNER_PRESET,
-  churn: CHURN_ASSIGN_OWNER_PRESET,
-} as const;
 
 function DefinitionSkeleton() {
   return (
@@ -54,7 +48,9 @@ const DefinitionRoute = () => {
   const { data, isLoading, isError, refetch } = useGetStageDefinition(stage.slug);
   const definition = data?.data;
   const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
-  const ownerPreset = OWNER_ASSIGN_PRESET[stage.slug as keyof typeof OWNER_ASSIGN_PRESET];
+  const stageQuery = useGetStage(stage.slug);
+  const isUnowned = stageQuery.data?.data.ownershipStanding.isOwned === false;
+  const owner = stageQuery.data?.data.owner ?? null;
 
   // A proposed pick, distinct from what's actually saved (`definition.current.entryEventKey`) —
   // resets whenever the stage changes since the outlet's route param can change without
@@ -129,15 +125,18 @@ const DefinitionRoute = () => {
               : undefined
         }
         action={
-          ownerPreset ? (
-            <Button type="button" size="sm" onClick={() => setAssignOwnerOpen(true)}>
-              Assign an owner
-            </Button>
-          ) : canEdit ? (
-            <Button type="button" size="sm" disabled={!hasProposedChange || isPreviewPending} onClick={handlePreviewClick}>
-              {isPreviewPending ? "Checking…" : "Preview the change"}
-            </Button>
-          ) : null
+          <div className="flex items-center gap-2">
+            {stageQuery.data && (
+              <Button type="button" size="sm" variant={isUnowned ? "default" : "outline"} onClick={() => setAssignOwnerOpen(true)}>
+                {isUnowned ? "Assign an owner" : "Change owner"}
+              </Button>
+            )}
+            {canEdit && (
+              <Button type="button" size="sm" disabled={!hasProposedChange || isPreviewPending} onClick={handlePreviewClick}>
+                {isPreviewPending ? "Checking…" : "Preview the change"}
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -251,7 +250,14 @@ const DefinitionRoute = () => {
         </>
       )}
 
-      {ownerPreset && <AssignAnOwnerModal preset={ownerPreset} open={assignOwnerOpen} onOpenChange={setAssignOwnerOpen} />}
+      <AssignStageOwnerModal
+        stageKey={stage.slug}
+        stageName={definition?.stageName ?? stage.name}
+        currentOwnerId={owner?.ownerUserId ?? null}
+        currentOwnerName={owner?.displayName ?? null}
+        open={assignOwnerOpen}
+        onOpenChange={setAssignOwnerOpen}
+      />
 
       <PreviewDefinitionChangeModal
         open={previewOpen}

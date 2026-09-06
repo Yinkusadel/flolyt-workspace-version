@@ -8,33 +8,6 @@
 
 import type { OpenRoomPreset } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import type { ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
-import type { AssignOwnerPreset } from "@/pages/everyday/lifecycle/stage/modals/assign-an-owner-modal";
-
-// ---- Shared across Definition/Overview/Agents (CH01/CH02/CH09) -----------
-
-export const CHURN_ASSIGN_OWNER_PRESET: AssignOwnerPreset = {
-  description: "Four breached thresholds route somewhere the moment somebody's name is on this",
-  unownedTitle: "Unowned since 12 January",
-  statsLine: "22 agent findings · 0 rooms · 4 breached thresholds · 31 unopened weekly lists",
-  candidatesEyebrow: "Who should own it",
-  candidates: [
-    { id: "ngozi-bello", initials: "NB", color: "#2E8B7F", name: "Ngozi Bello", reason: "Already owns Renew, the stage every churned customer passed through last", selected: true },
-    { id: "zainab-yusuf", initials: "ZY", color: "#7A5AA8", name: "Zainab Yusuf", reason: "Owns Activate · 51.8% of churn is attributed there" },
-    { id: "amara-obi", initials: "AO", color: "#C56A2E", name: "Amara Obi", reason: "Owns Support · silent failures are the second-largest unowned reason" },
-  ],
-  consequencesEyebrow: "What happens the moment you assign",
-  consequences: [
-    { label: "Four breached thresholds route somewhere", value: "and open four rooms tonight", tone: "amber" },
-    { label: "22 agent findings are delivered", value: "in tomorrow's 06:00 digest", tone: "teal" },
-    { label: "The prediction model gets a first action", value: "₦31M · one approval, one wave", tone: "teal" },
-    { label: "31 weekly lists stop going unopened", value: "starting with this week's", tone: "teal" },
-    { label: "Their load", value: "Ngozi already owns Renew and 1 open room", tone: "amber" },
-  ],
-  closingTitle: "Assigning this is the cheapest action available in the workspace today",
-  closingBody:
-    "No engineering, no budget, no customer contact. One name against the stage every other stage empties into, and 31 weekly prediction lists stop being generated for nobody. It has been available since 12 January.",
-  confirmLabel: "Assign Ngozi",
-};
 
 // ---- Definition (CH01) is now the shared DefinitionRoute template — see
 // stage/definition/definition-route.tsx. GET .../definition has no field for the definition-
