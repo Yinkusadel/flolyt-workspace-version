@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import { Button } from "@/components/ui/button";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
 import { OpenARoomModal } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
@@ -47,11 +46,8 @@ const RenewOneAccountRoute = () => {
         ]}
         title={detail.title}
         subtitle={detail.subtitle}
-        action={
-          <Button type="button" size="sm" onClick={() => setOpenRoom(true)}>
-            Open a room
-          </Button>
-        }
+        // "Open a room" header button removed for now, per explicit request — inconsistent
+        // across tabs; only the /lifecycle map page's own button stays.
       />
 
       <span className="inline-flex rounded-chip border border-ultra-border bg-ultra-bg px-3 py-1.5 font-mono text-[9.5px] font-semibold text-ultra">

@@ -45,11 +45,8 @@ const SupportSilentFailuresRoute = () => {
         ]}
         title="Silent failures"
         subtitle="Customers whose orders went wrong who may never have said anything"
-        action={
-          <Button type="button" size="sm">
-            Open a room
-          </Button>
-        }
+        // "Open a room" header button removed for now, per explicit request — inconsistent
+        // across tabs; only the /lifecycle map page's own button stays.
       />
 
       {isError ? (

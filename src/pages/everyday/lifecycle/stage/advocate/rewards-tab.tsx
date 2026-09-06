@@ -1,11 +1,8 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 
-import { Button } from "@/components/ui/button";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
 import { KpiCards } from "@/pages/everyday/lifecycle/stage/kpi-cards";
-import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { OpenARoomModal } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import {
@@ -30,18 +27,12 @@ const COLUMNS: Column<AdvocateRewardChangeRow>[] = [
 
 /** AV05 — Advocate's unique Rewards tab. */
 const AdvocateRewardsTab = () => {
-  const { headerActionsEl } = useStageContext();
   const [openRoom, setOpenRoom] = useState(false);
 
   return (
     <div className="space-y-8">
-      {headerActionsEl &&
-        createPortal(
-          <Button type="button" size="sm" onClick={() => setOpenRoom(true)}>
-            Open a room
-          </Button>,
-          headerActionsEl
-        )}
+      {/* "Open a room" header button removed for now, per explicit request — inconsistent
+          across tabs; only the /lifecycle map page's own button stays. */}
 
       <KpiCards items={ADVOCATE_REWARDS_KPIS} />
 
