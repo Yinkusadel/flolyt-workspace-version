@@ -9,6 +9,8 @@ import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-ta
 import { RootCauseSpotlight } from "@/pages/everyday/lifecycle/root-cause-spotlight";
 import { StageRail } from "@/pages/everyday/lifecycle/stage-rail";
 import { RequestGapInstrumentationModal } from "@/pages/everyday/lifecycle/modals/request-gap-instrumentation-modal";
+import { CloseInstrumentationRequestModal } from "@/pages/everyday/lifecycle/modals/close-instrumentation-request-modal";
+import { AssignInstrumentationOwnerModal } from "@/pages/everyday/lifecycle/modals/assign-instrumentation-owner-modal";
 import { KNOWN_DEPARTMENTS, STAGES, type Department, type RootCauseRow, type Stage } from "@/pages/everyday/lifecycle/data";
 import useGetLifecycleMap from "@/features/lifecycle/use-get-lifecycle-map";
 import { useGetChurnChain } from "@/features/lifecycle/use-get-churn-chain";
@@ -16,6 +18,13 @@ import { useGetInstrumentation } from "@/features/lifecycle/use-get-instrumentat
 import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 import type { InstrumentationGapDto } from "@/services/api/lifecycle/get-instrumentation";
 import { formatCompactCurrency, formatHeadlineValue, formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
@@ -36,7 +45,12 @@ const GAP_STATE_LABEL: Record<string, string> = { "no-request": "Not requested" 
 
 type GapRow = InstrumentationGapDto & { id: string };
 
-function buildGapColumns(onRequest: (row: GapRow) => void): Column<GapRow>[] {
+function buildGapColumns(
+  onRequest: (row: GapRow) => void,
+  onMarkDelivered: (row: GapRow) => void,
+  onWithdraw: (row: GapRow) => void,
+  onChangeOwner: (row: GapRow) => void
+): Column<GapRow>[] {
   return [
     {
       key: "what",
@@ -92,6 +106,21 @@ function buildGapColumns(onRequest: (row: GapRow) => void): Column<GapRow>[] {
           <Button type="button" variant="outline" size="sm" onClick={() => onRequest(row)}>
             Request
           </Button>
+        ) : row.obligationId ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="rounded-control p-1 text-ink-4 hover:bg-paper-2 hover:text-ink" aria-label="Request actions">
+                <MoreVertical className="size-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => onChangeOwner(row)}>{row.ownerName ? "Change owner" : "Assign owner"}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onMarkDelivered(row)}>Mark delivered</DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onClick={() => onWithdraw(row)}>
+                Withdraw
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : null,
     },
   ];
@@ -140,6 +169,8 @@ const Lifecycle = () => {
   const churnChainQuery = useGetChurnChain();
   const instrumentationQuery = useGetInstrumentation();
   const [gapToRequest, setGapToRequest] = useState<GapRow | null>(null);
+  const [gapToClose, setGapToClose] = useState<{ row: GapRow; resolved: boolean } | null>(null);
+  const [gapForOwner, setGapForOwner] = useState<GapRow | null>(null);
 
   const liveByKey = new Map(liveStages.map((stage) => [stage.key, stage]));
 
@@ -184,7 +215,12 @@ const Lifecycle = () => {
 
   const instrumentation = instrumentationQuery.data?.data;
   const gapRows: GapRow[] = (instrumentation?.gaps ?? []).map((gap) => ({ ...gap, id: gap.gapKey }));
-  const gapColumns = buildGapColumns(setGapToRequest);
+  const gapColumns = buildGapColumns(
+    setGapToRequest,
+    (row) => setGapToClose({ row, resolved: true }),
+    (row) => setGapToClose({ row, resolved: false }),
+    setGapForOwner
+  );
 
   return (
     <div className="space-y-8">
@@ -260,6 +296,21 @@ const Lifecycle = () => {
       </p>
 
       <RequestGapInstrumentationModal gap={gapToRequest} open={!!gapToRequest} onOpenChange={(next) => !next && setGapToRequest(null)} />
+      <CloseInstrumentationRequestModal
+        obligationId={gapToClose?.row.obligationId ?? null}
+        gapName={gapToClose?.row.name ?? ""}
+        resolved={gapToClose?.resolved ?? true}
+        open={!!gapToClose}
+        onOpenChange={(next) => !next && setGapToClose(null)}
+      />
+      <AssignInstrumentationOwnerModal
+        obligationId={gapForOwner?.obligationId ?? null}
+        gapName={gapForOwner?.name ?? ""}
+        currentOwnerId={gapForOwner?.ownerUserId ?? null}
+        currentOwnerName={gapForOwner?.ownerName ?? null}
+        open={!!gapForOwner}
+        onOpenChange={(next) => !next && setGapForOwner(null)}
+      />
     </div>
   );
 };
