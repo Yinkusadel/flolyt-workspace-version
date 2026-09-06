@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,9 +19,11 @@ import type { InstrumentationGapDto } from "@/services/api/lifecycle/get-instrum
  * Raises `POST /instrumentation-requests` for one specific gap from the workspace-wide
  * `GET /lifecycle/instrumentation` list — replaces the old per-stage static-preset modal
  * (`stage/modals/request-instrumentation-modal.tsx`, deleted 2026-09-06 along with its two
- * unwired consumers, Adopt's Blind Spots tab and Expand's Basket tab). `requiredEventSchemas`/
- * `blocks` come straight off the gap the backend already identified — only the deadline needs
- * typing.
+ * unwired consumers, Adopt's Blind Spots tab and Expand's Basket tab). `blocks` comes straight
+ * off the gap the backend already identified. `requiredEventSchemas` was originally treated the
+ * same way, but the backend refused a real submission on a gap with none listed ("Name the events
+ * being asked for... without them this is a conversation rather than a contract") — so it's now
+ * a real, always-required editable field, seeded from the gap's own list when one exists.
  */
 export function RequestGapInstrumentationModal({
   gap,
@@ -32,21 +35,30 @@ export function RequestGapInstrumentationModal({
   onOpenChange: (open: boolean) => void;
 }) {
   const [neededBy, setNeededBy] = useState("");
+  const [schemas, setSchemas] = useState<string[]>([""]);
   const { raiseRequest, isPending } = useCreateInstrumentationRequest({ onSuccess: () => onOpenChange(false) });
 
   useEffect(() => {
-    if (open) setNeededBy("");
+    if (open) {
+      setNeededBy("");
+      setSchemas(gap && gap.requiredEventSchemas.length > 0 ? gap.requiredEventSchemas : [""]);
+    }
   }, [open, gap]);
 
+  const cleanedSchemas = schemas.map((s) => s.trim()).filter(Boolean);
+
   const submit = () => {
-    if (!gap || !neededBy) return;
+    if (!gap || !neededBy || cleanedSchemas.length === 0) return;
     raiseRequest({
       gap: gap.gap,
       gapKey: gap.gapKey,
-      neededByUtc: new Date(`${neededBy}T00:00:00Z`).toISOString(),
+      // End of the selected day, not the start — "needed by 6 Sept" means by the end of 6 Sept.
+      // Sending T00:00:00Z made "today" resolve to a moment already behind the request by the
+      // time it reached the server, refused as a past deadline for every date except tomorrow+.
+      neededByUtc: new Date(`${neededBy}T23:59:59Z`).toISOString(),
       blocks: gap.blocks.length > 0 ? gap.blocks : null,
       ownerUserId: null,
-      requiredEventSchemas: gap.requiredEventSchemas.length > 0 ? gap.requiredEventSchemas : null,
+      requiredEventSchemas: cleanedSchemas,
     });
   };
 
@@ -72,18 +84,40 @@ export function RequestGapInstrumentationModal({
               </div>
             )}
 
-            {gap.requiredEventSchemas.length > 0 && (
-              <div>
-                <p className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">What Flolyt needs</p>
-                <div className="mt-1.5 space-y-1.5">
-                  {gap.requiredEventSchemas.map((schema) => (
-                    <div key={schema} className="rounded-panel border border-line bg-paper-2 px-3.5 py-2">
-                      <p className="font-mono text-[11px] font-semibold text-ink">{schema}</p>
-                    </div>
-                  ))}
-                </div>
+            <div>
+              <p className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">
+                What Flolyt needs — name the events an engineer can actually satisfy
+              </p>
+              <div className="mt-1.5 space-y-1.5">
+                {schemas.map((schema, index) => (
+                  <div key={index} className="flex items-center gap-1.5">
+                    <Input
+                      value={schema}
+                      onChange={(e) => setSchemas(schemas.map((s, i) => (i === index ? e.currentTarget.value : s)))}
+                      placeholder="e.g. loyalty.tier_shown"
+                      className="font-mono"
+                    />
+                    {schemas.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setSchemas(schemas.filter((_, i) => i !== index))}
+                        className="shrink-0 rounded-control p-1.5 text-ink-4 hover:bg-paper-2 hover:text-ink"
+                        aria-label="Remove event"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
-            )}
+              <button
+                type="button"
+                onClick={() => setSchemas([...schemas, ""])}
+                className="mt-1.5 text-[11px] font-semibold text-ultra hover:underline"
+              >
+                + Add another event
+              </button>
+            </div>
 
             <div>
               <label className="font-mono text-[8.5px] font-medium tracking-[0.85px] text-ink-4 uppercase">Needed by</label>
@@ -94,7 +128,7 @@ export function RequestGapInstrumentationModal({
 
         <DialogFooter>
           <div className="flex items-center gap-4">
-            <Button type="button" onClick={submit} disabled={isPending || !neededBy}>
+            <Button type="button" onClick={submit} disabled={isPending || !neededBy || cleanedSchemas.length === 0}>
               {isPending ? "Sending…" : "Send to Engineering"}
             </Button>
             <button type="button" onClick={() => onOpenChange(false)} className="text-[12px] font-semibold text-ink-3 hover:text-ink">

@@ -9,8 +9,13 @@ export interface CreateInstrumentationRequestPayload {
   neededByUtc: string;
   blocks?: string[] | null;
   ownerUserId?: string | null;
-  /** The point of the request — "please instrument loyalty" is a conversation, an event schema is a contract. */
-  requiredEventSchemas?: string[] | null;
+  /**
+   * The point of the request — "please instrument loyalty" is a conversation, an event schema is
+   * a contract. The type doc marks this optional, but a live 2026-09-06 submission with none
+   * was refused: "Name the events being asked for... without them this is a conversation rather
+   * than a contract" — treat as required, at least one non-empty entry.
+   */
+  requiredEventSchemas: string[];
 }
 
 export interface CreateInstrumentationRequestResponse {
