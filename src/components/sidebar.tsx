@@ -189,6 +189,7 @@ export type SidebarProps = {
   onSearchClick?: () => void;
   /** Total addressable customer base for the current viewing-as scope. Omit to hide the footer stat. */
   customerBase?: string;
+  isCustomerBaseLoading?: boolean;
   /** Currencies represented in that customer base. */
   currencies?: string[];
   /** Team members with visibility into the current scope. Omit/empty hides the roster row. */
@@ -205,6 +206,7 @@ function Sidebar({
   onViewingAsChange,
   onSearchClick,
   customerBase,
+  isCustomerBaseLoading = false,
   currencies = [],
   roster = [],
   className,
@@ -312,12 +314,16 @@ function Sidebar({
       </nav>
 
       {/* Customer base + roster for the current viewing-as scope */}
-      {customerBase && (
+      {(isCustomerBaseLoading || customerBase) && (
         <div className="shrink-0 border-t border-line px-4 py-3">
           <p className="pb-1 font-mono text-[8.6px] font-medium tracking-[0.85px] text-ink-4">
             CUSTOMER BASE
           </p>
-          <p className="text-lg font-semibold text-ink">{customerBase}</p>
+          {isCustomerBaseLoading ? (
+            <Skeleton className="h-5 w-14" />
+          ) : (
+            <p className="text-lg font-semibold text-ink">{customerBase}</p>
+          )}
           {currencies.length > 0 && (
             <p className="pt-0.5 font-mono text-[9px] text-ink-3">{currencies.join(" · ")}</p>
           )}

@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { OpenARoomModal } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
@@ -104,7 +102,6 @@ function WinBackSkeleton() {
 
 /** CH05 — Churn's own Win-back tab, wired to GET /lifecycle/churn/win-back. */
 const ChurnWinBackTab = () => {
-  const { headerActionsEl } = useStageContext();
   const [openRoom, setOpenRoom] = useState(false);
   const { data, isLoading, isError, refetch } = useGetChurnWinBack();
   const winBack = data?.data;
@@ -112,13 +109,8 @@ const ChurnWinBackTab = () => {
 
   return (
     <div className="space-y-8">
-      {headerActionsEl &&
-        createPortal(
-          <Button type="button" size="sm" onClick={() => setOpenRoom(true)}>
-            Open a war room
-          </Button>,
-          headerActionsEl
-        )}
+      {/* "Open a room" header button removed for now, per explicit request — inconsistent
+          across tabs; only the /lifecycle map page's own button stays. */}
 
       <p className={EYEBROW_CLASS}>
         {winBack

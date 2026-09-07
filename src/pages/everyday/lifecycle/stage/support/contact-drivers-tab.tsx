@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { ReclassifyADriverModal } from "@/pages/everyday/lifecycle/stage/modals/reclassify-a-driver-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { formatCount, formatPercent, round } from "@/pages/everyday/lifecycle/format-measured-value";
@@ -61,7 +59,6 @@ function DriversSkeleton() {
 
 /** SU03 — Support's own Contact drivers tab, wired to GET /lifecycle/support/contact-drivers. */
 const SupportContactDriversTab = () => {
-  const { headerActionsEl } = useStageContext();
   const [reclassifyOpen, setReclassifyOpen] = useState(false);
   const { data, isLoading, isError, refetch } = useGetSupportContactDrivers();
   const drivers = data?.data;
@@ -69,13 +66,8 @@ const SupportContactDriversTab = () => {
 
   return (
     <div className="space-y-8">
-      {headerActionsEl &&
-        createPortal(
-          <Button type="button" size="sm" onClick={() => setReclassifyOpen(true)}>
-            Reclassify a driver
-          </Button>,
-          headerActionsEl
-        )}
+      {/* "Reclassify a driver" header button removed for now, per explicit request — this
+          modal is still a static preset with no real endpoint behind it (confirm just toasts). */}
 
       <p className={EYEBROW_CLASS}>
         {drivers ? `${drivers.tickets !== null ? formatCount(drivers.tickets) : "?"} tickets over ${drivers.windowDays} days` : "What customers contact you about"}

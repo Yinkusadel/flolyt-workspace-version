@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { BuildAnAudienceModal } from "@/pages/everyday/lifecycle/stage/modals/build-an-audience-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
@@ -107,7 +105,6 @@ function ReactivationSkeleton() {
 
 /** RT06 — Retain's own Reactivation tab, wired to GET /lifecycle/retain/reactivation. */
 const RetainReactivationTab = () => {
-  const { headerActionsEl } = useStageContext();
   const [buildOpen, setBuildOpen] = useState(false);
   const { data, isLoading, isError, refetch } = useGetRetainReactivation();
   const reactivation = data?.data;
@@ -115,13 +112,8 @@ const RetainReactivationTab = () => {
 
   return (
     <div className="space-y-8">
-      {headerActionsEl &&
-        createPortal(
-          <Button type="button" size="sm" onClick={() => setBuildOpen(true)}>
-            Build an audience
-          </Button>,
-          headerActionsEl
-        )}
+      {/* "Build an audience" header button removed for now, per explicit request — this
+          modal is still a static preset with no real endpoint behind it (confirm just toasts). */}
 
       <p className={EYEBROW_CLASS}>
         {reactivation

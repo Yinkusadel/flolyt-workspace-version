@@ -9,13 +9,25 @@ import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-ta
 import { RootCauseSpotlight } from "@/pages/everyday/lifecycle/root-cause-spotlight";
 import { StageRail } from "@/pages/everyday/lifecycle/stage-rail";
 import { RequestGapInstrumentationModal } from "@/pages/everyday/lifecycle/modals/request-gap-instrumentation-modal";
+import { CloseInstrumentationRequestModal } from "@/pages/everyday/lifecycle/modals/close-instrumentation-request-modal";
+import { AssignInstrumentationOwnerModal } from "@/pages/everyday/lifecycle/modals/assign-instrumentation-owner-modal";
 import { KNOWN_DEPARTMENTS, STAGES, type Department, type RootCauseRow, type Stage } from "@/pages/everyday/lifecycle/data";
 import useGetLifecycleMap from "@/features/lifecycle/use-get-lifecycle-map";
 import { useGetChurnChain } from "@/features/lifecycle/use-get-churn-chain";
 import { useGetInstrumentation } from "@/features/lifecycle/use-get-instrumentation";
+import { useGetChurnRoutings } from "@/features/lifecycle/use-get-churn-routings";
+import useAcknowledgeChurnRouting from "@/features/lifecycle/use-acknowledge-churn-routing";
 import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 import type { InstrumentationGapDto } from "@/services/api/lifecycle/get-instrumentation";
+import type { ChurnRoutingDto } from "@/services/api/lifecycle/get-churn-routings";
 import { formatCompactCurrency, formatHeadlineValue, formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
@@ -32,11 +44,32 @@ function gapStateTone(state: string): ChipTone {
   return "amber";
 }
 
+// Same keyword set gapStateTone uses for its teal/rose branches — a request in one of these
+// states has already been closed (delivered or withdrawn), so close/withdraw/reassign no longer
+// apply. Caught live: POST .../close on an already-closed obligation 400s ("This obligation is
+// already closed."), because the dropdown wasn't checking state, only that obligationId existed
+// (which stays non-null forever once a request has ever been raised).
+function isGapClosed(state: string): boolean {
+  const normalized = state.toLowerCase();
+  return (
+    normalized.includes("close") ||
+    normalized.includes("delivered") ||
+    normalized.includes("resolved") ||
+    normalized.includes("withdraw") ||
+    normalized.includes("reject")
+  );
+}
+
 const GAP_STATE_LABEL: Record<string, string> = { "no-request": "Not requested" };
 
 type GapRow = InstrumentationGapDto & { id: string };
 
-function buildGapColumns(onRequest: (row: GapRow) => void): Column<GapRow>[] {
+function buildGapColumns(
+  onRequest: (row: GapRow) => void,
+  onMarkDelivered: (row: GapRow) => void,
+  onWithdraw: (row: GapRow) => void,
+  onChangeOwner: (row: GapRow) => void
+): Column<GapRow>[] {
   return [
     {
       key: "what",
@@ -92,6 +125,21 @@ function buildGapColumns(onRequest: (row: GapRow) => void): Column<GapRow>[] {
           <Button type="button" variant="outline" size="sm" onClick={() => onRequest(row)}>
             Request
           </Button>
+        ) : row.obligationId && !isGapClosed(row.state) ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="rounded-control p-1 text-ink-4 hover:bg-paper-2 hover:text-ink" aria-label="Request actions">
+                <MoreVertical className="size-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => onChangeOwner(row)}>{row.ownerName ? "Change owner" : "Assign owner"}</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onMarkDelivered(row)}>Mark delivered</DropdownMenuItem>
+              <DropdownMenuItem variant="destructive" onClick={() => onWithdraw(row)}>
+                Withdraw
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : null,
     },
   ];
@@ -109,6 +157,61 @@ function GapsSkeleton() {
       ))}
     </div>
   );
+}
+
+type RoutingRow = ChurnRoutingDto & { id: string };
+
+function buildRoutingColumns(onAcknowledge: (row: RoutingRow) => void, isAcknowledging: boolean): Column<RoutingRow>[] {
+  return [
+    {
+      key: "cause",
+      header: "Cause",
+      render: (row) => <span className="font-semibold text-ink-2">{row.causeLabel}</span>,
+    },
+    {
+      key: "target",
+      header: "Routed to",
+      render: (row) => (
+        <div className="flex items-center gap-1.5">
+          <span className="text-ink-2">{row.targetStageName}</span>
+          {row.isUndeliverable && <Chip tone="rose">No owner</Chip>}
+        </div>
+      ),
+    },
+    {
+      key: "note",
+      header: "Note",
+      render: (row) => <span className="text-ink-3">{row.note ?? <span className="text-ink-4">No note</span>}</span>,
+    },
+    {
+      key: "routed",
+      header: "Routed",
+      align: "right",
+      render: (row) => <span className="font-mono text-ink-4">{formatShortDate(row.routedAtUtc)}</span>,
+    },
+    {
+      key: "status",
+      header: "Status",
+      align: "right",
+      render: (row) =>
+        row.acknowledgedAtUtc ? (
+          <Chip tone="teal">Acknowledged</Chip>
+        ) : (
+          <Chip tone="amber">Unanswered</Chip>
+        ),
+    },
+    {
+      key: "action",
+      header: "",
+      align: "right",
+      render: (row) =>
+        row.acknowledgedAtUtc ? null : (
+          <Button type="button" variant="outline" size="sm" disabled={isAcknowledging} onClick={() => onAcknowledge(row)}>
+            I have it
+          </Button>
+        ),
+    },
+  ];
 }
 
 // GET /lifecycle/map's atStake is a measured-value wrapper, not a bare number — confirmed
@@ -139,7 +242,11 @@ const Lifecycle = () => {
   const { stages: liveStages, callouts, isLoading, isError, refetch } = useGetLifecycleMap();
   const churnChainQuery = useGetChurnChain();
   const instrumentationQuery = useGetInstrumentation();
+  const routingsQuery = useGetChurnRoutings();
   const [gapToRequest, setGapToRequest] = useState<GapRow | null>(null);
+  const [gapToClose, setGapToClose] = useState<{ row: GapRow; resolved: boolean } | null>(null);
+  const [gapForOwner, setGapForOwner] = useState<GapRow | null>(null);
+  const { acknowledge, isPending: isAcknowledging } = useAcknowledgeChurnRouting();
 
   const liveByKey = new Map(liveStages.map((stage) => [stage.key, stage]));
 
@@ -184,7 +291,16 @@ const Lifecycle = () => {
 
   const instrumentation = instrumentationQuery.data?.data;
   const gapRows: GapRow[] = (instrumentation?.gaps ?? []).map((gap) => ({ ...gap, id: gap.gapKey }));
-  const gapColumns = buildGapColumns(setGapToRequest);
+  const gapColumns = buildGapColumns(
+    setGapToRequest,
+    (row) => setGapToClose({ row, resolved: true }),
+    (row) => setGapToClose({ row, resolved: false }),
+    setGapForOwner
+  );
+
+  const routings = routingsQuery.data?.data;
+  const routingRows: RoutingRow[] = (routings?.routings ?? []).map((routing) => ({ ...routing, id: routing.id }));
+  const routingColumns = buildRoutingColumns((row) => acknowledge({ routingId: row.id, note: null }), isAcknowledging);
 
   return (
     <div className="space-y-8">
@@ -196,7 +312,7 @@ const Lifecycle = () => {
           </p>
         </div>
         <Button type="button" className="shrink-0">
-          Open a war room
+          Open a room
         </Button>
       </div>
 
@@ -251,6 +367,39 @@ const Lifecycle = () => {
         ))}
       </section>
 
+      <section className="space-y-3">
+        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
+          Causes routed to a stage, workspace-wide
+          {routings ? ` · ${routingRows.length}` : ""}
+          {routings && routings.unanswered > 0 ? ` · ${routings.unanswered} unanswered` : ""}
+          {routings && routings.undeliverable > 0 ? ` · ${routings.undeliverable} undeliverable` : ""}
+        </p>
+
+        {routingsQuery.isError ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+            <p className="text-[12px] text-rose">Couldn't load routed causes.</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => routingsQuery.refetch()}>
+              Retry
+            </Button>
+          </div>
+        ) : routingsQuery.isLoading ? (
+          <GapsSkeleton />
+        ) : (
+          <DataTable
+            columns={routingColumns}
+            rows={routingRows}
+            emptyTitle="Nothing routed"
+            emptyBody="No churn cause has been sent to another stage yet."
+          />
+        )}
+
+        {routings?.callouts.map((callout) => (
+          <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+            {callout.body}
+          </Callout>
+        ))}
+      </section>
+
       <p className="text-[11px] text-ink-4">
         Owner, lead agent and review cadence per stage now live on{" "}
         <Link to="/lifecycle/settings" className="font-semibold text-ultra hover:underline">
@@ -260,6 +409,21 @@ const Lifecycle = () => {
       </p>
 
       <RequestGapInstrumentationModal gap={gapToRequest} open={!!gapToRequest} onOpenChange={(next) => !next && setGapToRequest(null)} />
+      <CloseInstrumentationRequestModal
+        obligationId={gapToClose?.row.obligationId ?? null}
+        gapName={gapToClose?.row.name ?? ""}
+        resolved={gapToClose?.resolved ?? true}
+        open={!!gapToClose}
+        onOpenChange={(next) => !next && setGapToClose(null)}
+      />
+      <AssignInstrumentationOwnerModal
+        obligationId={gapForOwner?.obligationId ?? null}
+        gapName={gapForOwner?.name ?? ""}
+        currentOwnerId={gapForOwner?.ownerUserId ?? null}
+        currentOwnerName={gapForOwner?.ownerName ?? null}
+        open={!!gapForOwner}
+        onOpenChange={(next) => !next && setGapForOwner(null)}
+      />
     </div>
   );
 };

@@ -115,13 +115,13 @@ export const CHURN_WINBACK_OPEN_ROOM_PRESET: OpenRoomPreset = {
 };
 
 // ---- Cohorts (CH06) is wired to the shared GET /lifecycle/stages/{stageKey}/cohorts — see
-// acquire/data.ts's Cohorts note and cohorts-tab.tsx. Its "Open a war room" header button is
+// acquire/data.ts's Cohorts note and cohorts-tab.tsx. Its "Open a room" header button is
 // dropped along with it, same reason as its Markets tab's — seeded with a hardcoded March-cohort
 // finding tied to the old fabricated mock, not a generic affordance.
 
 // ---- Markets (CH07) is wired to the shared GET /lifecycle/stages/{stageKey}/markets — see
 // acquire/data.ts's Markets note and markets-tab.tsx. Churn's bespoke "Ghana across all ten
-// stages" cross-stage table and its "Open a war room" header button are both dropped along with
+// stages" cross-stage table and its "Open a room" header button are both dropped along with
 // it — neither is backed by this (or any) endpoint; both were hand-authored narrative built
 // entirely around the old mock's fabricated Ghana story.
 

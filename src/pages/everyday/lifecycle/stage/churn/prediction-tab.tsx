@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import { useStageContext } from "@/pages/everyday/lifecycle/stage/layout";
 import { OpenARoomModal } from "@/pages/everyday/lifecycle/stage/modals/open-a-room-modal";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
 import { formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
@@ -62,7 +60,6 @@ function PredictionSkeleton() {
 
 /** CH04 — Churn's own Prediction tab, wired to GET /lifecycle/churn/prediction. */
 const ChurnPredictionTab = () => {
-  const { headerActionsEl } = useStageContext();
   const [openRoom, setOpenRoom] = useState(false);
   const { data, isLoading, isError, refetch } = useGetChurnPrediction();
   const prediction = data?.data;
@@ -70,13 +67,8 @@ const ChurnPredictionTab = () => {
 
   return (
     <div className="space-y-8">
-      {headerActionsEl &&
-        createPortal(
-          <Button type="button" size="sm" onClick={() => setOpenRoom(true)}>
-            Open a war room
-          </Button>,
-          headerActionsEl
-        )}
+      {/* "Open a room" header button removed for now, per explicit request — inconsistent
+          across tabs; only the /lifecycle map page's own button stays. */}
 
       <p className={EYEBROW_CLASS}>
         {prediction ? `${formatCount(prediction.lapsedCustomers)} lapsed customers · no fused risk score, signals named individually` : "Leading churn signals, never fused into a score"}

@@ -1,6 +1,5 @@
 import { Link, useParams } from "react-router-dom";
 
-import { Button } from "@/components/ui/button";
 import { WideBarRow } from "@/pages/everyday/lifecycle/stage/bar";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
@@ -57,11 +56,8 @@ const AdoptFeatureDetailRoute = () => {
         ]}
         title={detail.feature}
         subtitle={detail.headline}
-        action={
-          <Button type="button" size="sm">
-            Open a war room
-          </Button>
-        }
+        // "Open a room" header button removed for now, per explicit request — inconsistent
+        // across tabs; only the /lifecycle map page's own button stays.
       />
 
       <KpiCards items={detail.kpis} />

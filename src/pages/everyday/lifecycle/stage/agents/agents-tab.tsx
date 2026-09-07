@@ -13,9 +13,7 @@ import { EditConditionModal, AcceptConditionModal } from "@/pages/everyday/lifec
 import { ConfirmActionModal } from "@/pages/everyday/lifecycle/stage/modals/confirm-action-modal";
 import { formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetStageAgents } from "@/features/lifecycle/use-get-stage-agents";
-import { useGetStage } from "@/features/lifecycle/use-get-stage";
 import type { StageAgentConditionDto, StageAgentDto } from "@/services/api/lifecycle/get-stage-agents";
-import { AssignStageOwnerModal } from "@/pages/everyday/lifecycle/stage/modals/assign-stage-owner-modal";
 import useMuteCondition from "@/features/lifecycle/use-mute-condition";
 import useDecideCondition from "@/features/lifecycle/use-decide-condition";
 import {
@@ -25,7 +23,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
-import { createPortal } from "react-dom";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
@@ -77,7 +74,7 @@ function AgentsSkeleton() {
 
 /** The shared Agents tab template (e.g. A10) — which agents watch this stage, and what would make one open a room. */
 export function AgentsTab() {
-  const { stage, headerActionsEl } = useStageContext();
+  const { stage } = useStageContext();
   const { data, isLoading, isError, refetch } = useGetStageAgents(stage.slug);
   const agentsData = data?.data;
   const agents: StageAgentDto[] = agentsData?.agents ?? [];
@@ -85,10 +82,6 @@ export function AgentsTab() {
     agent.conditions.map((condition) => ({ id: `${agent.key}::${condition.id}`, agentName: agent.name, condition }))
   );
   const [thresholdOpen, setThresholdOpen] = useState(false);
-  const [assignOwnerOpen, setAssignOwnerOpen] = useState(false);
-  const stageQuery = useGetStage(stage.slug);
-  const isUnowned = stageQuery.data?.data.ownershipStanding.isOwned === false;
-  const owner = stageQuery.data?.data.owner ?? null;
 
   const [conditionToEdit, setConditionToEdit] = useState<StageAgentConditionDto | null>(null);
   const [conditionToAccept, setConditionToAccept] = useState<StageAgentConditionDto | null>(null);
@@ -153,15 +146,6 @@ export function AgentsTab() {
 
   return (
     <div className="space-y-8">
-      {stageQuery.data &&
-        headerActionsEl &&
-        createPortal(
-          <Button type="button" size="sm" variant={isUnowned ? "default" : "outline"} onClick={() => setAssignOwnerOpen(true)}>
-            {isUnowned ? "Assign an owner" : "Change owner"}
-          </Button>,
-          headerActionsEl
-        )}
-
       <section className="space-y-3">
         <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
           Agents watching this stage{agents.length > 0 ? ` · ${agents.length}` : ""}
@@ -288,14 +272,6 @@ export function AgentsTab() {
         pendingLabel="Declining…"
         isPending={isDeclining}
         onConfirm={() => conditionToDecline && decideCondition({ conditionId: conditionToDecline.id, accept: false })}
-      />
-      <AssignStageOwnerModal
-        stageKey={stage.slug}
-        stageName={stage.name}
-        currentOwnerId={owner?.ownerUserId ?? null}
-        currentOwnerName={owner?.displayName ?? null}
-        open={assignOwnerOpen}
-        onOpenChange={setAssignOwnerOpen}
       />
     </div>
   );

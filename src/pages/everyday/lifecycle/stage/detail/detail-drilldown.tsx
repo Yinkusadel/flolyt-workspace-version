@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-import { Button } from "@/components/ui/button";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
 import { KpiCards, type Kpi } from "@/pages/everyday/lifecycle/stage/kpi-cards";
@@ -42,7 +41,6 @@ export function DetailDrilldown({
   causeBody,
   actionsEyebrow,
   actionCards,
-  onOpenRoom,
 }: {
   crumbs: Crumb[];
   title: string;
@@ -63,11 +61,8 @@ export function DetailDrilldown({
         crumbs={crumbs}
         title={title}
         subtitle={subtitle}
-        action={
-          <Button type="button" size="sm" onClick={onOpenRoom}>
-            Open a war room
-          </Button>
-        }
+        // "Open a room" header button removed for now, per explicit request — inconsistent
+        // across tabs; only the /lifecycle map page's own button stays.
       />
 
       <KpiCards items={kpis} />

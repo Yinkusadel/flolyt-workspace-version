@@ -12,24 +12,24 @@ import {
 } from "@/components/ui/dialog";
 import { SearchableSelect, SearchableSelectSkeleton, type SearchableSelectOption } from "@/components/ui/searchable-select";
 import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
-import useUpdateStageOwner from "@/features/lifecycle/use-update-stage-owner";
+import useUpdateInstrumentationRequestOwner from "@/features/lifecycle/use-update-instrumentation-request-owner";
 
 /**
- * The real "assign an owner" flow — `PUT /lifecycle/map/{stageKey}/owner`, generic across all 10
- * stages. Distinct from `assign-an-owner-modal.tsx`, which is a still-fully-mock preset-driven
- * component reused elsewhere (Revenue's leakage-map LK10 screen) and left untouched.
+ * Assigns who's on the hook for an already-raised instrumentation request —
+ * `PUT /instrumentation-requests/{obligationId}/owner`. Separate from raising the request
+ * itself — deliberately, per the endpoint's own note: who does the work is usually settled
+ * after the ask. Owner is always a person, never a team.
  */
-export function AssignStageOwnerModal({
-  stageKey,
-  stageName,
+export function AssignInstrumentationOwnerModal({
+  obligationId,
+  gapName,
   currentOwnerId = null,
   currentOwnerName = null,
   open,
   onOpenChange,
 }: {
-  stageKey: string;
-  stageName: string;
-  /** Present when the stage already has an owner — switches this from an assign flow to a change flow. */
+  obligationId: string | null;
+  gapName: string;
   currentOwnerId?: string | null;
   currentOwnerName?: string | null;
   open: boolean;
@@ -38,22 +38,19 @@ export function AssignStageOwnerModal({
   const hasOwner = currentOwnerId !== null;
   const [ownerUserId, setOwnerUserId] = useState<string | null>(currentOwnerId);
   const { members, isLoading: membersLoading } = useGetWorkspaceMembers();
-  // Owner must be a workspace member and a person — an agent leads a stage but accountability stays human.
   const candidateOptions: SearchableSelectOption[] = members
     .filter((m) => m.kind === "Human" && m.isActive)
     .map((m) => ({ value: m.id, label: m.email ? `${m.displayName} · ${m.email}` : m.displayName }));
 
-  const { assignOwner, isPending } = useUpdateStageOwner({
-    onSuccess: () => onOpenChange(false),
-  });
+  const { assignOwner, isPending } = useUpdateInstrumentationRequestOwner({ onSuccess: () => onOpenChange(false) });
 
   useEffect(() => {
     if (open) setOwnerUserId(currentOwnerId);
   }, [open, currentOwnerId]);
 
   const confirm = () => {
-    if (!ownerUserId) return;
-    assignOwner({ stageKey, ownerUserId });
+    if (!obligationId || !ownerUserId) return;
+    assignOwner({ obligationId, ownerUserId });
   };
 
   return (
@@ -63,8 +60,8 @@ export function AssignStageOwnerModal({
           <DialogTitle>{hasOwner ? "Change owner" : "Assign an owner"}</DialogTitle>
           <DialogDescription>
             {hasOwner
-              ? `Currently owned by ${currentOwnerName ?? "someone"}. Pick a different workspace member to hand ${stageName} to.`
-              : `Names the person accountable for ${stageName}. Must be a workspace member and a person, never a team or an agent.`}
+              ? `Currently owned by ${currentOwnerName ?? "someone"}. Pick a different workspace member to hand "${gapName}" to.`
+              : `Names the person on the hook for "${gapName}". Must be a workspace member and a person, never a team.`}
           </DialogDescription>
         </DialogHeader>
 
