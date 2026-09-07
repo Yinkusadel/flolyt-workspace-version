@@ -118,9 +118,9 @@ const useVerifyLoginCode = ({ challengeId, email }: UseVerifyLoginCodeOptions) =
     setUser(userObj);
     setCookie(COOKIE_KEYS.USER_DATA, JSON.stringify(userObj), { expires: 7 });
 
-    // No onboarding UI exists yet — everyone lands on the dashboard for now,
-    // onboardingRequired is still tracked on the user object for later.
-    navigate("/");
+    // Onboarding step 1 (workspace) exists now — steps 2-5 (business model, data,
+    // agents, team) don't yet, so this only carries a user through the first step.
+    navigate(onboardingRequired ? "/onboarding/start" : "/");
   }, [user, jwtClaims, onboardingRequired, isPlatformAdmin, setUser, navigate]);
 
   const onSubmit = (values: VerifyLoginCodeSchemaType) => {

@@ -27,7 +27,7 @@ export function ApproveReauthModal({
 }) {
   const confirm = () => {
     onOpenChange(false);
-    toast.success("Approved — running under your identity");
+    toast.success("Approved. Running under your identity");
   };
 
   return (

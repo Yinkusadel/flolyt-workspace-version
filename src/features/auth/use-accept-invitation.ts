@@ -33,7 +33,7 @@ const useAcceptInvitation = ({ token }: UseAcceptInvitationOptions) => {
 
       // Accepting creates the account and membership but does not sign the
       // user in — route them to the same code flow as anyone else.
-      toast.success("Welcome to the team — sign in to continue");
+      toast.success("Welcome to the team. Sign in to continue");
       navigate("/auth/sign-in", { replace: true });
     },
     onError: (error) => {

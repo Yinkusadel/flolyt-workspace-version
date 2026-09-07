@@ -1,20 +1,36 @@
+import { Plus, Pencil } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
-import { DEPARTMENT_COLORS, EYEBROW_CLASS, type OwnershipRow, type Trend } from "@/pages/everyday/lifecycle/data";
+import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
+import { DEPARTMENT_COLORS, EYEBROW_CLASS, KNOWN_DEPARTMENTS, type Department } from "@/pages/everyday/lifecycle/data";
+
+export type OwnershipRow = {
+  id: string;
+  stage: string;
+  owningTeam: string | null;
+  ownerId: string | null;
+  ownerName: string | null;
+  leadAgentName: string | null;
+  openRooms: number;
+  reviewCadence: string | null;
+};
 
 export type OwnershipTableProps = {
   rows: OwnershipRow[];
+  onManageOwner: (row: OwnershipRow) => void;
 };
 
-const TREND_CLASSES: Record<Trend, string> = {
-  steady: "text-ink-4",
-  worsening: "text-rose",
-  improving: "text-teal",
-};
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[9px] font-medium tracking-[0.85px] text-ink-4 uppercase";
 
-export function OwnershipTable({ rows }: OwnershipTableProps) {
+export function OwnershipTable({ rows, onManageOwner }: OwnershipTableProps) {
   return (
     <section aria-labelledby="ownership-eyebrow">
       <p id="ownership-eyebrow" className={EYEBROW_CLASS}>
@@ -31,59 +47,83 @@ export function OwnershipTable({ rows }: OwnershipTableProps) {
               <th className={HEAD_CLASS}>Lead agent</th>
               <th className={cn(HEAD_CLASS, "text-right")}>Open rooms</th>
               <th className={HEAD_CLASS}>Reviewed</th>
-              <th className={cn(HEAD_CLASS, "text-right")}>Trend</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.stage} className="border-b border-line last:border-0">
-                <td className="px-4 py-3 font-semibold whitespace-nowrap text-ink">{row.stage}</td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <span className="flex items-center gap-2 text-ink-2">
-                    <span
-                      className="size-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: DEPARTMENT_COLORS[row.department] }}
-                      aria-hidden
-                    />
-                    {row.department}
-                  </span>
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <span className="flex items-center gap-2 text-ink-2">
-                    <PersonAvatar
-                      kind="human"
-                      initials={row.owner.initials}
-                      size="sm"
-                      style={{ backgroundColor: DEPARTMENT_COLORS[row.department] }}
-                    />
-                    {row.owner.name}
-                  </span>
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <span className="flex items-center gap-2 font-mono text-[10.5px] text-ultra">
-                    <PersonAvatar kind="agent" initials={row.leadAgent.initials} size="sm" />
-                    {row.leadAgent.name}
-                  </span>
-                </td>
-                <td
-                  className={cn(
-                    "px-4 py-3 text-right font-mono font-semibold",
-                    row.openRooms > 0 ? "text-amber" : "text-ink-4"
-                  )}
-                >
-                  {row.openRooms}
-                </td>
-                <td className="px-4 py-3 font-mono whitespace-nowrap text-ink-4">{row.reviewCadence}</td>
-                <td
-                  className={cn(
-                    "px-4 py-3 text-right font-medium whitespace-nowrap",
-                    TREND_CLASSES[row.trend]
-                  )}
-                >
-                  {row.trend}
-                </td>
-              </tr>
-            ))}
+            {rows.map((row) => {
+              const knownDepartment = row.owningTeam && KNOWN_DEPARTMENTS.has(row.owningTeam) ? (row.owningTeam as Department) : null;
+              return (
+                <tr key={row.id} className="border-b border-line last:border-0">
+                  <td className="px-4 py-3 font-semibold whitespace-nowrap text-ink">{row.stage}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className="flex items-center gap-2 text-ink-2">
+                      {knownDepartment && (
+                        <span
+                          className="size-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: DEPARTMENT_COLORS[knownDepartment] }}
+                          aria-hidden
+                        />
+                      )}
+                      {row.owningTeam ?? <span className="text-ink-4">Unavailable</span>}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {row.ownerName ? (
+                      <span className="flex items-center gap-2">
+                        <span className="flex items-center gap-2 text-ink-2">
+                          <PersonAvatar
+                            kind="human"
+                            initials={getInitials(row.ownerName)}
+                            size="sm"
+                            style={knownDepartment ? { backgroundColor: DEPARTMENT_COLORS[knownDepartment] } : undefined}
+                          />
+                          {row.ownerName}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onManageOwner(row)}
+                          className="shrink-0 rounded-control p-1 text-ink-4 hover:bg-paper-2 hover:text-ink"
+                          aria-label={`Change ${row.stage}'s owner`}
+                        >
+                          <Pencil className="size-3" />
+                        </button>
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Chip tone="amber">No owner</Chip>
+                        <button
+                          type="button"
+                          onClick={() => onManageOwner(row)}
+                          className="shrink-0 rounded-control p-1 text-ink-4 hover:bg-paper-2 hover:text-ink"
+                          aria-label={`Assign ${row.stage}'s owner`}
+                        >
+                          <Plus className="size-3.5" />
+                        </button>
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {row.leadAgentName ? (
+                      <span className="flex items-center gap-2 font-mono text-[10.5px] text-ultra">
+                        <PersonAvatar kind="agent" initials={getInitials(row.leadAgentName)} size="sm" />
+                        {row.leadAgentName}
+                      </span>
+                    ) : (
+                      <span className="text-ink-4">No lead agent</span>
+                    )}
+                  </td>
+                  <td
+                    className={cn(
+                      "px-4 py-3 text-right font-mono font-semibold",
+                      row.openRooms > 0 ? "text-amber" : "text-ink-4"
+                    )}
+                  >
+                    {row.openRooms}
+                  </td>
+                  <td className="px-4 py-3 font-mono whitespace-nowrap text-ink-4">{row.reviewCadence ?? "Not set"}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

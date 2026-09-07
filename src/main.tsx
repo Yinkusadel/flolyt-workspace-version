@@ -8,6 +8,9 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { AuthProvider } from "./utils/auth-context";
 // import { ThemeProvider } from "./context/ThemeContext";
 import "./index.css";
+// Flag emoji don't reliably render as flags on Windows (shows two-letter codes
+// instead) — real SVG flag icons via this CSS avoid depending on the OS's font.
+import "flag-icons/css/flag-icons.min.css";
 
 
 const rootElement = document.getElementById("root");

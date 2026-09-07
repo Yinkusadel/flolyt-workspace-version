@@ -1,58 +1,116 @@
-import { WideBarRow } from "@/pages/everyday/lifecycle/stage/bar";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BarTrack, type BarTone } from "@/pages/everyday/lifecycle/stage/bar";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
-import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
-import {
-  ACTIVATE_TIME_TO_VALUE_COHORT_ROWS,
-  ACTIVATE_TIME_TO_VALUE_ROWS,
-  type TimeToValueCohortRow,
-} from "@/pages/everyday/lifecycle/stage/activate/data";
+import { formatCount, formatPercent, round } from "@/pages/everyday/lifecycle/format-measured-value";
+import { useGetActivateTimeToValue } from "@/features/lifecycle/use-get-activate-time-to-value";
 
-const RATE_TONE_CLASS: Record<"teal" | "rose", string> = { teal: "text-teal", rose: "text-rose" };
-const MEDIAN_TONE_CLASS: Record<"teal" | "rose" | "neutral", string> = { teal: "text-teal", rose: "text-rose", neutral: "text-ink-4" };
-const SAME_DAY_TONE_CLASS: Record<"ink" | "amber", string> = { ink: "text-ink", amber: "text-amber" };
+// The 5 bands are fixed by Flolyt (GET /lifecycle/activate/time-to-value's own notes), not
+// per-tenant — "never" is a band, not a drop.
+const BAND_LABELS: Record<string, string> = {
+  "same-day": "Same day",
+  "1-7": "1–7 days",
+  "8-30": "8–30 days",
+  "31+": "31+ days",
+  never: "Never activated",
+};
+const BAND_TONES: Record<string, BarTone> = {
+  "same-day": "teal",
+  "1-7": "teal",
+  "8-30": "amber",
+  "31+": "rose",
+  never: "rose",
+};
 
-const COLUMNS: Column<TimeToValueCohortRow>[] = [
-  { key: "cohort", header: "Cohort", render: (row) => <span className="font-semibold text-ink-2">{row.cohort}</span> },
-  { key: "activated", header: "Activated", align: "right", render: (row) => <span className="font-mono text-ink">{row.activated}</span> },
-  { key: "rate", header: "Rate", align: "right", render: (row) => <span className={RATE_TONE_CLASS[row.rateTone]}>{row.rate}</span> },
-  { key: "medianDays", header: "Median days", align: "right", render: (row) => <span className={MEDIAN_TONE_CLASS[row.medianTone]}>{row.medianDays}</span> },
-  { key: "sameDay", header: "Same-day", align: "right", render: (row) => <span className={SAME_DAY_TONE_CLASS[row.sameDayTone]}>{row.sameDay}</span> },
-  { key: "vsFeb", header: "vs Feb", align: "right", render: (row) => <span className={MEDIAN_TONE_CLASS[row.vsFebTone]}>{row.vsFeb}</span> },
-];
+const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
+function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
+  return (CALLOUT_TONES.has(tone) ? tone : "neutral") as "amber" | "teal" | "rose" | "ultra" | "neutral";
+}
 
 /** AC03 — Activate's unique Time to value tab. */
 const ActivateTimeToValueTab = () => {
+  const { data, isLoading, isError, refetch } = useGetActivateTimeToValue();
+  const timeToValue = data?.data;
+  const isUnbound = !!timeToValue && timeToValue.conversionConditionKey === null;
+
   return (
     <div className="space-y-8">
       <section className="space-y-4">
         <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-          Days from first order to activation · 366,000 who got there
+          Days from first order to activation
+          {timeToValue?.maturityDays != null ? ` · matured after ${timeToValue.maturityDays} days` : ""}
         </p>
-        <div className="space-y-5">
-          {ACTIVATE_TIME_TO_VALUE_ROWS.map((row) => (
-            <WideBarRow key={row.label} label={row.label} value={row.value} percent={row.percent} tone={row.tone} />
-          ))}
-        </div>
+
+        {isError ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-card border border-rose-border bg-rose-bg/40 px-4 py-3">
+            <p className="text-[12px] text-rose">Couldn't load time to value.</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
+        ) : isLoading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="space-y-1.5">
+                <div className="flex items-baseline justify-between gap-4">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+                <Skeleton className="h-1.5 w-full rounded-full" />
+              </div>
+            ))}
+          </div>
+        ) : isUnbound ? (
+          <Callout tone="amber" title="This screen has no answer until Activate has a conversion">
+            Reaching value is measured against whichever exit is bound as Activate's conversion, and none is bound
+            yet. Bind one from the stage's definition to turn this from unavailable into a real breakdown.
+          </Callout>
+        ) : (
+          <>
+            {(timeToValue?.entered != null || timeToValue?.reached != null) && (
+              <p className="font-mono text-[10.5px] text-ink-4">
+                {timeToValue.entered != null && `${formatCount(timeToValue.entered)} entered`}
+                {timeToValue.entered != null && timeToValue.reached != null && " · "}
+                {timeToValue.reached != null && `${formatCount(timeToValue.reached)} reached value`}
+              </p>
+            )}
+            <div className="space-y-4">
+              {timeToValue?.bands.map((band) => (
+                <div key={band.band} className="space-y-1.5">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <span className="text-[12.5px] font-semibold text-ink">{BAND_LABELS[band.band] ?? band.band}</span>
+                    <span className="font-mono text-[12px] font-semibold text-ink">
+                      {formatCount(band.customers)}
+                      {band.share !== null && ` · ${formatPercent(band.share)}`}
+                    </span>
+                  </div>
+                  <BarTrack percent={band.share !== null ? band.share * 100 : 0} tone={BAND_TONES[band.band] ?? "ink"} />
+                </div>
+              ))}
+            </div>
+            {(timeToValue?.medianBand || timeToValue?.drift != null) && (
+              <p className="font-mono text-[10.5px] text-ink-4">
+                {timeToValue.medianBand && `Median: ${BAND_LABELS[timeToValue.medianBand] ?? timeToValue.medianBand}`}
+                {timeToValue.medianBand && timeToValue.drift != null && " · "}
+                {/* Drift's exact scale (fraction vs already-in-points) isn't confirmed live — shown
+                    as points without a ×100 conversion rather than guess the wrong order of magnitude. */}
+                {timeToValue.drift != null && `${timeToValue.drift >= 0 ? "+" : ""}${round(timeToValue.drift, 1)} pts vs prior quarter`}
+              </p>
+            )}
+          </>
+        )}
       </section>
 
-      <Callout tone="ultra" title="The 14-day window is a choice, and it costs 84,000 customers">
-        84,000 people returned between day 15 and day 45 and are counted as never activated. Widening the window would
-        raise the activation rate to 50.4% and would not change a single customer&apos;s behaviour. The narrow window is
-        kept because 14 days is where the signal stops predicting a second order.
-      </Callout>
+      {/* ❌ Backend does NOT provide: a per-cohort-by-month breakdown (activated/rate/median
+          days/same-day/vs prior month) — GET /lifecycle/activate/time-to-value has no cohort
+          dimension at all, only the fixed same-day/1-7/8-30/31+/never bands above. Dropped
+          rather than shown against fabricated rows. */}
 
-      <section className="space-y-3">
-        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-          Time to value is getting worse, and it is not gradual
-        </p>
-        <DataTable columns={COLUMNS} rows={ACTIVATE_TIME_TO_VALUE_COHORT_ROWS} />
-      </section>
-
-      <Callout tone="rose" title="Median time to value nearly doubled in the week of 4 March">
-        3.4 days to 6.0 days, and it has not recovered in twenty weeks. A customer deciding more slowly is a customer
-        deciding less certainly — this is the same event that shows up as −11 points in Retain, seen from one stage
-        earlier.
-      </Callout>
+      {timeToValue?.callouts.map((callout) => (
+        <Callout key={callout.key} tone={safeCalloutTone(callout.tone)} title={callout.headline}>
+          {callout.body}
+        </Callout>
+      ))}
     </div>
   );
 };

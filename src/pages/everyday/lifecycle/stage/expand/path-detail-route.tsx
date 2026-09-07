@@ -1,6 +1,5 @@
 import { Link, useParams } from "react-router-dom";
 
-import { Button } from "@/components/ui/button";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
@@ -62,11 +61,8 @@ const ExpandPathDetailRoute = () => {
         ]}
         title={detail.fromTo}
         subtitle={detail.headline}
-        action={
-          <Button type="button" size="sm">
-            Open a war room
-          </Button>
-        }
+        // "Open a room" header button removed for now, per explicit request — inconsistent
+        // across tabs; only the /lifecycle map page's own button stays.
       />
 
       <KpiCards items={detail.kpis} />

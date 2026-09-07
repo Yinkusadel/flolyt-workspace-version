@@ -15,7 +15,6 @@ import PriceMarginTab from "@/pages/everyday/lifecycle/stage/price/margin-tab";
 import PriceDiscountingTab from "@/pages/everyday/lifecycle/stage/price/discounting-tab";
 import AdoptFeaturesTab from "@/pages/everyday/lifecycle/stage/adopt/features-tab";
 import AdoptDepthTab from "@/pages/everyday/lifecycle/stage/adopt/depth-tab";
-import AdoptBlindSpotsTab from "@/pages/everyday/lifecycle/stage/adopt/blind-spots-tab";
 import RetainRepeatCurveTab from "@/pages/everyday/lifecycle/stage/retain/repeat-curve-tab";
 import RetainSegmentsTab from "@/pages/everyday/lifecycle/stage/retain/segments-tab";
 import RetainReactivationTab from "@/pages/everyday/lifecycle/stage/retain/reactivation-tab";
@@ -87,7 +86,6 @@ export const STAGE_TABS: Partial<Record<string, StageTab[]>> = {
   adopt: [
     { path: "features", label: "Features", Component: AdoptFeaturesTab },
     { path: "depth", label: "Depth", Component: AdoptDepthTab },
-    { path: "blind-spots", label: "Not instrumented", Component: AdoptBlindSpotsTab },
     { path: "cohorts", label: "Cohorts", Component: CohortsTab },
     { path: "markets", label: "Markets", Component: MarketsTab },
     { path: "changes", label: "What changed", Component: ChangesTab },
