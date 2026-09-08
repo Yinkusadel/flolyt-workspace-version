@@ -151,6 +151,17 @@ export default function OnboardingWorkspaceRoute() {
     });
   };
 
+  // Lets a manually-added market override the "country's usual currency" default —
+  // e.g. a US-registered business that bills a UK market in GBP, not USD.
+  const setAddedMarketCurrency = (countryCode: string, currencyCode: string | null) => {
+    const current = getMarketsValues("markets");
+    setMarketsValue(
+      "markets",
+      current.map((m) => (m.countryCode === countryCode ? { ...m, currencyCode } : m)),
+      { shouldValidate: true }
+    );
+  };
+
   const canContinue = !isLoadingProposed && !markets.isPending && !stepUp.isRequesting;
 
   return (
@@ -214,30 +225,44 @@ export default function OnboardingWorkspaceRoute() {
                     );
                   })}
 
-                  {addedMarkets.map((market) => (
-                    <div
-                      key={market.countryCode}
-                      className="flex items-center justify-between rounded-panel border border-ultra-border bg-paper px-3.5 py-3 text-left"
-                    >
-                      <span>
-                        <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink">
-                          <FlagIcon code={market.countryCode} />{" "}
-                          {Country.getCountryByCode(market.countryCode)?.name ?? market.countryCode}
-                        </span>
-                        <span className="font-mono text-[10.5px] text-ink-4">
-                          {Country.getCountryByCode(market.countryCode)?.currency ?? "auto"}
-                        </span>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeMarket(market.countryCode)}
-                        aria-label={`Remove ${Country.getCountryByCode(market.countryCode)?.name ?? market.countryCode}`}
-                        className="flex size-4 shrink-0 items-center justify-center rounded-full text-ink-4 hover:text-ink"
+                  {addedMarkets.map((market) => {
+                    const countryName =
+                      Country.getCountryByCode(market.countryCode)?.name ?? market.countryCode;
+                    const defaultCurrency = Country.getCountryByCode(market.countryCode)?.currency;
+                    return (
+                      <div
+                        key={market.countryCode}
+                        className="rounded-panel border border-ultra-border bg-paper px-3.5 py-3 text-left"
                       >
-                        <X className="size-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink">
+                            <FlagIcon code={market.countryCode} /> {countryName}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeMarket(market.countryCode)}
+                            aria-label={`Remove ${countryName}`}
+                            className="flex size-4 shrink-0 items-center justify-center rounded-full text-ink-4 hover:text-ink"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        </div>
+                        {isLoadingCurrencies ? (
+                          <SearchableSelectSkeleton className="mt-2 h-7" />
+                        ) : (
+                          <SearchableSelect
+                            id={`currency-${market.countryCode}`}
+                            options={currencyOptions}
+                            value={market.currencyCode ?? null}
+                            onChange={(value) => setAddedMarketCurrency(market.countryCode, value)}
+                            placeholder={defaultCurrency ? `Auto (${defaultCurrency})` : "Auto"}
+                            searchPlaceholder="Search currencies..."
+                            className="mt-2 h-7 text-[10.5px]"
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </>

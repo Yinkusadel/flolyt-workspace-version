@@ -99,10 +99,12 @@ right after sign-in when `onboardingRequired: true` and no workspace exists yet.
   proposed set even though `PUT /markets` itself accepts any `{ countryCode, currencyCode }`
   pair (see `workspace.md`'s notes on that endpoint). Added a country `SearchableSelect` (options
   from `getCountryOptions()` in `src/lib/location.tsx`, same source as the start-of-onboarding
-  country field) below the proposal cards. A manually added market omits `currencyCode` (sent as
-  `null`) so the server falls back to the country's usual currency, per that endpoint's own docs —
-  no client-side currency-support check is done for it the way proposals' currencies are already
-  vetted server-side.
+  country field) below the proposal cards. A manually added market defaults `currencyCode` to
+  `null` (server falls back to the country's usual currency), with its own per-card
+  `SearchableSelect` (options from `GET /currency/supported`, same list "Reporting currency"
+  already uses) so the currency can be overridden — e.g. a US-registered business billing a UK
+  market in GBP rather than USD. Proposals' currencies are left as the API already picked; only
+  manually added markets get this override control.
 - **Search UX for the country/timezone pickers:** no combobox/typeahead component exists in this
   app yet (only a plain, non-searchable Radix `Select`), and no combobox library is installed.
   Hand-rolling a filter-as-you-type list on the existing `Popover` primitive rather than adding a
