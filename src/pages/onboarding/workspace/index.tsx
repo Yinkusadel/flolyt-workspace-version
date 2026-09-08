@@ -234,7 +234,6 @@ export default function OnboardingWorkspaceRoute() {
                   {addedMarkets.map((market) => {
                     const countryName =
                       Country.getCountryByCode(market.countryCode)?.name ?? market.countryCode;
-                    const defaultCurrency = Country.getCountryByCode(market.countryCode)?.currency;
                     return (
                       <div
                         key={market.countryCode}
@@ -253,17 +252,23 @@ export default function OnboardingWorkspaceRoute() {
                             <X className="size-3.5" />
                           </button>
                         </div>
+                        <label
+                          htmlFor={`currency-${market.countryCode}`}
+                          className="mt-2 block text-[10px] text-ink-4"
+                        >
+                          Currency for this market
+                        </label>
                         {isLoadingCurrencies ? (
-                          <SearchableSelectSkeleton className="mt-2 h-7" />
+                          <SearchableSelectSkeleton className="mt-1 h-7" />
                         ) : (
                           <SearchableSelect
                             id={`currency-${market.countryCode}`}
                             options={currencyOptions}
                             value={market.currencyCode ?? null}
                             onChange={(value) => setAddedMarketCurrency(market.countryCode, value)}
-                            placeholder={defaultCurrency ? `Auto (${defaultCurrency})` : "Auto"}
+                            placeholder="Select currency"
                             searchPlaceholder="Search currencies..."
-                            className="mt-2 h-7 text-[10.5px]"
+                            className="mt-1 h-7 text-[10.5px]"
                           />
                         )}
                       </div>
