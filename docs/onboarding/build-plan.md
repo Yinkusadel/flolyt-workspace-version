@@ -105,6 +105,15 @@ right after sign-in when `onboardingRequired: true` and no workspace exists yet.
   already uses) so the currency can be overridden — e.g. a US-registered business billing a UK
   market in GBP rather than USD. Proposals' currencies are left as the API already picked; only
   manually added markets get this override control.
+- **Bug fixed 2026-09-08: the pre-fill effect was re-seeding the form on every
+  `GET /proposed-markets` refetch, not just the first.** react-query refetches that query on
+  window focus by default, so tabbing away (e.g. to grab the step-up email code) and back would
+  silently `form.reset()` the whole markets form back to the server's original proposal —
+  discarding any market the user had added and any primary-market change, mid-session. Guarded
+  with a `useRef` so the reset fires exactly once, on the first successful fetch; the form is the
+  source of truth after that. This also matches `GET /proposed-markets`'s own documented
+  `declared: true` semantics ("proposals become a comparison, not a starting point — must not
+  overwrite existing choices with a fresh scrape") which the un-guarded effect was violating.
 - **Search UX for the country/timezone pickers:** no combobox/typeahead component exists in this
   app yet (only a plain, non-searchable Radix `Select`), and no combobox library is installed.
   Hand-rolling a filter-as-you-type list on the existing `Popover` primitive rather than adding a

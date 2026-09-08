@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Country } from "country-state-city";
@@ -63,9 +63,15 @@ export default function OnboardingWorkspaceRoute() {
   };
 
   // Pre-fill the markets form once the proposed set arrives — a reset, not per-field
-  // setValue, since every field changes together on first real data.
+  // setValue, since every field changes together on first real data. Guarded to fire
+  // only once: GET /proposed-markets refetches on window focus (e.g. tabbing away to
+  // grab the step-up email code), and re-seeding on every one of those would silently
+  // wipe out any market the user added, or a primary-market change, mid-session — the
+  // form is the source of truth once the user starts editing it.
+  const hasSeededMarkets = useRef(false);
   useEffect(() => {
-    if (!proposedMarkets) return;
+    if (!proposedMarkets || hasSeededMarkets.current) return;
+    hasSeededMarkets.current = true;
     markets.form.reset({
       markets: proposedMarkets.proposals.map((p) => ({
         countryCode: p.countryCode,
