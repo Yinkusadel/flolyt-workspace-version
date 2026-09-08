@@ -94,6 +94,15 @@ right after sign-in when `onboardingRequired: true` and no workspace exists yet.
 - **Screen 03's "Primary market" / "Markets you sell in":** `GET /workspace/proposed-markets`
   (already fully documented in `workspace.md`) — not the currency endpoints above, which only
   cover currency codes, no country data at all.
+- **"Add another market" picker, added 2026-09-08:** the cards only ever rendered
+  `proposed-markets`' own guesses — a workspace couldn't declare a market outside that small
+  proposed set even though `PUT /markets` itself accepts any `{ countryCode, currencyCode }`
+  pair (see `workspace.md`'s notes on that endpoint). Added a country `SearchableSelect` (options
+  from `getCountryOptions()` in `src/lib/location.tsx`, same source as the start-of-onboarding
+  country field) below the proposal cards. A manually added market omits `currencyCode` (sent as
+  `null`) so the server falls back to the country's usual currency, per that endpoint's own docs —
+  no client-side currency-support check is done for it the way proposals' currencies are already
+  vetted server-side.
 - **Search UX for the country/timezone pickers:** no combobox/typeahead component exists in this
   app yet (only a plain, non-searchable Radix `Select`), and no combobox library is installed.
   Hand-rolling a filter-as-you-type list on the existing `Popover` primitive rather than adding a

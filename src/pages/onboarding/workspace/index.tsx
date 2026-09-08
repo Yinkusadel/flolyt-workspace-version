@@ -2,12 +2,14 @@ import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Country } from "country-state-city";
+import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SearchableSelect, SearchableSelectSkeleton } from "@/components/ui/searchable-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StepUpConfirmModal } from "@/components/step-up-confirm-modal";
 import { FlagIcon } from "@/components/flag-icon";
+import { getCountryOptions } from "@/lib/location";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
 import { BackButton } from "@/pages/onboarding/back-button";
 import useUpdateWorkspaceMarkets from "@/features/workspace/use-update-workspace-markets";
@@ -90,15 +92,12 @@ export default function OnboardingWorkspaceRoute() {
 
   const primaryMarketOptions = useMemo(
     () =>
-      selectedMarkets.map((m) => {
-        const info = marketProposals.find((p) => p.countryCode === m.countryCode);
-        return {
-          value: m.countryCode,
-          label: info?.countryName ?? m.countryCode,
-          icon: <FlagIcon code={m.countryCode} />,
-        };
-      }),
-    [selectedMarkets, marketProposals]
+      selectedMarkets.map((m) => ({
+        value: m.countryCode,
+        label: Country.getCountryByCode(m.countryCode)?.name ?? m.countryCode,
+        icon: <FlagIcon code={m.countryCode} />,
+      })),
+    [selectedMarkets]
   );
 
   const currencyOptions = useMemo(
@@ -109,21 +108,47 @@ export default function OnboardingWorkspaceRoute() {
   const isMarketSelected = (countryCode: string) =>
     selectedMarkets.some((m) => m.countryCode === countryCode);
 
-  const toggleMarket = (proposal: (typeof marketProposals)[number]) => {
+  const removeMarket = (countryCode: string) => {
     const current = getMarketsValues("markets");
+    const next = current.filter((m) => m.countryCode !== countryCode);
+    setMarketsValue("markets", next, { shouldValidate: true });
+    if (primaryMarketCountry === countryCode) {
+      setMarketsValue("primaryMarketCountry", next[0]?.countryCode ?? "", { shouldValidate: true });
+    }
+  };
+
+  const toggleMarket = (proposal: (typeof marketProposals)[number]) => {
     if (isMarketSelected(proposal.countryCode)) {
-      const next = current.filter((m) => m.countryCode !== proposal.countryCode);
-      setMarketsValue("markets", next, { shouldValidate: true });
-      if (primaryMarketCountry === proposal.countryCode) {
-        setMarketsValue("primaryMarketCountry", next[0]?.countryCode ?? "", { shouldValidate: true });
-      }
+      removeMarket(proposal.countryCode);
       return;
     }
+    const current = getMarketsValues("markets");
     setMarketsValue(
       "markets",
       [...current, { countryCode: proposal.countryCode, currencyCode: proposal.currencyCode }],
       { shouldValidate: true }
     );
+  };
+
+  // Markets added via the "Add another market" picker below — any country, not
+  // just what GET /proposed-markets guessed. No currencyCode: per docs/endpoints/workspace.md,
+  // omitting it makes PUT /markets fall back to the country's usual currency.
+  const addedMarkets = useMemo(
+    () => selectedMarkets.filter((m) => !marketProposals.some((p) => p.countryCode === m.countryCode)),
+    [selectedMarkets, marketProposals]
+  );
+
+  const addableCountryOptions = useMemo(
+    () => getCountryOptions().filter((option) => !isMarketSelected(option.value)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedMarkets]
+  );
+
+  const addMarket = (countryCode: string) => {
+    const current = getMarketsValues("markets");
+    setMarketsValue("markets", [...current, { countryCode, currencyCode: null }], {
+      shouldValidate: true,
+    });
   };
 
   const canContinue = !isLoadingProposed && !markets.isPending && !stepUp.isRequesting;
@@ -156,39 +181,81 @@ export default function OnboardingWorkspaceRoute() {
                 </div>
               ))}
             </div>
-          ) : marketProposals.length === 0 ? (
-            <p className="mt-3 text-[11.5px] text-ink-3">No proposed markets yet.</p>
           ) : (
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {marketProposals.map((proposal) => {
-                const selected = isMarketSelected(proposal.countryCode);
-                return (
-                  <button
-                    key={proposal.countryCode}
-                    type="button"
-                    onClick={() => toggleMarket(proposal)}
-                    className={`flex items-center justify-between rounded-panel border px-3.5 py-3 text-left transition-colors ${
-                      selected ? "border-ultra-border bg-paper" : "border-line bg-paper-2"
-                    }`}
-                  >
-                    <span>
-                      <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink">
-                        <FlagIcon code={proposal.countryCode} /> {proposal.countryName}
+            <>
+              {marketProposals.length === 0 && addedMarkets.length === 0 && (
+                <p className="mt-3 text-[11.5px] text-ink-3">No proposed markets yet — add one below.</p>
+              )}
+              {(marketProposals.length > 0 || addedMarkets.length > 0) && (
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {marketProposals.map((proposal) => {
+                    const selected = isMarketSelected(proposal.countryCode);
+                    return (
+                      <button
+                        key={proposal.countryCode}
+                        type="button"
+                        onClick={() => toggleMarket(proposal)}
+                        className={`flex items-center justify-between rounded-panel border px-3.5 py-3 text-left transition-colors ${
+                          selected ? "border-ultra-border bg-paper" : "border-line bg-paper-2"
+                        }`}
+                      >
+                        <span>
+                          <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink">
+                            <FlagIcon code={proposal.countryCode} /> {proposal.countryName}
+                          </span>
+                          <span className="font-mono text-[10.5px] text-ink-4">{proposal.currencyCode}</span>
+                        </span>
+                        {selected && (
+                          <span className="flex size-4 items-center justify-center rounded-full bg-ultra text-[8px] text-white">
+                            ✓
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+
+                  {addedMarkets.map((market) => (
+                    <div
+                      key={market.countryCode}
+                      className="flex items-center justify-between rounded-panel border border-ultra-border bg-paper px-3.5 py-3 text-left"
+                    >
+                      <span>
+                        <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink">
+                          <FlagIcon code={market.countryCode} />{" "}
+                          {Country.getCountryByCode(market.countryCode)?.name ?? market.countryCode}
+                        </span>
+                        <span className="font-mono text-[10.5px] text-ink-4">
+                          {Country.getCountryByCode(market.countryCode)?.currency ?? "auto"}
+                        </span>
                       </span>
-                      <span className="font-mono text-[10.5px] text-ink-4">{proposal.currencyCode}</span>
-                    </span>
-                    {selected && (
-                      <span className="flex size-4 items-center justify-center rounded-full bg-ultra text-[8px] text-white">
-                        ✓
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                      <button
+                        type="button"
+                        onClick={() => removeMarket(market.countryCode)}
+                        aria-label={`Remove ${Country.getCountryByCode(market.countryCode)?.name ?? market.countryCode}`}
+                        className="flex size-4 shrink-0 items-center justify-center rounded-full text-ink-4 hover:text-ink"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
           {marketsErrors.markets && (
             <p className="mt-1.5 text-[11px] text-destructive">{marketsErrors.markets.message}</p>
+          )}
+
+          {!isLoadingProposed && (
+            <SearchableSelect
+              id="add-market"
+              options={addableCountryOptions}
+              value={null}
+              onChange={addMarket}
+              placeholder="Add another market"
+              searchPlaceholder="Search countries..."
+              className="mt-3"
+            />
           )}
         </div>
 
