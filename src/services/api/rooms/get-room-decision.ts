@@ -29,6 +29,12 @@ export interface RoomDecisionDissentDto {
   aboutProposalId: string | null;
 }
 
+export interface RoomDecisionRecipientDto {
+  userId: string;
+  what: string;
+  class: string;
+}
+
 export interface RoomDecisionData {
   roomId: string;
   openingNumber: number;
@@ -41,6 +47,7 @@ export interface RoomDecisionData {
   revisions: RoomDecisionRevisionDto[];
   whatWouldChangeThis: RoomDecisionFalsifierDto[];
   dissent: RoomDecisionDissentDto[];
+  recipients: RoomDecisionRecipientDto[];
 }
 
 export interface GetRoomDecisionResponse {

@@ -22,6 +22,12 @@ export interface RoomListRestrictedDto {
   peopleInside: number;
 }
 
+export interface RoomListAgentDto {
+  key: string;
+  displayName: string;
+  role: string;
+}
+
 export interface RoomListRowDto {
   id: string;
   title: string;
@@ -48,6 +54,14 @@ export interface RoomListRowDto {
   lastActivityAtUtc: string | null;
   stoppedBecause: string | null;
   isStale: boolean;
+  /** Null when unowned. On a restricted room this is null. */
+  ownerName: string | null;
+  /** Empty on a restricted room. */
+  agents: RoomListAgentDto[];
+  /** Pending plays on the room, counted the way the inbox counts them. 0 on a restricted room. */
+  pendingDecisions: number;
+  /** True when one of the plays waits on the caller specifically. False on a restricted room. */
+  needsYou: boolean;
 }
 
 export interface RoomListAmountBehindStaleDto {

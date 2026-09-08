@@ -23,6 +23,44 @@ export interface RoomPlayDto {
   waitingHours: number | null;
   deferredBecause: string | null;
   proposedAtUtc: string;
+  campaignId: string | null;
+}
+
+export interface RoomPlayObligationBlockDto {
+  text: string;
+  amount: number | null;
+  currency: string | null;
+  reference: string | null;
+}
+
+export interface RoomPlayReturnedObligationDto {
+  id: string;
+  chainId: string | null;
+  roomId: string | null;
+  roomTitle: string | null;
+  description: string;
+  class: string;
+  origin: string;
+  fromUserId: string;
+  fromName: string;
+  toUserId: string;
+  toName: string;
+  toTeam: string | null;
+  state: string;
+  proposedDueAtUtc: string;
+  dueAtUtc: string | null;
+  isOverdue: boolean;
+  daysOverdue: number | null;
+  isPastAskedDate: boolean;
+  firstCreatedAtUtc: string;
+  askedAtUtc: string;
+  acceptedAtUtc: string | null;
+  doneAtUtc: string | null;
+  lastMovedAtUtc: string;
+  blocks: RoomPlayObligationBlockDto[];
+  readCount: number;
+  repeatCount: number;
+  toHasLeft: boolean;
 }
 
 export interface RoomPlaysData {
@@ -32,6 +70,8 @@ export interface RoomPlaysData {
   rejected: number;
   deferred: number;
   waitingOnPeople: number;
+  /** Follow-up obligations (from `close`'s `outstanding`) that landed back at this room/list — the reopen-worthy ones. */
+  returnedObligations: RoomPlayReturnedObligationDto[];
 }
 
 export interface GetRoomPlaysResponse {

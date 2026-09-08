@@ -35,6 +35,7 @@ export const CURRENCY_BASE_URL = `${API_BASE_URL}/api/flolyt/currency`;
 export const WORKSPACE_BASE_URL = `${API_BASE_URL}/api/flolyt/workspace`;
 export const LIFECYCLE_BASE_URL = `${API_BASE_URL}/api/flolyt/lifecycle`;
 export const ROOMS_BASE_URL = `${API_BASE_URL}/api/flolyt/rooms`;
+export const PLAYS_BASE_URL = `${API_BASE_URL}/api/flolyt/plays`;
 
 export const API_ENDPOINTS = {
   USER: {
@@ -566,6 +567,7 @@ export const API_ENDPOINTS = {
     DELETE_ROOM_VIEW: `${ROOMS_BASE_URL}/views/{viewId}`,
     GET_ROOMS: `${ROOMS_BASE_URL}`,
     OPEN_ROOM_ON_LEAKAGE_CELL: `${ROOMS_BASE_URL}`,
+    GET_ROOM_CLOSE_PREVIEW: `${ROOMS_BASE_URL}/{roomId}/close-preview`,
     CLOSE_ROOM: `${ROOMS_BASE_URL}/{roomId}/close`,
     GET_ROOM_DECISION: `${ROOMS_BASE_URL}/{roomId}/decision`,
     SAVE_ROOM_DECISION: `${ROOMS_BASE_URL}/{roomId}/decision`,
@@ -586,6 +588,13 @@ export const API_ENDPOINTS = {
     CREATE_ROOM: `${ROOMS_BASE_URL}/new`,
     LINK_ROOM: `${ROOMS_BASE_URL}/{roomId}/link`,
     UNLINK_ROOM: `${ROOMS_BASE_URL}/{roomId}/link/{otherRoomId}`,
+    GET_CONVENING: `${ROOMS_BASE_URL}/convening`,
+    ACCEPT_CONVENING_PROPOSAL: `${ROOMS_BASE_URL}/convening/{proposalId}/accept`,
+    DECLINE_CONVENING_PROPOSAL: `${ROOMS_BASE_URL}/convening/{proposalId}/decline`,
+    GET_ROOM_GUARDRAILS: `${ROOMS_BASE_URL}/{roomId}/guardrails`,
+    CREATE_ROOM_GUARDRAIL: `${ROOMS_BASE_URL}/{roomId}/guardrails`,
+    REMOVE_ROOM_GUARDRAIL: `${ROOMS_BASE_URL}/{roomId}/guardrails/{key}`,
+    GET_ROOM_RUNS: `${ROOMS_BASE_URL}/{roomId}/runs`,
     ADD_ROOM_AGENT: `${ROOMS_BASE_URL}/{roomId}/agents`,
     REMOVE_ROOM_AGENT: `${ROOMS_BASE_URL}/{roomId}/agents/{agentKey}`,
     GET_MERGE_CANDIDATES: `${ROOMS_BASE_URL}/{roomId}/merge-candidates`,
@@ -604,7 +613,10 @@ export const API_ENDPOINTS = {
     RESTRICT_ROOM: `${ROOMS_BASE_URL}/{roomId}/restrict`,
     UNRESTRICT_ROOM: `${ROOMS_BASE_URL}/{roomId}/restrict`,
     GET_ROOM_PLAYS: `${ROOMS_BASE_URL}/{roomId}/plays`,
-    GET_ALL_PLAYS: `${ROOMS_BASE_URL}/plays`,
+    // Top-level `/api/flolyt/plays`, NOT under `/rooms` — corrected 2026-09-08 after the live doc
+    // showed this living outside the rooms path entirely.
+    GET_ALL_PLAYS: `${PLAYS_BASE_URL}`,
+    GET_PLAY: `${PLAYS_BASE_URL}/{proposalId}`,
     REOPEN_ROOM: `${ROOMS_BASE_URL}/{roomId}/reopen`,
   },
 

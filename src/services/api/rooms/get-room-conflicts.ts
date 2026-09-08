@@ -19,6 +19,8 @@ export interface RoomConflictReadingDto {
   currency: string | null;
   effectUnavailableBecause: string | null;
   longRunEffect: string | null;
+  /** True on whichever reading `POST /rooms/conflicts/{conflictId}/choose` named. */
+  chosen: boolean;
 }
 
 export interface RoomThirdReadingDto {
@@ -36,10 +38,8 @@ export interface RoomConflictDto {
   raisedByLabel: string;
   raisedByAgentKey: string | null;
   raisedAtUtc: string;
-  // The real response carries more per-reading properties than the doc's example lists (its own
-  // entry ends in "...") — don't treat RoomConflictReadingDto as exhaustive.
   readings: RoomConflictReadingDto[];
-  waitingOnUserId: string | null;
+  waitingOnUserId: string;
   escalatedToUserId: string | null;
   escalationReason: string | null;
   escalatedAtUtc: string | null;
