@@ -1,23 +1,6 @@
 import type { Tone } from "@/pages/everyday/rooms/types";
 
-/** Static flavor content for the Rooms index's empty / stale-recovering-archived states — R01, R05. */
-
-export type SourceReadRow = {
-  source: string;
-  state: "reading" | "done" | "not-connected";
-  stateLabel: string;
-  rowsRead: string;
-  firstFullRead: string;
-  waitingOn: string;
-};
-
-export const EMPTY_STATE_SOURCES: SourceReadRow[] = [
-  { source: "Orders", state: "reading", stateLabel: "reading", rowsRead: "2.1M of 4.2M", firstFullRead: "14:20 today", waitingOn: "Repeat & Decay, Acquisition Quality" },
-  { source: "Payments", state: "reading", stateLabel: "reading", rowsRead: "890k of 1.3M", firstFullRead: "13:50 today", waitingOn: "Involuntary Churn" },
-  { source: "Support", state: "done", stateLabel: "done", rowsRead: "412k", firstFullRead: "complete", waitingOn: "Support Signal" },
-  { source: "Delivery", state: "not-connected", stateLabel: "not connected", rowsRead: "—", firstFullRead: "—", waitingOn: "2 agents blocked" },
-  { source: "Cost of goods", state: "not-connected", stateLabel: "not connected", rowsRead: "—", firstFullRead: "—", waitingOn: "Price & Margin" },
-];
+/** Static flavor content for the Rooms index's stale/recovering/archived explainer cards — R05. */
 
 export type ExplainerCard = { eyebrow: string; heading: string; body: string; tag: string; tone: Tone };
 

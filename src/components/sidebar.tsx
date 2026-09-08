@@ -34,7 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getRoomsNeedingApproval } from "@/pages/everyday/rooms/data";
+import { useGetRooms } from "@/features/rooms/use-get-rooms";
 import { INBOX_PENDING_COUNT } from "@/pages/everyday/inbox/data";
 import {
   Select,
@@ -62,14 +62,12 @@ type NavSection = {
   items: NavItem[];
 };
 
-const ROOMS_NEEDING_APPROVAL = getRoomsNeedingApproval();
-
 const NAV_SECTIONS: NavSection[] = [
   {
     label: "EVERY DAY",
     items: [
       { label: "Lifecycle", href: "/lifecycle", icon: TrendingUp },
-      { label: "Rooms", href: "/rooms", icon: MessagesSquare, badge: ROOMS_NEEDING_APPROVAL || undefined },
+      { label: "Rooms", href: "/rooms", icon: MessagesSquare },
       { label: "What to do today", href: "/what-to-do-today", icon: ListChecks },
       { label: "Goals", href: "/goals", icon: Target },
       { label: "Digest", href: "/digest", icon: Newspaper },
@@ -171,6 +169,10 @@ function Sidebar({
   roster = [],
   className,
 }: SidebarProps) {
+  // Open rooms only (the default GET /rooms filter) — needsYou is what the old mock's badge counted.
+  const { data: roomsData } = useGetRooms();
+  const roomsNeedingApproval = roomsData?.data.rooms.filter((r) => r.needsYou).length ?? 0;
+
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
       "flex items-center gap-2.5 rounded-panel px-2.5 py-[7px] text-[11.5px] text-ink-3 transition-colors",
@@ -252,22 +254,25 @@ function Sidebar({
               {section.label}
             </p>
             <div className="space-y-0.5">
-              {section.items.map((item) => (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  onClick={onClose}
-                  className={navLinkClass}
-                >
-                  <item.icon className="size-3.75 shrink-0" />
-                  <span className="truncate">{item.label}</span>
-                  {item.badge ? (
-                    <span className="ml-auto rounded-chip border border-amber-border bg-amber-bg px-1.5 py-0.5 font-mono text-[9px] font-semibold text-amber">
-                      {item.badge}
-                    </span>
-                  ) : null}
-                </NavLink>
-              ))}
+              {section.items.map((item) => {
+                const badge = item.href === "/rooms" ? roomsNeedingApproval || undefined : item.badge;
+                return (
+                  <NavLink
+                    key={item.href}
+                    to={item.href}
+                    onClick={onClose}
+                    className={navLinkClass}
+                  >
+                    <item.icon className="size-3.75 shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                    {badge ? (
+                      <span className="ml-auto rounded-chip border border-amber-border bg-amber-bg px-1.5 py-0.5 font-mono text-[9px] font-semibold text-amber">
+                        {badge}
+                      </span>
+                    ) : null}
+                  </NavLink>
+                );
+              })}
             </div>
           </div>
         ))}
