@@ -133,6 +133,10 @@ export const useAiConversationMessages = (
   const sendMessage = useCallback(
     async (message: string) => {
       setIsStreaming(true);
+      // Set immediately, not just once the server's own `status` event arrives — the request can
+      // sit pending for a while before the first byte comes back, and that gap needs a visible
+      // "Thinking…" state too, not a blank one.
+      setCurrentPhase("submitted");
       setReasoningSteps([]);
       setStreamingText("");
       clearTypewriter();

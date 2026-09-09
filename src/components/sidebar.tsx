@@ -187,9 +187,27 @@ function Sidebar({
   const navigate = useNavigate();
   const [conversationsOpen, setConversationsOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [menuOpensUp, setMenuOpensUp] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const { archiveConversation, isPending: isDeleting } = useArchiveAiConversation();
   const openMenuRef = useRef<HTMLDivElement>(null);
+  const conversationListRef = useRef<HTMLDivElement>(null);
+
+  // The row menu renders inline inside this `overflow-y-auto` list (not portaled, see the note
+  // below), so a menu opened from a row near the bottom gets clipped by the list's own scroll
+  // boundary instead of floating over it. Flip it to open upward when there isn't ~44px of room
+  // below the trigger inside the list.
+  const toggleRowMenu = (id: string, trigger: HTMLElement) => {
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+      return;
+    }
+    const listRect = conversationListRef.current?.getBoundingClientRect();
+    const triggerRect = trigger.getBoundingClientRect();
+    const MENU_HEIGHT = 44;
+    setMenuOpensUp(!!listRect && listRect.bottom - triggerRect.bottom < MENU_HEIGHT);
+    setOpenMenuId(id);
+  };
 
   // The drawer only translates off-screen on close, it doesn't unmount — drop any open row menu
   // so it isn't still open (invisibly) the next time the drawer slides back in.
@@ -318,7 +336,7 @@ function Sidebar({
           </button>
 
           {conversationsOpen && (
-            <div className="max-h-64 space-y-0.5 overflow-y-auto py-0.5 pl-6">
+            <div ref={conversationListRef} className="max-h-64 space-y-0.5 overflow-y-auto py-0.5 pl-6">
               {conversationsLoading &&
                 [1, 2, 3].map((key) => (
                   <Skeleton key={key} className="h-7 w-full rounded-control" />
@@ -354,7 +372,7 @@ function Sidebar({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            setOpenMenuId(isMenuOpen ? null : conversation.id);
+                            toggleRowMenu(conversation.id, e.currentTarget);
                           }}
                           aria-label="Conversation actions"
                           aria-expanded={isMenuOpen}
@@ -367,7 +385,12 @@ function Sidebar({
                         </button>
 
                         {isMenuOpen && (
-                          <div className="absolute top-full right-0 z-10 mt-1 w-32 overflow-hidden rounded-panel border border-line bg-paper-2 py-1 shadow-lg">
+                          <div
+                            className={cn(
+                              "absolute right-0 z-10 w-32 overflow-hidden rounded-panel border border-line bg-paper-2 py-1 shadow-lg",
+                              menuOpensUp ? "bottom-full mb-1" : "top-full mt-1"
+                            )}
+                          >
                             <button
                               type="button"
                               onClick={(e) => {

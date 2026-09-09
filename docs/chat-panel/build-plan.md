@@ -302,3 +302,38 @@ the new id as `conversation_id:<id>` the way the reference assumes.
 
 **Still open, deferred on purpose:** everything in the hardening checklist beyond `runId` capture
 (Stop, steer, reconnect, proposal cards) — Stages 3-5 of `agent-hardening-frontend-design.md`.
+
+## Progress (2026-09-09) — first live-verified round trip, two bugs found and fixed
+
+The user ran this in their own dev server against the real, signed-in backend — the first time any
+part of this build has been checked against a live backend rather than just `npm run build` and
+static-CSS screenshots. Two real bugs surfaced and were fixed; both confirmed live.
+
+- **No loading state between send and first byte** — reported via a screenshot: sent "hello," the
+  network tab showed the SSE request sitting `(pending)`, 0.0kB transferred, and the UI showed
+  nothing at all in that gap. Root cause: `currentPhase` in
+  `use-ai-conversation-messages.ts` only got set once the first `status` SSE event was parsed out
+  of the response body — so if the server takes a while to write its first byte (or the connection
+  is just slow to open), there's a real window where `isStreaming` is `true` but `currentPhase` is
+  still `null`, and `detail-route.tsx`'s phase indicator only renders when `currentPhase` is
+  truthy. Fixed by calling `setCurrentPhase("submitted")` synchronously at the top of `sendMessage`,
+  before the `fetch` call — the "Thinking…" spinner now shows the instant you hit send, not once
+  the server responds. **Confirmed live** ("i can see it now").
+- **Delete menu on the last row hides below the list** — reported via a screenshot of the sidebar's
+  "AI conversations" list: opening the kebab menu on the last row made it invisible instead of
+  showing "Delete." Root cause: the row menu renders inline inside the list's own
+  `overflow-y-auto` `max-h-64` container (deliberately, to avoid the `DropdownMenu`-portal bug — see
+  [[feedback_no_dropdown_menu_for_sidebar_nav]]), so a menu opening downward (`top-full`) from a row
+  near the bottom extends past that container's own scroll boundary and gets clipped there — it's
+  not a stacking/z-index problem, the container's `overflow-y-auto` genuinely cuts it off. Fixed
+  with a `toggleRowMenu` handler in `sidebar.tsx` that measures the trigger's position against the
+  list container (`getBoundingClientRect`) when opening and flips the menu to `bottom-full` instead
+  of `top-full` when there isn't ~44px of room below it. Applied and build-verified; not
+  explicitly re-confirmed live by the user in this session (only the loading-state fix was).
+
+**Implication:** sign-in and the base send → stream → render round trip now have at least one live
+confirmation outside this sandbox. The backend's SSE framing (`event:`/`data:` lines) and the
+`status` event's `conversation_id:<id>` prefix convention are therefore very likely correct as
+implemented — worth re-confirming on the next live session rather than treating as fully proven,
+since only the loading-state symptom (not the full send→respond→render path) was explicitly
+verified end-to-end here.
