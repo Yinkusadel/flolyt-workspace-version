@@ -202,7 +202,7 @@ export const useAiConversationMessages = (
 
               case "tool_call": {
                 const step = parsed.reasoningSteps?.[0];
-                if (step) setReasoningSteps((prev) => [...prev, step]);
+                if (step) setReasoningSteps((prev) => [...prev, { ...step, kind: "tool_call" }]);
                 setCurrentPhase("readingSource");
                 break;
               }
@@ -210,8 +210,9 @@ export const useAiConversationMessages = (
               case "reasoning_step": {
                 const step = parsed.reasoningSteps?.[0];
                 if (step) {
-                  setReasoningSteps((prev) => [...prev, step]);
-                  optionsRef.current?.onReasoningStep?.(step);
+                  const tagged: ReasoningStep = { ...step, kind: "reasoning_step" };
+                  setReasoningSteps((prev) => [...prev, tagged]);
+                  optionsRef.current?.onReasoningStep?.(tagged);
                 }
                 break;
               }

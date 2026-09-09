@@ -217,3 +217,88 @@ since Tailwind's `ring` can't animate a gradient:
 
 If this pattern is needed elsewhere later, it's reusable as-is; not extracted into a shared
 component/utility since there's only one caller so far.
+
+## Progress (2026-09-09) — SSE streaming chat thread at `/conversations/:id`
+
+The base chat surface described above ("State of the reference implementation") is now built here.
+`detail-route.tsx` is no longer a placeholder — it's the real thread UI, and the starting page no
+longer sends the message itself.
+
+- **Flow changed to match `PromptBox.tsx`'s bootstrap pattern, not the original non-streaming
+  mutation.** `new-conversation-route.tsx` was originally wired to `POST
+  /ai/conversations/messages` (`Accept: application/json`) via `use-send-ai-message.ts`, waiting
+  for a `conversationId` back before navigating. Re-read `PromptBox.tsx` and it doesn't wait at
+  all — it navigates immediately with a `bootstrapToken` + the prompt in nav `state`, and lets the
+  *destination* page own the actual send over SSE, capturing `conversationId` off the stream's
+  first `status` event. Ported that: `new-conversation-route.tsx` now just does
+  `navigate("/conversations/new", { state: { bootstrapToken, prompt } })`; `send-message.ts` /
+  `use-send-ai-message.ts` were deleted (nothing called them anymore, per the "no unused code"
+  rule) in favor of the SSE hook below. `"new"` is the sentinel id — `detail-route.tsx` checks
+  `id === "new"` to know it's bootstrapping rather than loading history.
+- **`src/features/ai-conversations/use-ai-conversation-messages.ts`** — the SSE hook, ported from
+  `flolyt-dashboard`'s `use-ai-conversation-message.ts` and trimmed to **text-only v1 scope**
+  (explicit user decision): handles `status` (incl. `conversation_id:` prefix parsing to capture
+  the new id), `run_queued` (captures `runId`, unused — same "capture now, wire up later" reasoning
+  the design doc itself argues for), `tool_call`, `reasoning_step`, `response_chunk` (drives the
+  typewriter effect), and `error`. Deliberately does **not** handle `workflow_generated`,
+  `broadcast_preview`, or `suggested_action` — this app has no ReactFlow canvas / broadcast-draft
+  surface for those to drive, unlike `WorkflowStudio`. Auth via `fetch` + the same
+  `COOKIE_KEYS.AUTH_TOKEN` cookie `axiosInstance` already reads (confirmed identical cookie name
+  between both repos). Also carries a conversation-switch reset effect (dropping streamed state
+  when `initialConversationId` changes to a different real id, e.g. picking another thread from the
+  sidebar) that the reference needed for the same reason (`WorkflowStudio`'s `routeScopeKey`) since
+  React Router reuses the component instance across param changes rather than remounting it.
+- **History for existing conversations** — added `GET_BY_ID` wiring that didn't exist yet:
+  `src/services/api/ai-conversations/get-conversation-by-id.ts` +
+  `src/features/ai-conversations/use-get-ai-conversation-by-id.ts`. `detail-route.tsx` merges
+  history messages with the live-streamed ones (deduped by role+timestamp+content).
+- **Delete conversation** — `src/services/api/ai-conversations/archive-conversation.ts` (`DELETE
+  /ai/conversations/{id}`, the same endpoint the reference calls "archive" but the UI presents as
+  delete) + `use-archive-ai-conversation.ts`. Surfaced in the sidebar's conversation list as a
+  per-row menu — **not** a Radix `DropdownMenu` (portal-to-body breaks the mobile drawer, see
+  [[feedback_no_dropdown_menu_for_sidebar_nav]]) but a fully inline, non-portaled menu: an
+  always-visible (not hover-revealed — hover doesn't exist on touch, this was corrected mid-build)
+  kebab button toggles local `useState`, closed via a plain `document.addEventListener("mousedown")`
+  effect checking a ref, not a Radix dismissable layer. Confirms via a `Dialog`-based modal (the
+  existing `close-without-answering-modal.tsx` pattern), and redirects to `/new-conversation` if you
+  delete the conversation you're currently viewing.
+- **UI polish, several corrections mid-build:**
+  - Sparkle (`lucide-react`) badges swapped for the real Flolyt logo (`assets/logo.png`, per
+    [[flolyt_logo_asset]]) on both the starting-page hero and the thread's empty state — badge sized
+    up to `size-12`/`size-7` image after an initial pass read as too small/faint.
+  - The per-message sparkle marker above each AI response was removed entirely — flagged as
+    unwanted, not just resized.
+  - The user bubble went through two passes: first just a tinted bordered box (`rounded-card`),
+    corrected to an actual bubble (`bg-ultra`, white text) — still wasn't right (still no tail),
+    corrected again to a real WhatsApp-style tail: `rounded-tr-none` on the bubble plus a CSS
+    border-triangle (`border-width: 8px 8px 0 0`, one side colored) butted against that now-sharp
+    corner. The first tail attempt (`-right-2`, i.e. positioned outside the bubble's own box) caused
+    a page-wide horizontal-scroll bug — see the min-w-0/overflow entry below.
+  - `ReasoningTrace` (the collapsible "N reasoning steps" block shown while streaming) was upgraded
+    from plain bullets to match `ActivityItemComp.tsx`'s convention: a `Database` icon for
+    `tool_call` steps vs. a status circle (spinner while active, checkmark once superseded) for
+    `reasoning_step` ones. Required tagging each captured step with a `kind` field in the hook
+    itself (not part of the wire payload — the SSE event type already tells us this, the DTO
+    doesn't). Also caught before shipping: this app's palette has no `emerald` token at all (grepped
+    `index.css` to confirm) — the equivalent "positive" state color here is `teal`
+    (`--color-teal`/`-bg`/`-border`), used instead.
+  - **Horizontal-scroll bug** — reported as "why is it scrolling left to right, it shouldn't
+    scroll left to right." Root cause: the bubble tail's `-right-2` position placed it 8px outside
+    its own container's box with no `overflow-x-hidden` between it and the page, so any bubble near
+    the column's right edge forced the whole `main` region to scroll sideways by a few pixels
+    (`app-layout.tsx`'s flex chain already has `min-w-0` — that wasn't the gap; a genuinely
+    overflowing descendant was). Fixed at the source (reserved the 8px via `pr-2` padding on the
+    tail's wrapper instead of letting it spill past the box) and defensively elsewhere: `min-w-0` +
+    `wrap-break-word` added to every text-bearing flex child in the message list (mirroring the
+    explicit `min-w-0` guards already present in `ActivityItemComp.tsx`'s `ai_response`/`tool_call`
+    rendering — that pattern exists there for exactly this reason), plus `overflow-x-hidden` on the
+    message-list scroll container as a backstop.
+
+**Verified:** `npm run build` (`tsc -b && vite build`) passes clean after every change above.
+**Still not verified live:** a real authenticated round trip against the backend — this sandbox has
+never completed the OTP sign-in flow. In particular unverified: whether the backend's actual SSE
+framing matches the `event:`/`data:` parsing here, and whether the `status` event really prefixes
+the new id as `conversation_id:<id>` the way the reference assumes.
+
+**Still open, deferred on purpose:** everything in the hardening checklist beyond `runId` capture
+(Stop, steer, reconnect, proposal cards) — Stages 3-5 of `agent-hardening-frontend-design.md`.

@@ -10,6 +10,9 @@ export interface ReasoningStep {
   dataSource: string | null;
   querySummary: string | null;
   timestamp: string;
+  /** Which SSE event produced this step — set locally by the hook, not part of the wire payload.
+   *  Lets the UI pick a tool-call icon vs. a plain reasoning-step marker. */
+  kind?: "tool_call" | "reasoning_step";
 }
 
 // SSE event during streaming.

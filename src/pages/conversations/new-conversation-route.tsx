@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowUp, Sparkles } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import flolytLogo from "../../../assets/logo.png";
 
 export default function NewConversationRoute() {
   const navigate = useNavigate();
@@ -27,8 +28,8 @@ export default function NewConversationRoute() {
       />
 
       <div className="relative flex flex-col items-center text-center duration-500 animate-in fade-in slide-in-from-bottom-2">
-        <span className="flex size-9 items-center justify-center rounded-full border border-ultra-border bg-ultra-bg text-ultra">
-          <Sparkles className="size-4" />
+        <span className="flex size-12 items-center justify-center rounded-full border border-ultra-border bg-ultra-bg">
+          <img src={flolytLogo} alt="" className="size-7 object-contain" />
         </span>
         <h1 className="mt-4 font-serif text-[26px] text-ink sm:text-[28px]">What can I do for you?</h1>
         <p className="mt-2 text-[12.5px] text-ink-3">Ask Flolyt to look something up or take an action.</p>

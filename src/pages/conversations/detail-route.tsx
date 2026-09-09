@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowUp, ChevronDown, Loader2, Sparkles } from "lucide-react";
+import { ArrowUp, CheckCircle2, ChevronDown, Database, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { usePageBreadcrumb } from "@/components/breadcrumb-context";
@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAiConversationMessages } from "@/features/ai-conversations/use-ai-conversation-messages";
 import { useGetAiConversationById } from "@/features/ai-conversations/use-get-ai-conversation-by-id";
 import type { AiConversationMessage, ReasoningStep } from "@/features/ai-conversations/ai-conversation-types";
+import flolytLogo from "../../../assets/logo.png";
 
 // Guards the bootstrap prompt (arriving via nav state from /new-conversation) against being
 // re-sent by a StrictMode double-invoke or an accidental remount — same idiom as the reference
@@ -39,14 +40,14 @@ function ReasoningTrace({ steps, isStreaming }: { steps: ReasoningStep[]; isStre
   if (!steps.length) return null;
 
   return (
-    <div className="max-w-[75%] rounded-card border border-line bg-paper-2">
+    <div className="max-w-[75%] min-w-0 rounded-card border border-line bg-paper-2">
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left"
+        className="flex w-full min-w-0 items-center gap-2 px-3.5 py-2.5 text-left"
       >
         {isStreaming && <Loader2 className="size-3 shrink-0 animate-spin text-ultra" />}
-        <span className="flex-1 truncate text-[11px] font-medium text-ink-3">
+        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-ink-3">
           {isStreaming ? "Working…" : `${steps.length} reasoning step${steps.length === 1 ? "" : "s"}`}
         </span>
         <ChevronDown className={cn("size-3.5 shrink-0 text-ink-4 transition-transform", open && "rotate-180")} />
@@ -54,12 +55,31 @@ function ReasoningTrace({ steps, isStreaming }: { steps: ReasoningStep[]; isStre
 
       {open && (
         <div className="space-y-2 border-t border-line px-3.5 py-2.5">
-          {steps.map((step, idx) => (
-            <div key={`${step.timestamp}-${idx}`} className="flex gap-2">
-              <span className="mt-1 size-1 shrink-0 rounded-full bg-ink-4" aria-hidden />
-              <p className="text-[11px] leading-relaxed text-ink-3">{step.description}</p>
-            </div>
-          ))}
+          {steps.map((step, idx) => {
+            const isLast = idx === steps.length - 1;
+            const isActive = isStreaming && isLast;
+            return (
+              <div key={`${step.timestamp}-${idx}`} className="flex min-w-0 items-start gap-2">
+                <span
+                  className={cn(
+                    "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full",
+                    isActive ? "text-ultra" : "bg-teal-bg text-teal"
+                  )}
+                >
+                  {isActive ? (
+                    <Loader2 className="size-3 animate-spin" />
+                  ) : step.kind === "tool_call" ? (
+                    <Database className="size-2.5" />
+                  ) : (
+                    <CheckCircle2 className="size-3" />
+                  )}
+                </span>
+                <p className="min-w-0 flex-1 text-[11px] leading-relaxed wrap-break-word text-ink-3">
+                  {step.description}
+                </p>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -131,7 +151,7 @@ export default function AiConversationDetailRoute() {
 
   return (
     <div className="mx-auto flex h-full max-w-3xl flex-col">
-      <div className="flex-1 space-y-5 overflow-y-auto py-6">
+      <div className="min-w-0 flex-1 space-y-5 overflow-x-hidden overflow-y-auto py-6">
         {isHistoryLoading && (
           <div className="space-y-3">
             <Skeleton className="h-16 w-2/3 rounded-card" />
@@ -141,8 +161,8 @@ export default function AiConversationDetailRoute() {
 
         {showEmptyState && (
           <div className="flex flex-col items-center pt-16 text-center">
-            <span className="flex size-9 items-center justify-center rounded-full border border-ultra-border bg-ultra-bg text-ultra">
-              <Sparkles className="size-4" />
+            <span className="flex size-12 items-center justify-center rounded-full border border-ultra-border bg-ultra-bg">
+              <img src={flolytLogo} alt="" className="size-7 object-contain" />
             </span>
             <p className="mt-4 text-[12.5px] text-ink-3">Ask Flolyt to look something up or take an action.</p>
           </div>
@@ -151,26 +171,28 @@ export default function AiConversationDetailRoute() {
         {messages.map((message) =>
           message.role === "user" ? (
             <div key={message.key} className="flex justify-end">
-              <div className="relative max-w-[75%]">
+              {/* pr-2 reserves room for the tail below so it sits inside this box's own edge
+                  instead of overflowing past it (was forcing the whole page to scroll sideways). */}
+              <div className="relative max-w-[75%] min-w-0 pr-2">
                 {/* WhatsApp-style tail: a hard-cornered triangle butted against the bubble's
                     (deliberately unrounded) top-right corner, not just a smaller border-radius. */}
                 <span
                   aria-hidden
-                  className="absolute -right-2 top-0 size-0"
+                  className="absolute right-0 top-0 size-0"
                   style={{
                     borderStyle: "solid",
                     borderWidth: "8px 8px 0 0",
                     borderColor: "var(--color-ultra) transparent transparent transparent",
                   }}
                 />
-                <div className="rounded-2xl rounded-tr-none bg-ultra px-4 py-2.5 text-[12.5px] leading-relaxed text-paper shadow-xs">
+                <div className="rounded-2xl rounded-tr-none bg-ultra px-4 py-2.5 text-[12.5px] leading-relaxed wrap-break-word text-paper shadow-xs">
                   {message.content}
                 </div>
               </div>
             </div>
           ) : (
-            <div key={message.key} className="flex flex-col items-start gap-1.5">
-              <p className="max-w-[85%] text-[12.5px] leading-relaxed whitespace-pre-wrap text-ink">
+            <div key={message.key} className="flex min-w-0 flex-col items-start gap-1.5">
+              <p className="max-w-[85%] min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-ink">
                 {message.content}
               </p>
             </div>
@@ -178,7 +200,7 @@ export default function AiConversationDetailRoute() {
         )}
 
         {isStreaming && (
-          <div className="flex flex-col items-start gap-1.5">
+          <div className="flex min-w-0 flex-col items-start gap-1.5">
             {currentPhase && currentPhase !== "streaming" && (
               <div className="flex items-center gap-1.5 text-[11px] font-medium text-ink-3">
                 <Loader2 className="size-3 animate-spin text-ultra" />
@@ -189,7 +211,7 @@ export default function AiConversationDetailRoute() {
             <ReasoningTrace steps={reasoningSteps} isStreaming={isStreaming} />
 
             {animatedStreamingText && (
-              <p className="max-w-[85%] text-[12.5px] leading-relaxed whitespace-pre-wrap text-ink">
+              <p className="max-w-[85%] min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-ink">
                 {animatedStreamingText}
               </p>
             )}
