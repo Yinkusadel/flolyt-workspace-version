@@ -130,6 +130,8 @@ import OneObligationRoute from "@/pages/everyday/handoff/obligation/one-obligati
 import HandoffEscalationRoute from "@/pages/everyday/handoff/settings/escalation-route";
 import DeparturesRoute from "@/pages/everyday/handoff/settings/departures-route";
 import HandoffSettingsRoute from "@/pages/everyday/handoff/settings/handoff-settings-route";
+import NewConversationRoute from "@/pages/conversations/new-conversation-route";
+import AiConversationDetailRoute from "@/pages/conversations/detail-route";
 import LeakageMap from "@/pages/revenue/leakage-map";
 import LeaksChangedRoute from "@/pages/revenue/leakage-map/changed-route";
 import LeaksUnmeasurableRoute from "@/pages/revenue/leakage-map/unmeasurable-route";
@@ -598,6 +600,16 @@ export const routes = createBrowserRouter([
               {
                 path: "settings/handoff",
                 Component: HandoffSettingsRoute,
+              },
+              // Sidebar entry points, not part of the Everyday section — the sidebar's "New
+              // conversation" link and "AI conversations" dropdown both live above EVERY DAY.
+              {
+                path: "new-conversation",
+                Component: NewConversationRoute,
+              },
+              {
+                path: "conversations/:id",
+                Component: AiConversationDetailRoute,
               },
               {
                 path: "goals",

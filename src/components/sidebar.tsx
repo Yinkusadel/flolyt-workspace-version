@@ -1,10 +1,11 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, Link, useLocation } from "react-router-dom";
 import {
   ArrowLeftRight,
   Award,
   BarChart3,
   Bot,
   BookOpen,
+  ChevronDown,
   Filter,
   Fingerprint,
   FlaskConical,
@@ -17,6 +18,8 @@ import {
   ListChecks,
   Map,
   Megaphone,
+  MessageCircle,
+  MessageCirclePlus,
   MessagesSquare,
   Newspaper,
   PieChart,
@@ -32,9 +35,9 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetRooms } from "@/features/rooms/use-get-rooms";
+import { useGetAiConversations } from "@/features/ai-conversations/use-get-ai-conversations";
 import { INBOX_PENDING_COUNT } from "@/pages/everyday/inbox/data";
 import {
   Select,
@@ -43,6 +46,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import flolytLogo from "../../assets/logo.png";
 
 /**
@@ -144,7 +154,6 @@ export type SidebarProps = {
   /** Who the home route's numbers/content are scoped to. Controlled from the app shell. */
   viewingAs?: ViewingAs;
   onViewingAsChange?: (value: ViewingAs) => void;
-  onSearchClick?: () => void;
   /** Total addressable customer base for the current viewing-as scope. Omit to hide the footer stat. */
   customerBase?: string;
   isCustomerBaseLoading?: boolean;
@@ -162,16 +171,23 @@ function Sidebar({
   isWorkspaceModeLoading = false,
   viewingAs = "Everyone",
   onViewingAsChange,
-  onSearchClick,
   customerBase,
   isCustomerBaseLoading = false,
   currencies = [],
   roster = [],
   className,
 }: SidebarProps) {
+  const { pathname } = useLocation();
+
   // Open rooms only (the default GET /rooms filter) — needsYou is what the old mock's badge counted.
   const { data: roomsData } = useGetRooms();
   const roomsNeedingApproval = roomsData?.data.rooms.filter((r) => r.needsYou).length ?? 0;
+
+  const { data: conversationsData, isLoading: conversationsLoading } = useGetAiConversations({
+    pageNumber: 1,
+    pageSize: 50,
+  });
+  const conversations = conversationsData?.data ?? [];
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
@@ -231,23 +247,61 @@ function Sidebar({
         </Select>
       </div>
 
-      {/* Command bar entry */}
-      <div className="shrink-0 px-4 pt-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onSearchClick}
-          className="h-auto w-full justify-between rounded-panel px-2.5 py-1.75 text-left font-normal text-ink-4 hover:border-ink-4 hover:bg-paper hover:text-ink-4"
-        >
-          <span className="text-[11px]">Ask anything…</span>
-          <kbd className="rounded-control border border-line bg-paper-2 px-1.5 py-0.5 font-mono text-[8.5px] text-ink-3">
-            ⌘K
-          </kbd>
-        </Button>
-      </div>
-
       {/* Nav sections */}
       <nav className="flex-1 space-y-4 overflow-y-auto px-2.5 py-4">
+        {/* Sits above EVERY DAY — the entry points for starting/finding an AI conversation. */}
+        <div className="space-y-0.5">
+          <NavLink to="/new-conversation" onClick={onClose} className={navLinkClass}>
+            <MessageCirclePlus className="size-3.75 shrink-0" />
+            <span className="truncate">New conversation</span>
+          </NavLink>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "flex w-full items-center gap-2.5 rounded-panel px-2.5 py-[7px] text-[11.5px] text-ink-3 transition-colors",
+                  "hover:bg-paper hover:text-ink",
+                  pathname.startsWith("/conversations") &&
+                    "border border-line bg-paper font-medium text-ink shadow-xs"
+                )}
+              >
+                <MessageCircle className="size-3.75 shrink-0" />
+                <span className="truncate">AI conversations</span>
+                <ChevronDown className="ml-auto size-3.5 shrink-0" />
+              </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="start" className="max-h-80 w-64 overflow-y-auto">
+              {conversationsLoading && (
+                <div className="space-y-1 p-1">
+                  {[1, 2, 3].map((key) => (
+                    <Skeleton key={key} className="h-7 w-full rounded-control" />
+                  ))}
+                </div>
+              )}
+
+              {!conversationsLoading && conversations.length === 0 && (
+                <DropdownMenuLabel className="font-normal text-ink-4">
+                  No conversations yet.
+                </DropdownMenuLabel>
+              )}
+
+              {!conversationsLoading &&
+                conversations.map((conversation) => (
+                  <DropdownMenuItem key={conversation.id} asChild>
+                    <Link to={`/conversations/${conversation.id}`} onClick={onClose}>
+                      <span className="truncate">
+                        {conversation.title || "Untitled conversation"}
+                      </span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         {NAV_SECTIONS.map((section) => (
           <div key={section.label}>
             <p className="px-2.5 pb-1.5 font-mono text-[8.6px] font-medium tracking-[0.85px] text-ink-4">

@@ -230,6 +230,8 @@ function getBreadcrumb(pathname: string): React.ReactNode {
 
   if (pathname === "/handoff") return "Handoff";
 
+  if (pathname === "/new-conversation") return "New conversation";
+
   if (pathname === "/goals") return "Goals";
 
   if (pathname === "/leakage-map") return "Leakage map";

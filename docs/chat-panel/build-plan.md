@@ -100,3 +100,63 @@ work, not v1 scope, unless told otherwise.
   `/ai/conversations/messages` + SSE surface? Needs a Scalar check.
 - Where does the chat panel live in this app — a dedicated page, or a persistent panel like
   `flolyt-dashboard`'s `WorkflowCommentPanel`? Not yet decided.
+
+## Progress (2026-09-09) — sidebar entry points + starting page
+
+First real slice, built directly (not ported verbatim — adapted to this app's own paper/ink
+design tokens and route conventions, not `flolyt-dashboard`'s dark surface-800 theme). Went
+through two passes — the first pass put a plain "Conversation" link under EVERY DAY and an inline
+always-expanded accordion list in the main nav flow; corrected below to match what was actually
+asked for. Only the corrected (current) shape is described here.
+
+- **Sidebar** ([src/components/sidebar.tsx](../../src/components/sidebar.tsx)) — a block sitting
+  above the "EVERY DAY" section, not inside it:
+  - **"New conversation"** — a plain `NavLink` to `/new-conversation` (the starting page).
+  - **"AI conversations"** — a `DropdownMenu` trigger (not an inline/always-visible accordion),
+    styled like a nav row with a chevron, modeled directly on the avatar menu's Data/Settings
+    toggle pattern in [src/components/user-menu.tsx](../../src/components/user-menu.tsx):
+    `DropdownMenuTrigger asChild` wrapping the styled button, `DropdownMenuContent` popover
+    (`max-h-80 w-64 overflow-y-auto`) holding `DropdownMenuItem asChild` + `Link` rows, fetched
+    live via `useGetAiConversations`. Selecting one navigates to `/conversations/:id` and closes
+    the popover (Radix's default `onSelect` behavior) and the mobile drawer (`onClose` on the
+    `Link`).
+  - Removed the non-functional "Ask anything…" ⌘K button — its `onSearchClick` prop was dead
+    (nothing in `app-layout.tsx` ever passed it).
+- **Services/hooks** — following the `rooms` domain's exact service/hook shape (not the reference
+  repo's wrapper-hook style):
+  - `src/services/api/ai-conversations/get-conversations.ts` + `use-get-ai-conversations.ts` —
+    `GET /ai/conversations` (`AI_CONVERSATIONS.LIST`, already in `apiConfig.ts` — someone had
+    pre-added the whole `AI_CONVERSATIONS` and `AGENT_RUNS` endpoint blocks before this session,
+    unused until now). Response/query shape matches the live spec pasted 2026-09-09 exactly:
+    `scope` query param (`Visible` | `Own` | `SharedWithMe`), and each row carries `ownerUserId`,
+    `ownerName`, `isOwn`, `visibility` alongside the fields guessed in the first pass.
+  - `src/services/api/ai-conversations/send-message.ts` + `use-send-ai-message.ts` — `POST
+    /ai/conversations/messages` in **non-streaming** mode (`Accept: application/json`, per §3.1 of
+    the design doc), not the SSE mode. Deliberate scope cut: the starting page only needs a
+    `conversationId` back to redirect with, not the full typewriter/reasoning-step stream — that
+    belongs to whatever eventually renders `/conversations/:id`.
+- **Pages** — moved out of `pages/everyday/` into a new top-level `src/pages/conversations/`,
+  since neither route is actually part of the Everyday section anymore (both are sidebar entry
+  points that sit above it):
+  - `new-conversation-route.tsx` — the starting page ("What can I do for you?" + prompt textarea),
+    registered at `/new-conversation`. On submit, calls the real `sendAiMessage` mutation and
+    navigates to `/conversations/{conversationId}` on success.
+  - `detail-route.tsx` — intentionally blank per instruction: a bordered placeholder card, no chat
+    UI. Registered at `conversations/:id`. Exported as `AiConversationDetailRoute` in `route.tsx`
+    (not `ConversationDetailRoute` — that name was already taken by
+    `src/pages/customers/replies/conversation-detail-route.tsx`).
+  - Breadcrumb: `/new-conversation` gets a static `"New conversation"` entry in
+    `app-layout.tsx`'s `getBreadcrumb`; `/conversations/:id` uses `usePageBreadcrumb` from inside
+    the component instead (matches the convention — no static title exists for an unbuilt detail
+    page), linking back to `/new-conversation`.
+
+**Verified:** `npm run build` (`tsc -b && vite build`) passes clean after both passes. **Not
+verified:** the actual submit → real backend → real `conversationId` → redirect round trip, or how
+the sidebar/pages render for a signed-in user — this session couldn't complete sign-in (email OTP)
+to reach an authenticated view. Per [[feedback_mutation_flows_need_live_submit]], treat the
+send-message mutation as unverified against the real backend until someone actually submits a
+prompt in a running dev server.
+
+**Still open, deferred on purpose:** the SSE streaming hook (`use-ai-conversation-message.ts`'s
+full port), the actual chat thread UI at `/conversations/:id`, and everything in the hardening
+checklist (Stop, steer, reconnect, proposals).
