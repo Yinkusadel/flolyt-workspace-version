@@ -151,15 +151,25 @@ export default function AiConversationDetailRoute() {
         {messages.map((message) =>
           message.role === "user" ? (
             <div key={message.key} className="flex justify-end">
-              <div className="max-w-[75%] rounded-card border border-ultra-border bg-ultra-bg px-4 py-2.5 text-[12.5px] leading-relaxed text-ink">
-                {message.content}
+              <div className="relative max-w-[75%]">
+                {/* WhatsApp-style tail: a hard-cornered triangle butted against the bubble's
+                    (deliberately unrounded) top-right corner, not just a smaller border-radius. */}
+                <span
+                  aria-hidden
+                  className="absolute -right-2 top-0 size-0"
+                  style={{
+                    borderStyle: "solid",
+                    borderWidth: "8px 8px 0 0",
+                    borderColor: "var(--color-ultra) transparent transparent transparent",
+                  }}
+                />
+                <div className="rounded-2xl rounded-tr-none bg-ultra px-4 py-2.5 text-[12.5px] leading-relaxed text-paper shadow-xs">
+                  {message.content}
+                </div>
               </div>
             </div>
           ) : (
             <div key={message.key} className="flex flex-col items-start gap-1.5">
-              <span className="flex size-5 items-center justify-center rounded-full border border-ultra-border bg-ultra-bg text-ultra">
-                <Sparkles className="size-2.5" />
-              </span>
               <p className="max-w-[85%] text-[12.5px] leading-relaxed whitespace-pre-wrap text-ink">
                 {message.content}
               </p>
@@ -169,10 +179,6 @@ export default function AiConversationDetailRoute() {
 
         {isStreaming && (
           <div className="flex flex-col items-start gap-1.5">
-            <span className="flex size-5 items-center justify-center rounded-full border border-ultra-border bg-ultra-bg text-ultra">
-              <Sparkles className="size-2.5" />
-            </span>
-
             {currentPhase && currentPhase !== "streaming" && (
               <div className="flex items-center gap-1.5 text-[11px] font-medium text-ink-3">
                 <Loader2 className="size-3 animate-spin text-ultra" />

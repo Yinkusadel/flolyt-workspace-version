@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { NavLink, Link, useLocation } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeftRight,
   Award,
@@ -22,6 +22,7 @@ import {
   MessageCircle,
   MessageCirclePlus,
   MessagesSquare,
+  MoreVertical,
   Newspaper,
   PieChart,
   Reply,
@@ -29,6 +30,7 @@ import {
   ShieldCheck,
   Store,
   Target,
+  Trash2,
   TrendingUp,
   Users2,
   Wrench,
@@ -37,8 +39,18 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useGetRooms } from "@/features/rooms/use-get-rooms";
 import { useGetAiConversations } from "@/features/ai-conversations/use-get-ai-conversations";
+import { useArchiveAiConversation } from "@/features/ai-conversations/use-archive-ai-conversation";
 import { INBOX_PENDING_COUNT } from "@/pages/everyday/inbox/data";
 import {
   Select,
@@ -172,7 +184,32 @@ function Sidebar({
   className,
 }: SidebarProps) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [conversationsOpen, setConversationsOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const { archiveConversation, isPending: isDeleting } = useArchiveAiConversation();
+  const openMenuRef = useRef<HTMLDivElement>(null);
+
+  // The drawer only translates off-screen on close, it doesn't unmount — drop any open row menu
+  // so it isn't still open (invisibly) the next time the drawer slides back in.
+  useEffect(() => {
+    if (!open) setOpenMenuId(null);
+  }, [open]);
+
+  // Plain document listener, not a Radix dismissable layer — this menu renders inline (no portal),
+  // so it can't trip the mobile drawer's "outside click" handling the way DropdownMenu did
+  // (see [[feedback_no_dropdown_menu_for_sidebar_nav]]).
+  useEffect(() => {
+    if (!openMenuId) return;
+    const handlePointerDown = (e: MouseEvent) => {
+      if (openMenuRef.current && !openMenuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [openMenuId]);
 
   // Open rooms only (the default GET /rooms filter) — needsYou is what the old mock's badge counted.
   const { data: roomsData } = useGetRooms();
@@ -191,7 +228,16 @@ function Sidebar({
       isActive && "border border-line bg-paper font-medium text-ink shadow-xs"
     );
 
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    const { id } = deleteTarget;
+    archiveConversation(id);
+    if (pathname === `/conversations/${id}`) navigate("/new-conversation");
+    setDeleteTarget(null);
+  };
+
   return (
+    <>
     <aside
       data-slot="sidebar"
       data-state={open ? "open" : "closed"}
@@ -283,21 +329,67 @@ function Sidebar({
               )}
 
               {!conversationsLoading &&
-                conversations.map((conversation) => (
-                  <Link
-                    key={conversation.id}
-                    to={`/conversations/${conversation.id}`}
-                    onClick={onClose}
-                    className={cn(
-                      "block truncate rounded-control px-2.5 py-[7px] text-[11.5px] text-ink-3 transition-colors",
-                      "hover:bg-paper hover:text-ink",
-                      pathname === `/conversations/${conversation.id}` &&
-                        "bg-paper font-medium text-ink"
-                    )}
-                  >
-                    {conversation.title || "Untitled conversation"}
-                  </Link>
-                ))}
+                conversations.map((conversation) => {
+                  const isMenuOpen = openMenuId === conversation.id;
+                  return (
+                    <div key={conversation.id} className="relative flex items-center">
+                      <Link
+                        to={`/conversations/${conversation.id}`}
+                        onClick={onClose}
+                        className={cn(
+                          "block flex-1 truncate rounded-control py-[7px] pr-7 pl-2.5 text-[11.5px] text-ink-3 transition-colors",
+                          "hover:bg-paper hover:text-ink",
+                          pathname === `/conversations/${conversation.id}` &&
+                            "bg-paper font-medium text-ink"
+                        )}
+                      >
+                        {conversation.title || "Untitled conversation"}
+                      </Link>
+
+                      {/* Always rendered (not hover-revealed) so it's reachable by tap on touch
+                          screens, not just by mouse hover — see [[flolyt_mobile_design]]. */}
+                      <div ref={isMenuOpen ? openMenuRef : undefined} className="absolute right-1">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setOpenMenuId(isMenuOpen ? null : conversation.id);
+                          }}
+                          aria-label="Conversation actions"
+                          aria-expanded={isMenuOpen}
+                          className={cn(
+                            "flex size-6 shrink-0 items-center justify-center rounded-control text-ink-4 transition-colors hover:bg-paper hover:text-ink",
+                            isMenuOpen && "bg-paper text-ink"
+                          )}
+                        >
+                          <MoreVertical className="size-3.5" />
+                        </button>
+
+                        {isMenuOpen && (
+                          <div className="absolute top-full right-0 z-10 mt-1 w-32 overflow-hidden rounded-panel border border-line bg-paper-2 py-1 shadow-lg">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setOpenMenuId(null);
+                                setDeleteTarget({
+                                  id: conversation.id,
+                                  title: conversation.title || "Untitled conversation",
+                                });
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11.5px] text-rose hover:bg-rose-bg"
+                            >
+                              <Trash2 className="size-3.25" />
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>
@@ -364,6 +456,33 @@ function Sidebar({
         </div>
       )}
     </aside>
+
+    <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Delete conversation</DialogTitle>
+          <DialogDescription>
+            {`Delete "${deleteTarget?.title ?? ""}"? This can't be undone.`}
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter>
+          <div className="flex items-center gap-4">
+            <Button type="button" variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
+              {isDeleting ? "Deleting…" : "Delete"}
+            </Button>
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(null)}
+              className="text-[12px] font-semibold text-ink-3 hover:text-ink"
+            >
+              Cancel
+            </button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
