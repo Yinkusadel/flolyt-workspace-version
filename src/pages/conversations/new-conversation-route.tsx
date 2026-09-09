@@ -3,20 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { ArrowUp, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import useSendAiMessage from "@/features/ai-conversations/use-send-ai-message";
 
 export default function NewConversationRoute() {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState("");
-  const { sendMessage, isPending } = useSendAiMessage({
-    onSuccess: (conversationId) => navigate(`/conversations/${conversationId}`),
-  });
 
   const handleSubmit = () => {
     const message = prompt.trim();
-    if (!message || isPending) return;
+    if (!message) return;
 
-    sendMessage({ conversationId: null, message, mode: null, interactiveReply: null });
+    // Navigate immediately — the detail route owns the actual send (SSE) and picks the prompt
+    // up from nav state via the bootstrap token, so the response starts streaming the moment
+    // it lands instead of waiting on a round trip here first.
+    navigate("/conversations/new", { state: { bootstrapToken: crypto.randomUUID(), prompt: message } });
   };
 
   return (
@@ -60,20 +59,17 @@ export default function NewConversationRoute() {
             }}
             rows={3}
             placeholder="Assign a task or ask anything"
-            disabled={isPending}
-            className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3.5 pb-1.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
+            className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3.5 pb-1.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4"
           />
 
           <div className="flex items-center justify-end border-t border-line px-2.5 py-1.5">
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={!prompt.trim() || isPending}
+              disabled={!prompt.trim()}
               className={cn(
                 "flex size-6.5 items-center justify-center rounded-md transition-all",
-                prompt.trim() && !isPending
-                  ? "bg-ultra text-paper hover:opacity-90"
-                  : "bg-paper text-ink-4"
+                prompt.trim() ? "bg-ultra text-paper hover:opacity-90" : "bg-paper text-ink-4"
               )}
             >
               <ArrowUp size={13} strokeWidth={2.5} />
