@@ -190,3 +190,30 @@ Verified by rendering the same markup against the actual compiled `dist/assets/*
 throwaway static HTML file at mobile (390px) and desktop (1280px) viewports — this session still
 couldn't complete a real sign-in to check the live authenticated route directly. Padding and
 footer proportions confirmed visually; still worth a real look in a running dev server.
+
+## Focus outline pass (2026-09-09) — thin animated gradient, not a solid ring
+
+The prompt box's `focus-within` state originally used the same idiom as `Input`
+(`focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50`, per
+`src/components/ui/input.tsx`) — a solid 3px indigo ring. Asked to make it thinner and give it a
+subtle animated gradient instead. Implemented as a layered border rather than a `ring` utility,
+since Tailwind's `ring` can't animate a gradient:
+
+- `src/index.css` gained one new global `@keyframes border-gradient-pan` (pans
+  `background-position` 0%→100%→0% over a `300%`-sized gradient), added after the existing
+  `@layer base` block — commented as a one-off keyframe, not a design token, so it doesn't need a
+  home in the `@theme` block with the other tokens.
+- The prompt box wrapper became `group relative`, with a new `aria-hidden` absolutely-positioned
+  `-inset-px` div behind the visible box carrying the gradient
+  (`linear-gradient(120deg, var(--color-ultra), var(--color-ultra-border), var(--color-ultra))`,
+  `background-size: 300% 300%`, `animation: border-gradient-pan 5s ease infinite`) and
+  `opacity-0 group-focus-within:opacity-100`. The visible box itself keeps its normal `border-line`
+  border and switches to `group-focus-within:border-transparent` on focus, so the 1px inset gap
+  reveals exactly a 1px animated gradient line, no glow/ring size.
+- Confirmed visually the same way as the earlier styling pass: static HTML against the compiled
+  build CSS, this time with the focus-within state forced on to see the outline itself (a plain
+  screenshot can't show the pan motion, but the setup — one keyframe, one opacity-gated gradient
+  layer — is unambiguous).
+
+If this pattern is needed elsewhere later, it's reusable as-is; not extracted into a shared
+component/utility since there's only one caller so far.
