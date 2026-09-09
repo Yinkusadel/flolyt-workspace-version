@@ -220,3 +220,15 @@
     background-color: var(--color-ink-4);
   }
 }
+
+/* Slow gradient pan for the thin animated focus outline on the new-conversation prompt box —
+   see src/pages/conversations/new-conversation-route.tsx. Kept outside @layer base since it's a
+   one-off keyframe, not a design token. */
+@keyframes border-gradient-pan {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}

@@ -35,8 +35,20 @@ export default function NewConversationRoute() {
         <p className="mt-2 text-[12.5px] text-ink-3">Ask Flolyt to look something up or take an action.</p>
       </div>
 
-      <div className="relative mt-8 w-full max-w-2xl duration-500 animate-in fade-in slide-in-from-bottom-2 delay-150">
-        <div className="rounded-card border border-line bg-paper-2 shadow-xs transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
+      <div className="group relative mt-8 w-full max-w-2xl duration-500 animate-in fade-in slide-in-from-bottom-2 delay-150">
+        {/* Thin animated gradient outline — only visible while focused, kept subtle */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -inset-px rounded-card opacity-0 transition-opacity duration-300 group-focus-within:opacity-100"
+          style={{
+            background:
+              "linear-gradient(120deg, var(--color-ultra), var(--color-ultra-border), var(--color-ultra))",
+            backgroundSize: "300% 300%",
+            animation: "border-gradient-pan 5s ease infinite",
+          }}
+        />
+
+        <div className="relative rounded-card border border-line bg-paper-2 shadow-xs transition-colors group-focus-within:border-transparent">
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.currentTarget.value)}
