@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import {
   ArrowLeftRight,
@@ -46,13 +47,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import flolytLogo from "../../assets/logo.png";
 
 /**
@@ -178,6 +172,7 @@ function Sidebar({
   className,
 }: SidebarProps) {
   const { pathname } = useLocation();
+  const [conversationsOpen, setConversationsOpen] = useState(false);
 
   // Open rooms only (the default GET /rooms filter) — needsYou is what the old mock's badge counted.
   const { data: roomsData } = useGetRooms();
@@ -256,50 +251,55 @@ function Sidebar({
             <span className="truncate">New conversation</span>
           </NavLink>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  "flex w-full items-center gap-2.5 rounded-panel px-2.5 py-[7px] text-[11.5px] text-ink-3 transition-colors",
-                  "hover:bg-paper hover:text-ink",
-                  pathname.startsWith("/conversations") &&
-                    "border border-line bg-paper font-medium text-ink shadow-xs"
-                )}
-              >
-                <MessageCircle className="size-3.75 shrink-0" />
-                <span className="truncate">AI conversations</span>
-                <ChevronDown className="ml-auto size-3.5 shrink-0" />
-              </button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="start" className="max-h-80 w-64 overflow-y-auto">
-              {conversationsLoading && (
-                <div className="space-y-1 p-1">
-                  {[1, 2, 3].map((key) => (
-                    <Skeleton key={key} className="h-7 w-full rounded-control" />
-                  ))}
-                </div>
+          <button
+            type="button"
+            onClick={() => setConversationsOpen((prev) => !prev)}
+            aria-expanded={conversationsOpen}
+            className={cn(
+              "flex w-full items-center gap-2.5 rounded-panel px-2.5 py-[7px] text-[11.5px] text-ink-3 transition-colors",
+              "hover:bg-paper hover:text-ink",
+              conversationsOpen && "text-ink"
+            )}
+          >
+            <MessageCircle className="size-3.75 shrink-0" />
+            <span className="truncate">AI conversations</span>
+            <ChevronDown
+              className={cn(
+                "ml-auto size-3.5 shrink-0 transition-transform",
+                conversationsOpen && "rotate-180"
               )}
+            />
+          </button>
+
+          {conversationsOpen && (
+            <div className="max-h-64 space-y-0.5 overflow-y-auto py-0.5 pl-6">
+              {conversationsLoading &&
+                [1, 2, 3].map((key) => (
+                  <Skeleton key={key} className="h-7 w-full rounded-control" />
+                ))}
 
               {!conversationsLoading && conversations.length === 0 && (
-                <DropdownMenuLabel className="font-normal text-ink-4">
-                  No conversations yet.
-                </DropdownMenuLabel>
+                <p className="px-2.5 py-1 text-[11px] text-ink-4">No conversations yet.</p>
               )}
 
               {!conversationsLoading &&
                 conversations.map((conversation) => (
-                  <DropdownMenuItem key={conversation.id} asChild>
-                    <Link to={`/conversations/${conversation.id}`} onClick={onClose}>
-                      <span className="truncate">
-                        {conversation.title || "Untitled conversation"}
-                      </span>
-                    </Link>
-                  </DropdownMenuItem>
+                  <Link
+                    key={conversation.id}
+                    to={`/conversations/${conversation.id}`}
+                    onClick={onClose}
+                    className={cn(
+                      "block truncate rounded-control px-2.5 py-[7px] text-[11.5px] text-ink-3 transition-colors",
+                      "hover:bg-paper hover:text-ink",
+                      pathname === `/conversations/${conversation.id}` &&
+                        "bg-paper font-medium text-ink"
+                    )}
+                  >
+                    {conversation.title || "Untitled conversation"}
+                  </Link>
                 ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </div>
+          )}
         </div>
 
         {NAV_SECTIONS.map((section) => (

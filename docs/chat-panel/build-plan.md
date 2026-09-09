@@ -112,14 +112,19 @@ asked for. Only the corrected (current) shape is described here.
 - **Sidebar** ([src/components/sidebar.tsx](../../src/components/sidebar.tsx)) — a block sitting
   above the "EVERY DAY" section, not inside it:
   - **"New conversation"** — a plain `NavLink` to `/new-conversation` (the starting page).
-  - **"AI conversations"** — a `DropdownMenu` trigger (not an inline/always-visible accordion),
-    styled like a nav row with a chevron, modeled directly on the avatar menu's Data/Settings
-    toggle pattern in [src/components/user-menu.tsx](../../src/components/user-menu.tsx):
-    `DropdownMenuTrigger asChild` wrapping the styled button, `DropdownMenuContent` popover
-    (`max-h-80 w-64 overflow-y-auto`) holding `DropdownMenuItem asChild` + `Link` rows, fetched
-    live via `useGetAiConversations`. Selecting one navigates to `/conversations/:id` and closes
-    the popover (Radix's default `onSelect` behavior) and the mobile drawer (`onClose` on the
-    `Link`).
+  - **"AI conversations"** — an inline expand/collapse toggle (local `useState`, chevron rotates
+    on open), **not** a `DropdownMenu`. A `DropdownMenu` was tried first (matching the avatar
+    menu's Data/Settings toggle pattern in
+    [src/components/user-menu.tsx](../../src/components/user-menu.tsx) literally), but Radix's
+    `DropdownMenuContent` portals to `document.body` as a floating overlay — fine for a corner
+    avatar menu, wrong for a persistent nav-list row: it rendered as a detached card overflowing
+    past the sidebar's `w-nav` width over the page content, and on mobile its portal sat outside
+    the drawer's own DOM subtree, so opening/using it could register as an outside click and
+    close the whole drawer. Reverted to a plain conditional-render list (`max-h-64 overflow-y-auto
+    pl-6`, indented under the toggle), fetched live via `useGetAiConversations`, collapsed by
+    default. Selecting a conversation is a normal `Link` with `onClick={onClose}`, same as every
+    other sidebar nav item — nothing portaled, so the drawer only closes on an intentional
+    selection.
   - Removed the non-functional "Ask anything…" ⌘K button — its `onSearchClick` prop was dead
     (nothing in `app-layout.tsx` ever passed it).
 - **Services/hooks** — following the `rooms` domain's exact service/hook shape (not the reference
