@@ -327,9 +327,12 @@ static-CSS screenshots. Two real bugs surfaced and were fixed; both confirmed li
   near the bottom extends past that container's own scroll boundary and gets clipped there — it's
   not a stacking/z-index problem, the container's `overflow-y-auto` genuinely cuts it off. Fixed
   with a `toggleRowMenu` handler in `sidebar.tsx` that measures the trigger's position against the
-  list container (`getBoundingClientRect`) when opening and flips the menu to `bottom-full` instead
-  of `top-full` when there isn't ~44px of room below it. Applied and build-verified; not
-  explicitly re-confirmed live by the user in this session (only the loading-state fix was).
+  list container (`getBoundingClientRect`) when opening. **First version of this fix was itself
+  wrong** — it only checked room below and flipped up unconditionally when insufficient, which
+  broke on a short list (as few as 2 conversations): the *top* row got flipped up too (also not
+  enough room below it, in a short list) and clipped at the container's *top* edge instead, caught
+  live by the user immediately after this shipped. Corrected to compare room on both sides
+  (`spaceAbove`/`spaceBelow`) and open toward whichever is larger, not a one-directional threshold.
 
 **Implication:** sign-in and the base send → stream → render round trip now have at least one live
 confirmation outside this sandbox. The backend's SSE framing (`event:`/`data:` lines) and the
@@ -337,3 +340,25 @@ confirmation outside this sandbox. The backend's SSE framing (`event:`/`data:` l
 implemented — worth re-confirming on the next live session rather than treating as fully proven,
 since only the loading-state symptom (not the full send→respond→render path) was explicitly
 verified end-to-end here.
+
+## Progress (2026-09-09) — debug logging restored, sidebar list didn't refresh after sending
+
+- **Debug logging** — the reference hook (`use-ai-conversation-message.ts`) logs `🔥 SSE status`,
+  `🔥 SSE headers`, `🔥 SSE chunk` (per read), `🔥 SSE event` (per parsed event), and `❌ Send
+  message failed` on error. These were deliberately dropped during the initial port as dev noise
+  not worth shipping in clean code — flagged by the user as a real difference from the reference,
+  and reinstated verbatim given the integration is still being actively live-debugged against a
+  backend whose exact SSE contract isn't fully confirmed yet. Worth stripping once the integration
+  is fully trusted, not before.
+- **Sidebar conversation list didn't update after sending, needed a manual refresh** — confirmed:
+  `queryClient.invalidateQueries({ queryKey: ["ai-conversations"] })` only ran inside the
+  `if (parsed.state === "complete")` branch, i.e. only if the backend's stream explicitly emits an
+  event whose `state` field is exactly `"complete"` before closing. If it signals completion any
+  other way (the connection just ends, a different field/casing, no final event at all), that
+  invalidate never runs, and the sidebar's list — mounted persistently, so it would otherwise
+  auto-refetch on invalidate — never hears about the new/updated conversation until something else
+  causes a refetch (a full reload). Moved the invalidate into the `finally` block instead, so it
+  fires unconditionally whenever `sendMessage` finishes for any reason (normal completion, error,
+  or an abort that still produced a response) — not proven yet whether the "complete" event
+  actually never fires or fires under a different shape; the `finally` fix is correct either way
+  since it doesn't depend on parsing that event.

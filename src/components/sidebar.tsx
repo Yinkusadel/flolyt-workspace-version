@@ -194,9 +194,10 @@ function Sidebar({
   const conversationListRef = useRef<HTMLDivElement>(null);
 
   // The row menu renders inline inside this `overflow-y-auto` list (not portaled, see the note
-  // below), so a menu opened from a row near the bottom gets clipped by the list's own scroll
-  // boundary instead of floating over it. Flip it to open upward when there isn't ~44px of room
-  // below the trigger inside the list.
+  // below), so it gets clipped by the list's own scroll boundary whichever edge it opens toward.
+  // A row near the bottom needs it to open up; a row near the top (a short list — even the first
+  // row of just two — has just as little room above as a last row has below) needs it to open
+  // down. Pick whichever side actually has more room, rather than only checking one direction.
   const toggleRowMenu = (id: string, trigger: HTMLElement) => {
     if (openMenuId === id) {
       setOpenMenuId(null);
@@ -204,8 +205,9 @@ function Sidebar({
     }
     const listRect = conversationListRef.current?.getBoundingClientRect();
     const triggerRect = trigger.getBoundingClientRect();
-    const MENU_HEIGHT = 44;
-    setMenuOpensUp(!!listRect && listRect.bottom - triggerRect.bottom < MENU_HEIGHT);
+    const spaceBelow = listRect ? listRect.bottom - triggerRect.bottom : Infinity;
+    const spaceAbove = listRect ? triggerRect.top - listRect.top : 0;
+    setMenuOpensUp(spaceAbove > spaceBelow);
     setOpenMenuId(id);
   };
 

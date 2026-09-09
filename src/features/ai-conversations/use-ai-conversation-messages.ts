@@ -165,14 +165,24 @@ export const useAiConversationMessages = (
         });
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        console.log("🔥 SSE status:", JSON.stringify({ status: res.status }, null, 2));
+        console.log("🔥 SSE headers:", JSON.stringify([...res.headers.entries()], null, 2));
         if (!res.body) throw new Error("Streaming not supported");
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
+        let chunkIndex = 0;
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
+
+          chunkIndex += 1;
+          console.log(
+            "🔥 SSE chunk",
+            JSON.stringify({ idx: chunkIndex, bytes: value?.length ?? 0, at: new Date().toISOString() }, null, 2)
+          );
 
           bufferRef.current += decoder.decode(value, { stream: true });
 
@@ -190,6 +200,21 @@ export const useAiConversationMessages = (
             const eventType = eventLine?.replace("event:", "").trim();
             const parsed: AgentStreamEvent = JSON.parse(dataLine.replace("data:", "").trim());
             const resolvedEventType = eventType ?? parsed.eventType ?? "message";
+
+            console.log(
+              "🔥 SSE event:",
+              JSON.stringify(
+                {
+                  at: new Date().toISOString(),
+                  eventType: resolvedEventType,
+                  contentLength: (parsed.message ?? "").length,
+                  event: parsed,
+                  raw,
+                },
+                null,
+                2
+              )
+            );
 
             switch (resolvedEventType) {
               case "status": {
@@ -254,6 +279,7 @@ export const useAiConversationMessages = (
         }
       } catch (err: unknown) {
         if (err instanceof DOMException && err.name === "AbortError") return;
+        console.error("❌ Send message failed:", err);
         const errorMessage = err instanceof Error ? err.message : "Something went wrong";
         setMessages((prev) => [
           ...prev,
@@ -264,6 +290,10 @@ export const useAiConversationMessages = (
           setIsStreaming(false);
           clearTypewriter();
         }
+        // Unconditional, not just on a `state: "complete"` event — the sidebar's conversation
+        // list (title/lastMessagePreview/messageCount) needs refreshing whenever a send finishes,
+        // however the stream actually signals that it's done.
+        queryClient.invalidateQueries({ queryKey: ["ai-conversations"] });
       }
     },
     [clearTypewriter, kickTypewriter, queryClient]
