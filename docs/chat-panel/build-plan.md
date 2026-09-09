@@ -160,3 +160,28 @@ prompt in a running dev server.
 **Still open, deferred on purpose:** the SSE streaming hook (`use-ai-conversation-message.ts`'s
 full port), the actual chat thread UI at `/conversations/:id`, and everything in the hardening
 checklist (Stop, steer, reconnect, proposals).
+
+## Styling pass (2026-09-09) — `new-conversation-route.tsx`
+
+The first cut had its own `px-6` on the page root, double-padding on top of `app-layout.tsx`'s
+shared `<main className="p-page">` (a flat `--spacing-page: 22px` on every side, every
+breakpoint — there's no separate mobile value, so "consistent" here just means *only* `p-page`,
+no page adding its own on top, same as `pages/everyday/lifecycle/index.tsx`, which has zero
+horizontal padding of its own). Removed it. The send button footer was also disproportionately
+tall next to the textarea (`size-8` button in a `py-2.5` row); shrunk to `size-6.5` in `py-1.5`,
+in line with this app's compact control sizing elsewhere (`Input` is `h-9`, default `Button` is
+`h-8`).
+
+Also reworked the page to read as a deliberate "AI moment" rather than a plain form, using tokens
+already in this design system rather than inventing new ones: `font-serif` (Newsreader, the same
+face `auth/shared/right-section.tsx` uses for its hero line) on the heading, the `--color-ultra`
+accent (`text-ultra`/`bg-ultra-bg`/`border-ultra-border` — this app's existing AI/primary accent,
+already wired to `--ring`) on a small sparkle badge and the send button, a soft `blur-3xl` ultra
+glow behind the hero, and a staggered `animate-in fade-in slide-in-from-bottom-2` entrance
+(the same `tailwindcss-animate` utilities `onboarding/finishing-up/index.tsx` already uses, just
+applied on mount instead of on a timer).
+
+Verified by rendering the same markup against the actual compiled `dist/assets/*.css` in a
+throwaway static HTML file at mobile (390px) and desktop (1280px) viewports — this session still
+couldn't complete a real sign-in to check the live authenticated route directly. Padding and
+footer proportions confirmed visually; still worth a real look in a running dev server.
