@@ -9,6 +9,12 @@ export const getServerErrorMessage = (data: any): string => {
     return data.message;
   }
 
+  // Wallet endpoints respond with their own {status, responseMessage} shape, not the standard
+  // envelope's messages[]/message — see docs/endpoints/wallet.md.
+  if (typeof data.responseMessage === "string") {
+    return data.responseMessage;
+  }
+
   if (typeof data === "string") {
     return data;
   }

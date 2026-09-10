@@ -51,9 +51,9 @@ six.
   ```
   `data` is an array.
 - **Used by:** `services/api/ai-credits/get-credit-packs.ts`,
-  `features/ai-credits/use-get-credit-packs.ts`. No screen wired yet — no credits-purchase page
-  exists in this app.
-- **Status:** scaffolded (service + hook, build-clean), not wired
+  `features/ai-credits/use-get-credit-packs.ts`, wired into `pages/plan-and-billing/index.tsx`'s
+  "Buy a credit pack" grid.
+- **Status:** wired
 
 ## POST /api/flolyt/payments/credits/purchase
 
@@ -62,8 +62,13 @@ six.
 - **Response:** `data = { packName, creditsAdded, amountCharged, newCreditBalance }`.
 - **Used by:** `services/api/ai-credits/purchase-credit-pack.ts`,
   `features/ai-credits/use-purchase-credit-pack.ts` (invalidates `credit-balance`, `credit-packs`,
-  `credit-overview` on success). No screen wired yet.
-- **Status:** scaffolded, not wired
+  `credit-overview` on success), wired into `pages/plan-and-billing/index.tsx`'s pack-purchase
+  button.
+- **Status:** wired
+- **Notes:** unlike wallet top-up, this returns synchronously (`amountCharged`, no `paymentUrl`) —
+  unconfirmed how it's actually charged (saved card on file? deducted from the wallet balance
+  itself?). Flag this to the user before assuming either; the reference implementation doesn't
+  show a payment step for it either, so it may just not be real yet on the backend.
 
 ## GET /api/flolyt/payments/credits/operations
 
@@ -72,8 +77,9 @@ six.
 - **Request:** none.
 - **Response:** `data = { name, displayName, description, creditCost }[]`.
 - **Used by:** `services/api/ai-credits/get-credit-operations.ts`,
-  `features/ai-credits/use-get-credit-operations.ts`. No screen wired yet.
-- **Status:** scaffolded, not wired
+  `features/ai-credits/use-get-credit-operations.ts`, wired into `pages/plan-and-billing/index.tsx`'s
+  "What costs credits" schedule.
+- **Status:** wired
 
 ## GET /api/flolyt/payments/credits/usage
 

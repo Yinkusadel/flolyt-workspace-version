@@ -132,6 +132,7 @@ import DeparturesRoute from "@/pages/everyday/handoff/settings/departures-route"
 import HandoffSettingsRoute from "@/pages/everyday/handoff/settings/handoff-settings-route";
 import NewConversationRoute from "@/pages/conversations/new-conversation-route";
 import AiConversationDetailRoute from "@/pages/conversations/detail-route";
+import PlanAndBillingRoute from "@/pages/plan-and-billing";
 import LeakageMap from "@/pages/revenue/leakage-map";
 import LeaksChangedRoute from "@/pages/revenue/leakage-map/changed-route";
 import LeaksUnmeasurableRoute from "@/pages/revenue/leakage-map/unmeasurable-route";
@@ -610,6 +611,10 @@ export const routes = createBrowserRouter([
               {
                 path: "conversations/:id",
                 Component: AiConversationDetailRoute,
+              },
+              {
+                path: "plan-and-billing",
+                Component: PlanAndBillingRoute,
               },
               {
                 path: "goals",
