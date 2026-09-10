@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ArrowDownRight, ArrowUpRight, ChevronLeft, ChevronRight, Loader2, Wallet as WalletIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -20,6 +21,12 @@ const AMOUNT_PRESETS = [10000, 50000, 100000];
 const TRANSACTIONS_PAGE_SIZE = 8;
 const OPERATIONS_PREVIEW_COUNT = 4;
 
+type PlanBillingTab = "overview" | "activity";
+const PLAN_BILLING_TABS: { key: PlanBillingTab; label: string }[] = [
+  { key: "overview", label: "Overview" },
+  { key: "activity", label: "Activity" },
+];
+
 function formatMoney(amount: number, currency: string | undefined) {
   if (!currency) return amount.toLocaleString();
   try {
@@ -31,6 +38,30 @@ function formatMoney(amount: number, currency: string | undefined) {
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return <p className={EYEBROW_CLASS}>{children}</p>;
+}
+
+function TabBar({ active, onChange }: { active: PlanBillingTab; onChange: (tab: PlanBillingTab) => void }) {
+  return (
+    <div className="border-b border-line">
+      <div className="flex items-center gap-1">
+        {PLAN_BILLING_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => onChange(tab.key)}
+            className={cn(
+              "shrink-0 rounded-t-panel border-b-2 px-3 py-2.5 text-[11.5px] whitespace-nowrap",
+              active === tab.key
+                ? "border-ink font-semibold text-ink"
+                : "border-transparent font-normal text-ink-3 hover:text-ink-2"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function CostRow({ op }: { op: CreditOperationDto }) {
@@ -129,6 +160,12 @@ function FundWalletSection({ walletCurrency }: { walletCurrency: string | undefi
 }
 
 export default function PlanAndBillingRoute() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab: PlanBillingTab = searchParams.get("tab") === "activity" ? "activity" : "overview";
+  const setActiveTab = (tab: PlanBillingTab) => {
+    setSearchParams(tab === "overview" ? {} : { tab }, { replace: true });
+  };
+
   const [showFundWallet, setShowFundWallet] = useState(false);
   const [transactionsPage, setTransactionsPage] = useState(1);
   const [selectedPackName, setSelectedPackName] = useState<string | null>(null);
@@ -150,7 +187,7 @@ export default function PlanAndBillingRoute() {
   const transactions = transactionsData?.data ?? [];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-[17px] font-semibold text-ink">Plan and billing</h1>
         <p className="mt-1 text-[11.5px] text-ink-3">
@@ -158,6 +195,10 @@ export default function PlanAndBillingRoute() {
         </p>
       </div>
 
+      <TabBar active={activeTab} onChange={setActiveTab} />
+
+      {activeTab === "overview" && (
+        <div className="space-y-8">
       {/* Wallet balance */}
       <section className="space-y-3">
         <SectionHeading>Wallet</SectionHeading>
@@ -322,8 +363,10 @@ export default function PlanAndBillingRoute() {
           </DialogBody>
         </DialogContent>
       </Dialog>
+        </div>
+      )}
 
-      {/* Recent wallet activity */}
+      {activeTab === "activity" && (
       <section className="space-y-3">
         <SectionHeading>Recent wallet activity</SectionHeading>
 
@@ -398,6 +441,7 @@ export default function PlanAndBillingRoute() {
           </div>
         )}
       </section>
+      )}
     </div>
   );
 }
