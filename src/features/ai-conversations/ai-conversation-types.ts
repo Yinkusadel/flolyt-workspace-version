@@ -1,0 +1,51 @@
+export interface AiConversationMessage {
+  // "context" also comes back from history (GET_BY_ID) — a tool-call/data-context summary line
+  // the backend logs into the message array, not part of the actual conversation. Confirmed live
+  // 2026-09-10: rendering it as if it were "assistant" put "[Tools called: ...] [Data context: ...]"
+  // in the chat as though Flolyt said it. Never emitted by the live SSE stream itself, only history.
+  // "error" is a local role — pushed by the hook itself when the stream fails or errors out, not
+  // something the backend ever sends. Lets the UI style it as an error instead of a normal reply.
+  role: "user" | "assistant" | "context" | "error";
+  content: string;
+  timestamp: string;
+}
+
+export interface ReasoningStep {
+  phase: string;
+  description: string;
+  dataSource: string | null;
+  querySummary: string | null;
+  timestamp: string;
+  /** Which SSE event produced this step — set locally by the hook, not part of the wire payload.
+   *  Lets the UI pick a tool-call icon vs. a plain reasoning-step marker. */
+  kind?: "tool_call" | "reasoning_step";
+}
+
+// A mutating action the agent wants to take, surfaced for human review instead of executed
+// outright. `argumentsJson` is a JSON-encoded string, not a nested object — parse it to get the
+// actual tool arguments (which themselves nest further JSON-string fields depending on toolName,
+// e.g. open_room_on_cohort's rulesJson/peopleJson/agentsJson). Same record GET
+// /api/flolyt/ai/proposals reads back later, so this is a live nudge, not the source of truth.
+export interface StreamProposal {
+  proposalId: string;
+  toolName: string;
+  argumentsJson: string;
+  conversationId: string;
+  runId: string | null;
+  createdAtUtc: string;
+}
+
+// SSE event during streaming.
+// Nulls are omitted from SSE payloads (WhenWritingNull) — treat every optional field as possibly
+// absent, not just possibly null.
+export interface AgentStreamEvent {
+  eventType: string;
+  state: string;
+  message: string | null;
+  errorMessage: string | null;
+  reasoningSteps: ReasoningStep[] | null;
+  /** Set on `run_queued`. Unlocks stop/steer/reconnect in a future stage — captured now, unused. */
+  runId?: string | null;
+  /** Set on `proposal`. */
+  proposal?: StreamProposal | null;
+}

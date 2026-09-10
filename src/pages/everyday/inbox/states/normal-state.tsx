@@ -3,11 +3,13 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { AgentDot, PersonDot } from "@/pages/everyday/rooms/actor";
-import { TONE_TEXT_CLASS } from "@/pages/everyday/rooms/tone";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PersonDot } from "@/pages/everyday/rooms/actor";
 import { BulkSelectionPanel } from "@/pages/everyday/inbox/bulk-selection-panel";
 import { InboxSettingsLink, InboxTabs } from "@/pages/everyday/inbox/quick-links";
-import { DECISION_CARDS, MENTIONS, NEVER_APPEAR_CALLOUT, SYSTEMS_CALLOUT } from "@/pages/everyday/inbox/data";
+import { MENTIONS, NEVER_APPEAR_CALLOUT, SYSTEMS_CALLOUT } from "@/pages/everyday/inbox/data";
+import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
+import { ProposalCard } from "@/pages/conversations/proposal-card";
 
 const ROOM_LINKS: Record<string, string> = {
   "Second order never happened": "second-order-never-happened",
@@ -18,6 +20,9 @@ const ROOM_LINKS: Record<string, string> = {
 export function NormalState() {
   const [selectMode, setSelectMode] = React.useState(false);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
+
+  const { data: proposalsData, isLoading: isProposalsLoading } = useGetAiProposals();
+  const proposals = proposalsData?.data ?? [];
 
   const toggle = (id: string) => {
     setSelected((prev) => {
@@ -43,7 +48,7 @@ export function NormalState() {
         <div>
           <h1 className="text-[17px] font-semibold text-ink">Your inbox</h1>
           <p className="mt-1 text-[11.5px] text-ink-3">
-            {DECISION_CARDS.length} need a decision · sorted by what stops work, not by time
+            {isProposalsLoading ? "Loading…" : `${proposals.length} need a decision`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2.5 sm:shrink-0 sm:justify-end">
@@ -73,42 +78,39 @@ export function NormalState() {
       <div>
         <div className="mb-2 flex items-center justify-between gap-3">
           <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-            Needs a decision from you · {DECISION_CARDS.length}
+            Needs a decision from you · {isProposalsLoading ? "…" : proposals.length}
           </p>
           <Link to="/inbox?group=cost" className="shrink-0 text-[11px] font-medium text-ultra hover:underline">
             Group by cost →
           </Link>
         </div>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {DECISION_CARDS.map((card) => (
-            <div key={card.itemId} className="relative rounded-card border border-amber-border bg-paper p-4">
-              {selectMode && (
-                <input
-                  type="checkbox"
-                  checked={selected.has(card.itemId)}
-                  onChange={() => toggle(card.itemId)}
-                  className="absolute top-4 right-4 size-3.5 accent-ultra"
-                  aria-label={`Select ${card.title}`}
-                />
-              )}
-              <span className="flex items-center gap-1.5 font-mono text-[9.5px] font-semibold tracking-[0.6px] text-ink-4 uppercase">
-                {card.agent && <AgentDot agent={card.agent} size="sm" />}
-                {card.waitingLabel}
-              </span>
-              <h3 className="mt-2 pr-6 text-[13.5px] font-semibold text-ink">{card.title}</h3>
-              <p className="mt-1.5 text-[11px] leading-relaxed text-ink-2">{card.body}</p>
-              <Link
-                to={`/inbox/${card.itemId}`}
-                className={cn(
-                  "mt-3 block border-t border-dashed border-line pt-3 font-mono text-[10.5px] font-semibold hover:underline",
-                  TONE_TEXT_CLASS[card.footnoteTone]
-                )}
-              >
-                {card.footnote}
-              </Link>
-            </div>
-          ))}
-        </div>
+        {/* No select-mode checkboxes here — the AI proposals endpoint is explicit that there is
+            no bulk approve ("one card, one person, one decision"), so batching these into the
+            select-mode/BulkSelectionPanel flow below would offer an action the backend refuses. */}
+        {isProposalsLoading ? (
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <Skeleton className="h-32 rounded-card" />
+            <Skeleton className="h-32 rounded-card" />
+          </div>
+        ) : proposals.length === 0 ? (
+          <div className="rounded-card border border-line bg-paper-2 px-4 py-6 text-center text-[11.5px] text-ink-3">
+            Nothing needs a decision right now.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            {proposals.map((proposal) => (
+              <ProposalCard
+                key={proposal.id}
+                proposal={{
+                  id: proposal.id,
+                  toolName: proposal.toolName,
+                  argumentsJson: proposal.argumentsJson,
+                  status: proposal.status,
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <div>

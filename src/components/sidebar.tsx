@@ -1,56 +1,57 @@
-import { NavLink } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Activity,
   ArrowLeftRight,
   Award,
   BarChart3,
-  Bell,
   Bot,
   BookOpen,
-  Boxes,
-  Code2,
-  CreditCard,
-  Database,
-  Eye,
+  ChevronDown,
   Filter,
   Fingerprint,
   FlaskConical,
-  Frame,
   Gem,
   GitBranch,
-  Globe,
   HeartPulse,
-  IdCard,
   Inbox,
-  Languages,
   Library,
   LineChart,
   ListChecks,
-  Lock,
   Map,
   Megaphone,
+  MessageCircle,
+  MessageCirclePlus,
   MessagesSquare,
+  MoreVertical,
   Newspaper,
   PieChart,
-  Plug,
   Reply,
-  ScrollText,
   Share2,
   ShieldCheck,
   Store,
   Target,
+  Trash2,
   TrendingUp,
-  Users,
   Users2,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getRoomsNeedingApproval } from "@/pages/everyday/rooms/data";
-import { INBOX_PENDING_COUNT } from "@/pages/everyday/inbox/data";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useGetRooms } from "@/features/rooms/use-get-rooms";
+import { useGetAiConversations } from "@/features/ai-conversations/use-get-ai-conversations";
+import { useArchiveAiConversation } from "@/features/ai-conversations/use-archive-ai-conversation";
+import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
 import {
   Select,
   SelectContent,
@@ -77,18 +78,16 @@ type NavSection = {
   items: NavItem[];
 };
 
-const ROOMS_NEEDING_APPROVAL = getRoomsNeedingApproval();
-
 const NAV_SECTIONS: NavSection[] = [
   {
     label: "EVERY DAY",
     items: [
       { label: "Lifecycle", href: "/lifecycle", icon: TrendingUp },
-      { label: "Rooms", href: "/rooms", icon: MessagesSquare, badge: ROOMS_NEEDING_APPROVAL || undefined },
+      { label: "Rooms", href: "/rooms", icon: MessagesSquare },
       { label: "What to do today", href: "/what-to-do-today", icon: ListChecks },
       { label: "Goals", href: "/goals", icon: Target },
       { label: "Digest", href: "/digest", icon: Newspaper },
-      { label: "Inbox", href: "/inbox", icon: Inbox, badge: INBOX_PENDING_COUNT || undefined },
+      { label: "Inbox", href: "/inbox", icon: Inbox },
       { label: "Handoff", href: "/handoff", icon: ArrowLeftRight },
     ],
   },
@@ -133,31 +132,6 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "Governance", href: "/governance", icon: ShieldCheck },
     ],
   },
-  {
-    label: "DATA",
-    items: [
-      { label: "Data sources", href: "/data-sources", icon: Database },
-      { label: "Data health", href: "/data-health", icon: Activity },
-      { label: "Schema", href: "/schema", icon: Boxes },
-      { label: "Identity", href: "/identity", icon: IdCard },
-    ],
-  },
-  {
-    label: "SETTINGS",
-    items: [
-      { label: "Members", href: "/members", icon: Users },
-      { label: "Security", href: "/security", icon: Lock },
-      { label: "Audit log", href: "/audit-log", icon: ScrollText },
-      { label: "Data and residency", href: "/data-and-residency", icon: Globe },
-      { label: "Notifications", href: "/notifications", icon: Bell },
-      { label: "Integrations", href: "/integrations", icon: Plug },
-      { label: "Plan and billing", href: "/plan-and-billing", icon: CreditCard },
-      { label: "Developers", href: "/developers", icon: Code2 },
-      { label: "Embedding", href: "/embedding", icon: Frame },
-      { label: "Your view", href: "/your-view", icon: Eye },
-      { label: "Language", href: "/language", icon: Languages },
-    ],
-  },
 ];
 
 export const VIEWING_AS_OPTIONS = ["Everyone", "Marketing", "Sales", "Products"] as const;
@@ -186,7 +160,6 @@ export type SidebarProps = {
   /** Who the home route's numbers/content are scoped to. Controlled from the app shell. */
   viewingAs?: ViewingAs;
   onViewingAsChange?: (value: ViewingAs) => void;
-  onSearchClick?: () => void;
   /** Total addressable customer base for the current viewing-as scope. Omit to hide the footer stat. */
   customerBase?: string;
   isCustomerBaseLoading?: boolean;
@@ -204,13 +177,76 @@ function Sidebar({
   isWorkspaceModeLoading = false,
   viewingAs = "Everyone",
   onViewingAsChange,
-  onSearchClick,
   customerBase,
   isCustomerBaseLoading = false,
   currencies = [],
   roster = [],
   className,
 }: SidebarProps) {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const [conversationsOpen, setConversationsOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [menuOpensUp, setMenuOpensUp] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const { archiveConversation, isPending: isDeleting } = useArchiveAiConversation();
+  const openMenuRef = useRef<HTMLDivElement>(null);
+  const conversationListRef = useRef<HTMLDivElement>(null);
+
+  // The row menu renders inline inside this `overflow-y-auto` list (not portaled, see the note
+  // below), so it gets clipped by the list's own scroll boundary whichever edge it opens toward.
+  // A row near the bottom needs it to open up; a row near the top (a short list — even the first
+  // row of just two — has just as little room above as a last row has below) needs it to open
+  // down. Pick whichever side actually has more room, rather than only checking one direction.
+  const toggleRowMenu = (id: string, trigger: HTMLElement) => {
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+      return;
+    }
+    const listRect = conversationListRef.current?.getBoundingClientRect();
+    const triggerRect = trigger.getBoundingClientRect();
+    const spaceBelow = listRect ? listRect.bottom - triggerRect.bottom : Infinity;
+    const spaceAbove = listRect ? triggerRect.top - listRect.top : 0;
+    setMenuOpensUp(spaceAbove > spaceBelow);
+    setOpenMenuId(id);
+  };
+
+  // The drawer only translates off-screen on close, it doesn't unmount — drop any open row menu
+  // so it isn't still open (invisibly) the next time the drawer slides back in.
+  useEffect(() => {
+    if (!open) setOpenMenuId(null);
+  }, [open]);
+
+  // Plain document listener, not a Radix dismissable layer — this menu renders inline (no portal),
+  // so it can't trip the mobile drawer's "outside click" handling the way DropdownMenu did
+  // (see [[feedback_no_dropdown_menu_for_sidebar_nav]]).
+  useEffect(() => {
+    if (!openMenuId) return;
+    const handlePointerDown = (e: MouseEvent) => {
+      if (openMenuRef.current && !openMenuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [openMenuId]);
+
+  // Open rooms only (the default GET /rooms filter) — needsYou is what the old mock's badge counted.
+  const { data: roomsData } = useGetRooms();
+  const roomsNeedingApproval = roomsData?.data.rooms.filter((r) => r.needsYou).length ?? 0;
+
+  // Every proposal still pending across every conversation — the Inbox badge used to count a
+  // static mock (`INBOX_PENDING_COUNT`); this is the same real list its "Needs a decision from
+  // you" section now renders.
+  const { data: proposalsData } = useGetAiProposals();
+  const pendingProposalsCount = proposalsData?.data.length ?? 0;
+
+  const { data: conversationsData, isLoading: conversationsLoading } = useGetAiConversations({
+    pageNumber: 1,
+    pageSize: 50,
+  });
+  const conversations = conversationsData?.data ?? [];
+
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
       "flex items-center gap-2.5 rounded-panel px-2.5 py-[7px] text-[11.5px] text-ink-3 transition-colors",
@@ -218,7 +254,16 @@ function Sidebar({
       isActive && "border border-line bg-paper font-medium text-ink shadow-xs"
     );
 
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    const { id } = deleteTarget;
+    archiveConversation(id);
+    if (pathname === `/conversations/${id}`) navigate("/new-conversation");
+    setDeleteTarget(null);
+  };
+
   return (
+    <>
     <aside
       data-slot="sidebar"
       data-state={open ? "open" : "closed"}
@@ -269,45 +314,147 @@ function Sidebar({
         </Select>
       </div>
 
-      {/* Command bar entry */}
-      <div className="shrink-0 px-4 pt-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onSearchClick}
-          className="h-auto w-full justify-between rounded-panel px-2.5 py-1.75 text-left font-normal text-ink-4 hover:border-ink-4 hover:bg-paper hover:text-ink-4"
-        >
-          <span className="text-[11px]">Ask anything…</span>
-          <kbd className="rounded-control border border-line bg-paper-2 px-1.5 py-0.5 font-mono text-[8.5px] text-ink-3">
-            ⌘K
-          </kbd>
-        </Button>
-      </div>
-
       {/* Nav sections */}
       <nav className="flex-1 space-y-4 overflow-y-auto px-2.5 py-4">
+        {/* Sits above EVERY DAY — the entry points for starting/finding an AI conversation. */}
+        <div className="space-y-0.5">
+          <NavLink to="/new-conversation" onClick={onClose} className={navLinkClass}>
+            <MessageCirclePlus className="size-3.75 shrink-0" />
+            <span className="truncate">New conversation</span>
+          </NavLink>
+
+          <button
+            type="button"
+            onClick={() => setConversationsOpen((prev) => !prev)}
+            aria-expanded={conversationsOpen}
+            className={cn(
+              "flex w-full items-center gap-2.5 rounded-panel px-2.5 py-[7px] text-[11.5px] text-ink-3 transition-colors",
+              "hover:bg-paper hover:text-ink",
+              conversationsOpen && "text-ink"
+            )}
+          >
+            <MessageCircle className="size-3.75 shrink-0" />
+            <span className="truncate">AI conversations</span>
+            <ChevronDown
+              className={cn(
+                "ml-auto size-3.5 shrink-0 transition-transform",
+                conversationsOpen && "rotate-180"
+              )}
+            />
+          </button>
+
+          {conversationsOpen && (
+            <div ref={conversationListRef} className="max-h-64 space-y-0.5 overflow-y-auto py-0.5 pl-6">
+              {conversationsLoading &&
+                [1, 2, 3].map((key) => (
+                  <Skeleton key={key} className="h-7 w-full rounded-control" />
+                ))}
+
+              {!conversationsLoading && conversations.length === 0 && (
+                <p className="px-2.5 py-1 text-[11px] text-ink-4">No conversations yet.</p>
+              )}
+
+              {!conversationsLoading &&
+                conversations.map((conversation) => {
+                  const isMenuOpen = openMenuId === conversation.id;
+                  return (
+                    <div key={conversation.id} className="relative flex items-center">
+                      <Link
+                        to={`/conversations/${conversation.id}`}
+                        onClick={onClose}
+                        className={cn(
+                          "block flex-1 truncate rounded-control py-[7px] pr-7 pl-2.5 text-[11.5px] text-ink-3 transition-colors",
+                          "hover:bg-paper hover:text-ink",
+                          pathname === `/conversations/${conversation.id}` &&
+                            "bg-paper font-medium text-ink"
+                        )}
+                      >
+                        {conversation.title || "Untitled conversation"}
+                      </Link>
+
+                      {/* Always rendered (not hover-revealed) so it's reachable by tap on touch
+                          screens, not just by mouse hover — see [[flolyt_mobile_design]]. */}
+                      <div ref={isMenuOpen ? openMenuRef : undefined} className="absolute right-1">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleRowMenu(conversation.id, e.currentTarget);
+                          }}
+                          aria-label="Conversation actions"
+                          aria-expanded={isMenuOpen}
+                          className={cn(
+                            "flex size-6 shrink-0 items-center justify-center rounded-control text-ink-4 transition-colors hover:bg-paper hover:text-ink",
+                            isMenuOpen && "bg-paper text-ink"
+                          )}
+                        >
+                          <MoreVertical className="size-3.5" />
+                        </button>
+
+                        {isMenuOpen && (
+                          <div
+                            className={cn(
+                              "absolute right-0 z-10 w-32 overflow-hidden rounded-panel border border-line bg-paper-2 py-1 shadow-lg",
+                              menuOpensUp ? "bottom-full mb-1" : "top-full mt-1"
+                            )}
+                          >
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setOpenMenuId(null);
+                                setDeleteTarget({
+                                  id: conversation.id,
+                                  title: conversation.title || "Untitled conversation",
+                                });
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11.5px] text-rose hover:bg-rose-bg"
+                            >
+                              <Trash2 className="size-3.25" />
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+
         {NAV_SECTIONS.map((section) => (
           <div key={section.label}>
             <p className="px-2.5 pb-1.5 font-mono text-[8.6px] font-medium tracking-[0.85px] text-ink-4">
               {section.label}
             </p>
             <div className="space-y-0.5">
-              {section.items.map((item) => (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  onClick={onClose}
-                  className={navLinkClass}
-                >
-                  <item.icon className="size-3.75 shrink-0" />
-                  <span className="truncate">{item.label}</span>
-                  {item.badge ? (
-                    <span className="ml-auto rounded-chip border border-amber-border bg-amber-bg px-1.5 py-0.5 font-mono text-[9px] font-semibold text-amber">
-                      {item.badge}
-                    </span>
-                  ) : null}
-                </NavLink>
-              ))}
+              {section.items.map((item) => {
+                const badge =
+                  item.href === "/rooms"
+                    ? roomsNeedingApproval || undefined
+                    : item.href === "/inbox"
+                      ? pendingProposalsCount || undefined
+                      : item.badge;
+                return (
+                  <NavLink
+                    key={item.href}
+                    to={item.href}
+                    onClick={onClose}
+                    className={navLinkClass}
+                  >
+                    <item.icon className="size-3.75 shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                    {badge ? (
+                      <span className="ml-auto rounded-chip border border-amber-border bg-amber-bg px-1.5 py-0.5 font-mono text-[9px] font-semibold text-amber">
+                        {badge}
+                      </span>
+                    ) : null}
+                  </NavLink>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -345,6 +492,33 @@ function Sidebar({
         </div>
       )}
     </aside>
+
+    <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Delete conversation</DialogTitle>
+          <DialogDescription>
+            {`Delete "${deleteTarget?.title ?? ""}"? This can't be undone.`}
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter>
+          <div className="flex items-center gap-4">
+            <Button type="button" variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
+              {isDeleting ? "Deleting…" : "Delete"}
+            </Button>
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(null)}
+              className="text-[12px] font-semibold text-ink-3 hover:text-ink"
+            >
+              Cancel
+            </button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 

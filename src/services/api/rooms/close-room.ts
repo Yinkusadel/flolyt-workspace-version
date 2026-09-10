@@ -20,6 +20,13 @@ export interface RoomCloseMeasurementInput {
   liftPoints: number | null;
 }
 
+export interface OutstandingInput {
+  toUserId: string;
+  description: string;
+  class: string;
+  proposedDueAtUtc?: string;
+}
+
 export interface CloseRoomPayload {
   roomId: string;
   kind: string;
@@ -31,6 +38,8 @@ export interface CloseRoomPayload {
   supersededByRoomId?: string;
   revisitCondition?: string;
   unmeasuredReason?: string;
+  /** Follow-up items to hand off out of the room on close. */
+  outstanding?: OutstandingInput[];
 }
 
 export interface RoomCloseFalsifierDto {

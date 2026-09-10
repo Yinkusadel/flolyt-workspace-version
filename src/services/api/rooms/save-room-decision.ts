@@ -3,12 +3,19 @@ import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
 
+export interface DecisionRecipientInput {
+  userId: string;
+  what: string;
+  class: string;
+}
+
 export interface SaveRoomDecisionPayload {
   roomId: string;
   summary: string;
   draftedByLabel?: string;
   guardrails?: string;
   statement?: string;
+  recipients?: DecisionRecipientInput[];
 }
 
 export interface SaveRoomDecisionResponse {

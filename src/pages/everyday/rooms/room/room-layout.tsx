@@ -1,7 +1,9 @@
+import * as React from "react";
 import { Link, Outlet, useOutletContext, useParams } from "react-router-dom";
 
 import { getRoom } from "@/pages/everyday/rooms/room/data";
 import type { RoomDetail } from "@/pages/everyday/rooms/room/types";
+import useMarkRoomOpened from "@/features/rooms/use-mark-room-opened";
 
 export type RoomOutletContext = { room: RoomDetail };
 
@@ -9,6 +11,13 @@ export type RoomOutletContext = { room: RoomDetail };
 const RoomLayout = () => {
   const { roomId } = useParams();
   const room = roomId ? getRoom(roomId) : undefined;
+  const { markRoomOpened } = useMarkRoomOpened();
+
+  // The only input to the 30-day "still wanted" decay check — fire on every room-detail mount.
+  React.useEffect(() => {
+    if (roomId) markRoomOpened(roomId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId]);
 
   if (!room) {
     return (

@@ -94,6 +94,26 @@ right after sign-in when `onboardingRequired: true` and no workspace exists yet.
 - **Screen 03's "Primary market" / "Markets you sell in":** `GET /workspace/proposed-markets`
   (already fully documented in `workspace.md`) — not the currency endpoints above, which only
   cover currency codes, no country data at all.
+- **"Add another market" picker, added 2026-09-08:** the cards only ever rendered
+  `proposed-markets`' own guesses — a workspace couldn't declare a market outside that small
+  proposed set even though `PUT /markets` itself accepts any `{ countryCode, currencyCode }`
+  pair (see `workspace.md`'s notes on that endpoint). Added a country `SearchableSelect` (options
+  from `getCountryOptions()` in `src/lib/location.tsx`, same source as the start-of-onboarding
+  country field) below the proposal cards. A manually added market defaults `currencyCode` to
+  `null` (server falls back to the country's usual currency), with its own per-card
+  `SearchableSelect` (options from `GET /currency/supported`, same list "Reporting currency"
+  already uses) so the currency can be overridden — e.g. a US-registered business billing a UK
+  market in GBP rather than USD. Proposals' currencies are left as the API already picked; only
+  manually added markets get this override control.
+- **Bug fixed 2026-09-08: the pre-fill effect was re-seeding the form on every
+  `GET /proposed-markets` refetch, not just the first.** react-query refetches that query on
+  window focus by default, so tabbing away (e.g. to grab the step-up email code) and back would
+  silently `form.reset()` the whole markets form back to the server's original proposal —
+  discarding any market the user had added and any primary-market change, mid-session. Guarded
+  with a `useRef` so the reset fires exactly once, on the first successful fetch; the form is the
+  source of truth after that. This also matches `GET /proposed-markets`'s own documented
+  `declared: true` semantics ("proposals become a comparison, not a starting point — must not
+  overwrite existing choices with a fresh scrape") which the un-guarded effect was violating.
 - **Search UX for the country/timezone pickers:** no combobox/typeahead component exists in this
   app yet (only a plain, non-searchable Radix `Select`), and no combobox library is installed.
   Hand-rolling a filter-as-you-type list on the existing `Popover` primitive rather than adding a

@@ -3,6 +3,7 @@ import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
 import type {
+  LifecycleAtStakeAmountDto,
   LifecycleCalloutDto,
   LifecycleMeasuredValueDto,
   LifecycleReferralReachDto,
@@ -75,7 +76,7 @@ export interface StageData {
   yearOverYearCaveat: string | null;
   primaryConversion: LifecycleMeasuredValueDto<number>;
   /** Added 2026-09-04. Decided by the same code GET /map uses — real value only for activate/retain/churn. */
-  atStake: LifecycleMeasuredValueDto<number>;
+  atStake: LifecycleMeasuredValueDto<LifecycleAtStakeAmountDto[]>;
   departures: StageDepartureDto[];
   restating: boolean;
   callouts: LifecycleCalloutDto[];

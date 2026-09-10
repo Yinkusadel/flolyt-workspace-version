@@ -19,6 +19,9 @@ wired into code yet, so we always have a source of truth to check against and co
 | Lifecycle | [lifecycle.md](lifecycle.md) | 69/69 documented, 69/69 scaffolded (service+hook files, typechecks clean), 1/69 wired (`GET /map`, partial). Full-surface reference (tab matrix, conventions) at [lifecycle-reference.md](lifecycle-reference.md) |
 | App shell | [app-shell.md](app-shell.md) | 5/5 documented (`/search /home /inbox /command-bar /sources`), 0/5 wired |
 | Rooms | [rooms.md](rooms.md) | 52/52 documented, service+hook scaffolded for all 52, 0/52 wired into a page |
+| AI credits | [ai-credits.md](ai-credits.md) | 6/6 documented and scaffolded (service+hook), 3/6 wired (`GET /balance`, `GET /packs`, `POST /purchase` — `user-menu.tsx` + `plan-and-billing`) |
+| Wallet | [wallet.md](wallet.md) | 5/5 documented and scaffolded (service+hook), 3/5 wired (`GET /balance`, `GET /transactions`, `POST /topup`, into `plan-and-billing`) |
+| AI proposals | [ai-proposals.md](ai-proposals.md) | 4/4 documented and wired into the chat panel (`conversations/detail-route.tsx` + `proposal-card.tsx`); Inbox side not built yet |
 
 ## Per-endpoint entry format
 

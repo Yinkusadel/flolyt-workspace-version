@@ -23,18 +23,6 @@ export type WorkingAgentRow = {
   willReachTone?: Tone;
 };
 
-/** I02 — "needs a decision from you" cards. */
-export type DecisionCard = {
-  agent?: AgentRef;
-  waitingLabel: string;
-  title: string;
-  body: string;
-  footnote: string;
-  footnoteTone: Tone;
-  roomId: string;
-  itemId: string;
-};
-
 /** I02/I05 shared shape for a customer/person quote row. */
 export type MentionRow = {
   person: PersonRef;

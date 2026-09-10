@@ -13,6 +13,14 @@ export type PersonRef = { initials: string; name: string; department: Department
 export type AgentRef = { initials: string; name: string };
 export type Actor = { kind: "human"; person: PersonRef } | { kind: "agent"; agent: AgentRef };
 
+/**
+ * A bare owner reference from an endpoint that only carries an id + name (`GET /rooms`'s
+ * `ownerMemberId`/`ownerName`) — no `department`, so no department-coded avatar color is
+ * possible. Rendered as a plain neutral avatar, never through `ActorAvatar`/`PersonDot` (both
+ * require a full `PersonRef`).
+ */
+export type OwnerRef = { id: string; initials: string; name: string };
+
 /** A room's own lifecycle state — distinct from `RoomListState`, which is the index's filter-tab value. */
 export type RoomStatus = "open" | "closed" | "recovering" | "restricted";
 
@@ -27,11 +35,11 @@ export type RoomListRow = {
   title: string;
   condition: string;
   stage?: string;
-  market?: string;
   population: string;
-  atRisk: string;
+  /** null when the leakage cell behind this room can't currently be read — render "unavailable", never a stale/zero figure. */
+  atRisk: string | null;
   atRiskTone?: Tone;
-  owner?: PersonRef;
+  owner?: OwnerRef;
   working: AgentRef[];
   last: string;
   lastTone?: Tone;
