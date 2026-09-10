@@ -83,13 +83,14 @@ key/value row rather than dropping it.
 - **Used by:** `services/api/ai-proposals/reject-ai-proposal.ts`, `features/ai-proposals/use-decide-ai-proposal.ts`, wired into the card's "Reject" button.
 - **Status:** wired (chat only)
 
-## Not yet built: the Inbox side
+## Also wired: the Inbox side
 
-[[flolyt_inbox_rebuild]]'s "Needs a decision from you" section (`normal-state.tsx`'s
-`DECISION_CARDS`) is still static mock data with a different shape (`DecisionCard`:
-`{agent, waitingLabel, title, body, footnote, footnoteTone, roomId, itemId}`) — it does not call
-this endpoint yet, and the AI's own chat copy ("the proposal card is sitting in your inbox") is
-currently aspirational for anything outside the open conversation. Wiring the Inbox to this same
-`GET` (no `conversationId` filter, so it becomes "everything waiting on me across every
-conversation") is the natural next step — see [[flolyt_inbox_rebuild]] for the reminder to do this
-when Inbox work resumes.
+[[flolyt_inbox_rebuild]]'s "Needs a decision from you" section
+(`pages/everyday/inbox/states/normal-state.tsx`) called this same `GET` unscoped (no
+`conversationId` — "everything waiting on me across every conversation") and renders each row
+with the same `proposal-card.tsx` component the chat panel uses, rather than inventing a second
+card. The old mock `DECISION_CARDS`/`DecisionCard` type and its derived `INBOX_PENDING_COUNT`
+sidebar badge were deleted, not kept as a fallback — `components/sidebar.tsx`'s Inbox badge now
+counts the same live list. Bulk-select was deliberately left off these cards: accept only allows
+"one card, one person, one decision," so select-mode still applies to the "Someone mentioned you"
+table but not here.

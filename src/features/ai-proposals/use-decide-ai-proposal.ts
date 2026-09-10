@@ -4,19 +4,16 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { acceptAiProposal } from "@/services/api/ai-proposals/accept-ai-proposal";
 import { deferAiProposal } from "@/services/api/ai-proposals/defer-ai-proposal";
 import { rejectAiProposal } from "@/services/api/ai-proposals/reject-ai-proposal";
-import { AI_PROPOSALS_QUERY_KEY } from "./use-get-ai-proposals";
-
-interface UseDecideAiProposalOptions {
-  conversationId?: string;
-}
-
 // One card, one person, one decision — three separate mutations rather than a single "decide"
 // endpoint because the server itself exposes them as distinct actions (defer requires `because`,
 // accept optionally takes edited arguments, reject takes neither).
-export const useDecideAiProposal = (options?: UseDecideAiProposalOptions) => {
+//
+// Invalidates every "ai-proposals" query regardless of its params (conversation-scoped in the
+// chat, unscoped in the Inbox) rather than trying to target one exact param shape — a decided
+// proposal should disappear from every list showing it, not just the one it was decided from.
+export const useDecideAiProposal = () => {
   const queryClient = useQueryClient();
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: AI_PROPOSALS_QUERY_KEY({ conversationId: options?.conversationId }) });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["ai-proposals"] });
 
   const accept = useMutation({
     mutationFn: acceptAiProposal,

@@ -14,7 +14,6 @@ import type {
   AuthorityStat,
   BulkActionRow,
   Customer,
-  DecisionCard,
   DelegationCard,
   DelegationRow,
   FallbackOption,
@@ -85,30 +84,6 @@ export const WORKING_AGENTS: WorkingAgentRow[] = [
   },
 ];
 
-/** I02 — "needs a decision from you" cards. */
-export const DECISION_CARDS: DecisionCard[] = [
-  {
-    agent: REPEAT_DECAY,
-    waitingLabel: "Waiting 19 hours",
-    title: "Reactivate 100,000 in three waves",
-    body: "Second order never happened · proposed 07:41. Nothing sends until you approve, and about 4,100 customers age out of the window each day.",
-    footnote: "₦412M · review in the room",
-    footnoteTone: "amber",
-    roomId: "second-order-never-happened",
-    itemId: "i-8f2c",
-  },
-  {
-    agent: INVOLUNTARY_CHURN,
-    waitingLabel: "Waiting 4 hours",
-    title: "Retry cards at payday +1",
-    body: "Cards failing on renewal night · proposed 04:12. Ravi is the named owner; this is in your inbox because he named you as cover while he is away.",
-    footnote: "₦88M · review in the room",
-    footnoteTone: "amber",
-    roomId: "cards-failing-on-renewal-night",
-    itemId: "i-9d41",
-  },
-];
-
 /** I02 — "someone mentioned you" table. */
 export const MENTIONS: MentionRow[] = [
   {
@@ -134,9 +109,6 @@ export const NEVER_APPEAR_CALLOUT = {
   title: "What will never appear here",
   body: "An agent narrating its own tool calls is not a notification. 412 runs finished cleanly overnight and none of them reached this screen. Only outcomes and asks arrive — which is the only reason the amber badge still means something.",
 };
-
-/** Sidebar badge — pending count, amber only where a person must act. */
-export const INBOX_PENDING_COUNT = DECISION_CARDS.length;
 
 /** I03 — grouped triage table, /inbox?group=cost. */
 export const GROUPED_ROWS: GroupedRow[] = [

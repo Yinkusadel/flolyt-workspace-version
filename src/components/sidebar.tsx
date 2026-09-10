@@ -51,7 +51,7 @@ import {
 import { useGetRooms } from "@/features/rooms/use-get-rooms";
 import { useGetAiConversations } from "@/features/ai-conversations/use-get-ai-conversations";
 import { useArchiveAiConversation } from "@/features/ai-conversations/use-archive-ai-conversation";
-import { INBOX_PENDING_COUNT } from "@/pages/everyday/inbox/data";
+import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
 import {
   Select,
   SelectContent,
@@ -87,7 +87,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: "What to do today", href: "/what-to-do-today", icon: ListChecks },
       { label: "Goals", href: "/goals", icon: Target },
       { label: "Digest", href: "/digest", icon: Newspaper },
-      { label: "Inbox", href: "/inbox", icon: Inbox, badge: INBOX_PENDING_COUNT || undefined },
+      { label: "Inbox", href: "/inbox", icon: Inbox },
       { label: "Handoff", href: "/handoff", icon: ArrowLeftRight },
     ],
   },
@@ -234,6 +234,12 @@ function Sidebar({
   // Open rooms only (the default GET /rooms filter) — needsYou is what the old mock's badge counted.
   const { data: roomsData } = useGetRooms();
   const roomsNeedingApproval = roomsData?.data.rooms.filter((r) => r.needsYou).length ?? 0;
+
+  // Every proposal still pending across every conversation — the Inbox badge used to count a
+  // static mock (`INBOX_PENDING_COUNT`); this is the same real list its "Needs a decision from
+  // you" section now renders.
+  const { data: proposalsData } = useGetAiProposals();
+  const pendingProposalsCount = proposalsData?.data.length ?? 0;
 
   const { data: conversationsData, isLoading: conversationsLoading } = useGetAiConversations({
     pageNumber: 1,
@@ -426,7 +432,12 @@ function Sidebar({
             </p>
             <div className="space-y-0.5">
               {section.items.map((item) => {
-                const badge = item.href === "/rooms" ? roomsNeedingApproval || undefined : item.badge;
+                const badge =
+                  item.href === "/rooms"
+                    ? roomsNeedingApproval || undefined
+                    : item.href === "/inbox"
+                      ? pendingProposalsCount || undefined
+                      : item.badge;
                 return (
                   <NavLink
                     key={item.href}
