@@ -43,6 +43,8 @@ function FundWalletSection({ walletCurrency }: { walletCurrency: string | undefi
       amount: numericAmount,
       currency: walletCurrency ?? null,
       description: description.trim() || null,
+      // Sends the user right back to this page once the gateway's done with them.
+      callbackUrl: `${window.location.origin}/plan-and-billing`,
     });
   };
 

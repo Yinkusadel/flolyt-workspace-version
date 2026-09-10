@@ -72,7 +72,19 @@ credits domain, which is a thing the wallet pays for, not a synonym for it).
 ## POST /api/payments/wallets/topup
 
 - **Purpose:** Start a real-money wallet top-up via an external payment gateway.
-- **Request:** `{ amount: number; currency?: string | null; description?: string | null; callbackUrl?: string | null }`.
+- **Request:** `{ amount: number; currency?: string | null; description?: string | null;
+  callbackUrl: string }` — confirmed against this endpoint's own Scalar/OpenAPI doc, pasted live by
+  the user 2026-09-10. `callbackUrl` is documented as nullable, but a real live call with it
+  null/omitted 422'd with `redirect_url should be a string` — **`redirect_url` is not this
+  endpoint's own field name** (a first attempt at fixing this by renaming the request field to
+  `redirect_url` was wrong and didn't change the error at all, which is itself the tell). Reading
+  is that this backend forwards `callbackUrl` to a downstream payment gateway that uses its own
+  `redirect_url` parameter name internally, and the 422 is that gateway's validation leaking
+  through `responseMessage` — so despite the nullable typing, a real value is required in practice.
+  Sent as `${window.location.origin}/plan-and-billing` — always resolves correctly in both dev and
+  prod, no hardcoded domain needed (the reference hardcodes its own deployed origin instead).
+  **Not yet re-confirmed live with a real value** — the doc-correction and the real-value fix landed
+  together, un-tested as of this write-up.
 - **Response — NOT the standard envelope:**
   ```ts
   interface TopupWalletResponse {
@@ -83,13 +95,14 @@ credits domain, which is a thing the wallet pays for, not a synonym for it).
   }
   ```
   No `{data, messages, succeeded}` wrapper — this one sits unwrapped at the top level, same class
-  of exception as `currency.md`'s two endpoints. Confirmed against the reference implementation's
-  own typing, not independently verified live.
+  of exception as `currency.md`'s two endpoints.
+  **On a validation error, `responseMessage` is itself a JSON-encoded string** (confirmed live):
+  `"{\"status\":false,\"error\":\"validation_error\",\"message\":\"...\",\"data\":{\"<field>\":
+  {\"message\":\"...\"}}}"`. `get-server-error.ts` now unwraps this (parses it, surfaces the
+  nested `message` plus any per-field messages from `data`) instead of dumping raw JSON text into
+  a toast.
 - **Used by:** `services/api/wallet/topup-wallet.ts`, `features/wallet/use-topup-wallet.ts`, wired into `pages/plan-and-billing/index.tsx`'s inline "Fund wallet" section. On success with a `paymentUrl`, the hook redirects the whole page there via `window.location.href` — there is nothing left to render in-app until the user returns from the payment gateway.
-- **Status:** wired
-- **Notes:** `callbackUrl` isn't set from this app yet (the reference hardcodes its own deployed
-  origin) — worth revisiting once this app has a real deployed URL to send the gateway back to
-  after payment; currently omitted (`undefined`), so whatever the backend defaults to applies.
+- **Status:** wired, request shape corrected against the live doc — not yet re-confirmed working
 
 ## Error shape difference from every other domain
 
