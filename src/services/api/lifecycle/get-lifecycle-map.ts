@@ -24,6 +24,16 @@ export interface LifecycleMeasuredValueDto<T> {
   wouldUnlock?: string;
 }
 
+// Confirmed 2026-09-10 from real GET /lifecycle/map and GET /lifecycle/stage responses: atStake's
+// `value` is an array of per-currency amounts, not a bare number — "money is never blended across
+// currencies" (see formatCompactMoney) applies here too, so a stage that's genuinely exposed in
+// two currencies gets two entries rather than one summed figure. In practice this is a
+// single-entry array today, but the shape is an array regardless.
+export interface LifecycleAtStakeAmountDto {
+  currency: string;
+  amountAtRisk: number;
+}
+
 // Added 2026-09-04 from the fresh spec — the map card's one always-present figure. 6 of 10
 // stages compute this today (new customers, repeat share, order-problem-then-lapsed customers,
 // plans in use, plans up-for-renewal); the other 4 are declared but gated, never computed on the
@@ -63,7 +73,7 @@ export interface LifecycleStageDto {
   // the other 7 stages always carry missingSource/wouldUnlock instead of a value. See
   // docs/endpoints/lifecycle.md's GET /map entry for why the 2026-08-31 note claiming otherwise
   // was a misread of its own evidence.
-  atStake: LifecycleMeasuredValueDto<number>;
+  atStake: LifecycleMeasuredValueDto<LifecycleAtStakeAmountDto[]>;
   /** A true zero, unlike the other figures here — rooms are opened on a leakage cell, so a stage with nothing measurable cannot have one. */
   openRoomCount: number;
   population: LifecycleMeasuredValueDto<number>;

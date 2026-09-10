@@ -16,7 +16,7 @@ import { OpenARoomModal, type OpenRoomPreset } from "@/pages/everyday/lifecycle/
 import { ShareOrExportModal, type ShareOrExportPreset } from "@/pages/everyday/lifecycle/stage/modals/share-or-export-modal";
 import { AssignStageOwnerModal } from "@/pages/everyday/lifecycle/stage/modals/assign-stage-owner-modal";
 import { STAGES } from "@/pages/everyday/lifecycle/data";
-import { formatCompactCurrency, formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
+import { formatAtStakeAmounts, formatCompactCurrency, formatCount, formatPercent } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetStage } from "@/features/lifecycle/use-get-stage";
 import type { StageData, StageDepartureDto } from "@/services/api/lifecycle/get-stage";
 import { ACQUIRE_OPEN_ROOM_PRESET, ACQUIRE_SHARE_EXPORT_PRESET } from "@/pages/everyday/lifecycle/stage/acquire/data";
@@ -225,7 +225,7 @@ function buildStageKpis(stageData: StageData | undefined): Kpi[] {
       ? { eyebrow: "Population", value: formatCount(population.value), tone: "teal", note: populationNote }
       : { eyebrow: "Population", unavailable: { missingSource: population.missingSource, wouldUnlock: population.wouldUnlock } },
     atStake.value !== null
-      ? { eyebrow: "At stake", value: formatCompactCurrency(atStake.value), tone: "rose", note: "in this stage alone" }
+      ? { eyebrow: "At stake", value: formatAtStakeAmounts(atStake.value), tone: "rose", note: "in this stage alone" }
       : { eyebrow: "At stake", unavailable: { missingSource: atStake.missingSource, wouldUnlock: atStake.wouldUnlock } },
     rateOfChange.value !== null
       ? { eyebrow: "Rate of change", value: `${rateOfChange.value >= 0 ? "+" : ""}${formatPercent(rateOfChange.value)}`, tone: rateOfChange.value >= 0 ? "teal" : "rose", note: "month over month" }

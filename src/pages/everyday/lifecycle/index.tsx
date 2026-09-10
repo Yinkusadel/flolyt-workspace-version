@@ -17,10 +17,10 @@ import { useGetChurnChain } from "@/features/lifecycle/use-get-churn-chain";
 import { useGetInstrumentation } from "@/features/lifecycle/use-get-instrumentation";
 import { useGetChurnRoutings } from "@/features/lifecycle/use-get-churn-routings";
 import useAcknowledgeChurnRouting from "@/features/lifecycle/use-acknowledge-churn-routing";
-import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import type { LifecycleAtStakeAmountDto, LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 import type { InstrumentationGapDto } from "@/services/api/lifecycle/get-instrumentation";
 import type { ChurnRoutingDto } from "@/services/api/lifecycle/get-churn-routings";
-import { formatCompactCurrency, formatHeadlineValue, formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
+import { formatAtStakeAmounts, formatHeadlineValue, formatShortDate } from "@/pages/everyday/lifecycle/format-measured-value";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -214,11 +214,12 @@ function buildRoutingColumns(onAcknowledge: (row: RoutingRow) => void, isAcknowl
   ];
 }
 
-// GET /lifecycle/map's atStake is a measured-value wrapper, not a bare number — confirmed
-// 2026-08-31 from a real response (see LifecycleMeasuredValueDto).
-function formatAtStake(atStake: LifecycleMeasuredValueDto<number>): string {
+// GET /lifecycle/map's atStake is a measured-value wrapper around an array of per-currency
+// amounts, not a bare number — confirmed 2026-09-10 from a real response
+// (see LifecycleMeasuredValueDto / LifecycleAtStakeAmountDto).
+function formatAtStake(atStake: LifecycleMeasuredValueDto<LifecycleAtStakeAmountDto[]>): string {
   if (atStake.value === null) return "Unavailable";
-  return formatCompactCurrency(atStake.value);
+  return formatAtStakeAmounts(atStake.value);
 }
 
 /**
