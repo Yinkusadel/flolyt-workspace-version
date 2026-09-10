@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
 import { DataTable, type Column } from "@/pages/everyday/lifecycle/stage/data-table";
 import { EYEBROW_CLASS } from "@/pages/everyday/lifecycle/data";
-import { formatCompactMoney, formatCount, formatPercent, round } from "@/pages/everyday/lifecycle/format-measured-value";
+import { formatCompactMoney, formatCount, formatMonthYear, formatPercent, round } from "@/pages/everyday/lifecycle/format-measured-value";
 import { useGetPriceMargin } from "@/features/lifecycle/use-get-price-margin";
 import type { PriceMarginMonthDto } from "@/services/api/lifecycle/get-price-margin";
 
@@ -15,7 +15,7 @@ function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "n
 type MonthRow = PriceMarginMonthDto & { id: string };
 
 const COLUMNS: Column<MonthRow>[] = [
-  { key: "period", header: "Month", render: (row) => <span className="font-semibold text-ink-2">{row.period}</span> },
+  { key: "period", header: "Month", render: (row) => <span className="font-semibold text-ink-2">{formatMonthYear(row.period)}</span> },
   { key: "currency", header: "Currency", align: "right", render: (row) => <span className="font-mono text-ink-4">{row.currency}</span> },
   { key: "orders", header: "Orders", align: "right", render: (row) => <span className="font-mono text-ink">{formatCount(row.orders)}</span> },
   { key: "revenue", header: "Revenue", align: "right", render: (row) => <span className="font-mono text-ink">{formatCompactMoney(row.revenue, row.currency)}</span> },
@@ -25,13 +25,13 @@ const COLUMNS: Column<MonthRow>[] = [
     key: "marginRate",
     header: "Margin rate",
     align: "right",
-    render: (row) => <span className="text-ink-2">{row.marginRate !== null ? formatPercent(row.marginRate) : <span className="text-ink-4">Unavailable</span>}</span>,
+    render: (row) => <span className="text-ink-2">{row.marginRate.value !== null ? formatPercent(row.marginRate.value) : <span className="text-ink-4">Unavailable</span>}</span>,
   },
   {
     key: "marginPerOrder",
     header: "Margin / order",
     align: "right",
-    render: (row) => <span className="text-ink-4">{row.marginPerOrder !== null ? formatCompactMoney(row.marginPerOrder, row.currency) : "Unavailable"}</span>,
+    render: (row) => <span className="text-ink-4">{row.marginPerOrder.value !== null ? formatCompactMoney(row.marginPerOrder.value, row.currency) : "Unavailable"}</span>,
   },
 ];
 
@@ -94,15 +94,15 @@ const PriceMarginTab = () => {
             {margin.trend.map((trend) => (
               <div key={trend.currency} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                 <span className="text-[11.5px] text-ink-2">
-                  {trend.currency} · {trend.from} → {trend.to}
+                  {trend.currency} · {formatMonthYear(trend.from)} → {formatMonthYear(trend.to)}
                 </span>
                 <span className="font-mono text-[11px]">
-                  {trend.fromRate !== null ? formatPercent(trend.fromRate) : "Unavailable"} → {trend.toRate !== null ? formatPercent(trend.toRate) : "Unavailable"}
-                  {trend.change !== null && (
-                    <span className={trend.change >= 0 ? "text-teal" : "text-rose"}>
+                  {trend.fromRate.value !== null ? formatPercent(trend.fromRate.value) : "Unavailable"} → {trend.toRate.value !== null ? formatPercent(trend.toRate.value) : "Unavailable"}
+                  {trend.change.value !== null && (
+                    <span className={trend.change.value >= 0 ? "text-teal" : "text-rose"}>
                       {" "}
-                      ({trend.change >= 0 ? "+" : ""}
-                      {round(trend.change, 1)} pts)
+                      ({trend.change.value >= 0 ? "+" : ""}
+                      {round(trend.change.value * 100, 1)} pts)
                     </span>
                   )}
                 </span>

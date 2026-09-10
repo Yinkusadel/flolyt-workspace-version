@@ -2,8 +2,12 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
-import type { LifecycleCalloutDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import type { LifecycleCalloutDto, LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
 
+// Confirmed 2026-09-10 from a real GET /lifecycle/price/margin response: marginRate/
+// marginPerOrder/fromRate/toRate/change are all the same measured-value wrapper used elsewhere in
+// this domain (see get-lifecycle-map.ts's LifecycleMeasuredValueDto), not bare `number | null` as
+// first typed — that mistyping rendered as "NaN%" / "₦[object Object]" until fixed.
 export interface PriceMarginMonthDto {
   period: string;
   currency: string;
@@ -11,18 +15,20 @@ export interface PriceMarginMonthDto {
   revenue: number;
   cost: number;
   margin: number;
-  marginRate: number | null;
-  marginPerOrder: number | null;
+  marginRate: LifecycleMeasuredValueDto<number>;
+  marginPerOrder: LifecycleMeasuredValueDto<number>;
 }
 
 export interface PriceMarginTrendDto {
   currency: string;
   from: string;
   to: string;
-  fromRate: number | null;
-  toRate: number | null;
-  /** In percentage points — 40% to 30% is "ten points," never "25% down." */
-  change: number | null;
+  fromRate: LifecycleMeasuredValueDto<number>;
+  toRate: LifecycleMeasuredValueDto<number>;
+  /** Confirmed 2026-09-10: same 0-1 fraction scale as fromRate/toRate (e.g. -0.0010 for 24.07% →
+   *  23.98%), not already multiplied into percentage points — multiply by 100 before rounding, or
+   *  "-0.1 pts" renders as "-0.0 pts". */
+  change: LifecycleMeasuredValueDto<number>;
 }
 
 export interface PriceMarginData {
