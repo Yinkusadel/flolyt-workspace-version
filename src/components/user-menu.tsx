@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/utils/auth-context";
 import useLogout from "@/features/auth/use-logout";
+import { useGetCreditBalance } from "@/features/ai-credits/use-get-credit-balance";
 
 type MenuLink = { label: string; href: string; icon: LucideIcon };
 
@@ -115,6 +116,7 @@ export function UserMenu() {
   const { user } = useAuth();
   const { logout, isPending } = useLogout();
   const [expanded, setExpanded] = useState<Section | null>(null);
+  const { data: creditBalance, isLoading: isCreditBalanceLoading } = useGetCreditBalance();
 
   if (!user) return null;
 
@@ -139,6 +141,41 @@ export function UserMenu() {
           <p className="truncate text-[12.5px] font-semibold text-ink">{user.name}</p>
           {user.email && <p className="mt-0.5 truncate text-[11px] text-ink-3">{user.email}</p>}
         </DropdownMenuLabel>
+
+        <DropdownMenuSeparator />
+
+        <div className="px-2 py-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10.5px] font-semibold text-ink">Credits</span>
+            <Link
+              to="/plan-and-billing"
+              className="rounded-control bg-paper px-2 py-1 text-[10px] font-medium text-ink-3 transition-colors hover:bg-line hover:text-ink"
+            >
+              Add credits
+            </Link>
+          </div>
+
+          <div className="mt-2 space-y-1">
+            <div className="flex items-center justify-between text-[12px] font-medium text-ink">
+              <span>Available</span>
+              <span className="font-mono tabular-nums">
+                {isCreditBalanceLoading ? "…" : (creditBalance?.data.totalAvailable ?? 0)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[10px] text-ink-4">
+              <span>Free monthly credits</span>
+              <span className="font-mono tabular-nums">
+                {isCreditBalanceLoading ? "…" : (creditBalance?.data.monthlyFreeLimit ?? 0)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[10px] text-ink-4">
+              <span>Daily limit</span>
+              <span className="font-mono tabular-nums">
+                {isCreditBalanceLoading ? "…" : (creditBalance?.data.dailyFreeLimit ?? 0)}
+              </span>
+            </div>
+          </div>
+        </div>
 
         <DropdownMenuSeparator />
 
