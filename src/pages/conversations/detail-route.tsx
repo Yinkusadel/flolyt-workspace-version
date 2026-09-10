@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAiConversationMessages } from "@/features/ai-conversations/use-ai-conversation-messages";
 import { useGetAiConversationById } from "@/features/ai-conversations/use-get-ai-conversation-by-id";
 import type { AiConversationMessage, ReasoningStep } from "@/features/ai-conversations/ai-conversation-types";
+import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
+import { ProposalCard, type ProposalCardData } from "./proposal-card";
 import flolytLogo from "../../../assets/logo.png";
 
 // Guards the bootstrap prompt (arriving via nav state from /new-conversation) against being
@@ -106,6 +108,7 @@ export default function AiConversationDetailRoute() {
   const {
     messages: streamedMessages,
     reasoningSteps,
+    proposals: streamedProposals,
     animatedStreamingText,
     isStreaming,
     currentPhase,
@@ -119,6 +122,33 @@ export default function AiConversationDetailRoute() {
   const { data: history, isLoading: isHistoryLoading } = useGetAiConversationById(
     !isNew ? id : undefined
   );
+
+  // The SSE `proposal` event is a live nudge, not the source of truth — GET /ai/proposals is,
+  // and is what makes a still-pending proposal survive a page reload. Merge the two: prefer the
+  // fetched copy (it carries the real `status`), fall back to the streamed one until the refetch
+  // (triggered by accept/defer/reject) catches up.
+  const { data: proposalsData } = useGetAiProposals({ conversationId: !isNew ? id : undefined });
+
+  const pendingProposals = useMemo<ProposalCardData[]>(() => {
+    const fetched = proposalsData?.data ?? [];
+    const fetchedIds = new Set(fetched.map((p) => p.id));
+    const streamedOnly = streamedProposals.filter((p) => !fetchedIds.has(p.proposalId));
+
+    return [
+      ...fetched.map((p) => ({
+        id: p.id,
+        toolName: p.toolName,
+        argumentsJson: p.argumentsJson,
+        status: p.status,
+      })),
+      ...streamedOnly.map((p) => ({
+        id: p.proposalId,
+        toolName: p.toolName,
+        argumentsJson: p.argumentsJson,
+        status: "Pending",
+      })),
+    ];
+  }, [proposalsData, streamedProposals]);
 
   usePageBreadcrumb([
     { label: "New conversation", to: "/new-conversation" },
@@ -144,7 +174,7 @@ export default function AiConversationDetailRoute() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, animatedStreamingText]);
+  }, [messages, animatedStreamingText, pendingProposals.length]);
 
   const handleSend = () => {
     const message = input.trim();
@@ -236,6 +266,12 @@ export default function AiConversationDetailRoute() {
             )}
           </div>
         )}
+
+        {pendingProposals.map((proposal) => (
+          <div key={proposal.id} className="flex min-w-0 justify-start">
+            <ProposalCard proposal={proposal} conversationId={!isNew ? id : undefined} />
+          </div>
+        ))}
 
         <div ref={bottomRef} />
       </div>

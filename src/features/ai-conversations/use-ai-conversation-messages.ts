@@ -3,7 +3,12 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { COOKIE_KEYS, getCookie } from "@/utils/cookies";
-import type { AgentStreamEvent, AiConversationMessage, ReasoningStep } from "./ai-conversation-types";
+import type {
+  AgentStreamEvent,
+  AiConversationMessage,
+  ReasoningStep,
+  StreamProposal,
+} from "./ai-conversation-types";
 
 interface UseAiConversationMessagesOptions {
   onReasoningStep?: (step: ReasoningStep) => void;
@@ -22,6 +27,7 @@ export const useAiConversationMessages = (
   const [conversationId, setConversationId] = useState<string | null>(initialConversationId ?? null);
   const [messages, setMessages] = useState<AiConversationMessage[]>([]);
   const [reasoningSteps, setReasoningSteps] = useState<ReasoningStep[]>([]);
+  const [proposals, setProposals] = useState<StreamProposal[]>([]);
   const [streamingText, setStreamingText] = useState("");
   const [animatedStreamingText, setAnimatedStreamingText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -63,6 +69,7 @@ export const useAiConversationMessages = (
     setConversationId(nextConversationId);
     setMessages([]);
     setReasoningSteps([]);
+    setProposals([]);
     setStreamingText("");
     setAnimatedStreamingText("");
     setIsStreaming(false);
@@ -256,6 +263,11 @@ export const useAiConversationMessages = (
                 break;
               }
 
+              case "proposal": {
+                if (parsed.proposal) setProposals((prev) => [...prev, parsed.proposal!]);
+                break;
+              }
+
               case "error": {
                 setMessages((prev) => [
                   ...prev,
@@ -311,6 +323,7 @@ export const useAiConversationMessages = (
     conversationId,
     messages,
     reasoningSteps,
+    proposals,
     streamingText,
     animatedStreamingText,
     isStreaming,

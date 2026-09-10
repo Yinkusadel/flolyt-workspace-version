@@ -26,6 +26,7 @@ export const COMMAND_CENTER_BASE_URL = `${API_BASE_URL}/api/flolyt/command-cente
 export const AGENT_RUNS_BASE_URL = `${COMMAND_CENTER_BASE_URL}/runs`;
 export const SKILLS_BASE_URL = `${API_BASE_URL}/api/flolyt/skills`;
 export const AI_CONVERSATIONS_BASE_URL = `${API_BASE_URL}/api/flolyt/ai/conversations`;
+export const AI_PROPOSALS_BASE_URL = `${API_BASE_URL}/api/flolyt/ai/proposals`;
 export const NOTIFICATIONS_BASE_URL = `${API_BASE_URL}/api/flolyt/notifications`;
 export const AICREDITS_BASE_URL = `${API_BASE_URL}/api/flolyt/payments/credits`;
 export const GOVERNANCE_BASE_URL = `${API_BASE_URL}/api/flolyt/governance`;
@@ -379,6 +380,13 @@ export const API_ENDPOINTS = {
     GET_BY_ID: `${AI_CONVERSATIONS_BASE_URL}/{id}`,
     ARCHIVE: `${AI_CONVERSATIONS_BASE_URL}/{id}`,
     SAMPLE_PROMPTS: `${AI_CONVERSATIONS_BASE_URL}/sample-prompts`,
+  },
+
+  AI_PROPOSALS: {
+    LIST: `${AI_PROPOSALS_BASE_URL}`,
+    ACCEPT: `${AI_PROPOSALS_BASE_URL}/{id}/accept`,
+    DEFER: `${AI_PROPOSALS_BASE_URL}/{id}/defer`,
+    REJECT: `${AI_PROPOSALS_BASE_URL}/{id}/reject`,
   },
 
 

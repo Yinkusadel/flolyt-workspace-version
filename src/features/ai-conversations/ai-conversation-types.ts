@@ -21,6 +21,20 @@ export interface ReasoningStep {
   kind?: "tool_call" | "reasoning_step";
 }
 
+// A mutating action the agent wants to take, surfaced for human review instead of executed
+// outright. `argumentsJson` is a JSON-encoded string, not a nested object — parse it to get the
+// actual tool arguments (which themselves nest further JSON-string fields depending on toolName,
+// e.g. open_room_on_cohort's rulesJson/peopleJson/agentsJson). Same record GET
+// /api/flolyt/ai/proposals reads back later, so this is a live nudge, not the source of truth.
+export interface StreamProposal {
+  proposalId: string;
+  toolName: string;
+  argumentsJson: string;
+  conversationId: string;
+  runId: string | null;
+  createdAtUtc: string;
+}
+
 // SSE event during streaming.
 // Nulls are omitted from SSE payloads (WhenWritingNull) — treat every optional field as possibly
 // absent, not just possibly null.
@@ -32,4 +46,6 @@ export interface AgentStreamEvent {
   reasoningSteps: ReasoningStep[] | null;
   /** Set on `run_queued`. Unlocks stop/steer/reconnect in a future stage — captured now, unused. */
   runId?: string | null;
+  /** Set on `proposal`. */
+  proposal?: StreamProposal | null;
 }
