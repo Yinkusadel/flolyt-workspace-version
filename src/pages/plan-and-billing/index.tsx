@@ -138,7 +138,7 @@ export default function PlanAndBillingRoute() {
       <div>
         <h1 className="text-[17px] font-semibold text-ink">Plan and billing</h1>
         <p className="mt-1 text-[11.5px] text-ink-3">
-          Your wallet funds everything — monthly active users, messages sent, and AI credit usage.
+          Your wallet funds everything: monthly active users, messages sent, and AI credit usage.
         </p>
       </div>
 
