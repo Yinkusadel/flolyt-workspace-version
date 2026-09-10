@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowUp, CheckCircle2, ChevronDown, Database, Loader2 } from "lucide-react";
+import { AlertTriangle, ArrowUp, CheckCircle2, ChevronDown, Database, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { usePageBreadcrumb } from "@/components/breadcrumb-context";
@@ -198,6 +198,15 @@ export default function AiConversationDetailRoute() {
                 <div className="rounded-2xl rounded-tr-none bg-ultra px-4 py-2.5 text-[12.5px] leading-relaxed wrap-break-word text-paper shadow-xs">
                   {message.content}
                 </div>
+              </div>
+            </div>
+          ) : message.role === "error" ? (
+            <div key={message.key} className="flex min-w-0 justify-start">
+              <div className="flex max-w-[85%] min-w-0 items-start gap-2 rounded-card border border-rose-border bg-rose-bg px-3.5 py-2.5">
+                <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-rose" />
+                <p className="min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-rose">
+                  {message.content}
+                </p>
               </div>
             </div>
           ) : (

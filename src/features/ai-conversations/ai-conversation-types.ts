@@ -3,7 +3,9 @@ export interface AiConversationMessage {
   // the backend logs into the message array, not part of the actual conversation. Confirmed live
   // 2026-09-10: rendering it as if it were "assistant" put "[Tools called: ...] [Data context: ...]"
   // in the chat as though Flolyt said it. Never emitted by the live SSE stream itself, only history.
-  role: "user" | "assistant" | "context";
+  // "error" is a local role — pushed by the hook itself when the stream fails or errors out, not
+  // something the backend ever sends. Lets the UI style it as an error instead of a normal reply.
+  role: "user" | "assistant" | "context" | "error";
   content: string;
   timestamp: string;
 }

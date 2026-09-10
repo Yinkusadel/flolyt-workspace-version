@@ -397,3 +397,30 @@ history/live-stream merge in `detail-route.tsx`, neither backend-side.
 
 **Not yet re-confirmed live** — both fixed and build-verified, not yet re-tested against the real
 backend in this session.
+
+## Progress (2026-09-10) — error events weren't visually distinct, `insufficient_credits` seen live
+
+The user hit a real `insufficient_credits` error live (captured in the SSE log — a `status`
+event with `state: "error"` and a colon-prefixed code in `message`
+(`"insufficient_credits:This operation requires 18 credits but you only have 9 available..."`),
+followed by a proper `error` eventType event carrying the same text cleanly in `errorMessage`, no
+prefix). Asked directly: "are we handling this error event type?" — yes, functionally (the `error`
+case already pushed a message and stopped the stream), but it rendered as a plain gray line with a
+literal `"Error: "` text prefix, indistinguishable from a normal reply — easy to miss for something
+actionable like a credit top-up prompt.
+
+- Gave error messages their own role instead of stuffing them into `"assistant"` with a string
+  prefix: `AiConversationMessage.role` widened again, now `"user" | "assistant" | "context" |
+  "error"` — `"error"` is local-only, pushed by the hook itself (the `error` SSE case and the
+  network/fetch-failure `catch` block), never something the backend sends as a persisted role.
+- `detail-route.tsx` renders `role === "error"` as its own branch: a rose-toned card
+  (`border-rose-border bg-rose-bg text-rose`, this app's standard error token trio) with an
+  `AlertTriangle` icon, instead of falling through to the plain-paragraph assistant branch.
+- Only used `parsed.errorMessage` (clean, no prefix) from the `error` eventType — did **not** try
+  to parse the colon-prefixed `status(state:"error")` event's `message` field
+  (`insufficient_credits:...`), since the `error` eventType always follows it with the same text
+  already clean. No credits-purchase page/route exists in this app yet
+  (grepped `route.tsx`, nothing) — didn't invent a CTA button linking anywhere, just styled the
+  message itself; add a "Buy credits" action once that surface exists.
+
+Build-verified, not yet re-confirmed live.

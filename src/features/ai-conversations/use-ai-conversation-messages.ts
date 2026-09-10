@@ -260,8 +260,8 @@ export const useAiConversationMessages = (
                 setMessages((prev) => [
                   ...prev,
                   {
-                    role: "assistant",
-                    content: `Error: ${parsed.errorMessage ?? "Unknown error"}`,
+                    role: "error",
+                    content: parsed.errorMessage ?? "Something went wrong",
                     timestamp: new Date().toISOString(),
                   },
                 ]);
@@ -283,7 +283,7 @@ export const useAiConversationMessages = (
         const errorMessage = err instanceof Error ? err.message : "Something went wrong";
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: `Error: ${errorMessage}`, timestamp: new Date().toISOString() },
+          { role: "error", content: errorMessage, timestamp: new Date().toISOString() },
         ]);
       } finally {
         if (!completePendingRef.current) {
