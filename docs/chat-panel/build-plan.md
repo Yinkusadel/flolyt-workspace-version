@@ -362,3 +362,38 @@ verified end-to-end here.
   or an abort that still produced a response) — not proven yet whether the "complete" event
   actually never fires or fires under a different shape; the `finally` fix is correct either way
   since it doesn't depend on parsing that event.
+
+## Progress (2026-09-10) — full live send/stream/render cycle captured, two more bugs
+
+The user sent a bootstrap message end-to-end against the real backend and captured the entire SSE
+log (see the events dump — this is the first time this session has seen an actual, complete
+transcript of the backend's event shape). Two bugs found from that one exchange, both from the
+history/live-stream merge in `detail-route.tsx`, neither backend-side.
+
+- **The whole exchange rendered twice.** `dedupeMessages`'s key was `role-timestamp-content`. The
+  user's message exists as two logically-identical-but-differently-timestamped copies: the
+  optimistic one pushed locally the instant `sendMessage` runs (browser `Date.now()`), and the one
+  that comes back once `GET_BY_ID` history resolves (server timestamp) — the history query goes
+  from disabled to enabled the moment the bootstrap flow's `onConversationCreated` swaps the URL
+  from `/conversations/new` to the real id, and it can resolve either before or after the SSE
+  stream finishes. Same problem hits the assistant reply once it's persisted. Because the
+  timestamps never matched, dedup never recognized either pair as the same message. Fixed by
+  dropping `timestamp` from the dedupe key entirely (`role-content` only) — a false-positive dedupe
+  (two genuinely different messages with identical role+content) is a far rarer, lower-stakes
+  failure than this was.
+- **A `[Tools called: ...] [Data context: ...]` line rendered as if Flolyt said it.** Confirmed
+  from the SSE log that this text is **not** part of any `response_chunk` — the actual reply starts
+  clean at `"Aye"`. It's a separate row in the history array's `messages`, with a role our type
+  didn't account for (`AiConversationMessage.role` only declared `"user" | "assistant"`). Given
+  this is the same backend family as `flolyt-dashboard`, and `WorkflowStudio/index.tsx` explicitly
+  filters `msg.role === 'context'` out of its chat messages into a separate
+  `historicalReasoningSteps` array for exactly this kind of tool-call/data-context summary line,
+  the role is almost certainly `"context"`. Widened the type to include it and filters it out of
+  `fromHistory` before merging — v1 scope doesn't build a historical-reasoning-trace UI for it (only
+  the *live* turn gets `ReasoningTrace`), so for now it's simply dropped rather than rendered as
+  chat content. If a real design for showing past reasoning steps is wanted later, this is where
+  those rows would be picked back up from, the same way `historicalReasoningSteps` does in the
+  reference.
+
+**Not yet re-confirmed live** — both fixed and build-verified, not yet re-tested against the real
+backend in this session.
