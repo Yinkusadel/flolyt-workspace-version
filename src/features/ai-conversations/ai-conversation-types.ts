@@ -1,5 +1,9 @@
 export interface AiConversationMessage {
-  role: "user" | "assistant";
+  // "context" also comes back from history (GET_BY_ID) — a tool-call/data-context summary line
+  // the backend logs into the message array, not part of the actual conversation. Confirmed live
+  // 2026-09-10: rendering it as if it were "assistant" put "[Tools called: ...] [Data context: ...]"
+  // in the chat as though Flolyt said it. Never emitted by the live SSE stream itself, only history.
+  role: "user" | "assistant" | "context";
   content: string;
   timestamp: string;
 }

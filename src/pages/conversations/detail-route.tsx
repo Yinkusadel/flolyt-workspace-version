@@ -27,7 +27,11 @@ function dedupeMessages(messages: AiConversationMessage[]): ChatMessage[] {
   const seen = new Set<string>();
   const result: ChatMessage[] = [];
   messages.forEach((m, idx) => {
-    const key = `${m.role}-${m.timestamp}-${m.content}`;
+    // Timestamp deliberately left out of the key: the same logical message shows up with two
+    // different timestamps — a browser-side one from the optimistic/streamed copy, a server-side
+    // one once it comes back from GET_BY_ID history — so keying on it let both through as if they
+    // were two separate messages. Confirmed live 2026-09-10.
+    const key = `${m.role}-${m.content}`;
     if (seen.has(key)) return;
     seen.add(key);
     result.push({ ...m, key: `${key}-${idx}` });
@@ -132,7 +136,9 @@ export default function AiConversationDetailRoute() {
   }, [isNew, bootstrapPrompt, bootstrapToken]);
 
   const messages = useMemo(() => {
-    const fromHistory = history?.data.messages ?? [];
+    // "context" rows (tool-call/data-context summaries the backend logs into history) aren't part
+    // of the conversation — drop them rather than rendering them as an assistant bubble.
+    const fromHistory = (history?.data.messages ?? []).filter((m) => m.role !== "context");
     return dedupeMessages([...fromHistory, ...streamedMessages]);
   }, [history, streamedMessages]);
 
@@ -152,7 +158,11 @@ export default function AiConversationDetailRoute() {
   return (
     <div className="mx-auto flex h-full max-w-3xl flex-col">
       <div className="min-w-0 flex-1 space-y-5 overflow-x-hidden overflow-y-auto py-6">
-        {isHistoryLoading && (
+        {/* Only for a cold visit to an existing conversation with nothing on screen yet — not
+            during a bootstrap send, where the history query flips from disabled to enabled the
+            moment the new id resolves (mid-stream) and would otherwise pop this in above the
+            prompt/response that are already showing. */}
+        {isHistoryLoading && messages.length === 0 && !isStreaming && (
           <div className="space-y-3">
             <Skeleton className="h-16 w-2/3 rounded-card" />
             <Skeleton className="ml-auto h-10 w-1/2 rounded-card" />
