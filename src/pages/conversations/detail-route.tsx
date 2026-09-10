@@ -127,7 +127,10 @@ export default function AiConversationDetailRoute() {
   // and is what makes a still-pending proposal survive a page reload. Merge the two: prefer the
   // fetched copy (it carries the real `status`), fall back to the streamed one until the refetch
   // (triggered by accept/defer/reject) catches up.
-  const { data: proposalsData } = useGetAiProposals({ conversationId: !isNew ? id : undefined });
+  const { data: proposalsData } = useGetAiProposals(
+    { conversationId: !isNew ? id : undefined },
+    { enabled: !isNew }
+  );
 
   const pendingProposals = useMemo<ProposalCardData[]>(() => {
     const fetched = proposalsData?.data ?? [];
@@ -268,8 +271,8 @@ export default function AiConversationDetailRoute() {
         )}
 
         {pendingProposals.map((proposal) => (
-          <div key={proposal.id} className="flex min-w-0 justify-start">
-            <ProposalCard proposal={proposal} conversationId={!isNew ? id : undefined} />
+          <div key={proposal.id} className="flex max-w-[85%] min-w-0 justify-start">
+            <ProposalCard proposal={proposal} />
           </div>
         ))}
 
