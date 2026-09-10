@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import type { CreditOperationDto } from "@/services/api/ai-credits/get-credit-operations";
 import { useGetWalletBalance } from "@/features/wallet/use-get-wallet-balance";
 import { useGetWalletTransactions } from "@/features/wallet/use-get-wallet-transactions";
 import { useTopupWallet } from "@/features/wallet/use-topup-wallet";
@@ -16,6 +18,7 @@ import { usePurchaseCreditPack } from "@/features/ai-credits/use-purchase-credit
 const EYEBROW_CLASS = "font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase";
 const AMOUNT_PRESETS = [10000, 50000, 100000];
 const TRANSACTIONS_PAGE_SIZE = 8;
+const OPERATIONS_PREVIEW_COUNT = 4;
 
 function formatMoney(amount: number, currency: string | undefined) {
   if (!currency) return amount.toLocaleString();
@@ -28,6 +31,18 @@ function formatMoney(amount: number, currency: string | undefined) {
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return <p className={EYEBROW_CLASS}>{children}</p>;
+}
+
+function CostRow({ op }: { op: CreditOperationDto }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-2.5">
+      <div>
+        <p className="text-[12px] font-medium text-ink">{op.displayName}</p>
+        {op.description && <p className="text-[10.5px] text-ink-4">{op.description}</p>}
+      </div>
+      <p className="shrink-0 text-[12px] font-semibold text-ultra tabular-nums">{op.creditCost} credits</p>
+    </div>
+  );
 }
 
 function FundWalletSection({ walletCurrency }: { walletCurrency: string | undefined }) {
@@ -117,6 +132,7 @@ export default function PlanAndBillingRoute() {
   const [showFundWallet, setShowFundWallet] = useState(false);
   const [transactionsPage, setTransactionsPage] = useState(1);
   const [selectedPackName, setSelectedPackName] = useState<string | null>(null);
+  const [showAllOperations, setShowAllOperations] = useState(false);
 
   const { data: walletBalance, isLoading: isWalletLoading } = useGetWalletBalance();
   const { data: transactionsData, isLoading: isTransactionsLoading } = useGetWalletTransactions({
@@ -162,7 +178,11 @@ export default function PlanAndBillingRoute() {
                 </p>
               )}
             </div>
-            <Button type="button" onClick={() => setShowFundWallet((prev) => !prev)}>
+            <Button
+              type="button"
+              onClick={() => setShowFundWallet((prev) => !prev)}
+              disabled={isWalletLoading}
+            >
               <WalletIcon className="size-3.5" />
               Fund wallet
             </Button>
@@ -273,20 +293,35 @@ export default function PlanAndBillingRoute() {
           ) : creditOperations.length === 0 ? (
             <p className="p-4 text-[11.5px] text-ink-3">No operation costs published yet.</p>
           ) : (
-            creditOperations.map((op) => (
-              <div key={op.name} className="flex items-center justify-between px-4 py-2.5">
-                <div>
-                  <p className="text-[12px] font-medium text-ink">{op.displayName}</p>
-                  {op.description && <p className="text-[10.5px] text-ink-4">{op.description}</p>}
-                </div>
-                <p className="shrink-0 text-[12px] font-semibold text-ultra tabular-nums">
-                  {op.creditCost} credits
-                </p>
-              </div>
-            ))
+            creditOperations.slice(0, OPERATIONS_PREVIEW_COUNT).map((op) => <CostRow key={op.name} op={op} />)
           )}
         </div>
+
+        {creditOperations.length > OPERATIONS_PREVIEW_COUNT && (
+          <button
+            type="button"
+            onClick={() => setShowAllOperations(true)}
+            className="text-[11.5px] font-semibold text-ultra hover:underline"
+          >
+            View all {creditOperations.length}
+          </button>
+        )}
       </section>
+
+      <Dialog open={showAllOperations} onOpenChange={setShowAllOperations}>
+        <DialogContent className="max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>What costs credits</DialogTitle>
+          </DialogHeader>
+          <DialogBody className="p-0">
+            <div className="divide-y divide-line">
+              {creditOperations.map((op) => (
+                <CostRow key={op.name} op={op} />
+              ))}
+            </div>
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
 
       {/* Recent wallet activity */}
       <section className="space-y-3">
