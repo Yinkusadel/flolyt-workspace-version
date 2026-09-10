@@ -62,13 +62,16 @@ six.
 - **Response:** `data = { packName, creditsAdded, amountCharged, newCreditBalance }`.
 - **Used by:** `services/api/ai-credits/purchase-credit-pack.ts`,
   `features/ai-credits/use-purchase-credit-pack.ts` (invalidates `credit-balance`, `credit-packs`,
-  `credit-overview` on success), wired into `pages/plan-and-billing/index.tsx`'s pack-purchase
-  button.
+  `credit-overview`, **and `wallet-balance`/`wallet-transactions`** on success — see Notes), wired
+  into `pages/plan-and-billing/index.tsx`'s pack-purchase button.
 - **Status:** wired
-- **Notes:** unlike wallet top-up, this returns synchronously (`amountCharged`, no `paymentUrl`) —
-  unconfirmed how it's actually charged (saved card on file? deducted from the wallet balance
-  itself?). Flag this to the user before assuming either; the reference implementation doesn't
-  show a payment step for it either, so it may just not be real yet on the backend.
+- **Notes:** confirmed live 2026-09-10 — a purchase **does** charge the wallet (real money out of
+  the same NGN balance top-up deposits into, not a saved card), settling the earlier open question
+  about how `amountCharged` gets paid. Caught the same way the sidebar-list bug was caught earlier
+  in this build: the mutation only invalidated the credit-side queries
+  (`credit-balance`/`credit-packs`/`credit-overview`), so the wallet balance on the same page went
+  stale after a purchase until now. Same class of bug, same fix — invalidate every query a mutation
+  actually affects, not just the ones its own domain's name suggests.
 
 ## GET /api/flolyt/payments/credits/operations
 

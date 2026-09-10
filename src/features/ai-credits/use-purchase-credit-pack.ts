@@ -21,6 +21,11 @@ export const usePurchaseCreditPack = () => {
       queryClient.invalidateQueries({ queryKey: ["credit-balance"] });
       queryClient.invalidateQueries({ queryKey: ["credit-packs"] });
       queryClient.invalidateQueries({ queryKey: ["credit-overview"] });
+      // A pack purchase charges real money (`amountCharged` in the response) out of the same
+      // wallet the "Fund wallet" flow deposits into — its balance and transaction list go stale
+      // here too if these aren't invalidated alongside the credit-side queries.
+      queryClient.invalidateQueries({ queryKey: ["wallet-balance"] });
+      queryClient.invalidateQueries({ queryKey: ["wallet-transactions"] });
     },
     onError: (error) => {
       toast.error(error.message || "Failed to purchase credit pack");
