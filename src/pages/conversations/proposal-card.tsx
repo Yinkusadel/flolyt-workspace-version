@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
+import { Chip, type ChipTone } from "@/components/ui/chip";
 import { useDecideAiProposal } from "@/features/ai-proposals/use-decide-ai-proposal";
 
 export interface ProposalCardData {

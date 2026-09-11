@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Chip } from "@/pages/everyday/lifecycle/stage/chip";
+import { Chip } from "@/components/ui/chip";
 import { AcceptInvitationForm } from "@/pages/teams/accept-invitation/accept-invitation-form";
 import useGetInvitationDetails from "@/features/teams/use-get-invitation-details";
 import flolytLogo from "../../../../assets/logo.png";

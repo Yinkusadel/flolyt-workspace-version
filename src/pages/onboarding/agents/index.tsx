@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
+import { Callout } from "@/components/ui/rail";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
 import { BackButton } from "@/pages/onboarding/back-button";
 import { AgentCard, AgentCardSkeleton } from "@/pages/onboarding/agents/agent-card";

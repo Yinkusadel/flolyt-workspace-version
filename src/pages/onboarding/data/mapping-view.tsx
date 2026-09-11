@@ -3,7 +3,7 @@ import { Check, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Callout } from "@/pages/everyday/lifecycle/stage/rail";
+import { Callout } from "@/components/ui/rail";
 import type { DataMapDto, DataMapTableDto } from "@/services/api/workspace/get-data-map";
 
 const CONFIDENCE_CLASS: Record<"high" | "medium" | "low", string> = {

@@ -1,39 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  ArrowLeftRight,
-  Award,
-  BarChart3,
-  Bot,
-  BookOpen,
   ChevronDown,
-  Filter,
-  Fingerprint,
-  FlaskConical,
-  Gem,
-  GitBranch,
-  HeartPulse,
-  Inbox,
-  Library,
-  LineChart,
-  ListChecks,
-  Map,
-  Megaphone,
   MessageCircle,
   MessageCirclePlus,
   MessagesSquare,
   MoreVertical,
-  Newspaper,
-  PieChart,
-  Reply,
-  Share2,
-  ShieldCheck,
-  Store,
-  Target,
   Trash2,
-  TrendingUp,
-  Users2,
-  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,7 +24,6 @@ import {
 import { useGetRooms } from "@/features/rooms/use-get-rooms";
 import { useGetAiConversations } from "@/features/ai-conversations/use-get-ai-conversations";
 import { useArchiveAiConversation } from "@/features/ai-conversations/use-archive-ai-conversation";
-import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
 import {
   Select,
   SelectContent,
@@ -81,56 +53,7 @@ type NavSection = {
 const NAV_SECTIONS: NavSection[] = [
   {
     label: "EVERY DAY",
-    items: [
-      { label: "Lifecycle", href: "/lifecycle", icon: TrendingUp },
-      { label: "Rooms", href: "/rooms", icon: MessagesSquare },
-      { label: "What to do today", href: "/what-to-do-today", icon: ListChecks },
-      { label: "Goals", href: "/goals", icon: Target },
-      { label: "Digest", href: "/digest", icon: Newspaper },
-      { label: "Inbox", href: "/inbox", icon: Inbox },
-      { label: "Handoff", href: "/handoff", icon: ArrowLeftRight },
-    ],
-  },
-  {
-    label: "REVENUE",
-    items: [
-      { label: "Leakage map", href: "/leakage-map", icon: Map },
-      { label: "Funnel", href: "/funnel", icon: Filter },
-      { label: "Scenario", href: "/scenario", icon: GitBranch },
-      { label: "Forecast", href: "/forecast", icon: LineChart },
-      { label: "Attribution", href: "/attribution", icon: Share2 },
-      { label: "Value", href: "/value", icon: Gem },
-      { label: "Benchmarks", href: "/benchmarks", icon: BarChart3 },
-    ],
-  },
-  {
-    label: "CUSTOMERS",
-    items: [
-      { label: "Segments", href: "/segments", icon: PieChart },
-      { label: "Customer health", href: "/customer-health", icon: HeartPulse },
-      { label: "Campaigns", href: "/campaigns", icon: Megaphone },
-      { label: "Experiments", href: "/experiments", icon: FlaskConical },
-      { label: "Replies", href: "/replies", icon: Reply },
-    ],
-  },
-  {
-    label: "KNOWLEDGE",
-    items: [
-      { label: "Business memory", href: "/business-memory", icon: Library },
-      { label: "Playbooks", href: "/playbooks", icon: BookOpen },
-      { label: "Community", href: "/community", icon: Users2 },
-      { label: "Recognition", href: "/recognition", icon: Award },
-    ],
-  },
-  {
-    label: "AGENTS",
-    items: [
-      { label: "AI teammates", href: "/ai-teammates", icon: Bot },
-      { label: "Agent detail", href: "/agent-detail", icon: Fingerprint },
-      { label: "Agent builder", href: "/agent-builder", icon: Wrench },
-      { label: "Marketplace", href: "/marketplace", icon: Store },
-      { label: "Governance", href: "/governance", icon: ShieldCheck },
-    ],
+    items: [{ label: "Rooms", href: "/rooms", icon: MessagesSquare }],
   },
 ];
 
@@ -234,12 +157,6 @@ function Sidebar({
   // Open rooms only (the default GET /rooms filter) — needsYou is what the old mock's badge counted.
   const { data: roomsData } = useGetRooms();
   const roomsNeedingApproval = roomsData?.data.rooms.filter((r) => r.needsYou).length ?? 0;
-
-  // Every proposal still pending across every conversation — the Inbox badge used to count a
-  // static mock (`INBOX_PENDING_COUNT`); this is the same real list its "Needs a decision from
-  // you" section now renders.
-  const { data: proposalsData } = useGetAiProposals();
-  const pendingProposalsCount = proposalsData?.data.length ?? 0;
 
   const { data: conversationsData, isLoading: conversationsLoading } = useGetAiConversations({
     pageNumber: 1,
@@ -433,11 +350,7 @@ function Sidebar({
             <div className="space-y-0.5">
               {section.items.map((item) => {
                 const badge =
-                  item.href === "/rooms"
-                    ? roomsNeedingApproval || undefined
-                    : item.href === "/inbox"
-                      ? pendingProposalsCount || undefined
-                      : item.badge;
+                  item.href === "/rooms" ? roomsNeedingApproval || undefined : item.badge;
                 return (
                   <NavLink
                     key={item.href}
