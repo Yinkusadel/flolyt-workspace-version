@@ -13,8 +13,15 @@ import { HEAT_SCALE, HEAT_TEXT_CLASS, HOW_ITS_CALCULATED, MATRIX_COLUMNS, MATRIX
  */
 export function LeakageMatrix() {
   return (
-    <div className="rounded-card border border-line bg-paper p-4">
-      <div className="overflow-x-auto">
+    <div className="rounded-card border border-line bg-paper py-4">
+      {/* Padding lives on the scrolling element itself, not the card around it — a card-level
+          `p-4` still looks flush at max scroll because the scroller's own content (not the
+          static card padding) is what defines how far right you can actually scroll to.
+          `py-1.5` matters too, not just `px-4`: setting only `overflow-x` to `auto` makes the
+          browser compute `overflow-y` as `auto` as well (a CSS spec rule, not a Tailwind quirk),
+          so the selection ring on the bottom-row cells — which paints outside their own box,
+          same as the right-column ones — was getting clipped by that now-non-visible y-axis too. */}
+      <div className="overflow-x-auto px-4 py-1.5">
         <div className="grid min-w-180 grid-cols-[110px_repeat(5,1fr)] gap-2">
           <div />
           {MATRIX_COLUMNS.map((col) => (
@@ -100,7 +107,7 @@ export function LeakageMatrix() {
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-3.5 text-[10.5px]">
+      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line px-4 pt-3.5 text-[10.5px]">
         <span className="font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">Low</span>
         <div className="flex gap-1">
           {HEAT_SCALE.map((color) => (
