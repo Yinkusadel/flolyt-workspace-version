@@ -43,9 +43,9 @@ type NavItem = {
   beta?: boolean;
 };
 
-// Placeholders (Leakage Map, Inbox, Playbooks, Business Memory) are linked here on purpose —
-// they route to an empty page under src/pages until their content gets rebuilt or restored
-// from src/oldpages.
+// Leakage Map is rebuilt (src/pages/leakage-map); Inbox/Playbooks/Business Memory are still
+// placeholders linked here on purpose — they route to an empty page under src/pages until their
+// content gets rebuilt or restored from src/oldpages.
 const NAV_ITEMS: NavItem[] = [
   { label: "Leakage Map", href: "/leakage-map", icon: Map },
   { label: "Inbox", href: "/inbox", icon: Inbox },

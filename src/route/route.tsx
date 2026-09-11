@@ -142,7 +142,8 @@ export const routes = createBrowserRouter([
                 path: "plan-and-billing",
                 Component: PlanAndBillingRoute,
               },
-              // Sidebar placeholders — linked from the nav but not rebuilt yet.
+              // Leakage Map is rebuilt (src/pages/leakage-map). The rest are sidebar
+              // placeholders — linked from the nav but not rebuilt yet.
               { path: "leakage-map", Component: LeakageMap },
               { path: "inbox", Component: Inbox },
               { path: "playbooks", Component: Playbooks },
