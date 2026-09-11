@@ -2,9 +2,52 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { MessagesSquare, Paperclip, Link2, ArrowUp } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Chip } from "@/components/ui/chip";
 import { ME, type InboxMessage, type ThreadItem } from "@/pages/inbox/data";
+
+/** Mirrors the tail trick from conversations/detail-route.tsx's user bubble, flipped for the left side. */
+function MessageBubble({ message }: { message: InboxMessage }) {
+  const isMe = message.person.name === ME.name;
+
+  return (
+    <div className={cn("flex flex-col gap-1", isMe ? "items-end" : "items-start")}>
+      <div className="flex items-baseline gap-2 px-1">
+        <span className="text-[11.5px] font-semibold text-ink-2">{isMe ? "You" : message.person.name}</span>
+        <span className="text-[11px] text-ink-4">{message.timestamp}</span>
+      </div>
+
+      <div className={cn("relative max-w-[75%] min-w-0", isMe ? "pr-2" : "pl-2")}>
+        <span
+          aria-hidden
+          className={cn("absolute top-0 size-0", isMe ? "right-0" : "left-0")}
+          style={
+            isMe
+              ? {
+                  borderStyle: "solid",
+                  borderWidth: "8px 8px 0 0",
+                  borderColor: "var(--color-ultra) transparent transparent transparent",
+                }
+              : {
+                  borderStyle: "solid",
+                  borderWidth: "8px 0 0 8px",
+                  borderColor: "var(--color-paper-2) transparent transparent transparent",
+                }
+          }
+        />
+        <div
+          className={cn(
+            "rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed wrap-break-word",
+            isMe ? "rounded-tr-none bg-ultra text-paper shadow-xs" : "rounded-tl-none bg-paper-2 text-ink"
+          )}
+        >
+          {message.text}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function ThreadView({ item }: { item: ThreadItem }) {
   const [messages, setMessages] = React.useState<InboxMessage[]>(
@@ -44,14 +87,7 @@ export function ThreadView({ item }: { item: ThreadItem }) {
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
         {messages.map((message, i) => (
-          <div key={i} className="flex items-baseline gap-2">
-            <span className="text-[13px] font-semibold text-ink">
-              {message.person.name === ME.name ? "You" : message.person.name}
-            </span>
-            <span className="text-[11px] text-ink-4">{message.timestamp}</span>
-            <span className="sr-only">:</span>
-            <p className="ml-1 min-w-0 flex-1 text-[13px] leading-relaxed text-ink-2">{message.text}</p>
-          </div>
+          <MessageBubble key={i} message={message} />
         ))}
 
         {item.attachedRoom && (
