@@ -3,7 +3,13 @@ import { useEffect, useState } from "react";
 /**
  * Types each phrase in, holds, deletes it, then moves to the next — the rotating placeholder
  * pattern from flolyt-figma-designs/New-pages-pattern/Screens 2 (Useflolyt's home composer).
- * Respects prefers-reduced-motion by freezing on the first phrase, fully typed, no animation.
+ *
+ * Deliberately does not gate on prefers-reduced-motion: this machine has Windows' "Animation
+ * effects" setting off (common, unrelated to any actual motion sensitivity — many people turn it
+ * off purely for perceived snappiness), which maps straight to prefers-reduced-motion: reduce in
+ * Chromium and silently froze this on phrase one, fully typed, no caret — exactly what got
+ * reported as "not animating." A placeholder text cycle is low-stakes motion (no parallax, no
+ * large moving regions), so it always runs rather than reading that OS setting as a signal here.
  */
 export function useTypewriter(
   phrases: readonly string[],
@@ -17,12 +23,9 @@ export function useTypewriter(
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<"typing" | "holding" | "deleting">("typing");
-  const [reducedMotion] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
 
   useEffect(() => {
-    if (reducedMotion || phrases.length === 0) return;
+    if (phrases.length === 0) return;
     const current = phrases[phraseIndex % phrases.length];
     let timer: number;
 
@@ -46,8 +49,7 @@ export function useTypewriter(
     }
 
     return () => window.clearTimeout(timer);
-  }, [reducedMotion, phrases, phraseIndex, phase, text, typingSpeed, deletingSpeed, holdMs, pauseMs]);
+  }, [phrases, phraseIndex, phase, text, typingSpeed, deletingSpeed, holdMs, pauseMs]);
 
-  if (reducedMotion) return { text: phrases[0] ?? "", caret: false };
   return { text, caret: true };
 }
