@@ -81,6 +81,11 @@ function Row({ item, active, onSelect }: { item: InboxItem; active: boolean; onS
     <button
       type="button"
       onClick={onSelect}
+      // Belt-and-suspenders: some browsers scroll a focused element fully into view when it's
+      // only partially visible at click time. Blocking the mousedown-driven focus keeps the
+      // click working without any reveal-scroll; keyboard nav (Tab) is untouched since this only
+      // intercepts a pointer-triggered focus.
+      onMouseDown={(e) => e.preventDefault()}
       className={cn(
         "w-full rounded-panel px-2.5 py-2.5 text-left transition-colors",
         active ? "bg-ultra-bg" : "hover:bg-paper-2"
