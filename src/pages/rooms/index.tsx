@@ -60,7 +60,7 @@ function EmptyState() {
           <p className="mt-1 text-[11.5px] text-ink-3">Nothing open yet</p>
         </div>
         <Button asChild className="shrink-0">
-          <Link to="/rooms/new">New room</Link>
+          <Link to="/">New room</Link>
         </Button>
       </div>
 
@@ -72,7 +72,7 @@ function EmptyState() {
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
           <Button asChild>
-            <Link to="/rooms/new">Open one yourself</Link>
+            <Link to="/">Open one yourself</Link>
           </Button>
           <Button asChild variant="outline">
             <Link to="/ai-teammates">See what agents watch</Link>
@@ -569,7 +569,7 @@ const Rooms = () => {
             <p className="mt-1 text-[11.5px] text-ink-3">One room · opened by an agent · nobody assigned</p>
           </div>
           <Button asChild className="shrink-0">
-            <Link to="/rooms/new">New room</Link>
+            <Link to="/">New room</Link>
           </Button>
         </div>
         <FirstRoomBanner
@@ -631,7 +631,7 @@ const Rooms = () => {
           </p>
         </div>
         <Button asChild className="shrink-0">
-          <Link to="/rooms/new">New room</Link>
+          <Link to="/">New room</Link>
         </Button>
       </div>
 
