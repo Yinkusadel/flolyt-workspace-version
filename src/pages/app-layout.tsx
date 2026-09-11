@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 
-import { Sidebar, type ViewingAs } from "@/components/sidebar";
+import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { BreadcrumbContext, type Crumb } from "@/components/breadcrumb-context";
 import { cn } from "@/lib/utils";
@@ -16,11 +16,8 @@ import { getRoom } from "@/pages/rooms/room/data";
  * protected-route component instead of changing this file's structure.
  */
 
-/** Shared with every route via <Outlet context>, so a screen can scope its own content to the sidebar's "viewing as" selection. */
-export type AppOutletContext = { viewingAs: ViewingAs };
-
 function getBreadcrumb(pathname: string): React.ReactNode {
-  if (pathname === "/" || pathname === "/new-conversation") return "New conversation";
+  if (pathname === "/" || pathname === "/new-conversation") return "Home";
 
   if (pathname === "/rooms") return "Rooms";
   if (pathname === "/rooms/new")
@@ -44,6 +41,11 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   }
 
   if (pathname === "/plan-and-billing") return "Plan and billing";
+
+  if (pathname === "/leakage-map") return "Leakage Map";
+  if (pathname === "/inbox") return "Inbox";
+  if (pathname === "/playbooks") return "Playbooks";
+  if (pathname === "/business-memory") return "Business Memory";
 
   return "Home";
 }
@@ -70,7 +72,6 @@ function renderCrumbs(crumbs: Crumb[]): React.ReactNode {
 
 export const AppLayout = () => {
   const [navOpen, setNavOpen] = React.useState(false);
-  const [viewingAs, setViewingAs] = React.useState<ViewingAs>("Everyone");
   const [breadcrumbOverride, setBreadcrumbOverride] = React.useState<Crumb[] | null>(null);
   const location = useLocation();
   const breadcrumbContextValue = React.useMemo(
@@ -100,12 +101,7 @@ export const AppLayout = () => {
 
   return (
     <div className="flex h-dvh overflow-hidden bg-paper">
-      <Sidebar
-        open={navOpen}
-        onClose={() => setNavOpen(false)}
-        viewingAs={viewingAs}
-        onViewingAsChange={setViewingAs}
-      />
+      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
 
       <div
         aria-hidden
@@ -123,7 +119,7 @@ export const AppLayout = () => {
         />
         <main className="flex-1 overflow-y-auto p-page">
           <BreadcrumbContext.Provider value={breadcrumbContextValue}>
-            <Outlet context={{ viewingAs } satisfies AppOutletContext} />
+            <Outlet />
           </BreadcrumbContext.Provider>
         </main>
       </div>

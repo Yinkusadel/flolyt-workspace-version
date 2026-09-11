@@ -35,6 +35,10 @@ import { MergeRoute } from "@/pages/rooms/room/merge-route";
 import NewConversationRoute from "@/pages/conversations/new-conversation-route";
 import AiConversationDetailRoute from "@/pages/conversations/detail-route";
 import PlanAndBillingRoute from "@/pages/plan-and-billing";
+import LeakageMap from "@/pages/leakage-map";
+import Inbox from "@/pages/inbox";
+import Playbooks from "@/pages/playbooks";
+import BusinessMemory from "@/pages/business-memory";
 import { RouteError } from "@/route/route-error";
 import { ProtectedRoute } from "@/route/protected-route";
 import { GuestRoute } from "@/route/guest-route";
@@ -138,6 +142,11 @@ export const routes = createBrowserRouter([
                 path: "plan-and-billing",
                 Component: PlanAndBillingRoute,
               },
+              // Sidebar placeholders — linked from the nav but not rebuilt yet.
+              { path: "leakage-map", Component: LeakageMap },
+              { path: "inbox", Component: Inbox },
+              { path: "playbooks", Component: Playbooks },
+              { path: "business-memory", Component: BusinessMemory },
             ],
           },
         ],

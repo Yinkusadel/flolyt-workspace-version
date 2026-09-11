@@ -154,7 +154,7 @@ export default function AiConversationDetailRoute() {
   }, [proposalsData, streamedProposals]);
 
   usePageBreadcrumb([
-    { label: "New conversation", to: "/new-conversation" },
+    { label: "Home", to: "/" },
     { label: history?.data.title || "Conversation" },
   ]);
 
