@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 
 const EYEBROW_CLASS = "font-mono text-[8.6px] font-medium tracking-[0.85px] text-ink-4";
 
-const CARD_WIDTH = 280;
-const CARD_HEIGHT = 300;
+const CARD_WIDTH = 296;
+const CARD_HEIGHT = 336;
 /** Horizontal distance between a card and its neighbor, in px — tuned so neighbors peek
  *  out from behind the focused card rather than sitting fully clear of it. */
-const NEIGHBOR_OFFSET = 224;
+const NEIGHBOR_OFFSET = 244;
 const NEIGHBOR_SCALE = 0.88;
-const NEIGHBOR_OPACITY = 0.45;
+const NEIGHBOR_OPACITY = 0.5;
 
 /** Uniform shape every slide renders into, so the deck reads as one consistent object
  *  cycling through states rather than three differently-proportioned cards. */
@@ -27,10 +27,10 @@ function CarouselCardFrame({
   footer: ReactNode;
 }) {
   return (
-    <div className="flex h-full w-full flex-col p-5">
+    <div className="flex h-full w-full flex-col p-5.5">
       <p className={EYEBROW_CLASS}>{eyebrow}</p>
-      <div className="mt-3.5 min-h-0 flex-1">{children}</div>
-      <div className="mt-3.5 shrink-0">{footer}</div>
+      <div className="mt-4 min-h-0 flex-1">{children}</div>
+      <div className="mt-4 shrink-0">{footer}</div>
     </div>
   );
 }
@@ -47,26 +47,33 @@ function PastWeekCard() {
     >
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
-          <p className="font-serif text-xl text-ink">$412K</p>
-          <p className="mt-0.5 font-mono text-[8.5px] font-medium tracking-[0.05em] text-ink-4">AT RISK</p>
+          <p className="font-serif text-2xl text-ink">$412K</p>
+          <p className="mt-1 font-mono text-[8.5px] font-medium tracking-[0.05em] text-ink-4">AT RISK</p>
         </div>
         <div>
-          <p className="font-serif text-xl text-ink">3</p>
-          <p className="mt-0.5 font-mono text-[8.5px] font-medium tracking-[0.05em] text-ink-4">ROOMS</p>
+          <p className="font-serif text-2xl text-ink">3</p>
+          <p className="mt-1 font-mono text-[8.5px] font-medium tracking-[0.05em] text-ink-4">ROOMS</p>
         </div>
         <div>
-          <p className="font-serif text-xl text-ink">1</p>
-          <p className="mt-0.5 font-mono text-[8.5px] font-medium tracking-[0.05em] text-ink-4">FOR YOU</p>
+          <p className="font-serif text-2xl text-ink">1</p>
+          <p className="mt-1 font-mono text-[8.5px] font-medium tracking-[0.05em] text-ink-4">FOR YOU</p>
         </div>
       </div>
 
-      <div className="mt-4 border-t border-line pt-3.5">
-        <p className="flex items-center gap-1.5 font-serif text-[14px] text-ultra">
+      <div className="mt-4 border-t border-line pt-4">
+        <p className="flex items-center gap-1.5 font-serif text-[15px] text-ultra">
           <span className="size-1.5 shrink-0 rounded-full bg-ultra" aria-hidden />
           1 approval waiting
         </p>
-        <p className="mt-1.5 text-[11px] leading-relaxed text-ink-3">
+        <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-3">
           Room 2471 · you are the named approver
+        </p>
+      </div>
+
+      <div className="mt-4 border-t border-line pt-4">
+        <p className={EYEBROW_CLASS}>BIGGEST EXPOSURE</p>
+        <p className="mt-1.5 text-[12px] leading-relaxed font-semibold text-ink">
+          Second-order rate fell 38% to 27% after 4 March
         </p>
       </div>
     </CarouselCardFrame>
@@ -77,7 +84,7 @@ function NeedsYouCard() {
   const items = [
     { body: "Finance's objection is still open on Room 2471", action: "Open the room" },
     { body: "Zendesk stopped syncing six hours ago", action: "Reconnect" },
-    { body: "Warehouse COGS is not connected, margin reads Unavailable", action: "Connect a source" },
+    { body: "Warehouse COGS is not connected, so margin reads Unavailable", action: "Connect a source" },
   ];
 
   return (
@@ -89,12 +96,12 @@ function NeedsYouCard() {
         </Button>
       }
     >
-      <p className="font-serif text-[16px] text-ink">3 things need you</p>
-      <div className="mt-2.5 space-y-2.5">
+      <p className="font-serif text-[18px] text-ink">3 things need you</p>
+      <div className="mt-3 divide-y divide-line">
         {items.map((item) => (
-          <div key={item.body} className="border-t border-line pt-2.5 first:border-t-0 first:pt-0">
-            <p className="line-clamp-2 text-[11.5px] leading-snug text-ink-2">{item.body}</p>
-            <p className="mt-0.5 text-[11px] font-medium text-ultra">{item.action} →</p>
+          <div key={item.body} className="py-2.5 first:pt-0 last:pb-0">
+            <p className="text-[11.5px] leading-snug text-ink-2">{item.body}</p>
+            <p className="mt-1 text-[11.5px] font-medium text-ultra">{item.action} →</p>
           </div>
         ))}
       </div>
@@ -113,12 +120,12 @@ function EarlierRoomsCard() {
       }
     >
       <div className="flex h-full flex-col items-center justify-center text-center">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-control bg-paper-2">
-          <MessagesSquare className="size-4 text-ink-4" />
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-paper-2">
+          <MessagesSquare className="size-4.5 text-ink-4" />
         </span>
-        <p className="mt-3 text-[13.5px] font-semibold text-ink">Rooms waiting on you</p>
-        <p className="mt-1.5 max-w-44 text-[11.5px] leading-relaxed text-ink-3">
-          Rooms you haven't answered yet are waiting on the rooms page.
+        <p className="mt-3.5 text-[14.5px] font-semibold text-ink">Rooms waiting on you</p>
+        <p className="mt-1.5 max-w-52 text-[12px] leading-relaxed text-ink-3">
+          Rooms you haven't answered yet are waiting for you on the rooms page.
         </p>
       </div>
     </CarouselCardFrame>
@@ -153,7 +160,7 @@ export function HomeCarousel() {
   const goTo = (index: number) => setActive(((index % COUNT) + COUNT) % COUNT);
 
   return (
-    <div className="mt-10 flex w-full flex-col items-center duration-500 animate-in fade-in slide-in-from-bottom-2 delay-300">
+    <div className="mt-6 flex w-full flex-col items-center duration-500 animate-in fade-in slide-in-from-bottom-2 delay-300">
       <div className="relative w-full" style={{ height: CARD_HEIGHT }}>
         {SLIDES.map((slide, index) => {
           const offset = circularOffset(index, active, COUNT);
@@ -180,7 +187,7 @@ export function HomeCarousel() {
               }}
               className={cn(
                 "absolute rounded-card border border-line bg-paper text-left transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
-                isActive ? "cursor-default shadow-lg" : "cursor-pointer hover:opacity-70"
+                isActive ? "cursor-default shadow-xl" : "cursor-pointer hover:opacity-75"
               )}
             >
               <div className={cn(!isActive && "pointer-events-none")}>{slide.content}</div>
@@ -189,7 +196,7 @@ export function HomeCarousel() {
         })}
       </div>
 
-      <div className="mt-5 flex items-center gap-3">
+      <div className="mt-4 flex items-center gap-3">
         <button
           type="button"
           onClick={() => goTo(active - 1)}

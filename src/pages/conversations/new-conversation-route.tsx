@@ -21,7 +21,7 @@ export default function NewConversationRoute() {
   };
 
   return (
-    <div className="relative flex min-h-full flex-col items-center justify-center py-10">
+    <div className="relative flex h-full flex-col items-center overflow-hidden pt-8 pb-4">
       {/* Ambient accent glow — subtle, matches the app's --color-ultra AI accent */}
       <div
         aria-hidden
@@ -33,10 +33,10 @@ export default function NewConversationRoute() {
           <img src={flolytLogo} alt="" className="size-7 object-contain" />
         </span>
         <h1 className="mt-4 font-serif text-[26px] text-ink sm:text-[28px]">What can I do for you?</h1>
-        <p className="mt-2 text-[12.5px] text-ink-3">Ask Flolyt to look something up or take an action.</p>
+        <p className="mt-1 text-[12.5px] text-ink-3">Ask Flolyt to look something up or take an action.</p>
       </div>
 
-      <div className="group relative mt-8 w-full max-w-2xl duration-500 animate-in fade-in slide-in-from-bottom-2 delay-150">
+      <div className="group relative mt-6 w-full max-w-2xl duration-500 animate-in fade-in slide-in-from-bottom-2 delay-150">
         {/* Thin animated gradient outline — only visible while focused, kept subtle */}
         <div
           aria-hidden
