@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { HomeCarousel } from "@/pages/conversations/home-carousel";
 import flolytLogo from "../../../assets/logo.png";
 
 export default function NewConversationRoute() {
@@ -20,7 +21,7 @@ export default function NewConversationRoute() {
   };
 
   return (
-    <div className="relative flex h-full flex-col items-center justify-center overflow-hidden">
+    <div className="relative flex min-h-full flex-col items-center justify-center py-10">
       {/* Ambient accent glow — subtle, matches the app's --color-ultra AI accent */}
       <div
         aria-hidden
@@ -78,6 +79,8 @@ export default function NewConversationRoute() {
           </div>
         </div>
       </div>
+
+      <HomeCarousel />
     </div>
   );
 }
