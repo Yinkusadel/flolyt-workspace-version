@@ -2,11 +2,21 @@
  * Static content for the new leakage map, sourced from
  * flolyt-figma-designs/New-pages-pattern/leakage/leakage/svg/01–04. The export's own caption
  * (index.html) says the content is a fixed "live-demo sample" — there is no GET /leakage
- * endpoint behind these numbers, only the real GET /datasources / connected-datasources APIs
- * that back the "Connect Stripe" action on the two gap cells (see detail-panel.tsx).
+ * endpoint behind these numbers, so the "Window" picker in index.tsx only changes its own
+ * label for now; it doesn't recompute anything below it.
  */
 
 export type Tone = "rose" | "teal";
+
+export const WINDOW_OPTIONS = [
+  { value: "30d", label: "Last 30 days" },
+  { value: "60d", label: "Last 60 days" },
+  { value: "90d", label: "Last 90 days" },
+  { value: "6m", label: "Last 6 months" },
+  { value: "1y", label: "Last 12 months" },
+] as const;
+
+export const DEFAULT_WINDOW = "90d";
 
 export type Stage = {
   id: string;
