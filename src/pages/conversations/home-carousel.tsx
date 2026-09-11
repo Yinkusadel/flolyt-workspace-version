@@ -160,7 +160,7 @@ export function HomeCarousel() {
   const goTo = (index: number) => setActive(((index % COUNT) + COUNT) % COUNT);
 
   return (
-    <div className="mt-6 flex w-full flex-col items-center duration-500 animate-in fade-in slide-in-from-bottom-2 delay-300">
+    <div className="mt-6 hidden w-full flex-col items-center duration-500 animate-in fade-in slide-in-from-bottom-2 delay-300 sm:flex">
       <div className="relative w-full" style={{ height: CARD_HEIGHT }}>
         {SLIDES.map((slide, index) => {
           const offset = circularOffset(index, active, COUNT);

@@ -21,7 +21,7 @@ export default function NewConversationRoute() {
   };
 
   return (
-    <div className="relative flex h-full flex-col items-center overflow-hidden pt-8 pb-4">
+    <div className="relative flex min-h-full flex-col items-center justify-center pb-4 sm:justify-start sm:pt-2">
       {/* Ambient accent glow — subtle, matches the app's --color-ultra AI accent */}
       <div
         aria-hidden
