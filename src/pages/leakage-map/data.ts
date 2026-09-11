@@ -1,22 +1,80 @@
 /**
  * Static content for the new leakage map, sourced from
- * flolyt-figma-designs/New-pages-pattern/leakage/leakage/svg/01–04. The export's own caption
- * (index.html) says the content is a fixed "live-demo sample" — there is no GET /leakage
- * endpoint behind these numbers, so the "Window" picker in index.tsx only changes its own
- * label for now; it doesn't recompute anything below it.
+ * flolyt-figma-designs/New-pages-pattern/leakage/leakage/svg/01–04, updated per the later revision
+ * in .../leakage/Archive/04,08,09 (new "Shade by" filter, and the Window picker's options/coverage
+ * notes). The export's own caption (index.html) says the content is a fixed "live-demo sample" —
+ * there is no GET /leakage endpoint behind these numbers, so both pickers in index.tsx only change
+ * their own label and the legend caption for now; neither recomputes the matrix below them.
  */
 
 export type Tone = "rose" | "teal";
 
-export const WINDOW_OPTIONS = [
-  { value: "30d", label: "Last 30 days" },
-  { value: "60d", label: "Last 60 days" },
-  { value: "90d", label: "Last 90 days" },
-  { value: "6m", label: "Last 6 months" },
-  { value: "1y", label: "Last 12 months" },
-] as const;
+export type WindowOption = {
+  value: string;
+  label: string;
+  /** Muted coverage note shown under the label — amber (a real caveat) when `caveat` is set. */
+  note: string;
+  caveat?: boolean;
+};
+
+export const WINDOW_OPTIONS: WindowOption[] = [
+  { value: "30d", label: "Last 30 days", note: "every source covers this" },
+  { value: "90d", label: "Last 90 days", note: "every source covers this" },
+  { value: "qtd", label: "Quarter to date", note: "every source covers this" },
+  { value: "12m", label: "Last 12 months", note: "product events only start 4 March", caveat: true },
+  { value: "custom", label: "Custom range…", note: "pick any start and end" },
+];
 
 export const DEFAULT_WINDOW = "90d";
+
+export const WINDOW_FOOTNOTE =
+  "A longer window is not always a fuller picture. Cells a source cannot reach read Unavailable.";
+
+export type ShadeByOption = {
+  value: string;
+  /** Compact form shown in the closed trigger, e.g. "Exposure". */
+  shortLabel: string;
+  /** Full label shown in the open list, e.g. "Exposure · 90 days". */
+  label: string;
+  note: string;
+  /** Slots into the matrix legend's "Shading is …" caption. */
+  captionLabel: string;
+};
+
+export const SHADE_BY_OPTIONS: ShadeByOption[] = [
+  {
+    value: "exposure",
+    shortLabel: "Exposure",
+    label: "Exposure · 90 days",
+    note: "money at risk inside the window",
+    captionLabel: "90-day exposure",
+  },
+  {
+    value: "annualised",
+    shortLabel: "Annualised",
+    label: "Annualised exposure",
+    note: "the same cells at a yearly run rate",
+    captionLabel: "annualised exposure",
+  },
+  {
+    value: "severity",
+    shortLabel: "Severity",
+    label: "Severity",
+    note: "S1–S5, so small but urgent cells surface",
+    captionLabel: "severity",
+  },
+  {
+    value: "confidence",
+    shortLabel: "Confidence",
+    label: "Confidence",
+    note: "how firmly each cell is held",
+    captionLabel: "confidence",
+  },
+];
+
+export const DEFAULT_SHADE_BY = "exposure";
+
+export const SHADE_BY_FOOTNOTE = "Shading changes the ramp, never the figures. Ranking always uses the threat score.";
 
 export type Stage = {
   id: string;

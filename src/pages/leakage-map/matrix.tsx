@@ -11,7 +11,7 @@ import { HEAT_SCALE, HEAT_TEXT_CLASS, HOW_ITS_CALCULATED, MATRIX_COLUMNS, MATRIX
  * matching svg/02-leakage-cell-selected.svg and 03-leakage-unavailable.svg (a floating card near
  * the click, not a full-screen dialog).
  */
-export function LeakageMatrix() {
+export function LeakageMatrix({ shadeByCaptionLabel }: { shadeByCaptionLabel: string }) {
   return (
     <div className="rounded-card border border-line bg-paper py-4">
       {/* Padding lives on the scrolling element itself, not the card around it — a card-level
@@ -115,7 +115,9 @@ export function LeakageMatrix() {
           ))}
         </div>
         <span className="font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">High</span>
-        <span className="text-ink-3">Dashed cells are gaps in the data, not zeros.</span>
+        <span className="text-ink-3">
+          Shading is {shadeByCaptionLabel}. Ranking uses the threat score, not the figure alone.
+        </span>
 
         <FloatingCard
           align="end"
