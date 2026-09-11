@@ -4,11 +4,18 @@ import { ArrowUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { HomeCarousel } from "@/pages/conversations/home-carousel";
+import { useTypewriter } from "@/pages/conversations/use-typewriter";
+import { MAPPING_QUESTIONS } from "@/pages/onboarding/data/data";
 import flolytLogo from "../../../assets/logo.png";
+
+// Reuses the app's own already-authored example questions (onboarding's "what you can ask"
+// rail) rather than inventing new copy — same questions, different surface.
+const PLACEHOLDER_PHRASES = MAPPING_QUESTIONS.map((q) => q.question);
 
 export default function NewConversationRoute() {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState("");
+  const { text: placeholderText, caret } = useTypewriter(PLACEHOLDER_PHRASES);
 
   const handleSubmit = () => {
     const message = prompt.trim();
@@ -50,19 +57,32 @@ export default function NewConversationRoute() {
         />
 
         <div className="relative rounded-card border border-line bg-paper-2 shadow-xs transition-colors group-focus-within:border-transparent">
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit();
-              }
-            }}
-            rows={3}
-            placeholder="Assign a task or ask anything"
-            className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3.5 pb-1.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4"
-          />
+          <div className="relative">
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }}
+              rows={3}
+              aria-label="Assign a task or ask anything"
+              className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3.5 pb-1.5 text-[12.5px] text-ink outline-none"
+            />
+            {/* Native `placeholder` can't be animated, so the typewriter text renders as an
+                overlay in its place instead — hidden the instant a real value exists. */}
+            {!prompt && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute top-3.5 left-4 text-[12.5px] text-ink-4"
+              >
+                {placeholderText}
+                {caret && <span className="ml-px animate-pulse">|</span>}
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center justify-end border-t border-line px-2.5 py-1.5">
             <button
