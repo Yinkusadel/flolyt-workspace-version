@@ -9,7 +9,7 @@ const MONTH_NAMES = Array.from({ length: 12 }, (_, i) =>
 );
 
 // How many years back the Year dropdown offers below whatever year `maxDate` falls in.
-const YEARS_BACK = 6;
+const YEARS_BACK = 10;
 
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
