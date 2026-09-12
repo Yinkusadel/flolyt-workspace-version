@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, MessagesSquare } from "lucide-react";
 
@@ -155,12 +155,25 @@ function circularOffset(index: number, active: number, count: number) {
  * change, never the shape. The focused card sits centered at full scale; its neighbors
  * peek from behind at reduced scale/opacity, all animated with one transform transition.
  */
+const AUTO_SCROLL_INTERVAL = 5000;
+
 export function HomeCarousel() {
   const [active, setActive] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const goTo = (index: number) => setActive(((index % COUNT) + COUNT) % COUNT);
 
+  useEffect(() => {
+    if (isPaused) return;
+    const id = setInterval(() => setActive((current) => (current + 1) % COUNT), AUTO_SCROLL_INTERVAL);
+    return () => clearInterval(id);
+  }, [isPaused]);
+
   return (
-    <div className="mt-6 hidden w-full flex-col items-center duration-500 animate-in fade-in slide-in-from-bottom-2 delay-300 sm:flex">
+    <div
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      className="mt-6 hidden w-full flex-col items-center duration-500 animate-in fade-in slide-in-from-bottom-2 delay-300 sm:flex"
+    >
       <div className="relative w-full" style={{ height: CARD_HEIGHT }}>
         {SLIDES.map((slide, index) => {
           const offset = circularOffset(index, active, COUNT);
