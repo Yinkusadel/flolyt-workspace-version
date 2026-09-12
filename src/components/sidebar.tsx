@@ -1,45 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  ArrowLeftRight,
-  Award,
-  BarChart3,
-  Bot,
   BookOpen,
   ChevronDown,
-  Filter,
-  Fingerprint,
-  FlaskConical,
-  Gem,
-  GitBranch,
-  HeartPulse,
+  Home,
   Inbox,
   Library,
-  LineChart,
-  ListChecks,
   Map,
-  Megaphone,
   MessageCircle,
-  MessageCirclePlus,
   MessagesSquare,
   MoreVertical,
-  Newspaper,
-  PieChart,
-  Reply,
-  Share2,
-  ShieldCheck,
-  Store,
-  Target,
   Trash2,
-  TrendingUp,
-  Users2,
-  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import {
   Dialog,
   DialogContent,
@@ -51,14 +29,6 @@ import {
 import { useGetRooms } from "@/features/rooms/use-get-rooms";
 import { useGetAiConversations } from "@/features/ai-conversations/use-get-ai-conversations";
 import { useArchiveAiConversation } from "@/features/ai-conversations/use-archive-ai-conversation";
-import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import flolytLogo from "../../assets/logo.png";
 
 /**
@@ -70,119 +40,26 @@ type NavItem = {
   label: string;
   href: string;
   icon: LucideIcon;
-  badge?: number;
+  beta?: boolean;
 };
 
-type NavSection = {
-  label: string;
-  items: NavItem[];
-};
-
-const NAV_SECTIONS: NavSection[] = [
-  {
-    label: "EVERY DAY",
-    items: [
-      { label: "Lifecycle", href: "/lifecycle", icon: TrendingUp },
-      { label: "Rooms", href: "/rooms", icon: MessagesSquare },
-      { label: "What to do today", href: "/what-to-do-today", icon: ListChecks },
-      { label: "Goals", href: "/goals", icon: Target },
-      { label: "Digest", href: "/digest", icon: Newspaper },
-      { label: "Inbox", href: "/inbox", icon: Inbox },
-      { label: "Handoff", href: "/handoff", icon: ArrowLeftRight },
-    ],
-  },
-  {
-    label: "REVENUE",
-    items: [
-      { label: "Leakage map", href: "/leakage-map", icon: Map },
-      { label: "Funnel", href: "/funnel", icon: Filter },
-      { label: "Scenario", href: "/scenario", icon: GitBranch },
-      { label: "Forecast", href: "/forecast", icon: LineChart },
-      { label: "Attribution", href: "/attribution", icon: Share2 },
-      { label: "Value", href: "/value", icon: Gem },
-      { label: "Benchmarks", href: "/benchmarks", icon: BarChart3 },
-    ],
-  },
-  {
-    label: "CUSTOMERS",
-    items: [
-      { label: "Segments", href: "/segments", icon: PieChart },
-      { label: "Customer health", href: "/customer-health", icon: HeartPulse },
-      { label: "Campaigns", href: "/campaigns", icon: Megaphone },
-      { label: "Experiments", href: "/experiments", icon: FlaskConical },
-      { label: "Replies", href: "/replies", icon: Reply },
-    ],
-  },
-  {
-    label: "KNOWLEDGE",
-    items: [
-      { label: "Business memory", href: "/business-memory", icon: Library },
-      { label: "Playbooks", href: "/playbooks", icon: BookOpen },
-      { label: "Community", href: "/community", icon: Users2 },
-      { label: "Recognition", href: "/recognition", icon: Award },
-    ],
-  },
-  {
-    label: "AGENTS",
-    items: [
-      { label: "AI teammates", href: "/ai-teammates", icon: Bot },
-      { label: "Agent detail", href: "/agent-detail", icon: Fingerprint },
-      { label: "Agent builder", href: "/agent-builder", icon: Wrench },
-      { label: "Marketplace", href: "/marketplace", icon: Store },
-      { label: "Governance", href: "/governance", icon: ShieldCheck },
-    ],
-  },
+// Leakage Map, Inbox, Playbooks and Business Memory are all rebuilt (src/pages).
+const NAV_ITEMS: NavItem[] = [
+  { label: "Leakage Map", href: "/leakage-map", icon: Map },
+  { label: "Inbox", href: "/inbox", icon: Inbox },
+  { label: "Playbooks", href: "/playbooks", icon: BookOpen, beta: true },
+  { label: "Business Memory", href: "/business-memory", icon: Library },
 ];
-
-export const VIEWING_AS_OPTIONS = ["Everyone", "Marketing", "Sales", "Products"] as const;
-export type ViewingAs = (typeof VIEWING_AS_OPTIONS)[number];
-
-export type RosterEntry = { initials: string; team: 1 | 2 | 3 | 4 };
-
-const TEAM_BORDER_CLASSES = {
-  1: "border-team-1 text-team-1",
-  2: "border-team-2 text-team-2",
-  3: "border-team-3 text-team-3",
-  4: "border-team-4 text-team-4",
-} as const;
 
 export type SidebarProps = {
   /** Drawer visibility below the lg breakpoint. Ignored at lg+, where the sidebar is always visible. */
   open: boolean;
   /** Called when the drawer should close — backdrop click, Escape, or a nav item was chosen. */
   onClose: () => void;
-  /** From GET /lifecycle/leakage-map's `revenueModel` (the only endpoint that currently surfaces
-   *  it — see [[flolyt_lifecycle_endpoints]]). `null` while loading or if it errors; also `null`
-   *  for a workspace that hasn't picked one yet, which are indistinguishable without a dedicated
-   *  loading flag — hence `isWorkspaceModeLoading` below. */
-  workspaceMode?: "Consumer" | "Accounts" | "Hybrid" | null;
-  isWorkspaceModeLoading?: boolean;
-  /** Who the home route's numbers/content are scoped to. Controlled from the app shell. */
-  viewingAs?: ViewingAs;
-  onViewingAsChange?: (value: ViewingAs) => void;
-  /** Total addressable customer base for the current viewing-as scope. Omit to hide the footer stat. */
-  customerBase?: string;
-  isCustomerBaseLoading?: boolean;
-  /** Currencies represented in that customer base. */
-  currencies?: string[];
-  /** Team members with visibility into the current scope. Omit/empty hides the roster row. */
-  roster?: RosterEntry[];
   className?: string;
 };
 
-function Sidebar({
-  open,
-  onClose,
-  workspaceMode = null,
-  isWorkspaceModeLoading = false,
-  viewingAs = "Everyone",
-  onViewingAsChange,
-  customerBase,
-  isCustomerBaseLoading = false,
-  currencies = [],
-  roster = [],
-  className,
-}: SidebarProps) {
+function Sidebar({ open, onClose, className }: SidebarProps) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [conversationsOpen, setConversationsOpen] = useState(false);
@@ -235,12 +112,6 @@ function Sidebar({
   const { data: roomsData } = useGetRooms();
   const roomsNeedingApproval = roomsData?.data.rooms.filter((r) => r.needsYou).length ?? 0;
 
-  // Every proposal still pending across every conversation — the Inbox badge used to count a
-  // static mock (`INBOX_PENDING_COUNT`); this is the same real list its "Needs a decision from
-  // you" section now renders.
-  const { data: proposalsData } = useGetAiProposals();
-  const pendingProposalsCount = proposalsData?.data.length ?? 0;
-
   const { data: conversationsData, isLoading: conversationsLoading } = useGetAiConversations({
     pageNumber: 1,
     pageSize: 50,
@@ -258,7 +129,7 @@ function Sidebar({
     if (!deleteTarget) return;
     const { id } = deleteTarget;
     archiveConversation(id);
-    if (pathname === `/conversations/${id}`) navigate("/new-conversation");
+    if (pathname === `/conversations/${id}`) navigate("/");
     setDeleteTarget(null);
   };
 
@@ -274,55 +145,42 @@ function Sidebar({
         className
       )}
     >
-      {/* Brand + workspace mode */}
+      {/* Brand */}
       <div className="flex h-topbar shrink-0 items-center gap-2 border-b border-line px-4">
         <img src={flolytLogo} alt="Flolyt" className="size-page shrink-0 object-contain" />
         <span className="text-sm font-semibold text-ink">Flolyt</span>
-        {isWorkspaceModeLoading ? (
-          <Skeleton className="ml-auto h-5 w-16 rounded-chip" />
-        ) : (
-          workspaceMode && (
-            <span className="ml-auto rounded-chip border border-ultra-border bg-ultra-bg px-2 py-1 text-[9.5px] font-semibold text-ultra">
-              {workspaceMode}
-            </span>
-          )
-        )}
       </div>
 
-      {/* Viewing-as scope */}
-      <div className="shrink-0 space-y-1.5 px-4 pt-4">
-        <p className="font-mono text-[8.6px] font-medium tracking-[0.85px] text-ink-4">
-          VIEWING AS
-        </p>
-        <Select
-          value={viewingAs}
-          onValueChange={(value) => onViewingAsChange?.(value as ViewingAs)}
-        >
-          <SelectTrigger>
-            <span className="flex items-center gap-2">
-              <span className="size-1.5 shrink-0 rounded-full bg-ink-3" aria-hidden />
-              <SelectValue />
-            </span>
-          </SelectTrigger>
-          <SelectContent>
-            {VIEWING_AS_OPTIONS.map((option) => (
-              <SelectItem key={option} value={option}>
-                {option}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Nav */}
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 py-4">
+        <NavLink to="/" end onClick={onClose} className={navLinkClass}>
+          <Home className="size-3.75 shrink-0" />
+          <span className="truncate">Home</span>
+        </NavLink>
 
-      {/* Nav sections */}
-      <nav className="flex-1 space-y-4 overflow-y-auto px-2.5 py-4">
-        {/* Sits above EVERY DAY — the entry points for starting/finding an AI conversation. */}
-        <div className="space-y-0.5">
-          <NavLink to="/new-conversation" onClick={onClose} className={navLinkClass}>
-            <MessageCirclePlus className="size-3.75 shrink-0" />
-            <span className="truncate">New conversation</span>
+        <NavLink to="/rooms" onClick={onClose} className={navLinkClass}>
+          <MessagesSquare className="size-3.75 shrink-0" />
+          <span className="truncate">Rooms</span>
+          {roomsNeedingApproval ? (
+            <span className="ml-auto rounded-chip border border-amber-border bg-amber-bg px-1.5 py-0.5 font-mono text-[9px] font-semibold text-amber">
+              {roomsNeedingApproval}
+            </span>
+          ) : null}
+        </NavLink>
+
+        {NAV_ITEMS.map((item) => (
+          <NavLink key={item.href} to={item.href} onClick={onClose} className={navLinkClass}>
+            <item.icon className="size-3.75 shrink-0" />
+            <span className="truncate">{item.label}</span>
+            {item.beta ? (
+              <Chip tone="ultra" className="ml-auto">
+                BETA
+              </Chip>
+            ) : null}
           </NavLink>
+        ))}
 
+        <div>
           <button
             type="button"
             onClick={() => setConversationsOpen((prev) => !prev)}
@@ -334,7 +192,7 @@ function Sidebar({
             )}
           >
             <MessageCircle className="size-3.75 shrink-0" />
-            <span className="truncate">AI conversations</span>
+            <span className="truncate">Conversations</span>
             <ChevronDown
               className={cn(
                 "ml-auto size-3.5 shrink-0 transition-transform",
@@ -424,73 +282,7 @@ function Sidebar({
             </div>
           )}
         </div>
-
-        {NAV_SECTIONS.map((section) => (
-          <div key={section.label}>
-            <p className="px-2.5 pb-1.5 font-mono text-[8.6px] font-medium tracking-[0.85px] text-ink-4">
-              {section.label}
-            </p>
-            <div className="space-y-0.5">
-              {section.items.map((item) => {
-                const badge =
-                  item.href === "/rooms"
-                    ? roomsNeedingApproval || undefined
-                    : item.href === "/inbox"
-                      ? pendingProposalsCount || undefined
-                      : item.badge;
-                return (
-                  <NavLink
-                    key={item.href}
-                    to={item.href}
-                    onClick={onClose}
-                    className={navLinkClass}
-                  >
-                    <item.icon className="size-3.75 shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                    {badge ? (
-                      <span className="ml-auto rounded-chip border border-amber-border bg-amber-bg px-1.5 py-0.5 font-mono text-[9px] font-semibold text-amber">
-                        {badge}
-                      </span>
-                    ) : null}
-                  </NavLink>
-                );
-              })}
-            </div>
-          </div>
-        ))}
       </nav>
-
-      {/* Customer base + roster for the current viewing-as scope */}
-      {(isCustomerBaseLoading || customerBase) && (
-        <div className="shrink-0 border-t border-line px-4 py-3">
-          <p className="pb-1 font-mono text-[8.6px] font-medium tracking-[0.85px] text-ink-4">
-            CUSTOMER BASE
-          </p>
-          {isCustomerBaseLoading ? (
-            <Skeleton className="h-5 w-14" />
-          ) : (
-            <p className="text-lg font-semibold text-ink">{customerBase}</p>
-          )}
-          {currencies.length > 0 && (
-            <p className="pt-0.5 font-mono text-[9px] text-ink-3">{currencies.join(" · ")}</p>
-          )}
-          {roster.length > 0 && (
-            <div className="flex -space-x-1.5 pt-2">
-              {roster.map((person, i) => (
-                <div
-                  key={`${person.initials}-${i}`}
-                  className={cn(
-                    "flex size-4.5 items-center justify-center rounded-full border-[1.5px] bg-paper-2 font-mono text-[6.5px] font-semibold ring-2 ring-paper-2",
-                    TEAM_BORDER_CLASSES[person.team]
-                  )}
-                >
-                  {person.initials}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </aside>
 
     <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

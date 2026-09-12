@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { StepUpConfirmModal } from "@/components/step-up-confirm-modal";
-import { Chip, type ChipTone } from "@/pages/everyday/lifecycle/stage/chip";
+import { Chip, type ChipTone } from "@/components/ui/chip";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
 import { InviteMemberModal } from "@/pages/onboarding/team/invite-member-modal";
 import { EditMemberRolesModal } from "@/pages/onboarding/team/edit-member-roles-modal";
