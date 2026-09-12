@@ -32,8 +32,11 @@ export default function LeakageMap() {
 
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           <ViewModePicker value={viewMode} onChange={setViewMode} />
-          <ShadeByPicker value={shadeBy} onChange={setShadeBy} />
-          {viewMode === "historical" && <WindowPicker />}
+          {viewMode === "historical" ? (
+            <WindowPicker />
+          ) : (
+            <ShadeByPicker value={shadeBy} onChange={setShadeBy} />
+          )}
         </div>
       </div>
 

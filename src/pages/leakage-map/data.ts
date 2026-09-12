@@ -19,8 +19,10 @@ export type ViewModeOption = {
   note: string;
 };
 
-// Window only makes sense for a backward-looking read, so it's the one control this toggle
-// gates — see index.tsx. Shade By stays as-is either way; nothing here narrows its options.
+// Window (a period) and Shade By (Exposure/Annualised/Severity/Confidence) don't both make sense
+// on screen at once — Window is a backward-looking span, Exposure a right-now measure. So index.tsx
+// shows exactly one of the two next to this toggle, never both, never neither: Historical pairs
+// with Window, Forward exposure pairs with Shade By (full option list, nothing narrowed).
 export const VIEW_MODE_OPTIONS: ViewModeOption[] = [
   {
     value: "historical",
@@ -32,7 +34,7 @@ export const VIEW_MODE_OPTIONS: ViewModeOption[] = [
     value: "forward",
     shortLabel: "Forward",
     label: "Forward exposure",
-    note: "no fixed period — Window drops off",
+    note: "shade by exposure or risk instead of a period",
   },
 ];
 
