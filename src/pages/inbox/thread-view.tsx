@@ -1,11 +1,29 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { MessagesSquare, Paperclip, Link2, ArrowUp } from "lucide-react";
+import { ChevronRight, MessagesSquare, Paperclip, Link2, ArrowUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Chip } from "@/components/ui/chip";
-import { ME, type InboxMessage, type ThreadItem } from "@/pages/inbox/data";
+import { ME, type AttachedRoom, type InboxMessage, type ThreadItem } from "@/pages/inbox/data";
+
+/** Compact, bubble-width attachment for the message that actually referenced the room — not a
+ * full-width block detached from who brought it up. */
+function AttachedRoomCard({ room }: { room: AttachedRoom }) {
+  return (
+    <Link
+      to="/rooms"
+      className="flex max-w-[75%] min-w-0 items-center gap-2.5 rounded-card border border-line bg-paper px-3 py-2 transition-colors hover:border-ink-4"
+    >
+      <MessagesSquare className="size-3.5 shrink-0 text-ink-3" />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[11.5px] font-semibold text-ink">{room.label}</p>
+        <p className="truncate text-[10.5px] text-ink-3">{room.subtitle}</p>
+      </div>
+      <ChevronRight className="size-3.5 shrink-0 text-ink-4" />
+    </Link>
+  );
+}
 
 /** Mirrors the tail trick from conversations/detail-route.tsx's user bubble, flipped for the left side. */
 function MessageBubble({ message }: { message: InboxMessage }) {
@@ -45,6 +63,8 @@ function MessageBubble({ message }: { message: InboxMessage }) {
           {message.text}
         </div>
       </div>
+
+      {message.attachedRoom && <AttachedRoomCard room={message.attachedRoom} />}
     </div>
   );
 }
@@ -89,20 +109,6 @@ export function ThreadView({ item }: { item: ThreadItem }) {
         {messages.map((message, i) => (
           <MessageBubble key={i} message={message} />
         ))}
-
-        {item.attachedRoom && (
-          <Link
-            to="/rooms"
-            className="mt-2 flex items-start gap-3 rounded-card border border-line bg-paper px-4 py-3.5 transition-colors hover:border-ink-4"
-          >
-            <MessagesSquare className="mt-0.5 size-4 shrink-0 text-ink-3" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-semibold text-ink">{item.attachedRoom.label}</p>
-              <p className="mt-0.5 text-[11.5px] text-ink-3">{item.attachedRoom.subtitle}</p>
-            </div>
-            <span className="shrink-0 text-[12px] font-medium text-ultra">Open →</span>
-          </Link>
-        )}
 
         <div ref={bottomRef} />
       </div>

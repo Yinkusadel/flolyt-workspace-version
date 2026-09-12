@@ -11,9 +11,9 @@ export type PersonRef = { name: string; initials: string; team: 1 | 2 | 3 | 4 };
 
 export type EvidenceTier = "measured" | "corroborated" | "indicative";
 
-export type InboxMessage = { person: PersonRef; timestamp: string; text: string };
-
 export type AttachedRoom = { label: string; subtitle: string };
+
+export type InboxMessage = { person: PersonRef; timestamp: string; text: string; attachedRoom?: AttachedRoom };
 
 export type ApprovalDetail = {
   subtitle: string;
@@ -35,7 +35,6 @@ export type ThreadItem = {
   preview: string[];
   roomLabel?: string;
   thread?: InboxMessage[];
-  attachedRoom?: AttachedRoom;
 };
 
 export type NoticeItem = {
@@ -103,6 +102,10 @@ export const INBOX_ITEMS: InboxItem[] = [
         person: REVAN,
         timestamp: "1h",
         text: "I have filed the objection on 2471. The discount holds cost more than the second orders they recover, on the numbers I can see.",
+        attachedRoom: {
+          label: "Room 2471 · Checklist drop-off at Adopt",
+          subtitle: "₦412M at risk · 4 findings · 1 objection open",
+        },
       },
       {
         person: ME,
@@ -115,10 +118,6 @@ export const INBOX_ITEMS: InboxItem[] = [
         text: "Agreed. I will narrow the objection to the discount leg only. Still want the holdout set before either ships.",
       },
     ],
-    attachedRoom: {
-      label: "Room 2471 · Checklist drop-off at Adopt",
-      subtitle: "₦412M at risk · 4 findings · 1 objection open",
-    },
   },
   {
     id: "notice-2473",
