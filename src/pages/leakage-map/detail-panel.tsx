@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { HelpCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -126,7 +126,7 @@ export function ValueCellCard({
  * readout + a "Learn why" note synthesized only from numbers already on this card; every other
  * stage only restates what its own rail card already shows. */
 export function StageDetailCard({ stage }: { stage: Stage }) {
-  const [showWhy, setShowWhy] = React.useState(false);
+  const navigate = useNavigate();
   const isAdopt = stage.id === ADOPT_STAGE_DETAIL.stageId;
   const leakWord = stage.valueTone === "teal" ? "generated at this stage" : "leaking at this stage";
 
@@ -171,20 +171,18 @@ export function StageDetailCard({ stage }: { stage: Stage }) {
 
           <button
             type="button"
-            onClick={() => setShowWhy((v) => !v)}
-            aria-expanded={showWhy}
+            onClick={() =>
+              navigate("/new-conversation", {
+                state: {
+                  prefillPrompt: `Why is ${stage.value} leaking at the ${stage.label} stage? ${ADOPT_STAGE_DETAIL.customersInStage} customers are in this stage and the median has reached only ${ADOPT_STAGE_DETAIL.medianFeaturesReached} features, with ${ADOPT_STAGE_DETAIL.slippedOutLastQuarter} slipping out before adopting more.`,
+                },
+              })
+            }
             className="mt-2.5 inline-flex items-center gap-1.5 rounded-control border border-line bg-paper-2 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-paper"
           >
             <HelpCircle className="size-3.5" />
             Learn why
           </button>
-          {showWhy && (
-            <p className="mt-2.5 rounded-control bg-paper-2 p-3 text-[11px] leading-relaxed text-ink-2">
-              {ADOPT_STAGE_DETAIL.customersInStage} customers are in this stage; the median has reached only{" "}
-              {ADOPT_STAGE_DETAIL.medianFeaturesReached} features. {stage.value} is the revenue tied to the{" "}
-              {ADOPT_STAGE_DETAIL.slippedOutLastQuarter} who slipped out before adopting more.
-            </p>
-          )}
         </>
       ) : (
         <p className="mt-3 border-t border-line pt-3 text-[11.5px] text-ink-3">{stage.metricLines.join(" · ")}</p>

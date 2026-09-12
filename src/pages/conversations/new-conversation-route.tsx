@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowUp, Plus, Shield, Sparkles, Zap } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -22,7 +22,9 @@ const PLACEHOLDER_PHRASES = MAPPING_QUESTIONS.map((q) => q.question);
 
 export default function NewConversationRoute() {
   const navigate = useNavigate();
-  const [prompt, setPrompt] = useState("");
+  const location = useLocation();
+  const prefillPrompt = (location.state as { prefillPrompt?: string } | null)?.prefillPrompt;
+  const [prompt, setPrompt] = useState(prefillPrompt ?? "");
   const [askBeforeSpending, setAskBeforeSpending] = useState(true);
   const [planMode, setPlanMode] = useState(true);
   const { text: placeholderText, caret } = useTypewriter(PLACEHOLDER_PHRASES);
