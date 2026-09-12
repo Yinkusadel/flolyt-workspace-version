@@ -44,6 +44,8 @@ import PlaybookDetailRoute from "@/pages/playbooks/detail-route";
 import PlaybookRunRoute from "@/pages/playbooks/run-route";
 import BusinessMemory from "@/pages/business-memory";
 import BusinessMemoryEntry from "@/pages/business-memory/entry-route";
+import Agents from "@/pages/agents";
+import AgentDetailRoute from "@/pages/agents/detail-route";
 import { RouteError } from "@/route/route-error";
 import { ProtectedRoute } from "@/route/protected-route";
 import { GuestRoute } from "@/route/guest-route";
@@ -157,6 +159,8 @@ export const routes = createBrowserRouter([
               { path: "playbooks/:id/runs/:runId", Component: PlaybookRunRoute },
               { path: "business-memory", Component: BusinessMemory },
               { path: "business-memory/:id", Component: BusinessMemoryEntry },
+              { path: "agents", Component: Agents },
+              { path: "agents/:id", Component: AgentDetailRoute },
             ],
           },
         ],

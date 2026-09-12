@@ -243,3 +243,19 @@
     transform: scale(1.08);
   }
 }
+
+/* Small staggered entrance for a grid of cards — see src/pages/agents/index.tsx's agent grid.
+   Kept outside @layer base since it's a one-off keyframe, not a design token. */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.35s ease-out backwards;
+}
