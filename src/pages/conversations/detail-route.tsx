@@ -10,6 +10,7 @@ import { useGetAiConversationById } from "@/features/ai-conversations/use-get-ai
 import type { AiConversationMessage, ReasoningStep } from "@/features/ai-conversations/ai-conversation-types";
 import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
 import { ProposalCard, type ProposalCardData } from "./proposal-card";
+import { PromptToggles } from "./prompt-toggles";
 import flolytLogo from "../../../assets/logo.png";
 
 // Guards the bootstrap prompt (arriving via nav state from /new-conversation) against being
@@ -104,6 +105,8 @@ export default function AiConversationDetailRoute() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState("");
+  const [askBeforeSpending, setAskBeforeSpending] = useState(true);
+  const [planMode, setPlanMode] = useState(true);
 
   const {
     messages: streamedMessages,
@@ -309,7 +312,14 @@ export default function AiConversationDetailRoute() {
               className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3 pb-1.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
             />
 
-            <div className="flex items-center justify-end border-t border-line px-2.5 py-1.5">
+            <div className="flex items-center justify-between border-t border-line px-2.5 py-1.5">
+              <PromptToggles
+                askBeforeSpending={askBeforeSpending}
+                onAskBeforeSpendingChange={setAskBeforeSpending}
+                planMode={planMode}
+                onPlanModeChange={setPlanMode}
+              />
+
               <button
                 type="button"
                 onClick={handleSend}
