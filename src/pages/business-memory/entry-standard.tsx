@@ -83,7 +83,7 @@ export function EntryStandard({ entry }: { entry: MemoryEntry }) {
             <Link to="/rooms">Open room</Link>
           </Button>
           <Button asChild>
-            <Link to="/playbooks">Promote to playbook</Link>
+            <Link to={entry.id === "room-2412" ? "/playbooks/new" : "/playbooks"}>Promote to playbook</Link>
           </Button>
         </div>
       </div>

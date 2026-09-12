@@ -38,6 +38,10 @@ import PlanAndBillingRoute from "@/pages/plan-and-billing";
 import LeakageMap from "@/pages/leakage-map";
 import Inbox from "@/pages/inbox";
 import Playbooks from "@/pages/playbooks";
+import PlaybooksProposeRoute from "@/pages/playbooks/propose-route";
+import PlaybooksNewRoute from "@/pages/playbooks/new-route";
+import PlaybookDetailRoute from "@/pages/playbooks/detail-route";
+import PlaybookRunRoute from "@/pages/playbooks/run-route";
 import BusinessMemory from "@/pages/business-memory";
 import BusinessMemoryEntry from "@/pages/business-memory/entry-route";
 import { RouteError } from "@/route/route-error";
@@ -143,11 +147,14 @@ export const routes = createBrowserRouter([
                 path: "plan-and-billing",
                 Component: PlanAndBillingRoute,
               },
-              // Leakage Map is rebuilt (src/pages/leakage-map). The rest are sidebar
-              // placeholders — linked from the nav but not rebuilt yet.
+              // Leakage Map, Inbox, Playbooks and Business Memory are rebuilt.
               { path: "leakage-map", Component: LeakageMap },
               { path: "inbox", Component: Inbox },
               { path: "playbooks", Component: Playbooks },
+              { path: "playbooks/propose", Component: PlaybooksProposeRoute },
+              { path: "playbooks/new", Component: PlaybooksNewRoute },
+              { path: "playbooks/:id", Component: PlaybookDetailRoute },
+              { path: "playbooks/:id/runs/:runId", Component: PlaybookRunRoute },
               { path: "business-memory", Component: BusinessMemory },
               { path: "business-memory/:id", Component: BusinessMemoryEntry },
             ],
