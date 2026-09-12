@@ -12,6 +12,7 @@ import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals"
 import { ProposalCard, type ProposalCardData } from "./proposal-card";
 import { PromptToggles } from "./prompt-toggles";
 import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
+import { AiResponseRenderer } from "./ai-response/response-renderer";
 import flolytLogo from "../../../assets/logo.png";
 
 // ❌ Backend does NOT provide a suggested-next-actions endpoint yet — mocked until one exists.
@@ -298,10 +299,12 @@ export default function AiConversationDetailRoute() {
               </div>
             </div>
           ) : (
-            <div key={message.key} className="flex min-w-0 flex-col items-start gap-1.5">
-              <p className="max-w-[85%] min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-ink">
-                {message.content}
-              </p>
+            // w-full (not just items-start) matters here: without a definite width on this
+            // wrapper, a table/chart segment's own max-w-[85%] has nothing real to resolve
+            // against under shrink-to-fit flex sizing, and a wide table's min-w-max content can
+            // then overflow straight past the pane's edge instead of being capped at 85%.
+            <div key={message.key} className="flex w-full min-w-0 flex-col items-start gap-1.5">
+              <AiResponseRenderer content={message.content} />
             </div>
           )
         )}
@@ -344,54 +347,56 @@ export default function AiConversationDetailRoute() {
           />
         )}
 
-        <div className="group relative border-t border-line pt-4 pb-4">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -inset-px rounded-card opacity-0 transition-opacity duration-300 group-focus-within:opacity-100"
-            style={{
-              background:
-                "linear-gradient(120deg, var(--color-ultra), var(--color-ultra-border), var(--color-ultra))",
-              backgroundSize: "300% 300%",
-              animation: "border-gradient-pan 5s ease infinite",
-            }}
-          />
-
-          <div className="relative rounded-card border border-line bg-paper-2 shadow-xs transition-colors group-focus-within:border-transparent">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.currentTarget.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
+        <div className="border-t border-line pt-4 pb-4">
+          <div className="group relative">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-px rounded-card opacity-0 transition-opacity duration-300 group-focus-within:opacity-100"
+              style={{
+                background:
+                  "linear-gradient(120deg, var(--color-ultra), var(--color-ultra-border), var(--color-ultra))",
+                backgroundSize: "300% 300%",
+                animation: "border-gradient-pan 5s ease infinite",
               }}
-              rows={2}
-              placeholder="Ask a follow-up…"
-              disabled={isStreaming}
-              className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3 pb-1.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
             />
 
-            <div className="flex items-center justify-between border-t border-line px-2.5 py-1.5">
-              <PromptToggles
-                askBeforeSpending={askBeforeSpending}
-                onAskBeforeSpendingChange={setAskBeforeSpending}
-                planMode={planMode}
-                onPlanModeChange={setPlanMode}
+            <div className="relative rounded-card border border-line bg-paper-2 shadow-xs transition-colors group-focus-within:border-transparent">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                rows={2}
+                placeholder="Ask a follow-up…"
+                disabled={isStreaming}
+                className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3 pb-1.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
               />
 
-              <button
-                type="button"
-                onClick={handleSend}
-                disabled={!input.trim() || isStreaming}
-                className={cn(
-                  "flex size-6.5 items-center justify-center rounded-md transition-all",
-                  input.trim() && !isStreaming ? "bg-ultra text-paper hover:opacity-90" : "bg-paper text-ink-4"
-                )}
-              >
-                {isStreaming ? <Loader2 className="size-3.25 animate-spin" /> : <ArrowUp size={13} strokeWidth={2.5} />}
-              </button>
+              <div className="flex items-center justify-between border-t border-line px-2.5 py-1.5">
+                <PromptToggles
+                  askBeforeSpending={askBeforeSpending}
+                  onAskBeforeSpendingChange={setAskBeforeSpending}
+                  planMode={planMode}
+                  onPlanModeChange={setPlanMode}
+                />
+
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  disabled={!input.trim() || isStreaming}
+                  className={cn(
+                    "flex size-6.5 items-center justify-center rounded-md transition-all",
+                    input.trim() && !isStreaming ? "bg-ultra text-paper hover:opacity-90" : "bg-paper text-ink-4"
+                  )}
+                >
+                  {isStreaming ? <Loader2 className="size-3.25 animate-spin" /> : <ArrowUp size={13} strokeWidth={2.5} />}
+                </button>
+              </div>
             </div>
           </div>
         </div>

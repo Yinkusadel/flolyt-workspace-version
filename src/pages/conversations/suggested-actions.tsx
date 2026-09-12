@@ -74,7 +74,7 @@ export function SuggestedActions({ actions, isOpen, onOpenChange, onSelect }: Su
               }
             }}
             className={cn(
-              "group flex w-full min-w-0 cursor-pointer items-center gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-paper-2",
+              "group flex w-full min-w-0 cursor-pointer items-center gap-3 py-2.5 pr-3.5 pl-6 text-left transition-colors hover:bg-paper-2",
               idx !== actions.length - 1 && "border-b border-line"
             )}
           >
