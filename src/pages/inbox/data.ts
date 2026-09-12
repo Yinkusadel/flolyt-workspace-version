@@ -47,6 +47,10 @@ export type NoticeItem = {
   title: string;
   preview: string;
   approval?: ApprovalDetail;
+  /** Set only when the notice is one named agent's own update (e.g. "Repeat & Decay · Room
+   * 2473") — drives the initials in its row icon. A system-level notice like "Room 2468 closed"
+   * has no single agent to name, so this stays unset and the icon falls back to a glyph. */
+  agentName?: string;
 };
 
 export type InboxItem = ThreadItem | NoticeItem;
@@ -124,6 +128,7 @@ export const INBOX_ITEMS: InboxItem[] = [
     timestamp: "5h",
     title: "Repeat & Decay · Room 2473",
     preview: "Discount depth rose 4 points on the Lagos cohort",
+    agentName: "Repeat & Decay",
   },
   {
     id: "thread-tunde",

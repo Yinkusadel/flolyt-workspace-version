@@ -3,6 +3,7 @@ import { Plus, ShieldCheck, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Chip } from "@/components/ui/chip";
+import { agentInitialsFromName } from "@/pages/rooms/format";
 import {
   countApprovals,
   countUnread,
@@ -71,16 +72,24 @@ function FilterTabs({
   );
 }
 
-function NoticeTile({ noticeType }: { noticeType: "approval" | "agent" }) {
-  const isApproval = noticeType === "approval";
+function NoticeTile({ noticeType, agentName }: { noticeType: "approval" | "agent"; agentName?: string }) {
+  if (noticeType === "approval") {
+    return (
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-control border border-amber-border bg-amber-bg text-amber">
+        <ShieldCheck className="size-4" />
+      </span>
+    );
+  }
+
+  if (agentName) {
+    return <PersonAvatar kind="agent" initials={agentInitialsFromName(agentName)} size="lg" />;
+  }
+
+  // No single named agent (e.g. a system-level "room closed" notice) — same dashed-circle
+  // language, generic activity glyph instead of initials.
   return (
-    <span
-      className={cn(
-        "flex size-8 shrink-0 items-center justify-center rounded-control border",
-        isApproval ? "border-amber-border bg-amber-bg text-amber" : "border-line bg-paper-2 text-ink-3"
-      )}
-    >
-      {isApproval ? <ShieldCheck className="size-4" /> : <Sparkles className="size-4" />}
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-full border-[1.5px] border-dashed border-ultra-border text-ultra">
+      <Sparkles className="size-3.5" />
     </span>
   );
 }
@@ -118,7 +127,7 @@ function Row({ item, active, onSelect }: { item: InboxItem; active: boolean; onS
             className="mt-0.5"
           />
         ) : (
-          <NoticeTile noticeType={item.noticeType} />
+          <NoticeTile noticeType={item.noticeType} agentName={item.agentName} />
         )}
 
         <div className="min-w-0 flex-1">
