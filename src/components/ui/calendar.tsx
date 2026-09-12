@@ -4,6 +4,13 @@ import { cn } from "@/lib/utils";
 
 const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
+const MONTH_NAMES = Array.from({ length: 12 }, (_, i) =>
+  new Date(2000, i, 1).toLocaleDateString(undefined, { month: "long" })
+);
+
+// How many years back the Year dropdown offers below whatever year `maxDate` falls in.
+const YEARS_BACK = 6;
+
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
@@ -55,26 +62,54 @@ export function Calendar({
   const rangeStart = from && rangeEnd ? (from < rangeEnd ? from : rangeEnd) : null;
   const rangeStop = from && rangeEnd ? (from < rangeEnd ? rangeEnd : from) : null;
 
+  const maxYear = maxDate ? maxDate.getFullYear() : year;
+  const yearOptions = Array.from({ length: YEARS_BACK + 1 }, (_, i) => maxYear - i);
+
   return (
     <div className={cn("select-none", className)}>
-      <div className="flex items-center justify-between pb-2">
+      <div className="flex items-center justify-between gap-1 pb-2">
         <button
           type="button"
           aria-label="Previous month"
           onClick={() => onMonthChange(new Date(year, monthIndex - 1, 1))}
-          className="flex size-6 items-center justify-center rounded-control text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink"
+          className="flex size-6 shrink-0 items-center justify-center rounded-control text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink"
         >
           <ChevronLeft className="size-3.5" />
         </button>
-        <p className="text-[12px] font-medium text-ink">
-          {firstOfMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
-        </p>
+
+        <div className="flex min-w-0 items-center gap-1">
+          <select
+            aria-label="Month"
+            value={monthIndex}
+            onChange={(e) => onMonthChange(new Date(year, Number(e.currentTarget.value), 1))}
+            className="min-w-0 rounded-control border border-line bg-paper-2 px-1.5 py-1 text-[11px] font-medium text-ink"
+          >
+            {MONTH_NAMES.map((name, i) => (
+              <option key={name} value={i} disabled={year === maxYear && !!maxDate && i > maxDate.getMonth()}>
+                {name}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Year"
+            value={year}
+            onChange={(e) => onMonthChange(new Date(Number(e.currentTarget.value), monthIndex, 1))}
+            className="min-w-0 rounded-control border border-line bg-paper-2 px-1.5 py-1 text-[11px] font-medium text-ink"
+          >
+            {yearOptions.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <button
           type="button"
           aria-label="Next month"
           onClick={() => onMonthChange(nextMonthStart)}
           disabled={maxDate ? nextMonthStart > maxDate : false}
-          className="flex size-6 items-center justify-center rounded-control text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink disabled:pointer-events-none disabled:opacity-30"
+          className="flex size-6 shrink-0 items-center justify-center rounded-control text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink disabled:pointer-events-none disabled:opacity-30"
         >
           <ChevronRight className="size-3.5" />
         </button>
