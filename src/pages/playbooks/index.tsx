@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { KpiCards, type Kpi } from "@/components/ui/kpi-cards";
 import { PersonAvatar } from "@/components/person-avatar";
@@ -179,9 +180,9 @@ function PopulatedIndex() {
           <h1 className="text-[17px] font-semibold text-ink">Playbooks</h1>
           <p className="mt-1 text-[11.5px] text-ink-3">A playbook is memory that has earned the right to run again</p>
         </div>
-        <Link to="/playbooks/propose" className="shrink-0 text-[12.5px] font-medium text-ultra hover:underline">
-          Flolyt has 1 playbook to propose →
-        </Link>
+        <Button asChild className="shrink-0">
+          <Link to="/playbooks/propose">Flolyt has 1 playbook to propose</Link>
+        </Button>
       </div>
 
       <KpiCards items={stats} />
