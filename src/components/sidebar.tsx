@@ -152,7 +152,7 @@ function Sidebar({ open, onClose, className }: SidebarProps) {
       data-slot="sidebar"
       data-state={open ? "open" : "closed"}
       className={cn(
-        "group fixed inset-y-0 left-0 z-40 flex w-nav -translate-x-full flex-col border-r border-line bg-paper-2 transition-transform duration-200 ease-out",
+        "group fixed inset-y-0 left-0 z-40 flex w-nav -translate-x-full flex-col overflow-hidden border-r border-line bg-paper-2 transition-[width,transform] duration-200 ease-out",
         "lg:static lg:translate-x-0",
         collapsed ? "lg:w-14" : "lg:w-nav",
         open && "translate-x-0 shadow-2xl",
