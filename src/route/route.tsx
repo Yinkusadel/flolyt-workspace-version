@@ -39,6 +39,7 @@ import LeakageMap from "@/pages/leakage-map";
 import Inbox from "@/pages/inbox";
 import Playbooks from "@/pages/playbooks";
 import BusinessMemory from "@/pages/business-memory";
+import BusinessMemoryEntry from "@/pages/business-memory/entry-route";
 import { RouteError } from "@/route/route-error";
 import { ProtectedRoute } from "@/route/protected-route";
 import { GuestRoute } from "@/route/guest-route";
@@ -148,6 +149,7 @@ export const routes = createBrowserRouter([
               { path: "inbox", Component: Inbox },
               { path: "playbooks", Component: Playbooks },
               { path: "business-memory", Component: BusinessMemory },
+              { path: "business-memory/:id", Component: BusinessMemoryEntry },
             ],
           },
         ],
