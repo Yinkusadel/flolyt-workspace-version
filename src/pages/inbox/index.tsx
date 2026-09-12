@@ -45,7 +45,7 @@ export default function Inbox() {
   const unreadCount = countUnread(items);
 
   return (
-    <div className="-mt-page flex h-[calc(100%+var(--spacing-page))] flex-col">
+    <div className="-my-page flex h-[calc(100%+var(--spacing-page)*2)] flex-col">
       <div className="flex min-h-0 flex-1 overflow-hidden bg-paper">
         <div className="w-[320px] shrink-0">
           <ListPane
