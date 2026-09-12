@@ -5,7 +5,8 @@ import { LeakageMatrix } from "@/pages/leakage-map/matrix";
 import { MarketBreakdown } from "@/pages/leakage-map/market-breakdown";
 import { ShadeByPicker } from "@/pages/leakage-map/shade-by-picker";
 import { WindowPicker } from "@/pages/leakage-map/window-picker";
-import { DEFAULT_SHADE_BY, SHADE_BY_OPTIONS } from "@/pages/leakage-map/data";
+import { ViewModePicker } from "@/pages/leakage-map/view-mode-picker";
+import { DEFAULT_SHADE_BY, DEFAULT_VIEW_MODE, SHADE_BY_OPTIONS, type ViewMode } from "@/pages/leakage-map/data";
 
 /**
  * Rebuilt from flolyt-figma-designs/New-pages-pattern/leakage/leakage/svg/01–04, updated per
@@ -16,6 +17,7 @@ import { DEFAULT_SHADE_BY, SHADE_BY_OPTIONS } from "@/pages/leakage-map/data";
  * (02/03) instead of a shared, centered dialog.
  */
 export default function LeakageMap() {
+  const [viewMode, setViewMode] = React.useState<ViewMode>(DEFAULT_VIEW_MODE);
   const [shadeBy, setShadeBy] = React.useState<string>(DEFAULT_SHADE_BY);
 
   const shadeByOption = SHADE_BY_OPTIONS.find((o) => o.value === shadeBy) ?? SHADE_BY_OPTIONS[0];
@@ -28,9 +30,10 @@ export default function LeakageMap() {
           <p className="mt-1 text-[11.5px] text-ink-3">4.2M customers · refreshed 6 minutes ago · 90-day exposure, annualised in each cell</p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <ViewModePicker value={viewMode} onChange={setViewMode} />
           <ShadeByPicker value={shadeBy} onChange={setShadeBy} />
-          <WindowPicker />
+          {viewMode === "historical" && <WindowPicker />}
         </div>
       </div>
 

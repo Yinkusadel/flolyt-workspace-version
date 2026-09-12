@@ -3,11 +3,40 @@
  * flolyt-figma-designs/New-pages-pattern/leakage/leakage/svg/01–04, updated per the later revision
  * in .../leakage/Archive/04,08,09 (new "Shade by" filter, and the Window picker's options/coverage
  * notes). The export's own caption (index.html) says the content is a fixed "live-demo sample" —
- * there is no GET /leakage endpoint behind these numbers, so both pickers in index.tsx only change
- * their own label and the legend caption for now; neither recomputes the matrix below them.
+ * there is no GET /leakage endpoint behind these numbers, so every picker in index.tsx only changes
+ * its own label and the legend caption for now; none of them recompute the matrix below.
  */
 
 export type Tone = "rose" | "teal";
+
+export type ViewMode = "historical" | "forward";
+
+export type ViewModeOption = {
+  value: ViewMode;
+  /** Compact form shown in the closed trigger. */
+  shortLabel: string;
+  label: string;
+  note: string;
+};
+
+// Window only makes sense for a backward-looking read, so it's the one control this toggle
+// gates — see index.tsx. Shade By stays as-is either way; nothing here narrows its options.
+export const VIEW_MODE_OPTIONS: ViewModeOption[] = [
+  {
+    value: "historical",
+    shortLabel: "Historical",
+    label: "Historical window",
+    note: "look back over a period you pick",
+  },
+  {
+    value: "forward",
+    shortLabel: "Forward",
+    label: "Forward exposure",
+    note: "no fixed period — Window drops off",
+  },
+];
+
+export const DEFAULT_VIEW_MODE: ViewMode = "historical";
 
 export type WindowOption = {
   value: string;
@@ -25,7 +54,9 @@ export const WINDOW_OPTIONS: WindowOption[] = [
   { value: "custom", label: "Custom range…", note: "pick any start and end" },
 ];
 
-export const DEFAULT_WINDOW = "90d";
+// Reasserted every time Window remounts (switching back from Forward, or a fresh page load) —
+// see index.tsx's conditional render.
+export const DEFAULT_WINDOW = "30d";
 
 export const WINDOW_FOOTNOTE =
   "A longer window is not always a fuller picture. Cells a source cannot reach read Unavailable.";
