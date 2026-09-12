@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Shield, Sparkles, Zap } from "lucide-react";
 
+import { buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { HomeCarousel } from "@/pages/conversations/home-carousel";
 import { useTypewriter } from "@/pages/conversations/use-typewriter";
@@ -15,6 +23,8 @@ const PLACEHOLDER_PHRASES = MAPPING_QUESTIONS.map((q) => q.question);
 export default function NewConversationRoute() {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState("");
+  const [askBeforeSpending, setAskBeforeSpending] = useState(true);
+  const [planMode, setPlanMode] = useState(true);
   const { text: placeholderText, caret } = useTypewriter(PLACEHOLDER_PHRASES);
 
   const handleSubmit = () => {
@@ -84,7 +94,42 @@ export default function NewConversationRoute() {
             )}
           </div>
 
-          <div className="flex items-center justify-end border-t border-line px-2.5 py-1.5">
+          <div className="flex items-center justify-between border-t border-line px-2.5 py-1.5">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+                aria-label="Prompt settings"
+              >
+                <Shield size={14} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64">
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  className="justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Shield size={14} className="text-ink-3" />
+                    Ask before spending
+                  </span>
+                  <Switch checked={askBeforeSpending} onCheckedChange={setAskBeforeSpending} />
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  className="justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Zap size={14} className="text-ink-3" />
+                    Plan mode
+                  </span>
+                  <Switch checked={planMode} onCheckedChange={setPlanMode} />
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Sparkles size={14} className="text-ink-3" />
+                  Enrichment chat
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <button
               type="button"
               onClick={handleSubmit}
