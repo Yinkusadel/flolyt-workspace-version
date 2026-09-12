@@ -1,29 +1,11 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
-import { ChevronRight, MessagesSquare, Paperclip, Link2, ArrowUp } from "lucide-react";
+import { Paperclip, Link2, ArrowUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Chip } from "@/components/ui/chip";
-import { ME, type AttachedRoom, type InboxMessage, type ThreadItem } from "@/pages/inbox/data";
-
-/** Compact, bubble-width attachment for the message that actually referenced the room — not a
- * full-width block detached from who brought it up. */
-function AttachedRoomCard({ room }: { room: AttachedRoom }) {
-  return (
-    <Link
-      to="/rooms"
-      className="flex max-w-[75%] min-w-0 items-center gap-2.5 rounded-card border border-line bg-paper px-3 py-2 transition-colors hover:border-ink-4"
-    >
-      <MessagesSquare className="size-3.5 shrink-0 text-ink-3" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[11.5px] font-semibold text-ink">{room.label}</p>
-        <p className="truncate text-[10.5px] text-ink-3">{room.subtitle}</p>
-      </div>
-      <ChevronRight className="size-3.5 shrink-0 text-ink-4" />
-    </Link>
-  );
-}
+import { ME, type InboxMessage, type ThreadItem } from "@/pages/inbox/data";
+import { AttachedRoomCard } from "@/pages/inbox/attached-room-card";
 
 /** Mirrors the tail trick from conversations/detail-route.tsx's user bubble, flipped for the left side. */
 function MessageBubble({ message }: { message: InboxMessage }) {
