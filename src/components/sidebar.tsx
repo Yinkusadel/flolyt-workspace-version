@@ -10,6 +10,8 @@ import {
   MessageCircle,
   MessagesSquare,
   MoreVertical,
+  PanelLeftClose,
+  PanelLeftOpen,
   Trash2,
   type LucideIcon,
 } from "lucide-react";
@@ -59,9 +61,19 @@ export type SidebarProps = {
   className?: string;
 };
 
+const SIDEBAR_COLLAPSED_KEY = "flolyt-sidebar-collapsed";
+
 function Sidebar({ open, onClose, className }: SidebarProps) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  // Desktop-only collapse (icon rail). The mobile drawer always renders full-width regardless
+  // of this — collapsing only makes sense for the static lg+ sidebar, never the overlay drawer.
+  const [collapsed, setCollapsed] = useState(
+    () => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1"
+  );
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0");
+  }, [collapsed]);
   const [conversationsOpen, setConversationsOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [menuOpensUp, setMenuOpensUp] = useState(false);
@@ -122,7 +134,8 @@ function Sidebar({ open, onClose, className }: SidebarProps) {
     cn(
       "flex items-center gap-2.5 rounded-panel px-2.5 py-[7px] text-[11.5px] text-ink-3 transition-colors",
       "hover:bg-paper hover:text-ink",
-      isActive && "border border-line bg-paper font-medium text-ink shadow-xs"
+      isActive && "border border-line bg-paper font-medium text-ink shadow-xs",
+      collapsed && "lg:justify-center lg:px-0"
     );
 
   const handleConfirmDelete = () => {
@@ -139,48 +152,85 @@ function Sidebar({ open, onClose, className }: SidebarProps) {
       data-slot="sidebar"
       data-state={open ? "open" : "closed"}
       className={cn(
-        "fixed inset-y-0 left-0 z-40 flex w-nav -translate-x-full flex-col border-r border-line bg-paper-2 transition-transform duration-200 ease-out",
+        "group fixed inset-y-0 left-0 z-40 flex w-nav -translate-x-full flex-col overflow-hidden border-r border-line bg-paper-2 transition-[width,transform] duration-200 ease-out",
         "lg:static lg:translate-x-0",
+        collapsed ? "lg:w-14" : "lg:w-nav",
         open && "translate-x-0 shadow-2xl",
         className
       )}
     >
-      {/* Brand */}
-      <div className="flex h-topbar shrink-0 items-center gap-2 border-b border-line px-4">
-        <img src={flolytLogo} alt="Flolyt" className="size-page shrink-0 object-contain" />
-        <span className="text-sm font-semibold text-ink">Flolyt</span>
+      {/* Brand — the mark swaps for a collapse/expand toggle when the desktop sidebar is
+          hovered, so no separate toggle control needs its own space in the rail. */}
+      <div
+        className={cn(
+          "flex h-topbar shrink-0 items-center gap-2 border-b border-line px-4",
+          collapsed && "lg:justify-center lg:px-0"
+        )}
+      >
+        <img
+          src={flolytLogo}
+          alt="Flolyt"
+          className="size-page shrink-0 object-contain lg:group-hover:hidden"
+        />
+        <button
+          type="button"
+          onClick={() => setCollapsed((prev) => !prev)}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="hidden size-page shrink-0 items-center justify-center rounded-control text-ink-3 hover:text-ink lg:group-hover:flex"
+        >
+          {collapsed ? (
+            <PanelLeftOpen className="size-3.75" />
+          ) : (
+            <PanelLeftClose className="size-3.75" />
+          )}
+        </button>
+        <span className={cn("text-sm font-semibold text-ink", collapsed && "lg:hidden")}>
+          Flolyt
+        </span>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 py-4">
-        <NavLink to="/" end onClick={onClose} className={navLinkClass}>
+        <NavLink to="/" end onClick={onClose} title="Home" className={navLinkClass}>
           <Home className="size-3.75 shrink-0" />
-          <span className="truncate">Home</span>
+          <span className={cn("truncate", collapsed && "lg:hidden")}>Home</span>
         </NavLink>
 
-        <NavLink to="/rooms" onClick={onClose} className={navLinkClass}>
+        <NavLink to="/rooms" onClick={onClose} title="Rooms" className={navLinkClass}>
           <MessagesSquare className="size-3.75 shrink-0" />
-          <span className="truncate">Rooms</span>
+          <span className={cn("truncate", collapsed && "lg:hidden")}>Rooms</span>
           {roomsNeedingApproval ? (
-            <span className="ml-auto rounded-chip border border-amber-border bg-amber-bg px-1.5 py-0.5 font-mono text-[9px] font-semibold text-amber">
+            <span
+              className={cn(
+                "ml-auto rounded-chip border border-amber-border bg-amber-bg px-1.5 py-0.5 font-mono text-[9px] font-semibold text-amber",
+                collapsed && "lg:hidden"
+              )}
+            >
               {roomsNeedingApproval}
             </span>
           ) : null}
         </NavLink>
 
         {NAV_ITEMS.map((item) => (
-          <NavLink key={item.href} to={item.href} onClick={onClose} className={navLinkClass}>
+          <NavLink
+            key={item.href}
+            to={item.href}
+            onClick={onClose}
+            title={item.label}
+            className={navLinkClass}
+          >
             <item.icon className="size-3.75 shrink-0" />
-            <span className="truncate">{item.label}</span>
+            <span className={cn("truncate", collapsed && "lg:hidden")}>{item.label}</span>
             {item.beta ? (
-              <Chip tone="ultra" className="ml-auto">
+              <Chip tone="ultra" className={cn("ml-auto", collapsed && "lg:hidden")}>
                 BETA
               </Chip>
             ) : null}
           </NavLink>
         ))}
 
-        <div>
+        <div className={cn(collapsed && "lg:hidden")}>
           <button
             type="button"
             onClick={() => setConversationsOpen((prev) => !prev)}

@@ -11,6 +11,10 @@ const MONTH_NAMES = Array.from({ length: 12 }, (_, i) =>
 // How many years back the Year dropdown offers below whatever year `maxDate` falls in.
 const YEARS_BACK = 10;
 
+// How many years forward the Year dropdown offers when only `minDate` is set (no `maxDate`) —
+// a future-projection calendar has no natural upper bound, so this caps it to something sane.
+const YEARS_FORWARD = 2;
+
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
@@ -27,6 +31,8 @@ interface CalendarProps {
   onSelectDate: (date: Date) => void;
   /** Dates after this are shown disabled — defaults to no limit. */
   maxDate?: Date;
+  /** Dates before this are shown disabled — defaults to no limit. */
+  minDate?: Date;
   className?: string;
 }
 
@@ -44,6 +50,7 @@ export function Calendar({
   onHoverDate,
   onSelectDate,
   maxDate,
+  minDate,
   className,
 }: CalendarProps) {
   const year = month.getFullYear();
@@ -51,6 +58,7 @@ export function Calendar({
   const firstOfMonth = new Date(year, monthIndex, 1);
   const startWeekday = firstOfMonth.getDay();
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const prevMonthEnd = new Date(year, monthIndex, 0);
   const nextMonthStart = new Date(year, monthIndex + 1, 1);
 
   const cells: (Date | null)[] = [];
@@ -62,8 +70,12 @@ export function Calendar({
   const rangeStart = from && rangeEnd ? (from < rangeEnd ? from : rangeEnd) : null;
   const rangeStop = from && rangeEnd ? (from < rangeEnd ? rangeEnd : from) : null;
 
+  // A future-projection calendar (minDate, no maxDate) counts years forward instead of back.
   const maxYear = maxDate ? maxDate.getFullYear() : year;
-  const yearOptions = Array.from({ length: YEARS_BACK + 1 }, (_, i) => maxYear - i);
+  const yearOptions =
+    minDate && !maxDate
+      ? Array.from({ length: YEARS_FORWARD + 1 }, (_, i) => minDate.getFullYear() + i)
+      : Array.from({ length: YEARS_BACK + 1 }, (_, i) => maxYear - i);
 
   return (
     <div className={cn("select-none", className)}>
@@ -72,7 +84,8 @@ export function Calendar({
           type="button"
           aria-label="Previous month"
           onClick={() => onMonthChange(new Date(year, monthIndex - 1, 1))}
-          className="flex size-6 shrink-0 items-center justify-center rounded-control text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink"
+          disabled={minDate ? prevMonthEnd < minDate : false}
+          className="flex size-6 shrink-0 items-center justify-center rounded-control text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink disabled:pointer-events-none disabled:opacity-30"
         >
           <ChevronLeft className="size-3.5" />
         </button>
@@ -85,7 +98,14 @@ export function Calendar({
             className="min-w-0 rounded-control border border-line bg-paper-2 px-1.5 py-1 text-[11px] font-medium text-ink"
           >
             {MONTH_NAMES.map((name, i) => (
-              <option key={name} value={i} disabled={year === maxYear && !!maxDate && i > maxDate.getMonth()}>
+              <option
+                key={name}
+                value={i}
+                disabled={
+                  (year === maxYear && !!maxDate && i > maxDate.getMonth()) ||
+                  (year === minDate?.getFullYear() && i < (minDate?.getMonth() ?? 0))
+                }
+              >
                 {name}
               </option>
             ))}
@@ -128,7 +148,7 @@ export function Calendar({
         {cells.map((date, i) => {
           if (!date) return <div key={i} className="h-7" />;
 
-          const disabled = maxDate ? date > maxDate : false;
+          const disabled = (maxDate ? date > maxDate : false) || (minDate ? date < minDate : false);
           const isFrom = !!from && isSameDay(date, from);
           const isTo = !!to && isSameDay(date, to);
           const isEndpoint = isFrom || isTo;

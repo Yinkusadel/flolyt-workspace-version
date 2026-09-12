@@ -4,19 +4,13 @@ import {
   Activity,
   Bell,
   Boxes,
+  Bot,
   ChevronDown,
   ChevronRight,
-  Code2,
   CreditCard,
   Database,
-  Eye,
-  Frame,
-  Globe,
   IdCard,
-  Languages,
   LogOut,
-  Lock,
-  Plug,
   ScrollText,
   Settings,
   Users,
@@ -47,16 +41,16 @@ const DATA_LINKS: MenuLink[] = [
 
 const SETTINGS_LINKS: MenuLink[] = [
   { label: "Members", href: "/members", icon: Users },
-  { label: "Security", href: "/security", icon: Lock },
+  // { label: "Security", href: "/security", icon: Lock },
   { label: "Audit log", href: "/audit-log", icon: ScrollText },
-  { label: "Data and residency", href: "/data-and-residency", icon: Globe },
+  // { label: "Data and residency", href: "/data-and-residency", icon: Globe },
   { label: "Notifications", href: "/notifications", icon: Bell },
-  { label: "Integrations", href: "/integrations", icon: Plug },
+  // { label: "Integrations", href: "/integrations", icon: Plug },
   { label: "Plan and billing", href: "/plan-and-billing", icon: CreditCard },
-  { label: "Developers", href: "/developers", icon: Code2 },
-  { label: "Embedding", href: "/embedding", icon: Frame },
-  { label: "Your view", href: "/your-view", icon: Eye },
-  { label: "Language", href: "/language", icon: Languages },
+  // { label: "Developers", href: "/developers", icon: Code2 },
+  // { label: "Embedding", href: "/embedding", icon: Frame },
+  // { label: "Your view", href: "/your-view", icon: Eye },
+  // { label: "Language", href: "/language", icon: Languages },
 ];
 
 function getInitials(name: string) {
@@ -194,6 +188,13 @@ export function UserMenu() {
           onToggle={() => toggle("settings")}
         />
         {expanded === "settings" && <SectionLinks links={SETTINGS_LINKS} />}
+
+        <DropdownMenuItem asChild>
+          <Link to="/agents">
+            <Bot className="size-4" />
+            Agents
+          </Link>
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 

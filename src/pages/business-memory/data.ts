@@ -1,3 +1,4 @@
+import { agentInitialsFromName } from "@/pages/rooms/format";
 import type { AgentRef } from "@/pages/rooms/types";
 import { REPEAT_DECAY } from "@/pages/rooms/data";
 import { ME, type PersonRef } from "@/pages/inbox/data";
@@ -21,7 +22,10 @@ export type ControlStatus = "healthy" | "decaying" | "no-control" | "unavailable
 
 export type EvidenceTier = "measured" | "corroborated" | "indicative";
 
-export const DISCOUNT_OPTIMIZER: AgentRef = { initials: "DO", name: "Discount Optimizer" };
+export const DISCOUNT_OPTIMIZER: AgentRef = {
+  initials: agentInitialsFromName("Discount Optimizer"),
+  name: "Discount Optimizer",
+};
 
 const REVAN: PersonRef = { name: "Revan S.", initials: "RS", team: 1 };
 

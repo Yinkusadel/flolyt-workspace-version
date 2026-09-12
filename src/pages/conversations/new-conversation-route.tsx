@@ -1,17 +1,10 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowUp, Plus, Shield, Sparkles, Zap } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 
-import { buttonVariants } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { HomeCarousel } from "@/pages/conversations/home-carousel";
+import { PromptToggles } from "@/pages/conversations/prompt-toggles";
 import { useTypewriter } from "@/pages/conversations/use-typewriter";
 import { MAPPING_QUESTIONS } from "@/pages/onboarding/data/data";
 import flolytLogo from "../../../assets/logo.png";
@@ -97,40 +90,12 @@ export default function NewConversationRoute() {
           </div>
 
           <div className="flex items-center justify-between border-t border-line px-2.5 py-1.5">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
-                aria-label="Prompt settings"
-              >
-                <Plus size={14} />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64">
-                <DropdownMenuItem
-                  onSelect={(e) => e.preventDefault()}
-                  className="justify-between"
-                >
-                  <span className="flex items-center gap-2">
-                    <Shield size={14} className="text-ink-3" />
-                    Ask before spending
-                  </span>
-                  <Switch checked={askBeforeSpending} onCheckedChange={setAskBeforeSpending} />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={(e) => e.preventDefault()}
-                  className="justify-between"
-                >
-                  <span className="flex items-center gap-2">
-                    <Zap size={14} className="text-ink-3" />
-                    Plan mode
-                  </span>
-                  <Switch checked={planMode} onCheckedChange={setPlanMode} />
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Sparkles size={14} className="text-ink-3" />
-                  Enrichment chat
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <PromptToggles
+              askBeforeSpending={askBeforeSpending}
+              onAskBeforeSpendingChange={setAskBeforeSpending}
+              planMode={planMode}
+              onPlanModeChange={setPlanMode}
+            />
 
             <button
               type="button"
