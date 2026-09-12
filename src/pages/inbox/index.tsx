@@ -46,8 +46,8 @@ export default function Inbox() {
 
   return (
     <div className="-mt-page flex h-[calc(100%+var(--spacing-page))] flex-col">
-      <div className="flex min-h-0 flex-1 overflow-hidden rounded-card border border-line bg-paper">
-        <div className="w-[320px] shrink-0 border-r border-line">
+      <div className="flex min-h-0 flex-1 overflow-hidden bg-paper">
+        <div className="w-[320px] shrink-0">
           <ListPane
             items={items}
             filter={filter}

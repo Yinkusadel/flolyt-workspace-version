@@ -35,7 +35,7 @@ function FilterTabs({
   };
 
   return (
-    <div className="flex items-center justify-between gap-1 border-b border-line px-3 py-2">
+    <div className="flex items-center justify-between gap-1 px-3 py-2">
       <div className="flex items-center gap-1">
         {FILTERS.map((f) => {
           const count = counts[f.value];
