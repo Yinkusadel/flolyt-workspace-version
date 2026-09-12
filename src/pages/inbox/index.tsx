@@ -1,7 +1,6 @@
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { Button } from "@/components/ui/button";
 import {
   countAgentNotices,
   countUnread,
@@ -47,19 +46,16 @@ export default function Inbox() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex shrink-0 items-center justify-between gap-3 pb-4">
-        <div>
-          <h1 className="text-[17px] font-semibold text-ink">Inbox</h1>
-          <p className="mt-0.5 text-[11.5px] text-ink-3">{unreadCount} unread</p>
-        </div>
-        <Button size="sm" onClick={openCompose}>
-          New message
-        </Button>
-      </div>
-
       <div className="flex min-h-0 flex-1 overflow-hidden rounded-card border border-line bg-paper">
         <div className="w-[320px] shrink-0 border-r border-line">
-          <ListPane items={items} filter={filter} onFilterChange={setFilter} selectedId={rawId} onSelect={select} />
+          <ListPane
+            items={items}
+            filter={filter}
+            onFilterChange={setFilter}
+            selectedId={rawId}
+            onSelect={select}
+            onCompose={openCompose}
+          />
         </div>
 
         <div className="min-w-0 flex-1">

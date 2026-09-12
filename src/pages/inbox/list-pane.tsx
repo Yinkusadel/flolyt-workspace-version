@@ -1,4 +1,4 @@
-import { ShieldCheck, Sparkles } from "lucide-react";
+import { Plus, ShieldCheck, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
@@ -22,10 +22,12 @@ function FilterTabs({
   items,
   active,
   onChange,
+  onCompose,
 }: {
   items: InboxItem[];
   active: InboxFilter;
   onChange: (filter: InboxFilter) => void;
+  onCompose: () => void;
 }) {
   const counts: Partial<Record<InboxFilter, number>> = {
     unread: countUnread(items),
@@ -33,27 +35,38 @@ function FilterTabs({
   };
 
   return (
-    <div className="flex items-center gap-1 border-b border-line px-3 py-2">
-      {FILTERS.map((f) => {
-        const count = counts[f.value];
-        const isActive = active === f.value;
-        return (
-          <button
-            key={f.value}
-            type="button"
-            onClick={() => onChange(f.value)}
-            className={cn(
-              "flex items-center gap-1.5 rounded-control px-2.5 py-1.5 text-[12px] transition-colors",
-              isActive ? "bg-paper-2 font-medium text-ink" : "text-ink-3 hover:text-ink"
-            )}
-          >
-            {f.label}
-            {typeof count === "number" && count > 0 && (
-              <span className="text-[11px] font-medium text-ink-4">{count}</span>
-            )}
-          </button>
-        );
-      })}
+    <div className="flex items-center justify-between gap-1 border-b border-line px-3 py-2">
+      <div className="flex items-center gap-1">
+        {FILTERS.map((f) => {
+          const count = counts[f.value];
+          const isActive = active === f.value;
+          return (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => onChange(f.value)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-control px-2.5 py-1.5 text-[12px] transition-colors",
+                isActive ? "bg-paper-2 font-medium text-ink" : "text-ink-3 hover:text-ink"
+              )}
+            >
+              {f.label}
+              {typeof count === "number" && count > 0 && (
+                <span className="text-[11px] font-medium text-ink-4">{count}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={onCompose}
+        aria-label="New message"
+        className="flex size-6.5 shrink-0 items-center justify-center rounded-control text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink"
+      >
+        <Plus className="size-4" />
+      </button>
     </div>
   );
 }
@@ -167,18 +180,20 @@ export function ListPane({
   onFilterChange,
   selectedId,
   onSelect,
+  onCompose,
 }: {
   items: InboxItem[];
   filter: InboxFilter;
   onFilterChange: (filter: InboxFilter) => void;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onCompose: () => void;
 }) {
   const filtered = filterInboxItems(items, filter);
 
   return (
     <div className="flex h-full min-w-0 flex-col">
-      <FilterTabs items={items} active={filter} onChange={onFilterChange} />
+      <FilterTabs items={items} active={filter} onChange={onFilterChange} onCompose={onCompose} />
 
       <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-1.5">
         {filtered.length === 0 ? (
