@@ -232,3 +232,14 @@
     background-position: 100% 50%;
   }
 }
+
+/* Gentle breathing scale for the full-page app loader — see src/components/app-loader.tsx.
+   Kept outside @layer base since it's a one-off keyframe, not a design token. */
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
