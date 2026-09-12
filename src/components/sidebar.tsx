@@ -152,21 +152,39 @@ function Sidebar({ open, onClose, className }: SidebarProps) {
       data-slot="sidebar"
       data-state={open ? "open" : "closed"}
       className={cn(
-        "fixed inset-y-0 left-0 z-40 flex w-nav -translate-x-full flex-col border-r border-line bg-paper-2 transition-transform duration-200 ease-out",
+        "group fixed inset-y-0 left-0 z-40 flex w-nav -translate-x-full flex-col border-r border-line bg-paper-2 transition-transform duration-200 ease-out",
         "lg:static lg:translate-x-0",
         collapsed ? "lg:w-14" : "lg:w-nav",
         open && "translate-x-0 shadow-2xl",
         className
       )}
     >
-      {/* Brand */}
+      {/* Brand — the mark swaps for a collapse/expand toggle when the desktop sidebar is
+          hovered, so no separate toggle control needs its own space in the rail. */}
       <div
         className={cn(
           "flex h-topbar shrink-0 items-center gap-2 border-b border-line px-4",
           collapsed && "lg:justify-center lg:px-0"
         )}
       >
-        <img src={flolytLogo} alt="Flolyt" className="size-page shrink-0 object-contain" />
+        <img
+          src={flolytLogo}
+          alt="Flolyt"
+          className="size-page shrink-0 object-contain lg:group-hover:hidden"
+        />
+        <button
+          type="button"
+          onClick={() => setCollapsed((prev) => !prev)}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="hidden size-page shrink-0 items-center justify-center rounded-control text-ink-3 hover:text-ink lg:group-hover:flex"
+        >
+          {collapsed ? (
+            <PanelLeftOpen className="size-3.75" />
+          ) : (
+            <PanelLeftClose className="size-3.75" />
+          )}
+        </button>
         <span className={cn("text-sm font-semibold text-ink", collapsed && "lg:hidden")}>
           Flolyt
         </span>
@@ -315,30 +333,6 @@ function Sidebar({ open, onClose, className }: SidebarProps) {
           )}
         </div>
       </nav>
-
-      {/* Collapse toggle: desktop-only, the mobile drawer is closed by the topbar hamburger instead. */}
-      <div className="hidden shrink-0 border-t border-line p-2.5 lg:block">
-        <button
-          type="button"
-          onClick={() => setCollapsed((prev) => !prev)}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={cn(
-            "flex w-full items-center gap-2.5 rounded-panel px-2.5 py-[7px] text-[11.5px] text-ink-3 transition-colors",
-            "hover:bg-paper hover:text-ink",
-            collapsed && "justify-center"
-          )}
-        >
-          {collapsed ? (
-            <PanelLeftOpen className="size-3.75 shrink-0" />
-          ) : (
-            <>
-              <PanelLeftClose className="size-3.75 shrink-0" />
-              <span className="truncate">Collapse</span>
-            </>
-          )}
-        </button>
-      </div>
     </aside>
 
     <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
