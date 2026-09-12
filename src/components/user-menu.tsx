@@ -47,7 +47,6 @@ const SETTINGS_LINKS: MenuLink[] = [
   { label: "Notifications", href: "/notifications", icon: Bell },
   // { label: "Integrations", href: "/integrations", icon: Plug },
   { label: "Plan and billing", href: "/plan-and-billing", icon: CreditCard },
-  { label: "Agents", href: "/agents", icon: Bot },
   // { label: "Developers", href: "/developers", icon: Code2 },
   // { label: "Embedding", href: "/embedding", icon: Frame },
   // { label: "Your view", href: "/your-view", icon: Eye },
@@ -189,6 +188,13 @@ export function UserMenu() {
           onToggle={() => toggle("settings")}
         />
         {expanded === "settings" && <SectionLinks links={SETTINGS_LINKS} />}
+
+        <DropdownMenuItem asChild>
+          <Link to="/agents">
+            <Bot className="size-4" />
+            Agents
+          </Link>
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
