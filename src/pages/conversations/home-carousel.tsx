@@ -48,7 +48,7 @@ function PastWeekCard() {
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
           <p className="font-serif text-2xl text-ink">$412K</p>
-          <p className="mt-1 font-mono text-[8.5px] font-medium tracking-[0.05em] text-ink-4">AT RISK</p>
+          <p className="mt-1 font-mono text-[8.5px] font-medium tracking-[0.05em] text-ink-4">PRESERVED</p>
         </div>
         <div>
           <p className="font-serif text-2xl text-ink">3</p>

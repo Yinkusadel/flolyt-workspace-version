@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowUp, Shield, Sparkles, Zap } from "lucide-react";
+import { ArrowUp, Plus, Shield, Sparkles, Zap } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -100,7 +100,7 @@ export default function NewConversationRoute() {
                 className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
                 aria-label="Prompt settings"
               >
-                <Shield size={14} />
+                <Plus size={14} />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64">
                 <DropdownMenuItem
