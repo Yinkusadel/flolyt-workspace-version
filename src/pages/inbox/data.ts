@@ -11,9 +11,9 @@ export type PersonRef = { name: string; initials: string; team: 1 | 2 | 3 | 4 };
 
 export type EvidenceTier = "measured" | "corroborated" | "indicative";
 
-export type InboxMessage = { person: PersonRef; timestamp: string; text: string };
-
 export type AttachedRoom = { label: string; subtitle: string };
+
+export type InboxMessage = { person: PersonRef; timestamp: string; text: string; attachedRoom?: AttachedRoom };
 
 export type ApprovalDetail = {
   subtitle: string;
@@ -35,7 +35,6 @@ export type ThreadItem = {
   preview: string[];
   roomLabel?: string;
   thread?: InboxMessage[];
-  attachedRoom?: AttachedRoom;
 };
 
 export type NoticeItem = {
@@ -47,6 +46,10 @@ export type NoticeItem = {
   title: string;
   preview: string;
   approval?: ApprovalDetail;
+  /** Set only when the notice is one named agent's own update (e.g. "Repeat & Decay · Room
+   * 2473") — drives the initials in its row icon. A system-level notice like "Room 2468 closed"
+   * has no single agent to name, so this stays unset and the icon falls back to a glyph. */
+  agentName?: string;
 };
 
 export type InboxItem = ThreadItem | NoticeItem;
@@ -99,6 +102,10 @@ export const INBOX_ITEMS: InboxItem[] = [
         person: REVAN,
         timestamp: "1h",
         text: "I have filed the objection on 2471. The discount holds cost more than the second orders they recover, on the numbers I can see.",
+        attachedRoom: {
+          label: "Room 2471 · Checklist drop-off at Adopt",
+          subtitle: "₦412M at risk · 4 findings · 1 objection open",
+        },
       },
       {
         person: ME,
@@ -111,10 +118,6 @@ export const INBOX_ITEMS: InboxItem[] = [
         text: "Agreed. I will narrow the objection to the discount leg only. Still want the holdout set before either ships.",
       },
     ],
-    attachedRoom: {
-      label: "Room 2471 · Checklist drop-off at Adopt",
-      subtitle: "₦412M at risk · 4 findings · 1 objection open",
-    },
   },
   {
     id: "notice-2473",
@@ -124,6 +127,7 @@ export const INBOX_ITEMS: InboxItem[] = [
     timestamp: "5h",
     title: "Repeat & Decay · Room 2473",
     preview: "Discount depth rose 4 points on the Lagos cohort",
+    agentName: "Repeat & Decay",
   },
   {
     id: "thread-tunde",

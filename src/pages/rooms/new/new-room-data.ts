@@ -1,4 +1,14 @@
-import { AMARA, RAVI, REPEAT_DECAY, SAM, TUNDE, ZAINAB } from "@/pages/rooms/data";
+import {
+  ACQUISITION_QUALITY,
+  AMARA,
+  ORCHESTRATOR,
+  PRICE_MARGIN,
+  RAVI,
+  REPEAT_DECAY,
+  SAM,
+  TUNDE,
+  ZAINAB,
+} from "@/pages/rooms/data";
 import type { AgentRef, PersonRef, Tone } from "@/pages/rooms/types";
 
 /** Static content for the new-room wizard (`/rooms/new`) — R06–R11. */
@@ -53,9 +63,9 @@ export type SuggestedAgent = {
 
 export const SUGGESTED_AGENTS: SuggestedAgent[] = [
   { agent: REPEAT_DECAY, does: "Owns the reading · repeat rate, cohorts, reactivation response", role: "lead", roleTone: "ultra", reads: "orders", added: true },
-  { agent: { initials: "AQ", name: "Acquisition Quality" }, does: "Half this cohort's behaviour was decided in Acquire", role: "supporting", roleTone: "neutral", reads: "orders, ad spend", added: true },
-  { agent: { initials: "MO", name: "Orchestrator" }, does: "Arbitrates when two agents disagree · does not pick sides", role: "automatic", roleTone: "neutral", reads: "everything", added: true, locked: true },
-  { agent: { initials: "PX", name: "Price & Margin" }, does: "Would price any discount · currently blocked on COGS", role: "optional", roleTone: "neutral", reads: "billing", added: false },
+  { agent: ACQUISITION_QUALITY, does: "Half this cohort's behaviour was decided in Acquire", role: "supporting", roleTone: "neutral", reads: "orders, ad spend", added: true },
+  { agent: ORCHESTRATOR, does: "Arbitrates when two agents disagree · does not pick sides", role: "automatic", roleTone: "neutral", reads: "everything", added: true, locked: true },
+  { agent: PRICE_MARGIN, does: "Would price any discount · currently blocked on COGS", role: "optional", roleTone: "neutral", reads: "billing", added: false },
 ];
 
 export type SettleOption = { label: string; sub: string; offered: boolean };

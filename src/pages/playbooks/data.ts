@@ -1,3 +1,4 @@
+import { agentInitialsFromName } from "@/pages/rooms/format";
 import type { AgentRef } from "@/pages/rooms/types";
 import { ME, type PersonRef } from "@/pages/inbox/data";
 
@@ -32,12 +33,12 @@ export const AUTONOMY_TONE: Record<AutonomyStatus, "teal" | "amber" | "neutral">
   retired: "neutral",
 };
 
-export const GUARDIAN: AgentRef = { initials: "GD", name: "Guardian" };
-export const PRISM: AgentRef = { initials: "PR", name: "Prism" };
-export const ANCHOR: AgentRef = { initials: "AN", name: "Anchor" };
-export const RIA: AgentRef = { initials: "RI", name: "RIA" };
-export const LOOM: AgentRef = { initials: "LO", name: "Loom" };
-export const MAESTRO: AgentRef = { initials: "MA", name: "Maestro" };
+export const GUARDIAN: AgentRef = { initials: agentInitialsFromName("Guardian"), name: "Guardian" };
+export const PRISM: AgentRef = { initials: agentInitialsFromName("Prism"), name: "Prism" };
+export const ANCHOR: AgentRef = { initials: agentInitialsFromName("Anchor"), name: "Anchor" };
+export const RIA: AgentRef = { initials: agentInitialsFromName("RIA"), name: "RIA" };
+export const LOOM: AgentRef = { initials: agentInitialsFromName("Loom"), name: "Loom" };
+export const MAESTRO: AgentRef = { initials: agentInitialsFromName("Maestro"), name: "Maestro" };
 
 const REVAN: PersonRef = { name: "Revan S.", initials: "RS", team: 1 };
 

@@ -1,14 +1,8 @@
-import { Loader2 } from "lucide-react";
 import { Navigate, Outlet, useLocation } from "react-router";
 
+import { AppLoader as Loader } from "@/components/app-loader";
 import { useAuth } from "@/utils/auth-context";
 import useGetOnboardingStatus from "@/features/workspace/use-get-onboarding-status";
-
-const Loader = () => (
-  <div className="flex h-dvh items-center justify-center bg-paper">
-    <Loader2 className="size-5 animate-spin text-ink-3" />
-  </div>
-);
 
 // GET /workspace/onboarding's resumeAt → the route for that step, for whichever
 // steps actually have a screen built.

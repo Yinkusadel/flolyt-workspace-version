@@ -1,3 +1,4 @@
+import { agentInitialsFromName } from "@/pages/rooms/format";
 import type { AgentRef, PersonRef } from "@/pages/rooms/types";
 
 /**
@@ -20,10 +21,16 @@ export const KUNLE: PersonRef = { initials: "KO", name: "Kunle", department: "Cu
 export const SADE: PersonRef = { initials: "SO", name: "Sade Ogun", department: "Engineering" };
 export const SAMUEL: PersonRef = { initials: "SA", name: "Samuel Eze", department: "Finance" };
 
-export const REPEAT_DECAY: AgentRef = { initials: "RD", name: "Repeat & Decay" };
-export const ACQUISITION_QUALITY: AgentRef = { initials: "AQ", name: "Acquisition Quality" };
-export const ORCHESTRATOR: AgentRef = { initials: "MO", name: "Orchestrator" };
-export const PRICE_MARGIN: AgentRef = { initials: "PX", name: "Price & Margin" };
-export const SUPPORT_SIGNAL: AgentRef = { initials: "SS", name: "Support Signal" };
-export const INVOLUNTARY_CHURN: AgentRef = { initials: "IC", name: "Involuntary Churn" };
-export const EXPANSION: AgentRef = { initials: "EX", name: "Expansion" };
+export const REPEAT_DECAY: AgentRef = { initials: agentInitialsFromName("Repeat & Decay"), name: "Repeat & Decay" };
+export const ACQUISITION_QUALITY: AgentRef = {
+  initials: agentInitialsFromName("Acquisition Quality"),
+  name: "Acquisition Quality",
+};
+export const ORCHESTRATOR: AgentRef = { initials: agentInitialsFromName("Orchestrator"), name: "Orchestrator" };
+export const PRICE_MARGIN: AgentRef = { initials: agentInitialsFromName("Price & Margin"), name: "Price & Margin" };
+export const SUPPORT_SIGNAL: AgentRef = { initials: agentInitialsFromName("Support Signal"), name: "Support Signal" };
+export const INVOLUNTARY_CHURN: AgentRef = {
+  initials: agentInitialsFromName("Involuntary Churn"),
+  name: "Involuntary Churn",
+};
+export const EXPANSION: AgentRef = { initials: agentInitialsFromName("Expansion"), name: "Expansion" };

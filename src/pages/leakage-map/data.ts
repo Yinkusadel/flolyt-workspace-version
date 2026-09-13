@@ -65,29 +65,52 @@ export const WINDOW_FOOTNOTE =
 
 export type ShadeByOption = {
   value: string;
-  /** Compact form shown in the closed trigger, e.g. "Exposure". */
+  /** Compact form shown in the closed trigger, e.g. "Next 90 days". */
   shortLabel: string;
-  /** Full label shown in the open list, e.g. "Exposure · 90 days". */
+  /** Full label shown in the open list, e.g. "Next 90 days". */
   label: string;
   note: string;
   /** Slots into the matrix legend's "Shading is …" caption. */
   captionLabel: string;
 };
 
+// Mirrors WINDOW_OPTIONS' preset spread, forward-phrased, plus the two periodless metrics —
+// see window-picker.tsx, whose list/calendar split this picker's custom-date view reuses.
 export const SHADE_BY_OPTIONS: ShadeByOption[] = [
   {
-    value: "exposure",
-    shortLabel: "Exposure",
-    label: "Exposure · 90 days",
-    note: "money at risk inside the window",
+    value: "30d",
+    shortLabel: "Next 30 days",
+    label: "Next 30 days",
+    note: "every source covers this",
+    captionLabel: "30-day exposure",
+  },
+  {
+    value: "90d",
+    shortLabel: "Next 90 days",
+    label: "Next 90 days",
+    note: "every source covers this",
     captionLabel: "90-day exposure",
   },
   {
-    value: "annualised",
-    shortLabel: "Annualised",
-    label: "Annualised exposure",
+    value: "qtr",
+    shortLabel: "Rest of quarter",
+    label: "Rest of quarter",
+    note: "every source covers this",
+    captionLabel: "rest-of-quarter exposure",
+  },
+  {
+    value: "12m",
+    shortLabel: "Next 12 months",
+    label: "Next 12 months",
     note: "the same cells at a yearly run rate",
     captionLabel: "annualised exposure",
+  },
+  {
+    value: "custom",
+    shortLabel: "Custom date",
+    label: "Custom date…",
+    note: "pick a date to project through",
+    captionLabel: "custom-range exposure",
   },
   {
     value: "severity",
@@ -105,7 +128,7 @@ export const SHADE_BY_OPTIONS: ShadeByOption[] = [
   },
 ];
 
-export const DEFAULT_SHADE_BY = "exposure";
+export const DEFAULT_SHADE_BY = "90d";
 
 export const SHADE_BY_FOOTNOTE = "Shading changes the ramp, never the figures. Ranking always uses the threat score.";
 

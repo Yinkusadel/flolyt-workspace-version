@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { agentInitialsFromName } from "@/pages/rooms/format";
 import type { WorkspaceAgentDto } from "@/services/api/workspace/get-workspace-agents";
 
 const STATE_META: Record<string, { label: string; dot: string; text: string }> = {
@@ -42,7 +43,7 @@ export function AgentCard({ agent }: { agent: WorkspaceAgentDto }) {
     <div className="flex flex-col rounded-panel border border-dashed border-line bg-paper p-4">
       <div className="flex items-center gap-2">
         <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-dashed border-ultra-border font-mono text-[8px] font-semibold text-ultra">
-          {agent.initials}
+          {agentInitialsFromName(agent.name)}
         </span>
         <span className="font-mono text-[9.5px] font-semibold tracking-[0.6px] text-ultra uppercase">
           {agent.name}

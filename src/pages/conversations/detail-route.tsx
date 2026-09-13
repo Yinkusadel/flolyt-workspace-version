@@ -1,16 +1,34 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, ArrowUp, CheckCircle2, ChevronDown, Database, Loader2 } from "lucide-react";
+import { AlertTriangle, ArrowUp, Link2, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { usePageBreadcrumb } from "@/components/breadcrumb-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAiConversationMessages } from "@/features/ai-conversations/use-ai-conversation-messages";
 import { useGetAiConversationById } from "@/features/ai-conversations/use-get-ai-conversation-by-id";
-import type { AiConversationMessage, ReasoningStep } from "@/features/ai-conversations/ai-conversation-types";
+import type { AiConversationMessage } from "@/features/ai-conversations/ai-conversation-types";
 import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
 import { ProposalCard, type ProposalCardData } from "./proposal-card";
+import { PromptToggles } from "./prompt-toggles";
+import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
+import { AiResponseRenderer } from "./ai-response/response-renderer";
 import flolytLogo from "../../../assets/logo.png";
+
+// ❌ Backend does NOT provide a suggested-next-actions endpoint yet — mocked until one exists.
+const MOCK_SUGGESTED_ACTIONS: SuggestedAction[] = [
+  { id: "1", label: "Summarize the key changes in this conversation so far" },
+  { id: "2", label: "Suggest what I should prioritize next" },
+  { id: "3", label: "Draft a follow-up message based on this" },
+];
+
+// Hysteresis band for the scroll-driven reveal: reopen only within OPEN px of the bottom, close
+// only once scrolled past CLOSE px away. The gap between them must clear the panel's own
+// open/closed height difference (~140px) — collapsing/expanding it resizes the scroll container,
+// which shifts the distance-from-bottom reading; a single shared threshold sits inside that swing
+// and re-crosses itself on every resize, oscillating open/closed in a tight loop.
+const NEAR_BOTTOM_OPEN_THRESHOLD = 40;
+const NEAR_BOTTOM_CLOSE_THRESHOLD = 220;
 
 // Guards the bootstrap prompt (arriving via nav state from /new-conversation) against being
 // re-sent by a StrictMode double-invoke or an accidental remount — same idiom as the reference
@@ -22,6 +40,12 @@ const PHASE_LABEL: Record<string, string> = {
   readingSource: "Reading source…",
   streaming: "Responding…",
 };
+
+function formatElapsed(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
 
 type ChatMessage = AiConversationMessage & { key: string };
 
@@ -41,53 +65,28 @@ function dedupeMessages(messages: AiConversationMessage[]): ChatMessage[] {
   return result;
 }
 
-function ReasoningTrace({ steps, isStreaming }: { steps: ReasoningStep[]; isStreaming: boolean }) {
-  const [open, setOpen] = useState(true);
-  if (!steps.length) return null;
-
+// No card, no click-to-expand — mirrors Claude's own in-progress status: a single "is working"
+// header with a live timer, and one current-activity line underneath that swaps out as new SSE
+// events arrive rather than accumulating into a list. Past steps are intentionally discarded once
+// replaced (see reasoningSteps in useAiConversationMessages — kept for the send lifecycle, not for
+// history display).
+function WorkingStatus({ elapsedSeconds, subline, isPhaseOnly }: { elapsedSeconds: number; subline: string; isPhaseOnly: boolean }) {
   return (
-    <div className="max-w-[75%] min-w-0 rounded-card border border-line bg-paper-2">
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className="flex w-full min-w-0 items-center gap-2 px-3.5 py-2.5 text-left"
-      >
-        {isStreaming && <Loader2 className="size-3 shrink-0 animate-spin text-ultra" />}
-        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-ink-3">
-          {isStreaming ? "Working…" : `${steps.length} reasoning step${steps.length === 1 ? "" : "s"}`}
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <div className="flex items-center gap-1.5 text-[11px] font-medium text-ink-3">
+        <img src={flolytLogo} alt="" className="size-3.5 object-contain" />
+        Working · {formatElapsed(elapsedSeconds)}
+      </div>
+      <div className="flex min-w-0 items-start gap-1.5 pl-0.5">
+        {isPhaseOnly ? (
+          <Loader2 className="mt-0.5 size-3 shrink-0 animate-spin text-ink-4" />
+        ) : (
+          <Link2 className="mt-0.5 size-3 shrink-0 text-ink-4" />
+        )}
+        <span className="min-w-0 flex-1 animate-text-shimmer text-[11px] leading-relaxed wrap-break-word">
+          {subline}
         </span>
-        <ChevronDown className={cn("size-3.5 shrink-0 text-ink-4 transition-transform", open && "rotate-180")} />
-      </button>
-
-      {open && (
-        <div className="space-y-2 border-t border-line px-3.5 py-2.5">
-          {steps.map((step, idx) => {
-            const isLast = idx === steps.length - 1;
-            const isActive = isStreaming && isLast;
-            return (
-              <div key={`${step.timestamp}-${idx}`} className="flex min-w-0 items-start gap-2">
-                <span
-                  className={cn(
-                    "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full",
-                    isActive ? "text-ultra" : "bg-teal-bg text-teal"
-                  )}
-                >
-                  {isActive ? (
-                    <Loader2 className="size-3 animate-spin" />
-                  ) : step.kind === "tool_call" ? (
-                    <Database className="size-2.5" />
-                  ) : (
-                    <CheckCircle2 className="size-3" />
-                  )}
-                </span>
-                <p className="min-w-0 flex-1 text-[11px] leading-relaxed wrap-break-word text-ink-3">
-                  {step.description}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -102,8 +101,16 @@ export default function AiConversationDetailRoute() {
   const bootstrapToken = isNew ? ((location.state as { bootstrapToken?: string } | null)?.bootstrapToken ?? null) : null;
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // Toggling the panel resizes the scroll container, which fires a real (not spurious) native
+  // "scroll" event of its own as the browser re-clamps scrollTop — briefly ignore the scroll
+  // listener right after a manual toggle so that reflow-echo doesn't immediately undo it.
+  const suppressScrollAutoRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState("");
+  const [askBeforeSpending, setAskBeforeSpending] = useState(true);
+  const [planMode, setPlanMode] = useState(true);
+  const [suggestedActionsOpen, setSuggestedActionsOpen] = useState(true);
 
   const {
     messages: streamedMessages,
@@ -112,6 +119,7 @@ export default function AiConversationDetailRoute() {
     animatedStreamingText,
     isStreaming,
     currentPhase,
+    currentPhaseMessage,
     sendMessage,
   } = useAiConversationMessages(isNew ? undefined : id, {
     onConversationCreated: (newId) => {
@@ -122,6 +130,39 @@ export default function AiConversationDetailRoute() {
   const { data: history, isLoading: isHistoryLoading } = useGetAiConversationById(
     !isNew ? id : undefined
   );
+
+  // No backend field for "how long has this run been going" — this is a plain wall-clock timer
+  // tied to the real isStreaming lifecycle from the hook, restarted at 0 each time a send begins.
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  useEffect(() => {
+    if (!isStreaming) {
+      setElapsedSeconds(0);
+      return;
+    }
+    const startedAt = Date.now();
+    const interval = window.setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [isStreaming]);
+
+  // The current-activity line always reflects the latest real SSE data. A `proposal` event is
+  // just as much "activity" as a tool_call/reasoning_step, but it lands in its own array
+  // (streamedProposals, below) — compare real timestamps across both to find whichever actually
+  // happened last, rather than only ever looking at reasoningSteps and silently dropping proposal
+  // activity. Falls back to the current lifecycle phase before either has produced anything.
+  const latestStep = reasoningSteps[reasoningSteps.length - 1];
+  const latestProposal = streamedProposals[streamedProposals.length - 1];
+  const proposalIsLatest =
+    !!latestProposal &&
+    (!latestStep || new Date(latestProposal.createdAtUtc) >= new Date(latestStep.timestamp));
+
+  const latestActivity = latestStep || latestProposal;
+  // Prefer the backend's own phase copy ("Analyzing your request...", "Processing...") over the
+  // PHASE_LABEL map — that map is only a fallback for a phase the backend didn't send text for.
+  const workingSubline = proposalIsLatest
+    ? `Preparing proposal: ${latestProposal!.toolName}`
+    : (latestStep?.description ?? currentPhaseMessage ?? PHASE_LABEL[currentPhase ?? ""] ?? "Working…");
 
   // The SSE `proposal` event is a live nudge, not the source of truth — GET /ai/proposals is,
   // and is what makes a still-pending proposal survive a page reload. Merge the two: prefer the
@@ -186,19 +227,56 @@ export default function AiConversationDetailRoute() {
     sendMessage(message);
   };
 
+  const handleSelectSuggestion = (label: string) => {
+    if (isStreaming) return;
+    sendMessage(label);
+  };
+
+  const handleChatScroll = () => {
+    if (suppressScrollAutoRef.current) return;
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setSuggestedActionsOpen((prev) => {
+      if (prev && distanceFromBottom > NEAR_BOTTOM_CLOSE_THRESHOLD) return false;
+      if (!prev && distanceFromBottom < NEAR_BOTTOM_OPEN_THRESHOLD) return true;
+      return prev;
+    });
+  };
+
+  const handleToggleSuggestedActions = (open: boolean) => {
+    suppressScrollAutoRef.current = true;
+    setSuggestedActionsOpen(open);
+    window.setTimeout(() => {
+      suppressScrollAutoRef.current = false;
+    }, 400);
+  };
+
+  const showSkeleton = isHistoryLoading && messages.length === 0 && !isStreaming;
   const showEmptyState = !isHistoryLoading && messages.length === 0 && !isStreaming;
+  const showSuggestedActions = !showSkeleton && !showEmptyState && !isStreaming;
 
   return (
     <div className="mx-auto flex h-full max-w-3xl flex-col">
-      <div className="min-w-0 flex-1 space-y-5 overflow-x-hidden overflow-y-auto py-6">
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleChatScroll}
+        className="min-w-0 flex-1 space-y-5 overflow-x-hidden overflow-y-auto py-6"
+      >
         {/* Only for a cold visit to an existing conversation with nothing on screen yet — not
             during a bootstrap send, where the history query flips from disabled to enabled the
             moment the new id resolves (mid-stream) and would otherwise pop this in above the
             prompt/response that are already showing. */}
-        {isHistoryLoading && messages.length === 0 && !isStreaming && (
+        {showSkeleton && (
           <div className="space-y-3">
             <Skeleton className="h-16 w-2/3 rounded-card" />
             <Skeleton className="ml-auto h-10 w-1/2 rounded-card" />
+            <Skeleton className="h-16 w-3/5 rounded-card" />
+            <Skeleton className="ml-auto h-10 w-2/5 rounded-card" />
+            <Skeleton className="h-16 w-1/2 rounded-card" />
+            <Skeleton className="ml-auto h-10 w-1/3 rounded-card" />
+            <Skeleton className="h-16 w-3/4 rounded-card" />
+            <Skeleton className="ml-auto h-10 w-3/5 rounded-card" />
           </div>
         )}
 
@@ -243,24 +321,28 @@ export default function AiConversationDetailRoute() {
               </div>
             </div>
           ) : (
-            <div key={message.key} className="flex min-w-0 flex-col items-start gap-1.5">
-              <p className="max-w-[85%] min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-ink">
-                {message.content}
-              </p>
+            // w-full (not just items-start) matters here: without a definite width on this
+            // wrapper, a table/chart segment's own max-w-[85%] has nothing real to resolve
+            // against under shrink-to-fit flex sizing, and a wide table's min-w-max content can
+            // then overflow straight past the pane's edge instead of being capped at 85%.
+            <div key={message.key} className="flex w-full min-w-0 flex-col items-start gap-1.5">
+              <AiResponseRenderer content={message.content} />
             </div>
           )
         )}
 
         {isStreaming && (
           <div className="flex min-w-0 flex-col items-start gap-1.5">
-            {currentPhase && currentPhase !== "streaming" && (
-              <div className="flex items-center gap-1.5 text-[11px] font-medium text-ink-3">
-                <Loader2 className="size-3 animate-spin text-ultra" />
-                {PHASE_LABEL[currentPhase] ?? "Working…"}
-              </div>
-            )}
-
-            <ReasoningTrace steps={reasoningSteps} isStreaming={isStreaming} />
+            {/* This backend interleaves tool_call/reasoning_step events with response_chunk
+                text rather than finishing all reasoning before it starts streaming an answer —
+                confirmed live 2026-09-13 (tool calls kept arriving after the first words of text).
+                So this status line has to stay up for the whole isStreaming window, not just
+                until text starts, or later tool calls after the first word never get shown. */}
+            <WorkingStatus
+              elapsedSeconds={elapsedSeconds}
+              subline={workingSubline}
+              isPhaseOnly={!latestActivity}
+            />
 
             {animatedStreamingText && (
               <p className="max-w-[85%] min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-ink">
@@ -279,50 +361,90 @@ export default function AiConversationDetailRoute() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="sticky bottom-0 border-t border-line bg-paper py-4">
-        <div className="group relative">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -inset-px rounded-card opacity-0 transition-opacity duration-300 group-focus-within:opacity-100"
-            style={{
-              background:
-                "linear-gradient(120deg, var(--color-ultra), var(--color-ultra-border), var(--color-ultra))",
-              backgroundSize: "300% 300%",
-              animation: "border-gradient-pan 5s ease infinite",
-            }}
+      <div className="sticky bottom-0 flex flex-col bg-paper">
+        {showSuggestedActions && (
+          <SuggestedActions
+            actions={MOCK_SUGGESTED_ACTIONS}
+            isOpen={suggestedActionsOpen}
+            onOpenChange={handleToggleSuggestedActions}
+            onSelect={handleSelectSuggestion}
           />
+        )}
 
-          <div className="relative rounded-card border border-line bg-paper-2 shadow-xs transition-colors group-focus-within:border-transparent">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.currentTarget.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              rows={2}
-              placeholder="Ask a follow-up…"
-              disabled={isStreaming}
-              className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3 pb-1.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
-            />
-
-            <div className="flex items-center justify-end border-t border-line px-2.5 py-1.5">
-              <button
-                type="button"
-                onClick={handleSend}
-                disabled={!input.trim() || isStreaming}
-                className={cn(
-                  "flex size-6.5 items-center justify-center rounded-md transition-all",
-                  input.trim() && !isStreaming ? "bg-ultra text-paper hover:opacity-90" : "bg-paper text-ink-4"
-                )}
-              >
-                {isStreaming ? <Loader2 className="size-3.25 animate-spin" /> : <ArrowUp size={13} strokeWidth={2.5} />}
-              </button>
+        <div className="border-t border-line pt-4 pb-4">
+          {showSkeleton ? (
+            // Same footprint as the real composer below (rounded-card box, textarea-height row +
+            // toolbar row) so nothing jumps once history loads and the real one swaps in. Keyed
+            // distinctly from the real composer below so React fully unmounts/remounts on the
+            // swap instead of patching this div in place — without a key, both branches render a
+            // bare <div> in the same slot, so React reuses the DOM node and the real composer's
+            // focus-glow div (the blue/purple gradient, normally opacity-0 until focused) could
+            // briefly render with a stale transition state during the patch. Confirmed live 2026-09-13.
+            <div key="composer-skeleton" className="rounded-card border border-line bg-paper-2 shadow-xs">
+              <div className="px-4 pt-3 pb-1.5">
+                <Skeleton className="h-4 w-2/5 rounded-full" />
+              </div>
+              <div className="flex items-center justify-between border-t border-line px-2.5 py-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Skeleton className="size-6.5 rounded-md" />
+                  <Skeleton className="size-6.5 rounded-md" />
+                </div>
+                <Skeleton className="size-6.5 rounded-md" />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div key="composer-real" className="group relative">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -inset-px rounded-card opacity-0 transition-opacity duration-300 group-focus-within:opacity-100"
+                style={{
+                  background:
+                    "linear-gradient(120deg, var(--color-ultra), var(--color-ultra-border), var(--color-ultra))",
+                  backgroundSize: "300% 300%",
+                  animation: "border-gradient-pan 5s ease infinite",
+                }}
+              />
+
+              <div className="relative rounded-card border border-line bg-paper-2 shadow-xs transition-colors group-focus-within:border-transparent">
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.currentTarget.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  rows={2}
+                  placeholder="Ask a follow-up…"
+                  disabled={isStreaming}
+                  className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3 pb-1.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
+                />
+
+                <div className="flex items-center justify-between border-t border-line px-2.5 py-1.5">
+                  <PromptToggles
+                    askBeforeSpending={askBeforeSpending}
+                    onAskBeforeSpendingChange={setAskBeforeSpending}
+                    planMode={planMode}
+                    onPlanModeChange={setPlanMode}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleSend}
+                    disabled={!input.trim() || isStreaming}
+                    className={cn(
+                      "flex size-6.5 items-center justify-center rounded-md transition-all",
+                      input.trim() && !isStreaming ? "bg-ultra text-paper hover:opacity-90" : "bg-paper text-ink-4"
+                    )}
+                  >
+                    {isStreaming ? <Loader2 className="size-3.25 animate-spin" /> : <ArrowUp size={13} strokeWidth={2.5} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

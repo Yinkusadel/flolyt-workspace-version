@@ -1,6 +1,6 @@
 import type { RoomListRowDto } from "@/services/api/rooms/get-rooms";
 import { formatCompactMoney, formatCount } from "@/lib/format-measured-value";
-import { formatRoomActivity, initialsFromName } from "@/pages/rooms/format";
+import { agentInitialsFromName, formatRoomActivity, initialsFromName } from "@/pages/rooms/format";
 import type { RoomListRow, RoomListState, Tone } from "@/pages/rooms/types";
 
 /**
@@ -73,7 +73,7 @@ export function mapRoomListRow(row: RoomListRowDto, listState: RoomListState): R
     owner: row.ownerMemberId && row.ownerName
       ? { id: row.ownerMemberId, initials: initialsFromName(row.ownerName), name: row.ownerName }
       : undefined,
-    working: row.agents.map((agent) => ({ initials: initialsFromName(agent.displayName), name: agent.displayName })),
+    working: row.agents.map((agent) => ({ initials: agentInitialsFromName(agent.displayName), name: agent.displayName })),
     last: formatRoomActivity(row.lastActivityAtUtc),
     lastTone: row.isStale ? "amber" : undefined,
     listState,
