@@ -252,8 +252,9 @@ export default function AiConversationDetailRoute() {
     }, 400);
   };
 
+  const showSkeleton = isHistoryLoading && messages.length === 0 && !isStreaming;
   const showEmptyState = !isHistoryLoading && messages.length === 0 && !isStreaming;
-  const showSuggestedActions = !showEmptyState && !isStreaming;
+  const showSuggestedActions = !showSkeleton && !showEmptyState && !isStreaming;
 
   return (
     <div className="mx-auto flex h-full max-w-3xl flex-col">
@@ -266,10 +267,16 @@ export default function AiConversationDetailRoute() {
             during a bootstrap send, where the history query flips from disabled to enabled the
             moment the new id resolves (mid-stream) and would otherwise pop this in above the
             prompt/response that are already showing. */}
-        {isHistoryLoading && messages.length === 0 && !isStreaming && (
+        {showSkeleton && (
           <div className="space-y-3">
             <Skeleton className="h-16 w-2/3 rounded-card" />
             <Skeleton className="ml-auto h-10 w-1/2 rounded-card" />
+            <Skeleton className="h-16 w-3/5 rounded-card" />
+            <Skeleton className="ml-auto h-10 w-2/5 rounded-card" />
+            <Skeleton className="h-16 w-1/2 rounded-card" />
+            <Skeleton className="ml-auto h-10 w-1/3 rounded-card" />
+            <Skeleton className="h-16 w-3/4 rounded-card" />
+            <Skeleton className="ml-auto h-10 w-3/5 rounded-card" />
           </div>
         )}
 
@@ -365,57 +372,79 @@ export default function AiConversationDetailRoute() {
         )}
 
         <div className="border-t border-line pt-4 pb-4">
-          <div className="group relative">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -inset-px rounded-card opacity-0 transition-opacity duration-300 group-focus-within:opacity-100"
-              style={{
-                background:
-                  "linear-gradient(120deg, var(--color-ultra), var(--color-ultra-border), var(--color-ultra))",
-                backgroundSize: "300% 300%",
-                animation: "border-gradient-pan 5s ease infinite",
-              }}
-            />
-
-            <div className="relative rounded-card border border-line bg-paper-2 shadow-xs transition-colors group-focus-within:border-transparent">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.currentTarget.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                rows={2}
-                placeholder="Ask a follow-up…"
-                disabled={isStreaming}
-                className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3 pb-1.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
-              />
-
+          {showSkeleton ? (
+            // Same footprint as the real composer below (rounded-card box, textarea-height row +
+            // toolbar row) so nothing jumps once history loads and the real one swaps in. Keyed
+            // distinctly from the real composer below so React fully unmounts/remounts on the
+            // swap instead of patching this div in place — without a key, both branches render a
+            // bare <div> in the same slot, so React reuses the DOM node and the real composer's
+            // focus-glow div (the blue/purple gradient, normally opacity-0 until focused) could
+            // briefly render with a stale transition state during the patch. Confirmed live 2026-09-13.
+            <div key="composer-skeleton" className="rounded-card border border-line bg-paper-2 shadow-xs">
+              <div className="px-4 pt-3 pb-1.5">
+                <Skeleton className="h-4 w-2/5 rounded-full" />
+              </div>
               <div className="flex items-center justify-between border-t border-line px-2.5 py-1.5">
-                <PromptToggles
-                  askBeforeSpending={askBeforeSpending}
-                  onAskBeforeSpendingChange={setAskBeforeSpending}
-                  planMode={planMode}
-                  onPlanModeChange={setPlanMode}
-                />
-
-                <button
-                  type="button"
-                  onClick={handleSend}
-                  disabled={!input.trim() || isStreaming}
-                  className={cn(
-                    "flex size-6.5 items-center justify-center rounded-md transition-all",
-                    input.trim() && !isStreaming ? "bg-ultra text-paper hover:opacity-90" : "bg-paper text-ink-4"
-                  )}
-                >
-                  {isStreaming ? <Loader2 className="size-3.25 animate-spin" /> : <ArrowUp size={13} strokeWidth={2.5} />}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <Skeleton className="size-6.5 rounded-md" />
+                  <Skeleton className="size-6.5 rounded-md" />
+                </div>
+                <Skeleton className="size-6.5 rounded-md" />
               </div>
             </div>
-          </div>
+          ) : (
+            <div key="composer-real" className="group relative">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -inset-px rounded-card opacity-0 transition-opacity duration-300 group-focus-within:opacity-100"
+                style={{
+                  background:
+                    "linear-gradient(120deg, var(--color-ultra), var(--color-ultra-border), var(--color-ultra))",
+                  backgroundSize: "300% 300%",
+                  animation: "border-gradient-pan 5s ease infinite",
+                }}
+              />
+
+              <div className="relative rounded-card border border-line bg-paper-2 shadow-xs transition-colors group-focus-within:border-transparent">
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.currentTarget.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  rows={2}
+                  placeholder="Ask a follow-up…"
+                  disabled={isStreaming}
+                  className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3 pb-1.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
+                />
+
+                <div className="flex items-center justify-between border-t border-line px-2.5 py-1.5">
+                  <PromptToggles
+                    askBeforeSpending={askBeforeSpending}
+                    onAskBeforeSpendingChange={setAskBeforeSpending}
+                    planMode={planMode}
+                    onPlanModeChange={setPlanMode}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleSend}
+                    disabled={!input.trim() || isStreaming}
+                    className={cn(
+                      "flex size-6.5 items-center justify-center rounded-md transition-all",
+                      input.trim() && !isStreaming ? "bg-ultra text-paper hover:opacity-90" : "bg-paper text-ink-4"
+                    )}
+                  >
+                    {isStreaming ? <Loader2 className="size-3.25 animate-spin" /> : <ArrowUp size={13} strokeWidth={2.5} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
