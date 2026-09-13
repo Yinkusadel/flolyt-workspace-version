@@ -40,7 +40,7 @@ function getBreadcrumb(pathname: string): React.ReactNode {
     );
   }
 
-  if (pathname === "/plan-and-billing") return "Plan and billing";
+  if (pathname === "/plan-and-billing") return "Plan and Billing";
 
   if (pathname === "/leakage-map") return "Leakage Map";
   if (pathname === "/inbox") return "Inbox";

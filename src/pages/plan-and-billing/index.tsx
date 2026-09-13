@@ -189,7 +189,7 @@ export default function PlanAndBillingRoute() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-[17px] font-semibold text-ink">Plan and billing</h1>
+        <h1 className="text-[17px] font-semibold text-ink">Plan and Billing</h1>
         <p className="mt-1 text-[11.5px] text-ink-3">
           Your wallet funds everything: monthly active users, messages sent, and AI credit usage.
         </p>
@@ -259,9 +259,9 @@ export default function PlanAndBillingRoute() {
         </div>
       </section>
 
-      {/* Buy a credit pack */}
+      {/* Buy a pack */}
       <section className="space-y-3">
-        <SectionHeading>Buy a credit pack</SectionHeading>
+        <SectionHeading>Buy a pack</SectionHeading>
 
         {isPacksLoading ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
