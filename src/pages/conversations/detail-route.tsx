@@ -77,13 +77,13 @@ function WorkingStatus({ elapsedSeconds, subline, isPhaseOnly }: { elapsedSecond
         <img src={flolytLogo} alt="" className="size-3.5 object-contain" />
         Working · {formatElapsed(elapsedSeconds)}
       </div>
-      <div className="flex min-w-0 items-center gap-1.5 pl-0.5">
+      <div className="flex min-w-0 items-start gap-1.5 pl-0.5">
         {isPhaseOnly ? (
-          <Loader2 className="size-3 shrink-0 animate-spin text-ink-4" />
+          <Loader2 className="mt-0.5 size-3 shrink-0 animate-spin text-ink-4" />
         ) : (
-          <Link2 className="size-3 shrink-0 text-ink-4" />
+          <Link2 className="mt-0.5 size-3 shrink-0 text-ink-4" />
         )}
-        <span className="min-w-0 max-w-[75%] animate-text-shimmer text-[11px] leading-relaxed wrap-break-word">
+        <span className="min-w-0 flex-1 animate-text-shimmer text-[11px] leading-relaxed wrap-break-word">
           {subline}
         </span>
       </div>
@@ -145,11 +145,21 @@ export default function AiConversationDetailRoute() {
     return () => window.clearInterval(interval);
   }, [isStreaming]);
 
-  // The current-activity line always reflects the latest real SSE data: the most recent
-  // tool_call/reasoning_step description once one has arrived, falling back to the current
-  // lifecycle phase (itself driven by the stream's own `status` events) before that.
+  // The current-activity line always reflects the latest real SSE data. A `proposal` event is
+  // just as much "activity" as a tool_call/reasoning_step, but it lands in its own array
+  // (streamedProposals, below) — compare real timestamps across both to find whichever actually
+  // happened last, rather than only ever looking at reasoningSteps and silently dropping proposal
+  // activity. Falls back to the current lifecycle phase before either has produced anything.
   const latestStep = reasoningSteps[reasoningSteps.length - 1];
-  const workingSubline = latestStep?.description ?? PHASE_LABEL[currentPhase ?? ""] ?? "Working…";
+  const latestProposal = streamedProposals[streamedProposals.length - 1];
+  const proposalIsLatest =
+    !!latestProposal &&
+    (!latestStep || new Date(latestProposal.createdAtUtc) >= new Date(latestStep.timestamp));
+
+  const latestActivity = latestStep || latestProposal;
+  const workingSubline = proposalIsLatest
+    ? `Preparing proposal: ${latestProposal!.toolName}`
+    : (latestStep?.description ?? PHASE_LABEL[currentPhase ?? ""] ?? "Working…");
 
   // The SSE `proposal` event is a live nudge, not the source of truth — GET /ai/proposals is,
   // and is what makes a still-pending proposal survive a page reload. Merge the two: prefer the
@@ -321,7 +331,7 @@ export default function AiConversationDetailRoute() {
             <WorkingStatus
               elapsedSeconds={elapsedSeconds}
               subline={workingSubline}
-              isPhaseOnly={!latestStep}
+              isPhaseOnly={!latestActivity}
             />
 
             {animatedStreamingText && (
