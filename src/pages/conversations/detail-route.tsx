@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, ArrowUp, CheckCircle2, ChevronDown, Database, Loader2 } from "lucide-react";
+import { AlertTriangle, ArrowUp, Link2, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { usePageBreadcrumb } from "@/components/breadcrumb-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAiConversationMessages } from "@/features/ai-conversations/use-ai-conversation-messages";
 import { useGetAiConversationById } from "@/features/ai-conversations/use-get-ai-conversation-by-id";
-import type { AiConversationMessage, ReasoningStep } from "@/features/ai-conversations/ai-conversation-types";
+import type { AiConversationMessage } from "@/features/ai-conversations/ai-conversation-types";
 import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
 import { ProposalCard, type ProposalCardData } from "./proposal-card";
 import { PromptToggles } from "./prompt-toggles";
@@ -41,6 +41,12 @@ const PHASE_LABEL: Record<string, string> = {
   streaming: "Responding…",
 };
 
+function formatElapsed(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
 type ChatMessage = AiConversationMessage & { key: string };
 
 function dedupeMessages(messages: AiConversationMessage[]): ChatMessage[] {
@@ -59,53 +65,28 @@ function dedupeMessages(messages: AiConversationMessage[]): ChatMessage[] {
   return result;
 }
 
-function ReasoningTrace({ steps, isStreaming }: { steps: ReasoningStep[]; isStreaming: boolean }) {
-  const [open, setOpen] = useState(true);
-  if (!steps.length) return null;
-
+// No card, no click-to-expand — mirrors Claude's own in-progress status: a single "is working"
+// header with a live timer, and one current-activity line underneath that swaps out as new SSE
+// events arrive rather than accumulating into a list. Past steps are intentionally discarded once
+// replaced (see reasoningSteps in useAiConversationMessages — kept for the send lifecycle, not for
+// history display).
+function WorkingStatus({ elapsedSeconds, subline, isPhaseOnly }: { elapsedSeconds: number; subline: string; isPhaseOnly: boolean }) {
   return (
-    <div className="max-w-[75%] min-w-0 rounded-card border border-line bg-paper-2">
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className="flex w-full min-w-0 items-center gap-2 px-3.5 py-2.5 text-left"
-      >
-        {isStreaming && <Loader2 className="size-3 shrink-0 animate-spin text-ultra" />}
-        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-ink-3">
-          {isStreaming ? "Working…" : `${steps.length} reasoning step${steps.length === 1 ? "" : "s"}`}
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <div className="flex items-center gap-1.5 text-[11px] font-medium text-ink-3">
+        <img src={flolytLogo} alt="" className="size-3.5 object-contain" />
+        Working · {formatElapsed(elapsedSeconds)}
+      </div>
+      <div className="flex min-w-0 items-center gap-1.5 pl-0.5">
+        {isPhaseOnly ? (
+          <Loader2 className="size-3 shrink-0 animate-spin text-ink-4" />
+        ) : (
+          <Link2 className="size-3 shrink-0 text-ink-4" />
+        )}
+        <span className="min-w-0 max-w-[75%] animate-text-shimmer text-[11px] leading-relaxed wrap-break-word">
+          {subline}
         </span>
-        <ChevronDown className={cn("size-3.5 shrink-0 text-ink-4 transition-transform", open && "rotate-180")} />
-      </button>
-
-      {open && (
-        <div className="space-y-2 border-t border-line px-3.5 py-2.5">
-          {steps.map((step, idx) => {
-            const isLast = idx === steps.length - 1;
-            const isActive = isStreaming && isLast;
-            return (
-              <div key={`${step.timestamp}-${idx}`} className="flex min-w-0 items-start gap-2">
-                <span
-                  className={cn(
-                    "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full",
-                    isActive ? "text-ultra" : "bg-teal-bg text-teal"
-                  )}
-                >
-                  {isActive ? (
-                    <Loader2 className="size-3 animate-spin" />
-                  ) : step.kind === "tool_call" ? (
-                    <Database className="size-2.5" />
-                  ) : (
-                    <CheckCircle2 className="size-3" />
-                  )}
-                </span>
-                <p className="min-w-0 flex-1 text-[11px] leading-relaxed wrap-break-word text-ink-3">
-                  {step.description}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -148,6 +129,27 @@ export default function AiConversationDetailRoute() {
   const { data: history, isLoading: isHistoryLoading } = useGetAiConversationById(
     !isNew ? id : undefined
   );
+
+  // No backend field for "how long has this run been going" — this is a plain wall-clock timer
+  // tied to the real isStreaming lifecycle from the hook, restarted at 0 each time a send begins.
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  useEffect(() => {
+    if (!isStreaming) {
+      setElapsedSeconds(0);
+      return;
+    }
+    const startedAt = Date.now();
+    const interval = window.setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [isStreaming]);
+
+  // The current-activity line always reflects the latest real SSE data: the most recent
+  // tool_call/reasoning_step description once one has arrived, falling back to the current
+  // lifecycle phase (itself driven by the stream's own `status` events) before that.
+  const latestStep = reasoningSteps[reasoningSteps.length - 1];
+  const workingSubline = latestStep?.description ?? PHASE_LABEL[currentPhase ?? ""] ?? "Working…";
 
   // The SSE `proposal` event is a live nudge, not the source of truth — GET /ai/proposals is,
   // and is what makes a still-pending proposal survive a page reload. Merge the two: prefer the
@@ -311,14 +313,16 @@ export default function AiConversationDetailRoute() {
 
         {isStreaming && (
           <div className="flex min-w-0 flex-col items-start gap-1.5">
-            {currentPhase && currentPhase !== "streaming" && (
-              <div className="flex items-center gap-1.5 text-[11px] font-medium text-ink-3">
-                <Loader2 className="size-3 animate-spin text-ultra" />
-                {PHASE_LABEL[currentPhase] ?? "Working…"}
-              </div>
-            )}
-
-            <ReasoningTrace steps={reasoningSteps} isStreaming={isStreaming} />
+            {/* This backend interleaves tool_call/reasoning_step events with response_chunk
+                text rather than finishing all reasoning before it starts streaming an answer —
+                confirmed live 2026-09-13 (tool calls kept arriving after the first words of text).
+                So this status line has to stay up for the whole isStreaming window, not just
+                until text starts, or later tool calls after the first word never get shown. */}
+            <WorkingStatus
+              elapsedSeconds={elapsedSeconds}
+              subline={workingSubline}
+              isPhaseOnly={!latestStep}
+            />
 
             {animatedStreamingText && (
               <p className="max-w-[85%] min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-ink">
