@@ -32,6 +32,10 @@ export const useAiConversationMessages = (
   const [animatedStreamingText, setAnimatedStreamingText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentPhase, setCurrentPhase] = useState<string | null>(null);
+  // The backend's own friendly text for the current phase (e.g. "Analyzing your request...",
+  // "Processing...") — kept separate from currentPhase (the raw state code) so the UI can show
+  // the real copy instead of a made-up label per state code.
+  const [currentPhaseMessage, setCurrentPhaseMessage] = useState<string | null>(null);
 
   const conversationIdRef = useRef<string | null>(initialConversationId ?? null);
   const abortRef = useRef<AbortController | null>(null);
@@ -74,6 +78,7 @@ export const useAiConversationMessages = (
     setAnimatedStreamingText("");
     setIsStreaming(false);
     setCurrentPhase(null);
+    setCurrentPhaseMessage(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialConversationId]);
 
@@ -144,6 +149,7 @@ export const useAiConversationMessages = (
       // sit pending for a while before the first byte comes back, and that gap needs a visible
       // "Thinking…" state too, not a blank one.
       setCurrentPhase("submitted");
+      setCurrentPhaseMessage(null);
       setReasoningSteps([]);
       setStreamingText("");
       clearTypewriter();
@@ -227,11 +233,18 @@ export const useAiConversationMessages = (
               case "status": {
                 setCurrentPhase(parsed.state);
 
-                if (parsed.message?.startsWith("conversation_id:") && !conversationIdRef.current) {
-                  const id = parsed.message.replace("conversation_id:", "");
-                  setConversationId(id);
-                  conversationIdRef.current = id;
-                  optionsRef.current?.onConversationCreated?.(id);
+                if (parsed.message?.startsWith("conversation_id:")) {
+                  if (!conversationIdRef.current) {
+                    const id = parsed.message.replace("conversation_id:", "");
+                    setConversationId(id);
+                    conversationIdRef.current = id;
+                    optionsRef.current?.onConversationCreated?.(id);
+                  }
+                } else {
+                  // The internal "conversation_id:..." message is never user-facing copy — every
+                  // other status message is the backend's own friendly text for this phase (e.g.
+                  // "Analyzing your request...", "Processing...").
+                  setCurrentPhaseMessage(parsed.message ?? null);
                 }
                 break;
               }
@@ -328,6 +341,7 @@ export const useAiConversationMessages = (
     animatedStreamingText,
     isStreaming,
     currentPhase, // "submitted" | "readingSource" | "streaming" | null
+    currentPhaseMessage,
     sendMessage,
     abortStream,
   };

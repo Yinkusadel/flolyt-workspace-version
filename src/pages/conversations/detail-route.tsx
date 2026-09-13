@@ -119,6 +119,7 @@ export default function AiConversationDetailRoute() {
     animatedStreamingText,
     isStreaming,
     currentPhase,
+    currentPhaseMessage,
     sendMessage,
   } = useAiConversationMessages(isNew ? undefined : id, {
     onConversationCreated: (newId) => {
@@ -157,9 +158,11 @@ export default function AiConversationDetailRoute() {
     (!latestStep || new Date(latestProposal.createdAtUtc) >= new Date(latestStep.timestamp));
 
   const latestActivity = latestStep || latestProposal;
+  // Prefer the backend's own phase copy ("Analyzing your request...", "Processing...") over the
+  // PHASE_LABEL map — that map is only a fallback for a phase the backend didn't send text for.
   const workingSubline = proposalIsLatest
     ? `Preparing proposal: ${latestProposal!.toolName}`
-    : (latestStep?.description ?? PHASE_LABEL[currentPhase ?? ""] ?? "Working…");
+    : (latestStep?.description ?? currentPhaseMessage ?? PHASE_LABEL[currentPhase ?? ""] ?? "Working…");
 
   // The SSE `proposal` event is a live nudge, not the source of truth — GET /ai/proposals is,
   // and is what makes a still-pending proposal survive a page reload. Merge the two: prefer the
