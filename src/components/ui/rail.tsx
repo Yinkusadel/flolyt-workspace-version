@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Info } from "lucide-react";
+import { Info, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -89,14 +89,27 @@ export function Callout({
   tone = "amber",
   title,
   children,
+  onClose,
 }: {
   tone?: keyof typeof CALLOUT_ACCENT_CLASSES;
   title: string;
   children: ReactNode;
+  /** Renders a small dismiss button when provided — omitted (the default) keeps this non-dismissible. */
+  onClose?: () => void;
 }) {
   return (
-    <div className={cn("rounded-card border p-4", CALLOUT_ACCENT_CLASSES[tone])}>
-      <div className="flex gap-2.5">
+    <div className={cn("relative rounded-card border p-4", CALLOUT_ACCENT_CLASSES[tone])}>
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Dismiss"
+          className="absolute top-3 right-3 text-ink-4 hover:text-ink-2"
+        >
+          <X className="size-3.5" />
+        </button>
+      )}
+      <div className={cn("flex gap-2.5", onClose && "pr-5")}>
         <Info className={cn("mt-0.5 size-4 shrink-0", CALLOUT_ICON_CLASSES[tone])} aria-hidden />
         <div>
           <h3 className="text-[12px] font-semibold text-ink">{title}</h3>

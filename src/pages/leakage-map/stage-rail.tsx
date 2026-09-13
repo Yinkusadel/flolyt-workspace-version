@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { cn } from "@/lib/utils";
 import { Callout } from "@/components/ui/rail";
 import { FloatingCard } from "@/pages/leakage-map/floating-card";
@@ -49,6 +51,8 @@ function StageCard({ stage }: { stage: Stage }) {
 }
 
 export function StageRail() {
+  const [advocacyNoteDismissed, setAdvocacyNoteDismissed] = useState(false);
+
   return (
     <div className="space-y-3">
       <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
@@ -59,9 +63,11 @@ export function StageRail() {
           <StageCard key={stage.id} stage={stage} />
         ))}
       </div>
-      <Callout tone="teal" title={ADVOCACY_NOTE_TITLE}>
-        {ADVOCACY_NOTE_BODY}
-      </Callout>
+      {!advocacyNoteDismissed && (
+        <Callout tone="teal" title={ADVOCACY_NOTE_TITLE} onClose={() => setAdvocacyNoteDismissed(true)}>
+          {ADVOCACY_NOTE_BODY}
+        </Callout>
+      )}
     </div>
   );
 }
