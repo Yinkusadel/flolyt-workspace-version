@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
   CALC_MODE_OPTIONS,
   SEVERITY_FILTER_OPTIONS,
@@ -12,7 +11,8 @@ import {
 /**
  * The live status line under the H1 (01-leakage-map.svg) — always says what mode, horizon and
  * coverage the figures below reflect. When Severity/Confidence are filtering cells out, a second
- * amber line takes over that job (11-filtered.svg) with a way back to the unfiltered view.
+ * amber line takes over that job (11-filtered.svg) — plain text there too; the way back to the
+ * unfiltered view lives on the matrix's own banner and on each hidden cell's card, not here.
  */
 export function StatusLine({
   calcMode,
@@ -20,14 +20,12 @@ export function StatusLine({
   hiddenPercent,
   severityFilter,
   confidenceFilter,
-  onClearFilters,
 }: {
   calcMode: CalcMode;
   horizonLabel: string;
   hiddenPercent: number;
   severityFilter: SeverityLevel;
   confidenceFilter: ConfidenceLevel;
-  onClearFilters: () => void;
 }) {
   const calcLabel = CALC_MODE_OPTIONS.find((o) => o.value === calcMode)?.label ?? "Expected loss";
   const severityLabel = SEVERITY_FILTER_OPTIONS.find((o) => o.value === severityFilter)?.label ?? "≥ S2";
@@ -42,11 +40,8 @@ export function StatusLine({
         <span className="font-medium text-ink-2">{COVERAGE_PANEL.overallPercent}%</span>
       </p>
       {isFiltered && (
-        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-amber">
+        <p className="text-[11.5px] text-amber">
           Severity {severityLabel} · Confidence {confidenceLabel} — {hiddenPercent}% of cells are outside this view
-          <Button type="button" variant="outline" size="xs" onClick={onClearFilters}>
-            Clear filter
-          </Button>
         </p>
       )}
     </div>

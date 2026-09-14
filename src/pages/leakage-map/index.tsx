@@ -78,7 +78,6 @@ export default function LeakageMap() {
             hiddenPercent={hiddenPercent}
             severityFilter={severityFilter}
             confidenceFilter={confidenceFilter}
-            onClearFilters={clearFilters}
           />
         </div>
 
