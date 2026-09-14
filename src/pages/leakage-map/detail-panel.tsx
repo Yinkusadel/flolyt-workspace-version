@@ -132,11 +132,6 @@ export function ValueCellCard({
       <Button asChild size="sm" className="mt-2.5 w-full">
         <Link to={`/rooms/${FEATURED_CELL.room.id}`}>Open operational queue</Link>
       </Button>
-
-      <p className="mt-2.5 border-t border-line pt-2.5 text-[10.5px] leading-relaxed text-ink-4">
-        Segments, not named accounts — this workspace is consumer. An account-based workspace shows accounts here,
-        from the same field.
-      </p>
     </div>
   );
 }
