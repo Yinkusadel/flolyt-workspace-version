@@ -73,7 +73,7 @@ export function ValueCellCard({
           <span className="text-[11.5px] text-ink-3">expected loss</span>
         </div>
         <RiskChips severity={severity} confidence={confidence} />
-        <div className="mt-3 flex items-center justify-between gap-3 border-t border-line pt-3">
+        <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-line pt-2.5">
           <span className="text-[11.5px] text-ink-3">No room is open on this cell yet.</span>
           <Button asChild size="sm" variant="outline">
             <Link to="/rooms/new">Start a room</Link>
@@ -97,14 +97,14 @@ export function ValueCellCard({
       </div>
       <p className="mt-0.5 text-[10.5px] text-ink-4">Probability-weighted. Not net of intervention.</p>
 
-      <dl className="mt-3 space-y-1.5 border-t border-line pt-3">
+      <dl className="mt-2.5 space-y-1 border-t border-line pt-2.5">
         <StatRow label="Range · 80% CI" value={`${FEATURED_CELL.rangeLow} – ${FEATURED_CELL.rangeHigh}`} />
         <StatRow label="Confidence" value={CONFIDENCE_LABEL[confidence]} />
         <StatRow label="Severity" value={SEVERITY_LABEL[severity]} />
         <StatRow label="Recency" value={FEATURED_CELL.recencyDays} />
       </dl>
 
-      <div className="mt-3 border-t border-line pt-3">
+      <div className="mt-2.5 border-t border-line pt-2.5">
         <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Recovery estimate</p>
         <p className="mt-1 text-[11.5px] text-ink-2">
           <span className="font-semibold text-ink">{FEATURED_CELL.recoverablePercent}%</span> is realistically
@@ -112,7 +112,7 @@ export function ValueCellCard({
         </p>
       </div>
 
-      <div className="mt-3 border-t border-line pt-3">
+      <div className="mt-2.5 border-t border-line pt-2.5">
         <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">
           Most affected segments
         </p>
@@ -129,21 +129,11 @@ export function ValueCellCard({
         <p className="mt-1 text-[10.5px] text-ink-4">+ {FEATURED_CELL.moreSegments} more segments</p>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3 border-t border-line pt-3">
-        <div className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full bg-rose" aria-hidden />
-          <span className="text-[11.5px] text-ink-2">{FEATURED_CELL.room.label}</span>
-        </div>
-        <Button asChild size="sm">
-          <Link to={`/rooms/${FEATURED_CELL.room.id}`}>Open room</Link>
-        </Button>
-      </div>
-
-      <Button asChild size="sm" variant="outline" className="mt-2.5 w-full">
+      <Button asChild size="sm" className="mt-2.5 w-full">
         <Link to={`/rooms/${FEATURED_CELL.room.id}`}>Open operational queue</Link>
       </Button>
 
-      <p className="mt-3 border-t border-line pt-3 text-[10.5px] leading-relaxed text-ink-4">
+      <p className="mt-2.5 border-t border-line pt-2.5 text-[10.5px] leading-relaxed text-ink-4">
         Segments, not named accounts — this workspace is consumer. An account-based workspace shows accounts here,
         from the same field.
       </p>
@@ -185,7 +175,7 @@ export function CompoundCellCard({
         <span className="text-[11.5px] text-ink-3">at the current horizon</span>
       </div>
 
-      <div className="mt-3 border-t border-line pt-3">
+      <div className="mt-2.5 border-t border-line pt-2.5">
         <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">
           This leak grows across horizons
         </p>
@@ -203,11 +193,11 @@ export function CompoundCellCard({
         </p>
       </div>
 
-      <Button size="sm" variant="outline" className="mt-3 w-full">
+      <Button size="sm" variant="outline" className="mt-2.5 w-full">
         View compound projection
       </Button>
 
-      <p className="mt-3 border-t border-line pt-3 text-[11px] text-ink-2">
+      <p className="mt-2.5 border-t border-line pt-2.5 text-[11px] text-ink-2">
         Ranked {ordinal(rankByAmount)} by amount, {ordinal(rankByThreat)} by threat score.
       </p>
       <p className="mt-1.5 text-[10.5px] leading-relaxed text-ink-4">
@@ -247,9 +237,9 @@ export function ZeroCellCard({
       <p className="mt-1.5 text-[11px] text-ink-3">Not necessarily zero — it could sit below the detection threshold.</p>
       <p className="mt-2 text-[10.5px] text-ink-4">Last checked {lastChecked}</p>
 
-      <div className="mt-3 border-t border-line pt-3">
+      <div className="mt-2.5 border-t border-line pt-2.5">
         <p className="text-[11px] font-medium text-ink-2">Three ways a cell can be empty, and they are not the same</p>
-        <dl className="mt-2 space-y-1.5">
+        <dl className="mt-2 space-y-1">
           <div className="text-[10.5px]">
             <dt className="inline font-semibold text-ink">No exposure</dt>
             <dd className="inline text-ink-3"> · measured, nothing there</dd>
@@ -305,19 +295,19 @@ export function GapCellCard({
         connected source can see it.
       </p>
 
-      <div className="mt-3 border-t border-line pt-3">
+      <div className="mt-2.5 border-t border-line pt-2.5">
         <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Why</p>
         <p className="mt-1 text-[11.5px] leading-relaxed text-ink-2">{explanation}</p>
       </div>
 
-      <div className="mt-3 border-t border-line pt-3">
+      <div className="mt-2.5 border-t border-line pt-2.5">
         <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">If you fix it</p>
         <p className="mt-1 text-[11.5px] text-ink-2">
           Estimated additional coverage <span className="font-semibold text-ink">{recoveryLow} – {recoveryHigh}</span>
         </p>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-3 border-t border-line pt-3">
+      <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-line pt-2.5">
         <span className="text-[11px] text-ink-3">{wouldUnlock}</span>
       </div>
       <div className="mt-2.5 flex items-center justify-between gap-3">
@@ -327,7 +317,7 @@ export function GapCellCard({
         </Button>
       </div>
 
-      <div className="mt-3 border-t border-line pt-3">
+      <div className="mt-2.5 border-t border-line pt-2.5">
         <p className="text-[10.5px] font-medium text-ink-2">Why the word changed</p>
         <p className="mt-1 text-[10.5px] leading-relaxed text-ink-4">
           "Unavailable" implies the number does not exist. "Unknown — data gap" says it exists and is not measured.
@@ -367,13 +357,13 @@ export function FilteredCellCard({
       <p className="mt-1.5 text-[16px] font-semibold text-ink">Hidden by your filter</p>
       <p className="text-[11.5px] text-ink-3">The cell is measured. It is outside the view you chose.</p>
 
-      <dl className="mt-3 space-y-1.5 border-t border-line pt-3">
+      <dl className="mt-2.5 space-y-1 border-t border-line pt-2.5">
         <StatRow label="Severity" value={`${SEVERITY_LABEL[severity]} — below your current filter`} />
         <StatRow label="Confidence" value={CONFIDENCE_LABEL[confidence]} />
         <StatRow label="Amount" value={amount} />
       </dl>
 
-      <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
+      <div className="mt-2.5 flex flex-wrap gap-2 border-t border-line pt-2.5">
         <Button type="button" size="sm" variant="outline" onClick={onClearFilter}>
           Clear severity filter
         </Button>
@@ -382,7 +372,7 @@ export function FilteredCellCard({
         </Button>
       </div>
 
-      <div className="mt-3 border-t border-line pt-3">
+      <div className="mt-2.5 border-t border-line pt-2.5">
         <p className="text-[10.5px] font-medium text-ink-2">A filtered total is not a total</p>
         <p className="mt-1 text-[10.5px] leading-relaxed text-ink-4">
           Every figure on this page now describes {100 - hiddenPercent}% of the cells. The warning stays up for as
@@ -418,11 +408,13 @@ export function StageDetailCard({ stage }: { stage: Stage }) {
         <span className={cn("text-[22px] font-bold", VALUE_TONE_CLASS[stage.valueTone])}>{stage.value}</span>
         <span className="text-[11.5px] text-ink-3">{leakWord} · last 90 days</span>
       </div>
-      <p className="mt-1 text-[10.5px] text-ink-4">{stage.coveragePercent}% covered · independent from the matrix</p>
+      {!isRetain && (
+        <p className="mt-1 text-[10.5px] text-ink-4">{stage.coveragePercent}% covered · independent from the matrix</p>
+      )}
 
       {isAdopt ? (
         <>
-          <dl className="mt-3 grid grid-cols-3 gap-2 border-t border-line pt-3">
+          <dl className="mt-2.5 grid grid-cols-3 gap-2 border-t border-line pt-2.5">
             <div>
               <dt className="font-mono text-[8px] font-medium tracking-[0.6px] text-ink-4 uppercase">
                 Customers in stage
@@ -442,7 +434,7 @@ export function StageDetailCard({ stage }: { stage: Stage }) {
               <dd className="mt-0.5 text-[13px] font-semibold text-ink">{ADOPT_STAGE_DETAIL.slippedOutLastQuarter}</dd>
             </div>
           </dl>
-          <p className="mt-3 border-t border-line pt-3 text-[11.5px] text-ink-3">{ADOPT_STAGE_DETAIL.spansNote}</p>
+          <p className="mt-2.5 border-t border-line pt-2.5 text-[11.5px] text-ink-3">{ADOPT_STAGE_DETAIL.spansNote}</p>
 
           <button
             type="button"
@@ -461,9 +453,9 @@ export function StageDetailCard({ stage }: { stage: Stage }) {
         </>
       ) : isRetain ? (
         <>
-          <p className="mt-3 border-t border-line pt-3 text-[11.5px] text-ink-3">{RETAIN_STAGE_ROLLUP.summary}</p>
+          <p className="mt-2.5 border-t border-line pt-2.5 text-[11.5px] text-ink-3">{RETAIN_STAGE_ROLLUP.summary}</p>
 
-          <div className="mt-3 border-t border-line pt-3">
+          <div className="mt-2.5 border-t border-line pt-2.5">
             <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Coverage</p>
             <p className="mt-1 text-[11.5px] text-ink-2">
               {RETAIN_STAGE_ROLLUP.coveragePercent}% of detectable Retain leaks are in this rollup.
@@ -474,7 +466,7 @@ export function StageDetailCard({ stage }: { stage: Stage }) {
             </p>
           </div>
 
-          <div className="mt-3 border-t border-line pt-3">
+          <div className="mt-2.5 border-t border-line pt-2.5">
             <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Top mechanisms</p>
             <ol className="mt-1.5 space-y-1">
               {RETAIN_STAGE_ROLLUP.topMechanisms.map((mechanism, i) => (
@@ -488,20 +480,15 @@ export function StageDetailCard({ stage }: { stage: Stage }) {
             </ol>
           </div>
 
-          <dl className="mt-3 flex items-baseline justify-between gap-3 border-t border-line pt-3 text-[11.5px]">
+          <dl className="mt-2.5 flex items-baseline justify-between gap-3 border-t border-line pt-2.5 text-[11.5px]">
             <dt className="text-ink-3">Confidence · range 80% CI</dt>
             <dd className="font-medium text-ink">
               {RETAIN_STAGE_ROLLUP.confidence} · {RETAIN_STAGE_ROLLUP.rangeLow} – {RETAIN_STAGE_ROLLUP.rangeHigh}
             </dd>
           </dl>
-
-          <div className="mt-3 border-t border-line pt-3">
-            <p className="text-[10.5px] font-medium text-ink-2">{RETAIN_STAGE_ROLLUP.explainerTitle}</p>
-            <p className="mt-1 text-[10.5px] leading-relaxed text-ink-4">{RETAIN_STAGE_ROLLUP.explainerBody}</p>
-          </div>
         </>
       ) : (
-        <p className="mt-3 border-t border-line pt-3 text-[11.5px] text-ink-3">{stage.metricLines.join(" · ")}</p>
+        <p className="mt-2.5 border-t border-line pt-2.5 text-[11.5px] text-ink-3">{stage.metricLines.join(" · ")}</p>
       )}
     </div>
   );

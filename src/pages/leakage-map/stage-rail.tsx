@@ -15,7 +15,7 @@ function StageCard({ stage }: { stage: Stage }) {
   return (
     <FloatingCard
       align="start"
-      panelClassName="w-80 max-w-[calc(100vw-2rem)]"
+      panelClassName="w-[26rem] max-w-[calc(100vw-2rem)]"
       renderTrigger={({ open, toggle, ref }) => (
         <button
           ref={ref}
