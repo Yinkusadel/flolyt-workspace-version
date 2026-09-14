@@ -25,7 +25,7 @@ export interface ReasoningStep {
 // outright. `argumentsJson` is a JSON-encoded string, not a nested object — parse it to get the
 // actual tool arguments (which themselves nest further JSON-string fields depending on toolName,
 // e.g. open_room_on_cohort's rulesJson/peopleJson/agentsJson). Same record GET
-// /api/v3/ai/proposals reads back later, so this is a live nudge, not the source of truth.
+// /api/v3/proposals reads back later, so this is a live nudge, not the source of truth.
 export interface StreamProposal {
   proposalId: string;
   toolName: string;

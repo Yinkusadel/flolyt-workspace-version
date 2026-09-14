@@ -25,8 +25,8 @@ export const COMMAND_CENTER_BASE_URL = `${API_BASE_URL}/api/v3/command-center`;
 // the AI conversation surface uses these same routes. Do not add a second set for chat.
 export const AGENT_RUNS_BASE_URL = `${COMMAND_CENTER_BASE_URL}/runs`;
 export const SKILLS_BASE_URL = `${API_BASE_URL}/api/v3/skills`;
-export const AI_CONVERSATIONS_BASE_URL = `${API_BASE_URL}/api/v3/ai/conversations`;
-export const AI_PROPOSALS_BASE_URL = `${API_BASE_URL}/api/v3/ai/proposals`;
+export const AI_CONVERSATIONS_BASE_URL = `${API_BASE_URL}/api/v3/conversations`;
+export const AI_PROPOSALS_BASE_URL = `${API_BASE_URL}/api/v3/proposals`;
 export const NOTIFICATIONS_BASE_URL = `${API_BASE_URL}/api/v3/notifications`;
 export const AICREDITS_BASE_URL = `${API_BASE_URL}/api/v3/payments/credits`;
 export const GOVERNANCE_BASE_URL = `${API_BASE_URL}/api/v3/governance`;
