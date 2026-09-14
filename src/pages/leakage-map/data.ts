@@ -221,15 +221,13 @@ export type MatrixCell =
       rankByThreat: number;
     } & RiskMeta)
   | { kind: "zero"; note: string; lastChecked: string }
-  | { kind: "gap"; missingSource: string; explanation: string; wouldUnlock: string; recoveryLow: string; recoveryHigh: string };
+  | { kind: "gap"; missingSource: string; explanation: string; recoveryLow: string; recoveryHigh: string };
 
 export type MatrixRow = {
   key: string;
   label: string;
   cells: Record<MatrixColumnKey, MatrixCell>;
 };
-
-const STRIPE_UNLOCK = "Connecting Stripe billing events fills this cell and one other.";
 
 export const MATRIX_ROWS: MatrixRow[] = [
   {
@@ -289,9 +287,7 @@ export const MATRIX_ROWS: MatrixRow[] = [
       involuntaryChurn: {
         kind: "gap",
         missingSource: "no dunning feed",
-        explanation:
-          "No dunning feed is connected, so Flolyt cannot see which lapsed customers left and which had a card fail.",
-        wouldUnlock: STRIPE_UNLOCK,
+        explanation: "No dunning feed is connected, so involuntary churn cannot be detected in this state.",
         recoveryLow: "₦18M",
         recoveryHigh: "₦34M",
       },
@@ -312,7 +308,6 @@ export const MATRIX_ROWS: MatrixRow[] = [
         missingSource: "no dunning feed",
         explanation:
           "No dunning feed is connected, so Flolyt cannot see which reactivated customers were refunded and which simply churned again.",
-        wouldUnlock: STRIPE_UNLOCK,
         recoveryLow: "₦6M",
         recoveryHigh: "₦15M",
       },

@@ -46,10 +46,14 @@ export function LeakageMatrix({
   return (
     <div className="rounded-card border border-line bg-paper py-4">
       {hiddenPercent > 0 && (
-        <div className="mx-4 mb-3 flex flex-wrap items-center justify-between gap-2 rounded-control border border-amber-border bg-amber-bg px-3 py-2 text-[11.5px] text-amber">
-          <span>
-            Filter is hiding {hiddenPercent}% of cells. Totals below reflect visible cells only.
-          </span>
+        <div className="mx-4 mb-3 flex flex-wrap items-start justify-between gap-2 rounded-control border border-amber-border bg-amber-bg px-3 py-2 text-[11.5px] text-amber">
+          <div>
+            <p>Filter is hiding {hiddenPercent}% of cells. Totals below reflect visible cells only.</p>
+            <p className="mt-1 text-[10.5px]">
+              Every figure on this page now describes {100 - hiddenPercent}% of the cells — a filtered total is not a
+              total.
+            </p>
+          </div>
           <Button type="button" variant="outline" size="xs" onClick={onClearFilter}>
             Clear filter
           </Button>
@@ -105,9 +109,7 @@ export function LeakageMatrix({
                       <GapCellCard
                         rowLabel={row.label}
                         columnLabel={col.label}
-                        missingSource={cell.missingSource}
                         explanation={cell.explanation}
-                        wouldUnlock={cell.wouldUnlock}
                         recoveryLow={cell.recoveryLow}
                         recoveryHigh={cell.recoveryHigh}
                       />
@@ -174,7 +176,6 @@ export function LeakageMatrix({
                         severity={cell.severity}
                         confidence={cell.confidence}
                         amount={cell.value}
-                        hiddenPercent={hiddenPercent}
                         onClearFilter={onClearFilter}
                         onLowerSeverityTo={onSetSeverityFilter}
                       />

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { HelpCircle } from "lucide-react";
+import { Flag, HelpCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -195,16 +195,11 @@ export function CompoundCellCard({
       <p className="mt-2.5 border-t border-line pt-2.5 text-[11px] text-ink-2">
         Ranked {ordinal(rankByAmount)} by amount, {ordinal(rankByThreat)} by threat score.
       </p>
-      <p className="mt-1.5 text-[10.5px] leading-relaxed text-ink-4">
-        A cell ranked {ordinal(rankByAmount)} by amount can be the {ordinal(rankByThreat)} most urgent thing on this
-        page. Shading is amount, ranking is threat score — this is the cell where the two disagree most, which is
-        exactly why the page says so twice.
-      </p>
     </div>
   );
 }
 
-function ordinal(n: number) {
+export function ordinal(n: number) {
   const suffixes: Record<number, string> = { 1: "1st", 2: "2nd", 3: "3rd" };
   return suffixes[n] ?? `${n}th`;
 }
@@ -229,48 +224,29 @@ export function ZeroCellCard({
       </CardEyebrow>
       <p className="mt-1.5 text-[16px] font-semibold text-ink">No exposure</p>
       <p className="mt-1.5 text-[12px] leading-relaxed text-ink-2">{note}</p>
-      <p className="mt-1.5 text-[11px] text-ink-3">Not necessarily zero — it could sit below the detection threshold.</p>
-      <p className="mt-2 text-[10.5px] text-ink-4">Last checked {lastChecked}</p>
 
-      <div className="mt-2.5 border-t border-line pt-2.5">
-        <p className="text-[11px] font-medium text-ink-2">Three ways a cell can be empty, and they are not the same</p>
-        <dl className="mt-2 space-y-1">
-          <div className="text-[10.5px]">
-            <dt className="inline font-semibold text-ink">No exposure</dt>
-            <dd className="inline text-ink-3"> · measured, nothing there</dd>
-          </div>
-          <div className="text-[10.5px]">
-            <dt className="inline font-semibold text-ink">Unknown</dt>
-            <dd className="inline text-ink-3"> · exists, not measurable — connect a source</dd>
-          </div>
-          <div className="text-[10.5px]">
-            <dt className="inline font-semibold text-ink">Hidden by filter</dt>
-            <dd className="inline text-ink-3"> · measured, outside your current view</dd>
-          </div>
-        </dl>
+      <div className="mt-2.5 rounded-control border border-line bg-paper-2 p-2.5">
+        <p className="text-[11.5px] text-ink-2">Not necessarily zero — it could sit below the detection threshold.</p>
       </div>
+      <p className="mt-2 text-[10.5px] text-ink-4">Last checked {lastChecked}</p>
     </div>
   );
 }
 
-/** The floating card a gap cell opens — works for any dashed cell, not just the one the export
- * shows: `explanation`/`wouldUnlock` are per-cell. "Connect Stripe" is a placeholder for now —
- * wiring it to the real onboarding connect flow (ConnectSourceModal) glitched here, nested inside
- * this page's own FloatingCard portal; revisit once that's untangled. */
+/** The floating card a gap cell opens (03-cell-unknown.svg) — works for any dashed cell, not
+ * just the one the export shows: `explanation` is per-cell. "Connect Stripe" is a placeholder
+ * for now — wiring it to the real onboarding connect flow (ConnectSourceModal) glitched here,
+ * nested inside this page's own FloatingCard portal; revisit once that's untangled. */
 export function GapCellCard({
   rowLabel,
   columnLabel,
-  missingSource,
   explanation,
-  wouldUnlock,
   recoveryLow,
   recoveryHigh,
 }: {
   rowLabel: string;
   columnLabel: string;
-  missingSource: string;
   explanation: string;
-  wouldUnlock: string;
   recoveryLow: string;
   recoveryHigh: string;
 }) {
@@ -279,45 +255,35 @@ export function GapCellCard({
       <CardEyebrow>
         {rowLabel} · {columnLabel}
       </CardEyebrow>
-      <p className="mt-1.5 text-[16px] font-semibold text-ink">Unknown</p>
-      <p className="text-[11px] text-ink-3">exposure is not measurable here</p>
-
-      <div className="mt-2.5">
-        <Chip tone="neutral">Unavailable · {missingSource}</Chip>
+      <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
+        <span className="text-[20px] font-semibold text-ink">Unknown</span>
+        <span className="text-[12px] text-ink-3">exposure is not measurable here</span>
       </div>
-      <p className="mt-2.5 text-[12px] leading-relaxed text-ink-2">
-        <span className="font-semibold text-ink">This is a data gap, not a zero.</span> The number exists. No
-        connected source can see it.
-      </p>
+
+      <div className="mt-2.5 flex gap-2 rounded-control border border-amber-border bg-amber-bg p-3">
+        <Flag className="mt-0.5 size-3.5 shrink-0 text-amber" aria-hidden />
+        <div>
+          <p className="text-[12px] font-semibold text-amber">This is a data gap, not a zero</p>
+          <p className="mt-0.5 text-[11px] text-amber">The number exists. No connected source can see it.</p>
+        </div>
+      </div>
 
       <div className="mt-2.5 border-t border-line pt-2.5">
         <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Why</p>
         <p className="mt-1 text-[11.5px] leading-relaxed text-ink-2">{explanation}</p>
       </div>
 
-      <div className="mt-2.5 border-t border-line pt-2.5">
-        <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">If you fix it</p>
-        <p className="mt-1 text-[11.5px] text-ink-2">
-          Estimated additional coverage <span className="font-semibold text-ink">{recoveryLow} – {recoveryHigh}</span>
-        </p>
-      </div>
-
-      <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-line pt-2.5">
-        <span className="text-[11px] text-ink-3">{wouldUnlock}</span>
-      </div>
-      <div className="mt-2.5 flex items-center justify-between gap-3">
-        <span className="text-[10.5px] text-ink-4">Never estimated</span>
-        <Button type="button" size="sm">
+      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-2.5">
+        <div>
+          <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">If you fix it</p>
+          <p className="mt-1 text-[11.5px] text-ink-2">
+            Estimated additional coverage{" "}
+            <span className="font-semibold text-ink">{recoveryLow} – {recoveryHigh}</span>
+          </p>
+        </div>
+        <Button type="button" size="sm" className="shrink-0">
           Connect dunning feed
         </Button>
-      </div>
-
-      <div className="mt-2.5 border-t border-line pt-2.5">
-        <p className="text-[10.5px] font-medium text-ink-2">Why the word changed</p>
-        <p className="mt-1 text-[10.5px] leading-relaxed text-ink-4">
-          "Unavailable" implies the number does not exist. "Unknown — data gap" says it exists and is not measured.
-          Different mental model, different action: one invites a shrug, the other names a source to connect.
-        </p>
       </div>
     </div>
   );
@@ -331,7 +297,6 @@ export function FilteredCellCard({
   severity,
   confidence,
   amount,
-  hiddenPercent,
   onClearFilter,
   onLowerSeverityTo,
 }: {
@@ -340,7 +305,6 @@ export function FilteredCellCard({
   severity: SeverityLevel;
   confidence: ConfidenceLevel;
   amount: string;
-  hiddenPercent: number;
   onClearFilter: () => void;
   onLowerSeverityTo: (level: SeverityLevel) => void;
 }) {
@@ -365,15 +329,6 @@ export function FilteredCellCard({
         <Button type="button" size="sm" variant="ghost" onClick={() => onLowerSeverityTo(severity)}>
           Or lower it to {SEVERITY_LABEL[severity].split(" ")[0]}
         </Button>
-      </div>
-
-      <div className="mt-2.5 border-t border-line pt-2.5">
-        <p className="text-[10.5px] font-medium text-ink-2">A filtered total is not a total</p>
-        <p className="mt-1 text-[10.5px] leading-relaxed text-ink-4">
-          Every figure on this page now describes {100 - hiddenPercent}% of the cells. The warning stays up for as
-          long as that is true, because a number that quietly means something narrower than it says is worse than no
-          number.
-        </p>
       </div>
     </div>
   );
