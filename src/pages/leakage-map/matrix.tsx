@@ -1,19 +1,61 @@
 import { Fragment } from "react";
-import { HelpCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { FloatingCard } from "@/pages/leakage-map/floating-card";
-import { GapCellCard, ValueCellCard } from "@/pages/leakage-map/detail-panel";
-import { HEAT_SCALE, HEAT_TEXT_CLASS, HOW_ITS_CALCULATED, MATRIX_COLUMNS, MATRIX_ROWS } from "@/pages/leakage-map/data";
+import { Button } from "@/components/ui/button";
+import {
+  CompoundCellCard,
+  FilteredCellCard,
+  GapCellCard,
+  ValueCellCard,
+  ZeroCellCard,
+} from "@/pages/leakage-map/detail-panel";
+import {
+  HEAT_SCALE,
+  HEAT_TEXT_CLASS,
+  MATRIX_COLUMNS,
+  MATRIX_ROWS,
+  filteredOutPercent,
+  isCellHiddenByFilter,
+  type ConfidenceLevel,
+  type SeverityLevel,
+} from "@/pages/leakage-map/data";
 
 /**
  * Each cell opens its own FloatingCard — a click opens a small card right against that cell,
- * matching svg/02-leakage-cell-selected.svg and 03-leakage-unavailable.svg (a floating card near
- * the click, not a full-screen dialog).
+ * matching the export's own floating-card screens (02–05, 11) rather than a full-screen dialog.
+ * Five kinds now render here: value, compound (a value cell whose amount and threat rank
+ * disagree), zero ("no exposure"), gap ("unknown — data gap"), and — computed from the current
+ * Severity/Confidence controls, not authored data — hidden-by-filter.
  */
-export function LeakageMatrix({ shadeByCaptionLabel }: { shadeByCaptionLabel: string }) {
+export function LeakageMatrix({
+  shadingCaptionLabel,
+  severityFilter,
+  confidenceFilter,
+  onClearFilter,
+  onSetSeverityFilter,
+}: {
+  shadingCaptionLabel: string;
+  severityFilter: SeverityLevel;
+  confidenceFilter: ConfidenceLevel;
+  onClearFilter: () => void;
+  onSetSeverityFilter: (value: SeverityLevel) => void;
+}) {
+  const hiddenPercent = filteredOutPercent(severityFilter, confidenceFilter);
+
   return (
     <div className="rounded-card border border-line bg-paper py-4">
+      {hiddenPercent > 0 && (
+        <div className="mx-4 mb-3 flex flex-wrap items-center justify-between gap-2 rounded-control border border-amber-border bg-amber-bg px-3 py-2 text-[11.5px] text-amber">
+          <span>
+            Filter is hiding {hiddenPercent}% of cells. Totals below reflect visible cells only.
+          </span>
+          <Button type="button" variant="outline" size="xs" onClick={onClearFilter}>
+            Clear filter
+          </Button>
+        </div>
+      )}
+
       {/* Padding lives on the scrolling element itself, not the card around it — a card-level
           `p-4` still looks flush at max scroll because the scroller's own content (not the
           static card padding) is what defines how far right you can actually scroll to.
@@ -55,8 +97,8 @@ export function LeakageMatrix({ shadeByCaptionLabel }: { shadeByCaptionLabel: st
                             open && "border-ultra ring-2 ring-ultra/30"
                           )}
                         >
-                          <span className="text-[11px] text-ink-3">unavailable</span>
-                          <span className="text-[9.5px] text-ink-4">{cell.missingSource}</span>
+                          <span className="text-[11px] text-ink-3">Unknown</span>
+                          <span className="text-[9.5px] text-ink-4">data gap · {cell.missingSource}</span>
                         </button>
                       )}
                     >
@@ -66,6 +108,114 @@ export function LeakageMatrix({ shadeByCaptionLabel }: { shadeByCaptionLabel: st
                         missingSource={cell.missingSource}
                         explanation={cell.explanation}
                         wouldUnlock={cell.wouldUnlock}
+                        recoveryLow={cell.recoveryLow}
+                        recoveryHigh={cell.recoveryHigh}
+                      />
+                    </FloatingCard>
+                  );
+                }
+
+                if (cell.kind === "zero") {
+                  return (
+                    <FloatingCard
+                      key={col.key}
+                      align="center"
+                      panelClassName="w-80 max-w-[calc(100vw-2rem)]"
+                      renderTrigger={({ open, toggle, ref }) => (
+                        <button
+                          ref={ref}
+                          type="button"
+                          onClick={toggle}
+                          className={cn(
+                            "flex h-14 w-full flex-col items-center justify-center rounded-control border border-line bg-paper-2 text-center",
+                            open && "border-ultra ring-2 ring-ultra/30"
+                          )}
+                        >
+                          <span className="text-[11px] text-ink-3">No exposure</span>
+                          <span className="text-[9.5px] text-ink-4">none detected</span>
+                        </button>
+                      )}
+                    >
+                      <ZeroCellCard
+                        rowLabel={row.label}
+                        columnLabel={col.label}
+                        note={cell.note}
+                        lastChecked={cell.lastChecked}
+                      />
+                    </FloatingCard>
+                  );
+                }
+
+                const hidden = isCellHiddenByFilter(cell, severityFilter, confidenceFilter);
+
+                if (hidden) {
+                  return (
+                    <FloatingCard
+                      key={col.key}
+                      align="center"
+                      panelClassName="w-80 max-w-[calc(100vw-2rem)]"
+                      renderTrigger={({ open, toggle, ref }) => (
+                        <button
+                          ref={ref}
+                          type="button"
+                          onClick={toggle}
+                          className={cn(
+                            "flex h-14 w-full flex-col items-center justify-center rounded-control border border-dashed border-ink-4/40 bg-paper-2/60 text-center",
+                            open && "border-ultra ring-2 ring-ultra/30"
+                          )}
+                        >
+                          <span className="text-[10.5px] text-ink-4">hidden by filter</span>
+                        </button>
+                      )}
+                    >
+                      <FilteredCellCard
+                        rowLabel={row.label}
+                        columnLabel={col.label}
+                        severity={cell.severity}
+                        confidence={cell.confidence}
+                        amount={cell.value}
+                        hiddenPercent={hiddenPercent}
+                        onClearFilter={onClearFilter}
+                        onLowerSeverityTo={onSetSeverityFilter}
+                      />
+                    </FloatingCard>
+                  );
+                }
+
+                if (cell.kind === "compound") {
+                  return (
+                    <FloatingCard
+                      key={col.key}
+                      align="center"
+                      panelClassName="w-80 max-w-[calc(100vw-2rem)]"
+                      renderTrigger={({ open, toggle, ref }) => (
+                        <button
+                          ref={ref}
+                          type="button"
+                          onClick={toggle}
+                          style={{ backgroundColor: HEAT_SCALE[cell.heat] }}
+                          className={cn(
+                            "flex h-14 w-full flex-col items-center justify-center gap-0.5 rounded-control",
+                            HEAT_TEXT_CLASS[cell.heat],
+                            open && "ring-2 ring-ultra ring-offset-1 ring-offset-paper"
+                          )}
+                        >
+                          <span className="text-[14px] font-semibold">{cell.value}</span>
+                          <span className="flex items-center gap-1 text-[8.5px] font-medium text-amber">
+                            ⚠ compound risk
+                          </span>
+                        </button>
+                      )}
+                    >
+                      <CompoundCellCard
+                        rowLabel={row.label}
+                        columnLabel={col.label}
+                        value={cell.value}
+                        projection={cell.projection}
+                        severityNow={cell.severityNow}
+                        severityAt12m={cell.severityAt12m}
+                        rankByAmount={cell.rankByAmount}
+                        rankByThreat={cell.rankByThreat}
                       />
                     </FloatingCard>
                   );
@@ -98,6 +248,8 @@ export function LeakageMatrix({ shadeByCaptionLabel }: { shadeByCaptionLabel: st
                       rowLabel={row.label}
                       columnLabel={col.label}
                       value={cell.value}
+                      severity={cell.severity}
+                      confidence={cell.confidence}
                     />
                   </FloatingCard>
                 );
@@ -116,26 +268,8 @@ export function LeakageMatrix({ shadeByCaptionLabel }: { shadeByCaptionLabel: st
         </div>
         <span className="font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">High</span>
         <span className="text-ink-3">
-          Shading is {shadeByCaptionLabel}. Ranking uses the threat score, not the figure alone.
+          Shading is {shadingCaptionLabel}. Cell ranking uses threat score, not amount.
         </span>
-
-        <FloatingCard
-          align="end"
-          panelClassName="w-72 max-w-[calc(100vw-2rem)] p-4 text-[11.5px] leading-relaxed text-ink-2"
-          renderTrigger={({ toggle, ref }) => (
-            <button
-              ref={ref}
-              type="button"
-              onClick={toggle}
-              className="ml-auto inline-flex items-center gap-1 font-medium text-ultra hover:underline"
-            >
-              How this is calculated
-              <HelpCircle className="size-3.5" />
-            </button>
-          )}
-        >
-          {HOW_ITS_CALCULATED}
-        </FloatingCard>
       </div>
     </div>
   );

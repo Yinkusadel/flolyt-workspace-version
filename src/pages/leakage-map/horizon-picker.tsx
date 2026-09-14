@@ -5,37 +5,56 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { DEFAULT_WINDOW, WINDOW_FOOTNOTE, WINDOW_OPTIONS } from "@/pages/leakage-map/data";
+import {
+  HORIZON_CUSTOM_LABEL,
+  HORIZON_FOOTNOTE,
+  HORIZON_GROUPS,
+  type HorizonValue,
+} from "@/pages/leakage-map/data";
 
-type CustomRange = { from: Date; to: Date };
+export type HorizonState =
+  | { kind: "preset"; value: HorizonValue; direction: "back" | "forward" }
+  | { kind: "custom"; from: Date; to: Date };
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-function formatRange(range: CustomRange) {
+function formatRange(from: Date, to: Date) {
   const currentYear = new Date().getFullYear();
-  const from = range.from.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  const to = range.to.toLocaleDateString(undefined, {
+  const fromLabel = from.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const toLabel = to.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
-    year: range.to.getFullYear() !== currentYear ? "numeric" : undefined,
+    year: to.getFullYear() !== currentYear ? "numeric" : undefined,
   });
-  return `${from} – ${to}`;
+  return `${fromLabel} – ${toLabel}`;
+}
+
+export function horizonLabel(state: HorizonState): string {
+  if (state.kind === "custom") return formatRange(state.from, state.to);
+  for (const group of HORIZON_GROUPS) {
+    const match = group.options.find((o) => o.value === state.value && o.direction === state.direction);
+    if (match) return match.label;
+  }
+  return "Next 90 days";
 }
 
 /**
- * Built as a Popover, not the plain `Select` the other Window options used to sit in — see
- * [[select_popover_aria_hidden_bug]]. Two views share one popover: the preset list, and (behind
- * "Custom range…") a single-month calendar for picking a from/to span. Selecting a range here only
- * changes this control's own label, same as every other Window option — see data.ts's header note,
- * there is no live endpoint behind this page yet for any window to recompute against.
+ * One control for both directions the prior build kept separate (WindowPicker/ShadeByPicker) —
+ * the export's own Horizon list is forward-only, so "Looking back" is grouped in above it and a
+ * shared from/to range replaces the export's single forward date, letting Custom cover a past
+ * span, a future one, or one straddling today. See data.ts's header note.
  */
-export function WindowPicker() {
+export function HorizonPicker({
+  value,
+  onChange,
+}: {
+  value: HorizonState;
+  onChange: (value: HorizonState) => void;
+}) {
   const [open, setOpen] = React.useState(false);
   const [view, setView] = React.useState<"list" | "calendar">("list");
-  const [value, setValue] = React.useState<string>(DEFAULT_WINDOW);
-  const [customRange, setCustomRange] = React.useState<CustomRange | null>(null);
 
   const today = React.useMemo(() => startOfDay(new Date()), []);
   const [calendarMonth, setCalendarMonth] = React.useState(today);
@@ -43,8 +62,7 @@ export function WindowPicker() {
   const [draftTo, setDraftTo] = React.useState<Date | null>(null);
   const [hoverDate, setHoverDate] = React.useState<Date | null>(null);
 
-  const selectedOption = WINDOW_OPTIONS.find((option) => option.value === value) ?? WINDOW_OPTIONS[0];
-  const label = value === "custom" && customRange ? formatRange(customRange) : selectedOption.label;
+  const label = horizonLabel(value);
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
@@ -57,9 +75,9 @@ export function WindowPicker() {
   };
 
   const openCustomView = () => {
-    setDraftFrom(customRange?.from ?? null);
-    setDraftTo(customRange?.to ?? null);
-    setCalendarMonth(startOfDay(customRange?.to ?? today));
+    setDraftFrom(value.kind === "custom" ? value.from : null);
+    setDraftTo(value.kind === "custom" ? value.to : null);
+    setCalendarMonth(startOfDay(value.kind === "custom" ? value.to : today));
     setView("calendar");
   };
 
@@ -79,8 +97,7 @@ export function WindowPicker() {
 
   const handleApply = () => {
     if (!draftFrom || !draftTo) return;
-    setCustomRange({ from: draftFrom, to: draftTo });
-    setValue("custom");
+    onChange({ kind: "custom", from: draftFrom, to: draftTo });
     handleOpenChange(false);
   };
 
@@ -92,7 +109,7 @@ export function WindowPicker() {
           className="flex w-auto items-center gap-2 rounded-panel border border-border bg-background px-2.5 py-2 text-[13px] whitespace-nowrap text-ink outline-none transition-colors hover:border-ink-4 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <span>
-            <span className="text-ink-3">Window </span>
+            <span className="text-ink-3">Horizon </span>
             <span>{label}</span>
           </span>
           <ChevronDown className="size-3.5 shrink-0 text-ink-3" />
@@ -102,50 +119,60 @@ export function WindowPicker() {
       <PopoverContent align="end" className={view === "list" ? "w-72 p-1" : "w-[296px] p-3"}>
         {view === "list" ? (
           <>
-            {WINDOW_OPTIONS.map((option) => {
-              if (option.value === "custom") {
-                const isActive = value === "custom" && !!customRange;
+            {HORIZON_GROUPS.map((group) => (
+              <div key={group.heading} className="mb-1 last:mb-0">
+                <p className="px-2.5 pt-2 pb-1 font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">
+                  {group.heading}
+                </p>
+                {group.options.map((option) => {
+                  const isActive =
+                    value.kind === "preset" && value.value === option.value && value.direction === option.direction;
+                  return (
+                    <button
+                      key={`${option.direction}-${option.value}`}
+                      type="button"
+                      onClick={() => {
+                        onChange({ kind: "preset", value: option.value, direction: option.direction });
+                        handleOpenChange(false);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-control px-2.5 py-2 text-left hover:bg-paper-2"
+                    >
+                      <span className="block flex-1">
+                        <span className="block text-[12px] font-medium text-ink">{option.label}</span>
+                        <span className="block text-[10.5px] text-ink-3">{option.note}</span>
+                      </span>
+                      {isActive && <Check className="size-3.5 shrink-0 text-ultra" />}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+
+            <div className="mt-1 border-t border-line pt-1">
+              {(() => {
+                const isActive = value.kind === "custom";
                 return (
                   <button
-                    key={option.value}
                     type="button"
                     onClick={openCustomView}
                     className="flex w-full items-center gap-2 rounded-control px-2.5 py-2 text-left hover:bg-paper-2"
                   >
                     <span className="block flex-1">
                       <span className="block text-[12px] font-medium text-ink">
-                        {isActive ? formatRange(customRange!) : option.label}
+                        {isActive ? formatRange(value.from, value.to) : HORIZON_CUSTOM_LABEL}
                       </span>
                       <span className="block text-[10.5px] text-ink-3">
-                        {isActive ? "tap to change the dates" : option.note}
+                        {isActive ? "tap to change the dates" : "pick any start and end, past or future"}
                       </span>
                     </span>
                     {isActive && <Check className="size-3.5 shrink-0 text-ultra" />}
                   </button>
                 );
-              }
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => {
-                    setValue(option.value);
-                    handleOpenChange(false);
-                  }}
-                  className="flex w-full items-center gap-2 rounded-control px-2.5 py-2 text-left hover:bg-paper-2"
-                >
-                  <span className="block flex-1">
-                    <span className="block text-[12px] font-medium text-ink">{option.label}</span>
-                    <span className={cn("block text-[10.5px]", option.caveat ? "text-amber" : "text-ink-3")}>
-                      {option.note}
-                    </span>
-                  </span>
-                  {value === option.value && <Check className="size-3.5 shrink-0 text-ultra" />}
-                </button>
-              );
-            })}
+              })()}
+            </div>
+
             <div className="mt-1 border-t border-line px-2.5 pt-2 text-[10.5px] leading-relaxed text-ink-4">
-              {WINDOW_FOOTNOTE}
+              {HORIZON_FOOTNOTE}
             </div>
           </>
         ) : (
@@ -153,7 +180,7 @@ export function WindowPicker() {
             <div className="mb-2.5 flex items-center gap-1">
               <button
                 type="button"
-                aria-label="Back to window options"
+                aria-label="Back to horizon options"
                 onClick={() => setView("list")}
                 className="flex size-6 items-center justify-center rounded-control text-ink-3 hover:bg-paper-2 hover:text-ink"
               >
@@ -193,7 +220,6 @@ export function WindowPicker() {
               hoverDate={hoverDate}
               onHoverDate={setHoverDate}
               onSelectDate={handleSelectDate}
-              maxDate={today}
             />
 
             <div className="mt-3 flex items-center justify-end gap-2 border-t border-line pt-3">

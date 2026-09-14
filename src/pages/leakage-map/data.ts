@@ -1,136 +1,127 @@
 /**
- * Static content for the new leakage map, sourced from
- * flolyt-figma-designs/New-pages-pattern/leakage/leakage/svg/01–04, updated per the later revision
- * in .../leakage/Archive/04,08,09 (new "Shade by" filter, and the Window picker's options/coverage
- * notes). The export's own caption (index.html) says the content is a fixed "live-demo sample" —
- * there is no GET /leakage endpoint behind these numbers, so every picker in index.tsx only changes
- * its own label and the legend caption for now; none of them recompute the matrix below.
+ * Static content for the leakage map, rebuilt from
+ * flolyt-figma-designs/New-pages-pattern/leakage-new/svg/01–12. The export's own caption says
+ * this is a fixed "live-demo sample" — there is no GET /leakage endpoint behind these numbers, so
+ * every control on this page only changes its own label (and, for Severity/Confidence, which
+ * cells are hidden); nothing here recomputes the underlying figures.
+ *
+ * The export's own controls are forward-only (a single "Custom date…" horizon). This page keeps
+ * the prior build's backward-looking window and its from/to range picker — grouped into the same
+ * Horizon control as a "Looking back" section — so a custom span can still cover the past, not
+ * only project through a future date. See horizon-picker.tsx.
  */
 
 export type Tone = "rose" | "teal";
 
-export type ViewMode = "historical" | "forward";
+// ---------------------------------------------------------------------------
+// Calculation mode
+// ---------------------------------------------------------------------------
 
-export type ViewModeOption = {
-  value: ViewMode;
-  /** Compact form shown in the closed trigger. */
-  shortLabel: string;
+export type CalcMode = "gross" | "expected" | "net";
+
+export type CalcModeOption = {
+  value: CalcMode;
   label: string;
   note: string;
 };
 
-// Window (a period) and Shade By (Exposure/Annualised/Severity/Confidence) don't both make sense
-// on screen at once — Window is a backward-looking span, Exposure a right-now measure. So index.tsx
-// shows exactly one of the two next to this toggle, never both, never neither: Historical pairs
-// with Window, Forward exposure pairs with Shade By (full option list, nothing narrowed).
-export const VIEW_MODE_OPTIONS: ViewModeOption[] = [
-  {
-    value: "historical",
-    shortLabel: "Historical",
-    label: "Historical window",
-    note: "look back over a period you pick",
-  },
-  {
-    value: "forward",
-    shortLabel: "Forward",
-    label: "Forward exposure",
-    note: "shade by exposure or risk instead of a period",
-  },
+export const CALC_MODE_OPTIONS: CalcModeOption[] = [
+  { value: "gross", label: "Gross exposure", note: "maximum at risk if nothing changes" },
+  { value: "expected", label: "Expected loss", note: "probability-weighted · default" },
+  { value: "net", label: "Net expected loss", note: "after recovery and intervention" },
 ];
 
-export const DEFAULT_VIEW_MODE: ViewMode = "historical";
+export const DEFAULT_CALC_MODE: CalcMode = "expected";
 
-export type WindowOption = {
-  value: string;
-  label: string;
-  /** Muted coverage note shown under the label — amber (a real caveat) when `caveat` is set. */
-  note: string;
-  caveat?: boolean;
-};
+// ---------------------------------------------------------------------------
+// Horizon — forward presets (the export's own list) plus the prior build's backward-looking
+// window presets, grouped into one control. See horizon-picker.tsx for the from/to vs.
+// single-date split this reuses.
+// ---------------------------------------------------------------------------
 
-export const WINDOW_OPTIONS: WindowOption[] = [
-  { value: "30d", label: "Last 30 days", note: "every source covers this" },
-  { value: "90d", label: "Last 90 days", note: "every source covers this" },
-  { value: "qtd", label: "Quarter to date", note: "every source covers this" },
-  { value: "12m", label: "Last 12 months", note: "product events only start 4 March", caveat: true },
-  { value: "custom", label: "Custom range…", note: "pick any start and end" },
-];
+export type HorizonValue = "30d" | "60d" | "90d" | "qtr" | "12m" | "custom";
 
-// Reasserted every time Window remounts (switching back from Forward, or a fresh page load) —
-// see index.tsx's conditional render.
-export const DEFAULT_WINDOW = "30d";
-
-export const WINDOW_FOOTNOTE =
-  "A longer window is not always a fuller picture. Cells a source cannot reach read Unavailable.";
-
-export type ShadeByOption = {
-  value: string;
-  /** Compact form shown in the closed trigger, e.g. "Next 90 days". */
-  shortLabel: string;
-  /** Full label shown in the open list, e.g. "Next 90 days". */
+export type HorizonOption = {
+  value: HorizonValue;
   label: string;
   note: string;
-  /** Slots into the matrix legend's "Shading is …" caption. */
-  captionLabel: string;
+  direction: "back" | "forward";
 };
 
-// Mirrors WINDOW_OPTIONS' preset spread, forward-phrased, plus the two periodless metrics —
-// see window-picker.tsx, whose list/calendar split this picker's custom-date view reuses.
-export const SHADE_BY_OPTIONS: ShadeByOption[] = [
+export const HORIZON_GROUPS: { heading: string; options: HorizonOption[] }[] = [
   {
-    value: "30d",
-    shortLabel: "Next 30 days",
-    label: "Next 30 days",
-    note: "every source covers this",
-    captionLabel: "30-day exposure",
+    heading: "Looking back",
+    options: [
+      { value: "30d", label: "Last 30 days", note: "every source covers this", direction: "back" },
+      { value: "90d", label: "Last 90 days", note: "every source covers this", direction: "back" },
+      { value: "qtr", label: "Quarter to date", note: "every source covers this", direction: "back" },
+      { value: "12m", label: "Last 12 months", note: "product events only start 4 March", direction: "back" },
+    ],
   },
   {
-    value: "90d",
-    shortLabel: "Next 90 days",
-    label: "Next 90 days",
-    note: "every source covers this",
-    captionLabel: "90-day exposure",
-  },
-  {
-    value: "qtr",
-    shortLabel: "Rest of quarter",
-    label: "Rest of quarter",
-    note: "every source covers this",
-    captionLabel: "rest-of-quarter exposure",
-  },
-  {
-    value: "12m",
-    shortLabel: "Next 12 months",
-    label: "Next 12 months",
-    note: "the same cells at a yearly run rate",
-    captionLabel: "annualised exposure",
-  },
-  {
-    value: "custom",
-    shortLabel: "Custom date",
-    label: "Custom date…",
-    note: "pick a date to project through",
-    captionLabel: "custom-range exposure",
-  },
-  {
-    value: "severity",
-    shortLabel: "Severity",
-    label: "Severity",
-    note: "S1–S5, so small but urgent cells surface",
-    captionLabel: "severity",
-  },
-  {
-    value: "confidence",
-    shortLabel: "Confidence",
-    label: "Confidence",
-    note: "how firmly each cell is held",
-    captionLabel: "confidence",
+    heading: "Looking forward",
+    options: [
+      { value: "30d", label: "Next 30 days", note: "imminent leaks, still stoppable", direction: "forward" },
+      { value: "60d", label: "Next 60 days", note: "forming leaks, intervention window", direction: "forward" },
+      { value: "90d", label: "Next 90 days", note: "near-term forecast risk · default", direction: "forward" },
+      { value: "qtr", label: "Rest of quarter", note: "commit-window exposure", direction: "forward" },
+      { value: "12m", label: "Next 12 months", note: "annualised run rate", direction: "forward" },
+    ],
   },
 ];
 
-export const DEFAULT_SHADE_BY = "90d";
+export const DEFAULT_HORIZON: HorizonValue = "90d";
+export const DEFAULT_HORIZON_DIRECTION: "back" | "forward" = "forward";
 
-export const SHADE_BY_FOOTNOTE = "Shading changes the ramp, never the figures. Ranking always uses the threat score.";
+export const HORIZON_CUSTOM_LABEL = "Custom range…";
+export const HORIZON_FOOTNOTE =
+  "A longer horizon lowers confidence. The legend and the status line both say which one you chose.";
+
+// ---------------------------------------------------------------------------
+// Severity / confidence thresholds — filters, not shading. A cell below either threshold reads
+// "hidden by filter" instead of its figure (see matrix.tsx / 11-filtered.svg).
+// ---------------------------------------------------------------------------
+
+export type SeverityLevel = 1 | 2 | 3 | 4 | 5;
+
+export const SEVERITY_LABEL: Record<SeverityLevel, string> = {
+  1: "S1 — Critical",
+  2: "S2 — High",
+  3: "S3 — Elevated",
+  4: "S4 — Moderate",
+  5: "S5 — Low",
+};
+
+export type SeverityFilterOption = { value: SeverityLevel; label: string; note: string };
+
+export const SEVERITY_FILTER_OPTIONS: SeverityFilterOption[] = [
+  { value: 1, label: "≥ S1", note: "critical only" },
+  { value: 2, label: "≥ S2", note: "critical and high · default" },
+  { value: 3, label: "≥ S3", note: "adds elevated" },
+  { value: 4, label: "≥ S4", note: "adds moderate" },
+  { value: 5, label: "≥ S5", note: "everything, including low" },
+];
+
+export const DEFAULT_SEVERITY_FILTER: SeverityLevel = 2;
+
+export type ConfidenceLevel = "low" | "medium" | "high";
+
+export const CONFIDENCE_RANK: Record<ConfidenceLevel, number> = { low: 1, medium: 2, high: 3 };
+export const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = { low: "Low", medium: "Medium", high: "High" };
+
+export type ConfidenceFilterOption = { value: ConfidenceLevel; label: string; note: string };
+
+export const CONFIDENCE_FILTER_OPTIONS: ConfidenceFilterOption[] = [
+  { value: "low", label: "≥ Low", note: "everything, including low" },
+  { value: "medium", label: "≥ Medium", note: "medium and high · default" },
+  { value: "high", label: "≥ High", note: "high-confidence only" },
+];
+
+export const DEFAULT_CONFIDENCE_FILTER: ConfidenceLevel = "medium";
+
+// ---------------------------------------------------------------------------
+// Stages
+// ---------------------------------------------------------------------------
 
 export type Stage = {
   id: string;
@@ -140,20 +131,21 @@ export type Stage = {
   metricLines: string[];
   value: string;
   valueTone: Tone;
+  coveragePercent: number;
 };
 
-/** 01–10 · the "REVENUE AT EACH STAGE" rail. */
+/** 01–10 · the "STAGE ROLLUPS" rail — independent from the matrix, coverage shown under each figure. */
 export const STAGES: Stage[] = [
-  { id: "acquire", number: "01", label: "Acquire", dot: "#788831", metricLines: ["894k / yr"], value: "₦74M", valueTone: "rose" },
-  { id: "activate", number: "02", label: "Activate", dot: "#7757AC", metricLines: ["41% reach", "value"], value: "₦188M", valueTone: "rose" },
-  { id: "price", number: "03", label: "Price", dot: "#5E67C0", metricLines: ["6 plans"], value: "₦46M", valueTone: "rose" },
-  { id: "adopt", number: "04", label: "Adopt", dot: "#785BA1", metricLines: ["2.1 of 9", "features"], value: "₦112M", valueTone: "rose" },
-  { id: "retain", number: "05", label: "Retain", dot: "#798933", metricLines: ["1.1M active"], value: "₦412M", valueTone: "rose" },
-  { id: "expand", number: "06", label: "Expand", dot: "#BB5390", metricLines: ["18% eligible"], value: "₦96M", valueTone: "rose" },
-  { id: "support", number: "07", label: "Support", dot: "#CC6626", metricLines: ["42k contacts"], value: "₦31M", valueTone: "rose" },
-  { id: "renew", number: "08", label: "Renew", dot: "#1D947F", metricLines: ["61k renewals"], value: "₦88M", valueTone: "rose" },
-  { id: "advocate", number: "09", label: "Advocate", dot: "#7A8934", metricLines: ["124k", "referrers"], value: "₦124M", valueTone: "teal" },
-  { id: "churn", number: "10", label: "Churn", dot: "#98A0AE", metricLines: ["602k lost"], value: "₦602M", valueTone: "rose" },
+  { id: "acquire", number: "01", label: "Acquire", dot: "#788831", metricLines: ["894k / yr"], value: "₦74M", valueTone: "rose", coveragePercent: 81 },
+  { id: "activate", number: "02", label: "Activate", dot: "#7757AC", metricLines: ["41% reach value"], value: "₦188M", valueTone: "rose", coveragePercent: 69 },
+  { id: "price", number: "03", label: "Price", dot: "#5E67C0", metricLines: ["6 plans"], value: "₦46M", valueTone: "rose", coveragePercent: 58 },
+  { id: "adopt", number: "04", label: "Adopt", dot: "#785BA1", metricLines: ["2.1 of 9 features"], value: "₦112M", valueTone: "rose", coveragePercent: 77 },
+  { id: "retain", number: "05", label: "Retain", dot: "#798933", metricLines: ["1.1M active"], value: "₦412M", valueTone: "rose", coveragePercent: 74 },
+  { id: "expand", number: "06", label: "Expand", dot: "#BB5390", metricLines: ["18% eligible"], value: "₦96M", valueTone: "rose", coveragePercent: 62 },
+  { id: "support", number: "07", label: "Support", dot: "#CC6626", metricLines: ["42k contacts"], value: "₦31M", valueTone: "rose", coveragePercent: 88 },
+  { id: "renew", number: "08", label: "Renew", dot: "#1D947F", metricLines: ["61k renewals"], value: "₦88M", valueTone: "rose", coveragePercent: 71 },
+  { id: "advocate", number: "09", label: "Advocate", dot: "#7A8934", metricLines: ["124k referrers"], value: "₦124M", valueTone: "teal", coveragePercent: 66 },
+  { id: "churn", number: "10", label: "Churn", dot: "#98A0AE", metricLines: ["602k lost"], value: "₦602M", valueTone: "rose", coveragePercent: 79 },
 ];
 
 // Source copy used an em dash ("Advocacy feeds acquisition — 124,000 referrers…"); split into a
@@ -162,7 +154,8 @@ export const ADVOCACY_NOTE_TITLE = "Advocacy feeds acquisition";
 export const ADVOCACY_NOTE_BODY =
   "124,000 referrers brought 31% of last quarter's new customers at a CAC of ₦0.";
 
-/** Only Adopt has authored drilldown copy (customers/median features/slipped-out + the rows it spans). */
+/** Adopt keeps its own operational drilldown (customers/median features/slipped-out) — the one
+ * stage this export authors a "Learn why" agent handoff for. */
 export const ADOPT_STAGE_DETAIL = {
   stageId: "adopt",
   owner: "Product owns this stage",
@@ -172,6 +165,32 @@ export const ADOPT_STAGE_DETAIL = {
   spans: ["active", "slipping"] as const,
   spansNote: "Adopt spans Active and Slipping in the matrix below — highlighted there now.",
 };
+
+/** Retain is the export's own authored rollup example (06-stage-rollup.svg) — the coverage math
+ * that explains why stage cards never sum to the matrix below them. */
+export const RETAIN_STAGE_ROLLUP = {
+  stageId: "retain",
+  summary: "Expected loss across all Retain-stage leaks at the current horizon.",
+  coveragePercent: 74,
+  unattributedAmount: "₦107M",
+  unattributedPercent: 26,
+  topMechanisms: [
+    { label: "Repeat decay", value: "₦212M" },
+    { label: "Involuntary churn", value: "₦98M" },
+    { label: "Abandonment", value: "₦61M" },
+    { label: "Refunds", value: "₦41M" },
+  ],
+  confidence: "Medium",
+  rangeLow: "₦280M",
+  rangeHigh: "₦580M",
+  explainerTitle: "Why the stage cards do not sum to the matrix",
+  explainerBody:
+    "Rollups cover 74% of what is detectable at this stage. The other 26% is real and not yet mapped to a mechanism, so it appears in the rollup and in no cell. Saying nothing about that gap is what creates distrust.",
+};
+
+// ---------------------------------------------------------------------------
+// Matrix
+// ---------------------------------------------------------------------------
 
 export type MatrixColumnKey = "repeatDecay" | "involuntaryChurn" | "abandonment" | "refunds" | "discountDependency";
 
@@ -187,9 +206,22 @@ export const MATRIX_COLUMNS: { key: MatrixColumnKey; label: string }[] = [
 export const HEAT_SCALE = ["#F5F5F4", "#FBEBE7", "#F4CFC7", "#E5A79B"] as const;
 export const HEAT_TEXT_CLASS = ["text-ink-2", "text-ink-2", "text-ink", "text-ink"] as const;
 
+type RiskMeta = { severity: SeverityLevel; confidence: ConfidenceLevel };
+
 export type MatrixCell =
-  | { kind: "value"; value: string; heat: 1 | 2 | 3 }
-  | { kind: "gap"; missingSource: string; explanation: string; wouldUnlock: string };
+  | ({ kind: "value"; value: string; heat: 1 | 2 | 3 } & RiskMeta)
+  | ({
+      kind: "compound";
+      value: string;
+      heat: 1 | 2 | 3;
+      projection: { horizon: string; value: string }[];
+      severityNow: SeverityLevel;
+      severityAt12m: SeverityLevel;
+      rankByAmount: number;
+      rankByThreat: number;
+    } & RiskMeta)
+  | { kind: "zero"; note: string; lastChecked: string }
+  | { kind: "gap"; missingSource: string; explanation: string; wouldUnlock: string; recoveryLow: string; recoveryHigh: string };
 
 export type MatrixRow = {
   key: string;
@@ -204,82 +236,267 @@ export const MATRIX_ROWS: MatrixRow[] = [
     key: "new",
     label: "New",
     cells: {
-      repeatDecay: { kind: "value", value: "₦41M", heat: 1 },
-      involuntaryChurn: { kind: "value", value: "₦12M", heat: 1 },
-      abandonment: { kind: "value", value: "₦88M", heat: 3 },
-      refunds: { kind: "value", value: "₦6M", heat: 1 },
-      discountDependency: { kind: "value", value: "₦18M", heat: 1 },
+      repeatDecay: { kind: "value", value: "₦41M", heat: 1, severity: 2, confidence: "medium" },
+      involuntaryChurn: { kind: "value", value: "₦12M", heat: 1, severity: 2, confidence: "medium" },
+      abandonment: { kind: "value", value: "₦88M", heat: 3, severity: 1, confidence: "high" },
+      refunds: { kind: "value", value: "₦6M", heat: 1, severity: 2, confidence: "medium" },
+      discountDependency: { kind: "value", value: "₦18M", heat: 1, severity: 2, confidence: "medium" },
     },
   },
   {
     key: "active",
     label: "Active",
     cells: {
-      repeatDecay: { kind: "value", value: "₦96M", heat: 2 },
-      involuntaryChurn: { kind: "value", value: "₦61M", heat: 2 },
-      abandonment: { kind: "value", value: "₦124M", heat: 3 },
-      refunds: { kind: "value", value: "₦22M", heat: 1 },
-      discountDependency: { kind: "value", value: "₦46M", heat: 2 },
+      repeatDecay: { kind: "value", value: "₦96M", heat: 2, severity: 2, confidence: "medium" },
+      involuntaryChurn: { kind: "value", value: "₦61M", heat: 2, severity: 1, confidence: "high" },
+      abandonment: {
+        kind: "compound",
+        value: "₦124M",
+        heat: 3,
+        severity: 2,
+        confidence: "medium",
+        severityNow: 3,
+        severityAt12m: 1,
+        rankByAmount: 6,
+        rankByThreat: 2,
+        projection: [
+          { horizon: "30d", value: "₦12M" },
+          { horizon: "90d", value: "₦124M" },
+          { horizon: "Qtr", value: "₦180M" },
+          { horizon: "12m", value: "₦248M" },
+        ],
+      },
+      refunds: { kind: "value", value: "₦22M", heat: 1, severity: 2, confidence: "medium" },
+      discountDependency: { kind: "value", value: "₦46M", heat: 2, severity: 2, confidence: "medium" },
     },
   },
   {
     key: "slipping",
     label: "Slipping",
     cells: {
-      repeatDecay: { kind: "value", value: "₦412M", heat: 3 },
-      involuntaryChurn: { kind: "value", value: "₦27M", heat: 1 },
-      abandonment: { kind: "value", value: "₦34M", heat: 1 },
-      refunds: { kind: "value", value: "₦9M", heat: 1 },
-      discountDependency: { kind: "value", value: "₦31M", heat: 1 },
+      repeatDecay: { kind: "value", value: "₦412M", heat: 3, severity: 2, confidence: "medium" },
+      involuntaryChurn: { kind: "value", value: "₦27M", heat: 1, severity: 2, confidence: "high" },
+      abandonment: { kind: "value", value: "₦34M", heat: 1, severity: 2, confidence: "medium" },
+      refunds: { kind: "zero", note: "No refunds detected in the slipping state at this horizon and confidence level.", lastChecked: "6 minutes ago" },
+      discountDependency: { kind: "value", value: "₦31M", heat: 1, severity: 2, confidence: "medium" },
     },
   },
   {
     key: "lapsed",
     label: "Lapsed",
     cells: {
-      repeatDecay: { kind: "value", value: "₦188M", heat: 3 },
+      repeatDecay: { kind: "value", value: "₦188M", heat: 3, severity: 1, confidence: "medium" },
       involuntaryChurn: {
         kind: "gap",
         missingSource: "no dunning feed",
         explanation:
           "No dunning feed is connected, so Flolyt cannot see which lapsed customers left and which had a card fail.",
         wouldUnlock: STRIPE_UNLOCK,
+        recoveryLow: "₦18M",
+        recoveryHigh: "₦34M",
       },
-      abandonment: { kind: "value", value: "₦11M", heat: 1 },
-      refunds: { kind: "value", value: "₦4M", heat: 1 },
-      discountDependency: { kind: "value", value: "₦52M", heat: 2 },
+      abandonment: { kind: "value", value: "₦11M", heat: 1, severity: 2, confidence: "medium" },
+      refunds: { kind: "value", value: "₦4M", heat: 1, severity: 2, confidence: "medium" },
+      discountDependency: { kind: "value", value: "₦52M", heat: 2, severity: 2, confidence: "medium" },
     },
   },
   {
     key: "reactivated",
     label: "Reactivated",
     cells: {
-      repeatDecay: { kind: "value", value: "₦34M", heat: 1 },
-      involuntaryChurn: { kind: "value", value: "₦8M", heat: 1 },
-      abandonment: { kind: "value", value: "₦14M", heat: 1 },
+      repeatDecay: { kind: "value", value: "₦34M", heat: 1, severity: 2, confidence: "medium" },
+      involuntaryChurn: { kind: "value", value: "₦8M", heat: 1, severity: 2, confidence: "medium" },
+      abandonment: { kind: "value", value: "₦14M", heat: 1, severity: 2, confidence: "medium" },
       refunds: {
         kind: "gap",
         missingSource: "no dunning feed",
         explanation:
           "No dunning feed is connected, so Flolyt cannot see which reactivated customers were refunded and which simply churned again.",
         wouldUnlock: STRIPE_UNLOCK,
+        recoveryLow: "₦6M",
+        recoveryHigh: "₦15M",
       },
-      discountDependency: { kind: "value", value: "₦74M", heat: 2 },
+      discountDependency: { kind: "value", value: "₦74M", heat: 2, severity: 2, confidence: "medium" },
     },
   },
 ];
+
+/** Only "value" and "compound" cells carry a severity/confidence ranking to filter on — a gap or
+ * a zero cell is about data availability, not risk severity, so both stay visible regardless of
+ * the Severity/Confidence controls. */
+function isRankedCell(cell: MatrixCell): cell is Extract<MatrixCell, { kind: "value" | "compound" }> {
+  return cell.kind === "value" || cell.kind === "compound";
+}
+
+export function isCellHiddenByFilter(
+  cell: MatrixCell,
+  severityFilter: SeverityLevel,
+  confidenceFilter: ConfidenceLevel
+): boolean {
+  if (!isRankedCell(cell)) return false;
+  return cell.severity > severityFilter || CONFIDENCE_RANK[cell.confidence] < CONFIDENCE_RANK[confidenceFilter];
+}
+
+/** Share of ranked cells the current Severity/Confidence filter hides — drives the status line's
+ * amber warning and the matrix's own banner (11-filtered.svg). */
+export function filteredOutPercent(severityFilter: SeverityLevel, confidenceFilter: ConfidenceLevel): number {
+  const ranked = MATRIX_ROWS.flatMap((row) => MATRIX_COLUMNS.map((col) => row.cells[col.key])).filter(isRankedCell);
+  if (ranked.length === 0) return 0;
+  const hidden = ranked.filter((cell) => isCellHiddenByFilter(cell, severityFilter, confidenceFilter)).length;
+  return Math.round((hidden / ranked.length) * 100);
+}
 
 /** The one authored worked example — every other cell only carries what the matrix itself already shows. */
 export const FEATURED_CELL = {
   rowKey: "slipping",
   columnKey: "repeatDecay" as MatrixColumnKey,
-  atRiskWindow: "at risk · 90 days",
-  customersInCell: "18,402",
-  secondOrderRateFrom: "38%",
-  secondOrderRateTo: "27%",
-  since: "4 March",
+  threatScore: 82,
+  rangeLow: "₦280M",
+  rangeHigh: "₦580M",
+  recencyDays: "3 days",
+  recoverablePercent: 22,
+  netExpectedLoss: "₦321M",
+  segments: [
+    { label: "Lagos · first order Mar–May", amount: "₦84M" },
+    { label: "Annual NGN plans", amount: "₦61M" },
+    { label: "Mobile-first, no second order", amount: "₦48M" },
+  ],
+  moreSegments: 87,
   room: { id: "second-order-never-happened", label: "Room 2471 is open on this cell" },
 };
+
+// ---------------------------------------------------------------------------
+// Coverage & limitations panel
+// ---------------------------------------------------------------------------
+
+export const COVERAGE_PANEL = {
+  overallPercent: 78,
+  missingSourceCount: 4,
+  covered: {
+    customerPercent: 79,
+    lines: ["10 lifecycle stages", "5 leak mechanisms", "5 customer states", "3.3M of 4.2M customers"],
+  },
+  notCovered: [
+    { label: "Dunning feed · involuntary churn", detail: "₦18M–₦34M unknown" },
+    { label: "Renewal intent signals", detail: "not connected" },
+    { label: "Partner-sourced accounts", detail: "0.6M customers" },
+    { label: "Latent pricing risk", detail: "not modelled" },
+  ],
+  notIncluded: [
+    { label: "Unknown leaks", detail: "by definition" },
+    { label: "Cascade from correlated churn", detail: "" },
+    { label: "Macro or market shocks", detail: "" },
+    { label: "Model error", detail: "" },
+  ],
+  howToImprove: [
+    { label: "Connect dunning feed", boost: "+4–6%" },
+    { label: "Connect renewal intent", boost: "+6–9%" },
+    { label: "Expand to partner accounts", boost: "+12%" },
+  ],
+  lastUpdated: "6 min ago",
+};
+
+// ---------------------------------------------------------------------------
+// Actions triggered panel
+// ---------------------------------------------------------------------------
+
+export type ActionRow = {
+  severity: "S1" | "S2";
+  cellLabel: string;
+  accountsLine: string;
+  action: string;
+  sla: string;
+  amount: string;
+  /** Links straight to the room already open on this cell, when there is one — see FEATURED_CELL. */
+  roomId?: string;
+};
+
+export const ACTIONS_PANEL = {
+  summary: "2 critical · 5 high · 11 medium · every one has an owner and an SLA",
+  filterSummary: "Based on the current view · Expected loss · Next 90 days · Severity ≥ S2 · Confidence ≥ Medium",
+  rows: [
+    { severity: "S1", cellLabel: "Slipping × Repeat decay", accountsLine: "24 accounts · Dana O. · Product", action: "Exec sponsor outreach", sla: "SLA 24h", amount: "₦412M", roomId: FEATURED_CELL.room.id },
+    { severity: "S1", cellLabel: "Active × Abandonment", accountsLine: "12 accounts · Amara Okeke · Support", action: "Onboarding intervention", sla: "SLA 48h", amount: "₦124M" },
+    { severity: "S2", cellLabel: "New × Abandonment", accountsLine: "41 accounts · 3 CSMs", action: "Activation campaign", sla: "SLA 1 week", amount: "₦88M" },
+    { severity: "S2", cellLabel: "Lapsed × Repeat decay", accountsLine: "18 accounts · Win-back team", action: "Reactivation play", sla: "SLA 2 weeks", amount: "₦188M" },
+  ] satisfies ActionRow[],
+  moreAtS3: 11,
+  totalActionableExposure: "₦1.18B",
+  expectedSaveRecoveryAdjusted: "₦487M",
+  calloutTitle: "Exposure without routing is a scoreboard",
+  calloutBody: "Every figure above lands on a named desk with an action and an SLA. A number nobody owns is a number nobody moves.",
+};
+
+// ---------------------------------------------------------------------------
+// How this is calculated
+// ---------------------------------------------------------------------------
+
+export const HOW_CALCULATED = {
+  formulas: [
+    "Expected loss = Probability × Impact × Ramp factor",
+    "Net expected loss = Expected loss × (1 − Recovery rate)",
+  ],
+  terms: [
+    { term: "Probability", body: "How likely the leak is to convert to actual loss. From base rates, signal strength and mechanism clarity." },
+    { term: "Impact", body: "Revenue at stake if it materialises, in the current lens — bookings, revenue, margin or cash." },
+    { term: "Ramp factor", body: "How much materialises by the selected horizon. Deal slippage ramps faster than discount dependency." },
+    { term: "Recovery rate", body: "Fraction realistically saveable with reasonable intervention, calibrated from historical saves." },
+    { term: "Confidence", body: "How much we trust the estimate itself. It decays as the horizon extends." },
+  ],
+  notIncluded: [
+    "Unknown leaks — not yet detected",
+    "Latent leaks — structural, not yet triggered",
+    "Correlated shocks — market, macro, competitive",
+    "Second-order effects — cascade, contagion",
+    "Model error",
+  ],
+  coveragePercent: 78,
+  lastCalibration: "2 April 2026",
+  nextRecalibration: "1 July 2026",
+};
+
+// ---------------------------------------------------------------------------
+// Page-level footer (shared under both the coverage and actions panels)
+// ---------------------------------------------------------------------------
+
+export const PAGE_FOOTER = {
+  coverageLine: "Coverage: 78% of detectable surface",
+  notIncludedLine: "Not included: unknown, latent, correlated, macro",
+  totalLine: "Total actionable exposure: ₦1.18B",
+  expectedSaveLine: "Expected save, recovery-adjusted: ₦487M",
+  explainer: "The first line protects you from false confidence. The second tells you what to do.",
+};
+
+// ---------------------------------------------------------------------------
+// Page states (12-states.svg) — this page has no live source yet, so loading/empty/error are
+// reachable only by editing LEAKAGE_MAP_STATE in index.tsx, same convention as other rebuilds.
+// ---------------------------------------------------------------------------
+
+export type PageState = "loading" | "empty" | "partial" | "error";
+
+export const PAGE_STATES = {
+  loading: {
+    title: "Recomputing exposure for next 90 days…",
+    body: "Cells refresh in about two seconds.",
+    footnote: "The previous figures stay visible and greyed until the new ones land.",
+  },
+  empty: {
+    title: "No leakage data yet",
+    body: "Connect at least one source to see your exposure map.",
+    footnote: "One source is enough to start; coverage is shown from the first cell.",
+    cta: "Connect a source",
+  },
+  error: {
+    title: "Unable to refresh the leakage map",
+    body: "Last successful refresh 41 minutes ago. Nothing below has been re-estimated.",
+    footnote: "The stale figures stay on screen with their timestamp rather than being blanked.",
+    cta: "Retry",
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Market breakdown
+// ---------------------------------------------------------------------------
 
 export type Market = {
   name: string;
@@ -303,6 +520,3 @@ export const NO_SINGLE_TOTAL = {
     "Where a combined figure is genuinely needed, the rate and its date sit next to it.",
   ],
 };
-
-export const HOW_ITS_CALCULATED =
-  "Each cell totals the product and billing events tied to customers in that state who moved through that leak category in the selected window. A dashed cell means no connected source can measure that combination yet. Connecting one fills it in; it is never estimated.";
