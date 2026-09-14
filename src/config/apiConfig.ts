@@ -2,53 +2,53 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // src/config/apiConfig.ts
 export const WAITLIST_BASE_URL = import.meta.env.VITE_WAITLIST_BASE_URL || "http://localhost:5139";
 
-export const USER_BASE_URL = `${API_BASE_URL}/api/users/auth`;
-export const WORKFLOW_BASE_URL = `${API_BASE_URL}/api/flolyt/campaigns/{campaignId}/workflow`;
-export const SEGMENT_BASE_URL = `${API_BASE_URL}/api/flolyt/segment`;
-export const MESSAGING_BASE_URL = `${API_BASE_URL}/api/flolyt/messaging`;
-export const CUSTOMER_BASE_URL = `${API_BASE_URL}/api/flolyt/customers`;
-export const CAMPAIGN_BASE_URL = `${API_BASE_URL}/api/flolyt/campaigns`;
-export const TEAMS_BASE_URL = `${API_BASE_URL}/api/teams`;
-export const WALLET_BASE_URL = `${API_BASE_URL}/api/payments/wallets`;
-export const EVENT_BASE_URL = `${API_BASE_URL}/api/flolyt/events`;
-export const COMPANY_BASE_URL = `${API_BASE_URL}/api/flolyt/company`;
-export const DATASOURCES_BASE_URL = `${API_BASE_URL}/api/flolyt/datasources`;
-export const DATA_PLATFORM_BASE_URL = `${API_BASE_URL}/api/flolyt/data-platform`;
-export const APIKEY_BASE_URL = `${API_BASE_URL}/api/flolyt/api-key`;
-export const ANALYTICS_BASE_URL = `${API_BASE_URL}/api/analytics`;
-export const WORKFLOWSTUDIO_BASE_URL = `${API_BASE_URL}/api/flolyt/workflows/studio`;
-export const CHANNELS_BASE_URL = `${API_BASE_URL}/api/flolyt/channels`;
-export const CREDENTIALS_BASE_URL = `${API_BASE_URL}/api/flolyt/`;
-export const PERSONALIZATION_BASE_URL = `${API_BASE_URL}/api/flolyt/personalization`;
-export const COMMAND_CENTER_BASE_URL = `${API_BASE_URL}/api/flolyt/command-center`;
+export const USER_BASE_URL = `${API_BASE_URL}/api/v3/users/auth`;
+export const WORKFLOW_BASE_URL = `${API_BASE_URL}/api/v3/campaigns/{campaignId}/workflow`;
+export const SEGMENT_BASE_URL = `${API_BASE_URL}/api/v3/segment`;
+export const MESSAGING_BASE_URL = `${API_BASE_URL}/api/v3/messaging`;
+export const CUSTOMER_BASE_URL = `${API_BASE_URL}/api/v3/customers`;
+export const CAMPAIGN_BASE_URL = `${API_BASE_URL}/api/v3/campaigns`;
+export const TEAMS_BASE_URL = `${API_BASE_URL}/api/v3/teams`;
+export const WALLET_BASE_URL = `${API_BASE_URL}/api/v3/payments/wallets`;
+export const EVENT_BASE_URL = `${API_BASE_URL}/api/v3/events`;
+export const COMPANY_BASE_URL = `${API_BASE_URL}/api/v3/company`;
+export const DATASOURCES_BASE_URL = `${API_BASE_URL}/api/v3/datasources`;
+export const DATA_PLATFORM_BASE_URL = `${API_BASE_URL}/api/v3/data-platform`;
+export const APIKEY_BASE_URL = `${API_BASE_URL}/api/v3/api-key`;
+export const ANALYTICS_BASE_URL = `${API_BASE_URL}/api/v3/analytics`;
+export const WORKFLOWSTUDIO_BASE_URL = `${API_BASE_URL}/api/v3/workflows/studio`;
+export const CHANNELS_BASE_URL = `${API_BASE_URL}/api/v3/channels`;
+export const CREDENTIALS_BASE_URL = `${API_BASE_URL}/api/v3/`;
+export const PERSONALIZATION_BASE_URL = `${API_BASE_URL}/api/v3/personalization`;
+export const COMMAND_CENTER_BASE_URL = `${API_BASE_URL}/api/v3/command-center`;
 // Agent runs live under command-center/ for historical reasons only. They are surface-agnostic —
 // the AI conversation surface uses these same routes. Do not add a second set for chat.
 export const AGENT_RUNS_BASE_URL = `${COMMAND_CENTER_BASE_URL}/runs`;
-export const SKILLS_BASE_URL = `${API_BASE_URL}/api/flolyt/skills`;
-export const AI_CONVERSATIONS_BASE_URL = `${API_BASE_URL}/api/flolyt/ai/conversations`;
-export const AI_PROPOSALS_BASE_URL = `${API_BASE_URL}/api/flolyt/ai/proposals`;
-export const NOTIFICATIONS_BASE_URL = `${API_BASE_URL}/api/flolyt/notifications`;
-export const AICREDITS_BASE_URL = `${API_BASE_URL}/api/flolyt/payments/credits`;
-export const GOVERNANCE_BASE_URL = `${API_BASE_URL}/api/flolyt/governance`;
+export const SKILLS_BASE_URL = `${API_BASE_URL}/api/v3/skills`;
+export const AI_CONVERSATIONS_BASE_URL = `${API_BASE_URL}/api/v3/ai/conversations`;
+export const AI_PROPOSALS_BASE_URL = `${API_BASE_URL}/api/v3/ai/proposals`;
+export const NOTIFICATIONS_BASE_URL = `${API_BASE_URL}/api/v3/notifications`;
+export const AICREDITS_BASE_URL = `${API_BASE_URL}/api/v3/payments/credits`;
+export const GOVERNANCE_BASE_URL = `${API_BASE_URL}/api/v3/governance`;
 export const INTELLIGENCE_BASE_URL = `${API_BASE_URL}/api/v1/intelligence`;
-export const PLATFORM_ADMIN_BASE_URL = `${API_BASE_URL}/api/flolyt/platform-admin`;
-export const CURRENCY_BASE_URL = `${API_BASE_URL}/api/flolyt/currency`;
-export const WORKSPACE_BASE_URL = `${API_BASE_URL}/api/flolyt/workspace`;
-export const LIFECYCLE_BASE_URL = `${API_BASE_URL}/api/flolyt/lifecycle`;
-export const ROOMS_BASE_URL = `${API_BASE_URL}/api/flolyt/rooms`;
-export const PLAYS_BASE_URL = `${API_BASE_URL}/api/flolyt/plays`;
+export const PLATFORM_ADMIN_BASE_URL = `${API_BASE_URL}/api/v3/platform-admin`;
+export const CURRENCY_BASE_URL = `${API_BASE_URL}/api/v3/currency`;
+export const WORKSPACE_BASE_URL = `${API_BASE_URL}/api/v3/workspace`;
+export const LIFECYCLE_BASE_URL = `${API_BASE_URL}/api/v3/lifecycle`;
+export const ROOMS_BASE_URL = `${API_BASE_URL}/api/v3/rooms`;
+export const PLAYS_BASE_URL = `${API_BASE_URL}/api/v3/plays`;
 
 export const API_ENDPOINTS = {
   USER: {
-    REGISTER: `${API_BASE_URL}/api/users/registration/register`,
-    CONFIRM_REGISTRATION: `${API_BASE_URL}/api/users/registration/{userId}/confirm`,
-    RESEND_OTP: `${API_BASE_URL}/api/users/registration/resend-otp`,
+    REGISTER: `${API_BASE_URL}/api/v3/users/registration/register`,
+    CONFIRM_REGISTRATION: `${API_BASE_URL}/api/v3/users/registration/{userId}/confirm`,
+    RESEND_OTP: `${API_BASE_URL}/api/v3/users/registration/resend-otp`,
     REQUEST_LOGIN_CODE: `${USER_BASE_URL}/login/request-code`,
     VERIFY_LOGIN_CODE: `${USER_BASE_URL}/login/verify-code`,
     STEP_UP_REQUEST_CODE: `${USER_BASE_URL}/step-up/request-code`,
     STEP_UP_VERIFY_CODE: `${USER_BASE_URL}/step-up/verify-code`,
-    CREATE_COMPANY: `${API_BASE_URL}/api/flolyt/company`,
-    GET_USER_BY_EMAIL: `${API_BASE_URL}/api/users/registration/{email}`,
+    CREATE_COMPANY: `${API_BASE_URL}/api/v3/company`,
+    GET_USER_BY_EMAIL: `${API_BASE_URL}/api/v3/users/registration/{email}`,
     REFRESH_TOKEN: `${USER_BASE_URL}/token/refresh`,
     LOGOUT: `${USER_BASE_URL}/logout`,
     LOGOUT_ALL: `${USER_BASE_URL}/logout-all`,
@@ -212,7 +212,7 @@ export const API_ENDPOINTS = {
 
 
   AUDITING: {
-    GET_AUDIT_TRAIL: `${API_BASE_URL}/api/auditing/trail`,
+    GET_AUDIT_TRAIL: `${API_BASE_URL}/api/v3/auditing/trail`,
 
   },
 
@@ -621,7 +621,7 @@ export const API_ENDPOINTS = {
     RESTRICT_ROOM: `${ROOMS_BASE_URL}/{roomId}/restrict`,
     UNRESTRICT_ROOM: `${ROOMS_BASE_URL}/{roomId}/restrict`,
     GET_ROOM_PLAYS: `${ROOMS_BASE_URL}/{roomId}/plays`,
-    // Top-level `/api/flolyt/plays`, NOT under `/rooms` — corrected 2026-09-08 after the live doc
+    // Top-level `/api/v3/plays`, NOT under `/rooms` — corrected 2026-09-08 after the live doc
     // showed this living outside the rooms path entirely.
     GET_ALL_PLAYS: `${PLAYS_BASE_URL}`,
     GET_PLAY: `${PLAYS_BASE_URL}/{proposalId}`,

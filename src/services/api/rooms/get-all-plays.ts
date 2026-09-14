@@ -18,7 +18,7 @@ const {
 
 // `waitingOnPeople` is how many distinct people the pending plays sit with — surfaces a
 // bottleneck when e.g. 14 plays are waiting and 6 sit with one person. Hits top-level
-// `/api/flolyt/plays`, not a path under `/rooms`.
+// `/api/v3/plays`, not a path under `/rooms`.
 export const getAllPlays = async (params?: GetAllPlaysParams): Promise<GetAllPlaysResponse> => {
   try {
     const response = await axiosInstance.get<GetAllPlaysResponse>(GET_ALL_PLAYS, { params });
