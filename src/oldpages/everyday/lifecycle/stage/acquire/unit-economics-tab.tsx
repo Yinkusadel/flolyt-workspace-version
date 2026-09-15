@@ -8,8 +8,8 @@ import { MapAFieldModal } from "@/oldpages/everyday/lifecycle/stage/modals/map-a
 import { Sparkline } from "@/oldpages/everyday/lifecycle/stage/sparkline";
 import { formatCompactMoney } from "@/lib/format-measured-value";
 import { ACQUIRE_MAP_FIELD_PRESET } from "@/oldpages/everyday/lifecycle/stage/acquire/data";
-import { useGetAcquireUnitEconomics } from "@/features/lifecycle/use-get-acquire-unit-economics";
-import type { UnitEconomicsCohortDto } from "@/services/api/lifecycle/get-acquire-unit-economics";
+import { useGetAcquireUnitEconomics } from "@/features/lifecycle-old/use-get-acquire-unit-economics";
+import type { UnitEconomicsCohortDto } from "@/services/api/lifecycle-old/get-acquire-unit-economics";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

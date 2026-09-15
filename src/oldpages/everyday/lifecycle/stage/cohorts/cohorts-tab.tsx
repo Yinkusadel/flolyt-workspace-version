@@ -5,8 +5,8 @@ import { DataTable, type Column } from "@/oldpages/everyday/lifecycle/stage/data
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { useStageContext } from "@/oldpages/everyday/lifecycle/stage/layout";
 import { formatCompactMoney, formatCount, formatMonthYear, formatPercent } from "@/lib/format-measured-value";
-import { useGetStageCohorts } from "@/features/lifecycle/use-get-stage-cohorts";
-import type { StageCohortRowDto } from "@/services/api/lifecycle/get-stage-cohorts";
+import { useGetStageCohorts } from "@/features/lifecycle-old/use-get-stage-cohorts";
+import type { StageCohortRowDto } from "@/services/api/lifecycle-old/get-stage-cohorts";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { SearchableSelect, SearchableSelectSkeleton, type SearchableSelectOption } from "@/components/ui/searchable-select";
 import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
-import useUpdateStageOwner from "@/features/lifecycle/use-update-stage-owner";
+import useUpdateStageOwner from "@/features/lifecycle-old/use-update-stage-owner";
 
 /**
  * The real "assign an owner" flow — `PUT /lifecycle/map/{stageKey}/owner`, generic across all 10

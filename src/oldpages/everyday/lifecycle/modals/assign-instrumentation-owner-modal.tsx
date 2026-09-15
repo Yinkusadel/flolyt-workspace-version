@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { SearchableSelect, SearchableSelectSkeleton, type SearchableSelectOption } from "@/components/ui/searchable-select";
 import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
-import useUpdateInstrumentationRequestOwner from "@/features/lifecycle/use-update-instrumentation-request-owner";
+import useUpdateInstrumentationRequestOwner from "@/features/lifecycle-old/use-update-instrumentation-request-owner";
 
 /**
  * Assigns who's on the hook for an already-raised instrumentation request —

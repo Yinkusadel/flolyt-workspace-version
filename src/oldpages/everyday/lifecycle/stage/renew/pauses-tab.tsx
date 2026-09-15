@@ -8,7 +8,7 @@ import { OpenARoomModal } from "@/oldpages/everyday/lifecycle/stage/modals/open-
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCount, formatPercent } from "@/lib/format-measured-value";
 import { RENEW_PAUSES_OPEN_ROOM_PRESET } from "@/oldpages/everyday/lifecycle/stage/renew/data";
-import { useGetRenewPauses } from "@/features/lifecycle/use-get-renew-pauses";
+import { useGetRenewPauses } from "@/features/lifecycle-old/use-get-renew-pauses";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

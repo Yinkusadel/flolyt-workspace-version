@@ -9,8 +9,8 @@ import { ReForecastTheBookModal } from "@/oldpages/everyday/lifecycle/stage/moda
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCompactMoney, formatCount } from "@/lib/format-measured-value";
 import { RENEW_REFORECAST_PRESET } from "@/oldpages/everyday/lifecycle/stage/renew/data";
-import { useGetRenewalBook } from "@/features/lifecycle/use-get-renewal-book";
-import type { RenewalBookSliceDto } from "@/services/api/lifecycle/get-renew-renewal-book";
+import { useGetRenewalBook } from "@/features/lifecycle-old/use-get-renewal-book";
+import type { RenewalBookSliceDto } from "@/services/api/lifecycle-old/get-renew-renewal-book";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

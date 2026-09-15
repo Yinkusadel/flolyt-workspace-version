@@ -15,7 +15,7 @@ function StageCard({ stage }: { stage: Stage }) {
   return (
     <FloatingCard
       align="start"
-      panelClassName="w-80 max-w-[calc(100vw-2rem)]"
+      panelClassName="w-[26rem] max-w-[calc(100vw-2rem)]"
       renderTrigger={({ open, toggle, ref }) => (
         <button
           ref={ref}
@@ -41,6 +41,7 @@ function StageCard({ stage }: { stage: Stage }) {
           </p>
           <div className="mt-auto border-t border-dashed border-line pt-2.5">
             <p className={cn("text-[15px] font-semibold", VALUE_TONE_CLASS[stage.valueTone])}>{stage.value}</p>
+            <p className="mt-0.5 text-[10px] text-ink-4">{stage.coveragePercent}% covered</p>
           </div>
         </button>
       )}
@@ -55,9 +56,10 @@ export function StageRail() {
 
   return (
     <div className="space-y-3">
-      <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">
-        Revenue at each stage, and what is leaking out of it
-      </p>
+      <div>
+        <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">Stage rollups</p>
+        <p className="mt-0.5 text-[11px] text-ink-3">Independent from the matrix · coverage shown under each figure</p>
+      </div>
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10">
         {STAGES.map((stage) => (
           <StageCard key={stage.id} stage={stage} />

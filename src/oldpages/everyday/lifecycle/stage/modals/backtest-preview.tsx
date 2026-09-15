@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkline } from "@/oldpages/everyday/lifecycle/stage/sparkline";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
-import useBacktestStageCondition from "@/features/lifecycle/use-backtest-stage-condition";
+import useBacktestStageCondition from "@/features/lifecycle-old/use-backtest-stage-condition";
 
 /**
  * "How often would this have fired?" — POST /lifecycle/stages/{stageKey}/conditions/backtest,

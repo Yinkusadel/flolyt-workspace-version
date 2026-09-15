@@ -12,10 +12,10 @@ import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCount, formatShortDate } from "@/lib/format-measured-value";
 import { PreviewDefinitionChangeModal } from "@/oldpages/everyday/lifecycle/stage/modals/preview-definition-change-modal";
-import { useGetStageDefinition } from "@/features/lifecycle/use-get-stage-definition";
-import usePreviewStageDefinition from "@/features/lifecycle/use-preview-stage-definition";
-import useUpdateStageDefinition from "@/features/lifecycle/use-update-stage-definition";
-import type { StageDefinitionCandidateDto } from "@/services/api/lifecycle/get-stage-definition";
+import { useGetStageDefinition } from "@/features/lifecycle-old/use-get-stage-definition";
+import usePreviewStageDefinition from "@/features/lifecycle-old/use-preview-stage-definition";
+import useUpdateStageDefinition from "@/features/lifecycle-old/use-update-stage-definition";
+import type { StageDefinitionCandidateDto } from "@/services/api/lifecycle-old/get-stage-definition";
 
 function DefinitionSkeleton() {
   return (

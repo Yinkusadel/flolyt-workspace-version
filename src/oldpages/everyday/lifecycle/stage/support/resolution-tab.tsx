@@ -4,8 +4,8 @@ import { Callout } from "@/components/ui/rail";
 import { DataTable, type Column } from "@/oldpages/everyday/lifecycle/stage/data-table";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCount, formatPercent, round } from "@/lib/format-measured-value";
-import { useGetSupportResolution } from "@/features/lifecycle/use-get-support-resolution";
-import type { SupportResolutionBandDto } from "@/services/api/lifecycle/get-support-resolution";
+import { useGetSupportResolution } from "@/features/lifecycle-old/use-get-support-resolution";
+import type { SupportResolutionBandDto } from "@/services/api/lifecycle-old/get-support-resolution";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

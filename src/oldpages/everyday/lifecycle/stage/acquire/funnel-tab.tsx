@@ -4,7 +4,7 @@ import { BarTrack } from "@/oldpages/everyday/lifecycle/stage/bar";
 import { Callout } from "@/components/ui/rail";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { formatCount, formatPercent } from "@/lib/format-measured-value";
-import { useGetAcquireFunnel } from "@/features/lifecycle/use-get-acquire-funnel";
+import { useGetAcquireFunnel } from "@/features/lifecycle-old/use-get-acquire-funnel";
 // PersonAvatar / ACQUIRE_FUNNEL_ACTION_CARDS were only used by the commented-out
 // "two drops worth acting on" section below — re-import both if it's ever reinstated.
 

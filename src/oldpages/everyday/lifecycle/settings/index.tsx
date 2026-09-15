@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OwnershipTable, type OwnershipRow } from "@/oldpages/everyday/lifecycle/settings/ownership-table";
 import { AssignStageOwnerModal } from "@/oldpages/everyday/lifecycle/stage/modals/assign-stage-owner-modal";
-import useGetLifecycleMap from "@/features/lifecycle/use-get-lifecycle-map";
+import useGetLifecycleMap from "@/features/lifecycle-old/use-get-lifecycle-map";
 
 function OwnershipSkeleton() {
   return (

@@ -5,8 +5,8 @@ import { DataTable, type Column } from "@/oldpages/everyday/lifecycle/stage/data
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCompactMoney, formatCount, formatMonthYear, formatPercent, round } from "@/lib/format-measured-value";
-import { useGetExpandBasket } from "@/features/lifecycle/use-get-expand-basket";
-import type { ExpandBasketLineDto, ExpandBasketMonthDto } from "@/services/api/lifecycle/get-expand-basket";
+import { useGetExpandBasket } from "@/features/lifecycle-old/use-get-expand-basket";
+import type { ExpandBasketLineDto, ExpandBasketMonthDto } from "@/services/api/lifecycle-old/get-expand-basket";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

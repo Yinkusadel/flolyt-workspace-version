@@ -12,14 +12,14 @@ import { RequestGapInstrumentationModal } from "@/oldpages/everyday/lifecycle/mo
 import { CloseInstrumentationRequestModal } from "@/oldpages/everyday/lifecycle/modals/close-instrumentation-request-modal";
 import { AssignInstrumentationOwnerModal } from "@/oldpages/everyday/lifecycle/modals/assign-instrumentation-owner-modal";
 import { KNOWN_DEPARTMENTS, STAGES, type Department, type RootCauseRow, type Stage } from "@/lib/lifecycle-data";
-import useGetLifecycleMap from "@/features/lifecycle/use-get-lifecycle-map";
-import { useGetChurnChain } from "@/features/lifecycle/use-get-churn-chain";
-import { useGetInstrumentation } from "@/features/lifecycle/use-get-instrumentation";
-import { useGetChurnRoutings } from "@/features/lifecycle/use-get-churn-routings";
-import useAcknowledgeChurnRouting from "@/features/lifecycle/use-acknowledge-churn-routing";
-import type { LifecycleAtStakeAmountDto, LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
-import type { InstrumentationGapDto } from "@/services/api/lifecycle/get-instrumentation";
-import type { ChurnRoutingDto } from "@/services/api/lifecycle/get-churn-routings";
+import useGetLifecycleMap from "@/features/lifecycle-old/use-get-lifecycle-map";
+import { useGetChurnChain } from "@/features/lifecycle-old/use-get-churn-chain";
+import { useGetInstrumentation } from "@/features/lifecycle-old/use-get-instrumentation";
+import { useGetChurnRoutings } from "@/features/lifecycle-old/use-get-churn-routings";
+import useAcknowledgeChurnRouting from "@/features/lifecycle-old/use-acknowledge-churn-routing";
+import type { LifecycleAtStakeAmountDto, LifecycleMeasuredValueDto } from "@/services/api/lifecycle-old/get-lifecycle-map";
+import type { InstrumentationGapDto } from "@/services/api/lifecycle-old/get-instrumentation";
+import type { ChurnRoutingDto } from "@/services/api/lifecycle-old/get-churn-routings";
 import { formatAtStakeAmounts, formatHeadlineValue, formatShortDate } from "@/lib/format-measured-value";
 import {
   DropdownMenu,

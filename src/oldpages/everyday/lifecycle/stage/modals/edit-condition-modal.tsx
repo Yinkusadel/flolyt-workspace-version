@@ -13,11 +13,11 @@ import {
 } from "@/components/ui/dialog";
 import { SearchableSelect, SearchableSelectSkeleton, type SearchableSelectOption } from "@/components/ui/searchable-select";
 import { BacktestPreview } from "@/oldpages/everyday/lifecycle/stage/modals/backtest-preview";
-import useUpdateCondition from "@/features/lifecycle/use-update-condition";
-import useDecideCondition from "@/features/lifecycle/use-decide-condition";
+import useUpdateCondition from "@/features/lifecycle-old/use-update-condition";
+import useDecideCondition from "@/features/lifecycle-old/use-decide-condition";
 import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
-import { useGetWatchableMetrics } from "@/features/lifecycle/use-get-watchable-metrics";
-import type { StageAgentConditionDto } from "@/services/api/lifecycle/get-stage-agents";
+import { useGetWatchableMetrics } from "@/features/lifecycle-old/use-get-watchable-metrics";
+import type { StageAgentConditionDto } from "@/services/api/lifecycle-old/get-stage-agents";
 
 const NO_ROUTE_OVERRIDE = "__stage_routing_chain__";
 

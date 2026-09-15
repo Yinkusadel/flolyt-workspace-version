@@ -5,9 +5,9 @@ import { DataTable, type Column } from "@/oldpages/everyday/lifecycle/stage/data
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCount, formatPercent } from "@/lib/format-measured-value";
-import { useGetAdoptFeatures } from "@/features/lifecycle/use-get-adopt-features";
-import type { AdoptFeatureDto } from "@/services/api/lifecycle/get-adopt-features";
-import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import { useGetAdoptFeatures } from "@/features/lifecycle-old/use-get-adopt-features";
+import type { AdoptFeatureDto } from "@/services/api/lifecycle-old/get-adopt-features";
+import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle-old/get-lifecycle-map";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

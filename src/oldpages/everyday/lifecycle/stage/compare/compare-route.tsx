@@ -9,8 +9,8 @@ import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { useStageContext } from "@/oldpages/everyday/lifecycle/stage/layout";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
 import { formatCount, formatPercent, formatShortDateWithYear } from "@/lib/format-measured-value";
-import { useGetStageCompare } from "@/features/lifecycle/use-get-stage-compare";
-import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import { useGetStageCompare } from "@/features/lifecycle-old/use-get-stage-compare";
+import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle-old/get-lifecycle-map";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {
