@@ -153,7 +153,7 @@ export default function NewConversationRoute() {
             )}
           </div>
 
-          <div className="flex items-center justify-between border-t border-line px-2.5 py-1.5">
+          <div className="flex items-center justify-between px-2.5 py-1.5">
             <PromptToggles
               askBeforeSpending={askBeforeSpending}
               onAskBeforeSpendingChange={setAskBeforeSpending}

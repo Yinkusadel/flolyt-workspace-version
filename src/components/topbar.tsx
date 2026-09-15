@@ -30,7 +30,7 @@ function Topbar({ breadcrumb, presence = [], actions, onMenuClick, className }: 
     <header
       data-slot="topbar"
       className={cn(
-        "sticky top-0 z-30 flex h-topbar shrink-0 items-center gap-3 border-b border-line bg-paper px-page",
+        "sticky top-0 z-30 flex h-topbar shrink-0 items-center gap-3 bg-paper px-page",
         className
       )}
     >

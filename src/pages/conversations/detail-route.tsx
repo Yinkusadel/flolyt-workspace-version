@@ -371,7 +371,7 @@ export default function AiConversationDetailRoute() {
           />
         )}
 
-        <div className="border-t border-line pt-4 pb-4">
+        <div className="pt-4 pb-4">
           {showSkeleton ? (
             // Same footprint as the real composer below (rounded-card box, textarea-height row +
             // toolbar row) so nothing jumps once history loads and the real one swaps in. Keyed
@@ -384,7 +384,7 @@ export default function AiConversationDetailRoute() {
               <div className="px-4 pt-3 pb-1.5">
                 <Skeleton className="h-4 w-2/5 rounded-full" />
               </div>
-              <div className="flex items-center justify-between border-t border-line px-2.5 py-1.5">
+              <div className="flex items-center justify-between px-2.5 py-1.5">
                 <div className="flex items-center gap-1.5">
                   <Skeleton className="size-6.5 rounded-md" />
                   <Skeleton className="size-6.5 rounded-md" />
@@ -422,7 +422,7 @@ export default function AiConversationDetailRoute() {
                   className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3 pb-1.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
                 />
 
-                <div className="flex items-center justify-between border-t border-line px-2.5 py-1.5">
+                <div className="flex items-center justify-between px-2.5 py-1.5">
                   <PromptToggles
                     askBeforeSpending={askBeforeSpending}
                     onAskBeforeSpendingChange={setAskBeforeSpending}
