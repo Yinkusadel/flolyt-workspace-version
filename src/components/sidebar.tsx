@@ -163,7 +163,7 @@ function Sidebar({ open, onClose, className }: SidebarProps) {
           hovered, so no separate toggle control needs its own space in the rail. */}
       <div
         className={cn(
-          "flex h-topbar shrink-0 items-center gap-2 border-b border-line px-4",
+          "flex h-topbar shrink-0 items-center gap-2 px-4",
           collapsed && "lg:justify-center lg:px-0"
         )}
       >
