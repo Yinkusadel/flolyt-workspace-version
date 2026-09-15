@@ -371,7 +371,7 @@ export default function AiConversationDetailRoute() {
           />
         )}
 
-        <div className="border-t border-line pt-4 pb-4">
+        <div className="pt-4 pb-4">
           {showSkeleton ? (
             // Same footprint as the real composer below (rounded-card box, textarea-height row +
             // toolbar row) so nothing jumps once history loads and the real one swaps in. Keyed
