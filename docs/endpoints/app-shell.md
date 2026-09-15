@@ -10,8 +10,11 @@ wiring starts.
 **Auth:** Bearer JWT, every route · **Envelope:** `Result<T>` (`succeeded`, `data`, `messages`).
 
 Status: 7 endpoints documented from the real spec (5 on 2026-09-04, `/home/greeting` +
-`/home/prompts` added 2026-09-15 alongside a reshaped `/home`), 0 wired. Service+hook files exist
-for the three `home*` routes only — see [[api_endpoint_style]].
+`/home/prompts` added 2026-09-15 alongside a reshaped `/home`), 1 wired (`/home/prompts`) —
+`/home/greeting` stays scaffolded-but-unused by design (same reason as below), and `/home` was
+wired then deliberately reverted 2026-09-15 — the carousel is back on its mocked 3 cards for now.
+See [docs/home/build-plan.md](../home/build-plan.md) for the wiring pass, [[api_endpoint_style]]
+for the service+hook shape.
 
 ## Endpoints
 
@@ -60,9 +63,11 @@ for the three `home*` routes only — see [[api_endpoint_style]].
   }
   ```
   Standard `{ data, messages, succeeded }` envelope.
-- **Used by:** not wired.
-- **Status:** documented (re-pasted from the live Scalar doc 2026-09-15, replaces the 2026-09-04
-  shape).
+- **Used by:** not wired. Was briefly wired into `HomeCarousel`
+  (`src/pages/conversations/home-carousel.tsx`) 2026-09-15, then reverted back to the mocked
+  3-card carousel at the requester's call — see build-plan for what the real response looked like
+  and the gaps found (some `href` values don't resolve to routes in this app).
+- **Status:** documented; wiring reverted.
 - **Notes:** Business state always leads, then severity, then recency — never the other way
   round. Severity is never derived by comparing money across currencies: a figure is measured
   against its own currency's digest threshold, and an action against the inbox grouping that
@@ -79,8 +84,9 @@ for the three `home*` routes only — see [[api_endpoint_style]].
 - **Auth:** Bearer token.
 - **Request:** none.
 - **Response `data`:** `{ greeting: string }`. Standard envelope.
-- **Used by:** not wired.
-- **Status:** documented (2026-09-15).
+- **Used by:** nothing — scaffolded (`useGetHomeGreeting`) but deliberately not called, per this
+  endpoint's own note below.
+- **Status:** documented (2026-09-15), intentionally not wired.
 - **Notes:** Drawn fresh from a small pool on each call, sometimes using the person's first name
   and sometimes not, and **never** announcing the time of day — that's one sentence for everybody
   in a timezone and wrong for anyone working late. The name comes from their own record, never
@@ -115,8 +121,9 @@ for the three `home*` routes only — see [[api_endpoint_style]].
   }
   ```
   Standard envelope.
-- **Used by:** not wired.
-- **Status:** documented (2026-09-15).
+- **Used by:** `NewConversationRoute` (`src/pages/conversations/new-conversation-route.tsx`) — the
+  `h1` greeting and the composer's typewriter placeholder texts.
+- **Status:** wired 2026-09-15.
 - **Notes:** Same greeting rules as `GET /home/greeting` above (small pool, sometimes a first
   name, never a time-of-day line) — don't call both from the same screen. Says nothing about the
   business itself: the `/home` carousel reports the state, prompts say what's worth asking about

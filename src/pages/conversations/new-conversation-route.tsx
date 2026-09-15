@@ -3,15 +3,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import { HomeCarousel } from "@/pages/conversations/home-carousel";
 import { PromptToggles } from "@/pages/conversations/prompt-toggles";
 import { useTypewriter } from "@/pages/conversations/use-typewriter";
-import { MAPPING_QUESTIONS } from "@/pages/onboarding/data/data";
+import { useGetHomePrompts } from "@/features/home/use-get-home-prompts";
 import flolytLogo from "../../../assets/logo.png";
-
-// Reuses the app's own already-authored example questions (onboarding's "what you can ask"
-// rail) rather than inventing new copy — same questions, different surface.
-const PLACEHOLDER_PHRASES = MAPPING_QUESTIONS.map((q) => q.question);
 
 export default function NewConversationRoute() {
   const navigate = useNavigate();
@@ -20,7 +17,19 @@ export default function NewConversationRoute() {
   const [prompt, setPrompt] = useState(prefillPrompt ?? "");
   const [askBeforeSpending, setAskBeforeSpending] = useState(true);
   const [planMode, setPlanMode] = useState(true);
-  const { text: placeholderText, caret } = useTypewriter(PLACEHOLDER_PHRASES);
+
+  // /home/prompts returns both the greeting above the composer and the suggestion texts
+  // cycled through it in one call — /home/greeting is deliberately not also called here,
+  // per that endpoint's own docs, since it would just duplicate this response's greeting.
+  const {
+    data: promptsData,
+    isPending: isPromptsPending,
+    isError: isPromptsError,
+    refetch: refetchPrompts,
+  } = useGetHomePrompts();
+  const greeting = promptsData?.data.greeting;
+  const promptPhrases = (promptsData?.data.prompts ?? []).map((p) => p.text);
+  const { text: placeholderText, caret } = useTypewriter(promptPhrases);
 
   const handleSubmit = () => {
     const message = prompt.trim();
@@ -44,8 +53,29 @@ export default function NewConversationRoute() {
         <span className="flex size-12 items-center justify-center rounded-full border border-ultra-border bg-ultra-bg">
           <img src={flolytLogo} alt="" className="size-7 object-contain" />
         </span>
-        <h1 className="mt-4 font-serif text-[26px] text-ink sm:text-[28px]">What can I do for you?</h1>
-        <p className="mt-1 text-[12.5px] text-ink-3">Ask Flolyt to look something up or take an action.</p>
+        {isPromptsPending ? (
+          <Skeleton className="mt-4 h-8 w-72 rounded-panel" />
+        ) : (
+          <h1 className="mt-4 font-serif text-[26px] text-ink sm:text-[28px]">
+            {isPromptsError ? "What can I do for you?" : greeting}
+          </h1>
+        )}
+        <p className="mt-1 text-[12.5px] text-ink-3">
+          {isPromptsError ? (
+            <>
+              Couldn't load your suggestions.{" "}
+              <button
+                type="button"
+                onClick={() => refetchPrompts()}
+                className="font-medium text-ultra hover:underline"
+              >
+                Retry
+              </button>
+            </>
+          ) : (
+            "Ask Flolyt to look something up or take an action."
+          )}
+        </p>
       </div>
 
       <div className="group relative mt-6 w-full max-w-2xl duration-500 animate-in fade-in slide-in-from-bottom-2 delay-150">
@@ -78,7 +108,7 @@ export default function NewConversationRoute() {
             />
             {/* Native `placeholder` can't be animated, so the typewriter text renders as an
                 overlay in its place instead — hidden the instant a real value exists. */}
-            {!prompt && (
+            {!prompt && placeholderText && (
               <div
                 aria-hidden
                 className="pointer-events-none absolute top-3.5 left-4 text-[12.5px] text-ink-4"
