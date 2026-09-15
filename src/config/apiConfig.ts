@@ -37,6 +37,7 @@ export const WORKSPACE_BASE_URL = `${API_BASE_URL}/api/v3/workspace`;
 export const LIFECYCLE_BASE_URL = `${API_BASE_URL}/api/v3/lifecycle`;
 export const ROOMS_BASE_URL = `${API_BASE_URL}/api/v3/rooms`;
 export const PLAYS_BASE_URL = `${API_BASE_URL}/api/v3/plays`;
+export const HOME_BASE_URL = `${API_BASE_URL}/api/v3/home`;
 
 export const API_ENDPOINTS = {
   USER: {
@@ -387,6 +388,12 @@ export const API_ENDPOINTS = {
     ACCEPT: `${AI_PROPOSALS_BASE_URL}/{id}/accept`,
     DEFER: `${AI_PROPOSALS_BASE_URL}/{id}/defer`,
     REJECT: `${AI_PROPOSALS_BASE_URL}/{id}/reject`,
+  },
+
+  HOME: {
+    GET_HOME: `${HOME_BASE_URL}`,
+    GET_GREETING: `${HOME_BASE_URL}/greeting`,
+    GET_PROMPTS: `${HOME_BASE_URL}/prompts`,
   },
 
 
