@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowUp } from "lucide-react";
 
@@ -9,6 +9,11 @@ import { PromptToggles } from "@/pages/conversations/prompt-toggles";
 import { useTypewriter } from "@/pages/conversations/use-typewriter";
 import { useGetHomePrompts } from "@/features/home/use-get-home-prompts";
 import flolytLogo from "../../../assets/logo.png";
+
+// The greeting is randomized fresh on every fetch (by design — see /home/prompts' own docs), so
+// a background refetch on remount can swap it out from under the reader. Crossfading rather than
+// snapping to the new text turns that swap into something that reads as intentional.
+const GREETING_FADE_MS = 300;
 
 export default function NewConversationRoute() {
   const navigate = useNavigate();
@@ -30,6 +35,28 @@ export default function NewConversationRoute() {
   const greeting = promptsData?.data.greeting;
   const promptPhrases = (promptsData?.data.prompts ?? []).map((p) => p.text);
   const { text: placeholderText, caret } = useTypewriter(promptPhrases);
+
+  // Crossfades the greeting whenever it actually changes value, instead of the text just
+  // snapping the instant a background refetch resolves.
+  const [displayedGreeting, setDisplayedGreeting] = useState(greeting);
+  const [isGreetingVisible, setIsGreetingVisible] = useState(true);
+
+  useEffect(() => {
+    if (greeting === undefined || greeting === displayedGreeting) return;
+
+    if (displayedGreeting === undefined) {
+      // First greeting to ever land — nothing to fade out from, so just show it.
+      setDisplayedGreeting(greeting);
+      return;
+    }
+
+    setIsGreetingVisible(false);
+    const timer = window.setTimeout(() => {
+      setDisplayedGreeting(greeting);
+      setIsGreetingVisible(true);
+    }, GREETING_FADE_MS);
+    return () => window.clearTimeout(timer);
+  }, [greeting, displayedGreeting]);
 
   const handleSubmit = () => {
     const message = prompt.trim();
@@ -56,8 +83,15 @@ export default function NewConversationRoute() {
         {isPromptsPending ? (
           <Skeleton className="mt-4 h-8 w-72 rounded-panel" />
         ) : (
-          <h1 className="mt-4 font-serif text-[26px] text-ink sm:text-[28px]">
-            {isPromptsError ? "What can I do for you?" : greeting}
+          <h1
+            className={cn(
+              // duration-300 must match GREETING_FADE_MS above — the timer swaps the text at
+              // the same moment this fade-out finishes.
+              "mt-4 translate-y-0 font-serif text-[26px] text-ink opacity-100 transition-all duration-300 ease-out sm:text-[28px]",
+              !isPromptsError && !isGreetingVisible && "-translate-y-1 opacity-0"
+            )}
+          >
+            {isPromptsError ? "What can I do for you?" : displayedGreeting}
           </h1>
         )}
         <p className="mt-1 text-[12.5px] text-ink-3">
