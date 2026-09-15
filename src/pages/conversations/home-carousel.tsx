@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, MessagesSquare } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -109,24 +109,30 @@ function NeedsYouCard() {
   );
 }
 
-function EarlierRoomsCard() {
+function RevenueFactsCard() {
+  const items = [
+    { body: "You're 12% away from this quarter's revenue target", action: "Check" },
+    { body: "Your Q3 numbers are looking better than Q2", action: "Compare quarters" },
+    { body: "You've brought in $2.4M in total revenue this year", action: "View revenue" },
+  ];
+
   return (
     <CarouselCardFrame
-      eyebrow="EARLIER ROOMS"
+      eyebrow="REVENUE FACTS"
       footer={
         <Button asChild variant="outline" size="sm" className="w-full">
-          <Link to="/rooms">View all</Link>
+          <Link to="/leakage-map">Open leakage map</Link>
         </Button>
       }
     >
-      <div className="flex h-full flex-col items-center justify-center text-center">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-paper-2">
-          <MessagesSquare className="size-4.5 text-ink-4" />
-        </span>
-        <p className="mt-3.5 text-[14.5px] font-semibold text-ink">Rooms waiting on you</p>
-        <p className="mt-1.5 max-w-52 text-[12px] leading-relaxed text-ink-3">
-          Rooms you haven't answered yet are waiting for you on the rooms page.
-        </p>
+      <p className="font-serif text-[18px] text-ink">3 revenue facts</p>
+      <div className="mt-3 divide-y divide-line">
+        {items.map((item) => (
+          <div key={item.body} className="py-2.5 first:pt-0 last:pb-0">
+            <p className="text-[11.5px] leading-snug text-ink-2">{item.body}</p>
+            <p className="mt-1 text-[11.5px] font-medium text-ultra">{item.action} →</p>
+          </div>
+        ))}
       </div>
     </CarouselCardFrame>
   );
@@ -135,7 +141,7 @@ function EarlierRoomsCard() {
 const SLIDES = [
   { id: "past-week", content: <PastWeekCard /> },
   { id: "needs-you", content: <NeedsYouCard /> },
-  { id: "earlier-rooms", content: <EarlierRoomsCard /> },
+  { id: "revenue-facts", content: <RevenueFactsCard /> },
 ];
 
 const COUNT = SLIDES.length;
