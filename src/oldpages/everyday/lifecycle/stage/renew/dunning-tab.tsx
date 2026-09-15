@@ -8,8 +8,8 @@ import { OpenARoomModal } from "@/oldpages/everyday/lifecycle/stage/modals/open-
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCount, formatPercent } from "@/lib/format-measured-value";
 import { RENEW_DUNNING_OPEN_ROOM_PRESET } from "@/oldpages/everyday/lifecycle/stage/renew/data";
-import { useGetRenewDunning } from "@/features/lifecycle/use-get-renew-dunning";
-import type { DunningBandDto } from "@/services/api/lifecycle/get-renew-dunning";
+import { useGetRenewDunning } from "@/features/lifecycle-old/use-get-renew-dunning";
+import type { DunningBandDto } from "@/services/api/lifecycle-old/get-renew-dunning";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

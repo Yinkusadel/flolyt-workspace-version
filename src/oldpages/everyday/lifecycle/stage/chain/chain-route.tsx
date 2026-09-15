@@ -7,8 +7,8 @@ import { useStageContext } from "@/oldpages/everyday/lifecycle/stage/layout";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
 import { formatCompactMoney, formatCount, formatShortDate } from "@/lib/format-measured-value";
 import { NO_TEAM_COLOR, TEAM_COLORS, effectLine } from "@/oldpages/everyday/lifecycle/stage/changes/changes-tab";
-import { useGetChurnChain } from "@/features/lifecycle/use-get-churn-chain";
-import type { ChurnChainStageDto } from "@/services/api/lifecycle/get-churn-chain";
+import { useGetChurnChain } from "@/features/lifecycle-old/use-get-churn-chain";
+import type { ChurnChainStageDto } from "@/services/api/lifecycle-old/get-churn-chain";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

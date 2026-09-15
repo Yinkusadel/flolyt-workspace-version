@@ -5,8 +5,8 @@ import { Callout } from "@/components/ui/rail";
 import { DataTable, type Column } from "@/oldpages/everyday/lifecycle/stage/data-table";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { formatCompactMoney, formatCount } from "@/lib/format-measured-value";
-import { useGetAcquireChannels } from "@/features/lifecycle/use-get-acquire-channels";
-import type { AcquireChannelDto } from "@/services/api/lifecycle/get-acquire-channels";
+import { useGetAcquireChannels } from "@/features/lifecycle-old/use-get-acquire-channels";
+import type { AcquireChannelDto } from "@/services/api/lifecycle-old/get-acquire-channels";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

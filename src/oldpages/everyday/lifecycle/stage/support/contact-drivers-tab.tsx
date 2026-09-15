@@ -8,8 +8,8 @@ import { ReclassifyADriverModal } from "@/oldpages/everyday/lifecycle/stage/moda
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCount, formatPercent, round } from "@/lib/format-measured-value";
 import { SUPPORT_RECLASSIFY_PRESET } from "@/oldpages/everyday/lifecycle/stage/support/data";
-import { useGetSupportContactDrivers } from "@/features/lifecycle/use-get-support-contact-drivers";
-import type { SupportContactDriverDto } from "@/services/api/lifecycle/get-support-contact-drivers";
+import { useGetSupportContactDrivers } from "@/features/lifecycle-old/use-get-support-contact-drivers";
+import type { SupportContactDriverDto } from "@/services/api/lifecycle-old/get-support-contact-drivers";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

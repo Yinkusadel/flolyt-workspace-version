@@ -13,10 +13,10 @@ import {
 } from "@/components/ui/dialog";
 import { SearchableSelect, SearchableSelectSkeleton, type SearchableSelectOption } from "@/components/ui/searchable-select";
 import { BacktestPreview } from "@/oldpages/everyday/lifecycle/stage/modals/backtest-preview";
-import useCreateStageCondition from "@/features/lifecycle/use-create-stage-condition";
+import useCreateStageCondition from "@/features/lifecycle-old/use-create-stage-condition";
 import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
-import { useGetWatchableMetrics } from "@/features/lifecycle/use-get-watchable-metrics";
-import type { StageAgentDto } from "@/services/api/lifecycle/get-stage-agents";
+import { useGetWatchableMetrics } from "@/features/lifecycle-old/use-get-watchable-metrics";
+import type { StageAgentDto } from "@/services/api/lifecycle-old/get-stage-agents";
 
 const NO_ROUTE_OVERRIDE = "__stage_routing_chain__";
 const NO_AGENT = "__no_agent__";

@@ -5,8 +5,8 @@ import { Chip } from "@/components/ui/chip";
 import { DataTable, type Column } from "@/oldpages/everyday/lifecycle/stage/data-table";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCompactMoney, formatCount, formatShortDate } from "@/lib/format-measured-value";
-import { useGetExpandAccounts } from "@/features/lifecycle/use-get-expand-accounts";
-import type { ExpandAtRiskAccountDto } from "@/services/api/lifecycle/get-expand-accounts";
+import { useGetExpandAccounts } from "@/features/lifecycle-old/use-get-expand-accounts";
+import type { ExpandAtRiskAccountDto } from "@/services/api/lifecycle-old/get-expand-accounts";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

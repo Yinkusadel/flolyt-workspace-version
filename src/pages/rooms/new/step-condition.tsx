@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { useGetLeakageMap } from "@/features/lifecycle/use-get-leakage-map";
+import { useGetLeakageMap } from "@/features/lifecycle-old/use-get-leakage-map";
 import { SearchableSelect, SearchableSelectSkeleton } from "@/components/ui/searchable-select";
 
 /** "lifecycle_stage" -> "Lifecycle stage" — the grid key has no separate label in the response. */

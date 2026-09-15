@@ -8,8 +8,8 @@ import { OpenARoomModal } from "@/oldpages/everyday/lifecycle/stage/modals/open-
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCount, formatPercent } from "@/lib/format-measured-value";
 import { ADVOCATE_REFERRERS_OPEN_ROOM_PRESET } from "@/oldpages/everyday/lifecycle/stage/advocate/data";
-import { useGetAdvocateReferrers } from "@/features/lifecycle/use-get-advocate-referrers";
-import type { AdvocateReferrerBandDto } from "@/services/api/lifecycle/get-advocate-referrers";
+import { useGetAdvocateReferrers } from "@/features/lifecycle-old/use-get-advocate-referrers";
+import type { AdvocateReferrerBandDto } from "@/services/api/lifecycle-old/get-advocate-referrers";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

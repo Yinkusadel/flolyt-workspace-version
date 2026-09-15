@@ -5,8 +5,8 @@ import { Chip, type ChipTone } from "@/components/ui/chip";
 import { DataTable, type Column } from "@/oldpages/everyday/lifecycle/stage/data-table";
 import { useStageContext } from "@/oldpages/everyday/lifecycle/stage/layout";
 import { formatCompactMoney, formatShortDate, round } from "@/lib/format-measured-value";
-import { useGetStageHistory } from "@/features/lifecycle/use-get-stage-history";
-import type { StageAttemptDto } from "@/services/api/lifecycle/get-stage-history";
+import { useGetStageHistory } from "@/features/lifecycle-old/use-get-stage-history";
+import type { StageAttemptDto } from "@/services/api/lifecycle-old/get-stage-history";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

@@ -4,7 +4,7 @@ import { Callout } from "@/components/ui/rail";
 import { useStageContext } from "@/oldpages/everyday/lifecycle/stage/layout";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
 import { formatCount, formatPercent } from "@/lib/format-measured-value";
-import { useGetSupportSilentFailures } from "@/features/lifecycle/use-get-support-silent-failures";
+import { useGetSupportSilentFailures } from "@/features/lifecycle-old/use-get-support-silent-failures";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

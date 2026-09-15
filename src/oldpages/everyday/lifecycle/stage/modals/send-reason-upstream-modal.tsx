@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { resolveStageKey } from "@/lib/lifecycle-data";
 import { formatCount, formatPercent } from "@/lib/format-measured-value";
-import useRouteChurnUpstream from "@/features/lifecycle/use-route-churn-upstream";
-import type { ChurnReasonDto } from "@/services/api/lifecycle/get-churn-reasons";
+import useRouteChurnUpstream from "@/features/lifecycle-old/use-route-churn-upstream";
+import type { ChurnReasonDto } from "@/services/api/lifecycle-old/get-churn-reasons";
 
 /**
  * Replaces the deleted CH12 `SendReasonUpstreamModal` — the old design sent to a named person,

@@ -9,8 +9,8 @@ import { OpenARoomModal } from "@/oldpages/everyday/lifecycle/stage/modals/open-
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCount, formatPercent } from "@/lib/format-measured-value";
 import { CHURN_WINBACK_OPEN_ROOM_PRESET } from "@/oldpages/everyday/lifecycle/stage/churn/data";
-import { useGetChurnWinBack } from "@/features/lifecycle/use-get-churn-win-back";
-import type { WinBackWaveDto } from "@/services/api/lifecycle/get-churn-win-back";
+import { useGetChurnWinBack } from "@/features/lifecycle-old/use-get-churn-win-back";
+import type { WinBackWaveDto } from "@/services/api/lifecycle-old/get-churn-win-back";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

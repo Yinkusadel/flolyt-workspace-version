@@ -10,9 +10,9 @@ import { SendReasonUpstreamModal } from "@/oldpages/everyday/lifecycle/stage/mod
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCount, formatPercent } from "@/lib/format-measured-value";
 import { CHURN_OPEN_ROOM_PRESET } from "@/oldpages/everyday/lifecycle/stage/churn/data";
-import { useGetChurnReasons } from "@/features/lifecycle/use-get-churn-reasons";
-import { useGetChurnRoutings } from "@/features/lifecycle/use-get-churn-routings";
-import type { ChurnReasonDto } from "@/services/api/lifecycle/get-churn-reasons";
+import { useGetChurnReasons } from "@/features/lifecycle-old/use-get-churn-reasons";
+import { useGetChurnRoutings } from "@/features/lifecycle-old/use-get-churn-routings";
+import type { ChurnReasonDto } from "@/services/api/lifecycle-old/get-churn-reasons";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

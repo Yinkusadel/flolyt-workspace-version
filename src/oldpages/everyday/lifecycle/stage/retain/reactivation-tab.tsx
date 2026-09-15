@@ -9,8 +9,8 @@ import { BuildAnAudienceModal } from "@/oldpages/everyday/lifecycle/stage/modals
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCount, formatPercent } from "@/lib/format-measured-value";
 import { RETAIN_BUILD_AUDIENCE_PRESET } from "@/oldpages/everyday/lifecycle/stage/retain/data";
-import { useGetRetainReactivation } from "@/features/lifecycle/use-get-retain-reactivation";
-import type { ReactivationWaveDto } from "@/services/api/lifecycle/get-retain-reactivation";
+import { useGetRetainReactivation } from "@/features/lifecycle-old/use-get-retain-reactivation";
+import type { ReactivationWaveDto } from "@/services/api/lifecycle-old/get-retain-reactivation";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

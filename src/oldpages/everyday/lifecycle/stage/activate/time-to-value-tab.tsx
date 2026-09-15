@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BarTrack, type BarTone } from "@/oldpages/everyday/lifecycle/stage/bar";
 import { Callout } from "@/components/ui/rail";
 import { formatCount, formatPercent, round } from "@/lib/format-measured-value";
-import { useGetActivateTimeToValue } from "@/features/lifecycle/use-get-activate-time-to-value";
+import { useGetActivateTimeToValue } from "@/features/lifecycle-old/use-get-activate-time-to-value";
 
 // The 5 bands are fixed by Flolyt (GET /lifecycle/activate/time-to-value's own notes), not
 // per-tenant — "never" is a band, not a drop.

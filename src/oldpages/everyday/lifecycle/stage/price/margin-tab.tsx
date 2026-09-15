@@ -4,8 +4,8 @@ import { Callout } from "@/components/ui/rail";
 import { DataTable, type Column } from "@/oldpages/everyday/lifecycle/stage/data-table";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCompactMoney, formatCount, formatMonthYear, formatPercent, round } from "@/lib/format-measured-value";
-import { useGetPriceMargin } from "@/features/lifecycle/use-get-price-margin";
-import type { PriceMarginMonthDto } from "@/services/api/lifecycle/get-price-margin";
+import { useGetPriceMargin } from "@/features/lifecycle-old/use-get-price-margin";
+import type { PriceMarginMonthDto } from "@/services/api/lifecycle-old/get-price-margin";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

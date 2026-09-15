@@ -12,10 +12,10 @@ import { SetThresholdModal } from "@/oldpages/everyday/lifecycle/stage/modals/se
 import { EditConditionModal, AcceptConditionModal } from "@/oldpages/everyday/lifecycle/stage/modals/edit-condition-modal";
 import { ConfirmActionModal } from "@/oldpages/everyday/lifecycle/stage/modals/confirm-action-modal";
 import { formatShortDate } from "@/lib/format-measured-value";
-import { useGetStageAgents } from "@/features/lifecycle/use-get-stage-agents";
-import type { StageAgentConditionDto, StageAgentDto } from "@/services/api/lifecycle/get-stage-agents";
-import useMuteCondition from "@/features/lifecycle/use-mute-condition";
-import useDecideCondition from "@/features/lifecycle/use-decide-condition";
+import { useGetStageAgents } from "@/features/lifecycle-old/use-get-stage-agents";
+import type { StageAgentConditionDto, StageAgentDto } from "@/services/api/lifecycle-old/get-stage-agents";
+import useMuteCondition from "@/features/lifecycle-old/use-mute-condition";
+import useDecideCondition from "@/features/lifecycle-old/use-decide-condition";
 import {
   DropdownMenu,
   DropdownMenuContent,

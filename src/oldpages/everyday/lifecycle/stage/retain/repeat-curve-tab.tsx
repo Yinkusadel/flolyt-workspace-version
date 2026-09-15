@@ -6,8 +6,8 @@ import { Sparkline } from "@/oldpages/everyday/lifecycle/stage/sparkline";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCount, formatPercent } from "@/lib/format-measured-value";
-import { useGetRetainRepeatCurve } from "@/features/lifecycle/use-get-retain-repeat-curve";
-import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import { useGetRetainRepeatCurve } from "@/features/lifecycle-old/use-get-retain-repeat-curve";
+import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle-old/get-lifecycle-map";
 
 function measuredCell(measured: LifecycleMeasuredValueDto<number>, format: (value: number) => string) {
   return measured.value !== null ? (

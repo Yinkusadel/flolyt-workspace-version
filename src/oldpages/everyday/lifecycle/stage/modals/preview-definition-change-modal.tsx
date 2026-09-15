@@ -12,7 +12,7 @@ import { formatCount } from "@/lib/format-measured-value";
 import type {
   PreviewImpactSectionDto,
   PreviewStageDefinitionData,
-} from "@/services/api/lifecycle/preview-stage-definition";
+} from "@/services/api/lifecycle-old/preview-stage-definition";
 
 const IMPACT_SECTIONS: { key: keyof PreviewStageDefinitionData; label: string }[] = [
   { key: "figuresAffected", label: "Figures affected" },

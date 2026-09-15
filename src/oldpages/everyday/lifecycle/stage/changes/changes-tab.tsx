@@ -4,8 +4,8 @@ import { Callout } from "@/components/ui/rail";
 import { Chip, type ChipTone } from "@/components/ui/chip";
 import { useStageContext } from "@/oldpages/everyday/lifecycle/stage/layout";
 import { formatCount, formatPercent, formatShortDate } from "@/lib/format-measured-value";
-import { useGetStageChangeRegistry } from "@/features/lifecycle/use-get-stage-change-registry";
-import type { StageChangeEffectDto, StageChangeRegistryEntryDto } from "@/services/api/lifecycle/get-stage-change-registry";
+import { useGetStageChangeRegistry } from "@/features/lifecycle-old/use-get-stage-change-registry";
+import type { StageChangeEffectDto, StageChangeRegistryEntryDto } from "@/services/api/lifecycle-old/get-stage-change-registry";
 
 const CALLOUT_TONES = new Set(["amber", "teal", "rose", "ultra", "neutral"]);
 function safeCalloutTone(tone: string): "amber" | "teal" | "rose" | "ultra" | "neutral" {

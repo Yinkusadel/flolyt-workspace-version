@@ -17,8 +17,8 @@ import { ShareOrExportModal, type ShareOrExportPreset } from "@/oldpages/everyda
 import { AssignStageOwnerModal } from "@/oldpages/everyday/lifecycle/stage/modals/assign-stage-owner-modal";
 import { STAGES } from "@/lib/lifecycle-data";
 import { formatAtStakeAmounts, formatCompactCurrency, formatCount, formatPercent } from "@/lib/format-measured-value";
-import { useGetStage } from "@/features/lifecycle/use-get-stage";
-import type { StageData, StageDepartureDto } from "@/services/api/lifecycle/get-stage";
+import { useGetStage } from "@/features/lifecycle-old/use-get-stage";
+import type { StageData, StageDepartureDto } from "@/services/api/lifecycle-old/get-stage";
 import { ACQUIRE_OPEN_ROOM_PRESET, ACQUIRE_SHARE_EXPORT_PRESET } from "@/oldpages/everyday/lifecycle/stage/acquire/data";
 import { ACTIVATE_OPEN_ROOM_PRESET, ACTIVATE_SHARE_EXPORT_PRESET } from "@/oldpages/everyday/lifecycle/stage/activate/data";
 import { PRICE_OPEN_ROOM_PRESET, PRICE_SHARE_EXPORT_PRESET } from "@/oldpages/everyday/lifecycle/stage/price/data";

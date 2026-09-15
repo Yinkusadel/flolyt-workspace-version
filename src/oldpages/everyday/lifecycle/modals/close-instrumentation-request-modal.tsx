@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import useCloseInstrumentationRequest from "@/features/lifecycle/use-close-instrumentation-request";
+import useCloseInstrumentationRequest from "@/features/lifecycle-old/use-close-instrumentation-request";
 
 /**
  * Closes an already-raised instrumentation request — `POST /instrumentation-requests/{obligationId}/close`.

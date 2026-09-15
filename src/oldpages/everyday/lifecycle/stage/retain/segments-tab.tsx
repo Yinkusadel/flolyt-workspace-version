@@ -6,9 +6,9 @@ import { DataTable, type Column } from "@/oldpages/everyday/lifecycle/stage/data
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { formatCompactMoney, formatCount, formatPercent } from "@/lib/format-measured-value";
-import { useGetRetainSegments } from "@/features/lifecycle/use-get-retain-segments";
-import type { RetainSegmentDto } from "@/services/api/lifecycle/get-retain-segments";
-import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle/get-lifecycle-map";
+import { useGetRetainSegments } from "@/features/lifecycle-old/use-get-retain-segments";
+import type { RetainSegmentDto } from "@/services/api/lifecycle-old/get-retain-segments";
+import type { LifecycleMeasuredValueDto } from "@/services/api/lifecycle-old/get-lifecycle-map";
 
 function measuredPercent(measured: LifecycleMeasuredValueDto<number>) {
   return measured.value !== null ? (

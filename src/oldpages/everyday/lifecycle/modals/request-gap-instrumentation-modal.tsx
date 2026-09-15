@@ -12,8 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import useCreateInstrumentationRequest from "@/features/lifecycle/use-create-instrumentation-request";
-import type { InstrumentationGapDto } from "@/services/api/lifecycle/get-instrumentation";
+import useCreateInstrumentationRequest from "@/features/lifecycle-old/use-create-instrumentation-request";
+import type { InstrumentationGapDto } from "@/services/api/lifecycle-old/get-instrumentation";
 
 /**
  * Raises `POST /instrumentation-requests` for one specific gap from the workspace-wide
