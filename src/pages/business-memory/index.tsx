@@ -1,10 +1,18 @@
 import * as React from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { ListFilter, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Chip, type ChipTone } from "@/components/ui/chip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { KpiCards, type Kpi } from "@/components/ui/kpi-cards";
 import {
@@ -41,29 +49,28 @@ const FILTERS: { value: IndexFilter; label: string; count: number }[] = [
 
 type SortBy = "cited" | "recent";
 
-function FilterChips({ active, onChange }: { active: IndexFilter; onChange: (f: IndexFilter) => void }) {
+function FilterDropdown({ active, onChange }: { active: IndexFilter; onChange: (f: IndexFilter) => void }) {
+  const activeFilter = FILTERS.find((f) => f.value === active) ?? FILTERS[0];
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {FILTERS.map((f) => {
-        const isActive = active === f.value;
-        return (
-          <button
-            key={f.value}
-            type="button"
-            onClick={() => onChange(f.value)}
-            className={cn(
-              "flex items-center gap-2 rounded-panel border px-2.5 py-1.5 text-[12.5px] transition-colors",
-              isActive
-                ? "border-border bg-paper-2 font-medium text-ink"
-                : "border-line bg-paper text-ink-3 hover:text-ink"
-            )}
-          >
-            {f.label}
-            <span className="text-[11px] text-ink-4">{f.count}</span>
-          </button>
-        );
-      })}
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="outline" size="sm" className="shrink-0">
+          <ListFilter data-icon="inline-start" />
+          {activeFilter.label}
+          <span className="text-[11px] text-ink-4">{activeFilter.count}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuRadioGroup value={active} onValueChange={(v) => onChange(v as IndexFilter)}>
+          {FILTERS.map((f) => (
+            <DropdownMenuRadioItem key={f.value} value={f.value} className="justify-between">
+              {f.label}
+              <span className="text-[11px] text-ink-4">{f.count}</span>
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -181,9 +188,9 @@ function PopulatedIndex({ onQueryChange }: { onQueryChange: (next: string) => vo
             <SelectItem value="recent">As listed</SelectItem>
           </SelectContent>
         </Select>
-      </div>
 
-      <FilterChips active={filter} onChange={setFilter} />
+        <FilterDropdown active={filter} onChange={setFilter} />
+      </div>
 
       <KpiCards items={stats} />
 
