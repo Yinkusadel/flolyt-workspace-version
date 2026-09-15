@@ -12,11 +12,17 @@ import type { DatasourceDto } from "@/services/api/datasources/get-datasources";
 import { SourceGrid, SourceGridSkeleton } from "@/pages/onboarding/data/source-grid";
 import { ConnectSourceModal } from "@/pages/onboarding/data/connect-source-modal";
 import { ConnectedSourcesList, ConnectedSourcesListSkeleton } from "@/pages/data-sources/connected-list";
+import useGetDatasourceDisconnections from "@/features/datasources/use-get-datasource-disconnections";
+import {
+  DisconnectionHistoryList,
+  DisconnectionHistoryListSkeleton,
+} from "@/pages/data-sources/disconnection-history-list";
 
-type DataSourcesTab = "sources" | "connected";
+type DataSourcesTab = "sources" | "connected" | "history";
 const TABS: { key: DataSourcesTab; label: string }[] = [
   { key: "sources", label: "Sources" },
   { key: "connected", label: "Connected" },
+  { key: "history", label: "Disconnection history" },
 ];
 
 function TabBar({ active, onChange }: { active: DataSourcesTab; onChange: (tab: DataSourcesTab) => void }) {
@@ -45,12 +51,18 @@ function TabBar({ active, onChange }: { active: DataSourcesTab; onChange: (tab: 
 
 /**
  * The sources tab is the same catalog + connect flow as /onboarding/data (screen 05) — same
- * hooks, same SourceGrid/ConnectSourceModal, minus the wizard chrome. The connected tab is new
- * here: onboarding never needed to just list what's already hooked up.
+ * hooks, same SourceGrid/ConnectSourceModal, minus the wizard chrome. Connected and Disconnection
+ * history are new here: onboarding never needed to list what's already hooked up or what got
+ * disconnected. The history tab's Reconnect action is a live experiment — `GET /disconnections`
+ * is a delete-audit log, not a "list of disconnected sources" endpoint, and there's no confirmed
+ * example yet of `POST /{id}/reconnect` accepting a disconnection record's `datasourceId` rather
+ * than a connection id. Confirm a real success response before building anything further on it.
  */
 export default function DataSourcesRoute() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab: DataSourcesTab = searchParams.get("tab") === "connected" ? "connected" : "sources";
+  const tabParam = searchParams.get("tab");
+  const activeTab: DataSourcesTab =
+    tabParam === "connected" || tabParam === "history" ? tabParam : "sources";
   const setActiveTab = (tab: DataSourcesTab) => {
     setSearchParams(tab === "sources" ? {} : { tab }, { replace: true });
   };
@@ -60,6 +72,7 @@ export default function DataSourcesRoute() {
 
   const { datasources, isLoading: isLoadingDatasources } = useGetDatasources();
   const { connectedDatasources, isLoading: isLoadingConnected } = useGetConnectedDatasources();
+  const { disconnections, isLoading: isLoadingDisconnections } = useGetDatasourceDisconnections();
 
   const activeConnections = useMemo(
     () => connectedDatasources.filter((c) => c.isActive),
@@ -100,13 +113,19 @@ export default function DataSourcesRoute() {
             }
           />
         )
-      ) : isLoadingConnected ? (
-        <ConnectedSourcesListSkeleton />
+      ) : activeTab === "connected" ? (
+        isLoadingConnected ? (
+          <ConnectedSourcesListSkeleton />
+        ) : (
+          <ConnectedSourcesList
+            connections={connectedDatasources}
+            onGoToSources={() => setActiveTab("sources")}
+          />
+        )
+      ) : isLoadingDisconnections ? (
+        <DisconnectionHistoryListSkeleton />
       ) : (
-        <ConnectedSourcesList
-          connections={connectedDatasources}
-          onGoToSources={() => setActiveTab("sources")}
-        />
+        <DisconnectionHistoryList records={disconnections} />
       )}
 
       {selectedDatasource && (
