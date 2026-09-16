@@ -94,22 +94,18 @@ export default function NewConversationRoute() {
             {isPromptsError ? "What can I do for you?" : displayedGreeting}
           </h1>
         )}
-        <p className="mt-1 text-[12.5px] text-ink-3">
-          {isPromptsError ? (
-            <>
-              Couldn't load your suggestions.{" "}
-              <button
-                type="button"
-                onClick={() => refetchPrompts()}
-                className="font-medium text-ultra hover:underline"
-              >
-                Retry
-              </button>
-            </>
-          ) : (
-            "Ask Flolyt to look something up or take an action."
-          )}
-        </p>
+        {isPromptsError && (
+          <p className="mt-1 text-[12.5px] text-ink-3">
+            Couldn't load your suggestions.{" "}
+            <button
+              type="button"
+              onClick={() => refetchPrompts()}
+              className="font-medium text-ultra hover:underline"
+            >
+              Retry
+            </button>
+          </p>
+        )}
       </div>
 
       <div className="group relative mt-6 w-full max-w-2xl duration-500 animate-in fade-in slide-in-from-bottom-2 delay-150">
@@ -153,7 +149,7 @@ export default function NewConversationRoute() {
             )}
           </div>
 
-          <div className="flex items-center justify-between border-t border-line px-2.5 py-1.5">
+          <div className="flex items-center justify-between px-2.5 py-1.5">
             <PromptToggles
               askBeforeSpending={askBeforeSpending}
               onAskBeforeSpendingChange={setAskBeforeSpending}

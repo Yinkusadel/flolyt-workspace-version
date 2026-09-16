@@ -6,6 +6,7 @@ import {
   type DisconnectDatasourceResponse,
 } from "@/services/api/datasources/disconnect-datasource";
 import { CONNECTED_DATASOURCES_QUERY_KEY } from "./use-get-connected-datasources";
+import { DATASOURCE_DISCONNECTIONS_QUERY_KEY } from "./use-get-datasource-disconnections";
 
 interface UseDisconnectDatasourceOptions {
   onSuccess?: () => void;
@@ -24,6 +25,7 @@ const useDisconnectDatasource = (options?: UseDisconnectDatasourceOptions) => {
       if (data.succeeded && data.data) {
         toast.success("Datasource disconnected");
         queryClient.invalidateQueries({ queryKey: CONNECTED_DATASOURCES_QUERY_KEY });
+        queryClient.invalidateQueries({ queryKey: DATASOURCE_DISCONNECTIONS_QUERY_KEY });
         options?.onSuccess?.();
         return;
       }
