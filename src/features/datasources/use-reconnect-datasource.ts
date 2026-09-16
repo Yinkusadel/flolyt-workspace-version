@@ -5,6 +5,7 @@ import {
   type ReconnectDatasourceResponse,
 } from "@/services/api/datasources/reconnect-datasource";
 import { CONNECTED_DATASOURCES_QUERY_KEY } from "./use-get-connected-datasources";
+import { DATASOURCE_DISCONNECTIONS_QUERY_KEY } from "./use-get-datasource-disconnections";
 
 const useReconnectDatasource = () => {
   const queryClient = useQueryClient();
@@ -15,6 +16,7 @@ const useReconnectDatasource = () => {
       if (data.succeeded && data.data) {
         toast.success("Datasource reconnected");
         queryClient.invalidateQueries({ queryKey: CONNECTED_DATASOURCES_QUERY_KEY });
+        queryClient.invalidateQueries({ queryKey: DATASOURCE_DISCONNECTIONS_QUERY_KEY });
         return;
       }
 
