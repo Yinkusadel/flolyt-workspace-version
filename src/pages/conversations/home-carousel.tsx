@@ -40,8 +40,8 @@ function PastWeekCard() {
     <CarouselCardFrame
       eyebrow="PAST 7 DAYS"
       footer={
-        <Button variant="outline" size="sm" className="w-full">
-          See what needs you
+        <Button asChild variant="outline" size="sm" className="w-full">
+          <Link to="/inbox">See what needs you</Link>
         </Button>
       }
     >
@@ -82,17 +82,21 @@ function PastWeekCard() {
 
 function NeedsYouCard() {
   const items = [
-    { body: "Finance's objection is still open on Room 2471", action: "Open the room" },
-    { body: "Zendesk stopped syncing six hours ago", action: "Reconnect" },
-    { body: "Warehouse COGS is not connected, so margin reads Unavailable", action: "Connect a source" },
+    { body: "Finance's objection is still open on Room 2471", action: "Open the room", to: "/rooms/2471" },
+    { body: "Zendesk stopped syncing six hours ago", action: "Reconnect", to: "/data-sources" },
+    {
+      body: "Warehouse COGS is not connected, so margin reads Unavailable",
+      action: "Connect a source",
+      to: "/data-sources",
+    },
   ];
 
   return (
     <CarouselCardFrame
       eyebrow="NEEDS YOU"
       footer={
-        <Button variant="outline" size="sm" className="w-full">
-          Open the inbox
+        <Button asChild variant="outline" size="sm" className="w-full">
+          <Link to="/inbox">Open the inbox</Link>
         </Button>
       }
     >
@@ -101,7 +105,9 @@ function NeedsYouCard() {
         {items.map((item) => (
           <div key={item.body} className="py-2.5 first:pt-0 last:pb-0">
             <p className="text-[11.5px] leading-snug text-ink-2">{item.body}</p>
-            <p className="mt-1 text-[11.5px] font-medium text-ultra">{item.action} →</p>
+            <Link to={item.to} className="mt-1 block text-[11.5px] font-medium text-ultra hover:underline">
+              {item.action} →
+            </Link>
           </div>
         ))}
       </div>
@@ -111,9 +117,9 @@ function NeedsYouCard() {
 
 function RevenueFactsCard() {
   const items = [
-    { body: "You're 12% away from this quarter's revenue target", action: "Check" },
-    { body: "Your Q3 numbers are looking better than Q2", action: "Compare quarters" },
-    { body: "You've brought in $2.4M in total revenue this year", action: "View revenue" },
+    { body: "You're 12% away from this quarter's revenue target", action: "Check", to: "/leakage-map" },
+    { body: "Your Q3 numbers are looking better than Q2", action: "Compare quarters", to: "/leakage-map" },
+    { body: "You've brought in $2.4M in total revenue this year", action: "View revenue", to: "/leakage-map" },
   ];
 
   return (
@@ -130,7 +136,9 @@ function RevenueFactsCard() {
         {items.map((item) => (
           <div key={item.body} className="py-2.5 first:pt-0 last:pb-0">
             <p className="text-[11.5px] leading-snug text-ink-2">{item.body}</p>
-            <p className="mt-1 text-[11.5px] font-medium text-ultra">{item.action} →</p>
+            <Link to={item.to} className="mt-1 block text-[11.5px] font-medium text-ultra hover:underline">
+              {item.action} →
+            </Link>
           </div>
         ))}
       </div>
@@ -187,29 +195,43 @@ export function HomeCarousel() {
           const translateX = offset * NEIGHBOR_OFFSET;
           const scale = isActive ? 1 : NEIGHBOR_SCALE;
 
+          const style = {
+            width: CARD_WIDTH,
+            height: CARD_HEIGHT,
+            left: "50%",
+            top: 0,
+            transform: `translateX(calc(-50% + ${translateX}px)) scale(${scale})`,
+            opacity: isActive ? 1 : NEIGHBOR_OPACITY,
+            zIndex: isActive ? 2 : 1,
+          };
+          const className = cn(
+            "absolute rounded-card border border-line bg-paper text-left transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+            isActive ? "shadow-xl" : "cursor-pointer hover:opacity-75"
+          );
+
+          // The active card hosts real interactive CTAs (links/buttons), so it renders as a
+          // plain div rather than a button — nesting those inside a button element would be
+          // invalid HTML. Its neighbors stay buttons since their content is inert (pointer-events
+          // disabled below) and clicking anywhere on them just brings that card into focus.
+          if (isActive) {
+            return (
+              <div key={slide.id} style={style} className={className}>
+                {slide.content}
+              </div>
+            );
+          }
+
           return (
             <button
               key={slide.id}
               type="button"
               onClick={() => goTo(index)}
-              aria-label={isActive ? undefined : `Show ${slide.id.replace("-", " ")} card`}
-              aria-current={isActive}
-              tabIndex={isActive ? -1 : 0}
-              style={{
-                width: CARD_WIDTH,
-                height: CARD_HEIGHT,
-                left: "50%",
-                top: 0,
-                transform: `translateX(calc(-50% + ${translateX}px)) scale(${scale})`,
-                opacity: isActive ? 1 : NEIGHBOR_OPACITY,
-                zIndex: isActive ? 2 : 1,
-              }}
-              className={cn(
-                "absolute rounded-card border border-line bg-paper text-left transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
-                isActive ? "cursor-default shadow-xl" : "cursor-pointer hover:opacity-75"
-              )}
+              aria-label={`Show ${slide.id.replace("-", " ")} card`}
+              tabIndex={0}
+              style={style}
+              className={className}
             >
-              <div className={cn(!isActive && "pointer-events-none")}>{slide.content}</div>
+              <div className="pointer-events-none">{slide.content}</div>
             </button>
           );
         })}
