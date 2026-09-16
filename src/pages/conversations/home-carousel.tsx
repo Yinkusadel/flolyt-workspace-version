@@ -195,44 +195,47 @@ export function HomeCarousel() {
           const translateX = offset * NEIGHBOR_OFFSET;
           const scale = isActive ? 1 : NEIGHBOR_SCALE;
 
-          const style = {
-            width: CARD_WIDTH,
-            height: CARD_HEIGHT,
-            left: "50%",
-            top: 0,
-            transform: `translateX(calc(-50% + ${translateX}px)) scale(${scale})`,
-            opacity: isActive ? 1 : NEIGHBOR_OPACITY,
-            zIndex: isActive ? 2 : 1,
-          };
-          const className = cn(
-            "absolute rounded-card border border-line bg-paper text-left transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
-            isActive ? "shadow-xl" : "cursor-pointer hover:opacity-75"
-          );
-
-          // The active card hosts real interactive CTAs (links/buttons), so it renders as a
-          // plain div rather than a button — nesting those inside a button element would be
-          // invalid HTML. Its neighbors stay buttons since their content is inert (pointer-events
-          // disabled below) and clicking anywhere on them just brings that card into focus.
-          if (isActive) {
-            return (
-              <div key={slide.id} style={style} className={className}>
-                {slide.content}
-              </div>
-            );
-          }
-
+          // Always the same element (a div) at this key across active/inactive states — the
+          // card-changing animation is a CSS transition on transform/opacity, which only plays
+          // when the same DOM node persists. Swapping the tag (e.g. div vs. button) here would
+          // make React remount the node instead of updating it, and the slide would just snap.
+          // The active card hosts real interactive CTAs (links/buttons), so it can't itself be a
+          // button (nesting those inside a button is invalid HTML) — instead it's a plain div,
+          // and only the inactive neighbors pick up the click/keyboard affordance that brings a
+          // card into focus.
           return (
-            <button
+            <div
               key={slide.id}
-              type="button"
-              onClick={() => goTo(index)}
-              aria-label={`Show ${slide.id.replace("-", " ")} card`}
-              tabIndex={0}
-              style={style}
-              className={className}
+              role={isActive ? undefined : "button"}
+              tabIndex={isActive ? undefined : 0}
+              aria-label={isActive ? undefined : `Show ${slide.id.replace("-", " ")} card`}
+              onClick={isActive ? undefined : () => goTo(index)}
+              onKeyDown={
+                isActive
+                  ? undefined
+                  : (e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        goTo(index);
+                      }
+                    }
+              }
+              style={{
+                width: CARD_WIDTH,
+                height: CARD_HEIGHT,
+                left: "50%",
+                top: 0,
+                transform: `translateX(calc(-50% + ${translateX}px)) scale(${scale})`,
+                opacity: isActive ? 1 : NEIGHBOR_OPACITY,
+                zIndex: isActive ? 2 : 1,
+              }}
+              className={cn(
+                "absolute rounded-card border border-line bg-paper text-left transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                isActive ? "shadow-xl" : "cursor-pointer hover:opacity-75"
+              )}
             >
-              <div className="pointer-events-none">{slide.content}</div>
-            </button>
+              <div className={cn(!isActive && "pointer-events-none")}>{slide.content}</div>
+            </div>
           );
         })}
       </div>
