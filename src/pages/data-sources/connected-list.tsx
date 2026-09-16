@@ -43,17 +43,19 @@ function SyncNowButton({ connectionId }: { connectionId: string }) {
  * datasources" endpoint, so this renders whatever it returns as one list rather than assuming a
  * disconnected row keeps showing up under a second tab. `isActive` on each row decides whether
  * its actions are Sync now + Disconnect, or just Reconnect.
+ *
+ * Sync now shows for every active row rather than being gated client-side: the catalog's
+ * `supportsBulkSync` looked like the right signal but isn't — confirmed live, it let the button
+ * show for a `BringYourOwnWarehouse` connection, which the backend then rejected with "Manual
+ * sync is only available for Managed SaaS datasources." There's no field anywhere that reliably
+ * says "this connection is Managed SaaS," so the backend's own per-connection validation is the
+ * only real gate — `useTriggerDatasourceSync`'s error toast already surfaces that message.
  */
 export function ConnectedSourcesList({
   connections,
-  bulkSyncDatasourceIds,
   onGoToSources,
 }: {
   connections: ConnectedDatasourceDto[];
-  /** Catalog datasource ids (`DatasourceDto.id`) with `supportsBulkSync: true` — POST
-   *  /{id}/sync/trigger's doc scopes it to "a managed SaaS datasource", so Sync now only shows
-   *  for a connection whose catalog entry actually supports it, not every row. */
-  bulkSyncDatasourceIds: Set<number>;
   onGoToSources: () => void;
 }) {
   const [disconnecting, setDisconnecting] = useState<ConnectedDatasourceDto | null>(null);
@@ -83,9 +85,7 @@ export function ConnectedSourcesList({
             actions={
               connection.isActive ? (
                 <>
-                  {bulkSyncDatasourceIds.has(connection.datasourceId) && (
-                    <SyncNowButton connectionId={connection.id} />
-                  )}
+                  <SyncNowButton connectionId={connection.id} />
                   <Button type="button" variant="outline" size="sm" onClick={() => setDisconnecting(connection)}>
                     Disconnect
                   </Button>

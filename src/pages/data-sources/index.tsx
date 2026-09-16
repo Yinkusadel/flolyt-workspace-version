@@ -82,10 +82,6 @@ export default function DataSourcesRoute() {
     () => new Set(activeConnections.map((c) => c.datasourceName)),
     [activeConnections]
   );
-  const bulkSyncDatasourceIds = useMemo(
-    () => new Set(datasources.filter((d) => d.supportsBulkSync).map((d) => d.id)),
-    [datasources]
-  );
 
   const isLoadingSources = isLoadingDatasources || isLoadingConnected;
 
@@ -123,7 +119,6 @@ export default function DataSourcesRoute() {
         ) : (
           <ConnectedSourcesList
             connections={connectedDatasources}
-            bulkSyncDatasourceIds={bulkSyncDatasourceIds}
             onGoToSources={() => setActiveTab("sources")}
           />
         )
