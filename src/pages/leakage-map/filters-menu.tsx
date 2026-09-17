@@ -16,7 +16,6 @@ import { Calendar } from "@/components/ui/calendar";
 import {
   CALC_MODE_OPTIONS,
   CONFIDENCE_FILTER_OPTIONS,
-  HORIZON_CUSTOM_LABEL,
   HORIZON_FOOTNOTE,
   HORIZON_GROUPS,
   SEVERITY_FILTER_OPTIONS,
@@ -25,6 +24,9 @@ import {
   type SeverityLevel,
 } from "@/pages/leakage-map/data";
 import { formatRange, horizonLabel, startOfDay, type HorizonState } from "@/pages/leakage-map/horizon-picker";
+
+const LOOKING_BACK_GROUP = HORIZON_GROUPS.find((group) => group.heading === "Looking back")!;
+const LOOKING_FORWARD_GROUP = HORIZON_GROUPS.find((group) => group.heading === "Looking forward")!;
 
 function OptionRow({
   label,
@@ -67,19 +69,112 @@ function SubHeading({
   );
 }
 
+function DirectionRowLabel({ label, note }: { label: string; note: string }) {
+  return (
+    <span className="block flex-1 text-left">
+      <span className="block text-[12px] font-medium text-ink">{label}</span>
+      <span className="block text-[10.5px] text-ink-3">{note}</span>
+    </span>
+  );
+}
+
+/**
+ * Manages one cascading level of the Filters menu: which key (if any) is "active" — i.e. open —
+ * among a set of siblings, driven by both click (instant) and hover. Hover only takes over after
+ * `openDelayMs` of dwelling on a trigger, and only lets go `closeDelayMs` after the pointer has
+ * left both the trigger and its content — see the FiltersMenu doc comment for why. Used once for
+ * the top-level categories (Calc/Horizon/Severity/Confidence) and again for Horizon's own
+ * Looking-back/Looking-forward split, so two levels of cascade can each track their own open child
+ * independently.
+ */
+function useCascadeSlot<K extends string>(openDelayMs: number, closeDelayMs: number) {
+  const [active, setActive] = React.useState<K | null>(null);
+  const closeTimerRef = React.useRef<number | undefined>(undefined);
+  const openTimerRef = React.useRef<number | undefined>(undefined);
+
+  const clearClose = React.useCallback(() => {
+    if (closeTimerRef.current !== undefined) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = undefined;
+    }
+  }, []);
+  const clearOpen = React.useCallback(() => {
+    if (openTimerRef.current !== undefined) {
+      window.clearTimeout(openTimerRef.current);
+      openTimerRef.current = undefined;
+    }
+  }, []);
+  React.useEffect(() => {
+    return () => {
+      clearClose();
+      clearOpen();
+    };
+  }, [clearClose, clearOpen]);
+
+  const open = React.useCallback(
+    (key: K) => {
+      clearOpen();
+      clearClose();
+      setActive(key);
+    },
+    [clearOpen, clearClose],
+  );
+
+  const scheduleClose = React.useCallback(
+    (key: K) => {
+      clearClose();
+      closeTimerRef.current = window.setTimeout(() => {
+        setActive((current) => (current === key ? null : current));
+      }, closeDelayMs);
+    },
+    [clearClose],
+  );
+
+  const closeAll = React.useCallback(() => {
+    clearOpen();
+    clearClose();
+    setActive(null);
+  }, [clearOpen, clearClose]);
+
+  const handleEnter = React.useCallback(
+    (key: K) => {
+      if (active === key) {
+        clearClose();
+        return;
+      }
+      clearOpen();
+      openTimerRef.current = window.setTimeout(() => open(key), openDelayMs);
+    },
+    [active, clearClose, clearOpen, open],
+  );
+
+  const handleLeave = React.useCallback(
+    (key: K) => {
+      clearOpen();
+      scheduleClose(key);
+    },
+    [clearOpen, scheduleClose],
+  );
+
+  return { active, open, scheduleClose, closeAll, handleEnter, handleLeave, clearClose };
+}
+
 /**
  * One filters trigger — an icon button that opens a list of categories (Calc, Horizon, Severity,
  * Confidence), each cascading its own options into a submenu beside it, same interaction as a
  * native OS menu / the app's own account menu. Replaces the four standalone popovers this page
  * used to show side by side.
  *
- * The Horizon submenu's "Custom range" step is the one part of this that can't live as another
- * nested DropdownMenuSub: Radix's Menu content, under this repo's preact/compat setup, closes a
- * submenu back to its parent on any inner click that doesn't itself select-and-close (confirmed
- * live — see [[preact_radix_dialog_crash]] for the sibling Presence/ref bug this stack already
- * has). A free-form multi-click calendar is exactly that case, so picking "Custom range" closes
- * this menu and opens a separate Popover (anchored to the same trigger button) for the calendar —
- * the same proven Popover+Calendar pattern the old standalone HorizonPicker used.
+ * Horizon itself cascades one level further into Looking back / Looking forward, each with its own
+ * presets and its own "Custom range" entry (so a custom span is always explicitly past or future,
+ * rather than one shared range that could straddle today). "Custom range" is the one step that
+ * can't live as another nested DropdownMenuSub: Radix's Menu content, under this repo's
+ * preact/compat setup, closes a submenu back to its parent on any inner click that doesn't itself
+ * select-and-close (confirmed live — see [[preact_radix_dialog_crash]] for the sibling
+ * Presence/ref bug this stack already has). A free-form multi-click calendar is exactly that case,
+ * so picking "Custom range" closes this whole menu and opens a separate Popover (anchored to the
+ * same trigger button) for the calendar — the same proven Popover+Calendar pattern the old
+ * standalone HorizonPicker used.
  *
  * horizon-picker.tsx keeps HorizonState/horizonLabel for the status line; its old standalone
  * HorizonPicker component (and calc-mode-picker.tsx / threshold-picker.tsx) is gone now that
@@ -106,82 +201,11 @@ export function FiltersMenu({
 }) {
   const [open, setOpen] = React.useState(false);
   const [calendarOpen, setCalendarOpen] = React.useState(false);
+  const [customDirection, setCustomDirection] = React.useState<"back" | "forward">("forward");
 
-  // Each category is hovered open/closed through this single active-sub slot rather than letting
-  // every trigger switch the active submenu the instant the pointer touches it. A straight
-  // switch-on-enter is what broke this the first time: reaching an already-open submenu (say
-  // Horizon's, cascading off to the side) usually means crossing OTHER trigger rows first (e.g.
-  // Severity) on the way there, and a real cursor doesn't move in a straight line along the trigger
-  // column to do it. So a trigger only takes over after the pointer has dwelled on it for
-  // openDelayMs (skipped for the row that's already active — re-entering it should feel instant),
-  // and the previously active one only lets go after closeDelayMs with the pointer outside both its
-  // trigger and its content — so passing through Severity without stopping never steals Horizon's
-  // submenu away, and a cursor that does land inside it in time always cancels the pending close.
-  type SubKey = "calc" | "horizon" | "severity" | "confidence" | null;
-  const openDelayMs = 150;
-  const closeDelayMs = 300;
-  const [activeSub, setActiveSub] = React.useState<SubKey>(null);
-  const closeTimerRef = React.useRef<number | undefined>(undefined);
-  const openTimerRef = React.useRef<number | undefined>(undefined);
-
-  const clearCloseTimer = React.useCallback(() => {
-    if (closeTimerRef.current !== undefined) {
-      window.clearTimeout(closeTimerRef.current);
-      closeTimerRef.current = undefined;
-    }
-  }, []);
-  const clearOpenTimer = React.useCallback(() => {
-    if (openTimerRef.current !== undefined) {
-      window.clearTimeout(openTimerRef.current);
-      openTimerRef.current = undefined;
-    }
-  }, []);
-  React.useEffect(() => {
-    return () => {
-      clearCloseTimer();
-      clearOpenTimer();
-    };
-  }, [clearCloseTimer, clearOpenTimer]);
-
-  const openSub = React.useCallback(
-    (key: Exclude<SubKey, null>) => {
-      clearOpenTimer();
-      clearCloseTimer();
-      setActiveSub(key);
-    },
-    [clearOpenTimer, clearCloseTimer],
-  );
-
-  const scheduleCloseSub = React.useCallback(
-    (key: Exclude<SubKey, null>) => {
-      clearCloseTimer();
-      closeTimerRef.current = window.setTimeout(() => {
-        setActiveSub((current) => (current === key ? null : current));
-      }, closeDelayMs);
-    },
-    [clearCloseTimer],
-  );
-
-  // Trigger hover: re-entering the already-active row just cancels its pending close; entering a
-  // different row schedules a takeover instead of switching immediately.
-  const handleTriggerEnter = React.useCallback(
-    (key: Exclude<SubKey, null>) => {
-      if (activeSub === key) {
-        clearCloseTimer();
-        return;
-      }
-      clearOpenTimer();
-      openTimerRef.current = window.setTimeout(() => openSub(key), openDelayMs);
-    },
-    [activeSub, clearCloseTimer, clearOpenTimer, openSub],
-  );
-  const handleTriggerLeave = React.useCallback(
-    (key: Exclude<SubKey, null>) => {
-      clearOpenTimer();
-      scheduleCloseSub(key);
-    },
-    [clearOpenTimer, scheduleCloseSub],
-  );
+  type TopKey = "calc" | "horizon" | "severity" | "confidence";
+  const topSub = useCascadeSlot<TopKey>(150, 300);
+  const horizonDir = useCascadeSlot<"back" | "forward">(150, 300);
 
   const today = React.useMemo(() => startOfDay(new Date()), []);
   const [calendarMonth, setCalendarMonth] = React.useState(today);
@@ -192,11 +216,14 @@ export function FiltersMenu({
   const selectedCalc = CALC_MODE_OPTIONS.find((option) => option.value === calcMode) ?? CALC_MODE_OPTIONS[1];
   const currentHorizonLabel = horizonLabel(horizon);
 
+  const isCustomBack = horizon.kind === "custom" && horizon.to < today;
+  const isCustomForward = horizon.kind === "custom" && horizon.from >= today;
+
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
     if (!next) {
-      clearCloseTimer();
-      setActiveSub(null);
+      topSub.closeAll();
+      horizonDir.closeAll();
     }
   };
 
@@ -209,11 +236,14 @@ export function FiltersMenu({
     }
   };
 
-  const openCustomRange = () => {
-    setDraftFrom(horizon.kind === "custom" ? horizon.from : null);
-    setDraftTo(horizon.kind === "custom" ? horizon.to : null);
-    setCalendarMonth(startOfDay(horizon.kind === "custom" ? horizon.to : today));
+  const openCustomRange = (direction: "back" | "forward") => {
+    const matchesDirection = direction === "back" ? isCustomBack : isCustomForward;
+    const existing = matchesDirection && horizon.kind === "custom" ? horizon : null;
+    setDraftFrom(existing?.from ?? null);
+    setDraftTo(existing?.to ?? null);
+    setCalendarMonth(existing ? startOfDay(existing.to) : today);
     setHoverDate(null);
+    setCustomDirection(direction);
     handleOpenChange(false);
     setCalendarOpen(true);
   };
@@ -221,7 +251,8 @@ export function FiltersMenu({
   const backToHorizonList = () => {
     setCalendarOpen(false);
     setOpen(true);
-    openSub("horizon");
+    topSub.open("horizon");
+    horizonDir.open(customDirection);
   };
 
   const handleSelectDate = (date: Date) => {
@@ -266,21 +297,21 @@ export function FiltersMenu({
           }}
         >
           <DropdownMenuSub
-            open={activeSub === "calc"}
-            onOpenChange={(next) => (next ? openSub("calc") : scheduleCloseSub("calc"))}
+            open={topSub.active === "calc"}
+            onOpenChange={(next) => (next ? topSub.open("calc") : topSub.scheduleClose("calc"))}
           >
             <DropdownMenuSubTrigger
               className="justify-between"
-              onPointerEnter={() => handleTriggerEnter("calc")}
-              onPointerLeave={() => handleTriggerLeave("calc")}
+              onPointerEnter={() => topSub.handleEnter("calc")}
+              onPointerLeave={() => topSub.handleLeave("calc")}
             >
               <SubHeading prefix="Calc" value={selectedCalc.label} />
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent
               className="w-64 p-1"
               sideOffset={4}
-              onPointerEnter={clearCloseTimer}
-              onPointerLeave={() => scheduleCloseSub("calc")}
+              onPointerEnter={topSub.clearClose}
+              onPointerLeave={() => topSub.scheduleClose("calc")}
             >
               {CALC_MODE_OPTIONS.map((option) => (
                 <OptionRow
@@ -298,56 +329,111 @@ export function FiltersMenu({
           </DropdownMenuSub>
 
           <DropdownMenuSub
-            open={activeSub === "horizon"}
-            onOpenChange={(next) => (next ? openSub("horizon") : scheduleCloseSub("horizon"))}
+            open={topSub.active === "horizon"}
+            onOpenChange={(next) => (next ? topSub.open("horizon") : topSub.scheduleClose("horizon"))}
           >
             <DropdownMenuSubTrigger
               className="justify-between"
-              onPointerEnter={() => handleTriggerEnter("horizon")}
-              onPointerLeave={() => handleTriggerLeave("horizon")}
+              onPointerEnter={() => topSub.handleEnter("horizon")}
+              onPointerLeave={() => topSub.handleLeave("horizon")}
             >
               <SubHeading prefix="Horizon" value={currentHorizonLabel} />
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent
-              className="w-72 p-1"
+              className="w-64 p-1"
               sideOffset={4}
-              onPointerEnter={clearCloseTimer}
-              onPointerLeave={() => scheduleCloseSub("horizon")}
+              onPointerEnter={topSub.clearClose}
+              onPointerLeave={() => topSub.scheduleClose("horizon")}
             >
-              {HORIZON_GROUPS.map((group) => (
-                <div key={group.heading} className="mb-1 last:mb-0">
-                  <p className="px-2.5 pt-2 pb-1 font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">
-                    {group.heading}
-                  </p>
-                  {group.options.map((option) => {
+              <DropdownMenuSub
+                open={horizonDir.active === "back"}
+                onOpenChange={(next) => (next ? horizonDir.open("back") : horizonDir.scheduleClose("back"))}
+              >
+                <DropdownMenuSubTrigger
+                  className="justify-between"
+                  onPointerEnter={() => horizonDir.handleEnter("back")}
+                  onPointerLeave={() => horizonDir.handleLeave("back")}
+                >
+                  <DirectionRowLabel label="Looking back" note="presets, or a custom past range" />
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent
+                  className="w-72 p-1"
+                  sideOffset={4}
+                  onPointerEnter={horizonDir.clearClose}
+                  onPointerLeave={() => horizonDir.scheduleClose("back")}
+                >
+                  {LOOKING_BACK_GROUP.options.map((option) => {
                     const isActive =
-                      horizon.kind === "preset" &&
-                      horizon.value === option.value &&
-                      horizon.direction === option.direction;
+                      horizon.kind === "preset" && horizon.value === option.value && horizon.direction === "back";
                     return (
                       <OptionRow
-                        key={`${option.direction}-${option.value}`}
+                        key={option.value}
                         label={option.label}
                         note={option.note}
                         active={isActive}
                         onClick={() => {
-                          onHorizonChange({ kind: "preset", value: option.value, direction: option.direction });
+                          onHorizonChange({ kind: "preset", value: option.value, direction: "back" });
                           handleOpenChange(false);
                         }}
                       />
                     );
                   })}
-                </div>
-              ))}
+                  <div className="mt-1 border-t border-line pt-1">
+                    <OptionRow
+                      label={isCustomBack && horizon.kind === "custom" ? formatRange(horizon.from, horizon.to) : "Custom range…"}
+                      note={isCustomBack ? "tap to change the dates" : "pick any start and end date up to today"}
+                      active={isCustomBack}
+                      onClick={() => openCustomRange("back")}
+                    />
+                  </div>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
 
-              <div className="mt-1 border-t border-line pt-1">
-                <OptionRow
-                  label={horizon.kind === "custom" ? formatRange(horizon.from, horizon.to) : HORIZON_CUSTOM_LABEL}
-                  note={horizon.kind === "custom" ? "tap to change the dates" : "pick any start and end, past or future"}
-                  active={horizon.kind === "custom"}
-                  onClick={openCustomRange}
-                />
-              </div>
+              <DropdownMenuSub
+                open={horizonDir.active === "forward"}
+                onOpenChange={(next) => (next ? horizonDir.open("forward") : horizonDir.scheduleClose("forward"))}
+              >
+                <DropdownMenuSubTrigger
+                  className="justify-between"
+                  onPointerEnter={() => horizonDir.handleEnter("forward")}
+                  onPointerLeave={() => horizonDir.handleLeave("forward")}
+                >
+                  <DirectionRowLabel label="Looking forward" note="presets, or a custom future range" />
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent
+                  className="w-72 p-1"
+                  sideOffset={4}
+                  onPointerEnter={horizonDir.clearClose}
+                  onPointerLeave={() => horizonDir.scheduleClose("forward")}
+                >
+                  {LOOKING_FORWARD_GROUP.options.map((option) => {
+                    const isActive =
+                      horizon.kind === "preset" && horizon.value === option.value && horizon.direction === "forward";
+                    return (
+                      <OptionRow
+                        key={option.value}
+                        label={option.label}
+                        note={option.note}
+                        active={isActive}
+                        onClick={() => {
+                          onHorizonChange({ kind: "preset", value: option.value, direction: "forward" });
+                          handleOpenChange(false);
+                        }}
+                      />
+                    );
+                  })}
+                  <div className="mt-1 border-t border-line pt-1">
+                    <OptionRow
+                      label={
+                        isCustomForward && horizon.kind === "custom" ? formatRange(horizon.from, horizon.to) : "Custom range…"
+                      }
+                      note={isCustomForward ? "tap to change the dates" : "pick any start and end date from today"}
+                      active={isCustomForward}
+                      onClick={() => openCustomRange("forward")}
+                    />
+                  </div>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
 
               <div className="mt-1 border-t border-line px-2.5 pt-2 text-[10.5px] leading-relaxed text-ink-4">
                 {HORIZON_FOOTNOTE}
@@ -356,21 +442,21 @@ export function FiltersMenu({
           </DropdownMenuSub>
 
           <DropdownMenuSub
-            open={activeSub === "severity"}
-            onOpenChange={(next) => (next ? openSub("severity") : scheduleCloseSub("severity"))}
+            open={topSub.active === "severity"}
+            onOpenChange={(next) => (next ? topSub.open("severity") : topSub.scheduleClose("severity"))}
           >
             <DropdownMenuSubTrigger
               className="justify-between"
-              onPointerEnter={() => handleTriggerEnter("severity")}
-              onPointerLeave={() => handleTriggerLeave("severity")}
+              onPointerEnter={() => topSub.handleEnter("severity")}
+              onPointerLeave={() => topSub.handleLeave("severity")}
             >
               <SubHeading prefix="Severity" value={SEVERITY_FILTER_OPTIONS.find((o) => o.value === severityFilter)?.label ?? ""} />
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent
               className="w-60 p-1"
               sideOffset={4}
-              onPointerEnter={clearCloseTimer}
-              onPointerLeave={() => scheduleCloseSub("severity")}
+              onPointerEnter={topSub.clearClose}
+              onPointerLeave={() => topSub.scheduleClose("severity")}
             >
               {SEVERITY_FILTER_OPTIONS.map((option) => (
                 <OptionRow
@@ -388,13 +474,13 @@ export function FiltersMenu({
           </DropdownMenuSub>
 
           <DropdownMenuSub
-            open={activeSub === "confidence"}
-            onOpenChange={(next) => (next ? openSub("confidence") : scheduleCloseSub("confidence"))}
+            open={topSub.active === "confidence"}
+            onOpenChange={(next) => (next ? topSub.open("confidence") : topSub.scheduleClose("confidence"))}
           >
             <DropdownMenuSubTrigger
               className="justify-between"
-              onPointerEnter={() => handleTriggerEnter("confidence")}
-              onPointerLeave={() => handleTriggerLeave("confidence")}
+              onPointerEnter={() => topSub.handleEnter("confidence")}
+              onPointerLeave={() => topSub.handleLeave("confidence")}
             >
               <SubHeading
                 prefix="Confidence"
@@ -404,8 +490,8 @@ export function FiltersMenu({
             <DropdownMenuSubContent
               className="w-60 p-1"
               sideOffset={4}
-              onPointerEnter={clearCloseTimer}
-              onPointerLeave={() => scheduleCloseSub("confidence")}
+              onPointerEnter={topSub.clearClose}
+              onPointerLeave={() => topSub.scheduleClose("confidence")}
             >
               {CONFIDENCE_FILTER_OPTIONS.map((option) => (
                 <OptionRow
@@ -438,7 +524,10 @@ export function FiltersMenu({
             >
               <ChevronLeft className="size-3.5" />
             </button>
-            <p className="text-[12px] font-medium text-ink">Custom range</p>
+            <div>
+              <p className="text-[12px] font-medium text-ink">Custom range</p>
+              <p className="text-[10px] text-ink-3">{customDirection === "back" ? "Past dates only" : "Future dates only"}</p>
+            </div>
           </div>
 
           <div className="mb-3 flex items-center gap-2">
@@ -468,6 +557,8 @@ export function FiltersMenu({
             hoverDate={hoverDate}
             onHoverDate={setHoverDate}
             onSelectDate={handleSelectDate}
+            maxDate={customDirection === "back" ? today : undefined}
+            minDate={customDirection === "forward" ? today : undefined}
           />
 
           <div className="mt-3 flex items-center justify-end gap-2 border-t border-line pt-3">
