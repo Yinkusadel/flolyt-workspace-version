@@ -105,8 +105,44 @@ export function FiltersMenu({
   onConfidenceFilterChange: (value: ConfidenceLevel) => void;
 }) {
   const [open, setOpen] = React.useState(false);
-  const [horizonSubOpen, setHorizonSubOpen] = React.useState(false);
   const [calendarOpen, setCalendarOpen] = React.useState(false);
+
+  // Each category is hovered open/closed through this single active-sub slot rather than Radix's
+  // own hover-intent heuristic, whose "grace area" polygon (see @radix-ui/react-menu) can lose a
+  // fast diagonal mouse move before it reaches the submenu, closing it out from under the cursor.
+  // A shared close-delay timer is far more forgiving: nothing closes until the pointer has been
+  // outside BOTH the trigger and its content for closeDelayMs, so a quick move that lands inside
+  // the content in time always cancels the pending close.
+  type SubKey = "calc" | "horizon" | "severity" | "confidence" | null;
+  const closeDelayMs = 300;
+  const [activeSub, setActiveSub] = React.useState<SubKey>(null);
+  const closeTimerRef = React.useRef<number | undefined>(undefined);
+
+  const clearCloseTimer = React.useCallback(() => {
+    if (closeTimerRef.current !== undefined) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = undefined;
+    }
+  }, []);
+  React.useEffect(() => clearCloseTimer, [clearCloseTimer]);
+
+  const openSub = React.useCallback(
+    (key: Exclude<SubKey, null>) => {
+      clearCloseTimer();
+      setActiveSub(key);
+    },
+    [clearCloseTimer],
+  );
+
+  const scheduleCloseSub = React.useCallback(
+    (key: Exclude<SubKey, null>) => {
+      clearCloseTimer();
+      closeTimerRef.current = window.setTimeout(() => {
+        setActiveSub((current) => (current === key ? null : current));
+      }, closeDelayMs);
+    },
+    [clearCloseTimer],
+  );
 
   const today = React.useMemo(() => startOfDay(new Date()), []);
   const [calendarMonth, setCalendarMonth] = React.useState(today);
@@ -119,7 +155,10 @@ export function FiltersMenu({
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
-    if (!next) setHorizonSubOpen(false);
+    if (!next) {
+      clearCloseTimer();
+      setActiveSub(null);
+    }
   };
 
   const handleCalendarOpenChange = (next: boolean) => {
@@ -143,7 +182,7 @@ export function FiltersMenu({
   const backToHorizonList = () => {
     setCalendarOpen(false);
     setOpen(true);
-    setHorizonSubOpen(true);
+    openSub("horizon");
   };
 
   const handleSelectDate = (date: Date) => {
@@ -187,11 +226,23 @@ export function FiltersMenu({
             if (calendarOpen) event.preventDefault();
           }}
         >
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="justify-between">
+          <DropdownMenuSub
+            open={activeSub === "calc"}
+            onOpenChange={(next) => (next ? openSub("calc") : scheduleCloseSub("calc"))}
+          >
+            <DropdownMenuSubTrigger
+              className="justify-between"
+              onPointerEnter={() => openSub("calc")}
+              onPointerLeave={() => scheduleCloseSub("calc")}
+            >
               <SubHeading prefix="Calc" value={selectedCalc.label} />
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="w-64 p-1" sideOffset={4}>
+            <DropdownMenuSubContent
+              className="w-64 p-1"
+              sideOffset={4}
+              onPointerEnter={clearCloseTimer}
+              onPointerLeave={() => scheduleCloseSub("calc")}
+            >
               {CALC_MODE_OPTIONS.map((option) => (
                 <OptionRow
                   key={option.value}
@@ -207,11 +258,23 @@ export function FiltersMenu({
             </DropdownMenuSubContent>
           </DropdownMenuSub>
 
-          <DropdownMenuSub open={horizonSubOpen} onOpenChange={setHorizonSubOpen}>
-            <DropdownMenuSubTrigger className="justify-between">
+          <DropdownMenuSub
+            open={activeSub === "horizon"}
+            onOpenChange={(next) => (next ? openSub("horizon") : scheduleCloseSub("horizon"))}
+          >
+            <DropdownMenuSubTrigger
+              className="justify-between"
+              onPointerEnter={() => openSub("horizon")}
+              onPointerLeave={() => scheduleCloseSub("horizon")}
+            >
               <SubHeading prefix="Horizon" value={currentHorizonLabel} />
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="w-72 p-1" sideOffset={4}>
+            <DropdownMenuSubContent
+              className="w-72 p-1"
+              sideOffset={4}
+              onPointerEnter={clearCloseTimer}
+              onPointerLeave={() => scheduleCloseSub("horizon")}
+            >
               {HORIZON_GROUPS.map((group) => (
                 <div key={group.heading} className="mb-1 last:mb-0">
                   <p className="px-2.5 pt-2 pb-1 font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">
@@ -253,11 +316,23 @@ export function FiltersMenu({
             </DropdownMenuSubContent>
           </DropdownMenuSub>
 
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="justify-between">
+          <DropdownMenuSub
+            open={activeSub === "severity"}
+            onOpenChange={(next) => (next ? openSub("severity") : scheduleCloseSub("severity"))}
+          >
+            <DropdownMenuSubTrigger
+              className="justify-between"
+              onPointerEnter={() => openSub("severity")}
+              onPointerLeave={() => scheduleCloseSub("severity")}
+            >
               <SubHeading prefix="Severity" value={SEVERITY_FILTER_OPTIONS.find((o) => o.value === severityFilter)?.label ?? ""} />
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="w-60 p-1" sideOffset={4}>
+            <DropdownMenuSubContent
+              className="w-60 p-1"
+              sideOffset={4}
+              onPointerEnter={clearCloseTimer}
+              onPointerLeave={() => scheduleCloseSub("severity")}
+            >
               {SEVERITY_FILTER_OPTIONS.map((option) => (
                 <OptionRow
                   key={option.value}
@@ -273,14 +348,26 @@ export function FiltersMenu({
             </DropdownMenuSubContent>
           </DropdownMenuSub>
 
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="justify-between">
+          <DropdownMenuSub
+            open={activeSub === "confidence"}
+            onOpenChange={(next) => (next ? openSub("confidence") : scheduleCloseSub("confidence"))}
+          >
+            <DropdownMenuSubTrigger
+              className="justify-between"
+              onPointerEnter={() => openSub("confidence")}
+              onPointerLeave={() => scheduleCloseSub("confidence")}
+            >
               <SubHeading
                 prefix="Confidence"
                 value={CONFIDENCE_FILTER_OPTIONS.find((o) => o.value === confidenceFilter)?.label ?? ""}
               />
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="w-60 p-1" sideOffset={4}>
+            <DropdownMenuSubContent
+              className="w-60 p-1"
+              sideOffset={4}
+              onPointerEnter={clearCloseTimer}
+              onPointerLeave={() => scheduleCloseSub("confidence")}
+            >
               {CONFIDENCE_FILTER_OPTIONS.map((option) => (
                 <OptionRow
                   key={option.value}
