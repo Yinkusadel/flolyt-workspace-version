@@ -107,16 +107,22 @@ export function FiltersMenu({
   const [open, setOpen] = React.useState(false);
   const [calendarOpen, setCalendarOpen] = React.useState(false);
 
-  // Each category is hovered open/closed through this single active-sub slot rather than Radix's
-  // own hover-intent heuristic, whose "grace area" polygon (see @radix-ui/react-menu) can lose a
-  // fast diagonal mouse move before it reaches the submenu, closing it out from under the cursor.
-  // A shared close-delay timer is far more forgiving: nothing closes until the pointer has been
-  // outside BOTH the trigger and its content for closeDelayMs, so a quick move that lands inside
-  // the content in time always cancels the pending close.
+  // Each category is hovered open/closed through this single active-sub slot rather than letting
+  // every trigger switch the active submenu the instant the pointer touches it. A straight
+  // switch-on-enter is what broke this the first time: reaching an already-open submenu (say
+  // Horizon's, cascading off to the side) usually means crossing OTHER trigger rows first (e.g.
+  // Severity) on the way there, and a real cursor doesn't move in a straight line along the trigger
+  // column to do it. So a trigger only takes over after the pointer has dwelled on it for
+  // openDelayMs (skipped for the row that's already active — re-entering it should feel instant),
+  // and the previously active one only lets go after closeDelayMs with the pointer outside both its
+  // trigger and its content — so passing through Severity without stopping never steals Horizon's
+  // submenu away, and a cursor that does land inside it in time always cancels the pending close.
   type SubKey = "calc" | "horizon" | "severity" | "confidence" | null;
+  const openDelayMs = 150;
   const closeDelayMs = 300;
   const [activeSub, setActiveSub] = React.useState<SubKey>(null);
   const closeTimerRef = React.useRef<number | undefined>(undefined);
+  const openTimerRef = React.useRef<number | undefined>(undefined);
 
   const clearCloseTimer = React.useCallback(() => {
     if (closeTimerRef.current !== undefined) {
@@ -124,14 +130,26 @@ export function FiltersMenu({
       closeTimerRef.current = undefined;
     }
   }, []);
-  React.useEffect(() => clearCloseTimer, [clearCloseTimer]);
+  const clearOpenTimer = React.useCallback(() => {
+    if (openTimerRef.current !== undefined) {
+      window.clearTimeout(openTimerRef.current);
+      openTimerRef.current = undefined;
+    }
+  }, []);
+  React.useEffect(() => {
+    return () => {
+      clearCloseTimer();
+      clearOpenTimer();
+    };
+  }, [clearCloseTimer, clearOpenTimer]);
 
   const openSub = React.useCallback(
     (key: Exclude<SubKey, null>) => {
+      clearOpenTimer();
       clearCloseTimer();
       setActiveSub(key);
     },
-    [clearCloseTimer],
+    [clearOpenTimer, clearCloseTimer],
   );
 
   const scheduleCloseSub = React.useCallback(
@@ -142,6 +160,27 @@ export function FiltersMenu({
       }, closeDelayMs);
     },
     [clearCloseTimer],
+  );
+
+  // Trigger hover: re-entering the already-active row just cancels its pending close; entering a
+  // different row schedules a takeover instead of switching immediately.
+  const handleTriggerEnter = React.useCallback(
+    (key: Exclude<SubKey, null>) => {
+      if (activeSub === key) {
+        clearCloseTimer();
+        return;
+      }
+      clearOpenTimer();
+      openTimerRef.current = window.setTimeout(() => openSub(key), openDelayMs);
+    },
+    [activeSub, clearCloseTimer, clearOpenTimer, openSub],
+  );
+  const handleTriggerLeave = React.useCallback(
+    (key: Exclude<SubKey, null>) => {
+      clearOpenTimer();
+      scheduleCloseSub(key);
+    },
+    [clearOpenTimer, scheduleCloseSub],
   );
 
   const today = React.useMemo(() => startOfDay(new Date()), []);
@@ -232,8 +271,8 @@ export function FiltersMenu({
           >
             <DropdownMenuSubTrigger
               className="justify-between"
-              onPointerEnter={() => openSub("calc")}
-              onPointerLeave={() => scheduleCloseSub("calc")}
+              onPointerEnter={() => handleTriggerEnter("calc")}
+              onPointerLeave={() => handleTriggerLeave("calc")}
             >
               <SubHeading prefix="Calc" value={selectedCalc.label} />
             </DropdownMenuSubTrigger>
@@ -264,8 +303,8 @@ export function FiltersMenu({
           >
             <DropdownMenuSubTrigger
               className="justify-between"
-              onPointerEnter={() => openSub("horizon")}
-              onPointerLeave={() => scheduleCloseSub("horizon")}
+              onPointerEnter={() => handleTriggerEnter("horizon")}
+              onPointerLeave={() => handleTriggerLeave("horizon")}
             >
               <SubHeading prefix="Horizon" value={currentHorizonLabel} />
             </DropdownMenuSubTrigger>
@@ -322,8 +361,8 @@ export function FiltersMenu({
           >
             <DropdownMenuSubTrigger
               className="justify-between"
-              onPointerEnter={() => openSub("severity")}
-              onPointerLeave={() => scheduleCloseSub("severity")}
+              onPointerEnter={() => handleTriggerEnter("severity")}
+              onPointerLeave={() => handleTriggerLeave("severity")}
             >
               <SubHeading prefix="Severity" value={SEVERITY_FILTER_OPTIONS.find((o) => o.value === severityFilter)?.label ?? ""} />
             </DropdownMenuSubTrigger>
@@ -354,8 +393,8 @@ export function FiltersMenu({
           >
             <DropdownMenuSubTrigger
               className="justify-between"
-              onPointerEnter={() => openSub("confidence")}
-              onPointerLeave={() => scheduleCloseSub("confidence")}
+              onPointerEnter={() => handleTriggerEnter("confidence")}
+              onPointerLeave={() => handleTriggerLeave("confidence")}
             >
               <SubHeading
                 prefix="Confidence"
