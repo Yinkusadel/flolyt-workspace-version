@@ -2,7 +2,6 @@ import * as React from "react";
 
 import { StageRail } from "@/pages/leakage-map/stage-rail";
 import { CoverageGapNote } from "@/pages/leakage-map/coverage-gap-note";
-import { CompoundRiskNote, ThreeWaysEmptyNote } from "@/pages/leakage-map/matrix-notes";
 import { LeakageMatrix } from "@/pages/leakage-map/matrix";
 import { MarketBreakdown } from "@/pages/leakage-map/market-breakdown";
 import { StatusLine } from "@/pages/leakage-map/status-line";
@@ -105,8 +104,6 @@ export default function LeakageMap() {
         onClearFilter={clearFilters}
         onSetSeverityFilter={setSeverityFilter}
       />
-      <ThreeWaysEmptyNote />
-      <CompoundRiskNote />
 
       <CoveragePanel />
       <ActionsPanel />

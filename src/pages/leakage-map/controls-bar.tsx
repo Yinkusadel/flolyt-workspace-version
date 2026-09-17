@@ -1,14 +1,7 @@
-import { CalcModePicker } from "@/pages/leakage-map/calc-mode-picker";
-import { HorizonPicker, type HorizonState } from "@/pages/leakage-map/horizon-picker";
-import { ThresholdPicker } from "@/pages/leakage-map/threshold-picker";
+import { FiltersMenu } from "@/pages/leakage-map/filters-menu";
 import { HowCalculatedDialog } from "@/pages/leakage-map/how-calculated-dialog";
-import {
-  CONFIDENCE_FILTER_OPTIONS,
-  SEVERITY_FILTER_OPTIONS,
-  type CalcMode,
-  type ConfidenceLevel,
-  type SeverityLevel,
-} from "@/pages/leakage-map/data";
+import type { HorizonState } from "@/pages/leakage-map/horizon-picker";
+import { type CalcMode, type ConfidenceLevel, type SeverityLevel } from "@/pages/leakage-map/data";
 
 export function ControlsBar({
   calcMode,
@@ -31,19 +24,15 @@ export function ControlsBar({
 }) {
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
-      <CalcModePicker value={calcMode} onChange={onCalcModeChange} />
-      <HorizonPicker value={horizon} onChange={onHorizonChange} />
-      <ThresholdPicker
-        prefix="Severity"
-        options={SEVERITY_FILTER_OPTIONS}
-        value={severityFilter}
-        onChange={onSeverityFilterChange}
-      />
-      <ThresholdPicker
-        prefix="Confidence"
-        options={CONFIDENCE_FILTER_OPTIONS}
-        value={confidenceFilter}
-        onChange={onConfidenceFilterChange}
+      <FiltersMenu
+        calcMode={calcMode}
+        onCalcModeChange={onCalcModeChange}
+        horizon={horizon}
+        onHorizonChange={onHorizonChange}
+        severityFilter={severityFilter}
+        onSeverityFilterChange={onSeverityFilterChange}
+        confidenceFilter={confidenceFilter}
+        onConfidenceFilterChange={onConfidenceFilterChange}
       />
       <HowCalculatedDialog />
     </div>

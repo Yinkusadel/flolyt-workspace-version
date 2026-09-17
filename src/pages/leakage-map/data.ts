@@ -73,7 +73,6 @@ export const HORIZON_GROUPS: { heading: string; options: HorizonOption[] }[] = [
 export const DEFAULT_HORIZON: HorizonValue = "90d";
 export const DEFAULT_HORIZON_DIRECTION: "back" | "forward" = "forward";
 
-export const HORIZON_CUSTOM_LABEL = "Custom range…";
 export const HORIZON_FOOTNOTE =
   "A longer horizon lowers confidence. The legend and the status line both say which one you chose.";
 
