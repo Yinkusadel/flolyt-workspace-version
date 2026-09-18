@@ -17,7 +17,8 @@ wired into code yet, so we always have a source of truth to check against and co
 | Datasources | [datasources.md](datasources.md) | 14/14 wired, `GET /connected`'s no-envelope shape confirmed |
 | Teams | [teams.md](teams.md) | 13/13 wired (1 of those, `POST /invitations/accept`, was already built in `auth/` during the auth rebuild) |
 | Lifecycle | [lifecycle.md](lifecycle.md) | 69/69 documented, 69/69 scaffolded (service+hook files, typechecks clean), 1/69 wired (`GET /map`, partial). Full-surface reference (tab matrix, conventions) at [lifecycle-reference.md](lifecycle-reference.md) |
-| App shell | [app-shell.md](app-shell.md) | 7/7 documented (`/search /home /home/greeting /home/prompts /inbox /command-bar /sources`), 1/7 wired (`/home/prompts` — home page greeting + composer); `/home` wired then reverted (carousel back to mock), `/home/greeting` scaffolded but intentionally unused |
+| App shell | [app-shell.md](app-shell.md) | 6/6 documented (`/search /home /home/greeting /home/prompts /command-bar /sources`), 1/6 wired (`/home/prompts` — home page greeting + composer); `/home` wired then reverted (carousel back to mock), `/home/greeting` scaffolded but intentionally unused; `/inbox` moved out to its own file |
+| Inbox | [inbox.md](inbox.md) | 11/11 documented, service+hook scaffolded for all 11, 0/11 wired into a page |
 | Rooms | [rooms.md](rooms.md) | 52/52 documented, service+hook scaffolded for all 52, 0/52 wired into a page |
 | AI credits | [ai-credits.md](ai-credits.md) | 6/6 documented and scaffolded (service+hook), 3/6 wired (`GET /balance`, `GET /packs`, `POST /purchase` — `user-menu.tsx` + `plan-and-billing`) |
 | Wallet | [wallet.md](wallet.md) | 5/5 documented and scaffolded (service+hook), 3/5 wired (`GET /balance`, `GET /transactions`, `POST /topup`, into `plan-and-billing`) |
