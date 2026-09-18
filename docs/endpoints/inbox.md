@@ -9,15 +9,15 @@ candidate to wire against an existing mocked screen, not a page waiting to be bu
 
 **Auth:** Bearer JWT, every route · **Envelope:** `Result<T>` (`data`, `messages`, `succeeded`).
 
-**Status: 11/11 documented, 9/11 wired into `/inbox` (2026-09-18), all 9 UI-confirmed live against
-real data — `GET /inbox`, `POST /read`, `POST /snooze` (UI wired, not actually fired live to
-avoid deciding a real proposal), `POST /threads`, `GET /threads/{id}`* , `POST
-/threads/{id}/messages`*, and `GET /approvals/{proposalId}` (including its accept/hold/reject
-actions, via the `ai-proposals` domain — see that entry's notes below and the "not fired live"
-caveat). `*` = wired and rendered without error, but this test account had no `Message`-kind
-items, so the thread read/reply path itself has no live example yet. `POST /read-all` and the
-three `/drafts/*` endpoints are still service/hook-only, not wired — drafts intentionally, per the
-"no way to list your own drafts" gap in docs/inbox/build-plan.md.
+**Status: 11/11 documented, 9/11 wired into `/inbox` (2026-09-18), all 9 live-verified against real
+data as of 2026-09-19** — `GET /inbox`, `POST /read`, `GET /threads/{id}`, `POST
+/threads/{id}/messages`, `POST /threads` (compose), and `GET /approvals/{proposalId}` (including
+its accept/hold/reject actions, via the `ai-proposals` domain — see that entry's notes below) are
+all confirmed against real responses and, for the mutations, real successful sends. `POST /snooze`
+is UI-verified but not actually fired live, to avoid deciding/snoozing a real pending proposal
+without being asked to. `POST /read-all` and the three `/drafts/*` endpoints are still
+service/hook-only, not wired — drafts intentionally, per the "no way to list your own drafts" gap
+in docs/inbox/build-plan.md.
 
 ## Per-endpoint entries
 
@@ -131,9 +131,10 @@ Mutations show their real top-level shape including the envelope.
 - **Response `data`:** `{ threadId, participants: string[], messages: InboxThreadMessage[] }` where
   `InboxThreadMessage = { id: uuid, sender: string, senderName: string, isAgent: boolean, body: string, roomId: uuid | null, room: InboxThreadRoom | null, sentAtUtc: string }`
   and `InboxThreadRoom = { id: uuid, title: string, status: string, isRestricted: boolean, stageLabel: string | null, conditionLabel: string | null, currency: string | null, amountAtRisk: number | null }`.
-- **Used by:** wired into `ThreadView` (`src/pages/inbox/thread-view.tsx`) — not live-verified,
-  this account's inbox had no `Message`-kind item to open.
-- **Status:** wired, `tsc -b` clean; not live-verified.
+- **Used by:** wired into `ThreadView` (`src/pages/inbox/thread-view.tsx`), live-verified
+  2026-09-19 once a real `Message`-kind item existed — the `sender`-matching `isMe()` heuristic
+  (`human:{guid}` ref vs bare `auth-context` user id) checked out correct on real data.
+- **Status:** wired, live-verified.
 - **Notes:** `senderName` is resolved at read time, not stored — a name frozen at write would be
   one the roster has since corrected (renames happen for both agents and people). Somebody who's
   left the workspace reads as `"Someone no longer here"`, and their messages stay — deleting what
@@ -148,9 +149,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `threadId`; body `{ body: string, asDraft?: boolean, roomId?: uuid | null }`.
 - **Response:** `{ data: uuid (messageId), messages, succeeded }`.
-- **Used by:** wired into `ThreadView`'s reply box — not live-verified alongside
-  `GET /threads/{id}` above (same reason: no live thread to reply into).
-- **Status:** wired, `tsc -b` clean; not live-verified.
+- **Used by:** wired into `ThreadView`'s reply box, live-verified 2026-09-19 alongside
+  `GET /threads/{id}` above.
+- **Status:** wired, live-verified.
 - **Notes:** Recipients are the thread, not the replier's choice — whoever was addressed or has
   spoken gets it, minus whoever is writing. Letting a replier re-pick would let them quietly drop
   a participant who'd have no way of noticing. An agent that has spoken into the thread is not

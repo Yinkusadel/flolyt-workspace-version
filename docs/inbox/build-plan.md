@@ -30,18 +30,35 @@ logged-in Playwright pass, zero console errors throughout:
   the same reason as above.
 - **Notice view** — confirmed live for `Finished`/`Notification` kind items, including a much
   larger real sample (117 full items pasted by the user 2026-09-18) — see findings below.
-- **Not exercised live:** thread view + reply (`GET /inbox/threads/{id}`,
-  `POST .../messages`) — this account had zero `Message`-kind items in its inbox, so the thread
-  read/reply path is wired and `tsc -b` clean but has no real example behind it yet.
+- **Thread view + reply — now live-verified 2026-09-19**, once the user sent themselves a real
+  test message via compose (`"hi guys"` / `"how are you doing"` / `"hellooooo"`). Confirmed: the
+  `isMe()` sender-matching heuristic (`human:{guid}` ref vs bare `auth-context` user id) works
+  correctly on real data — all three messages, sent by the signed-in user to themselves, rendered
+  as "mine" (right-aligned) — this was previously an unverified assumption. The thread landed in
+  the `Mentions` group, not `NeedsYou`, for this self-thread case. No console errors.
+
+**Two bugs found live and fixed, both reported directly by the user from screenshots:**
+1. **The `href`-based "Open" link looked like part of the app's topbar**, not tied to the notice
+   below it, because it sat at the far right of the header row. Moved into the message body,
+   right under the context line, next to where `AttachedRoomCard` renders.
+2. **Own thread messages showed a `"You"` label and a separate timestamp row above the bubble**
+   (compared against a WhatsApp-style reference screenshot). Fixed: `"You"` is gone entirely for
+   own messages (the bubble side + color already say whose it is); the other sender's name is
+   still shown above their bubble (useful once a thread has more than two participants); the
+   timestamp moved inline to the bottom-right of the bubble text itself (CSS `float`), same for
+   both sides.
 
 **Findings from the larger real sample (117 items, pasted 2026-09-18):**
 - **`href` includes routes that don't resolve in this app** (`/analytics`, `/customers`,
-  `/intelligence/suggested-actions` — checked against `src/route/`, no matches). **Not a bug** —
-  matches the identical, already-documented situation for `GET /home`'s `cards[].href`
-  (`docs/home/build-plan.md`), and the codebase's established convention (`home-carousel.tsx`,
-  `notification-bell.tsx`) is to render the `Link` anyway; the app's `route-error.tsx` 404 handler
-  means an unresolved href degrades to a not-found page, not a crash. `NoticeView`'s "Open" link
-  follows the same convention on purpose.
+  `/intelligence/suggested-actions` — checked against `src/route/`, no matches). Initially left
+  as-is to match `GET /home`'s identical, already-documented `cards[].href` situation
+  (`docs/home/build-plan.md`) — but **corrected 2026-09-19 per the user**, who gave real mappings
+  for the two backend paths that do have a home in this app:
+  `/settings/billing/credits` → `/plan-and-billing`, `/data-platform/datasources/{id}` →
+  `/data-sources?tab=connected` (both confirmed live). `resolveInboxHref()`
+  (`src/pages/inbox/kind.ts`) applies these two and returns `null` for anything else — an
+  unmapped href now hides the "Open" link entirely instead of pointing at a 404, unlike `GET
+  /home`'s cards which still render regardless. If more mappable paths turn up, add them there.
 - **This account's `Systems` group is almost entirely unread, high-volume, near-duplicate
   `DatasourcePipeline` progress logs** (87 `Notification`-kind items, e.g. repeated schema-sync
   steps). `POST /inbox/read-all` ("mark all read") is still unwired — **explicitly deferred by the
@@ -233,15 +250,17 @@ Ordered so each step is checkable against a real screen before moving to the nex
       there's no existing duration-picker component; UI-verified, mutation not live-fired).
       `POST /inbox/read-all` ("mark all read") **not wired** — no "mark all read" affordance exists
       in the new list pane yet; add one if/when needed.
-- [x] **3. Thread view** — wired 2026-09-18, `tsc -b` clean, **not live-verified** (no
-      `Message`-kind item in the test account). Avatar-data gap resolved via `initialsFromName`/
-      `agentInitialsFromName` fallbacks (no roster lookup needed — real usage already has this
-      exact "bare name, no initials" pattern elsewhere in the app). `AttachedRoomCard` now built
-      from the structured `room` object via `formatAttachedRoom()`. Multi-participant header
-      derives its title from the distinct non-me senders already in the loaded messages. Departed
-      members aren't specially handled — `senderName` renders whatever the API sends, including
-      `"Someone no longer here"` if that's what comes back; no client-side special-casing needed.
-- [x] **4. Thread reply** — wired 2026-09-18 alongside step 3, same not-live-verified caveat.
+- [x] **3. Thread view** — wired 2026-09-18, **live-verified 2026-09-19** once a real `Message`
+      item existed (see "What's live" above — the `isMe()` heuristic checked out correct on real
+      data). Avatar-data gap resolved via `initialsFromName`/`agentInitialsFromName` fallbacks (no
+      roster lookup needed — real usage already has this exact "bare name, no initials" pattern
+      elsewhere in the app). `AttachedRoomCard` now built from the structured `room` object via
+      `formatAttachedRoom()`. Multi-participant header derives its title from the distinct non-me
+      senders already in the loaded messages. Departed members aren't specially handled —
+      `senderName` renders whatever the API sends, including `"Someone no longer here"` if that's
+      what comes back; no client-side special-casing needed. Bubble styling corrected 2026-09-19
+      per a user-supplied reference screenshot — see "Two bugs found live" above.
+- [x] **4. Thread reply** — wired 2026-09-18, live-verified 2026-09-19 alongside step 3.
 - [x] **5. Approval view rebuild** — wired + live-verified 2026-09-18 against a real room-less
       proposal. Real inline Accept / Hold / Reject via `useDecideAiProposal()` (not
       `<ProposalCard>` itself — that component is a compact card-that-opens-a-dialog, which
