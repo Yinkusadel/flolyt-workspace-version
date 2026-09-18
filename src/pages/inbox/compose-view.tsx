@@ -6,6 +6,7 @@ import { PersonAvatar } from "@/components/person-avatar";
 import { Button } from "@/components/ui/button";
 import { SearchableSelect, SearchableSelectSkeleton } from "@/components/ui/searchable-select";
 import { initialsFromName } from "@/pages/rooms/format";
+import { useAuth } from "@/utils/auth-context";
 import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
 import { useGetRooms } from "@/features/rooms/use-get-rooms";
 import useCreateInboxThread from "@/features/inbox/use-create-inbox-thread";
@@ -22,6 +23,7 @@ export function ComposeView({ onDiscard, onSent }: { onDiscard: () => void; onSe
   const [attachedRoomId, setAttachedRoomId] = React.useState<string | null>(null);
   const [body, setBody] = React.useState("");
 
+  const { user } = useAuth();
   const { members, isLoading: isMembersLoading } = useGetWorkspaceMembers();
   const { data: roomsData, isLoading: isRoomsLoading } = useGetRooms();
   const { createInboxThread, isPending } = useCreateInboxThread({
@@ -53,8 +55,18 @@ export function ComposeView({ onDiscard, onSent }: { onDiscard: () => void; onSe
   const handleSend = () => {
     const trimmed = body.trim();
     if (recipients.length === 0 || !trimmed) return;
+
+    // Confirmed live 2026-09-19: the backend takes `recipients` as the literal participant list
+    // rather than implicitly adding the sender — a thread composed without yourself in it never
+    // shows up in your own inbox afterward. Always include the signed-in member's own ref so the
+    // thread you just started is one you can still see.
+    const myRef = members.find((m) => m.kind === "Human" && m.id === user?.id)?.ref;
+    const allRecipients = Array.from(
+      new Set([...recipients.map((r) => r.ref), myRef].filter((ref): ref is string => Boolean(ref)))
+    );
+
     createInboxThread({
-      recipients: recipients.map((r) => r.ref),
+      recipients: allRecipients,
       body: trimmed,
       asDraft: false,
       roomId: attachedRoomId,
