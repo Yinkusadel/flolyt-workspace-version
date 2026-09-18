@@ -1,4 +1,4 @@
-import { AtSign, ExternalLink, Sparkles } from "lucide-react";
+import { AtSign, Bell, ExternalLink, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { PersonAvatar } from "@/components/person-avatar";
@@ -18,6 +18,17 @@ function NoticeIcon({ item }: { item: InboxItemDto }) {
     return (
       <span className="flex size-8 shrink-0 items-center justify-center rounded-full border-[1.5px] border-dashed border-ultra-border text-ultra">
         <AtSign className="size-3.5" />
+      </span>
+    );
+  }
+
+  if (item.kind === "Notification") {
+    // System/pipeline events (e.g. "DatasourcePipeline", "CustomerSync") — a made-up-looking
+    // initials avatar would misread as a named workspace agent, so these get a plain glyph tile
+    // instead of the dashed agent-identity circle.
+    return (
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-control border border-line bg-paper-2 text-ink-3">
+        <Bell className="size-4" />
       </span>
     );
   }

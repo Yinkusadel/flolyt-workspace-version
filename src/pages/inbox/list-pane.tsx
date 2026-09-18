@@ -1,5 +1,5 @@
 import * as React from "react";
-import { AtSign, Plus, ShieldCheck, Sparkles } from "lucide-react";
+import { AtSign, Bell, Plus, ShieldCheck, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
@@ -95,7 +95,18 @@ function KindTile({ kind, actorLabel }: { kind: InboxItemKind; actorLabel: strin
     );
   }
 
-  // Assignment / Investigation / Obligation / Finished / Notification — agent-authored activity,
+  if (kind === "Notification") {
+    // System/pipeline events (e.g. "DatasourcePipeline", "CustomerSync") — a made-up-looking
+    // initials avatar would misread as a named workspace agent, so these get a plain glyph tile
+    // instead of the dashed agent-identity circle.
+    return (
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-control border border-line bg-paper-2 text-ink-3">
+        <Bell className="size-4" />
+      </span>
+    );
+  }
+
+  // Assignment / Investigation / Obligation / Finished — real agent-authored work (e.g. "Flolyt"),
   // no per-item avatar data on the list row so we derive initials from the actor label itself.
   return actorLabel ? (
     <PersonAvatar kind="agent" initials={agentInitialsFromName(actorLabel)} size="lg" />
