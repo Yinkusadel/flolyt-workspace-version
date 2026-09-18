@@ -28,10 +28,31 @@ logged-in Playwright pass, zero console errors throughout:
   already-added ones as you add more) and a real room-attach picker (this account had 0 open
   rooms, so it correctly showed "No results" rather than erroring). Send itself wasn't fired, for
   the same reason as above.
-- **Notice view** — confirmed live for `Finished`/`Notification` kind items.
+- **Notice view** — confirmed live for `Finished`/`Notification` kind items, including a much
+  larger real sample (117 full items pasted by the user 2026-09-18) — see findings below.
 - **Not exercised live:** thread view + reply (`GET /inbox/threads/{id}`,
   `POST .../messages`) — this account had zero `Message`-kind items in its inbox, so the thread
   read/reply path is wired and `tsc -b` clean but has no real example behind it yet.
+
+**Findings from the larger real sample (117 items, pasted 2026-09-18):**
+- **`href` includes routes that don't resolve in this app** (`/analytics`, `/customers`,
+  `/intelligence/suggested-actions` — checked against `src/route/`, no matches). **Not a bug** —
+  matches the identical, already-documented situation for `GET /home`'s `cards[].href`
+  (`docs/home/build-plan.md`), and the codebase's established convention (`home-carousel.tsx`,
+  `notification-bell.tsx`) is to render the `Link` anyway; the app's `route-error.tsx` 404 handler
+  means an unresolved href degrades to a not-found page, not a crash. `NoticeView`'s "Open" link
+  follows the same convention on purpose.
+- **This account's `Systems` group is almost entirely unread, high-volume, near-duplicate
+  `DatasourcePipeline` progress logs** (87 `Notification`-kind items, e.g. repeated schema-sync
+  steps). `POST /inbox/read-all` ("mark all read") is still unwired — **explicitly deferred by the
+  user 2026-09-18** despite this real-world noise; revisit if it comes up again.
+- **`context` is a genuinely useful short label** (`"Analytics ready"`, `"Customer import
+  complete"`) distinct from the longer `summary` — currently rendered as a secondary line under
+  the message bubble in `NoticeView`; a future pass could promote it to a more prominent subtitle.
+  Not changed this pass — flagged as a polish idea, not a defect.
+- Every real `Finished`-kind item in the sample has `roomId: null` and `eventCount: 1` — the
+  doc's "digested per room" rule simply doesn't apply when there's no room to digest under, which
+  is consistent, not a discrepancy from the endpoint's documented behavior.
 
 **One real bug found and fixed during this pass:** `formatRoomActivity()` already returns a full
 phrase for some cases (`"Yesterday"`, `"just now"`), not just a bare count — the approval/notice
