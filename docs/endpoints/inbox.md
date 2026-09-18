@@ -112,14 +112,18 @@ Mutations show their real top-level shape including the envelope.
 - **Response:** `{ data: uuid (messageId), messages, succeeded }`.
 - **Used by:** wired into `ComposeView` (`src/pages/inbox/compose-view.tsx`) — real multi-recipient
   picker (`GET /workspace/members`, humans only) and real room-attach picker (`GET /rooms`), both
-  confirmed loading live data 2026-09-18. The send mutation itself wasn't fired live (would have
-  sent a real message to a real teammate).
-- **Status:** wired, UI-verified; mutation itself not live-fired.
+  confirmed loading live data 2026-09-18. Send confirmed live 2026-09-19 (the user's own test
+  messages).
+- **Status:** wired, live-verified.
 - **Notes:** `recipients` are stored member references — `human:{guid}` — people only; bringing an
   agent in means opening a room or starting an agent conversation instead, both of which keep
   something a direct message wouldn't (a room holds the evidence and decision trail, an agent
-  conversation holds the run). Somebody outside the workspace is refused. `roomId` is the optional
-  "About" attachment — it rides on the message, not the thread, so a later reply can attach a
+  conversation holds the run). Somebody outside the workspace is refused. **The sender is not
+  auto-added as a participant** — confirmed live 2026-09-19: a thread composed without the sender
+  in `recipients` never appears in the sender's own inbox afterward. `ComposeView` always appends
+  the signed-in member's own ref to `recipients` before sending, to guarantee this. `roomId` is
+  the optional "About" attachment — it rides on the message, not the thread, so a later reply can
+  attach a
   different room. `asDraft: true` saves without sending. A message addressed to three people is
   one conversation all three are in, not three threads.
 

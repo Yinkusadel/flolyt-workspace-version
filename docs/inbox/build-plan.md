@@ -37,7 +37,7 @@ logged-in Playwright pass, zero console errors throughout:
   as "mine" (right-aligned) — this was previously an unverified assumption. The thread landed in
   the `Mentions` group, not `NeedsYou`, for this self-thread case. No console errors.
 
-**Two bugs found live and fixed, both reported directly by the user from screenshots:**
+**Three bugs found live and fixed, all reported directly by the user from real testing:**
 1. **The `href`-based "Open" link looked like part of the app's topbar**, not tied to the notice
    below it, because it sat at the far right of the header row. Moved into the message body,
    right under the context line, next to where `AttachedRoomCard` renders.
@@ -47,6 +47,17 @@ logged-in Playwright pass, zero console errors throughout:
    still shown above their bubble (useful once a thread has more than two participants); the
    timestamp moved inline to the bottom-right of the bubble text itself (CSS `float`), same for
    both sides.
+3. **A thread composed without including yourself as a recipient never showed up in your own
+   inbox afterward** — found live 2026-09-19 (composed to "Abarai renji" alone, real API response
+   showed only the earlier self-included thread, not the new one). Root cause: `recipients` is the
+   literal participant list on this backend, not "everyone except me" — the sender isn't
+   auto-added as a participant just because they authored the message. Fixed in
+   `compose-view.tsx`'s `handleSend`: the signed-in member's own `ref` (matched from
+   `useGetWorkspaceMembers()` via `useAuth().user.id`) is always appended to `recipients` before
+   sending, deduped against anything manually picked. **Confirmed live**: composing to "testing
+   invitation" alone now creates a thread that immediately appears in the sender's own inbox under
+   `Mentions`. Not retroactive — the earlier "Abarai renji" thread sent before this fix landed is
+   still not visible to its own sender and there's no way to recover it from the frontend.
 
 **Findings from the larger real sample (117 items, pasted 2026-09-18):**
 - **`href` includes routes that don't resolve in this app** (`/analytics`, `/customers`,
