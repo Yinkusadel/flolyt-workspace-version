@@ -175,7 +175,7 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-line p-4">
+      <div className="p-4">
         <div className="flex items-end gap-2 rounded-card border border-line bg-paper px-3.5 py-2.5">
           <input
             value={draft}
