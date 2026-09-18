@@ -52,6 +52,7 @@ export const API_ENDPOINTS = {
     STEP_UP_VERIFY_CODE: `${USER_BASE_URL}/step-up/verify-code`,
     CREATE_COMPANY: `${API_BASE_URL}/api/v3/company`,
     GET_USER_BY_EMAIL: `${API_BASE_URL}/api/v3/users/registration/{email}`,
+    GET_ME: `${USER_BASE_URL}/me`,
     REFRESH_TOKEN: `${USER_BASE_URL}/token/refresh`,
     LOGOUT: `${USER_BASE_URL}/logout`,
     LOGOUT_ALL: `${USER_BASE_URL}/logout-all`,

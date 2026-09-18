@@ -14,7 +14,7 @@ import {
 } from "@/services/api/auth/verify-login-code";
 import { useAuth } from "@/utils/auth-context";
 import { COOKIE_KEYS, setCookie } from "@/utils/cookies";
-import useGetUserByEmail from "./use-get-user-by-email";
+import useGetCurrentUser from "./use-get-current-user";
 
 type FlolytJwt = {
   sub: string;
@@ -53,13 +53,12 @@ function decodeFlolytJwt(token: string) {
 
 interface UseVerifyLoginCodeOptions {
   challengeId: string;
-  email: string;
 }
 
-const useVerifyLoginCode = ({ challengeId, email }: UseVerifyLoginCodeOptions) => {
+const useVerifyLoginCode = ({ challengeId }: UseVerifyLoginCodeOptions) => {
   const navigate = useNavigate();
   const { setUser } = useAuth();
-  const [emailForFetch, setEmailForFetch] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
   const [onboardingRequired, setOnboardingRequired] = useState(false);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [jwtClaims, setJwtClaims] = useState<ReturnType<typeof decodeFlolytJwt>>(null);
@@ -90,7 +89,7 @@ const useVerifyLoginCode = ({ challengeId, email }: UseVerifyLoginCodeOptions) =
       setJwtClaims(claims);
       setOnboardingRequired(Boolean(data.onboardingRequired));
       setIsPlatformAdmin(data.isPlatformAdmin);
-      setEmailForFetch(email);
+      setIsVerified(true);
       toast.success("Signed in");
     },
     onError: (error) => {
@@ -98,7 +97,7 @@ const useVerifyLoginCode = ({ challengeId, email }: UseVerifyLoginCodeOptions) =
     },
   });
 
-  const { user } = useGetUserByEmail(emailForFetch ?? "");
+  const { user } = useGetCurrentUser(isVerified);
 
   useEffect(() => {
     if (!user || !jwtClaims) return;

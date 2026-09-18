@@ -8,6 +8,23 @@ source of truth for all of auth) — this file only covers what was newly built 
 convention: the step-up confirmation pair, needed to unblock onboarding's markets/revenue-model
 saves. See [[flolyt_governance_stepup_reminder]] for why this was deferred until now.
 
+## GET /api/users/auth/me
+
+- **Purpose:** Returns the signed-in user, read from the User record the token names.
+- **Auth:** authenticated.
+- **Response:** `data` = `{ id, email, firstName, lastName, phoneNumber, isActive, role, companyId, companyName, onboardingRequired }`.
+- **Used by:** `services/api/auth/get-current-user.ts`, `features/auth/use-get-current-user.ts`, wired into `features/auth/use-verify-login-code.ts` right after `login/verify-code` succeeds.
+- **Status:** wired.
+- **Notes:** Replaces `GET /api/v3/users/registration/{email}` for this post-login lookup — that
+  endpoint reads self-signup registrations only and 404s for anyone who joined by accepting a
+  team invitation. `companyId` is null and `onboardingRequired` is true until the workspace
+  association lands, which for a fresh invitee is a few seconds after they accept — this hook
+  still sources `companyId`/`companyName`/`onboardingRequired` from the JWT claim and the
+  verify-code response respectively, not from this call, so that lag doesn't matter here.
+  `services/api/auth/get-user-by-email.ts` (registration/{email}) is kept as-is for
+  `features/auth/use-sign-up.ts`'s "already exists" branch, which runs before login and has no
+  token to call `/me` with.
+
 ## POST /api/users/auth/step-up/request-code
 
 - **Purpose:** Emails a fresh confirmation code for one sensitive action, even to an
