@@ -38,6 +38,8 @@ export const LIFECYCLE_BASE_URL = `${API_BASE_URL}/api/v3/lifecycle`;
 export const ROOMS_BASE_URL = `${API_BASE_URL}/api/v3/rooms`;
 export const PLAYS_BASE_URL = `${API_BASE_URL}/api/v3/plays`;
 export const HOME_BASE_URL = `${API_BASE_URL}/api/v3/home`;
+export const INBOX_BASE_URL = `${API_BASE_URL}/api/v3/inbox`;
+export const SOURCES_BASE_URL = `${API_BASE_URL}/api/v3/sources`;
 
 export const API_ENDPOINTS = {
   USER: {
@@ -396,7 +398,23 @@ export const API_ENDPOINTS = {
     GET_PROMPTS: `${HOME_BASE_URL}/prompts`,
   },
 
+  INBOX: {
+    GET_INBOX: `${INBOX_BASE_URL}`,
+    MARK_INBOX_READ: `${INBOX_BASE_URL}/read`,
+    MARK_ALL_INBOX_READ: `${INBOX_BASE_URL}/read-all`,
+    SNOOZE_INBOX_ITEM: `${INBOX_BASE_URL}/snooze`,
+    CREATE_INBOX_THREAD: `${INBOX_BASE_URL}/threads`,
+    GET_INBOX_THREAD: `${INBOX_BASE_URL}/threads/{threadId}`,
+    REPLY_TO_INBOX_THREAD: `${INBOX_BASE_URL}/threads/{threadId}/messages`,
+    UPDATE_INBOX_DRAFT: `${INBOX_BASE_URL}/drafts/{messageId}`,
+    DELETE_INBOX_DRAFT: `${INBOX_BASE_URL}/drafts/{messageId}`,
+    SEND_INBOX_DRAFT: `${INBOX_BASE_URL}/drafts/{messageId}/send`,
+    GET_INBOX_APPROVAL: `${INBOX_BASE_URL}/approvals/{proposalId}`,
+  },
 
+  SOURCES: {
+    GET_SOURCES: `${SOURCES_BASE_URL}`,
+  },
 
   NOTIFICATIONS: {
     STREAM_NOTIFICATIONS: `${NOTIFICATIONS_BASE_URL}/stream`,

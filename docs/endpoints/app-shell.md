@@ -3,16 +3,18 @@
 Five routes pasted 2026-09-04 alongside the lifecycle batch under the same Scalar "Lifecycle" tag,
 but genuinely cross-cutting — not scoped to `/lifecycle/*`, each its own top-level path with no
 shared base. [`lifecycle.md`](lifecycle.md) flagged these as "file under their own domain doc when
-we get to those surfaces" back on 2026-08-31; this is that doc. No `API_ENDPOINTS` group exists for
-these yet (checked `src/config/apiConfig.ts` 2026-09-04) — add one (`APP_SHELL` or similar) when
-wiring starts.
+we get to those surfaces" back on 2026-08-31; this is that doc. `search` and `command-bar` still
+have no `API_ENDPOINTS` group; `home`, `inbox`, and `sources` each grew their own group instead
+(`HOME`, `INBOX`, `SOURCES` in `src/config/apiConfig.ts`) once real specs landed for them.
 
 **Auth:** Bearer JWT, every route · **Envelope:** `Result<T>` (`succeeded`, `data`, `messages`).
 
-Status: 7 endpoints documented from the real spec (5 on 2026-09-04, `/home/greeting` +
-`/home/prompts` added 2026-09-15 alongside a reshaped `/home`), 2 wired (`/home/prompts`,
-`/home` as of 2026-09-16) — `/home/greeting` stays scaffolded-but-unused by design (same reason
-as below). See [docs/home/build-plan.md](../home/build-plan.md) for the wiring pass,
+Status: `search` and `command-bar` remain documented-only (2 endpoints). `home`'s 3 endpoints are
+tracked here (2 wired as of 2026-09-16, `/home/greeting` scaffolded-but-unused by design). `inbox`
+moved to its own file, [inbox.md](inbox.md), on 2026-09-18 (11/11 documented, service/hook
+scaffolded, 0/11 wired) once its real spec turned out far bigger than a single-endpoint stub.
+`sources`' single endpoint got its real path and full scaffold the same day (see its entry below).
+See [docs/home/build-plan.md](../home/build-plan.md) for `home`'s wiring pass,
 [[api_endpoint_style]] for the service+hook shape.
 
 ## Endpoints
@@ -174,20 +176,12 @@ as below). See [docs/home/build-plan.md](../home/build-plan.md) for the wiring p
   (the coordinate it came from), so choosing one is the same call the leakage map itself would
   have made.
 
-### GET /api/flolyt/inbox
+### GET /inbox and the rest of the inbox domain
 
-- **Purpose:** Grouped by consequence, not by time — needs a decision / mentions / finished /
-  systems. A decision waiting on you outranks a just-finished agent run regardless of timestamps.
-- **Auth:** Bearer token.
-- **Response `data`:** `{ items: [{ group, sourceId, actorLabel, summary, context, occurredAtUtc, roomId, eventCount }], counts: [{ group, count }], total }`. `group` ∈ (seen) `"NeedsYou"` — full enum not yet confirmed from one example. `context`/`roomId` nullable.
-- **Used by:** not wired.
-- **Status:** documented.
-- **Notes:** Four rules: (1) an agent narrating its own tool calls never appears here — the room
-  log/tool-call audit exist for that; (2) an undecided proposal never ages out — a reminder that
-  scrolls away is an action nobody took and nobody was reminded of; (3) finished work is digested
-  **per room** — eleven runs in one room send one line about the eleven, not eleven items crowding
-  everything else; (4) read/dismissed system alerts are gone — an interruption already answered is
-  noise.
+Moved to its own file, **[inbox.md](inbox.md)**, on 2026-09-18 once the real spec pasted 11
+operations (10 of them brand new — threads, drafts, snooze, per-line read, the approval detail
+pane) under the real `/api/v3/inbox/*` path, correcting the `/api/flolyt/inbox` guess this stub
+used to carry. See that file for the full, current entries.
 
 ### GET /api/flolyt/command-bar
 
@@ -205,18 +199,21 @@ as below). See [docs/home/build-plan.md](../home/build-plan.md) for the wiring p
   `willReasonOver` is the same row shape as `GET /sources` below — see that entry's notes, this is
   the same underlying data surfaced as the command bar's "will reason over" strip.
 
-### GET /api/flolyt/sources
+### GET /sources
 
 - **Purpose:** What this workspace can and can't reason over — the room sources rail, and
   `command-bar`'s `willReasonOver` strip (same question, same row shape).
 - **Auth:** Bearer token.
-- **Response `data`:** `{ sources: [{ kind, label, status, lastSyncedAtUtc, recordCount, problem, contributingConnections, blocks }], connectedCount, totalCount }`.
-- **Used by:** not wired.
-- **Status:** documented.
-- **Notes:** A row is a **data domain**, not a connection — two warehouses both carrying engagement
-  events are one row; a connected warehouse carrying nothing usable does not read as healthy. Every
-  domain is returned, including ones nothing supplies — a missing row and a not-connected row are
-  different statements and only one is actionable. `blocks` is derived from the leakage map's own
-  account of what's unavailable, not written down separately. **No `read_only` status** — every
-  source Flolyt connects is read-only, so that flag would distinguish nothing (don't invent one
-  client-side).
+- **Response `data`:** `{ sources: [{ kind, label, status, lastSyncedAtUtc, recordCount, problem, contributingConnections, blocks }], connectedCount, totalCount }`. `kind` enum includes `"Unknown"`; `status` enum includes `"NotConnected"`.
+- **Used by:** service + hook ready (`src/services/api/sources/get-sources.ts` /
+  `src/features/sources/use-get-sources.ts`), not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** **Path corrected 2026-09-18** — real spec confirms this lives at top-level
+  `/api/v3/sources`, not `/api/flolyt/sources` as first guessed on 2026-09-04; shape itself was
+  already right. A row is a **data domain**, not a connection — two warehouses both carrying
+  engagement events are one row; a connected warehouse carrying nothing usable does not read as
+  healthy. Every domain is returned, including ones nothing supplies — a missing row and a
+  not-connected row are different statements and only one is actionable. `blocks` is derived from
+  the leakage map's own account of what's unavailable, not written down separately. **No
+  `read_only` status** — every source Flolyt connects is read-only, so that flag would distinguish
+  nothing (don't invent one client-side).
