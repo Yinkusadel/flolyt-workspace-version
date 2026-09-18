@@ -9,7 +9,7 @@ import type { AttachedRoom } from "@/pages/inbox/data";
 export function AttachedRoomCard({ room }: { room: AttachedRoom }) {
   return (
     <Link
-      to="/rooms"
+      to={room.roomId ? `/rooms/${room.roomId}` : "/rooms"}
       className="flex max-w-[75%] min-w-0 items-center gap-2.5 rounded-card border border-line bg-paper px-3 py-2 transition-colors hover:border-ink-4"
     >
       <MessagesSquare className="size-3.5 shrink-0 text-ink-3" />

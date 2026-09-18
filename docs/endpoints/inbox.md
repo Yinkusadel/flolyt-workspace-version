@@ -9,13 +9,15 @@ candidate to wire against an existing mocked screen, not a page waiting to be bu
 
 **Auth:** Bearer JWT, every route · **Envelope:** `Result<T>` (`data`, `messages`, `succeeded`).
 
-**Status: 11/11 operations documented 2026-09-18, service+hook scaffolded for all 11, 0/11 wired
-into a page.** `POST /inbox/read`, `POST /inbox/read-all`, `POST /inbox/snooze`,
-`POST /inbox/threads`, `GET /inbox/threads/{threadId}`,
-`POST /inbox/threads/{threadId}/messages`, `PUT`/`DELETE /inbox/drafts/{messageId}`,
-`POST /inbox/drafts/{messageId}/send`, and `GET /inbox/approvals/{proposalId}` are all new;
-`GET /inbox` itself is a full-shape replacement of the earlier stub (adds `filter`, `isRead`,
-`mentionsYou`, `href`, the real `kind` enum, and per-group `counts`).
+**Status: 11/11 documented, 9/11 wired into `/inbox` (2026-09-18), all 9 UI-confirmed live against
+real data — `GET /inbox`, `POST /read`, `POST /snooze` (UI wired, not actually fired live to
+avoid deciding a real proposal), `POST /threads`, `GET /threads/{id}`* , `POST
+/threads/{id}/messages`*, and `GET /approvals/{proposalId}` (including its accept/hold/reject
+actions, via the `ai-proposals` domain — see that entry's notes below and the "not fired live"
+caveat). `*` = wired and rendered without error, but this test account had no `Message`-kind
+items, so the thread read/reply path itself has no live example yet. `POST /read-all` and the
+three `/drafts/*` endpoints are still service/hook-only, not wired — drafts intentionally, per the
+"no way to list your own drafts" gap in docs/inbox/build-plan.md.
 
 ## Per-endpoint entries
 
@@ -35,10 +37,16 @@ Mutations show their real top-level shape including the envelope.
 - **Request:** query `filter?` — `All` | `Unread` | `Mentions` | `Approvals`.
 - **Response `data`:** `{ items: InboxItem[], counts: [{ group, count }], unread: number, total: number }` where
   `InboxItem = { group: string, kind, sourceId: uuid, isRead: boolean, mentionsYou: boolean, actorLabel: string, summary: string, context: string | null, occurredAtUtc: string, roomId: uuid | null, href: string | null, eventCount: number }`.
-  `group` seen so far: `"NeedsYou"` — full enum not yet confirmed from one example.
-- **Used by:** service + hook ready (`src/services/api/inbox/get-inbox.ts` /
-  `src/features/inbox/use-get-inbox.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+  **`group` confirmed live 2026-09-18** (`ichigo@yopmail.com`): `NeedsYou`, `Mentions`, `Finished`,
+  `Systems` — all four came back in one `counts[]` response (`Mentions` at 0). Real observed
+  `kind`s for that account: `Proposal` (2, both in `NeedsYou`), `Finished` (28, in `Finished`),
+  `Notification` (87, in `Systems`) — confirms `kind` and `group` are independent axes, not a
+  kind→group lookup (a `Notification`-kind item landed in the `Systems` group, not a `Notification`
+  group).
+- **Used by:** wired into `/inbox` (`src/pages/inbox/`), live-verified 2026-09-18 — list pane,
+  grouped sections, filter tabs, read-on-select all confirmed against real data. `Message`-kind
+  rows (thread view) were **not** exercised live — this account had none in its inbox.
+- **Status:** wired, live-verified (except the `Message`/thread path — no live example yet).
 - **Notes:** Four rules hold: (1) an agent narrating its own tool calls never appears — the room
   log/tool-call audit exist for that; (2) an undecided proposal never ages out of the list — a
   reminder that scrolls away is an action nobody took and nobody was reminded of; (3) finished
@@ -55,8 +63,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** body `{ kind, sourceId: uuid }`.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`mark-inbox-read.ts` / `use-mark-inbox-read.ts`), not wired.
-- **Status:** service/hook ready, not wired.
+- **Used by:** wired into `/inbox` (`src/pages/inbox/index.tsx`'s row-select handler),
+  live-verified 2026-09-18 — the unread badge count dropped by one on each real select.
+- **Status:** wired, live-verified.
 - **Notes:** Read state is keyed on `kind` + `sourceId` together, not `sourceId` alone — a line's
   group can change (an obligation nobody answered escalates into `NeedsYou`) while what it *is*
   can't, and keying on the half that moves would quietly forget somebody had already read it.
@@ -83,9 +92,10 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** body `{ kind, sourceId: uuid, untilUtc: string | null }`.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`snooze-inbox-item.ts` / `use-snooze-inbox-item.ts`), not
-  wired.
-- **Status:** service/hook ready, not wired.
+- **Used by:** wired into the approval view's "Snooze" menu (3 preset durations); UI confirmed
+  rendering live 2026-09-18 but the mutation itself wasn't fired against a real proposal (would
+  have snoozed a live item out of the account's actual inbox).
+- **Status:** wired, UI-verified; mutation itself not live-fired.
 - **Notes:** Not a read — reading says you've seen it, snoozing says you've seen it and it isn't
   for now, and marking it read to get it out of the way is the wrong record because the line
   never comes back. A snoozed line leaves the list and its counters together, and returns on its
@@ -100,9 +110,11 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** body `{ recipients: string[], body: string, asDraft?: boolean, roomId?: uuid | null }`.
 - **Response:** `{ data: uuid (messageId), messages, succeeded }`.
-- **Used by:** service + hook ready (`create-inbox-thread.ts` / `use-create-inbox-thread.ts`), not
-  wired.
-- **Status:** service/hook ready, not wired.
+- **Used by:** wired into `ComposeView` (`src/pages/inbox/compose-view.tsx`) — real multi-recipient
+  picker (`GET /workspace/members`, humans only) and real room-attach picker (`GET /rooms`), both
+  confirmed loading live data 2026-09-18. The send mutation itself wasn't fired live (would have
+  sent a real message to a real teammate).
+- **Status:** wired, UI-verified; mutation itself not live-fired.
 - **Notes:** `recipients` are stored member references — `human:{guid}` — people only; bringing an
   agent in means opening a room or starting an agent conversation instead, both of which keep
   something a direct message wouldn't (a room holds the evidence and decision trail, an agent
@@ -119,9 +131,9 @@ Mutations show their real top-level shape including the envelope.
 - **Response `data`:** `{ threadId, participants: string[], messages: InboxThreadMessage[] }` where
   `InboxThreadMessage = { id: uuid, sender: string, senderName: string, isAgent: boolean, body: string, roomId: uuid | null, room: InboxThreadRoom | null, sentAtUtc: string }`
   and `InboxThreadRoom = { id: uuid, title: string, status: string, isRestricted: boolean, stageLabel: string | null, conditionLabel: string | null, currency: string | null, amountAtRisk: number | null }`.
-- **Used by:** service + hook ready (`get-inbox-thread.ts` / `use-get-inbox-thread.ts`), not
-  wired.
-- **Status:** service/hook ready, not wired.
+- **Used by:** wired into `ThreadView` (`src/pages/inbox/thread-view.tsx`) — not live-verified,
+  this account's inbox had no `Message`-kind item to open.
+- **Status:** wired, `tsc -b` clean; not live-verified.
 - **Notes:** `senderName` is resolved at read time, not stored — a name frozen at write would be
   one the roster has since corrected (renames happen for both agents and people). Somebody who's
   left the workspace reads as `"Someone no longer here"`, and their messages stay — deleting what
@@ -136,9 +148,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `threadId`; body `{ body: string, asDraft?: boolean, roomId?: uuid | null }`.
 - **Response:** `{ data: uuid (messageId), messages, succeeded }`.
-- **Used by:** service + hook ready (`reply-to-inbox-thread.ts` / `use-reply-to-inbox-thread.ts`),
-  not wired.
-- **Status:** service/hook ready, not wired.
+- **Used by:** wired into `ThreadView`'s reply box — not live-verified alongside
+  `GET /threads/{id}` above (same reason: no live thread to reply into).
+- **Status:** wired, `tsc -b` clean; not live-verified.
 - **Notes:** Recipients are the thread, not the replier's choice — whoever was addressed or has
   spoken gets it, minus whoever is writing. Letting a replier re-pick would let them quietly drop
   a participant who'd have no way of noticing. An agent that has spoken into the thread is not
@@ -240,9 +252,15 @@ Mutations show their real top-level shape including the envelope.
     }>;
   }
   ```
-- **Used by:** service + hook ready (`get-inbox-approval.ts` / `use-get-inbox-approval.ts`), not
-  wired.
-- **Status:** service/hook ready, not wired.
+- **Used by:** wired into `ApprovalView` (`src/pages/inbox/approval-view.tsx`), live-verified
+  2026-09-18 against a real room-less proposal (`room: null`, `evidenceCount: 0`) — the fallback
+  copy and the `framing.reach`-based "Customers" stat both rendered correctly. Accept/Hold/Reject
+  are wired to the **`ai-proposals` domain** (`useDecideAiProposal`, see
+  [ai-proposals.md](ai-proposals.md)), not a same-domain action — see docs/inbox/build-plan.md's
+  correction. Buttons rendered correctly live but weren't clicked (would have decided a real
+  pending proposal). Every proposal-decide success handler also invalidates the `["inbox"]` query
+  client-side, since `useDecideAiProposal` only invalidates `["ai-proposals"]` on its own.
+- **Status:** wired, live-verified (read side); decide actions UI-verified, not live-fired.
 - **Notes:** One call rather than four, on purpose — separate calls would render the argument
   before the evidence that qualifies it, and the dissent last of all, which puts the objection in
   front of the reader after they've already made up their mind. Each finding's `badge` is mapped

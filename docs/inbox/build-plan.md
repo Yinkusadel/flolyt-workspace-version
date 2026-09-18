@@ -1,18 +1,69 @@
 # Inbox — build plan
 
-Not wired yet. This is the audit + roadmap from the 2026-09-18 pass that documented and
-scaffolded every real `/api/v3/inbox/*` endpoint (see [inbox.md](../endpoints/inbox.md)) and
-compared them against the current mock-only `/inbox` (`src/pages/inbox/`, built from
-`flolyt-figma-designs/New-pages-pattern/inbox/inbox/svg/01–05`). Nothing in `src/pages/inbox/`
-has been touched yet — this doc exists so the audit survives even if the chat that produced it
-doesn't.
+**Steps 1–7 wired and live-verified 2026-09-18** (drafts, step 8, stays blocked — see below).
+`src/pages/inbox/` was fully rebuilt against the real endpoints in the same session that wrote
+the audit below; the audit section is kept as-is since it's still the record of what changed and
+why, not just history.
+
+## What's live as of 2026-09-18
+
+Verified against `ichigo@yopmail.com`'s real inbox (117 items: 2 `Proposal`, 28 `Finished`, 87
+`Notification`; groups `NeedsYou`/`Finished`/`Systems` populated, `Mentions` present at 0) via a
+logged-in Playwright pass, zero console errors throughout:
+
+- **List pane** — real grouped sections (dynamic on whatever `group` values come back, not a
+  fixed 3-bucket layout), per-`kind` row styling, tab badges (`Unread`, `Approvals`) computed from
+  a parallel `filter: "All"` fetch so they stay stable across tab switches, `Approvals`/`Mentions`
+  tabs confirmed server-filtering correctly (`Mentions` showed the real "No mentions" empty state,
+  not the old hard-stubbed one).
+- **Read-on-select** — confirmed live: the `Unread` badge decremented by one on each real row
+  click (`POST /inbox/read` firing correctly).
+- **Approval view** — confirmed live against a real room-less proposal (`room: null`): the
+  "Raised outside any room" fallback rendered, `Customers` fell back to `framing.reach` correctly,
+  `At risk` showed `—`. Accept/Hold/Reject render correctly (wired to the `ai-proposals` domain,
+  see the correction below) and the Snooze menu opens with 3 preset durations — **none of the
+  four actions were actually clicked**, to avoid deciding/snoozing a real pending proposal in a
+  live account without being asked to.
+- **Compose** — multi-recipient picker confirmed loading real workspace members (excluding
+  already-added ones as you add more) and a real room-attach picker (this account had 0 open
+  rooms, so it correctly showed "No results" rather than erroring). Send itself wasn't fired, for
+  the same reason as above.
+- **Notice view** — confirmed live for `Finished`/`Notification` kind items.
+- **Not exercised live:** thread view + reply (`GET /inbox/threads/{id}`,
+  `POST .../messages`) — this account had zero `Message`-kind items in its inbox, so the thread
+  read/reply path is wired and `tsc -b` clean but has no real example behind it yet.
+
+**One real bug found and fixed during this pass:** `formatRoomActivity()` already returns a full
+phrase for some cases (`"Yesterday"`, `"just now"`), not just a bare count — the approval/notice
+headers were unconditionally appending `" ago"`, producing `"Yesterday ago"`. Fixed by dropping
+the appended `" ago"` in both files, matching how the list pane already used the formatter bare.
+
+**One known, unfixed minor gap:** the compose recipient picker doesn't exclude the signed-in user
+from their own "add a teammate" list (confirmed live — `"Ichigo Kursaki"`, the logged-in account,
+appeared as a pickable option). Not fixed because excluding it needs matching the signed-in
+user's `auth-context` id against a workspace member's `ref` (`human:{guid}`), and the exact ref
+format isn't confirmed (same open question as the thread `isMe()` check below) — guessing wrong
+would silently hide the wrong person instead. Low-priority since picking yourself is harmless, just
+odd.
+
+**`GET /inbox`'s `group` enum is now confirmed, not guessed:** `NeedsYou`, `Mentions`, `Finished`,
+`Systems` (see [docs/endpoints/inbox.md](../endpoints/inbox.md)) — and `kind` and `group` are
+confirmed independent axes: a `Notification`-kind item landed in the `Systems` group, not a
+`Notification` group.
+
+**Assumption still unverified, flagged for whenever a `Message`-kind item shows up live:** thread
+messages carry no "who am I" field, so `ThreadView`'s `isMe()` check matches a message's `sender`
+(a `human:{guid}` ref) against `useAuth().user.id` (a bare guid) via `sender === userId ||
+sender.endsWith(":" + userId)`. Untested — could misattribute bubble alignment if the ref format
+turns out different.
 
 ## Endpoints
 
-11/11 documented, service+hook scaffolded for all 11, 0/11 wired. Full contracts in
-[docs/endpoints/inbox.md](../endpoints/inbox.md). `GET /sources`'s path was also corrected as
-part of the same pass (path only, see [app-shell.md](../endpoints/app-shell.md)) — unrelated to
-inbox itself, noted here only because it landed in the same commit.
+11/11 documented, 9/11 wired (`read-all` + the 3 draft endpoints are the exceptions — see
+"Implementation roadmap" below). Full contracts in [docs/endpoints/inbox.md](../endpoints/inbox.md).
+`GET /sources`'s path was also corrected as part of the original pass (path only, see
+[app-shell.md](../endpoints/app-shell.md)) — unrelated to inbox itself, noted here only because it
+landed in the same commit.
 
 ## The core finding: design to the endpoint's kind/group taxonomy, not the old mock
 
@@ -127,7 +178,8 @@ no inline action) confirmed that was the intended design. **That was wrong; chec
   (or at least `useDecideAiProposal()`) for real inline Accept / Hold / Reject.
 - The old inbox's section layout (`Needs a decision from you` / `Someone mentioned you` /
   `Systems`) is also a useful sanity check for what `GET /inbox`'s `group` values are likely meant
-  to render as — matches the "grouped by consequence" gap flagged above.
+  to render as — matches the "grouped by consequence" gap flagged above. **Confirmed live
+  2026-09-18: `Systems` is the literal real `group` value**, not just a naming coincidence.
 
 ## Flagged for later: no way to list your own saved drafts
 
@@ -147,34 +199,46 @@ session/tab rather than being durably resumable.
 
 ## Implementation roadmap
 
-Ordered so each step is checkable against a real screen before moving to the next. Nothing below
-is started.
+Ordered so each step is checkable against a real screen before moving to the next.
 
-- [ ] **1. List pane redesign** — replace the `thread`/`notice` binary with the real 8-value
-      `kind` enum; add grouped sections driven by `group` (mirror the old inbox's `Needs a
-      decision from you` / `Someone mentioned you` / `Systems` layout as a starting point); wire
-      `GET /inbox` with the `filter` param; remove the hard-stubbed empty `mentions` filter.
-- [ ] **2. Read/snooze actions** — wire row-select → `POST /inbox/read`, "Mark all read" →
-      `POST /inbox/read-all`, snooze affordance → `POST /inbox/snooze` (needs an `untilUtc`
-      picker UI that doesn't exist yet).
-- [ ] **3. Thread view** — wire `GET /inbox/threads/{threadId}`; resolve the avatar-data gap
-      (roster lookup for `initials`/`team` from `sender`); compose the `AttachedRoomCard` display
-      from the structured `room` object instead of a pre-formatted string; handle
-      multi-participant headers and departed members.
-- [ ] **4. Thread reply** — wire `POST /inbox/threads/{threadId}/messages`.
-- [ ] **5. Approval view rebuild** — wire `GET /inbox/approvals/{proposalId}`; replace "Open the
-      room to approve" with real inline Accept / Hold / Reject via `<ProposalCard>` /
-      `useDecideAiProposal()` (see correction above); render `figuresAreStated` as a visible
-      caveat; support multiple `dissent` entries; add a `room: null` fallback state; format
-      `amountAtRisk`/`population` client-side.
-- [ ] **6. Compose rebuild** — multi-recipient `To` field (array, not single slot) wired to
-      `POST /inbox/threads`; real room-attach picker (rooms domain) in place of the hardcoded
-      toggle; real recipient picker (teams domain) in place of the placeholder text.
-- [ ] **7. Notice view** — per-`kind` icon/copy variants for `Assignment/Investigation/Obligation/
-      Finished/Notification`, replacing the single generic `"agent"` bucket; confirm no
-      click-through fetch is actually needed (render straight from the `GET /inbox` list item).
-- [ ] **8. Drafts** — blocked on the missing "list my drafts" capability; revisit per the flagged
-      issue above before starting.
+- [x] **1. List pane redesign** — wired + live-verified 2026-09-18. Replaced the `thread`/`notice`
+      binary with the real 8-value `kind` enum (`src/pages/inbox/kind.ts`); sections are built
+      dynamically from whatever `group` values the response actually carries, not a fixed list;
+      `GET /inbox` wired with the `filter` param; the hard-stubbed empty `mentions` filter is gone
+      (confirmed live: real "No mentions" empty state from the API, not the old client stub).
+- [x] **2. Read/snooze actions** — wired 2026-09-18. Row-select → `POST /inbox/read`
+      (live-verified: unread badge decremented on real clicks). Snooze → `POST /inbox/snooze` from
+      the approval view's menu (3 preset durations — 1 hour / tomorrow morning / next week — since
+      there's no existing duration-picker component; UI-verified, mutation not live-fired).
+      `POST /inbox/read-all` ("mark all read") **not wired** — no "mark all read" affordance exists
+      in the new list pane yet; add one if/when needed.
+- [x] **3. Thread view** — wired 2026-09-18, `tsc -b` clean, **not live-verified** (no
+      `Message`-kind item in the test account). Avatar-data gap resolved via `initialsFromName`/
+      `agentInitialsFromName` fallbacks (no roster lookup needed — real usage already has this
+      exact "bare name, no initials" pattern elsewhere in the app). `AttachedRoomCard` now built
+      from the structured `room` object via `formatAttachedRoom()`. Multi-participant header
+      derives its title from the distinct non-me senders already in the loaded messages. Departed
+      members aren't specially handled — `senderName` renders whatever the API sends, including
+      `"Someone no longer here"` if that's what comes back; no client-side special-casing needed.
+- [x] **4. Thread reply** — wired 2026-09-18 alongside step 3, same not-live-verified caveat.
+- [x] **5. Approval view rebuild** — wired + live-verified 2026-09-18 against a real room-less
+      proposal. Real inline Accept / Hold / Reject via `useDecideAiProposal()` (not
+      `<ProposalCard>` itself — that component is a compact card-that-opens-a-dialog, which
+      doesn't fit a page that's already the expanded detail view; the hook is reused, the modal
+      isn't). `figuresAreStated` renders as a visible amber caveat. Multiple `dissent` entries
+      supported (mapped, not single). `room: null` fallback confirmed live. Snooze menu added
+      (see step 2). Each decide action manually invalidates `["inbox"]` too, since
+      `useDecideAiProposal` only invalidates `["ai-proposals"]` on its own.
+- [x] **6. Compose rebuild** — wired 2026-09-18. Multi-recipient `To` field (array) confirmed live
+      against real `GET /workspace/members` data; real room-attach picker confirmed live against
+      real `GET /rooms` data (correctly showed "No results" for this account's 0 open rooms).
+      "Save draft" removed entirely rather than wired or faked, per the drafts deferral below.
+- [x] **7. Notice view** — wired + live-verified 2026-09-18 for `Finished`/`Notification` kinds.
+      Renders straight from the `GET /inbox` list item, no click-through fetch, as expected —
+      confirmed there's genuinely no per-kind detail endpoint to call. `Mention` kind has an icon
+      variant built (`AtSign`) but wasn't exercised live (0 mentions in the test account).
+- [ ] **8. Drafts** — still blocked on the missing "list my drafts" capability; revisit per the
+      flagged issue above before starting. Explicitly out of scope for this pass per the user.
 
 ## Status tracking
 
