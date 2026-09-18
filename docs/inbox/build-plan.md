@@ -1,11 +1,12 @@
 # Inbox — build plan
 
-**Steps 1–7 wired and live-verified 2026-09-18** (drafts, step 8, stays blocked — see below).
+**Steps 1–7 wired and live-verified 2026-09-18/19** (drafts, step 8, stays blocked — see below).
 `src/pages/inbox/` was fully rebuilt against the real endpoints in the same session that wrote
 the audit below; the audit section is kept as-is since it's still the record of what changed and
-why, not just history.
+why, not just history. **Two known, unfixed issues are open as of 2026-09-19** — read "Two open
+issues found live" below before touching compose or the list pane again.
 
-## What's live as of 2026-09-18
+## What's live as of 2026-09-19
 
 Verified against `ichigo@yopmail.com`'s real inbox (117 items: 2 `Proposal`, 28 `Finished`, 87
 `Notification`; groups `NeedsYou`/`Finished`/`Systems` populated, `Mentions` present at 0) via a
@@ -58,6 +59,56 @@ logged-in Playwright pass, zero console errors throughout:
    invitation" alone now creates a thread that immediately appears in the sender's own inbox under
    `Mentions`. Not retroactive — the earlier "Abarai renji" thread sent before this fix landed is
    still not visible to its own sender and there's no way to recover it from the frontend.
+
+**Further thread-input polish, requested directly by the user 2026-09-19 (not bugs, design
+changes):**
+1. **Removed the divider line above the thread reply box** (`border-t border-line` on the
+   wrapping `<div>`) — the user pointed at a screenshot showing a stray horizontal line above the
+   input and asked for it gone.
+2. **Redesigned the thread reply input to match a ChatGPT/ WhatsApp-style reference** the user
+   supplied: an auto-growing pill (`<textarea>` with a scroll-driven height effect, capped at
+   128px, swapped in for the old fixed-height `<input>`), `+` and Send moved **outside** the pill
+   as their own circular buttons (`bg-ultra-bg`/`bg-ultra`), and the old `Paperclip`/`Link2` attach
+   icons removed and replaced with a single `Smile` (emoji) icon inside the pill — the user was
+   explicit that of the reference's several inner icons, only the emoji one should stay.
+   Enter-to-send now respects Shift+Enter for a newline (needed once the input can hold multiple
+   lines). Confirmed live: pill grows correctly across wrapped lines, emoji icon stays anchored
+   bottom-right, `+`/Send stay outside as separate circles. Both the `+` and emoji buttons are
+   **decorative only, no handlers** — same as the `Paperclip`/`Link2` buttons they replaced; adding
+   real attach/emoji behavior wasn't asked for.
+
+**Two open issues found live 2026-09-19, diagnosed but explicitly NOT fixed yet (user said "don't
+fix yet, just answer me") — read before touching compose/list-pane again:**
+1. **The list pane shows your own name instead of the other participant's, for `Message`-kind
+   rows.** Confirmed via real API responses: composing to "Abarai renji" produced a list item with
+   `actorLabel: "Ichigo Kursaki"` (the sender, i.e. the signed-in user) even though "Abarai renji"
+   is who the row should identify from the viewer's perspective — every messaging app (WhatsApp
+   reference included) shows the *other* person in the list, not yourself. Root cause: `actorLabel`
+   on `GET /inbox`'s list item appears to mean "whoever last acted" (sender of the last message),
+   not "who you're talking to" — for `Finished`/`Notification` kinds this is correct (`"Flolyt"`,
+   `"DatasourcePipeline"` are exactly who should show), but for `Message` it's the wrong field to
+   read as "the person in this row." **No cheap fix exists client-side**: `GET /inbox`'s list items
+   carry no participant list, only `GET /inbox/threads/{id}` (a separate per-thread fetch) does.
+   Real fix options: (a) fetch each `Message`-kind thread's detail just to resolve the counterpart
+   name for its list row (N+1-ish, not great), (b) ask the backend for a proper "counterpart" field
+   on the list item for `Message` kind (cleanest), (c) some in-between caching trick using threads
+   already opened. Not attempted this pass — diagnosis only.
+2. **Composing a new message to someone you already have an open thread with creates a second,
+   separate thread instead of continuing the first one.** Confirmed via real API responses: two
+   `POST /inbox/threads` calls to the exact same 2-person recipient set ("Ichigo Kursaki" +
+   "Abarai renji"), seconds apart, produced two different `threadId`s, each with exactly one
+   message — not one thread with two messages. **Diagnosed as a backend issue, not frontend**: the
+   client never learns whether a call created a new thread or joined an existing one (the response
+   is just an id), so it can't prevent this from its side even in principle; and even if it wanted
+   to guess client-side, `GET /inbox`'s list items don't carry participant info to check against
+   (same root cause as issue 1 above — `actorLabel` isn't a participant list). The supporting
+   evidence for "this should behave like one ongoing thread per person": `roomId` attaches
+   **per-message**, not per-thread, in this API — which only makes sense if a single thread is
+   meant to persist across many topics/rooms over time, not get re-created per topic. Real fix
+   needs the backend to treat `POST /inbox/threads` as find-or-reuse (an existing thread for that
+   exact participant set gets reused) rather than always-create. A client-side patch (name-matching
+   against currently-loaded threads before offering "New message") was discussed as a rough
+   mitigation, not a real fix, and wasn't asked for.
 
 **Findings from the larger real sample (117 items, pasted 2026-09-18):**
 - **`href` includes routes that don't resolve in this app** (`/analytics`, `/customers`,
@@ -270,7 +321,10 @@ Ordered so each step is checkable against a real screen before moving to the nex
       senders already in the loaded messages. Departed members aren't specially handled —
       `senderName` renders whatever the API sends, including `"Someone no longer here"` if that's
       what comes back; no client-side special-casing needed. Bubble styling corrected 2026-09-19
-      per a user-supplied reference screenshot — see "Two bugs found live" above.
+      per a user-supplied reference screenshot — see "Three bugs found live" above. Reply input
+      redesigned 2026-09-19 (auto-growing pill, outside `+`/Send, emoji-only inner icon) — see
+      "Further thread-input polish" above. **Open issue, not fixed**: list rows for this kind show
+      the wrong name (yours, not the other participant's) — see "Two open issues found live" above.
 - [x] **4. Thread reply** — wired 2026-09-18, live-verified 2026-09-19 alongside step 3.
 - [x] **5. Approval view rebuild** — wired + live-verified 2026-09-18 against a real room-less
       proposal. Real inline Accept / Hold / Reject via `useDecideAiProposal()` (not
@@ -284,6 +338,10 @@ Ordered so each step is checkable against a real screen before moving to the nex
       against real `GET /workspace/members` data; real room-attach picker confirmed live against
       real `GET /rooms` data (correctly showed "No results" for this account's 0 open rooms).
       "Save draft" removed entirely rather than wired or faked, per the drafts deferral below.
+      2026-09-19: fixed the sender-not-a-participant bug (see "Three bugs found live" above).
+      **Open issue, not fixed**: composing to someone you already have a thread with creates a
+      duplicate thread instead of continuing the existing one — diagnosed as a backend gap, see
+      "Two open issues found live" above.
 - [x] **7. Notice view** — wired + live-verified 2026-09-18 for `Finished`/`Notification` kinds.
       Renders straight from the `GET /inbox` list item, no click-through fetch, as expected —
       confirmed there's genuinely no per-kind detail endpoint to call. `Mention` kind has an icon

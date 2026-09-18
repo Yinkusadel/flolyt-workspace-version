@@ -17,7 +17,11 @@ all confirmed against real responses and, for the mutations, real successful sen
 is UI-verified but not actually fired live, to avoid deciding/snoozing a real pending proposal
 without being asked to. `POST /read-all` and the three `/drafts/*` endpoints are still
 service/hook-only, not wired — drafts intentionally, per the "no way to list your own drafts" gap
-in docs/inbox/build-plan.md.
+in docs/inbox/build-plan.md. **Two open issues found live 2026-09-19, not yet fixed** — see the
+`GET /inbox` and `POST /threads` entries below, and docs/inbox/build-plan.md's "Two open issues
+found live" section for the full write-up: (1) `Message`-kind list rows show your own name instead
+of who you're talking to; (2) composing to someone you already have a thread with creates a
+duplicate thread instead of continuing it (looks like a backend gap).
 
 ## Per-endpoint entries
 
@@ -43,10 +47,17 @@ Mutations show their real top-level shape including the envelope.
   `Notification` (87, in `Systems`) — confirms `kind` and `group` are independent axes, not a
   kind→group lookup (a `Notification`-kind item landed in the `Systems` group, not a `Notification`
   group).
-- **Used by:** wired into `/inbox` (`src/pages/inbox/`), live-verified 2026-09-18 — list pane,
-  grouped sections, filter tabs, read-on-select all confirmed against real data. `Message`-kind
-  rows (thread view) were **not** exercised live — this account had none in its inbox.
-- **Status:** wired, live-verified (except the `Message`/thread path — no live example yet).
+- **Used by:** wired into `/inbox` (`src/pages/inbox/`), live-verified 2026-09-18/19 — list pane,
+  grouped sections, filter tabs, read-on-select, and (once real `Message`-kind items existed from
+  2026-09-19 on) the thread row path too, all confirmed against real data.
+- **Status:** wired, live-verified. **Open issue, not fixed** — confirmed live 2026-09-19:
+  `actorLabel` on a `Message`-kind item is the *sender* of the item (whoever last acted), not "the
+  other participant" — so a row for a thread you started and last replied in shows your own name
+  instead of who you're talking to. Fine for every other `kind` (`"Flolyt"`, `"DatasourcePipeline"`
+  etc. are exactly who should show), wrong specifically for `Message`. No participant list exists
+  on the list item to derive the correct name from client-side — only `GET /threads/{id}` (a
+  separate per-thread fetch) has `participants`. See docs/inbox/build-plan.md's "Two open issues
+  found live" for the full write-up and fix options.
 - **Notes:** Four rules hold: (1) an agent narrating its own tool calls never appears — the room
   log/tool-call audit exist for that; (2) an undecided proposal never ages out of the list — a
   reminder that scrolls away is an action nobody took and nobody was reminded of; (3) finished
@@ -123,9 +134,15 @@ Mutations show their real top-level shape including the envelope.
   in `recipients` never appears in the sender's own inbox afterward. `ComposeView` always appends
   the signed-in member's own ref to `recipients` before sending, to guarantee this. `roomId` is
   the optional "About" attachment — it rides on the message, not the thread, so a later reply can
-  attach a
-  different room. `asDraft: true` saves without sending. A message addressed to three people is
-  one conversation all three are in, not three threads.
+  attach a different room. `asDraft: true` saves without sending. A message addressed to three
+  people is one conversation all three are in, not three threads. **Open issue, not fixed —
+  confirmed live 2026-09-19:** calling this twice with the exact same recipient set creates two
+  separate threads rather than reusing the existing one (two different `threadId`s, each with one
+  message, from two sends seconds apart to the same person). This looks like a backend gap, not
+  something the frontend can prevent — the response here never says whether a new thread was
+  created or an existing one was joined, so the client has no way to know or intervene; the
+  proper fix is this endpoint treating `recipients` as find-or-reuse rather than always-create.
+  See docs/inbox/build-plan.md's "Two open issues found live" for the full write-up.
 
 ### GET /inbox/threads/{threadId}
 
