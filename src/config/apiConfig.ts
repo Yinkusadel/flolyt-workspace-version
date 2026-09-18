@@ -2,46 +2,57 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // src/config/apiConfig.ts
 export const WAITLIST_BASE_URL = import.meta.env.VITE_WAITLIST_BASE_URL || "http://localhost:5139";
 
-export const USER_BASE_URL = `${API_BASE_URL}/api/users/auth`;
-export const WORKFLOW_BASE_URL = `${API_BASE_URL}/api/flolyt/campaigns/{campaignId}/workflow`;
-export const SEGMENT_BASE_URL = `${API_BASE_URL}/api/flolyt/segment`;
-export const MESSAGING_BASE_URL = `${API_BASE_URL}/api/flolyt/messaging`;
-export const CUSTOMER_BASE_URL = `${API_BASE_URL}/api/flolyt/customers`;
-export const CAMPAIGN_BASE_URL = `${API_BASE_URL}/api/flolyt/campaigns`;
-export const TEAMS_BASE_URL = `${API_BASE_URL}/api/teams`;
-export const WALLET_BASE_URL = `${API_BASE_URL}/api/payments/wallets`;
-export const EVENT_BASE_URL = `${API_BASE_URL}/api/flolyt/events`;
-export const COMPANY_BASE_URL = `${API_BASE_URL}/api/flolyt/company`;
-export const DATASOURCES_BASE_URL = `${API_BASE_URL}/api/flolyt/datasources`;
-export const DATA_PLATFORM_BASE_URL = `${API_BASE_URL}/api/flolyt/data-platform`;
-export const APIKEY_BASE_URL = `${API_BASE_URL}/api/flolyt/api-key`;
-export const ANALYTICS_BASE_URL = `${API_BASE_URL}/api/analytics`;
-export const WORKFLOWSTUDIO_BASE_URL = `${API_BASE_URL}/api/flolyt/workflows/studio`;
-export const CHANNELS_BASE_URL = `${API_BASE_URL}/api/flolyt/channels`;
-export const CREDENTIALS_BASE_URL = `${API_BASE_URL}/api/flolyt/`;
-export const PERSONALIZATION_BASE_URL = `${API_BASE_URL}/api/flolyt/personalization`;
-export const COMMAND_CENTER_BASE_URL = `${API_BASE_URL}/api/flolyt/command-center`;
+export const USER_BASE_URL = `${API_BASE_URL}/api/v3/users/auth`;
+export const WORKFLOW_BASE_URL = `${API_BASE_URL}/api/v3/campaigns/{campaignId}/workflow`;
+export const SEGMENT_BASE_URL = `${API_BASE_URL}/api/v3/segment`;
+export const MESSAGING_BASE_URL = `${API_BASE_URL}/api/v3/messaging`;
+export const CUSTOMER_BASE_URL = `${API_BASE_URL}/api/v3/customers`;
+export const CAMPAIGN_BASE_URL = `${API_BASE_URL}/api/v3/campaigns`;
+export const TEAMS_BASE_URL = `${API_BASE_URL}/api/v3/teams`;
+export const WALLET_BASE_URL = `${API_BASE_URL}/api/v3/payments/wallets`;
+export const EVENT_BASE_URL = `${API_BASE_URL}/api/v3/events`;
+export const COMPANY_BASE_URL = `${API_BASE_URL}/api/v3/company`;
+export const DATASOURCES_BASE_URL = `${API_BASE_URL}/api/v3/datasources`;
+export const DATA_PLATFORM_BASE_URL = `${API_BASE_URL}/api/v3/data-platform`;
+export const APIKEY_BASE_URL = `${API_BASE_URL}/api/v3/api-key`;
+export const ANALYTICS_BASE_URL = `${API_BASE_URL}/api/v3/analytics`;
+export const WORKFLOWSTUDIO_BASE_URL = `${API_BASE_URL}/api/v3/workflows/studio`;
+export const CHANNELS_BASE_URL = `${API_BASE_URL}/api/v3/channels`;
+export const CREDENTIALS_BASE_URL = `${API_BASE_URL}/api/v3/`;
+export const PERSONALIZATION_BASE_URL = `${API_BASE_URL}/api/v3/personalization`;
+export const COMMAND_CENTER_BASE_URL = `${API_BASE_URL}/api/v3/command-center`;
 // Agent runs live under command-center/ for historical reasons only. They are surface-agnostic —
 // the AI conversation surface uses these same routes. Do not add a second set for chat.
 export const AGENT_RUNS_BASE_URL = `${COMMAND_CENTER_BASE_URL}/runs`;
-export const SKILLS_BASE_URL = `${API_BASE_URL}/api/flolyt/skills`;
-export const AI_CONVERSATIONS_BASE_URL = `${API_BASE_URL}/api/flolyt/ai/conversations`;
-export const NOTIFICATIONS_BASE_URL = `${API_BASE_URL}/api/flolyt/notifications`;
-export const AICREDITS_BASE_URL = `${API_BASE_URL}/api/flolyt/payments/credits`;
-export const GOVERNANCE_BASE_URL = `${API_BASE_URL}/api/flolyt/governance`;
+export const SKILLS_BASE_URL = `${API_BASE_URL}/api/v3/skills`;
+export const AI_CONVERSATIONS_BASE_URL = `${API_BASE_URL}/api/v3/conversations`;
+export const AI_PROPOSALS_BASE_URL = `${API_BASE_URL}/api/v3/proposals`;
+export const NOTIFICATIONS_BASE_URL = `${API_BASE_URL}/api/v3/notifications`;
+export const AICREDITS_BASE_URL = `${API_BASE_URL}/api/v3/payments/credits`;
+export const GOVERNANCE_BASE_URL = `${API_BASE_URL}/api/v3/governance`;
 export const INTELLIGENCE_BASE_URL = `${API_BASE_URL}/api/v1/intelligence`;
-export const PLATFORM_ADMIN_BASE_URL = `${API_BASE_URL}/api/flolyt/platform-admin`;
-export const CURRENCY_BASE_URL = `${API_BASE_URL}/api/flolyt/currency`;
+export const PLATFORM_ADMIN_BASE_URL = `${API_BASE_URL}/api/v3/platform-admin`;
+export const CURRENCY_BASE_URL = `${API_BASE_URL}/api/v3/currency`;
+export const WORKSPACE_BASE_URL = `${API_BASE_URL}/api/v3/workspace`;
+export const LIFECYCLE_BASE_URL = `${API_BASE_URL}/api/v3/lifecycle`;
+export const ROOMS_BASE_URL = `${API_BASE_URL}/api/v3/rooms`;
+export const PLAYS_BASE_URL = `${API_BASE_URL}/api/v3/plays`;
+export const HOME_BASE_URL = `${API_BASE_URL}/api/v3/home`;
+export const INBOX_BASE_URL = `${API_BASE_URL}/api/v3/inbox`;
+export const SOURCES_BASE_URL = `${API_BASE_URL}/api/v3/sources`;
 
 export const API_ENDPOINTS = {
   USER: {
-    REGISTER: `${API_BASE_URL}/api/users/registration/register`,
-    CONFIRM_REGISTRATION: `${API_BASE_URL}/api/users/registration/{userId}/confirm`,
-    RESEND_OTP: `${API_BASE_URL}/api/users/registration/resend-otp`,
+    REGISTER: `${API_BASE_URL}/api/v3/users/registration/register`,
+    CONFIRM_REGISTRATION: `${API_BASE_URL}/api/v3/users/registration/{userId}/confirm`,
+    RESEND_OTP: `${API_BASE_URL}/api/v3/users/registration/resend-otp`,
     REQUEST_LOGIN_CODE: `${USER_BASE_URL}/login/request-code`,
     VERIFY_LOGIN_CODE: `${USER_BASE_URL}/login/verify-code`,
-    CREATE_COMPANY: `${API_BASE_URL}/api/flolyt/company`,
-    GET_USER_BY_EMAIL: `${API_BASE_URL}/api/users/registration/{email}`,
+    STEP_UP_REQUEST_CODE: `${USER_BASE_URL}/step-up/request-code`,
+    STEP_UP_VERIFY_CODE: `${USER_BASE_URL}/step-up/verify-code`,
+    CREATE_COMPANY: `${API_BASE_URL}/api/v3/company`,
+    GET_USER_BY_EMAIL: `${API_BASE_URL}/api/v3/users/registration/{email}`,
+    GET_ME: `${USER_BASE_URL}/me`,
     REFRESH_TOKEN: `${USER_BASE_URL}/token/refresh`,
     LOGOUT: `${USER_BASE_URL}/logout`,
     LOGOUT_ALL: `${USER_BASE_URL}/logout-all`,
@@ -205,7 +216,7 @@ export const API_ENDPOINTS = {
 
 
   AUDITING: {
-    GET_AUDIT_TRAIL: `${API_BASE_URL}/api/auditing/trail`,
+    GET_AUDIT_TRAIL: `${API_BASE_URL}/api/v3/auditing/trail`,
 
   },
 
@@ -251,15 +262,14 @@ export const API_ENDPOINTS = {
     GET_DATASOURCE_SYNC_STATUS: `${DATASOURCES_BASE_URL}/{id}/sync-status`,
     TRIGGER_DATASOURCE_SYNC: `${DATASOURCES_BASE_URL}/{id}/sync/trigger`,
     GET_DATASOURCE_MCP_SCHEMA: `${DATASOURCES_BASE_URL}/{id}/schema/mcp`,
-    GET_DATASOURCE_SCHEMA: `${DATASOURCES_BASE_URL}/{id}/schema`,
-    ANALYZE_DATASOURCE: `${DATASOURCES_BASE_URL}/{id}/analyze`,
-    GET_DATASOURCE_CAPABILITIES: `${DATASOURCES_BASE_URL}/{id}/capabilities`,
-    COMPUTE_DATASOURCE_SIGNALS: `${DATASOURCES_BASE_URL}/{id}/signals/compute`,
-    GET_DATASOURCE_SIGNALS_SUMMARY: `${DATASOURCES_BASE_URL}/{id}/signals/summary`,
     GET_DATASOURCE_CONNECTION_SCHEMA: `${DATASOURCES_BASE_URL}/{name}/connection-schema`,
     CONNECT_DATASOURCE: `${DATASOURCES_BASE_URL}/connect`,
     DISCONNECT_DATASOURCE: `${DATASOURCES_BASE_URL}/{id}/disconnect`,
     RECONNECT_DATASOURCE: `${DATASOURCES_BASE_URL}/{id}/reconnect`,
+    GET_DATASOURCE_DISCONNECTIONS: `${DATASOURCES_BASE_URL}/disconnections`,
+    GET_DATASOURCE_DELETION_CONFIG: `${DATASOURCES_BASE_URL}/deletion-config`,
+    UPDATE_DATASOURCE_DELETION_CONFIG: `${DATASOURCES_BASE_URL}/deletion-config`,
+    DELETE_DATASOURCE_DELETION_CONFIG: `${DATASOURCES_BASE_URL}/deletion-config`,
   },
 
 
@@ -376,7 +386,36 @@ export const API_ENDPOINTS = {
     SAMPLE_PROMPTS: `${AI_CONVERSATIONS_BASE_URL}/sample-prompts`,
   },
 
+  AI_PROPOSALS: {
+    LIST: `${AI_PROPOSALS_BASE_URL}`,
+    ACCEPT: `${AI_PROPOSALS_BASE_URL}/{id}/accept`,
+    DEFER: `${AI_PROPOSALS_BASE_URL}/{id}/defer`,
+    REJECT: `${AI_PROPOSALS_BASE_URL}/{id}/reject`,
+  },
 
+  HOME: {
+    GET_HOME: `${HOME_BASE_URL}`,
+    GET_GREETING: `${HOME_BASE_URL}/greeting`,
+    GET_PROMPTS: `${HOME_BASE_URL}/prompts`,
+  },
+
+  INBOX: {
+    GET_INBOX: `${INBOX_BASE_URL}`,
+    MARK_INBOX_READ: `${INBOX_BASE_URL}/read`,
+    MARK_ALL_INBOX_READ: `${INBOX_BASE_URL}/read-all`,
+    SNOOZE_INBOX_ITEM: `${INBOX_BASE_URL}/snooze`,
+    CREATE_INBOX_THREAD: `${INBOX_BASE_URL}/threads`,
+    GET_INBOX_THREAD: `${INBOX_BASE_URL}/threads/{threadId}`,
+    REPLY_TO_INBOX_THREAD: `${INBOX_BASE_URL}/threads/{threadId}/messages`,
+    UPDATE_INBOX_DRAFT: `${INBOX_BASE_URL}/drafts/{messageId}`,
+    DELETE_INBOX_DRAFT: `${INBOX_BASE_URL}/drafts/{messageId}`,
+    SEND_INBOX_DRAFT: `${INBOX_BASE_URL}/drafts/{messageId}/send`,
+    GET_INBOX_APPROVAL: `${INBOX_BASE_URL}/approvals/{proposalId}`,
+  },
+
+  SOURCES: {
+    GET_SOURCES: `${SOURCES_BASE_URL}`,
+  },
 
   NOTIFICATIONS: {
     STREAM_NOTIFICATIONS: `${NOTIFICATIONS_BASE_URL}/stream`,
@@ -446,5 +485,173 @@ export const API_ENDPOINTS = {
     GET_DEFAULT: `${CURRENCY_BASE_URL}/default`,
   },
 
+  WORKSPACE: {
+    CREATE_WORKSPACE: `${WORKSPACE_BASE_URL}`,
+    UPDATE_WORKSPACE_IDENTITY: `${WORKSPACE_BASE_URL}/identity`,
+    CHECK_SLUG_AVAILABLE: `${WORKSPACE_BASE_URL}/slug-available`,
+    ANALYZE_WORKSPACE: `${WORKSPACE_BASE_URL}/analyze`,
+    GET_WORKSPACE_PROFILE: `${WORKSPACE_BASE_URL}/profile`,
+    UPDATE_WORKSPACE_PROFILE: `${WORKSPACE_BASE_URL}/profile`,
+    GET_PROPOSED_MARKETS: `${WORKSPACE_BASE_URL}/proposed-markets`,
+    UPDATE_WORKSPACE_MARKETS: `${WORKSPACE_BASE_URL}/markets`,
+    UPDATE_REVENUE_MODEL: `${WORKSPACE_BASE_URL}/revenue-model`,
+    GET_LIFECYCLE_THRESHOLDS: `${WORKSPACE_BASE_URL}/lifecycle-thresholds`,
+    UPDATE_LIFECYCLE_THRESHOLDS: `${WORKSPACE_BASE_URL}/lifecycle-thresholds`,
+    GET_WORKSPACE_MEMBERS: `${WORKSPACE_BASE_URL}/members`,
+    GET_WORKSPACE_ROLES: `${WORKSPACE_BASE_URL}/roles`,
+    GET_MY_ROLES: `${WORKSPACE_BASE_URL}/members/me/roles`,
+    GET_MEMBER_ROLES: `${WORKSPACE_BASE_URL}/members/{userId}/roles`,
+    ASSIGN_MEMBER_ROLES: `${WORKSPACE_BASE_URL}/members/roles`,
+    REMOVE_MEMBER_ROLE: `${WORKSPACE_BASE_URL}/members/roles`,
+    GET_WORKSPACE_AGENTS: `${WORKSPACE_BASE_URL}/agents`,
+    GET_ONBOARDING_STATUS: `${WORKSPACE_BASE_URL}/onboarding`,
+    GET_MAPPING_QUALITY: `${WORKSPACE_BASE_URL}/mapping-quality`,
+    GET_DATA_MAP: `${WORKSPACE_BASE_URL}/data-map`,
+    SAVE_ONBOARDING_PROGRESS: `${WORKSPACE_BASE_URL}/onboarding/progress`,
+  },
+
+  LIFECYCLE: {
+    GET_MAP: `${LIFECYCLE_BASE_URL}/map`,
+    UPDATE_STAGE_OWNER: `${LIFECYCLE_BASE_URL}/map/{stageKey}/owner`,
+    GET_MARKET: `${LIFECYCLE_BASE_URL}/market/{country}`,
+    GET_LEAKAGE_MAP: `${LIFECYCLE_BASE_URL}/leakage-map`,
+    GET_DISTRIBUTION: `${LIFECYCLE_BASE_URL}/distribution`,
+    GET_STAGE: `${LIFECYCLE_BASE_URL}/stages/{stageKey}`,
+    GET_STAGE_CHANGES: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/changes`,
+    GET_STAGE_CHANGE_REGISTRY: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/change-registry`,
+    CREATE_CHANGE: `${LIFECYCLE_BASE_URL}/changes`,
+    CREATE_CHANGE_FROM_ROOM: `${LIFECYCLE_BASE_URL}/changes/from-room`,
+    DELETE_CHANGE: `${LIFECYCLE_BASE_URL}/changes/{changeId}`,
+    GET_CHANGE_IMPACT: `${LIFECYCLE_BASE_URL}/changes/{changeId}/impact`,
+    GET_STAGE_DEFINITION: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/definition`,
+    UPDATE_STAGE_DEFINITION: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/definition`,
+    PREVIEW_STAGE_DEFINITION: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/definition/preview`,
+    MEASURE_ENTRY_EVENT: `${LIFECYCLE_BASE_URL}/entry-events/measure`,
+    GET_STAGE_COHORTS: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/cohorts`,
+    GET_STAGE_COMPARE: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/compare`,
+
+    // Added 2026-09-04 — 4 core endpoints from the fresh spec paste.
+    UPDATE_STAGE_CONVERSION: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/conversion`,
+    GET_STAGE_SCREENS: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/screens`,
+    GET_STAGE_MARKETS: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/markets`,
+    GET_STAGE_HISTORY: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/history`,
+
+    // Added 2026-09-04 — 24 per-stage tab-specific endpoints (tab matrix, see lifecycle-reference.md §3).
+    GET_RETAIN_REPEAT_CURVE: `${LIFECYCLE_BASE_URL}/retain/repeat-curve`,
+    GET_RETAIN_SEGMENTS: `${LIFECYCLE_BASE_URL}/retain/segments`,
+    GET_RETAIN_REACTIVATION: `${LIFECYCLE_BASE_URL}/retain/reactivation`,
+    GET_ADOPT_FEATURES: `${LIFECYCLE_BASE_URL}/adopt/features`,
+    GET_ADOPT_DEPTH: `${LIFECYCLE_BASE_URL}/adopt/depth`,
+    GET_ADVOCATE_REFERRERS: `${LIFECYCLE_BASE_URL}/advocate/referrers`,
+    GET_ADVOCATE_REFERRAL_QUALITY: `${LIFECYCLE_BASE_URL}/advocate/referral-quality`,
+    GET_ADVOCATE_VIRAL_COMPOUNDING: `${LIFECYCLE_BASE_URL}/advocate/viral-compounding`,
+    GET_PRICE_PLANS: `${LIFECYCLE_BASE_URL}/price/plans`,
+    GET_RENEW_RENEWAL_BOOK: `${LIFECYCLE_BASE_URL}/renew/renewal-book`,
+    GET_RENEW_DUNNING: `${LIFECYCLE_BASE_URL}/renew/dunning`,
+    GET_EXPAND_UPGRADE_PATHS: `${LIFECYCLE_BASE_URL}/expand/upgrade-paths`,
+    GET_ACTIVATE_TIME_TO_VALUE: `${LIFECYCLE_BASE_URL}/activate/time-to-value`,
+    GET_ACTIVATE_PATHS: `${LIFECYCLE_BASE_URL}/activate/paths`,
+    GET_EXPAND_BASKET: `${LIFECYCLE_BASE_URL}/expand/basket`,
+    GET_ACQUIRE_FUNNEL: `${LIFECYCLE_BASE_URL}/acquire/funnel`,
+    GET_ACQUIRE_CHANNELS: `${LIFECYCLE_BASE_URL}/acquire/channels`,
+    GET_SUPPORT_DEFLECTION: `${LIFECYCLE_BASE_URL}/support/deflection`,
+    GET_RENEW_PAUSES: `${LIFECYCLE_BASE_URL}/renew/pauses`,
+    GET_ACQUIRE_UNIT_ECONOMICS: `${LIFECYCLE_BASE_URL}/acquire/unit-economics`,
+    GET_PRICE_MARGIN: `${LIFECYCLE_BASE_URL}/price/margin`,
+    GET_EXPAND_ACCOUNTS: `${LIFECYCLE_BASE_URL}/expand/accounts`,
+    GET_PRICE_DISCOUNTING: `${LIFECYCLE_BASE_URL}/price/discounting`,
+    GET_CHURN_CHAIN: `${LIFECYCLE_BASE_URL}/churn/chain`,
+
+    // Added 2026-09-04 — churn routing, churn/support analytics, agents & governance (23 endpoints).
+    ROUTE_CHURN_UPSTREAM: `${LIFECYCLE_BASE_URL}/churn/route-upstream`,
+    GET_CHURN_ROUTINGS: `${LIFECYCLE_BASE_URL}/churn/routings`,
+    ACKNOWLEDGE_CHURN_ROUTING: `${LIFECYCLE_BASE_URL}/churn/routings/{routingId}/acknowledge`,
+    GET_CHURN_REASONS: `${LIFECYCLE_BASE_URL}/churn/reasons`,
+    GET_CHURN_PREDICTION: `${LIFECYCLE_BASE_URL}/churn/prediction`,
+    GET_CHURN_WIN_BACK: `${LIFECYCLE_BASE_URL}/churn/win-back`,
+    GET_SUPPORT_CONTACT_DRIVERS: `${LIFECYCLE_BASE_URL}/support/contact-drivers`,
+    GET_SUPPORT_RESOLUTION: `${LIFECYCLE_BASE_URL}/support/resolution`,
+    GET_SUPPORT_SILENT_FAILURES: `${LIFECYCLE_BASE_URL}/support/silent-failures`,
+    GET_STAGE_AGENTS: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/agents`,
+    GET_TEAMS: `${LIFECYCLE_BASE_URL}/teams`,
+    UPDATE_INSTRUMENTATION_REQUEST_OWNER: `${LIFECYCLE_BASE_URL}/instrumentation-requests/{obligationId}/owner`,
+    GET_WATCHABLE_METRICS: `${LIFECYCLE_BASE_URL}/watchable-metrics`,
+    CREATE_STAGE_CONDITION: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/conditions`,
+    UPDATE_CONDITION: `${LIFECYCLE_BASE_URL}/conditions/{conditionId}`,
+    DECIDE_CONDITION: `${LIFECYCLE_BASE_URL}/conditions/{conditionId}/decide`,
+    MUTE_CONDITION: `${LIFECYCLE_BASE_URL}/conditions/{conditionId}/mute`,
+    BACKTEST_STAGE_CONDITION: `${LIFECYCLE_BASE_URL}/stages/{stageKey}/conditions/backtest`,
+    UPDATE_TEAM_LEAD: `${LIFECYCLE_BASE_URL}/teams/{team}/lead`,
+    UPDATE_ROOM_CAP: `${LIFECYCLE_BASE_URL}/governance/room-cap`,
+    GET_INSTRUMENTATION: `${LIFECYCLE_BASE_URL}/instrumentation`,
+    CREATE_INSTRUMENTATION_REQUEST: `${LIFECYCLE_BASE_URL}/instrumentation-requests`,
+    CLOSE_INSTRUMENTATION_REQUEST: `${LIFECYCLE_BASE_URL}/instrumentation-requests/{obligationId}/close`,
+  },
+
+  ROOMS: {
+    UPDATE_ROOM_OWNER: `${ROOMS_BASE_URL}/{roomId}/owner`,
+    MARK_FALSIFIER_MET: `${ROOMS_BASE_URL}/{roomId}/falsifiers/{index}/met`,
+    GET_ROOM_LOG: `${ROOMS_BASE_URL}/{roomId}/log`,
+    EXPORT_ROOM_LOG: `${ROOMS_BASE_URL}/{roomId}/log/export`,
+    GET_ROOM_EVIDENCE: `${ROOMS_BASE_URL}/{roomId}/evidence`,
+    CREATE_FALSIFIER: `${ROOMS_BASE_URL}/{roomId}/falsifiers`,
+    GET_ROOM_VIEWS: `${ROOMS_BASE_URL}/views`,
+    CREATE_ROOM_VIEW: `${ROOMS_BASE_URL}/views`,
+    UPDATE_ROOM_VIEW: `${ROOMS_BASE_URL}/views/{viewId}`,
+    DELETE_ROOM_VIEW: `${ROOMS_BASE_URL}/views/{viewId}`,
+    GET_ROOMS: `${ROOMS_BASE_URL}`,
+    OPEN_ROOM_ON_LEAKAGE_CELL: `${ROOMS_BASE_URL}`,
+    GET_ROOM_CLOSE_PREVIEW: `${ROOMS_BASE_URL}/{roomId}/close-preview`,
+    CLOSE_ROOM: `${ROOMS_BASE_URL}/{roomId}/close`,
+    GET_ROOM_DECISION: `${ROOMS_BASE_URL}/{roomId}/decision`,
+    SAVE_ROOM_DECISION: `${ROOMS_BASE_URL}/{roomId}/decision`,
+    DECIDE_ROOM_DECISION: `${ROOMS_BASE_URL}/{roomId}/decision/decide`,
+    CREATE_DISSENT: `${ROOMS_BASE_URL}/{roomId}/decision/dissent`,
+    WITHDRAW_DISSENT: `${ROOMS_BASE_URL}/dissent/{dissentId}`,
+    JUDGE_DISSENT: `${ROOMS_BASE_URL}/dissent/{dissentId}/judge`,
+    GET_ALL_DISSENT: `${ROOMS_BASE_URL}/dissent`,
+    GET_CITED_DISSENT: `${ROOMS_BASE_URL}/{roomId}/cited-dissent`,
+    CHECK_PROPOSAL_COLLISION: `${ROOMS_BASE_URL}/{roomId}/proposals/{proposalId}/collision-check`,
+    GET_ROOM_CONFLICTS: `${ROOMS_BASE_URL}/{roomId}/conflicts`,
+    CREATE_CONFLICT: `${ROOMS_BASE_URL}/{roomId}/conflicts`,
+    CHOOSE_CONFLICT_READING: `${ROOMS_BASE_URL}/conflicts/{conflictId}/choose`,
+    REQUEST_THIRD_READING: `${ROOMS_BASE_URL}/conflicts/{conflictId}/third-reading`,
+    ESCALATE_CONFLICT: `${ROOMS_BASE_URL}/conflicts/{conflictId}/escalate`,
+    ESTIMATE_NEW_ROOM_COHORT: `${ROOMS_BASE_URL}/new/estimate`,
+    GET_SIMILAR_ROOMS: `${ROOMS_BASE_URL}/new/similar`,
+    CREATE_ROOM: `${ROOMS_BASE_URL}/new`,
+    LINK_ROOM: `${ROOMS_BASE_URL}/{roomId}/link`,
+    UNLINK_ROOM: `${ROOMS_BASE_URL}/{roomId}/link/{otherRoomId}`,
+    GET_CONVENING: `${ROOMS_BASE_URL}/convening`,
+    ACCEPT_CONVENING_PROPOSAL: `${ROOMS_BASE_URL}/convening/{proposalId}/accept`,
+    DECLINE_CONVENING_PROPOSAL: `${ROOMS_BASE_URL}/convening/{proposalId}/decline`,
+    GET_ROOM_GUARDRAILS: `${ROOMS_BASE_URL}/{roomId}/guardrails`,
+    CREATE_ROOM_GUARDRAIL: `${ROOMS_BASE_URL}/{roomId}/guardrails`,
+    REMOVE_ROOM_GUARDRAIL: `${ROOMS_BASE_URL}/{roomId}/guardrails/{key}`,
+    GET_ROOM_RUNS: `${ROOMS_BASE_URL}/{roomId}/runs`,
+    ADD_ROOM_AGENT: `${ROOMS_BASE_URL}/{roomId}/agents`,
+    REMOVE_ROOM_AGENT: `${ROOMS_BASE_URL}/{roomId}/agents/{agentKey}`,
+    GET_MERGE_CANDIDATES: `${ROOMS_BASE_URL}/{roomId}/merge-candidates`,
+    MERGE_ROOM: `${ROOMS_BASE_URL}/{roomId}/merge`,
+    UNMERGE_ROOM: `${ROOMS_BASE_URL}/{roomId}/unmerge`,
+    GET_ROOM_SUBSCRIPTIONS: `${ROOMS_BASE_URL}/subscriptions`,
+    WATCH_ROOM: `${ROOMS_BASE_URL}/{roomId}/watch`,
+    SET_ROOM_NOTIFY_LEVEL: `${ROOMS_BASE_URL}/{roomId}/notify-level`,
+    UNWATCH_ROOM: `${ROOMS_BASE_URL}/{roomId}/unwatch`,
+    MARK_ROOM_OPENED: `${ROOMS_BASE_URL}/{roomId}/opened`,
+    GET_ROOM_COHORT: `${ROOMS_BASE_URL}/{roomId}/cohort`,
+    GET_ROOM_PEOPLE: `${ROOMS_BASE_URL}/{roomId}/people`,
+    ADD_ROOM_PERSON: `${ROOMS_BASE_URL}/{roomId}/people`,
+    UPDATE_ROOM_PERSON: `${ROOMS_BASE_URL}/{roomId}/people/{userId}`,
+    REMOVE_ROOM_PERSON: `${ROOMS_BASE_URL}/{roomId}/people/{userId}`,
+    RESTRICT_ROOM: `${ROOMS_BASE_URL}/{roomId}/restrict`,
+    UNRESTRICT_ROOM: `${ROOMS_BASE_URL}/{roomId}/restrict`,
+    GET_ROOM_PLAYS: `${ROOMS_BASE_URL}/{roomId}/plays`,
+    // Top-level `/api/v3/plays`, NOT under `/rooms` — corrected 2026-09-08 after the live doc
+    // showed this living outside the rooms path entirely.
+    GET_ALL_PLAYS: `${PLAYS_BASE_URL}`,
+    GET_PLAY: `${PLAYS_BASE_URL}/{proposalId}`,
+    REOPEN_ROOM: `${ROOMS_BASE_URL}/{roomId}/reopen`,
+  },
 
 };

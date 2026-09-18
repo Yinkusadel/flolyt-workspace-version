@@ -1,0 +1,168 @@
+import * as React from "react";
+import { toast } from "sonner";
+import { ChevronDown, MessagesSquare, MessageCircle, X } from "lucide-react";
+
+import { PersonAvatar } from "@/components/person-avatar";
+import { Button } from "@/components/ui/button";
+import { SearchableSelect, SearchableSelectSkeleton } from "@/components/ui/searchable-select";
+import { initialsFromName } from "@/pages/rooms/format";
+import { useAuth } from "@/utils/auth-context";
+import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
+import { useGetRooms } from "@/features/rooms/use-get-rooms";
+import useCreateInboxThread from "@/features/inbox/use-create-inbox-thread";
+
+/**
+ * Real `POST /inbox/threads` is multi-recipient by design ("a message addressed to three people
+ * is one conversation all three are in, not three threads" — docs/endpoints/inbox.md), unlike the
+ * old mock's single-recipient slot. Draft-saving is deliberately not wired here — see the
+ * "no way to list your own drafts" gap in docs/inbox/build-plan.md; the "Save draft" affordance
+ * is left out rather than faked until that's resolved.
+ */
+export function ComposeView({ onDiscard, onSent }: { onDiscard: () => void; onSent: () => void }) {
+  const [recipients, setRecipients] = React.useState<{ ref: string; name: string }[]>([]);
+  const [attachedRoomId, setAttachedRoomId] = React.useState<string | null>(null);
+  const [body, setBody] = React.useState("");
+
+  const { user } = useAuth();
+  const { members, isLoading: isMembersLoading } = useGetWorkspaceMembers();
+  const { data: roomsData, isLoading: isRoomsLoading } = useGetRooms();
+  const { createInboxThread, isPending } = useCreateInboxThread({
+    onSuccess: () => {
+      toast.success("Message sent");
+      onSent();
+    },
+  });
+
+  const recipientRefs = new Set(recipients.map((r) => r.ref));
+  const memberOptions = members
+    .filter((m) => m.kind === "Human" && m.isActive && !recipientRefs.has(m.ref))
+    .map((m) => ({ value: m.ref, label: m.displayName }));
+
+  const rooms = roomsData?.data.rooms ?? [];
+  const roomOptions = rooms.map((r) => ({ value: r.id, label: r.title }));
+  const attachedRoom = rooms.find((r) => r.id === attachedRoomId);
+
+  const addRecipient = (ref: string) => {
+    const member = members.find((m) => m.ref === ref);
+    if (!member) return;
+    setRecipients((prev) => [...prev, { ref, name: member.displayName }]);
+  };
+
+  const removeRecipient = (ref: string) => {
+    setRecipients((prev) => prev.filter((r) => r.ref !== ref));
+  };
+
+  const handleSend = () => {
+    const trimmed = body.trim();
+    if (recipients.length === 0 || !trimmed) return;
+
+    // Confirmed live 2026-09-19: the backend takes `recipients` as the literal participant list
+    // rather than implicitly adding the sender — a thread composed without yourself in it never
+    // shows up in your own inbox afterward. Always include the signed-in member's own ref so the
+    // thread you just started is one you can still see.
+    const myRef = members.find((m) => m.kind === "Human" && m.id === user?.id)?.ref;
+    const allRecipients = Array.from(
+      new Set([...recipients.map((r) => r.ref), myRef].filter((ref): ref is string => Boolean(ref)))
+    );
+
+    createInboxThread({
+      recipients: allRecipients,
+      body: trimmed,
+      asDraft: false,
+      roomId: attachedRoomId,
+    });
+  };
+
+  return (
+    <div className="flex h-full min-w-0 flex-col overflow-y-auto">
+      <div className="flex items-center justify-between border-b border-line px-5 py-4">
+        <p className="text-[15px] font-semibold text-ink">New message</p>
+        <button type="button" onClick={onDiscard} className="text-[13px] font-medium text-ink-3 hover:text-ink">
+          Discard
+        </button>
+      </div>
+
+      <div className="space-y-5 px-5 py-5">
+        <div>
+          <p className="mb-1.5 text-[12px] font-medium text-ink-2">To</p>
+          <div className="flex min-h-9 flex-wrap items-center gap-2 rounded-panel border border-border bg-paper-2 px-2.5 py-1.5">
+            {recipients.map((r) => (
+              <span
+                key={r.ref}
+                className="flex items-center gap-1.5 rounded-full border border-line bg-paper px-2 py-1"
+              >
+                <PersonAvatar kind="human" initials={initialsFromName(r.name)} team={1} size="sm" />
+                <span className="text-[12px] font-medium text-ink">{r.name}</span>
+                <button type="button" onClick={() => removeRecipient(r.ref)} aria-label={`Remove ${r.name}`}>
+                  <X className="size-3 text-ink-4" />
+                </button>
+              </span>
+            ))}
+            {isMembersLoading ? (
+              <span className="text-[12px] text-ink-4">Loading teammates…</span>
+            ) : (
+              <SearchableSelect
+                options={memberOptions}
+                value={null}
+                onChange={addRecipient}
+                placeholder="Add a teammate…"
+                searchPlaceholder="Search teammates…"
+                className="h-7 w-40 border-none bg-transparent px-1"
+              />
+            )}
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-1.5 text-[12px] font-medium text-ink-2">About</p>
+          {isRoomsLoading ? (
+            <SearchableSelectSkeleton />
+          ) : attachedRoom ? (
+            <button
+              type="button"
+              onClick={() => setAttachedRoomId(null)}
+              className="flex h-9 w-full items-center gap-2 rounded-panel border border-border bg-paper-2 px-2.5 text-left"
+            >
+              <MessagesSquare className="size-3.5 shrink-0 text-ink-3" />
+              <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-ink">
+                {attachedRoom.title}
+              </span>
+              <ChevronDown className="size-3.5 shrink-0 text-ink-4" />
+            </button>
+          ) : (
+            <SearchableSelect
+              options={roomOptions}
+              value={null}
+              onChange={setAttachedRoomId}
+              placeholder="Attach a room…"
+              searchPlaceholder="Search rooms…"
+            />
+          )}
+          <p className="mt-1.5 text-[11px] text-ink-3">
+            Optional. Attaching a room gives them the evidence without you pasting it.
+          </p>
+        </div>
+
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.currentTarget.value)}
+          placeholder="Write your message…"
+          rows={6}
+          className="w-full resize-none rounded-card border border-border bg-paper px-4 py-3.5 text-[13.5px] text-ink outline-none placeholder:text-ink-4 focus-visible:border-ring"
+        />
+
+        <div className="flex items-start gap-3 rounded-card border border-line bg-paper-2 px-4 py-3.5">
+          <MessageCircle className="mt-0.5 size-4 shrink-0 text-ink-3" />
+          <div>
+            <p className="text-[13px] font-semibold text-ink">Inbox is for people</p>
+            <p className="mt-0.5 text-[11.5px] text-ink-3">To bring an agent in, open a room or start a conversation.</p>
+          </div>
+        </div>
+
+        <Button disabled={recipients.length === 0 || !body.trim() || isPending} onClick={handleSend}>
+          {isPending ? "Sending…" : "Send"}
+        </Button>
+      </div>
+    </div>
+  );
+}
