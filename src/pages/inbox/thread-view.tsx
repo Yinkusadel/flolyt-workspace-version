@@ -21,16 +21,17 @@ function isMe(sender: string, userId: string | undefined): boolean {
   return sender === userId || sender.endsWith(`:${userId}`);
 }
 
-/** Mirrors the tail trick from conversations/detail-route.tsx's user bubble, flipped for the left side. */
+/** Mirrors the tail trick from conversations/detail-route.tsx's user bubble, flipped for the left
+ * side. No "You" label on own messages and the timestamp sits inline at the end of the bubble's
+ * text (float, WhatsApp-style) rather than on its own row above — the side + color already say
+ * whose message it is. The other side keeps a name above the bubble, useful once a thread has
+ * more than two participants. */
 function MessageBubble({ message, mine }: { message: InboxThreadMessageDto; mine: boolean }) {
   return (
     <div className={cn("flex flex-col gap-1", mine ? "items-end" : "items-start")}>
-      <div className="flex items-baseline gap-2 px-1">
-        <span className="text-[11.5px] font-semibold text-ink-2">
-          {mine ? "You" : message.senderName}
-        </span>
-        <span className="text-[11px] text-ink-4">{formatRoomActivity(message.sentAtUtc)}</span>
-      </div>
+      {!mine && (
+        <span className="px-3 text-[11.5px] font-semibold text-ink-2">{message.senderName}</span>
+      )}
 
       <div className={cn("relative max-w-[75%] min-w-0", mine ? "pr-2" : "pl-2")}>
         <span
@@ -57,6 +58,14 @@ function MessageBubble({ message, mine }: { message: InboxThreadMessageDto; mine
           )}
         >
           {message.body}
+          <span
+            className={cn(
+              "float-right mt-1 ml-2 translate-y-1 text-[10px] whitespace-nowrap",
+              mine ? "text-paper/70" : "text-ink-4"
+            )}
+          >
+            {formatRoomActivity(message.sentAtUtc)}
+          </span>
         </div>
       </div>
 
