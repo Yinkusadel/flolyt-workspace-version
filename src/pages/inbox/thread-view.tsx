@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Paperclip, Link2, ArrowUp } from "lucide-react";
+import { ArrowUp, Plus, Smile } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
@@ -96,6 +96,7 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
   const { replyToInboxThread, isPending } = useReplyToInboxThread();
   const [draft, setDraft] = React.useState("");
   const bottomRef = React.useRef<HTMLDivElement>(null);
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const thread = data?.data;
   const messages = thread?.messages ?? [];
@@ -107,6 +108,15 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
   React.useEffect(() => {
     setDraft("");
   }, [item.sourceId]);
+
+  // Grows with the draft, capped so a long paste doesn't take over the screen — matches the
+  // reference input's expanding-pill behaviour.
+  React.useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
+  }, [draft]);
 
   const handleSend = () => {
     const body = draft.trim();
@@ -176,34 +186,48 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
       </div>
 
       <div className="p-4">
-        <div className="flex items-end gap-2 rounded-card border border-line bg-paper px-3.5 py-2.5">
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder={`Reply to ${headerTitle.split(" ")[0]}…`}
-            disabled={isPending}
-            className="min-w-0 flex-1 bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
-          />
-          <button type="button" className="shrink-0 text-ink-4 hover:text-ink-2" aria-label="Attach a file">
-            <Paperclip className="size-4" />
+        <div className="flex items-end gap-2">
+          <button
+            type="button"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ultra-bg text-ultra transition-colors hover:bg-ultra-bg/70"
+            aria-label="Add"
+          >
+            <Plus className="size-4" />
           </button>
-          <button type="button" className="shrink-0 text-ink-4 hover:text-ink-2" aria-label="Attach a link">
-            <Link2 className="size-4" />
-          </button>
+
+          <div className="flex min-w-0 flex-1 items-end gap-2 rounded-3xl bg-ultra-bg px-4 py-2.5">
+            <textarea
+              ref={textareaRef}
+              value={draft}
+              onChange={(e) => setDraft(e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder={`Reply to ${headerTitle.split(" ")[0]}…`}
+              disabled={isPending}
+              rows={1}
+              className="max-h-32 min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
+            />
+            <button
+              type="button"
+              className="mb-0.5 shrink-0 text-ink-4 hover:text-ink-2"
+              aria-label="Emoji"
+            >
+              <Smile className="size-4" />
+            </button>
+          </div>
+
           <button
             type="button"
             onClick={handleSend}
             disabled={!draft.trim() || isPending}
-            className="flex shrink-0 items-center gap-1 rounded-control bg-ultra px-3 py-1.5 text-[12.5px] font-medium text-white transition-opacity disabled:opacity-40"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-ultra text-white transition-opacity disabled:opacity-40"
+            aria-label="Send"
           >
-            Send
-            <ArrowUp className="size-3.5" />
+            <ArrowUp className="size-4" />
           </button>
         </div>
       </div>
