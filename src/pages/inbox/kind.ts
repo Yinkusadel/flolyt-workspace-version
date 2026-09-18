@@ -63,3 +63,14 @@ export function groupLabel(group: string): string {
   if (!spaced) return group;
   return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase();
 }
+
+/** `GET /inbox` items' `href` points at routes from a different/older frontend that don't exist
+ * in this app (confirmed live 2026-09-18 — `/analytics`, `/customers`,
+ * `/intelligence/suggested-actions` all 404 here). Maps the two known backend paths onto their
+ * real equivalent here; anything else is hidden rather than linked to a dead page. */
+export function resolveInboxHref(href: string | null): string | null {
+  if (!href) return null;
+  if (href === "/settings/billing/credits") return "/plan-and-billing";
+  if (/^\/data-platform\/datasources\/[^/]+$/.test(href)) return "/data-sources?tab=connected";
+  return null;
+}

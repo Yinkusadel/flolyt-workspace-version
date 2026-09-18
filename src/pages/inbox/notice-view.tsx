@@ -5,7 +5,7 @@ import { PersonAvatar } from "@/components/person-avatar";
 import { Chip } from "@/components/ui/chip";
 import { agentInitialsFromName, formatRoomActivity } from "@/pages/rooms/format";
 import { AttachedRoomCard } from "@/pages/inbox/attached-room-card";
-import { KIND_LABEL, isProposalKind } from "@/pages/inbox/kind";
+import { KIND_LABEL, isProposalKind, resolveInboxHref } from "@/pages/inbox/kind";
 import type { InboxItemDto } from "@/services/api/inbox/get-inbox";
 
 /**
@@ -45,6 +45,8 @@ function NoticeIcon({ item }: { item: InboxItemDto }) {
 }
 
 export function NoticeView({ item }: { item: InboxItemDto }) {
+  const resolvedHref = resolveInboxHref(item.href);
+
   return (
     <div className="flex h-full min-w-0 flex-col overflow-y-auto">
       <div className="flex items-center gap-3 border-b border-line px-5 py-4">
@@ -56,14 +58,6 @@ export function NoticeView({ item }: { item: InboxItemDto }) {
           </div>
           <p className="truncate text-[11.5px] text-ink-3">{formatRoomActivity(item.occurredAtUtc)}</p>
         </div>
-        {item.href && (
-          <Link
-            to={item.href}
-            className="flex shrink-0 items-center gap-1 text-[12px] font-medium text-ultra hover:underline"
-          >
-            Open <ExternalLink className="size-3" />
-          </Link>
-        )}
       </div>
 
       <div className="min-h-0 flex-1 space-y-4 px-5 py-4">
@@ -89,6 +83,15 @@ export function NoticeView({ item }: { item: InboxItemDto }) {
 
           {item.eventCount > 1 && (
             <p className="pl-2 text-[11px] text-ink-4">{item.eventCount} updates digested into this line.</p>
+          )}
+
+          {resolvedHref && (
+            <Link
+              to={resolvedHref}
+              className="ml-2 flex w-fit items-center gap-1 text-[12px] font-medium text-ultra hover:underline"
+            >
+              Open <ExternalLink className="size-3" />
+            </Link>
           )}
 
           {item.roomId && (
