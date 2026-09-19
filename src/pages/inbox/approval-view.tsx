@@ -3,7 +3,16 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Flag, Loader2, ShieldCheck } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Chip, type ChipTone } from "@/components/ui/chip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,6 +77,7 @@ export function ApprovalView({ item }: { item: InboxItemDto }) {
   const { snoozeInboxItem, isPending: isSnoozing } = useSnoozeInboxItem();
   const [showDeferReason, setShowDeferReason] = React.useState(false);
   const [reason, setReason] = React.useState("");
+  const [confirmAction, setConfirmAction] = React.useState<"accept" | "reject" | null>(null);
 
   const approval = data?.data;
   const isDeciding = isAccepting || isDeferring || isRejecting;
@@ -86,6 +96,31 @@ export function ApprovalView({ item }: { item: InboxItemDto }) {
   }
 
   const { room, framing, evidence, dissent } = approval;
+
+  const handleConfirmedAction = () => {
+    if (confirmAction === "accept") {
+      accept(
+        { id: approval.proposalId },
+        {
+          onSuccess: (res) => {
+            if (!res.succeeded) return;
+            toast.success("Proposal accepted");
+            invalidateInbox();
+            setConfirmAction(null);
+          },
+        }
+      );
+    } else if (confirmAction === "reject") {
+      reject(approval.proposalId, {
+        onSuccess: (res) => {
+          if (!res.succeeded) return;
+          toast.success("Proposal rejected");
+          invalidateInbox();
+          setConfirmAction(null);
+        },
+      });
+    }
+  };
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-y-auto">
@@ -246,18 +281,7 @@ export function ApprovalView({ item }: { item: InboxItemDto }) {
                 <button
                   type="button"
                   disabled={isDeciding}
-                  onClick={() =>
-                    accept(
-                      { id: approval.proposalId },
-                      {
-                        onSuccess: (res) => {
-                          if (!res.succeeded) return;
-                          toast.success("Proposal accepted");
-                          invalidateInbox();
-                        },
-                      }
-                    )
-                  }
+                  onClick={() => setConfirmAction("accept")}
                   className="flex items-center gap-1.5 rounded-control bg-ultra px-4 py-2 text-[13px] font-medium text-white disabled:opacity-50"
                 >
                   {isAccepting && <Loader2 className="size-3.5 animate-spin" />}
@@ -274,15 +298,7 @@ export function ApprovalView({ item }: { item: InboxItemDto }) {
                 <button
                   type="button"
                   disabled={isDeciding}
-                  onClick={() =>
-                    reject(approval.proposalId, {
-                      onSuccess: (res) => {
-                        if (!res.succeeded) return;
-                        toast.success("Proposal rejected");
-                        invalidateInbox();
-                      },
-                    })
-                  }
+                  onClick={() => setConfirmAction("reject")}
                   className="flex items-center gap-1.5 rounded-control px-3.5 py-2 text-[12.5px] font-medium text-rose hover:bg-rose-bg disabled:opacity-50"
                 >
                   {isRejecting && <Loader2 className="size-3.5 animate-spin" />}
@@ -324,6 +340,45 @@ export function ApprovalView({ item }: { item: InboxItemDto }) {
           </div>
         )}
       </div>
+
+      <Dialog open={confirmAction !== null} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{confirmAction === "accept" ? "Accept this proposal?" : "Reject this proposal?"}</DialogTitle>
+            <DialogDescription>
+              {confirmAction === "accept"
+                ? `${humanizeToolName(approval.toolName)} will go ahead as described above.`
+                : "This proposal won't go ahead. The agent can revise and resubmit it if needed."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <div className="flex items-center gap-4">
+              <Button
+                type="button"
+                variant={confirmAction === "reject" ? "destructive" : "default"}
+                onClick={handleConfirmedAction}
+                disabled={isDeciding}
+              >
+                {confirmAction === "accept"
+                  ? isAccepting
+                    ? "Accepting…"
+                    : "Accept"
+                  : isRejecting
+                    ? "Rejecting…"
+                    : "Reject"}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setConfirmAction(null)}
+                disabled={isDeciding}
+                className="text-[12px] font-semibold text-ink-3 hover:text-ink disabled:pointer-events-none disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
