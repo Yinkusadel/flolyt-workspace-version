@@ -4,6 +4,7 @@ import { ArrowUp, Plus, Smile } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TextTooltip } from "@/components/ui/text-tooltip";
 import { useAuth } from "@/utils/auth-context";
 import { agentInitialsFromName, formatRoomActivity, initialsFromName } from "@/pages/rooms/format";
 import { AttachedRoomCard } from "@/pages/inbox/attached-room-card";
@@ -74,6 +75,16 @@ function MessageBubble({ message, mine }: { message: InboxThreadMessageDto; mine
   );
 }
 
+/** Caps a joined participant list at 2 names + a count of the rest ("Ichigo, Renji +3 others")
+ * rather than running every name together — a group thread's header is a title, not a full
+ * roster (that's what the tooltip and the "N people" line below it are for). */
+function formatParticipantNames(names: string[]): string {
+  if (names.length <= 2) return names.join(", ");
+  const shown = names.slice(0, 2).join(", ");
+  const remaining = names.length - 2;
+  return `${shown} +${remaining} other${remaining === 1 ? "" : "s"}`;
+}
+
 function ThreadSkeleton() {
   return (
     <div className="flex h-full min-w-0 flex-col">
@@ -138,34 +149,42 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
     );
   }
 
-  // No member-name/avatar data on `participants` itself — the header title comes from the
-  // distinct non-me senders already in the loaded messages, falling back to the list row's own
-  // actorLabel while there's nothing to derive it from yet.
+  // No member-name/avatar data on `participants` itself — `item.others` (recipients minus you,
+  // already real display names) is the reliable source since it's populated even before anyone
+  // but you has sent a message; the distinct non-me senders already in the loaded messages are
+  // the fallback for older items where `others` wasn't supplied, and the list row's own
+  // actorLabel is the last resort.
   const otherSenders = Array.from(
     new Map(
       messages.filter((m) => !isMe(m.sender, user?.id)).map((m) => [m.sender, m])
     ).values()
   );
-  const headerTitle = otherSenders.length > 0
-    ? otherSenders.map((m) => m.senderName).join(", ")
-    : item.actorLabel;
-  const headerAvatar = otherSenders[0];
+  const participantNames =
+    item.others.length > 0
+      ? item.others
+      : otherSenders.length > 0
+        ? otherSenders.map((m) => m.senderName)
+        : [item.actorLabel];
+  const headerTitle = formatParticipantNames(participantNames);
+  const headerAvatarName = participantNames[0] ?? item.actorLabel;
+  const headerAvatarIsAgent = otherSenders.find((m) => m.senderName === headerAvatarName)?.isAgent ?? false;
 
   return (
     <div className="flex h-full min-w-0 flex-col">
       <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
         <div className="flex min-w-0 items-center gap-3">
-          {headerAvatar?.isAgent ? (
-            <PersonAvatar kind="agent" initials={agentInitialsFromName(headerAvatar.senderName)} size="lg" />
+          {headerAvatarIsAgent ? (
+            <PersonAvatar kind="agent" initials={agentInitialsFromName(headerAvatarName)} size="lg" />
           ) : (
-            <PersonAvatar
-              kind="human"
-              initials={initialsFromName(headerAvatar?.senderName ?? item.actorLabel)}
-              size="lg"
-            />
+            <PersonAvatar kind="human" initials={initialsFromName(headerAvatarName)} size="lg" />
           )}
           <div className="min-w-0">
-            <p className="truncate text-[14px] font-semibold text-ink">{headerTitle}</p>
+            <TextTooltip
+              content={participantNames.join(", ")}
+              className="block truncate text-[14px] font-semibold text-ink"
+            >
+              {headerTitle}
+            </TextTooltip>
             {thread.participants.length > 2 && (
               <p className="truncate text-[11.5px] text-ink-3">{thread.participants.length} people</p>
             )}

@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { TextTooltip } from "@/components/ui/text-tooltip";
 import { agentInitialsFromName, formatRoomActivity, initialsFromName } from "@/pages/rooms/format";
 import { formatShortDate } from "@/lib/format-measured-value";
 import type { InboxItemDto, InboxItemKind } from "@/services/api/inbox/get-inbox";
@@ -229,14 +230,15 @@ function Row({ item, active, onSelect }: { item: InboxItemDto; active: boolean; 
 
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
-            <span
+            <TextTooltip
+              content={displayLabel}
               className={cn(
                 "truncate text-[13px]",
                 !item.isRead ? "font-semibold text-ink" : "font-medium text-ink-2"
               )}
             >
               {displayLabel}
-            </span>
+            </TextTooltip>
             <span className="flex shrink-0 items-center gap-1 text-[11px] text-ink-4">
               {item.mentionsYou && <AtSign className="size-3 text-ultra" />}
               {formatRoomActivity(item.occurredAtUtc)}
@@ -249,14 +251,15 @@ function Row({ item, active, onSelect }: { item: InboxItemDto; active: boolean; 
             </Chip>
           )}
 
-          <p
+          <TextTooltip
+            content={item.summary}
             className={cn(
               "line-clamp-2 text-[12px] leading-snug text-ink-3",
               item.kind !== "Message" ? "mt-1" : "mt-0.5"
             )}
           >
             {item.summary}
-          </p>
+          </TextTooltip>
 
           {item.eventCount > 1 && (
             <p className="mt-1 text-right text-[11px] text-ink-4">{item.eventCount} updates</p>
