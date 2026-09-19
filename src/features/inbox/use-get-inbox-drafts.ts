@@ -3,8 +3,9 @@ import { getInboxDrafts, type GetInboxDraftsResponse } from "@/services/api/inbo
 
 export const INBOX_DRAFTS_QUERY_KEY = ["inbox-drafts"];
 
-export const useGetInboxDrafts = () =>
+export const useGetInboxDrafts = (options?: { enabled?: boolean }) =>
   useQuery<GetInboxDraftsResponse, Error>({
     queryKey: INBOX_DRAFTS_QUERY_KEY,
     queryFn: getInboxDrafts,
+    enabled: options?.enabled,
   });

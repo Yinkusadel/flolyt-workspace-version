@@ -13,23 +13,19 @@ import useCreateInboxThread from "@/features/inbox/use-create-inbox-thread";
 /**
  * Real `POST /inbox/threads` is multi-recipient by design ("a message addressed to three people
  * is one conversation all three are in, not three threads" — docs/endpoints/inbox.md), unlike the
- * old mock's single-recipient slot. Draft-saving is deliberately not wired here — see the
- * "no way to list your own drafts" gap in docs/inbox/build-plan.md; the "Save draft" affordance
- * is left out rather than faked until that's resolved.
+ * old mock's single-recipient slot. Draft-saving (`asDraft: true`) re-added once `GET
+ * /inbox/drafts` resolved the "no way to list your own drafts" gap — see `DraftView` for editing
+ * a saved draft afterward.
  */
 export function ComposeView({ onDiscard, onSent }: { onDiscard: () => void; onSent: () => void }) {
   const [recipients, setRecipients] = React.useState<{ ref: string; name: string }[]>([]);
   const [attachedRoomId, setAttachedRoomId] = React.useState<string | null>(null);
   const [body, setBody] = React.useState("");
+  const [pendingAction, setPendingAction] = React.useState<"send" | "draft" | null>(null);
 
   const { members, isLoading: isMembersLoading } = useGetWorkspaceMembers();
   const { data: roomsData, isLoading: isRoomsLoading } = useGetRooms();
-  const { createInboxThread, isPending } = useCreateInboxThread({
-    onSuccess: () => {
-      toast.success("Message sent");
-      onSent();
-    },
-  });
+  const { createInboxThread, isPending } = useCreateInboxThread();
 
   const recipientRefs = new Set(recipients.map((r) => r.ref));
   const memberOptions = members
@@ -52,17 +48,33 @@ export function ComposeView({ onDiscard, onSent }: { onDiscard: () => void; onSe
 
   const handleSend = () => {
     const trimmed = body.trim();
-    if (recipients.length === 0 || !trimmed) return;
+    if (recipients.length === 0 || !trimmed || isPending) return;
 
-    createInboxThread({
-      recipients: recipients.map((r) => r.ref),
-      body: trimmed,
-      asDraft: false,
-      roomId: attachedRoomId,
-    });
+    setPendingAction("send");
+    createInboxThread(
+      { recipients: recipients.map((r) => r.ref), body: trimmed, asDraft: false, roomId: attachedRoomId },
+      { onSuccess: (res) => res.succeeded && onSent() }
+    );
+  };
+
+  const handleSaveDraft = () => {
+    if (recipients.length === 0 || isPending) return;
+
+    setPendingAction("draft");
+    createInboxThread(
+      { recipients: recipients.map((r) => r.ref), body: body.trim(), asDraft: true, roomId: attachedRoomId },
+      {
+        onSuccess: (res) => {
+          if (!res.succeeded) return;
+          toast.success("Draft saved");
+          onSent();
+        },
+      }
+    );
   };
 
   const canSend = recipients.length > 0 && !!body.trim() && !isPending;
+  const canSaveDraft = recipients.length > 0 && !isPending;
 
   return (
     <div className="flex h-full min-w-0 flex-col">
@@ -159,9 +171,14 @@ export function ComposeView({ onDiscard, onSent }: { onDiscard: () => void; onSe
           <MessageCircle className="size-3.5 shrink-0" />
           <span className="truncate">Inbox is for people — bring an agent in via a room instead.</span>
         </p>
-        <Button disabled={!canSend} onClick={handleSend} className="shrink-0">
-          {isPending ? "Sending…" : "Send"}
-        </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button type="button" variant="outline" disabled={!canSaveDraft} onClick={handleSaveDraft}>
+            {isPending && pendingAction === "draft" ? "Saving…" : "Save draft"}
+          </Button>
+          <Button type="button" disabled={!canSend} onClick={handleSend}>
+            {isPending && pendingAction === "send" ? "Sending…" : "Send"}
+          </Button>
+        </div>
       </div>
     </div>
   );

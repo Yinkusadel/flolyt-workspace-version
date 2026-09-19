@@ -1,4 +1,5 @@
 import type { GetInboxParams, InboxItemDto, InboxItemKind } from "@/services/api/inbox/get-inbox";
+import type { InboxDraftDto } from "@/services/api/inbox/get-inbox-drafts";
 import type { InboxSentItemDto } from "@/services/api/inbox/get-inbox-sent";
 import type { InboxThreadRoomDto } from "@/services/api/inbox/get-inbox-thread";
 import type { AttachedRoom, InboxFilter } from "@/pages/inbox/data";
@@ -88,6 +89,45 @@ export function sentItemToInboxItem(item: InboxSentItemDto): InboxItemDto {
     href: null,
     snoozedUntilUtc: null,
     eventCount: item.messageCount,
+  };
+}
+
+// A draft has no `GET /inbox` row of its own to key off of — `messageId` is the only real
+// identifier, so it's namespaced in the URL/`sourceId` to tell it apart from a real thread's id
+// without a second route param.
+const DRAFT_ID_PREFIX = "draft:";
+
+export function draftSourceId(messageId: string): string {
+  return `${DRAFT_ID_PREFIX}${messageId}`;
+}
+
+/** Returns the draft's `messageId` if `sourceId` (or the raw `id` search param) is a draft
+ * reference, `null` otherwise. */
+export function parseDraftMessageId(sourceId: string | null): string | null {
+  return sourceId?.startsWith(DRAFT_ID_PREFIX) ? sourceId.slice(DRAFT_ID_PREFIX.length) : null;
+}
+
+/** `GET /inbox/drafts` returns its own shape too (`to`/`body`/`updatedAtUtc`, `messageId` instead
+ * of `sourceId`) — reshaped the same way `sentItemToInboxItem` is, purely so a draft row can reuse
+ * the list's existing rendering. Unlike a sent or received item, a draft never opens `ThreadView`
+ * (drafts never appear in `GET /inbox/threads/{id}` — see get-inbox-thread.ts) so `sourceId` is
+ * namespaced via `draftSourceId` and the caller routes it to `DraftView` instead. */
+export function draftItemToInboxItem(draft: InboxDraftDto): InboxItemDto {
+  return {
+    group: "Drafts",
+    kind: "Message",
+    sourceId: draftSourceId(draft.messageId),
+    isRead: true,
+    mentionsYou: false,
+    actorLabel: draft.to.join(", "),
+    others: draft.to,
+    summary: draft.body || "(No content yet)",
+    context: null,
+    occurredAtUtc: draft.updatedAtUtc,
+    roomId: draft.roomId,
+    href: null,
+    snoozedUntilUtc: null,
+    eventCount: 0,
   };
 }
 

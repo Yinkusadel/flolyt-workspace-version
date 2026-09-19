@@ -33,7 +33,7 @@ function MoreFiltersMenu({
   onChange: (filter: InboxFilter) => void;
   unreadCount: number;
 }) {
-  const isActive = active === "unread" || active === "snoozed" || active === "sent";
+  const isActive = active === "unread" || active === "snoozed" || active === "sent" || active === "drafts";
 
   return (
     <DropdownMenu>
@@ -69,9 +69,11 @@ function MoreFiltersMenu({
         >
           Sent
         </DropdownMenuItem>
-        <DropdownMenuItem disabled>
+        <DropdownMenuItem
+          onSelect={() => onChange("drafts")}
+          className={cn(active === "drafts" && "bg-paper-2 font-medium")}
+        >
           Drafts
-          <span className="ml-auto text-[10.5px] text-ink-4">Soon</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -285,6 +287,7 @@ function ListEmptyState({ filter, unreadCount }: { filter: InboxFilter; unreadCo
     approvals: { title: "Nothing to approve", body: "No approval requests right now." },
     snoozed: { title: "Nothing snoozed", body: "Lines you put off show up here until they come back." },
     sent: { title: "Nothing sent", body: "Messages you've started show up here." },
+    drafts: { title: "No drafts", body: "Messages you've started writing but not sent yet show up here." },
   };
   const { title, body } = copy[filter];
 
