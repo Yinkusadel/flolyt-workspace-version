@@ -56,13 +56,13 @@ logged-in Playwright pass, zero console errors throughout:
    inbox afterward** — found live 2026-09-19 (composed to "Abarai renji" alone, real API response
    showed only the earlier self-included thread, not the new one). Root cause: `recipients` is the
    literal participant list on this backend, not "everyone except me" — the sender isn't
-   auto-added as a participant just because they authored the message. Fixed in
-   `compose-view.tsx`'s `handleSend`: the signed-in member's own `ref` (matched from
-   `useGetWorkspaceMembers()` via `useAuth().user.id`) is always appended to `recipients` before
-   sending, deduped against anything manually picked. **Confirmed live**: composing to "testing
-   invitation" alone now creates a thread that immediately appears in the sender's own inbox under
-   `Mentions`. Not retroactive — the earlier "Abarai renji" thread sent before this fix landed is
-   still not visible to its own sender and there's no way to recover it from the frontend.
+   auto-added as a participant just because they authored the message. **Original fix (superseded
+   2026-09-19, see "Sent" below): the signed-in member's own `ref` was appended to `recipients`
+   before every send.** That workaround was removed once `GET /inbox/sent` shipped and got wired
+   in — a thread you started now shows up in your own **Sent** list on its own merit, so
+   artificially inserting yourself as a recipient (which also polluted the real participant list
+   other people see) is no longer needed. `compose-view.tsx`'s `handleSend` now sends exactly the
+   recipients picked, nothing more.
 
 **Further thread-input polish, requested directly by the user 2026-09-19 (not bugs, design
 changes):**
@@ -302,6 +302,79 @@ recipients aren't editable, they're set at creation), send (`POST /inbox/drafts/
 first PUTs whatever's currently typed so nothing unsaved gets lost), and delete
 (`DELETE /inbox/drafts/{id}`, behind a confirm dialog). Not yet live-verified against a real
 account.
+
+## 2026-09-19 (continued): filter dropdown, Sent, group-thread fixes, compose redesign, proposal confirm dialogs
+
+A second pass the same day, driven entirely by user feedback on the live UI rather than new
+endpoint work. In order:
+
+1. **Filter tabs restructured into a dropdown.** The tab bar was overflowing/overlapping at
+   `All / Unread / Mentions / Approvals / Snoozed / +`. Fixed in two steps: first moved Snoozed
+   behind a `⋮` (`MoreVertical`) dropdown next to `+`; then, since it *still* overlapped, moved
+   Unread in too. Visible tabs are now just **All / Mentions / Approvals**; the `⋮` dropdown holds
+   **Unread** (with its count), **Snoozed**, **Sent**, **Drafts**. A `MoreVertical` icon was chosen
+   over a chevron per the user's request for "the same icon as [a reference screenshot]".
+2. **Sent built.** `GET /inbox/sent` wired as a dropdown filter — `sentItemToInboxItem()` in
+   `kind.ts` reshapes its response (`to`/`summary`/`lastAtUtc`/`lastFromYou`) into an `InboxItemDto`
+   so a sent row reuses the existing list rendering and `ThreadView` unchanged. **Bug found and
+   fixed**: `summary` was originally mapped from `lastFromYou` — that field is a **timestamp**
+   (when you last sent), not text, despite the name reading like it could be a preview; the raw ISO
+   string was rendering as the row's message preview. Fixed to read the DTO's own `summary` field
+   instead; `lastFromYou` is unused.
+3. **Group-thread display, several rounds of user feedback:**
+   - List rows: a `kind: "Message"` row with 2+ other participants got its own tile — **first
+     tried** a plain `Users` icon (rejected: "we not seeing 2 people" → tried `UsersRound`, then a
+     custom overlapping-initials-stack tile — **user said stop, revert**, back to plain `Users`).
+     **Current state: plain `Users`-icon tile, unchanged from the first attempt** — the stacked-
+     initials idea was explicitly rejected for the list, but the *same* `Users`-icon tile was later
+     asked for again in the thread header (see below), so it's now the deliberate, confirmed choice
+     for both places.
+   - Thread header (`thread-view.tsx`): originally derived its title only from *distinct message
+     senders*, which shows nothing/wrong names for a group nobody's replied in yet. Fixed to prefer
+     `item.others` (real names, populated even pre-reply), unioned with sender names and deduped
+     (`dedupeNames()` — normalizes whitespace/case; a real recipient name had a double space,
+     `"testing  invitation"`, that didn't match a sender name for the same person without it).
+     Selection precedence in `index.tsx` also flipped to check `sentItems` **before** `allItems`
+     when resolving the open item by id — a self-started thread can also appear in the
+     recipient-filtered `All` list once someone acts on it, but that copy only carries whoever
+     triggered *that* notification, not the full roster.
+   - Header caps at 2 names + a `+N other(s)` **badge** (a `Chip`, not concatenated text — the user
+     was explicit the overflow count should be a visual badge). The badge count is driven by
+     `thread.participants.length` (the real backend count), not just however many names got
+     resolved — a participant who's never spoken and wasn't in `others` either still counts toward
+     the badge even with no name available for them.
+   - Header avatar for a group: tried an overlapping-initials-stack (user: "just use the normal
+     avatar i dont like this, use the same group icon from the sidebar") → now reuses the exact
+     same plain-`Users`-icon tile as the list row (`GroupAvatar` in `thread-view.tsx`, intentionally
+     not shared as a component with the list's — different enough call sites, per an inline note in
+     the code).
+   - **Reverted, not kept**: making the "N people" line always-rendered (`invisible` when not
+     applicable) to stop a layout shift between group/1:1 threads — user said it "looks weird when
+     there is not people badge"; still conditionally rendered, the shift is still there, unresolved.
+4. **Hover tooltips added** (`src/components/ui/text-tooltip.tsx`, new shared component) for
+   truncated participant names and message previews in the list rows and thread header — portal +
+   `getBoundingClientRect` positioning, not Radix `Tooltip` (see the `preact-radix-dialog-crash`
+   memory: Radix's Presence-based enter/exit flickers on this stack). Opens after a **700ms** hover
+   delay (raised from an initial 500ms per the user) so it doesn't fire on every pass-through hover
+   while scrolling — timer is cancelled on `mouseleave` before it fires.
+5. **Compose panel redesigned** ("looks weird, professionally redesign it"): centered `max-w-xl`
+   column instead of edge-to-edge (was the main cause of the oversized/sparse look); all three
+   fields (`To`/`About`/message) unified on `bg-paper` + `border-border` + a real focus ring,
+   replacing a mismatched `bg-paper-2` look that read as disabled; header + a new bottom action bar
+   are fixed with only the form body scrolling between them (matches `ThreadView`'s structure); the
+   "Inbox is for people" card shrunk from a heavy bordered card to a single muted line living in the
+   footer next to Send.
+6. **Accept/Reject on a proposal now confirm before acting** (`approval-view.tsx`) — clicking
+   either used to fire the decision immediately. Now opens a `Dialog` (always mounted, `open` driven
+   by `confirmAction` state, never conditionally mounted — the known-safe pattern for Radix Dialog
+   on this stack) summarizing what's about to happen, with a tone-matched confirm button
+   (`default/destructive`) and Cancel. Hold was left as-is — it already required typing a reason
+   first, which already served as a confirmation step.
+7. **Drafts empty-body bug, found live via the network tab.** The user pasted a real
+   `POST /inbox/threads` 400 response: `"A message needs something in it."` — the backend rejects
+   an empty body even with `asDraft: true`. `ComposeView`'s "Save draft" and `DraftView`'s "Save"
+   originally allowed saving with just recipients picked, no text; both now require non-empty body,
+   same as Send.
 
 ## Implementation roadmap
 
