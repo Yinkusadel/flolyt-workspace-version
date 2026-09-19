@@ -67,10 +67,11 @@ export function groupLabel(group: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase();
 }
 
-/** `GET /inbox/sent` returns its own shape (`to`/`lastFromYou`/`lastAtUtc`, no `kind`/`group`/
- * `isRead`) since a thread you started isn't a recipient-filtered `GET /inbox` row. Reshaping it
- * into an `InboxItemDto` lets a sent row reuse `ThreadView` (keyed off `sourceId`/`kind: "Message"`)
- * unchanged instead of needing its own detail view. */
+/** `GET /inbox/sent` returns its own shape (`to`/`summary`/`lastAtUtc`, no `kind`/`group`/`isRead`)
+ * since a thread you started isn't a recipient-filtered `GET /inbox` row. `lastFromYou` is a
+ * timestamp (when you last sent), not text — deliberately unused here rather than mistaken for a
+ * preview. Reshaping the rest into an `InboxItemDto` lets a sent row reuse `ThreadView` (keyed off
+ * `sourceId`/`kind: "Message"`) unchanged instead of needing its own detail view. */
 export function sentItemToInboxItem(item: InboxSentItemDto): InboxItemDto {
   return {
     group: "Sent",
@@ -80,7 +81,7 @@ export function sentItemToInboxItem(item: InboxSentItemDto): InboxItemDto {
     mentionsYou: false,
     actorLabel: item.to.join(", "),
     others: item.to,
-    summary: item.lastFromYou,
+    summary: item.summary,
     context: null,
     occurredAtUtc: item.lastAtUtc,
     roomId: item.roomId,
