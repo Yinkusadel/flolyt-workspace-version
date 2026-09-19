@@ -1,8 +1,9 @@
 import * as React from "react";
-import { ArrowUp, Plus, Smile } from "lucide-react";
+import { ArrowUp, Plus, Smile, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
+import { Chip } from "@/components/ui/chip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextTooltip } from "@/components/ui/text-tooltip";
 import { useAuth } from "@/utils/auth-context";
@@ -75,14 +76,32 @@ function MessageBubble({ message, mine }: { message: InboxThreadMessageDto; mine
   );
 }
 
-/** Caps a joined participant list at 2 names + a count of the rest ("Ichigo, Renji +3 others")
- * rather than running every name together — a group thread's header is a title, not a full
- * roster (that's what the tooltip and the "N people" line below it are for). */
-function formatParticipantNames(names: string[]): string {
-  if (names.length <= 2) return names.join(", ");
-  const shown = names.slice(0, 2).join(", ");
-  const remaining = names.length - 2;
-  return `${shown} +${remaining} other${remaining === 1 ? "" : "s"}`;
+/** Merging `others` and message-sender names can produce the same person twice under slightly
+ * different strings (confirmed live: a recipient named with a double space, `"testing  invitation"`,
+ * next to a sender name for the same person without it) — dedupes on a normalized key while
+ * keeping each name's original (first-seen) display spelling. */
+function dedupeNames(names: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const raw of names) {
+    const name = raw.trim();
+    const key = name.replace(/\s+/g, " ").toLowerCase();
+    if (!name || seen.has(key)) continue;
+    seen.add(key);
+    result.push(name);
+  }
+  return result;
+}
+
+/** Same tile as the sidebar's group rows (`list-pane.tsx`'s `KindTile`) — kept in sync
+ * deliberately rather than shared, since the two call sites differ enough (row height, kind
+ * switch) that a shared component would need its own prop surface for no real reuse benefit. */
+function GroupAvatar() {
+  return (
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-line bg-paper-2 text-ink-3">
+      <Users className="size-3.5" />
+    </span>
+  );
 }
 
 function ThreadSkeleton() {
@@ -151,21 +170,23 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
 
   // No member-name/avatar data on `participants` itself — `item.others` (recipients minus you,
   // already real display names) is the reliable source since it's populated even before anyone
-  // but you has sent a message; the distinct non-me senders already in the loaded messages are
-  // the fallback for older items where `others` wasn't supplied, and the list row's own
-  // actorLabel is the last resort.
+  // but you has sent a message; the distinct non-me senders already in the loaded messages fill
+  // in anyone `others` missed, and the list row's own actorLabel is the last resort.
   const otherSenders = Array.from(
     new Map(
       messages.filter((m) => !isMe(m.sender, user?.id)).map((m) => [m.sender, m])
     ).values()
   );
-  const participantNames =
-    item.others.length > 0
-      ? item.others
-      : otherSenders.length > 0
-        ? otherSenders.map((m) => m.senderName)
-        : [item.actorLabel];
-  const headerTitle = formatParticipantNames(participantNames);
+  const participantNames = dedupeNames([...item.others, ...otherSenders.map((m) => m.senderName)]);
+  if (participantNames.length === 0) participantNames.push(item.actorLabel);
+  // `thread.participants.length` (a real per-participant ref count from the backend) is the
+  // source of truth for how many others are actually in this thread — `participantNames` can
+  // undercount when someone hasn't spoken yet and wasn't in `others` either, so the "+N" badge is
+  // sized off the trustworthy count, not just however many names we managed to resolve.
+  const otherCount = Math.max(thread.participants.length, participantNames.length);
+  const isGroup = otherCount > 1;
+  const shownNames = participantNames.slice(0, 2);
+  const extraCount = Math.max(otherCount - shownNames.length, 0);
   const headerAvatarName = participantNames[0] ?? item.actorLabel;
   const headerAvatarIsAgent = otherSenders.find((m) => m.senderName === headerAvatarName)?.isAgent ?? false;
 
@@ -173,18 +194,27 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
     <div className="flex h-full min-w-0 flex-col">
       <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
         <div className="flex min-w-0 items-center gap-3">
-          {headerAvatarIsAgent ? (
+          {isGroup ? (
+            <GroupAvatar />
+          ) : headerAvatarIsAgent ? (
             <PersonAvatar kind="agent" initials={agentInitialsFromName(headerAvatarName)} size="lg" />
           ) : (
             <PersonAvatar kind="human" initials={initialsFromName(headerAvatarName)} size="lg" />
           )}
           <div className="min-w-0">
-            <TextTooltip
-              content={participantNames.join(", ")}
-              className="block truncate text-[14px] font-semibold text-ink"
-            >
-              {headerTitle}
-            </TextTooltip>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <TextTooltip
+                content={participantNames.join(", ")}
+                className="min-w-0 truncate text-[14px] font-semibold text-ink"
+              >
+                {shownNames.join(", ")}
+              </TextTooltip>
+              {extraCount > 0 && (
+                <Chip tone="neutral" className="shrink-0">
+                  +{extraCount} other{extraCount === 1 ? "" : "s"}
+                </Chip>
+              )}
+            </div>
             {thread.participants.length > 2 && (
               <p className="truncate text-[11.5px] text-ink-3">{thread.participants.length} people</p>
             )}
@@ -225,7 +255,7 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
                   handleSend();
                 }
               }}
-              placeholder={`Reply to ${headerTitle.split(" ")[0]}…`}
+              placeholder={`Reply to ${headerAvatarName.split(" ")[0]}…`}
               disabled={isPending}
               rows={1}
               className="max-h-32 min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"

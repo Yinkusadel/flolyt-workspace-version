@@ -58,8 +58,13 @@ export default function Inbox() {
     (item) => !isProposalKind(item.kind) && !isThreadKind(item.kind)
   ).length;
 
+  // Sent-derived first: a thread you started can also turn up in the recipient-filtered `All`
+  // list once someone else acts on it (e.g. it gets flagged back to you), but that entry only
+  // carries whoever triggered *that* notification, not the full recipient list — `to` on the
+  // sent version is the complete, authoritative roster since it's the thread's actual addressee
+  // list, not a per-notification actor.
   const selectedItem = !isComposing
-    ? allItems.find((item) => item.sourceId === rawId) ?? sentItems.find((item) => item.sourceId === rawId)
+    ? sentItems.find((item) => item.sourceId === rawId) ?? allItems.find((item) => item.sourceId === rawId)
     : undefined;
 
   const { markInboxRead } = useMarkInboxRead();
