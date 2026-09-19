@@ -1,4 +1,5 @@
-import type { GetInboxParams, InboxItemKind } from "@/services/api/inbox/get-inbox";
+import type { GetInboxParams, InboxItemDto, InboxItemKind } from "@/services/api/inbox/get-inbox";
+import type { InboxSentItemDto } from "@/services/api/inbox/get-inbox-sent";
 import type { InboxThreadRoomDto } from "@/services/api/inbox/get-inbox-thread";
 import type { AttachedRoom, InboxFilter } from "@/pages/inbox/data";
 import { formatCompactMoney } from "@/lib/format-measured-value";
@@ -64,6 +65,29 @@ export function groupLabel(group: string): string {
   const spaced = group.replace(/([a-z0-9])([A-Z])/g, "$1 $2").trim();
   if (!spaced) return group;
   return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase();
+}
+
+/** `GET /inbox/sent` returns its own shape (`to`/`lastFromYou`/`lastAtUtc`, no `kind`/`group`/
+ * `isRead`) since a thread you started isn't a recipient-filtered `GET /inbox` row. Reshaping it
+ * into an `InboxItemDto` lets a sent row reuse `ThreadView` (keyed off `sourceId`/`kind: "Message"`)
+ * unchanged instead of needing its own detail view. */
+export function sentItemToInboxItem(item: InboxSentItemDto): InboxItemDto {
+  return {
+    group: "Sent",
+    kind: "Message",
+    sourceId: item.threadId,
+    isRead: true,
+    mentionsYou: false,
+    actorLabel: item.to.join(", "),
+    others: item.to,
+    summary: item.lastFromYou,
+    context: null,
+    occurredAtUtc: item.lastAtUtc,
+    roomId: item.roomId,
+    href: null,
+    snoozedUntilUtc: null,
+    eventCount: item.messageCount,
+  };
 }
 
 /** `GET /inbox` items' `href` points at routes from a different/older frontend that don't exist

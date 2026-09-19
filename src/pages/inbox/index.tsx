@@ -2,7 +2,7 @@ import * as React from "react";
 import { useSearchParams } from "react-router-dom";
 
 import type { InboxFilter } from "@/pages/inbox/data";
-import { isProposalKind, isThreadKind, toApiFilter } from "@/pages/inbox/kind";
+import { isProposalKind, isThreadKind, sentItemToInboxItem, toApiFilter } from "@/pages/inbox/kind";
 import { ListPane } from "@/pages/inbox/list-pane";
 import { ThreadView } from "@/pages/inbox/thread-view";
 import { ApprovalView } from "@/pages/inbox/approval-view";
@@ -10,6 +10,7 @@ import { NoticeView } from "@/pages/inbox/notice-view";
 import { ComposeView } from "@/pages/inbox/compose-view";
 import { CaughtUpState, PickAMessageState } from "@/pages/inbox/empty-view";
 import { useGetInbox } from "@/features/inbox/use-get-inbox";
+import { useGetInboxSent } from "@/features/inbox/use-get-inbox-sent";
 import type { InboxItemDto } from "@/services/api/inbox/get-inbox";
 import useMarkInboxRead from "@/features/inbox/use-mark-inbox-read";
 
@@ -32,6 +33,8 @@ export default function Inbox() {
   const rawId = searchParams.get("id");
   const isComposing = rawId === "compose";
 
+  const isSentFilter = filter === "sent";
+
   const { data: allData } = useGetInbox({ filter: "All" });
   const {
     data: filteredData,
@@ -39,16 +42,25 @@ export default function Inbox() {
     isError,
     error,
   } = useGetInbox({ filter: toApiFilter(filter) });
+  const {
+    data: sentData,
+    isLoading: isSentLoading,
+    isError: isSentError,
+    error: sentError,
+  } = useGetInboxSent({ enabled: isSentFilter });
 
   const allItems = allData?.data.items ?? [];
-  const displayItems = filteredData?.data.items ?? [];
+  const sentItems = (sentData?.data ?? []).map(sentItemToInboxItem);
+  const displayItems = isSentFilter ? sentItems : filteredData?.data.items ?? [];
   const unreadCount = allData?.data.unread ?? 0;
   const approvalsCount = allItems.filter((item) => isProposalKind(item.kind)).length;
   const movingCount = allItems.filter(
     (item) => !isProposalKind(item.kind) && !isThreadKind(item.kind)
   ).length;
 
-  const selectedItem = !isComposing ? allItems.find((item) => item.sourceId === rawId) : undefined;
+  const selectedItem = !isComposing
+    ? allItems.find((item) => item.sourceId === rawId) ?? sentItems.find((item) => item.sourceId === rawId)
+    : undefined;
 
   const { markInboxRead } = useMarkInboxRead();
 
@@ -72,9 +84,9 @@ export default function Inbox() {
         <div className="w-[320px] shrink-0">
           <ListPane
             items={displayItems}
-            isLoading={isLoading}
-            isError={isError}
-            errorMessage={error?.message}
+            isLoading={isSentFilter ? isSentLoading : isLoading}
+            isError={isSentFilter ? isSentError : isError}
+            errorMessage={isSentFilter ? sentError?.message : error?.message}
             filter={filter}
             onFilterChange={setFilter}
             selectedId={rawId}
