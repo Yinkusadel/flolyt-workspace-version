@@ -411,6 +411,8 @@ export const API_ENDPOINTS = {
     DELETE_INBOX_DRAFT: `${INBOX_BASE_URL}/drafts/{messageId}`,
     SEND_INBOX_DRAFT: `${INBOX_BASE_URL}/drafts/{messageId}/send`,
     GET_INBOX_APPROVAL: `${INBOX_BASE_URL}/approvals/{proposalId}`,
+    GET_INBOX_SENT: `${INBOX_BASE_URL}/sent`,
+    GET_INBOX_DRAFTS: `${INBOX_BASE_URL}/drafts`,
   },
 
   SOURCES: {

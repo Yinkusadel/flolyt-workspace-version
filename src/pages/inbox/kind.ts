@@ -28,6 +28,8 @@ export function toApiFilter(filter: InboxFilter): NonNullable<GetInboxParams["fi
       return "Mentions";
     case "approvals":
       return "Approvals";
+    case "snoozed":
+      return "Snoozed";
     default:
       return "All";
   }

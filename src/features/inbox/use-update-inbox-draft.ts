@@ -19,6 +19,7 @@ const useUpdateInboxDraft = () => {
       }
 
       queryClient.invalidateQueries({ queryKey: ["inbox"] });
+      queryClient.invalidateQueries({ queryKey: ["inbox-drafts"] });
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update the draft");

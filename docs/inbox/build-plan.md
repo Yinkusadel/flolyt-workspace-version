@@ -1,10 +1,14 @@
 # Inbox — build plan
 
-**Steps 1–7 wired and live-verified 2026-09-18/19** (drafts, step 8, stays blocked — see below).
+**Steps 1–7 wired and live-verified 2026-09-18/19** (drafts, step 8, stays not-built — see below).
 `src/pages/inbox/` was fully rebuilt against the real endpoints in the same session that wrote
 the audit below; the audit section is kept as-is since it's still the record of what changed and
-why, not just history. **Two known, unfixed issues are open as of 2026-09-19** — read "Two open
-issues found live" below before touching compose or the list pane again.
+why, not just history. **One known, unfixed issue is open as of 2026-09-19** — read "Two open
+issues found live" below before touching compose or the list pane again (the other of the two was
+fixed 2026-09-19). **Spec re-pasted in full 2026-09-19**: adds `GET /sent`, `GET /drafts`, the
+`Snoozed` filter value (now a 5th list-pane tab), and `others`/`snoozedUntilUtc` on the list item
+— see docs/endpoints/inbox.md for the updated shapes. `GET /drafts` resolves the capability gap
+that blocked step 8 below; it just hasn't been built into a screen yet.
 
 ## What's live as of 2026-09-19
 
@@ -79,20 +83,23 @@ changes):**
 
 **Two open issues found live 2026-09-19, diagnosed but explicitly NOT fixed yet (user said "don't
 fix yet, just answer me") — read before touching compose/list-pane again:**
-1. **The list pane shows your own name instead of the other participant's, for `Message`-kind
-   rows.** Confirmed via real API responses: composing to "Abarai renji" produced a list item with
-   `actorLabel: "Ichigo Kursaki"` (the sender, i.e. the signed-in user) even though "Abarai renji"
-   is who the row should identify from the viewer's perspective — every messaging app (WhatsApp
-   reference included) shows the *other* person in the list, not yourself. Root cause: `actorLabel`
-   on `GET /inbox`'s list item appears to mean "whoever last acted" (sender of the last message),
+1. **FIXED 2026-09-19.** The list pane showed your own name instead of the other participant's, for
+   `Message`-kind rows. Confirmed via real API responses: composing to "Abarai renji" produced a
+   list item with `actorLabel: "Ichigo Kursaki"` (the sender, i.e. the signed-in user) even though
+   "Abarai renji" is who the row should identify from the viewer's perspective — every messaging app
+   (WhatsApp reference included) shows the *other* person in the list, not yourself. Root cause:
+   `actorLabel` on `GET /inbox`'s list item means "whoever last acted" (sender of the last message),
    not "who you're talking to" — for `Finished`/`Notification` kinds this is correct (`"Flolyt"`,
-   `"DatasourcePipeline"` are exactly who should show), but for `Message` it's the wrong field to
-   read as "the person in this row." **No cheap fix exists client-side**: `GET /inbox`'s list items
-   carry no participant list, only `GET /inbox/threads/{id}` (a separate per-thread fetch) does.
-   Real fix options: (a) fetch each `Message`-kind thread's detail just to resolve the counterpart
-   name for its list row (N+1-ish, not great), (b) ask the backend for a proper "counterpart" field
-   on the list item for `Message` kind (cleanest), (c) some in-between caching trick using threads
-   already opened. Not attempted this pass — diagnosis only.
+   `"DatasourcePipeline"` are exactly who should show), but for `Message` it was the wrong field to
+   read as "the person in this row." **Fixed via option (b)** from the real fix options below: the
+   backend added an `others: string[]` field to the list item (the counterpart list minus
+   `actorLabel`, confirmed live against a fresh `GET /inbox` pull — see docs/endpoints/inbox.md).
+   `src/pages/inbox/list-pane.tsx`'s `Row` now shows `others.join(", ")` when non-empty, falling
+   back to `actorLabel` for the plain 2-person case where it was already correct. Real fix options
+   considered: (a) fetch each `Message`-kind thread's detail just to resolve the counterpart name for
+   its list row (N+1-ish, not great), (b) ask the backend for a proper "counterpart" field on the
+   list item for `Message` kind (cleanest — **this is what shipped**), (c) some in-between caching
+   trick using threads already opened.
 2. **Composing a new message to someone you already have an open thread with creates a second,
    separate thread instead of continuing the first one.** Confirmed via real API responses: two
    `POST /inbox/threads` calls to the exact same 2-person recipient set ("Ichigo Kursaki" +
@@ -346,8 +353,11 @@ Ordered so each step is checkable against a real screen before moving to the nex
       Renders straight from the `GET /inbox` list item, no click-through fetch, as expected —
       confirmed there's genuinely no per-kind detail endpoint to call. `Mention` kind has an icon
       variant built (`AtSign`) but wasn't exercised live (0 mentions in the test account).
-- [ ] **8. Drafts** — still blocked on the missing "list my drafts" capability; revisit per the
-      flagged issue above before starting. Explicitly out of scope for this pass per the user.
+- [ ] **8. Drafts** — no longer blocked as of 2026-09-19: `GET /inbox/drafts` now exists and is
+      scaffolded (`get-inbox-drafts.ts` / `use-get-inbox-drafts.ts`, see docs/endpoints/inbox.md),
+      and the existing draft mutations (update/delete/send, plus `asDraft: true` on
+      compose/reply) already invalidate its query key. Still not built into a screen — revisit
+      when asked to build the drafts UI itself.
 
 ## Status tracking
 

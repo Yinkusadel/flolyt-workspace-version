@@ -6,6 +6,7 @@ import { PersonAvatar } from "@/components/person-avatar";
 import { Chip } from "@/components/ui/chip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { agentInitialsFromName, formatRoomActivity, initialsFromName } from "@/pages/rooms/format";
+import { formatShortDate } from "@/lib/format-measured-value";
 import type { InboxItemDto, InboxItemKind } from "@/services/api/inbox/get-inbox";
 import { KIND_LABEL, groupLabel, isProposalKind } from "@/pages/inbox/kind";
 import type { InboxFilter } from "@/pages/inbox/data";
@@ -15,6 +16,7 @@ const FILTERS: { value: InboxFilter; label: string }[] = [
   { value: "unread", label: "Unread" },
   { value: "mentions", label: "Mentions" },
   { value: "approvals", label: "Approvals" },
+  { value: "snoozed", label: "Snoozed" },
 ];
 
 function FilterTabs({
@@ -118,6 +120,12 @@ function KindTile({ kind, actorLabel }: { kind: InboxItemKind; actorLabel: strin
 }
 
 function Row({ item, active, onSelect }: { item: InboxItemDto; active: boolean; onSelect: () => void }) {
+  // `actorLabel` is whoever last acted, which for a `Message`-kind thread you started and last
+  // replied in is your own name. `others` (the counterpart(s) minus you) is the correct label to
+  // show in a message row when the backend supplies it; fall back to `actorLabel` when it's empty
+  // (e.g. a 2-person thread where the last actor already is the other participant).
+  const displayLabel = item.kind === "Message" && item.others.length > 0 ? item.others.join(", ") : item.actorLabel;
+
   return (
     <button
       type="button"
@@ -137,7 +145,7 @@ function Row({ item, active, onSelect }: { item: InboxItemDto; active: boolean; 
           {!item.isRead && <span className="size-1.5 rounded-full bg-ultra" />}
         </div>
 
-        <KindTile kind={item.kind} actorLabel={item.actorLabel} />
+        <KindTile kind={item.kind} actorLabel={displayLabel} />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
@@ -147,7 +155,7 @@ function Row({ item, active, onSelect }: { item: InboxItemDto; active: boolean; 
                 !item.isRead ? "font-semibold text-ink" : "font-medium text-ink-2"
               )}
             >
-              {item.actorLabel}
+              {displayLabel}
             </span>
             <span className="flex shrink-0 items-center gap-1 text-[11px] text-ink-4">
               {item.mentionsYou && <AtSign className="size-3 text-ultra" />}
@@ -173,6 +181,10 @@ function Row({ item, active, onSelect }: { item: InboxItemDto; active: boolean; 
           {item.eventCount > 1 && (
             <p className="mt-1 text-right text-[11px] text-ink-4">{item.eventCount} updates</p>
           )}
+
+          {item.snoozedUntilUtc && (
+            <p className="mt-1 text-right text-[11px] text-ink-4">Back {formatShortDate(item.snoozedUntilUtc)}</p>
+          )}
         </div>
       </div>
     </button>
@@ -188,6 +200,7 @@ function ListEmptyState({ filter, unreadCount }: { filter: InboxFilter; unreadCo
     },
     mentions: { title: "No mentions", body: "No one has mentioned you yet." },
     approvals: { title: "Nothing to approve", body: "No approval requests right now." },
+    snoozed: { title: "Nothing snoozed", body: "Lines you put off show up here until they come back." },
   };
   const { title, body } = copy[filter];
 
