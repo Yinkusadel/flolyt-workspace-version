@@ -1,9 +1,10 @@
 import * as React from "react";
-import { ArrowUp, Plus, Smile, Users } from "lucide-react";
+import { ArrowUp, Plus, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Chip } from "@/components/ui/chip";
+import { EmojiPickerButton } from "@/components/ui/emoji-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextTooltip } from "@/components/ui/text-tooltip";
 import { useAuth } from "@/utils/auth-context";
@@ -157,6 +158,22 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
     );
   };
 
+  const handleInsertEmoji = (emoji: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      setDraft((prev) => prev + emoji);
+      return;
+    }
+    const start = textarea.selectionStart ?? draft.length;
+    const end = textarea.selectionEnd ?? draft.length;
+    setDraft(draft.slice(0, start) + emoji + draft.slice(end));
+    requestAnimationFrame(() => {
+      const cursor = start + emoji.length;
+      textarea.focus();
+      textarea.setSelectionRange(cursor, cursor);
+    });
+  };
+
   if (isLoading) return <ThreadSkeleton />;
 
   if (isError || !thread) {
@@ -260,13 +277,7 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
               rows={1}
               className="max-h-32 min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
             />
-            <button
-              type="button"
-              className="mb-0.5 shrink-0 text-ink-4 hover:text-ink-2"
-              aria-label="Emoji"
-            >
-              <Smile className="size-4" />
-            </button>
+            <EmojiPickerButton onSelect={handleInsertEmoji} className="mb-0.5" />
           </div>
 
           <button
