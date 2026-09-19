@@ -26,6 +26,9 @@ const useCreateInboxThread = (options?: UseCreateInboxThreadOptions) => {
         toast.success("Message sent");
       }
       queryClient.invalidateQueries({ queryKey: ["inbox"] });
+      if (variables.asDraft) {
+        queryClient.invalidateQueries({ queryKey: ["inbox-drafts"] });
+      }
       options?.onSuccess?.(data.data);
     },
     onError: (error) => {

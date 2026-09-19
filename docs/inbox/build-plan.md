@@ -1,10 +1,14 @@
 # Inbox — build plan
 
-**Steps 1–7 wired and live-verified 2026-09-18/19** (drafts, step 8, stays blocked — see below).
+**All 8 steps wired 2026-09-18/19**, including drafts (step 8, built 2026-09-19 — see below).
 `src/pages/inbox/` was fully rebuilt against the real endpoints in the same session that wrote
 the audit below; the audit section is kept as-is since it's still the record of what changed and
-why, not just history. **Two known, unfixed issues are open as of 2026-09-19** — read "Two open
-issues found live" below before touching compose or the list pane again.
+why, not just history. **One known, unfixed issue is open as of 2026-09-19** — read "Two open
+issues found live" below before touching compose or the list pane again (the other of the two was
+fixed 2026-09-19). **Spec re-pasted in full 2026-09-19**: adds `GET /sent`, `GET /drafts`, the
+`Snoozed` filter value (now list-pane dropdown items alongside Unread), and
+`others`/`snoozedUntilUtc` on the list item — see docs/endpoints/inbox.md for the updated shapes.
+Sent and Drafts are both now built (see step 8 below).
 
 ## What's live as of 2026-09-19
 
@@ -79,20 +83,23 @@ changes):**
 
 **Two open issues found live 2026-09-19, diagnosed but explicitly NOT fixed yet (user said "don't
 fix yet, just answer me") — read before touching compose/list-pane again:**
-1. **The list pane shows your own name instead of the other participant's, for `Message`-kind
-   rows.** Confirmed via real API responses: composing to "Abarai renji" produced a list item with
-   `actorLabel: "Ichigo Kursaki"` (the sender, i.e. the signed-in user) even though "Abarai renji"
-   is who the row should identify from the viewer's perspective — every messaging app (WhatsApp
-   reference included) shows the *other* person in the list, not yourself. Root cause: `actorLabel`
-   on `GET /inbox`'s list item appears to mean "whoever last acted" (sender of the last message),
+1. **FIXED 2026-09-19.** The list pane showed your own name instead of the other participant's, for
+   `Message`-kind rows. Confirmed via real API responses: composing to "Abarai renji" produced a
+   list item with `actorLabel: "Ichigo Kursaki"` (the sender, i.e. the signed-in user) even though
+   "Abarai renji" is who the row should identify from the viewer's perspective — every messaging app
+   (WhatsApp reference included) shows the *other* person in the list, not yourself. Root cause:
+   `actorLabel` on `GET /inbox`'s list item means "whoever last acted" (sender of the last message),
    not "who you're talking to" — for `Finished`/`Notification` kinds this is correct (`"Flolyt"`,
-   `"DatasourcePipeline"` are exactly who should show), but for `Message` it's the wrong field to
-   read as "the person in this row." **No cheap fix exists client-side**: `GET /inbox`'s list items
-   carry no participant list, only `GET /inbox/threads/{id}` (a separate per-thread fetch) does.
-   Real fix options: (a) fetch each `Message`-kind thread's detail just to resolve the counterpart
-   name for its list row (N+1-ish, not great), (b) ask the backend for a proper "counterpart" field
-   on the list item for `Message` kind (cleanest), (c) some in-between caching trick using threads
-   already opened. Not attempted this pass — diagnosis only.
+   `"DatasourcePipeline"` are exactly who should show), but for `Message` it was the wrong field to
+   read as "the person in this row." **Fixed via option (b)** from the real fix options below: the
+   backend added an `others: string[]` field to the list item (the counterpart list minus
+   `actorLabel`, confirmed live against a fresh `GET /inbox` pull — see docs/endpoints/inbox.md).
+   `src/pages/inbox/list-pane.tsx`'s `Row` now shows `others.join(", ")` when non-empty, falling
+   back to `actorLabel` for the plain 2-person case where it was already correct. Real fix options
+   considered: (a) fetch each `Message`-kind thread's detail just to resolve the counterpart name for
+   its list row (N+1-ish, not great), (b) ask the backend for a proper "counterpart" field on the
+   list item for `Message` kind (cleanest — **this is what shipped**), (c) some in-between caching
+   trick using threads already opened.
 2. **Composing a new message to someone you already have an open thread with creates a second,
    separate thread instead of continuing the first one.** Confirmed via real API responses: two
    `POST /inbox/threads` calls to the exact same 2-person recipient set ("Ichigo Kursaki" +
@@ -159,8 +166,9 @@ turns out different.
 
 ## Endpoints
 
-11/11 documented, 9/11 wired (`read-all` + the 3 draft endpoints are the exceptions — see
-"Implementation roadmap" below). Full contracts in [docs/endpoints/inbox.md](../endpoints/inbox.md).
+13/13 documented, 12/13 wired as of 2026-09-19 (`read-all` is the one remaining exception — no
+"mark all read" affordance exists in the list pane yet). Full contracts in
+[docs/endpoints/inbox.md](../endpoints/inbox.md).
 `GET /sources`'s path was also corrected as part of the original pass (path only, see
 [app-shell.md](../endpoints/app-shell.md)) — unrelated to inbox itself, noted here only because it
 landed in the same commit.
@@ -281,21 +289,19 @@ no inline action) confirmed that was the intended design. **That was wrong; chec
   to render as — matches the "grouped by consequence" gap flagged above. **Confirmed live
   2026-09-18: `Systems` is the literal real `group` value**, not just a naming coincidence.
 
-## Flagged for later: no way to list your own saved drafts
+## Drafts — resolved and built 2026-09-19
 
-**Explicitly deferred per the user — do not build drafts (save/edit/resume) until this is
-resolved. Revisit when asked, or once the rest of this roadmap is done.**
-
-You can create a draft (`asDraft: true` on `POST /inbox/threads` or
-`POST /inbox/threads/{threadId}/messages`) and, once you have its `messageId`, edit
-(`PUT /inbox/drafts/{id}`) / delete (`DELETE /inbox/drafts/{id}`) / send
-(`POST /inbox/drafts/{id}/send`) it — but there is **no endpoint that lists a caller's own
-drafts**. `GET /inbox/threads/{threadId}`'s own doc says drafts are deliberately excluded ("not
-yet part of what the conversation has said"), and `GET /inbox`'s `kind` enum has no draft value
-either. So if compose needs "leave a draft, come back to it another day," there's currently no
-fetch that would let the UI find it again. Options when this comes back up: ask the backend for a
-`GET /inbox/drafts` list, or scope the design so a draft only persists for the current
-session/tab rather than being durably resumable.
+Was flagged for later ("no way to list your own saved drafts" — `GET /inbox/threads/{threadId}`
+deliberately excludes drafts, and `GET /inbox`'s `kind` enum has no draft value either). Resolved
+once `GET /inbox/drafts` shipped as its own endpoint. Built: `ComposeView` got a "Save draft"
+button back (`asDraft: true` on `POST /inbox/threads`); the list pane's `⋮` dropdown got a
+"Drafts" item, listing `GET /inbox/drafts` reshaped through `draftItemToInboxItem` (same trick as
+`sentItemToInboxItem`) so a draft row reuses the existing list rendering; a new `DraftView`
+(`src/pages/inbox/draft-view.tsx`) handles editing (`PUT /inbox/drafts/{id}`, body/room only —
+recipients aren't editable, they're set at creation), send (`POST /inbox/drafts/{id}/send`, which
+first PUTs whatever's currently typed so nothing unsaved gets lost), and delete
+(`DELETE /inbox/drafts/{id}`, behind a confirm dialog). Not yet live-verified against a real
+account.
 
 ## Implementation roadmap
 
@@ -337,7 +343,8 @@ Ordered so each step is checkable against a real screen before moving to the nex
 - [x] **6. Compose rebuild** — wired 2026-09-18. Multi-recipient `To` field (array) confirmed live
       against real `GET /workspace/members` data; real room-attach picker confirmed live against
       real `GET /rooms` data (correctly showed "No results" for this account's 0 open rooms).
-      "Save draft" removed entirely rather than wired or faked, per the drafts deferral below.
+      "Save draft" was originally removed entirely rather than wired or faked (drafts had no way
+      to be listed yet) — re-added 2026-09-19 once drafts were built, see step 8.
       2026-09-19: fixed the sender-not-a-participant bug (see "Three bugs found live" above).
       **Open issue, not fixed**: composing to someone you already have a thread with creates a
       duplicate thread instead of continuing the existing one — diagnosed as a backend gap, see
@@ -346,8 +353,10 @@ Ordered so each step is checkable against a real screen before moving to the nex
       Renders straight from the `GET /inbox` list item, no click-through fetch, as expected —
       confirmed there's genuinely no per-kind detail endpoint to call. `Mention` kind has an icon
       variant built (`AtSign`) but wasn't exercised live (0 mentions in the test account).
-- [ ] **8. Drafts** — still blocked on the missing "list my drafts" capability; revisit per the
-      flagged issue above before starting. Explicitly out of scope for this pass per the user.
+- [x] **8. Drafts** — built 2026-09-19: `GET /inbox/drafts` listed via the list pane's `⋮`
+      dropdown, `ComposeView` has "Save draft" back, and a new `DraftView` handles edit/send/delete
+      of an existing draft. See "Drafts — resolved and built 2026-09-19" above. Not yet
+      live-verified against a real account.
 
 ## Status tracking
 

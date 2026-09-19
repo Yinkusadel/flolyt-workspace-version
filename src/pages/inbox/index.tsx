@@ -2,14 +2,24 @@ import * as React from "react";
 import { useSearchParams } from "react-router-dom";
 
 import type { InboxFilter } from "@/pages/inbox/data";
-import { isProposalKind, isThreadKind, toApiFilter } from "@/pages/inbox/kind";
+import {
+  draftItemToInboxItem,
+  isProposalKind,
+  isThreadKind,
+  parseDraftMessageId,
+  sentItemToInboxItem,
+  toApiFilter,
+} from "@/pages/inbox/kind";
 import { ListPane } from "@/pages/inbox/list-pane";
 import { ThreadView } from "@/pages/inbox/thread-view";
 import { ApprovalView } from "@/pages/inbox/approval-view";
 import { NoticeView } from "@/pages/inbox/notice-view";
 import { ComposeView } from "@/pages/inbox/compose-view";
+import { DraftView } from "@/pages/inbox/draft-view";
 import { CaughtUpState, PickAMessageState } from "@/pages/inbox/empty-view";
 import { useGetInbox } from "@/features/inbox/use-get-inbox";
+import { useGetInboxSent } from "@/features/inbox/use-get-inbox-sent";
+import { useGetInboxDrafts } from "@/features/inbox/use-get-inbox-drafts";
 import type { InboxItemDto } from "@/services/api/inbox/get-inbox";
 import useMarkInboxRead from "@/features/inbox/use-mark-inbox-read";
 
@@ -31,6 +41,10 @@ export default function Inbox() {
 
   const rawId = searchParams.get("id");
   const isComposing = rawId === "compose";
+  const draftMessageId = parseDraftMessageId(rawId);
+
+  const isSentFilter = filter === "sent";
+  const isDraftsFilter = filter === "drafts";
 
   const { data: allData } = useGetInbox({ filter: "All" });
   const {
@@ -39,16 +53,41 @@ export default function Inbox() {
     isError,
     error,
   } = useGetInbox({ filter: toApiFilter(filter) });
+  const {
+    data: sentData,
+    isLoading: isSentLoading,
+    isError: isSentError,
+    error: sentError,
+  } = useGetInboxSent({ enabled: isSentFilter });
+  const {
+    data: draftsData,
+    isLoading: isDraftsLoading,
+    isError: isDraftsError,
+    error: draftsError,
+  } = useGetInboxDrafts({ enabled: isDraftsFilter || draftMessageId !== null });
 
   const allItems = allData?.data.items ?? [];
-  const displayItems = filteredData?.data.items ?? [];
+  const sentItems = (sentData?.data ?? []).map(sentItemToInboxItem);
+  const draftItems = (draftsData?.data ?? []).map(draftItemToInboxItem);
+  const displayItems = isSentFilter ? sentItems : isDraftsFilter ? draftItems : filteredData?.data.items ?? [];
   const unreadCount = allData?.data.unread ?? 0;
   const approvalsCount = allItems.filter((item) => isProposalKind(item.kind)).length;
   const movingCount = allItems.filter(
     (item) => !isProposalKind(item.kind) && !isThreadKind(item.kind)
   ).length;
 
-  const selectedItem = !isComposing ? allItems.find((item) => item.sourceId === rawId) : undefined;
+  const selectedDraft = draftMessageId
+    ? draftsData?.data.find((d) => d.messageId === draftMessageId)
+    : undefined;
+
+  // Sent-derived first: a thread you started can also turn up in the recipient-filtered `All`
+  // list once someone else acts on it (e.g. it gets flagged back to you), but that entry only
+  // carries whoever triggered *that* notification, not the full recipient list — `to` on the
+  // sent version is the complete, authoritative roster since it's the thread's actual addressee
+  // list, not a per-notification actor.
+  const selectedItem = !isComposing && !draftMessageId
+    ? sentItems.find((item) => item.sourceId === rawId) ?? allItems.find((item) => item.sourceId === rawId)
+    : undefined;
 
   const { markInboxRead } = useMarkInboxRead();
 
@@ -72,9 +111,9 @@ export default function Inbox() {
         <div className="w-[320px] shrink-0">
           <ListPane
             items={displayItems}
-            isLoading={isLoading}
-            isError={isError}
-            errorMessage={error?.message}
+            isLoading={isSentFilter ? isSentLoading : isDraftsFilter ? isDraftsLoading : isLoading}
+            isError={isSentFilter ? isSentError : isDraftsFilter ? isDraftsError : isError}
+            errorMessage={isSentFilter ? sentError?.message : isDraftsFilter ? draftsError?.message : error?.message}
             filter={filter}
             onFilterChange={setFilter}
             selectedId={rawId}
@@ -88,6 +127,12 @@ export default function Inbox() {
         <div className="min-w-0 flex-1">
           {isComposing ? (
             <ComposeView onDiscard={closeDetail} onSent={closeDetail} />
+          ) : draftMessageId ? (
+            selectedDraft ? (
+              <DraftView draft={selectedDraft} onClosed={closeDetail} />
+            ) : !isDraftsLoading ? (
+              <PickAMessageState onCompose={openCompose} />
+            ) : null
           ) : !selectedItem ? (
             filter === "unread" && unreadCount === 0 ? (
               <CaughtUpState movingRoomsCount={movingCount} onSeeAll={() => setFilter("all")} />

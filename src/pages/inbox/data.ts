@@ -19,4 +19,4 @@ export const ME: PersonRef = { name: "Dana O.", initials: "D", team: 2 };
  * placeholder card in compose. */
 export type AttachedRoom = { label: string; subtitle: string; roomId?: string };
 
-export type InboxFilter = "all" | "unread" | "mentions" | "approvals";
+export type InboxFilter = "all" | "unread" | "mentions" | "approvals" | "snoozed" | "sent" | "drafts";

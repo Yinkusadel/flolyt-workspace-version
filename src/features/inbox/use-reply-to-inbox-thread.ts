@@ -25,6 +25,9 @@ const useReplyToInboxThread = (options?: UseReplyToInboxThreadOptions) => {
 
       queryClient.invalidateQueries({ queryKey: INBOX_THREAD_QUERY_KEY(variables.threadId) });
       queryClient.invalidateQueries({ queryKey: ["inbox"] });
+      if (variables.asDraft) {
+        queryClient.invalidateQueries({ queryKey: ["inbox-drafts"] });
+      }
       options?.onSuccess?.(data.data);
     },
     onError: (error) => {

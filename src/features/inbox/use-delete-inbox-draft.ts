@@ -19,6 +19,7 @@ const useDeleteInboxDraft = () => {
 
       toast.success("Draft deleted");
       queryClient.invalidateQueries({ queryKey: ["inbox"] });
+      queryClient.invalidateQueries({ queryKey: ["inbox-drafts"] });
     },
     onError: (error) => {
       toast.error(error.message || "Failed to delete the draft");

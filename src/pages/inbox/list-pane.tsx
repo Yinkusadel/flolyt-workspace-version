@@ -1,21 +1,84 @@
 import * as React from "react";
-import { AtSign, Bell, Plus, ShieldCheck, Sparkles } from "lucide-react";
+import { AtSign, Bell, MoreVertical, Plus, ShieldCheck, Sparkles, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Chip } from "@/components/ui/chip";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { TextTooltip } from "@/components/ui/text-tooltip";
 import { agentInitialsFromName, formatRoomActivity, initialsFromName } from "@/pages/rooms/format";
+import { formatShortDate } from "@/lib/format-measured-value";
 import type { InboxItemDto, InboxItemKind } from "@/services/api/inbox/get-inbox";
 import { KIND_LABEL, groupLabel, isProposalKind } from "@/pages/inbox/kind";
 import type { InboxFilter } from "@/pages/inbox/data";
 
 const FILTERS: { value: InboxFilter; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "unread", label: "Unread" },
   { value: "mentions", label: "Mentions" },
   { value: "approvals", label: "Approvals" },
 ];
+
+function MoreFiltersMenu({
+  active,
+  onChange,
+  unreadCount,
+}: {
+  active: InboxFilter;
+  onChange: (filter: InboxFilter) => void;
+  unreadCount: number;
+}) {
+  const isActive = active === "unread" || active === "snoozed" || active === "sent" || active === "drafts";
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label="More filters"
+          className={cn(
+            "flex items-center gap-0.5 rounded-control px-1.5 py-1.5 text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink",
+            isActive && "bg-paper-2 text-ink"
+          )}
+        >
+          <MoreVertical className="size-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem
+          onSelect={() => onChange("unread")}
+          className={cn(active === "unread" && "bg-paper-2 font-medium")}
+        >
+          Unread
+          {unreadCount > 0 && <span className="ml-auto text-[11px] text-ink-4">{unreadCount}</span>}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => onChange("snoozed")}
+          className={cn(active === "snoozed" && "bg-paper-2 font-medium")}
+        >
+          Snoozed
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => onChange("sent")}
+          className={cn(active === "sent" && "bg-paper-2 font-medium")}
+        >
+          Sent
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => onChange("drafts")}
+          className={cn(active === "drafts" && "bg-paper-2 font-medium")}
+        >
+          Drafts
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function FilterTabs({
   active,
@@ -31,7 +94,6 @@ function FilterTabs({
   approvalsCount: number;
 }) {
   const counts: Partial<Record<InboxFilter, number>> = {
-    unread: unreadCount,
     approvals: approvalsCount,
   };
 
@@ -60,19 +122,31 @@ function FilterTabs({
         })}
       </div>
 
-      <button
-        type="button"
-        onClick={onCompose}
-        aria-label="New message"
-        className="flex size-6.5 shrink-0 items-center justify-center rounded-control text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink"
-      >
-        <Plus className="size-4" />
-      </button>
+      <div className="flex shrink-0 items-center gap-0.5">
+        <MoreFiltersMenu active={active} onChange={onChange} unreadCount={unreadCount} />
+
+        <button
+          type="button"
+          onClick={onCompose}
+          aria-label="New message"
+          className="flex size-6.5 shrink-0 items-center justify-center rounded-control text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink"
+        >
+          <Plus className="size-4" />
+        </button>
+      </div>
     </div>
   );
 }
 
-function KindTile({ kind, actorLabel }: { kind: InboxItemKind; actorLabel: string }) {
+function KindTile({
+  kind,
+  actorLabel,
+  isGroup,
+}: {
+  kind: InboxItemKind;
+  actorLabel: string;
+  isGroup?: boolean;
+}) {
   if (kind === "Proposal") {
     return (
       <span className="flex size-8 shrink-0 items-center justify-center rounded-control border border-amber-border bg-amber-bg text-amber">
@@ -82,6 +156,16 @@ function KindTile({ kind, actorLabel }: { kind: InboxItemKind; actorLabel: strin
   }
 
   if (kind === "Message") {
+    // More than one other participant means `actorLabel` is a joined name list ("Ichigo Kursaki,
+    // Abarai renji"), which can't be reduced to a meaningful 2-letter initial — a group glyph
+    // reads correctly at a glance where a mangled initial wouldn't.
+    if (isGroup) {
+      return (
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border border-line bg-paper-2 text-ink-3">
+          <Users className="size-3.5" />
+        </span>
+      );
+    }
     return (
       <PersonAvatar kind="human" initials={initialsFromName(actorLabel)} size="lg" className="mt-0.5" />
     );
@@ -118,6 +202,13 @@ function KindTile({ kind, actorLabel }: { kind: InboxItemKind; actorLabel: strin
 }
 
 function Row({ item, active, onSelect }: { item: InboxItemDto; active: boolean; onSelect: () => void }) {
+  // `actorLabel` is whoever last acted, which for a `Message`-kind thread you started and last
+  // replied in is your own name. `others` (the counterpart(s) minus you) is the correct label to
+  // show in a message row when the backend supplies it; fall back to `actorLabel` when it's empty
+  // (e.g. a 2-person thread where the last actor already is the other participant).
+  const displayLabel = item.kind === "Message" && item.others.length > 0 ? item.others.join(", ") : item.actorLabel;
+  const isGroup = item.kind === "Message" && item.others.length > 1;
+
   return (
     <button
       type="button"
@@ -137,18 +228,19 @@ function Row({ item, active, onSelect }: { item: InboxItemDto; active: boolean; 
           {!item.isRead && <span className="size-1.5 rounded-full bg-ultra" />}
         </div>
 
-        <KindTile kind={item.kind} actorLabel={item.actorLabel} />
+        <KindTile kind={item.kind} actorLabel={displayLabel} isGroup={isGroup} />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
-            <span
+            <TextTooltip
+              content={displayLabel}
               className={cn(
                 "truncate text-[13px]",
                 !item.isRead ? "font-semibold text-ink" : "font-medium text-ink-2"
               )}
             >
-              {item.actorLabel}
-            </span>
+              {displayLabel}
+            </TextTooltip>
             <span className="flex shrink-0 items-center gap-1 text-[11px] text-ink-4">
               {item.mentionsYou && <AtSign className="size-3 text-ultra" />}
               {formatRoomActivity(item.occurredAtUtc)}
@@ -161,17 +253,22 @@ function Row({ item, active, onSelect }: { item: InboxItemDto; active: boolean; 
             </Chip>
           )}
 
-          <p
+          <TextTooltip
+            content={item.summary}
             className={cn(
               "line-clamp-2 text-[12px] leading-snug text-ink-3",
               item.kind !== "Message" ? "mt-1" : "mt-0.5"
             )}
           >
             {item.summary}
-          </p>
+          </TextTooltip>
 
           {item.eventCount > 1 && (
             <p className="mt-1 text-right text-[11px] text-ink-4">{item.eventCount} updates</p>
+          )}
+
+          {item.snoozedUntilUtc && (
+            <p className="mt-1 text-right text-[11px] text-ink-4">Back {formatShortDate(item.snoozedUntilUtc)}</p>
           )}
         </div>
       </div>
@@ -188,6 +285,9 @@ function ListEmptyState({ filter, unreadCount }: { filter: InboxFilter; unreadCo
     },
     mentions: { title: "No mentions", body: "No one has mentioned you yet." },
     approvals: { title: "Nothing to approve", body: "No approval requests right now." },
+    snoozed: { title: "Nothing snoozed", body: "Lines you put off show up here until they come back." },
+    sent: { title: "Nothing sent", body: "Messages you've started show up here." },
+    drafts: { title: "No drafts", body: "Messages you've started writing but not sent yet show up here." },
   };
   const { title, body } = copy[filter];
 
