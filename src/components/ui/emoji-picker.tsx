@@ -80,7 +80,7 @@ export function EmojiPickerButton({ onSelect, className, "aria-label": ariaLabel
           />
         </div>
 
-        <div className="max-h-64 overflow-y-auto p-2">
+        <div className="max-h-64 overflow-x-hidden overflow-y-auto p-2">
           {groups.length === 0 && (
             <p className="px-2.5 py-3 text-center text-[11.5px] text-ink-4">No emoji found</p>
           )}
@@ -97,7 +97,7 @@ export function EmojiPickerButton({ onSelect, className, "aria-label": ariaLabel
                     type="button"
                     title={entry.name}
                     onClick={() => handleSelect(entry.emoji)}
-                    className="flex size-8 items-center justify-center rounded-control text-[17px] hover:bg-paper-2"
+                    className="flex aspect-square w-full items-center justify-center rounded-control text-[16px] hover:bg-paper-2"
                   >
                     {entry.emoji}
                   </button>
