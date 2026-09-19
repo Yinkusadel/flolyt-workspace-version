@@ -58,11 +58,14 @@ export function ComposeView({ onDiscard, onSent }: { onDiscard: () => void; onSe
   };
 
   const handleSaveDraft = () => {
-    if (recipients.length === 0 || isPending) return;
+    const trimmed = body.trim();
+    // Confirmed live: the backend rejects an empty body even with `asDraft: true` ("A message
+    // needs something in it."), so a draft needs the same recipient + body requirements as Send.
+    if (recipients.length === 0 || !trimmed || isPending) return;
 
     setPendingAction("draft");
     createInboxThread(
-      { recipients: recipients.map((r) => r.ref), body: body.trim(), asDraft: true, roomId: attachedRoomId },
+      { recipients: recipients.map((r) => r.ref), body: trimmed, asDraft: true, roomId: attachedRoomId },
       {
         onSuccess: (res) => {
           if (!res.succeeded) return;
@@ -74,7 +77,7 @@ export function ComposeView({ onDiscard, onSent }: { onDiscard: () => void; onSe
   };
 
   const canSend = recipients.length > 0 && !!body.trim() && !isPending;
-  const canSaveDraft = recipients.length > 0 && !isPending;
+  const canSaveDraft = recipients.length > 0 && !!body.trim() && !isPending;
 
   return (
     <div className="flex h-full min-w-0 flex-col">

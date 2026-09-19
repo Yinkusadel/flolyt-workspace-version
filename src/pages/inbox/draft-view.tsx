@@ -48,9 +48,12 @@ export function DraftView({ draft, onClosed }: { draft: InboxDraftDto; onClosed:
   const isBusy = isSaving || isSending || isDeleting;
 
   const handleSaveChanges = () => {
-    if (isBusy) return;
+    const trimmed = body.trim();
+    // Confirmed live (compose): the backend rejects an empty body even on a draft, so this can't
+    // be saved down to nothing — delete it instead if that's the intent.
+    if (!trimmed || isBusy) return;
     updateInboxDraft(
-      { messageId: draft.messageId, body: body.trim(), roomId: attachedRoomId },
+      { messageId: draft.messageId, body: trimmed, roomId: attachedRoomId },
       { onSuccess: (res) => res.succeeded && toast.success("Draft saved") }
     );
   };
@@ -168,7 +171,7 @@ export function DraftView({ draft, onClosed }: { draft: InboxDraftDto; onClosed:
           <span className="truncate">Inbox is for people — bring an agent in via a room instead.</span>
         </p>
         <div className="flex shrink-0 items-center gap-2">
-          <Button type="button" variant="outline" onClick={handleSaveChanges} disabled={isBusy}>
+          <Button type="button" variant="outline" onClick={handleSaveChanges} disabled={isBusy || !body.trim()}>
             {isSaving ? "Saving…" : "Save"}
           </Button>
           <Button type="button" onClick={handleSend} disabled={isBusy || !body.trim() || draft.to.length === 0}>
