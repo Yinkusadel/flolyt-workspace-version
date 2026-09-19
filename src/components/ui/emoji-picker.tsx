@@ -54,7 +54,6 @@ export function EmojiPickerButton({ onSelect, className, "aria-label": ariaLabel
 
   const handleSelect = (emoji: string) => {
     onSelect(emoji);
-    handleOpenChange(false);
   };
 
   return (

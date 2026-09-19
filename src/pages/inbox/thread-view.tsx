@@ -167,9 +167,10 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
     const start = textarea.selectionStart ?? draft.length;
     const end = textarea.selectionEnd ?? draft.length;
     setDraft(draft.slice(0, start) + emoji + draft.slice(end));
+    // No textarea.focus() here — the picker stays open across multiple picks, and stealing
+    // focus back to the textarea would read as a focus-outside event and close the popover.
     requestAnimationFrame(() => {
       const cursor = start + emoji.length;
-      textarea.focus();
       textarea.setSelectionRange(cursor, cursor);
     });
   };
