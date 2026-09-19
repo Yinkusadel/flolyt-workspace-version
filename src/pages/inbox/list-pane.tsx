@@ -1,10 +1,16 @@
 import * as React from "react";
-import { AtSign, Bell, Plus, ShieldCheck, Sparkles } from "lucide-react";
+import { AtSign, Bell, MoreVertical, Plus, ShieldCheck, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Chip } from "@/components/ui/chip";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { agentInitialsFromName, formatRoomActivity, initialsFromName } from "@/pages/rooms/format";
 import { formatShortDate } from "@/lib/format-measured-value";
 import type { InboxItemDto, InboxItemKind } from "@/services/api/inbox/get-inbox";
@@ -13,11 +19,57 @@ import type { InboxFilter } from "@/pages/inbox/data";
 
 const FILTERS: { value: InboxFilter; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "unread", label: "Unread" },
   { value: "mentions", label: "Mentions" },
   { value: "approvals", label: "Approvals" },
-  { value: "snoozed", label: "Snoozed" },
 ];
+
+function MoreFiltersMenu({
+  active,
+  onChange,
+  unreadCount,
+}: {
+  active: InboxFilter;
+  onChange: (filter: InboxFilter) => void;
+  unreadCount: number;
+}) {
+  const isActive = active === "unread" || active === "snoozed";
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label="More filters"
+          className={cn(
+            "flex items-center gap-0.5 rounded-control px-1.5 py-1.5 text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink",
+            isActive && "bg-paper-2 text-ink"
+          )}
+        >
+          <MoreVertical className="size-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem
+          onSelect={() => onChange("unread")}
+          className={cn(active === "unread" && "bg-paper-2 font-medium")}
+        >
+          Unread
+          {unreadCount > 0 && <span className="ml-auto text-[11px] text-ink-4">{unreadCount}</span>}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() => onChange("snoozed")}
+          className={cn(active === "snoozed" && "bg-paper-2 font-medium")}
+        >
+          Snoozed
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled>
+          Drafts
+          <span className="ml-auto text-[10.5px] text-ink-4">Soon</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function FilterTabs({
   active,
@@ -33,7 +85,6 @@ function FilterTabs({
   approvalsCount: number;
 }) {
   const counts: Partial<Record<InboxFilter, number>> = {
-    unread: unreadCount,
     approvals: approvalsCount,
   };
 
@@ -62,14 +113,18 @@ function FilterTabs({
         })}
       </div>
 
-      <button
-        type="button"
-        onClick={onCompose}
-        aria-label="New message"
-        className="flex size-6.5 shrink-0 items-center justify-center rounded-control text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink"
-      >
-        <Plus className="size-4" />
-      </button>
+      <div className="flex shrink-0 items-center gap-0.5">
+        <MoreFiltersMenu active={active} onChange={onChange} unreadCount={unreadCount} />
+
+        <button
+          type="button"
+          onClick={onCompose}
+          aria-label="New message"
+          className="flex size-6.5 shrink-0 items-center justify-center rounded-control text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink"
+        >
+          <Plus className="size-4" />
+        </button>
+      </div>
     </div>
   );
 }
