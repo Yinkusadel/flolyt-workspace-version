@@ -1,5 +1,5 @@
 import * as React from "react";
-import { AtSign, Bell, MoreVertical, Plus, ShieldCheck, Sparkles } from "lucide-react";
+import { AtSign, Bell, MoreVertical, Plus, ShieldCheck, Sparkles, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
@@ -135,7 +135,15 @@ function FilterTabs({
   );
 }
 
-function KindTile({ kind, actorLabel }: { kind: InboxItemKind; actorLabel: string }) {
+function KindTile({
+  kind,
+  actorLabel,
+  isGroup,
+}: {
+  kind: InboxItemKind;
+  actorLabel: string;
+  isGroup?: boolean;
+}) {
   if (kind === "Proposal") {
     return (
       <span className="flex size-8 shrink-0 items-center justify-center rounded-control border border-amber-border bg-amber-bg text-amber">
@@ -145,6 +153,16 @@ function KindTile({ kind, actorLabel }: { kind: InboxItemKind; actorLabel: strin
   }
 
   if (kind === "Message") {
+    // More than one other participant means `actorLabel` is a joined name list ("Ichigo Kursaki,
+    // Abarai renji"), which can't be reduced to a meaningful 2-letter initial — a group glyph
+    // reads correctly at a glance where a mangled initial wouldn't.
+    if (isGroup) {
+      return (
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border border-line bg-paper-2 text-ink-3">
+          <Users className="size-3.5" />
+        </span>
+      );
+    }
     return (
       <PersonAvatar kind="human" initials={initialsFromName(actorLabel)} size="lg" className="mt-0.5" />
     );
@@ -186,6 +204,7 @@ function Row({ item, active, onSelect }: { item: InboxItemDto; active: boolean; 
   // show in a message row when the backend supplies it; fall back to `actorLabel` when it's empty
   // (e.g. a 2-person thread where the last actor already is the other participant).
   const displayLabel = item.kind === "Message" && item.others.length > 0 ? item.others.join(", ") : item.actorLabel;
+  const isGroup = item.kind === "Message" && item.others.length > 1;
 
   return (
     <button
@@ -206,7 +225,7 @@ function Row({ item, active, onSelect }: { item: InboxItemDto; active: boolean; 
           {!item.isRead && <span className="size-1.5 rounded-full bg-ultra" />}
         </div>
 
-        <KindTile kind={item.kind} actorLabel={displayLabel} />
+        <KindTile kind={item.kind} actorLabel={displayLabel} isGroup={isGroup} />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
