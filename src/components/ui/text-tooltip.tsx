@@ -20,18 +20,37 @@ export function TextTooltip({
 }) {
   const triggerRef = React.useRef<HTMLSpanElement>(null);
   const boxRef = React.useRef<HTMLDivElement>(null);
+  const openTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const [anchor, setAnchor] = React.useState<{ top: number; centerX: number } | null>(null);
   const [placement, setPlacement] = React.useState<{ left: number; arrowLeft: number } | null>(null);
 
+  // Opens only once the cursor has rested on the trigger for a beat, rather than instantly on
+  // enter — a bare `onMouseEnter` fires for every row the cursor merely passes over while
+  // scrolling/moving through the list, not just the one the user actually means to read.
+  const OPEN_DELAY_MS = 700;
+
   const open = () => {
-    const rect = triggerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    setPlacement(null);
-    setAnchor({ top: rect.bottom + 8, centerX: rect.left + rect.width / 2 });
-    setIsOpen(true);
+    if (openTimerRef.current) clearTimeout(openTimerRef.current);
+    openTimerRef.current = setTimeout(() => {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setPlacement(null);
+      setAnchor({ top: rect.bottom + 8, centerX: rect.left + rect.width / 2 });
+      setIsOpen(true);
+    }, OPEN_DELAY_MS);
   };
-  const close = () => setIsOpen(false);
+  const close = () => {
+    if (openTimerRef.current) {
+      clearTimeout(openTimerRef.current);
+      openTimerRef.current = null;
+    }
+    setIsOpen(false);
+  };
+
+  React.useEffect(() => () => {
+    if (openTimerRef.current) clearTimeout(openTimerRef.current);
+  }, []);
 
   // Clamps the box within the viewport and keeps the arrow pointing at the trigger's true center
   // rather than the box's, which the clamp can shift away from — see InfoTooltip for the same fix.
