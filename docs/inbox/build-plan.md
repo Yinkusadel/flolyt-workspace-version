@@ -1,10 +1,14 @@
 # Inbox — build plan
 
-**Steps 1–7 wired and live-verified 2026-09-18/19** (drafts, step 8, stays blocked — see below).
+**All 8 steps wired 2026-09-18/19**, including drafts (step 8, built 2026-09-19 — see below).
 `src/pages/inbox/` was fully rebuilt against the real endpoints in the same session that wrote
 the audit below; the audit section is kept as-is since it's still the record of what changed and
-why, not just history. **Two known, unfixed issues are open as of 2026-09-19** — read "Two open
-issues found live" below before touching compose or the list pane again.
+why, not just history. **One known, unfixed issue is open as of 2026-09-19** — read "Two open
+issues found live" below before touching compose or the list pane again (the other of the two was
+fixed 2026-09-19). **Spec re-pasted in full 2026-09-19**: adds `GET /sent`, `GET /drafts`, the
+`Snoozed` filter value (now list-pane dropdown items alongside Unread), and
+`others`/`snoozedUntilUtc` on the list item — see docs/endpoints/inbox.md for the updated shapes.
+Sent and Drafts are both now built (see step 8 below).
 
 ## What's live as of 2026-09-19
 
@@ -52,13 +56,13 @@ logged-in Playwright pass, zero console errors throughout:
    inbox afterward** — found live 2026-09-19 (composed to "Abarai renji" alone, real API response
    showed only the earlier self-included thread, not the new one). Root cause: `recipients` is the
    literal participant list on this backend, not "everyone except me" — the sender isn't
-   auto-added as a participant just because they authored the message. Fixed in
-   `compose-view.tsx`'s `handleSend`: the signed-in member's own `ref` (matched from
-   `useGetWorkspaceMembers()` via `useAuth().user.id`) is always appended to `recipients` before
-   sending, deduped against anything manually picked. **Confirmed live**: composing to "testing
-   invitation" alone now creates a thread that immediately appears in the sender's own inbox under
-   `Mentions`. Not retroactive — the earlier "Abarai renji" thread sent before this fix landed is
-   still not visible to its own sender and there's no way to recover it from the frontend.
+   auto-added as a participant just because they authored the message. **Original fix (superseded
+   2026-09-19, see "Sent" below): the signed-in member's own `ref` was appended to `recipients`
+   before every send.** That workaround was removed once `GET /inbox/sent` shipped and got wired
+   in — a thread you started now shows up in your own **Sent** list on its own merit, so
+   artificially inserting yourself as a recipient (which also polluted the real participant list
+   other people see) is no longer needed. `compose-view.tsx`'s `handleSend` now sends exactly the
+   recipients picked, nothing more.
 
 **Further thread-input polish, requested directly by the user 2026-09-19 (not bugs, design
 changes):**
@@ -79,20 +83,23 @@ changes):**
 
 **Two open issues found live 2026-09-19, diagnosed but explicitly NOT fixed yet (user said "don't
 fix yet, just answer me") — read before touching compose/list-pane again:**
-1. **The list pane shows your own name instead of the other participant's, for `Message`-kind
-   rows.** Confirmed via real API responses: composing to "Abarai renji" produced a list item with
-   `actorLabel: "Ichigo Kursaki"` (the sender, i.e. the signed-in user) even though "Abarai renji"
-   is who the row should identify from the viewer's perspective — every messaging app (WhatsApp
-   reference included) shows the *other* person in the list, not yourself. Root cause: `actorLabel`
-   on `GET /inbox`'s list item appears to mean "whoever last acted" (sender of the last message),
+1. **FIXED 2026-09-19.** The list pane showed your own name instead of the other participant's, for
+   `Message`-kind rows. Confirmed via real API responses: composing to "Abarai renji" produced a
+   list item with `actorLabel: "Ichigo Kursaki"` (the sender, i.e. the signed-in user) even though
+   "Abarai renji" is who the row should identify from the viewer's perspective — every messaging app
+   (WhatsApp reference included) shows the *other* person in the list, not yourself. Root cause:
+   `actorLabel` on `GET /inbox`'s list item means "whoever last acted" (sender of the last message),
    not "who you're talking to" — for `Finished`/`Notification` kinds this is correct (`"Flolyt"`,
-   `"DatasourcePipeline"` are exactly who should show), but for `Message` it's the wrong field to
-   read as "the person in this row." **No cheap fix exists client-side**: `GET /inbox`'s list items
-   carry no participant list, only `GET /inbox/threads/{id}` (a separate per-thread fetch) does.
-   Real fix options: (a) fetch each `Message`-kind thread's detail just to resolve the counterpart
-   name for its list row (N+1-ish, not great), (b) ask the backend for a proper "counterpart" field
-   on the list item for `Message` kind (cleanest), (c) some in-between caching trick using threads
-   already opened. Not attempted this pass — diagnosis only.
+   `"DatasourcePipeline"` are exactly who should show), but for `Message` it was the wrong field to
+   read as "the person in this row." **Fixed via option (b)** from the real fix options below: the
+   backend added an `others: string[]` field to the list item (the counterpart list minus
+   `actorLabel`, confirmed live against a fresh `GET /inbox` pull — see docs/endpoints/inbox.md).
+   `src/pages/inbox/list-pane.tsx`'s `Row` now shows `others.join(", ")` when non-empty, falling
+   back to `actorLabel` for the plain 2-person case where it was already correct. Real fix options
+   considered: (a) fetch each `Message`-kind thread's detail just to resolve the counterpart name for
+   its list row (N+1-ish, not great), (b) ask the backend for a proper "counterpart" field on the
+   list item for `Message` kind (cleanest — **this is what shipped**), (c) some in-between caching
+   trick using threads already opened.
 2. **Composing a new message to someone you already have an open thread with creates a second,
    separate thread instead of continuing the first one.** Confirmed via real API responses: two
    `POST /inbox/threads` calls to the exact same 2-person recipient set ("Ichigo Kursaki" +
@@ -159,8 +166,9 @@ turns out different.
 
 ## Endpoints
 
-11/11 documented, 9/11 wired (`read-all` + the 3 draft endpoints are the exceptions — see
-"Implementation roadmap" below). Full contracts in [docs/endpoints/inbox.md](../endpoints/inbox.md).
+13/13 documented, 12/13 wired as of 2026-09-19 (`read-all` is the one remaining exception — no
+"mark all read" affordance exists in the list pane yet). Full contracts in
+[docs/endpoints/inbox.md](../endpoints/inbox.md).
 `GET /sources`'s path was also corrected as part of the original pass (path only, see
 [app-shell.md](../endpoints/app-shell.md)) — unrelated to inbox itself, noted here only because it
 landed in the same commit.
@@ -281,21 +289,92 @@ no inline action) confirmed that was the intended design. **That was wrong; chec
   to render as — matches the "grouped by consequence" gap flagged above. **Confirmed live
   2026-09-18: `Systems` is the literal real `group` value**, not just a naming coincidence.
 
-## Flagged for later: no way to list your own saved drafts
+## Drafts — resolved and built 2026-09-19
 
-**Explicitly deferred per the user — do not build drafts (save/edit/resume) until this is
-resolved. Revisit when asked, or once the rest of this roadmap is done.**
+Was flagged for later ("no way to list your own saved drafts" — `GET /inbox/threads/{threadId}`
+deliberately excludes drafts, and `GET /inbox`'s `kind` enum has no draft value either). Resolved
+once `GET /inbox/drafts` shipped as its own endpoint. Built: `ComposeView` got a "Save draft"
+button back (`asDraft: true` on `POST /inbox/threads`); the list pane's `⋮` dropdown got a
+"Drafts" item, listing `GET /inbox/drafts` reshaped through `draftItemToInboxItem` (same trick as
+`sentItemToInboxItem`) so a draft row reuses the existing list rendering; a new `DraftView`
+(`src/pages/inbox/draft-view.tsx`) handles editing (`PUT /inbox/drafts/{id}`, body/room only —
+recipients aren't editable, they're set at creation), send (`POST /inbox/drafts/{id}/send`, which
+first PUTs whatever's currently typed so nothing unsaved gets lost), and delete
+(`DELETE /inbox/drafts/{id}`, behind a confirm dialog). Not yet live-verified against a real
+account.
 
-You can create a draft (`asDraft: true` on `POST /inbox/threads` or
-`POST /inbox/threads/{threadId}/messages`) and, once you have its `messageId`, edit
-(`PUT /inbox/drafts/{id}`) / delete (`DELETE /inbox/drafts/{id}`) / send
-(`POST /inbox/drafts/{id}/send`) it — but there is **no endpoint that lists a caller's own
-drafts**. `GET /inbox/threads/{threadId}`'s own doc says drafts are deliberately excluded ("not
-yet part of what the conversation has said"), and `GET /inbox`'s `kind` enum has no draft value
-either. So if compose needs "leave a draft, come back to it another day," there's currently no
-fetch that would let the UI find it again. Options when this comes back up: ask the backend for a
-`GET /inbox/drafts` list, or scope the design so a draft only persists for the current
-session/tab rather than being durably resumable.
+## 2026-09-19 (continued): filter dropdown, Sent, group-thread fixes, compose redesign, proposal confirm dialogs
+
+A second pass the same day, driven entirely by user feedback on the live UI rather than new
+endpoint work. In order:
+
+1. **Filter tabs restructured into a dropdown.** The tab bar was overflowing/overlapping at
+   `All / Unread / Mentions / Approvals / Snoozed / +`. Fixed in two steps: first moved Snoozed
+   behind a `⋮` (`MoreVertical`) dropdown next to `+`; then, since it *still* overlapped, moved
+   Unread in too. Visible tabs are now just **All / Mentions / Approvals**; the `⋮` dropdown holds
+   **Unread** (with its count), **Snoozed**, **Sent**, **Drafts**. A `MoreVertical` icon was chosen
+   over a chevron per the user's request for "the same icon as [a reference screenshot]".
+2. **Sent built.** `GET /inbox/sent` wired as a dropdown filter — `sentItemToInboxItem()` in
+   `kind.ts` reshapes its response (`to`/`summary`/`lastAtUtc`/`lastFromYou`) into an `InboxItemDto`
+   so a sent row reuses the existing list rendering and `ThreadView` unchanged. **Bug found and
+   fixed**: `summary` was originally mapped from `lastFromYou` — that field is a **timestamp**
+   (when you last sent), not text, despite the name reading like it could be a preview; the raw ISO
+   string was rendering as the row's message preview. Fixed to read the DTO's own `summary` field
+   instead; `lastFromYou` is unused.
+3. **Group-thread display, several rounds of user feedback:**
+   - List rows: a `kind: "Message"` row with 2+ other participants got its own tile — **first
+     tried** a plain `Users` icon (rejected: "we not seeing 2 people" → tried `UsersRound`, then a
+     custom overlapping-initials-stack tile — **user said stop, revert**, back to plain `Users`).
+     **Current state: plain `Users`-icon tile, unchanged from the first attempt** — the stacked-
+     initials idea was explicitly rejected for the list, but the *same* `Users`-icon tile was later
+     asked for again in the thread header (see below), so it's now the deliberate, confirmed choice
+     for both places.
+   - Thread header (`thread-view.tsx`): originally derived its title only from *distinct message
+     senders*, which shows nothing/wrong names for a group nobody's replied in yet. Fixed to prefer
+     `item.others` (real names, populated even pre-reply), unioned with sender names and deduped
+     (`dedupeNames()` — normalizes whitespace/case; a real recipient name had a double space,
+     `"testing  invitation"`, that didn't match a sender name for the same person without it).
+     Selection precedence in `index.tsx` also flipped to check `sentItems` **before** `allItems`
+     when resolving the open item by id — a self-started thread can also appear in the
+     recipient-filtered `All` list once someone acts on it, but that copy only carries whoever
+     triggered *that* notification, not the full roster.
+   - Header caps at 2 names + a `+N other(s)` **badge** (a `Chip`, not concatenated text — the user
+     was explicit the overflow count should be a visual badge). The badge count is driven by
+     `thread.participants.length` (the real backend count), not just however many names got
+     resolved — a participant who's never spoken and wasn't in `others` either still counts toward
+     the badge even with no name available for them.
+   - Header avatar for a group: tried an overlapping-initials-stack (user: "just use the normal
+     avatar i dont like this, use the same group icon from the sidebar") → now reuses the exact
+     same plain-`Users`-icon tile as the list row (`GroupAvatar` in `thread-view.tsx`, intentionally
+     not shared as a component with the list's — different enough call sites, per an inline note in
+     the code).
+   - **Reverted, not kept**: making the "N people" line always-rendered (`invisible` when not
+     applicable) to stop a layout shift between group/1:1 threads — user said it "looks weird when
+     there is not people badge"; still conditionally rendered, the shift is still there, unresolved.
+4. **Hover tooltips added** (`src/components/ui/text-tooltip.tsx`, new shared component) for
+   truncated participant names and message previews in the list rows and thread header — portal +
+   `getBoundingClientRect` positioning, not Radix `Tooltip` (see the `preact-radix-dialog-crash`
+   memory: Radix's Presence-based enter/exit flickers on this stack). Opens after a **700ms** hover
+   delay (raised from an initial 500ms per the user) so it doesn't fire on every pass-through hover
+   while scrolling — timer is cancelled on `mouseleave` before it fires.
+5. **Compose panel redesigned** ("looks weird, professionally redesign it"): centered `max-w-xl`
+   column instead of edge-to-edge (was the main cause of the oversized/sparse look); all three
+   fields (`To`/`About`/message) unified on `bg-paper` + `border-border` + a real focus ring,
+   replacing a mismatched `bg-paper-2` look that read as disabled; header + a new bottom action bar
+   are fixed with only the form body scrolling between them (matches `ThreadView`'s structure); the
+   "Inbox is for people" card shrunk from a heavy bordered card to a single muted line living in the
+   footer next to Send.
+6. **Accept/Reject on a proposal now confirm before acting** (`approval-view.tsx`) — clicking
+   either used to fire the decision immediately. Now opens a `Dialog` (always mounted, `open` driven
+   by `confirmAction` state, never conditionally mounted — the known-safe pattern for Radix Dialog
+   on this stack) summarizing what's about to happen, with a tone-matched confirm button
+   (`default/destructive`) and Cancel. Hold was left as-is — it already required typing a reason
+   first, which already served as a confirmation step.
+7. **Drafts empty-body bug, found live via the network tab.** The user pasted a real
+   `POST /inbox/threads` 400 response: `"A message needs something in it."` — the backend rejects
+   an empty body even with `asDraft: true`. `ComposeView`'s "Save draft" and `DraftView`'s "Save"
+   originally allowed saving with just recipients picked, no text; both now require non-empty body,
+   same as Send.
 
 ## Implementation roadmap
 
@@ -337,7 +416,8 @@ Ordered so each step is checkable against a real screen before moving to the nex
 - [x] **6. Compose rebuild** — wired 2026-09-18. Multi-recipient `To` field (array) confirmed live
       against real `GET /workspace/members` data; real room-attach picker confirmed live against
       real `GET /rooms` data (correctly showed "No results" for this account's 0 open rooms).
-      "Save draft" removed entirely rather than wired or faked, per the drafts deferral below.
+      "Save draft" was originally removed entirely rather than wired or faked (drafts had no way
+      to be listed yet) — re-added 2026-09-19 once drafts were built, see step 8.
       2026-09-19: fixed the sender-not-a-participant bug (see "Three bugs found live" above).
       **Open issue, not fixed**: composing to someone you already have a thread with creates a
       duplicate thread instead of continuing the existing one — diagnosed as a backend gap, see
@@ -346,8 +426,10 @@ Ordered so each step is checkable against a real screen before moving to the nex
       Renders straight from the `GET /inbox` list item, no click-through fetch, as expected —
       confirmed there's genuinely no per-kind detail endpoint to call. `Mention` kind has an icon
       variant built (`AtSign`) but wasn't exercised live (0 mentions in the test account).
-- [ ] **8. Drafts** — still blocked on the missing "list my drafts" capability; revisit per the
-      flagged issue above before starting. Explicitly out of scope for this pass per the user.
+- [x] **8. Drafts** — built 2026-09-19: `GET /inbox/drafts` listed via the list pane's `⋮`
+      dropdown, `ComposeView` has "Save draft" back, and a new `DraftView` handles edit/send/delete
+      of an existing draft. See "Drafts — resolved and built 2026-09-19" above. Not yet
+      live-verified against a real account.
 
 ## Status tracking
 

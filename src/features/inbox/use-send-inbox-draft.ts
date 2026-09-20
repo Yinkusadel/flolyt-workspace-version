@@ -19,6 +19,7 @@ const useSendInboxDraft = () => {
 
       toast.success("Message sent");
       queryClient.invalidateQueries({ queryKey: ["inbox"] });
+      queryClient.invalidateQueries({ queryKey: ["inbox-drafts"] });
     },
     onError: (error) => {
       toast.error(error.message || "Failed to send the draft");

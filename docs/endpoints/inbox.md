@@ -1,7 +1,9 @@
 # Inbox domain endpoints
 
-Everything under `/api/v3/inbox/*`, pasted 2026-09-18 from the real spec. Supersedes the single
-`GET /inbox` stub previously recorded in [app-shell.md](app-shell.md) under a guessed
+Everything under `/api/v3/inbox/*`, pasted 2026-09-18 from the real spec, re-pasted in full
+2026-09-19 (adds `GET /sent`, `GET /drafts`, the `Snoozed` filter value, and `others` +
+`snoozedUntilUtc` on the list item — see the changelog note under `GET /inbox` below). Supersedes
+the single `GET /inbox` stub previously recorded in [app-shell.md](app-shell.md) under a guessed
 `/api/flolyt/inbox` path — that entry moved here with its real path and full shape, and
 app-shell.md now points at this file instead. Corresponds to the already-built `/inbox` section
 (mock data at `src/pages/inbox/data.ts`) — see [[flolyt_inbox_rebuild]] — so every entry below is a
@@ -9,19 +11,24 @@ candidate to wire against an existing mocked screen, not a page waiting to be bu
 
 **Auth:** Bearer JWT, every route · **Envelope:** `Result<T>` (`data`, `messages`, `succeeded`).
 
-**Status: 11/11 documented, 9/11 wired into `/inbox` (2026-09-18), all 9 live-verified against real
-data as of 2026-09-19** — `GET /inbox`, `POST /read`, `GET /threads/{id}`, `POST
-/threads/{id}/messages`, `POST /threads` (compose), and `GET /approvals/{proposalId}` (including
-its accept/hold/reject actions, via the `ai-proposals` domain — see that entry's notes below) are
-all confirmed against real responses and, for the mutations, real successful sends. `POST /snooze`
-is UI-verified but not actually fired live, to avoid deciding/snoozing a real pending proposal
-without being asked to. `POST /read-all` and the three `/drafts/*` endpoints are still
-service/hook-only, not wired — drafts intentionally, per the "no way to list your own drafts" gap
-in docs/inbox/build-plan.md. **Two open issues found live 2026-09-19, not yet fixed** — see the
-`GET /inbox` and `POST /threads` entries below, and docs/inbox/build-plan.md's "Two open issues
-found live" section for the full write-up: (1) `Message`-kind list rows show your own name instead
-of who you're talking to; (2) composing to someone you already have a thread with creates a
-duplicate thread instead of continuing it (looks like a backend gap).
+**Status: 13/13 documented, 7/13 wired into `/inbox` (2026-09-18/19).** `GET /inbox`, `POST /read`,
+`GET /threads/{id}`, `POST /threads/{id}/messages`, `POST /threads` (compose), and `GET
+/approvals/{proposalId}` (including its accept/hold/reject actions, via the `ai-proposals` domain
+— see that entry's notes below) are all confirmed against real responses and, for the mutations,
+real successful sends. `POST /snooze` is UI-verified but not actually fired live, to avoid
+deciding/snoozing a real pending proposal without being asked to — a `Snoozed` list-pane tab now
+exists to view whatever ends up there (added 2026-09-19 alongside the filter enum value), but
+nothing has snoozed a real item yet to check it against. `POST /read-all` and the three
+`/drafts/*` mutation endpoints are still service/hook-only, not wired. **`GET /sent` and `GET
+/drafts` are new 2026-09-19** — service + hook scaffolded (`get-inbox-sent.ts` /
+`use-get-inbox-sent.ts`, `get-inbox-drafts.ts` / `use-get-inbox-drafts.ts`), no UI yet. `GET
+/drafts` in particular **resolves the "no way to list your own drafts" gap** that blocked step 8 of
+the inbox rebuild (see docs/inbox/build-plan.md) — a drafts screen/tab is now buildable but hasn't
+been built. **One open issue remains, not yet fixed** — see the `POST /threads` entry below and
+docs/inbox/build-plan.md's "Two open issues found live" section: composing to someone you already
+have a thread with creates a duplicate thread instead of continuing it (looks like a backend gap).
+The other open issue (`Message`-kind rows showing your own name) is **fixed** as of 2026-09-19 —
+see the `GET /inbox` entry below.
 
 ## Per-endpoint entries
 
@@ -38,9 +45,21 @@ Mutations show their real top-level shape including the envelope.
   systems, so a decision waiting on you outranks an agent finishing something regardless of
   timestamps.
 - **Auth:** Bearer token.
-- **Request:** query `filter?` — `All` | `Unread` | `Mentions` | `Approvals`.
+- **Request:** query `filter?` — `All` | `Unread` | `Mentions` | `Approvals` | `Snoozed`.
+  **`Snoozed` added 2026-09-19** — the one filter that changes *what* is shown rather than which of
+  it, since every other tab is a view over what isn't snoozed (a snoozed line leaves the list and
+  its counters together). This is the only way to see something you put off and when it returns —
+  each line there carries `snoozedUntilUtc`, soonest back first. Sending `POST /snooze` with a null
+  `untilUtc` brings a line back now. Wired as a 5th list-pane tab (`src/pages/inbox/list-pane.tsx`),
+  not live-verified — nothing has snoozed a real item yet.
 - **Response `data`:** `{ items: InboxItem[], counts: [{ group, count }], unread: number, total: number }` where
-  `InboxItem = { group: string, kind, sourceId: uuid, isRead: boolean, mentionsYou: boolean, actorLabel: string, summary: string, context: string | null, occurredAtUtc: string, roomId: uuid | null, href: string | null, eventCount: number }`.
+  `InboxItem = { group: string, kind, sourceId: uuid, isRead: boolean, mentionsYou: boolean, actorLabel: string, others: string[], summary: string, context: string | null, occurredAtUtc: string, roomId: uuid | null, href: string | null, snoozedUntilUtc: string | null, eventCount: number }`.
+  **`others` and `snoozedUntilUtc` added 2026-09-19** (real response re-pasted from
+  `ichigo@yopmail.com`), matching the spec's own description: `others` names who else is on a line
+  besides you and whoever acted, so a group conversation reads as one — empty on a two-party thread
+  and on every line that isn't a conversation at all (confirmed: only populated on `Message`-kind
+  rows in the real sample). `snoozedUntilUtc` was `null` on every item in this sample (nothing has
+  been snoozed live yet); populated only for lines returned by `filter=Snoozed`.
   **`group` confirmed live 2026-09-18** (`ichigo@yopmail.com`): `NeedsYou`, `Mentions`, `Finished`,
   `Systems` — all four came back in one `counts[]` response (`Mentions` at 0). Real observed
   `kind`s for that account: `Proposal` (2, both in `NeedsYou`), `Finished` (28, in `Finished`),
@@ -50,14 +69,15 @@ Mutations show their real top-level shape including the envelope.
 - **Used by:** wired into `/inbox` (`src/pages/inbox/`), live-verified 2026-09-18/19 — list pane,
   grouped sections, filter tabs, read-on-select, and (once real `Message`-kind items existed from
   2026-09-19 on) the thread row path too, all confirmed against real data.
-- **Status:** wired, live-verified. **Open issue, not fixed** — confirmed live 2026-09-19:
-  `actorLabel` on a `Message`-kind item is the *sender* of the item (whoever last acted), not "the
-  other participant" — so a row for a thread you started and last replied in shows your own name
-  instead of who you're talking to. Fine for every other `kind` (`"Flolyt"`, `"DatasourcePipeline"`
-  etc. are exactly who should show), wrong specifically for `Message`. No participant list exists
-  on the list item to derive the correct name from client-side — only `GET /threads/{id}` (a
-  separate per-thread fetch) has `participants`. See docs/inbox/build-plan.md's "Two open issues
-  found live" for the full write-up and fix options.
+- **Status:** wired, live-verified (all filters except `Snoozed`, which is UI-only so far). **Own-name
+  bug fixed 2026-09-19** via fix option (b) from docs/inbox/build-plan.md — the backend added
+  `others` to the list item, so `src/pages/inbox/list-pane.tsx`'s `Row` now shows
+  `others.join(", ")` for a `Message`-kind item when `others` is non-empty, falling back to
+  `actorLabel` otherwise (covers the plain 2-person case where `actorLabel` was already correct).
+  Previously: `actorLabel` on a `Message`-kind item is the *sender* of the item (whoever last
+  acted), not "the other participant" — so a row for a thread you started and last replied in
+  showed your own name. Fine for every other `kind` (`"Flolyt"`, `"DatasourcePipeline"` etc. are
+  exactly who should show), the bug was specific to `Message`.
 - **Notes:** Four rules hold: (1) an agent narrating its own tool calls never appears — the room
   log/tool-call audit exist for that; (2) an undecided proposal never ages out of the list — a
   reminder that scrolls away is an action nobody took and nobody was reminded of; (3) finished
@@ -66,6 +86,10 @@ Mutations show their real top-level shape including the envelope.
   is read for one teammate and unread for another. `counts`/`unread` are always over the *whole*
   inbox regardless of which `filter` is asked, because a tab that counted its own contents would
   report one approval only while already looking at approvals; `total` is the unfiltered figure.
+  Operational alerts (a datasource failing, credits arriving, a campaign approval) are **not**
+  here — those are the notification bell's and the home carousel's; this is work in rooms that
+  needs a person, so the only notification it carries is an obligation's escalation, and not to the
+  person who already owes it (they already have a line from the obligation itself).
 
 ### POST /inbox/read
 
@@ -298,3 +322,52 @@ Mutations show their real top-level shape including the envelope.
   404 — a restricted room's plays are part of its inside, and saying which of the two it is would
   confirm the work to somebody outside it. A proposal raised outside any room has `room: null`,
   `evidence: []`, `dissent: []` and reads that way rather than failing.
+
+### GET /inbox/sent
+
+*Added 2026-09-19.*
+
+- **Purpose:** Conversations you've written in, newest activity first.
+- **Auth:** Bearer token.
+- **Request:** none.
+- **Response `data`:** `InboxSentItem[]` where
+  `InboxSentItem = { threadId: uuid, to: string[], summary: string, roomId: uuid | null, room: InboxThreadRoom | null, messageCount: number, lastFromYou: string, lastAtUtc: string }`
+  (`InboxThreadRoom` is the same shape as on `GET /threads/{threadId}`, see above).
+- **Used by:** service + hook scaffolded (`get-inbox-sent.ts` / `use-get-inbox-sent.ts`), no UI
+  yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** Deliberately **not** part of `GET /inbox` — that's a queue grouped by consequence, and
+  nothing about a message you sent is waiting on you. Without this the sender was the one
+  participant who couldn't find their own conversation, since the inbox list is filtered to
+  recipients. Each row carries the whole thread, not just your half: `messageCount` is everybody's,
+  `summary` is the newest thing anybody said, and `lastFromYou` sits beside `lastAtUtc` because the
+  two differing is the question this list answers — somebody replied and you haven't been back.
+  `to` is who you addressed, off the conversation rather than the last message, so a reply doesn't
+  rename the row. Reaches back 90 days (longer than the inbox's 30) since this is a record of what
+  you said, not a queue, and bounded because sent messages are the one set that grows with your own
+  use and never shrinks — anything older is still served by its own `GET /threads/{id}`.
+
+### GET /inbox/drafts
+
+*Added 2026-09-19.*
+
+- **Purpose:** Your unsent drafts, most recently edited first.
+- **Auth:** Bearer token.
+- **Request:** none.
+- **Response `data`:** `InboxDraft[]` where
+  `InboxDraft = { messageId: uuid, threadId: uuid, to: string[], body: string, roomId: uuid | null, room: InboxThreadRoom | null, createdAtUtc: string, updatedAtUtc: string }`.
+- **Used by:** service + hook scaffolded (`get-inbox-drafts.ts` / `use-get-inbox-drafts.ts`), no UI
+  yet. `PUT`/`DELETE`/`POST .../send` on `/inbox/drafts/{messageId}` and `POST /inbox/threads(/{id}/messages)`
+  with `asDraft: true` now also invalidate this list's query key (`["inbox-drafts"]`) on success,
+  so a drafts screen built on this will stay in sync with the existing draft mutations without
+  further wiring.
+- **Status:** service/hook ready, not wired.
+- **Notes:** **Resolves the "no way to list your own drafts" gap** that blocked step 8 of the inbox
+  rebuild (see docs/inbox/build-plan.md) — a drafts screen is now buildable, just not built yet.
+  Yours alone — a draft is visible to its author and nobody else. Without this a draft was
+  unreachable after saving: it writes a message the inbox excludes and the thread view drops, and
+  revise/send/discard all take an id that only a client still holding the response could get back
+  to. `threadId` is the conversation the draft belongs to (the one it replies into, or the one a
+  draft of a new message would start but hasn't written to yet). Unwindowed, unlike the rest of the
+  inbox — a draft is something you made and can delete, so it shouldn't quietly disappear after 90
+  days the way the windowed lists do.

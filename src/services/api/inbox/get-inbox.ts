@@ -14,7 +14,7 @@ export type InboxItemKind =
   | "Mention";
 
 export interface GetInboxParams {
-  filter?: "All" | "Unread" | "Mentions" | "Approvals";
+  filter?: "All" | "Unread" | "Mentions" | "Approvals" | "Snoozed";
 }
 
 export interface InboxItemDto {
@@ -24,11 +24,13 @@ export interface InboxItemDto {
   isRead: boolean;
   mentionsYou: boolean;
   actorLabel: string;
+  others: string[];
   summary: string;
   context: string | null;
   occurredAtUtc: string;
   roomId: string | null;
   href: string | null;
+  snoozedUntilUtc: string | null;
   eventCount: number;
 }
 

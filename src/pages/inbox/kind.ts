@@ -1,4 +1,6 @@
-import type { GetInboxParams, InboxItemKind } from "@/services/api/inbox/get-inbox";
+import type { GetInboxParams, InboxItemDto, InboxItemKind } from "@/services/api/inbox/get-inbox";
+import type { InboxDraftDto } from "@/services/api/inbox/get-inbox-drafts";
+import type { InboxSentItemDto } from "@/services/api/inbox/get-inbox-sent";
 import type { InboxThreadRoomDto } from "@/services/api/inbox/get-inbox-thread";
 import type { AttachedRoom, InboxFilter } from "@/pages/inbox/data";
 import { formatCompactMoney } from "@/lib/format-measured-value";
@@ -28,6 +30,8 @@ export function toApiFilter(filter: InboxFilter): NonNullable<GetInboxParams["fi
       return "Mentions";
     case "approvals":
       return "Approvals";
+    case "snoozed":
+      return "Snoozed";
     default:
       return "All";
   }
@@ -62,6 +66,69 @@ export function groupLabel(group: string): string {
   const spaced = group.replace(/([a-z0-9])([A-Z])/g, "$1 $2").trim();
   if (!spaced) return group;
   return spaced.charAt(0).toUpperCase() + spaced.slice(1).toLowerCase();
+}
+
+/** `GET /inbox/sent` returns its own shape (`to`/`summary`/`lastAtUtc`, no `kind`/`group`/`isRead`)
+ * since a thread you started isn't a recipient-filtered `GET /inbox` row. `lastFromYou` is a
+ * timestamp (when you last sent), not text — deliberately unused here rather than mistaken for a
+ * preview. Reshaping the rest into an `InboxItemDto` lets a sent row reuse `ThreadView` (keyed off
+ * `sourceId`/`kind: "Message"`) unchanged instead of needing its own detail view. */
+export function sentItemToInboxItem(item: InboxSentItemDto): InboxItemDto {
+  return {
+    group: "Sent",
+    kind: "Message",
+    sourceId: item.threadId,
+    isRead: true,
+    mentionsYou: false,
+    actorLabel: item.to.join(", "),
+    others: item.to,
+    summary: item.summary,
+    context: null,
+    occurredAtUtc: item.lastAtUtc,
+    roomId: item.roomId,
+    href: null,
+    snoozedUntilUtc: null,
+    eventCount: item.messageCount,
+  };
+}
+
+// A draft has no `GET /inbox` row of its own to key off of — `messageId` is the only real
+// identifier, so it's namespaced in the URL/`sourceId` to tell it apart from a real thread's id
+// without a second route param.
+const DRAFT_ID_PREFIX = "draft:";
+
+export function draftSourceId(messageId: string): string {
+  return `${DRAFT_ID_PREFIX}${messageId}`;
+}
+
+/** Returns the draft's `messageId` if `sourceId` (or the raw `id` search param) is a draft
+ * reference, `null` otherwise. */
+export function parseDraftMessageId(sourceId: string | null): string | null {
+  return sourceId?.startsWith(DRAFT_ID_PREFIX) ? sourceId.slice(DRAFT_ID_PREFIX.length) : null;
+}
+
+/** `GET /inbox/drafts` returns its own shape too (`to`/`body`/`updatedAtUtc`, `messageId` instead
+ * of `sourceId`) — reshaped the same way `sentItemToInboxItem` is, purely so a draft row can reuse
+ * the list's existing rendering. Unlike a sent or received item, a draft never opens `ThreadView`
+ * (drafts never appear in `GET /inbox/threads/{id}` — see get-inbox-thread.ts) so `sourceId` is
+ * namespaced via `draftSourceId` and the caller routes it to `DraftView` instead. */
+export function draftItemToInboxItem(draft: InboxDraftDto): InboxItemDto {
+  return {
+    group: "Drafts",
+    kind: "Message",
+    sourceId: draftSourceId(draft.messageId),
+    isRead: true,
+    mentionsYou: false,
+    actorLabel: draft.to.join(", "),
+    others: draft.to,
+    summary: draft.body || "(No content yet)",
+    context: null,
+    occurredAtUtc: draft.updatedAtUtc,
+    roomId: draft.roomId,
+    href: null,
+    snoozedUntilUtc: null,
+    eventCount: 0,
+  };
 }
 
 /** `GET /inbox` items' `href` points at routes from a different/older frontend that don't exist
