@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { parseAgentResponse } from "@/features/ai-conversations/response-parser";
 import { AiDataChart } from "./data-chart";
 import { AiDataTable } from "./data-table";
+import { AiNavLinkGroup } from "./nav-link-group";
 
 // Splits an assistant message's raw text into plain-text / table / chart segments and renders
 // each with the right component. Only call this on a finished message — a DATA_TABLE/DATA_CHART
@@ -31,6 +32,13 @@ export function AiResponseRenderer({ content }: { content: string }) {
           return (
             <div key={idx} className="w-full max-w-[85%] min-w-0">
               <AiDataTable data={segment.data} />
+            </div>
+          );
+        }
+        if (segment.type === "nav_link_group") {
+          return (
+            <div key={idx} className="w-full max-w-[85%] min-w-0">
+              <AiNavLinkGroup links={segment.data} />
             </div>
           );
         }
