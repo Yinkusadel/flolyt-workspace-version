@@ -2,16 +2,17 @@
 
 Everything under `/api/v3/inbox/*`, pasted 2026-09-18 from the real spec, re-pasted in full
 2026-09-19 (adds `GET /sent`, `GET /drafts`, the `Snoozed` filter value, and `others` +
-`snoozedUntilUtc` on the list item — see the changelog note under `GET /inbox` below). Supersedes
-the single `GET /inbox` stub previously recorded in [app-shell.md](app-shell.md) under a guessed
-`/api/flolyt/inbox` path — that entry moved here with its real path and full shape, and
+`snoozedUntilUtc` on the list item — see the changelog note under `GET /inbox` below), and again
+2026-09-21 (adds `PUT /messages/{id}`, `DELETE /messages/{id}`, `POST /threads/{id}/clear`).
+Supersedes the single `GET /inbox` stub previously recorded in [app-shell.md](app-shell.md) under a
+guessed `/api/flolyt/inbox` path — that entry moved here with its real path and full shape, and
 app-shell.md now points at this file instead. Corresponds to the already-built `/inbox` section
 (mock data at `src/pages/inbox/data.ts`) — see [[flolyt_inbox_rebuild]] — so every entry below is a
 candidate to wire against an existing mocked screen, not a page waiting to be built.
 
 **Auth:** Bearer JWT, every route · **Envelope:** `Result<T>` (`data`, `messages`, `succeeded`).
 
-**Status: 13/13 documented, 7/13 wired into `/inbox` (2026-09-18/19).** `GET /inbox`, `POST /read`,
+**Status: 16/16 documented, 7/16 wired into `/inbox` (2026-09-18/19).** `GET /inbox`, `POST /read`,
 `GET /threads/{id}`, `POST /threads/{id}/messages`, `POST /threads` (compose), and `GET
 /approvals/{proposalId}` (including its accept/hold/reject actions, via the `ai-proposals` domain
 — see that entry's notes below) are all confirmed against real responses and, for the mutations,
@@ -19,16 +20,20 @@ real successful sends. `POST /snooze` is UI-verified but not actually fired live
 deciding/snoozing a real pending proposal without being asked to — a `Snoozed` list-pane tab now
 exists to view whatever ends up there (added 2026-09-19 alongside the filter enum value), but
 nothing has snoozed a real item yet to check it against. `POST /read-all` and the three
-`/drafts/*` mutation endpoints are still service/hook-only, not wired. **`GET /sent` and `GET
-/drafts` are new 2026-09-19** — service + hook scaffolded (`get-inbox-sent.ts` /
+`/drafts/*` mutation endpoints are still service/hook-only, not wired. `GET /sent` and `GET
+/drafts` (added 2026-09-19) — service + hook scaffolded (`get-inbox-sent.ts` /
 `use-get-inbox-sent.ts`, `get-inbox-drafts.ts` / `use-get-inbox-drafts.ts`), no UI yet. `GET
 /drafts` in particular **resolves the "no way to list your own drafts" gap** that blocked step 8 of
 the inbox rebuild (see docs/inbox/build-plan.md) — a drafts screen/tab is now buildable but hasn't
-been built. **One open issue remains, not yet fixed** — see the `POST /threads` entry below and
-docs/inbox/build-plan.md's "Two open issues found live" section: composing to someone you already
-have a thread with creates a duplicate thread instead of continuing it (looks like a backend gap).
-The other open issue (`Message`-kind rows showing your own name) is **fixed** as of 2026-09-19 —
-see the `GET /inbox` entry below.
+been built. **`PUT /messages/{id}`, `DELETE /messages/{id}` and `POST /threads/{id}/clear` are new
+2026-09-21** — service + hook scaffolded for all three (`update-inbox-message.ts` /
+`use-update-inbox-message.ts`, `delete-inbox-message.ts` / `use-delete-inbox-message.ts`,
+`clear-inbox-thread.ts` / `use-clear-inbox-thread.ts`), no UI yet — `ThreadView` has no edit/delete
+affordance on a sent message and no "clear conversation" action yet. **One open issue remains, not
+yet fixed** — see the `POST /threads` entry below and docs/inbox/build-plan.md's "Two open issues
+found live" section: composing to someone you already have a thread with creates a duplicate
+thread instead of continuing it (looks like a backend gap). The other open issue (`Message`-kind
+rows showing your own name) is **fixed** as of 2026-09-19 — see the `GET /inbox` entry below.
 
 ## Per-endpoint entries
 
@@ -346,6 +351,62 @@ Mutations show their real top-level shape including the envelope.
   rename the row. Reaches back 90 days (longer than the inbox's 30) since this is a record of what
   you said, not a queue, and bounded because sent messages are the one set that grows with your own
   use and never shrinks — anything older is still served by its own `GET /threads/{id}`.
+
+### PUT /inbox/messages/{messageId}
+
+*Added 2026-09-21.*
+
+- **Purpose:** Changes the words of a message you already sent.
+- **Auth:** Bearer token.
+- **Request:** path `messageId`; body `{ body: string, roomId?: uuid | null }`.
+- **Response:** `{ data: true, messages, succeeded }`.
+- **Used by:** service + hook scaffolded (`update-inbox-message.ts` / `use-update-inbox-message.ts`),
+  no UI yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** Yours alone, and only a message that's been sent — a draft is revised through the
+  drafts route instead, which stamps nothing because a draft nobody has seen has nothing to
+  disclose. The thread marks the message edited and carries `editedAtUtc` — the point rather than a
+  detail, since this used to be refused outright on the grounds that a message somebody has read
+  must not change under them; the stamp is what keeps that true while letting a mistake be fixed. A
+  deleted message can't be edited, and an attached room is re-checked on every edit, since a room
+  can turn restricted while a message sits in a thread and an edit must not be the way to attach one
+  you can no longer read.
+
+### DELETE /inbox/messages/{messageId}
+
+*Added 2026-09-21.*
+
+- **Purpose:** Takes back a message you sent.
+- **Auth:** Bearer token.
+- **Request:** path `messageId`.
+- **Response:** `{ data: true, messages, succeeded }`.
+- **Used by:** service + hook scaffolded (`delete-inbox-message.ts` / `use-delete-inbox-message.ts`),
+  no UI yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** Yours alone. The row stays in the thread with your name, the time and its place in the
+  conversation — `isDeleted: true` with an empty body, a hole where a message was, so the reply
+  underneath it still answers something. The words are cleared from the record rather than hidden
+  at read time, so deleted means deleted; any mentions go with them, since a name in a message
+  nobody can read isn't a mention of anybody. Idempotent. A draft is discarded through its own route
+  rather than deleted here.
+
+### POST /inbox/threads/{threadId}/clear
+
+*Added 2026-09-21.*
+
+- **Purpose:** Clears a conversation out of your own inbox, sent list and thread view.
+- **Auth:** Bearer token.
+- **Request:** path `threadId`.
+- **Response:** `{ data: true, messages, succeeded }`.
+- **Used by:** service + hook scaffolded (`clear-inbox-thread.ts` / `use-clear-inbox-thread.ts`), no
+  UI yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** Yours alone: wanting a conversation gone isn't a reason to destroy somebody else's
+  record of what was said in it, so this writes only to your own overlay and changes no message —
+  the other side keeps theirs, whole. It's a watermark rather than a switch, so the conversation can
+  start again: everything said up to now is gone for you, and anything said after it appears as a
+  conversation you're in, without handing back the part you cleared. A conversation you're not in
+  returns not-found rather than forbidden, the same answer reading it gives.
 
 ### GET /inbox/drafts
 

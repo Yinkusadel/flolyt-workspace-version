@@ -413,6 +413,9 @@ export const API_ENDPOINTS = {
     GET_INBOX_APPROVAL: `${INBOX_BASE_URL}/approvals/{proposalId}`,
     GET_INBOX_SENT: `${INBOX_BASE_URL}/sent`,
     GET_INBOX_DRAFTS: `${INBOX_BASE_URL}/drafts`,
+    UPDATE_INBOX_MESSAGE: `${INBOX_BASE_URL}/messages/{messageId}`,
+    DELETE_INBOX_MESSAGE: `${INBOX_BASE_URL}/messages/{messageId}`,
+    CLEAR_INBOX_THREAD: `${INBOX_BASE_URL}/threads/{threadId}/clear`,
   },
 
   SOURCES: {
