@@ -20,7 +20,18 @@ export function TeamCard({
   });
 
   return (
-    <div className="rounded-card border border-line bg-paper p-4 transition-all duration-200 hover:border-ink-4 hover:shadow-md sm:p-5">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onInvite}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onInvite();
+        }
+      }}
+      className="cursor-pointer rounded-card border border-line bg-paper p-4 transition-all duration-200 hover:border-ink-4 hover:shadow-md sm:p-5"
+    >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3.5">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-control border border-line bg-paper-2">
@@ -35,7 +46,15 @@ export function TeamCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <Button type="button" variant="outline" onClick={onInvite} className="gap-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              onInvite();
+            }}
+            className="gap-1.5"
+          >
             <UserPlus className="size-3.5" />
             Invite team member
           </Button>
@@ -43,7 +62,10 @@ export function TeamCard({
             type="button"
             variant="ghost"
             size="icon"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             aria-label="Delete team"
             className="text-ink-3 hover:text-destructive"
           >

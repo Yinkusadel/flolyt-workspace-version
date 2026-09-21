@@ -61,7 +61,7 @@ export function DisconnectDatasourceModal({
             <div>
               <p className="text-[12px] font-semibold text-ink">Also delete customers from this source</p>
               <p className="mt-1 text-[10.5px] leading-relaxed text-ink-2">
-                Hard-deletes every customer exclusively imported from {displayName}. Customers also
+                Hard-deletes every customer exclusively synced from {displayName}. Customers also
                 seen through another connected source are preserved.
               </p>
             </div>
