@@ -407,9 +407,11 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `threadId`.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook scaffolded (`clear-inbox-thread.ts` / `use-clear-inbox-thread.ts`), no
-  UI yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** wired into `ListPane`'s `Row` (`src/pages/inbox/list-pane.tsx`) — a `Message`-kind
+  row's hover reveals a chevron in place of its timestamp (matching the message-bubble affordance
+  in `ThreadView`), opening a one-item menu ("Clear chat") that confirms via the shared
+  `ConfirmModal` before firing. Rendered live, not fired against a real conversation yet.
+- **Status:** wired, UI-verified; mutation itself not live-fired.
 - **Notes:** Yours alone: wanting a conversation gone isn't a reason to destroy somebody else's
   record of what was said in it, so this writes only to your own overlay and changes no message —
   the other side keeps theirs, whole. It's a watermark rather than a switch, so the conversation can

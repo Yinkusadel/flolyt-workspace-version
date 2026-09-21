@@ -1,5 +1,5 @@
 import * as React from "react";
-import { AtSign, Bell, MoreVertical, Plus, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { AtSign, Bell, ChevronDown, MoreVertical, Plus, ShieldCheck, Sparkles, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
@@ -14,6 +14,8 @@ import {
 import { TextTooltip } from "@/components/ui/text-tooltip";
 import { agentInitialsFromName, formatRoomActivity, initialsFromName } from "@/pages/rooms/format";
 import { formatShortDate } from "@/lib/format-measured-value";
+import { ConfirmModal } from "@/pages/onboarding/team/confirm-modal";
+import useClearInboxThread from "@/features/inbox/use-clear-inbox-thread";
 import type { InboxItemDto, InboxItemKind } from "@/services/api/inbox/get-inbox";
 import { KIND_LABEL, groupLabel, isProposalKind } from "@/pages/inbox/kind";
 import type { InboxFilter } from "@/pages/inbox/data";
@@ -208,71 +210,128 @@ function Row({ item, active, onSelect }: { item: InboxItemDto; active: boolean; 
   // (e.g. a 2-person thread where the last actor already is the other participant).
   const displayLabel = item.kind === "Message" && item.others.length > 0 ? item.others.join(", ") : item.actorLabel;
   const isGroup = item.kind === "Message" && item.others.length > 1;
+  const isThread = item.kind === "Message";
+
+  const [confirmClear, setConfirmClear] = React.useState(false);
+  const { clearInboxThread, isPending: isClearing } = useClearInboxThread();
 
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      // Belt-and-suspenders: some browsers scroll a focused element fully into view when it's
-      // only partially visible at click time. Blocking the mousedown-driven focus keeps the
-      // click working without any reveal-scroll; keyboard nav (Tab) is untouched since this only
-      // intercepts a pointer-triggered focus.
-      onMouseDown={(e) => e.preventDefault()}
-      className={cn(
-        "w-full rounded-panel px-2.5 py-2.5 text-left transition-colors",
-        active ? "bg-ultra-bg" : "hover:bg-paper-2"
-      )}
-    >
-      <div className="flex gap-2.5">
-        <div className="flex w-2.5 shrink-0 justify-center pt-2">
-          {!item.isRead && <span className="size-1.5 rounded-full bg-ultra" />}
-        </div>
-
-        <KindTile kind={item.kind} actorLabel={displayLabel} isGroup={isGroup} />
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <TextTooltip
-              content={displayLabel}
-              className={cn(
-                "truncate text-[13px]",
-                !item.isRead ? "font-semibold text-ink" : "font-medium text-ink-2"
-              )}
-            >
-              {displayLabel}
-            </TextTooltip>
-            <span className="flex shrink-0 items-center gap-1 text-[11px] text-ink-4">
-              {item.mentionsYou && <AtSign className="size-3 text-ultra" />}
-              {formatRoomActivity(item.occurredAtUtc)}
-            </span>
+    <>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onSelect}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect();
+          }
+        }}
+        // Belt-and-suspenders: some browsers scroll a focused element fully into view when it's
+        // only partially visible at click time. Blocking the mousedown-driven focus keeps the
+        // click working without any reveal-scroll; keyboard nav (Tab) is untouched since this only
+        // intercepts a pointer-triggered focus.
+        onMouseDown={(e) => e.preventDefault()}
+        className={cn(
+          "group w-full cursor-pointer rounded-panel px-2.5 py-2.5 text-left transition-colors",
+          active ? "bg-ultra-bg" : "hover:bg-paper-2"
+        )}
+      >
+        <div className="flex gap-2.5">
+          <div className="flex w-2.5 shrink-0 justify-center pt-2">
+            {!item.isRead && <span className="size-1.5 rounded-full bg-ultra" />}
           </div>
 
-          {item.kind !== "Message" && (
-            <Chip tone={isProposalKind(item.kind) ? "amber" : "neutral"} className="mt-1">
-              {KIND_LABEL[item.kind]}
-            </Chip>
-          )}
+          <KindTile kind={item.kind} actorLabel={displayLabel} isGroup={isGroup} />
 
-          <TextTooltip
-            content={item.summary}
-            className={cn(
-              "line-clamp-2 text-[12px] leading-snug text-ink-3",
-              item.kind !== "Message" ? "mt-1" : "mt-0.5"
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline justify-between gap-2">
+              <TextTooltip
+                content={displayLabel}
+                className={cn(
+                  "truncate text-[13px]",
+                  !item.isRead ? "font-semibold text-ink" : "font-medium text-ink-2"
+                )}
+              >
+                {displayLabel}
+              </TextTooltip>
+              <div className="relative flex shrink-0 items-center">
+                <span
+                  className={cn(
+                    "flex items-center gap-1 text-[11px] text-ink-4 transition-opacity",
+                    isThread && "group-hover:opacity-0"
+                  )}
+                >
+                  {item.mentionsYou && <AtSign className="size-3 text-ultra" />}
+                  {formatRoomActivity(item.occurredAtUtc)}
+                </span>
+                {isThread && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        aria-label="Conversation options"
+                        className="pointer-events-none absolute inset-0 flex items-center justify-end text-ink-3 opacity-0 transition-opacity hover:text-ink group-hover:pointer-events-auto group-hover:opacity-100"
+                      >
+                        <ChevronDown className="size-3.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuItem variant="destructive" onSelect={() => setConfirmClear(true)}>
+                        Clear chat
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+            </div>
+
+            {item.kind !== "Message" && (
+              <Chip tone={isProposalKind(item.kind) ? "amber" : "neutral"} className="mt-1">
+                {KIND_LABEL[item.kind]}
+              </Chip>
             )}
-          >
-            {item.summary}
-          </TextTooltip>
 
-          {item.eventCount > 1 && (
-            <p className="mt-1 text-right text-[11px] text-ink-4">{item.eventCount} updates</p>
-          )}
+            <TextTooltip
+              content={item.summary}
+              className={cn(
+                "line-clamp-2 text-[12px] leading-snug text-ink-3",
+                item.kind !== "Message" ? "mt-1" : "mt-0.5"
+              )}
+            >
+              {item.summary}
+            </TextTooltip>
 
-          {item.snoozedUntilUtc && (
-            <p className="mt-1 text-right text-[11px] text-ink-4">Back {formatShortDate(item.snoozedUntilUtc)}</p>
-          )}
+            {item.eventCount > 1 && (
+              <p className="mt-1 text-right text-[11px] text-ink-4">{item.eventCount} updates</p>
+            )}
+
+            {item.snoozedUntilUtc && (
+              <p className="mt-1 text-right text-[11px] text-ink-4">Back {formatShortDate(item.snoozedUntilUtc)}</p>
+            )}
+          </div>
         </div>
       </div>
-    </button>
+
+      {isThread && (
+        <ConfirmModal
+          open={confirmClear}
+          onOpenChange={setConfirmClear}
+          title="Clear this conversation?"
+          description="Removes it from your own inbox and sent list. The other side keeps theirs, and it comes back if either of you says something new."
+          confirmLabel="Clear chat"
+          pendingLabel="Clearing…"
+          isPending={isClearing}
+          onConfirm={() =>
+            clearInboxThread(item.sourceId, {
+              onSuccess: (res) => res.succeeded && setConfirmClear(false),
+            })
+          }
+        />
+      )}
+    </>
   );
 }
 
