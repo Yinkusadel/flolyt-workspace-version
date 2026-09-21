@@ -1,18 +1,28 @@
 import * as React from "react";
-import { ArrowUp, Plus, Users } from "lucide-react";
+import { ArrowUp, Ban, ChevronDown, Plus, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Chip } from "@/components/ui/chip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EmojiPickerButton } from "@/components/ui/emoji-picker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextTooltip } from "@/components/ui/text-tooltip";
 import { useAuth } from "@/utils/auth-context";
 import { agentInitialsFromName, formatRoomActivity, initialsFromName } from "@/pages/rooms/format";
 import { AttachedRoomCard } from "@/pages/inbox/attached-room-card";
+import { EditMessageModal } from "@/pages/inbox/edit-message-modal";
 import { formatAttachedRoom } from "@/pages/inbox/kind";
+import { ConfirmModal } from "@/pages/onboarding/team/confirm-modal";
 import { useGetInboxThread } from "@/features/inbox/use-get-inbox-thread";
 import useReplyToInboxThread from "@/features/inbox/use-reply-to-inbox-thread";
+import useUpdateInboxMessage from "@/features/inbox/use-update-inbox-message";
+import useDeleteInboxMessage from "@/features/inbox/use-delete-inbox-message";
 import type { InboxItemDto } from "@/services/api/inbox/get-inbox";
 import type { InboxThreadMessageDto } from "@/services/api/inbox/get-inbox-thread";
 
@@ -29,9 +39,22 @@ function isMe(sender: string, userId: string | undefined): boolean {
  * text (float, WhatsApp-style) rather than on its own row above — the side + color already say
  * whose message it is. The other side keeps a name above the bubble, useful once a thread has
  * more than two participants. */
-function MessageBubble({ message, mine }: { message: InboxThreadMessageDto; mine: boolean }) {
+function MessageBubble({
+  message,
+  mine,
+  threadId,
+}: {
+  message: InboxThreadMessageDto;
+  mine: boolean;
+  threadId: string;
+}) {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const { updateInboxMessage, isPending: isSaving } = useUpdateInboxMessage({ threadId });
+  const { deleteInboxMessage, isPending: isDeleting } = useDeleteInboxMessage({ threadId });
+
   return (
-    <div className={cn("flex flex-col gap-1", mine ? "items-end" : "items-start")}>
+    <div className={cn("group flex flex-col gap-1", mine ? "items-end" : "items-start")}>
       {!mine && (
         <span className="px-3 text-[11.5px] font-semibold text-ink-2">{message.senderName}</span>
       )}
@@ -54,25 +77,102 @@ function MessageBubble({ message, mine }: { message: InboxThreadMessageDto; mine
                 }
           }
         />
-        <div
-          className={cn(
-            "rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed wrap-break-word",
-            mine ? "rounded-tr-none bg-ultra text-paper shadow-xs" : "rounded-tl-none bg-paper-2 text-ink"
-          )}
-        >
-          {message.body}
-          <span
+        {message.isDeleted ? (
+          <div
             className={cn(
-              "float-right mt-1 ml-2 translate-y-1 text-[10px] whitespace-nowrap",
-              mine ? "text-paper/70" : "text-ink-4"
+              "flex items-center gap-1.5 rounded-2xl py-2.5 pr-4 pl-3.5 text-[13px] italic",
+              mine ? "rounded-tr-none bg-ultra/55 text-paper/85" : "rounded-tl-none bg-paper-2/70 text-ink-3"
             )}
           >
-            {formatRoomActivity(message.sentAtUtc)}
-          </span>
-        </div>
+            <Ban className="size-3.5 shrink-0" />
+            <span>{mine ? "You deleted this message" : "This message was deleted"}</span>
+            <span
+              className={cn(
+                "ml-auto shrink-0 text-[10px] whitespace-nowrap not-italic",
+                mine ? "text-paper/60" : "text-ink-4"
+              )}
+            >
+              {formatRoomActivity(message.sentAtUtc)}
+            </span>
+          </div>
+        ) : (
+          <div
+            className={cn(
+              "relative rounded-2xl py-2.5 pl-4 text-[13px] leading-relaxed wrap-break-word",
+              mine
+                ? "rounded-tr-none bg-ultra pr-6 text-paper shadow-xs"
+                : "rounded-tl-none bg-paper-2 pr-4 text-ink"
+            )}
+          >
+            {mine && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Message options"
+                    className="absolute top-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-black/10 text-paper/90 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/20 focus-visible:opacity-100"
+                  >
+                    <ChevronDown className="size-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setIsEditing(true)}>Edit</DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => setConfirmDelete(true)}
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {message.body}
+            <span
+              className={cn(
+                "float-right mt-1 ml-2 translate-y-1 text-[10px] whitespace-nowrap",
+                mine ? "text-paper/70" : "text-ink-4"
+              )}
+            >
+              {message.editedAtUtc && "Edited "}
+              {formatRoomActivity(message.editedAtUtc ?? message.sentAtUtc)}
+            </span>
+          </div>
+        )}
       </div>
 
       {message.room && <AttachedRoomCard room={formatAttachedRoom(message.room)} />}
+
+      {mine && !message.isDeleted && (
+        <>
+          <EditMessageModal
+            open={isEditing}
+            onOpenChange={setIsEditing}
+            message={message}
+            isPending={isSaving}
+            onSave={(body) =>
+              updateInboxMessage(
+                { messageId: message.id, body, roomId: message.roomId },
+                { onSuccess: (res) => res.succeeded && setIsEditing(false) }
+              )
+            }
+          />
+          <ConfirmModal
+            open={confirmDelete}
+            onOpenChange={setConfirmDelete}
+            title="Delete this message?"
+            description="This can't be undone. It stays in the conversation, marked deleted."
+            confirmLabel="Delete"
+            pendingLabel="Deleting…"
+            isPending={isDeleting}
+            onConfirm={() =>
+              deleteInboxMessage(message.id, {
+                onSuccess: (res) => res.succeeded && setConfirmDelete(false),
+              })
+            }
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -245,7 +345,12 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
           <p className="text-[12px] text-ink-4">No messages yet.</p>
         ) : (
           messages.map((message) => (
-            <MessageBubble key={message.id} message={message} mine={isMe(message.sender, user?.id)} />
+            <MessageBubble
+              key={message.id}
+              message={message}
+              mine={isMe(message.sender, user?.id)}
+              threadId={item.sourceId}
+            />
           ))
         )}
 

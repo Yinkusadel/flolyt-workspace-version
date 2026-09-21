@@ -179,12 +179,21 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `threadId`.
 - **Response `data`:** `{ threadId, participants: string[], messages: InboxThreadMessage[] }` where
-  `InboxThreadMessage = { id: uuid, sender: string, senderName: string, isAgent: boolean, body: string, roomId: uuid | null, room: InboxThreadRoom | null, sentAtUtc: string }`
+  `InboxThreadMessage = { id: uuid, sender: string, senderName: string, isAgent: boolean, body: string, roomId: uuid | null, room: InboxThreadRoom | null, sentAtUtc: string, editedAtUtc: string | null, isDeleted: boolean }`
   and `InboxThreadRoom = { id: uuid, title: string, status: string, isRestricted: boolean, stageLabel: string | null, conditionLabel: string | null, currency: string | null, amountAtRisk: number | null }`.
+  **`editedAtUtc` and `isDeleted` added 2026-09-21, confirmed live** on a real edited message
+  (`editedAtUtc` a real timestamp, `isDeleted: false`) — re-pasted straight off the network
+  response, not inferred from the mutation docs.
 - **Used by:** wired into `ThreadView` (`src/pages/inbox/thread-view.tsx`), live-verified
   2026-09-19 once a real `Message`-kind item existed — the `sender`-matching `isMe()` heuristic
-  (`human:{guid}` ref vs bare `auth-context` user id) checked out correct on real data.
-- **Status:** wired, live-verified.
+  (`human:{guid}` ref vs bare `auth-context` user id) checked out correct on real data. The
+  "Edited" label (added 2026-09-21, renders `editedAtUtc`'s own time when present rather than
+  `sentAtUtc` — first pass showed the original send time even on an edited message, fixed same day)
+  is live-verified against the real edited message above. `isDeleted` now renders as its own state
+  (added 2026-09-21, live-verified against a real deleted message: `isDeleted: true`, `body: ""`) —
+  a muted, italic bubble reading "You deleted this message" (mine) / "This message was deleted"
+  (theirs), no edit/delete menu on it.
+- **Status:** wired, live-verified (including `editedAtUtc` and `isDeleted` rendering).
 - **Notes:** `senderName` is resolved at read time, not stored — a name frozen at write would be
   one the roster has since corrected (renames happen for both agents and people). Somebody who's
   left the workspace reads as `"Someone no longer here"`, and their messages stay — deleting what

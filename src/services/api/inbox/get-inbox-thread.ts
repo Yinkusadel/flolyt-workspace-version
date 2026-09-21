@@ -23,6 +23,9 @@ export interface InboxThreadMessageDto {
   roomId: string | null;
   room: InboxThreadRoomDto | null;
   sentAtUtc: string;
+  // Confirmed live 2026-09-21 on a real edited message — see docs/endpoints/inbox.md.
+  editedAtUtc: string | null;
+  isDeleted: boolean;
 }
 
 export interface InboxThreadDetailDto {
