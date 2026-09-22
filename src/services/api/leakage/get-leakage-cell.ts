@@ -6,18 +6,24 @@ import type {
   LeakageCalculationDto,
   LeakageExpectedEntryDto,
   LeakageHorizonDto,
+  LeakageMeasuredValueDto,
   LeakageSeverityLevelDto,
 } from "@/services/api/leakage/get-leakage";
 
-// NOT confirmed against a real response — the example returns bare `null`. Inferred from the
-// endpoint's prose ("what moved since a comparable earlier reading"), same caveat as
-// LeakageAtStakeEntryDto in get-leakage.ts.
-export interface LeakageMovementDto {
+// The OUTER wrapper is confirmed live 2026-09-22 — `movement` on a real stage-detail response was
+// `{ value: null, state: "unavailable", missingSource: "…", wouldUnlock: "…" }`, the same
+// LeakageMeasuredValueDto every other independently-gappable figure in this API uses. Every
+// example seen so far was unavailable, so this inner shape (what `.value` looks like once
+// available) is still a guess, inferred from the endpoint's prose ("what moved since a comparable
+// earlier reading") — re-check once a live response has a real movement.
+export interface LeakageMovementValueDto {
   direction: string | null;
   amountChange: number | null;
   percentChange: number | null;
   comparedToLabel: string | null;
 }
+
+export type LeakageMovementDto = LeakageMeasuredValueDto<LeakageMovementValueDto>;
 
 export interface LeakageCellRoomDto {
   roomId: string;
@@ -86,8 +92,8 @@ export interface LeakageCellDetailDto {
   state: string;
   amount: number | null;
   customers: number | null;
-  movement: LeakageMovementDto | null;
-  expected: LeakageExpectedEntryDto | null;
+  movement: LeakageMovementDto;
+  expected: LeakageMeasuredValueDto<LeakageExpectedEntryDto>;
   horizon: LeakageHorizonDto;
   severity: LeakageSeverityLevelDto;
   /** Present once a room is already open on this coordinate — clicking the cell joins it. */

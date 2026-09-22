@@ -65,7 +65,10 @@ export interface LeakageHeadlineDto {
   missingSource: string | null;
   wouldUnlock: string | null;
   computedAtUtc: string | null;
-  yearOverYear: number | null;
+  // Confirmed live 2026-09-22 — NOT a bare number as first typed; it's the same measured-value
+  // wrapper as atStake/population, e.g. `{ value: null, state: "unavailable", missingSource: "…",
+  // wouldUnlock: "…" }`.
+  yearOverYear: LeakageMeasuredValueDto<number>;
 }
 
 export interface LeakageStageSeverityDto {
@@ -78,26 +81,38 @@ export interface LeakageRealizedAmountDto {
   amount: number;
 }
 
-// NOT confirmed against a real response — the pasted example returns bare `null` for every
-// stage/cell/market's `atStake` and `expected`, so this is inferred from (a) the sibling
-// `realized: LeakageRealizedAmountDto[]` field's shape and (b) "nothing is summed across
-// currencies" being a stated rule of this endpoint. Re-paste with Scalar's "Show Schema" toggle
-// to confirm before relying on these two shapes for anything load-bearing.
-export interface LeakageAtStakeEntryDto {
-  currency: string;
-  amount: number;
+// Confirmed live 2026-09-22 — this is the same measured-value wrapper the old lifecycle domain
+// used (`LifecycleMeasuredValueDto`), just under this domain's own name. Every distinctly-named
+// figure that can independently be available or gapped (atStake, expected, population,
+// departedThisMonth, movement, headline.yearOverYear) comes back as this exact 4-key shape — the
+// wrapper itself is never null; only `.value` is.
+export interface LeakageMeasuredValueDto<T> {
+  value: T | null;
+  state: string;
+  missingSource?: string;
+  wouldUnlock?: string;
 }
 
-// Inferred from the endpoint's own prose ("probability-weighted ... with an 80% range and a
-// confidence tier — or a gap naming why no base rate exists"). Field names are a best guess, not
-// confirmed — see the note on LeakageAtStakeEntryDto above.
+// Confirmed live 2026-09-22 (`atStake.value = [{ currency: "NGN", amountAtRisk: 0 }]`) — field is
+// `amountAtRisk`, not `amount`. Matches `formatAtStakeAmounts` in
+// src/lib/format-measured-value.ts exactly, so that formatter can be reused as-is once this is
+// wired.
+export interface LeakageAtStakeAmountDto {
+  currency: string;
+  amountAtRisk: number;
+}
+
+// The outer wrapper (LeakageMeasuredValueDto) is confirmed live. This inner per-currency shape is
+// still a guess, inferred from the endpoint's prose ("probability-weighted ... with an 80% range
+// and a confidence tier") — every `expected` seen live so far was `state: "unavailable"`, so no
+// real "available" example has been observed yet. Re-check once a workspace with a completed
+// refresh is available.
 export interface LeakageExpectedEntryDto {
   currency: string;
-  amount: number | null;
-  rangeLow: number | null;
-  rangeHigh: number | null;
+  amount: number;
+  rangeLow: number;
+  rangeHigh: number;
   confidence: string; // "low" | "medium" | "high", string on the wire
-  gapReason: string | null;
 }
 
 export interface LeakageStageCardDto {
@@ -109,11 +124,11 @@ export interface LeakageStageCardDto {
   leadAgentKey: string | null;
   leadAgentName: string | null;
   headline: LeakageHeadlineDto;
-  atStake: LeakageAtStakeEntryDto[] | null;
-  expected: LeakageExpectedEntryDto[] | null;
+  atStake: LeakageMeasuredValueDto<LeakageAtStakeAmountDto[]>;
+  expected: LeakageMeasuredValueDto<LeakageExpectedEntryDto[]>;
   severity: LeakageStageSeverityDto[];
   openRoomCount: number;
-  population: number | null;
+  population: LeakageMeasuredValueDto<number>;
   calculation: LeakageCalculationDto;
   realized: LeakageRealizedAmountDto[];
 }
@@ -146,12 +161,14 @@ export interface LeakageGridRowDto {
   label: string;
 }
 
-// The pasted example truncates this object after `roomId` (`"...": "[Additional Properties
-// Truncated]"`) — there are more fields on a real cell than are typed here. Known from the cell
-// detail panel (get-leakage-cell.ts) that at least a `reason`/`missingSource`/`wouldUnlock` gap
-// trio exists for dashed cells; whether the grid response repeats those inline or the panel is
-// the only place to get them is unconfirmed. Re-paste this response with Scalar's "Show Schema"
-// toggle to fill in the rest.
+// Still unconfirmed — a live pull of this endpoint (2026-09-22) returned `cells: []` for every
+// grid (nothing has been measured for that workspace yet), so this truncated shape has not been
+// re-checked. `amount`/`customers` are kept as plain nullable scalars (matching the original
+// example, where they sit as bare siblings of `state`) rather than wrapped in
+// LeakageMeasuredValueDto — but note that wrapper turned out to apply to *every* other
+// independently-gappable figure in this API family, so treat that choice as a guess too. `expected`
+// is wrapped on the same reasoning as the stage-level fix. Re-paste once a workspace with
+// `coverage.measured > 0` is available.
 export interface LeakageCellDto {
   row: string;
   condition: string;
@@ -159,7 +176,7 @@ export interface LeakageCellDto {
   state: string;
   amount: number | null;
   customers: number | null;
-  expected: LeakageExpectedEntryDto | null;
+  expected: LeakageMeasuredValueDto<LeakageExpectedEntryDto>;
   severity: LeakageSeverityLevelDto;
   intensity: number | null;
   roomId: string | null;
@@ -233,7 +250,9 @@ export interface LeakagePageData {
   revenueModel: string | null;
   stages: LeakageStageCardDto[];
   callouts: LeakageCalloutDto[];
-  marketLens: LeakageMarketLensDto;
+  // Confirmed live 2026-09-22 to be `null` (not just its sub-fields) when no market data exists
+  // yet for the workspace — was typed as always-present.
+  marketLens: LeakageMarketLensDto | null;
   grids: LeakageGridDto[];
   markets: LeakageMarketRailEntryDto[];
   coverage: LeakageCoverageDto;

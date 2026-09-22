@@ -3,12 +3,13 @@ import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
 import type {
-  LeakageAtStakeEntryDto,
+  LeakageAtStakeAmountDto,
   LeakageCalculationDto,
   LeakageExpectedEntryDto,
   LeakageHeadlineDto,
   LeakageHorizonDto,
   LeakageMarketLensDto,
+  LeakageMeasuredValueDto,
   LeakageOwnerDto,
   LeakageRealizedAmountDto,
   LeakageStageSeverityDto,
@@ -29,14 +30,15 @@ export interface LeakageStageDetailDto {
   reviewCadence: string | null;
   windowDays: number;
   horizon: LeakageHorizonDto;
-  marketLens: LeakageMarketLensDto;
-  atStake: LeakageAtStakeEntryDto[] | null;
-  expected: LeakageExpectedEntryDto[] | null;
+  // Confirmed live 2026-09-22 to be nullable, same as the page-level field.
+  marketLens: LeakageMarketLensDto | null;
+  atStake: LeakageMeasuredValueDto<LeakageAtStakeAmountDto[]>;
+  expected: LeakageMeasuredValueDto<LeakageExpectedEntryDto[]>;
   severity: LeakageStageSeverityDto[];
-  movement: LeakageMovementDto | null;
-  population: number | null;
+  movement: LeakageMovementDto;
+  population: LeakageMeasuredValueDto<number>;
   /** Per calendar month, not per window — the calculation block says so. */
-  departedThisMonth: number | null;
+  departedThisMonth: LeakageMeasuredValueDto<number>;
   headline: LeakageHeadlineDto;
   openRoomCount: number;
   /** Empty for the seven stages the customer-state axis doesn't reach — the honest answer, not a gap. */

@@ -3,8 +3,12 @@
 Base path: `/api/v3/leakage` → `LEAKAGE_BASE_URL` / `API_ENDPOINTS.LEAKAGE` in
 [`src/config/apiConfig.ts`](../../src/config/apiConfig.ts). Pasted 2026-09-22 from the
 Scalar/OpenAPI reference doc (prose descriptions + example request/response payloads, same source
-format as [[lifecycle]] and [[rooms]]'s corrected passes) — **not yet independently confirmed
-against a real call**, per [[feedback_verify_against_endpoint_docs]].
+format as [[lifecycle]] and [[rooms]]'s corrected passes). **A real `GET /leakage` and
+`GET /leakage/stages/{stageKey}` response were confirmed live 2026-09-22** (workspace with no
+completed refresh yet — `coverage.measured: 0`, so `cells` was empty everywhere and no `expected`/
+`movement` was ever `"available"`); `GET /leakage/cells/{...}` was confirmed to refuse with a
+plain thrown error (see its section below) rather than a `200` with `data: null`. `report` and
+`conditions` are still unconfirmed against a real call — per [[feedback_verify_against_endpoint_docs]].
 
 This is the leakage map/page's own domain, separate from the pre-redesign `LIFECYCLE.GET_LEAKAGE_MAP`
 scaffold in `src/services/api/lifecycle-old/get-leakage-map.ts` (that one is part of the archived
@@ -35,17 +39,26 @@ Per [[feedback_stop_on_truncated_endpoint_fields]] — flagging this rather than
 Re-paste both with Scalar's "Show Schema" toggle (not the example tab) to get the rest of these two
 shapes before wiring either response into a UI that needs the cut-off fields.
 
-## Fields inferred rather than confirmed
+## Fields confirmed live vs. still inferred
 
-A handful of fields return bare `null` in every example in this paste (not marked truncated, just
-nullable in the generated example) with no nested shape visible anywhere else in the document:
-`atStake`/`expected` on stage cards, cells, stage detail, and report markets; `movement` on the
-cell panel and stage detail. These are typed using this codebase's existing
-`LifecycleMeasuredValueDto`-style convention plus the endpoint's own prose (e.g. "probability-weighted
-... with an 80% range and a confidence tier — or a gap naming why no base rate exists" for
-`expected`), and flagged inline in the relevant service file with a comment. Treat
-`LeakageAtStakeEntryDto`, `LeakageExpectedEntryDto`, and `LeakageMovementDto` as best-guess shapes,
-not confirmed ones, until a real response is seen.
+**Confirmed live 2026-09-22:** `atStake`, `expected`, `population` (stage card + stage detail),
+`departedThisMonth` (stage detail), `movement` (stage detail), and `headline.yearOverYear` are all
+the *same* measured-value wrapper — `LeakageMeasuredValueDto<T> = { value: T | null, state: string,
+missingSource?: string, wouldUnlock?: string }` — the same convention the old lifecycle domain's
+`LifecycleMeasuredValueDto` used. The wrapper object itself is never `null`; only `.value` is. This
+was originally typed as several different ad-hoc shapes per field — corrected. `atStake`'s inner
+array is confirmed to use `{ currency, amountAtRisk }` (not `amount`), which is exactly the shape
+`formatAtStakeAmounts` in `src/lib/format-measured-value.ts` already expects. `marketLens` is
+confirmed to be `null` itself (not just its sub-fields) when the workspace has no market data yet.
+
+**Still inferred (outer wrapper confirmed by analogy, inner content is not):** every `expected`
+and `movement` seen live so far was `state: "unavailable"`, so `LeakageExpectedEntryDto`'s and
+`LeakageMovementValueDto`'s fields (what `.value` looks like once populated) remain a guess from
+the endpoints' own prose. The grid's inline `LeakageCellDto` (`amount`/`customers`) is left as
+plain nullable scalars, matching the original truncated example, but note the wrapper pattern
+turned out to apply everywhere else in this API family — treat that choice as unconfirmed too.
+`GET /leakage/report`'s `gross`/`realized`/`expected`/`net` are still typed as plain
+`number | null`, entirely unconfirmed — no live report response has been pulled yet.
 
 ## Shared shapes
 
@@ -66,11 +79,19 @@ interface LeakageCalculationDto {
   sources: LeakageSourceDto[]; inputs: { label: string; value: string }[]; caveats: string[];
 }
 interface LeakageOwnerDto { ownerUserId: string; displayName: string; isActive: boolean; }
+// Confirmed live 2026-09-22 — the wrapper every independently-gappable figure in this API uses.
+interface LeakageMeasuredValueDto<T> {
+  value: T | null; state: string; missingSource?: string; wouldUnlock?: string;
+}
 interface LeakageHeadlineDto {
   key: string; label: string; unit: string; value: number | null; missingSource: string | null;
-  wouldUnlock: string | null; computedAtUtc: string | null; yearOverYear: number | null;
+  wouldUnlock: string | null; computedAtUtc: string | null;
+  yearOverYear: LeakageMeasuredValueDto<number>; // confirmed live — not a bare number
 }
 interface LeakageRealizedAmountDto { currency: string; amount: number; }
+// Confirmed live — atStake's inner field is `amountAtRisk`, matching
+// src/lib/format-measured-value.ts's formatAtStakeAmounts exactly.
+interface LeakageAtStakeAmountDto { currency: string; amountAtRisk: number; }
 ```
 
 `window` is one of `30 | 90 | 180 | 365 | "qtd" | <days up to 365>`, default 90, refused otherwise.
@@ -96,10 +117,12 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
     refreshedAtUtc: string | null;
     customerCount: number;
     revenueModel: string | null;
-    stages: LeakageStageCardDto[];   // 10 cards; atStake/expected inferred, see note above
+    stages: LeakageStageCardDto[];   // 10 cards; atStake/population/expected use LeakageMeasuredValueDto
     callouts: { key: string; tone: string; headline: string; body: string }[];
-    marketLens: { countryCode: string; currencyCode: string; isPrimary: boolean };
-    grids: LeakageGridDto[];         // customer-state and/or segment × condition
+    marketLens: { countryCode: string; currencyCode: string; isPrimary: boolean } | null; // confirmed nullable
+    grids: LeakageGridDto[];         // customer-state and/or segment × condition — confirmed live: this
+                                      // workspace has BOTH a "lifecycle_stage" grid and a "segment" grid
+                                      // at once, not a hypothetical future case
     markets: LeakageMarketRailEntryDto[];
     coverage: LeakageCoverageDto;    // measured/onMap/percent + the two condition-name lists + sentence
     filter: { calculate: string; minSeverity: string | null; minConfidence: string | null; cellsHidden: number };
@@ -198,8 +221,8 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
     coordinate: string; grid: string; rowKey: string; rowLabel: string;
     conditionKey: string; conditionLabel: string; label: string; currency: string; windowDays: number;
     state: string; amount: number | null; customers: number | null;
-    movement: { direction: string | null; amountChange: number | null; percentChange: number | null; comparedToLabel: string | null } | null; // inferred, see note above
-    expected: LeakageExpectedEntryDto | null; // inferred, see note above
+    movement: LeakageMeasuredValueDto<{ direction: string | null; amountChange: number | null; percentChange: number | null; comparedToLabel: string | null }>; // outer wrapper confirmed live, inner content still a guess
+    expected: LeakageMeasuredValueDto<LeakageExpectedEntryDto>; // outer wrapper confirmed live, inner content still a guess
     horizon: LeakageHorizonDto; severity: LeakageSeverityLevelDto;
     room: { roomId: string; title: string; openedAtUtc: string; ownerMemberId: string | null; ownerName: string | null; canSeeInside: boolean } | null;
     draft: {
@@ -220,6 +243,12 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   the map (`NotApplicable`) is refused, not served.
 - **Used by:** `services/api/leakage/get-leakage-cell.ts`, `features/leakage/use-get-leakage-cell.ts` (hook only fires once all four path params are present). Not wired.
 - **Status:** documented, scaffolded, not wired
+- **Confirmed live 2026-09-22:** a refused coordinate (no cell at that address) comes back as a
+  thrown HTTP error — `{ data: null, messages: ["That cell is not on the leakage map…"], succeeded:
+  false }` on a non-2xx status — not a `200` with `data: null`. `getServerErrorMessage` already
+  reads `messages[]` correctly, so the existing try/catch in `get-leakage-cell.ts` needed no
+  change. A genuinely measured cell (`room`/`draft`/`signals`/`guidance` populated) has not been
+  seen live yet.
 
 ## POST /api/v3/leakage/cells/{grid}/{row}/{condition}/{currency}/room
 
@@ -289,12 +318,13 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   interface LeakageStageDetailDto {
     key: string; name: string; position: number; owningTeam: string | null; owner: LeakageOwnerDto | null;
     reviewCadence: string | null; windowDays: number; horizon: LeakageHorizonDto;
-    marketLens: { countryCode: string; currencyCode: string; isPrimary: boolean };
-    atStake: LeakageAtStakeEntryDto[] | null; expected: LeakageExpectedEntryDto[] | null; // inferred, see note above
+    marketLens: { countryCode: string; currencyCode: string; isPrimary: boolean } | null; // confirmed nullable
+    atStake: LeakageMeasuredValueDto<LeakageAtStakeAmountDto[]>;
+    expected: LeakageMeasuredValueDto<LeakageExpectedEntryDto[]>; // outer confirmed, inner still a guess
     severity: { currency: string; severity: LeakageSeverityLevelDto }[];
-    movement: /* same inferred shape as the cell panel's */ null | { direction: string | null; amountChange: number | null; percentChange: number | null; comparedToLabel: string | null };
-    population: number | null;
-    departedThisMonth: number | null; // per calendar month, not per window — calculation says so
+    movement: LeakageMeasuredValueDto<{ direction: string | null; amountChange: number | null; percentChange: number | null; comparedToLabel: string | null }>; // outer confirmed, inner still a guess
+    population: LeakageMeasuredValueDto<number>;
+    departedThisMonth: LeakageMeasuredValueDto<number>; // per calendar month, not per window — calculation says so
     headline: LeakageHeadlineDto; openRoomCount: number;
     spansStates: string[]; // empty for the 7 stages the customer-state axis doesn't reach — honest, not a gap
     learnWhy: { agentKey: string; agentName: string };
@@ -304,3 +334,7 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   ```
 - **Used by:** `services/api/leakage/get-leakage-stage.ts`, `features/leakage/use-get-leakage-stage.ts`. Not wired.
 - **Status:** documented, scaffolded, not wired
+- **Confirmed live 2026-09-22** for the `acquire` stage on a workspace with no completed refresh —
+  every gapped field's `missingSource`/`wouldUnlock` sentence reads exactly as described in the
+  endpoint's prose. `atStake` was `available` (`[{ currency: "NGN", amountAtRisk: 0 }]`); every
+  other measured-value field was `unavailable`.
