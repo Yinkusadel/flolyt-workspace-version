@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Activity,
   Bell,
   Boxes,
   Bot,
@@ -9,7 +8,6 @@ import {
   ChevronRight,
   CreditCard,
   Database,
-  IdCard,
   LogOut,
   ScrollText,
   Settings,
@@ -34,9 +32,9 @@ type MenuLink = { label: string; href: string; icon: LucideIcon };
 
 const DATA_LINKS: MenuLink[] = [
   { label: "Data sources", href: "/data-sources", icon: Database },
-  { label: "Data health", href: "/data-health", icon: Activity },
+  // { label: "Data health", href: "/data-health", icon: Activity },
   { label: "Schema", href: "/schema", icon: Boxes },
-  { label: "Identity", href: "/identity", icon: IdCard },
+  // { label: "Identity", href: "/identity", icon: IdCard },
 ];
 
 const SETTINGS_LINKS: MenuLink[] = [
