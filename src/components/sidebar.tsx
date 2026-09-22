@@ -230,28 +230,38 @@ function Sidebar({ open, onClose, className }: SidebarProps) {
           </NavLink>
         ))}
 
-        <div className={cn(collapsed && "lg:hidden")}>
+        <div>
           <button
             type="button"
-            onClick={() => setConversationsOpen((prev) => !prev)}
+            onClick={() => {
+              if (collapsed) {
+                setCollapsed(false);
+                setConversationsOpen(true);
+                return;
+              }
+              setConversationsOpen((prev) => !prev);
+            }}
             aria-expanded={conversationsOpen}
+            title="Conversations"
             className={cn(
               "flex w-full items-center gap-2.5 rounded-panel px-2.5 py-[7px] text-[11.5px] text-ink-3 transition-colors",
               "hover:bg-paper hover:text-ink",
-              conversationsOpen && "text-ink"
+              conversationsOpen && "text-ink",
+              collapsed && "lg:justify-center lg:px-0"
             )}
           >
             <MessageCircle className="size-3.75 shrink-0" />
-            <span className="truncate">Conversations</span>
+            <span className={cn("truncate", collapsed && "lg:hidden")}>Conversations</span>
             <ChevronDown
               className={cn(
                 "ml-auto size-3.5 shrink-0 transition-transform",
-                conversationsOpen && "rotate-180"
+                conversationsOpen && "rotate-180",
+                collapsed && "lg:hidden"
               )}
             />
           </button>
 
-          {conversationsOpen && (
+          {conversationsOpen && !collapsed && (
             <div ref={conversationListRef} className="max-h-64 space-y-0.5 overflow-y-auto py-0.5 pl-6">
               {conversationsLoading &&
                 [1, 2, 3].map((key) => (
