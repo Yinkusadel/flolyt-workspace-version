@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { useGetHome } from "@/features/home/use-get-home";
 import { splitHomeCardsByKind } from "@/features/home/group-home-cards";
 import type { HomeCard, HomeExposure, HomeFact, HomeFigure, HomeGuarded } from "@/services/api/home/get-home";
@@ -23,20 +22,11 @@ const NEIGHBOR_OPACITY = 0.5;
  *  column with a definite height (inherited from the fixed-height slide two levels up — see the
  *  `h-full` note where slides are rendered) so a scrollable child inside it (`min-h-0 flex-1
  *  overflow-y-auto`) actually clips/scrolls instead of silently growing to fit its content. */
-function CarouselCardFrame({
-  eyebrow,
-  children,
-  footer,
-}: {
-  eyebrow: string;
-  children: ReactNode;
-  footer: ReactNode;
-}) {
+function CarouselCardFrame({ eyebrow, children }: { eyebrow: string; children: ReactNode }) {
   return (
     <div className="flex h-full w-full flex-col p-5.5">
       <p className={EYEBROW_CLASS}>{eyebrow}</p>
       <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
-      <div className="mt-4 shrink-0">{footer}</div>
     </div>
   );
 }
@@ -55,14 +45,7 @@ function GuardedCard({ guarded }: { guarded: HomeGuarded }) {
   const preservedText = guarded.preserved.length > 0 ? guarded.preserved.map(formatFigure).join(" + ") : "—";
 
   return (
-    <CarouselCardFrame
-      eyebrow={`PAST ${guarded.days} DAY${guarded.days === 1 ? "" : "S"}`}
-      footer={
-        <Button asChild variant="outline" size="sm" className="w-full">
-          <Link to="/inbox">See what needs you</Link>
-        </Button>
-      }
-    >
+    <CarouselCardFrame eyebrow={`PAST ${guarded.days} DAY${guarded.days === 1 ? "" : "S"}`}>
       <div className="grid shrink-0 grid-cols-3 gap-2 text-center">
         <div>
           <p className="font-serif text-2xl text-ink">{preservedText}</p>
@@ -117,14 +100,7 @@ function ExposureRow({ exposure }: { exposure: HomeExposure }) {
 
 function FactsCard({ facts, onAsk }: { facts: HomeFact[]; onAsk: (question: string) => void }) {
   return (
-    <CarouselCardFrame
-      eyebrow="REVENUE FACTS"
-      footer={
-        <Button asChild variant="outline" size="sm" className="w-full">
-          <Link to="/leakage-map">Open leakage map</Link>
-        </Button>
-      }
-    >
+    <CarouselCardFrame eyebrow="REVENUE FACTS">
       <p className="shrink-0 font-serif text-[18px] text-ink">
         {facts.length} thing{facts.length === 1 ? "" : "s"} worth knowing
       </p>
@@ -178,23 +154,14 @@ interface CardListPanelProps {
   eyebrow: string;
   headline: string;
   items: HomeCard[];
-  footerLabel: string;
-  footerTo: string;
 }
 
 /** Shared shape for the two `cards[]`-backed panels below — every item in the group is shown,
  *  scrolling within the fixed card height rather than capping items behind a "+N more" link
  *  that doesn't go to those specific items. */
-function CardListPanel({ eyebrow, headline, items, footerLabel, footerTo }: CardListPanelProps) {
+function CardListPanel({ eyebrow, headline, items }: CardListPanelProps) {
   return (
-    <CarouselCardFrame
-      eyebrow={eyebrow}
-      footer={
-        <Button asChild variant="outline" size="sm" className="w-full">
-          <Link to={footerTo}>{footerLabel}</Link>
-        </Button>
-      }
-    >
+    <CarouselCardFrame eyebrow={eyebrow}>
       <p className="shrink-0 font-serif text-[18px] text-ink">{headline}</p>
       <div className="mt-3 min-h-0 flex-1 divide-y divide-line overflow-y-auto">
         {items.map((card) => (
@@ -213,8 +180,6 @@ function NeedsYouCard({ items }: { items: HomeCard[] }) {
       eyebrow="NEEDS YOU"
       headline={`${items.length} thing${items.length === 1 ? "" : "s"} need you`}
       items={items}
-      footerLabel="Open the inbox"
-      footerTo="/inbox"
     />
   );
 }
