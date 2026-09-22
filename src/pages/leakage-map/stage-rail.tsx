@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Info } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { Callout } from "@/components/ui/rail";
 import { formatAtStakeAmounts, formatHeadlineValue } from "@/lib/format-measured-value";
 import type { LeakageCalloutDto, LeakageStageCardDto } from "@/services/api/leakage/get-leakage";
+
+const HINT_VISIBLE_MS = 5000;
 
 // Purely decorative — the API carries no per-stage color, so this just cycles a fixed palette by
 // position rather than asserting anything the response doesn't.
@@ -85,6 +89,19 @@ export function StageRail({
   callouts: LeakageCalloutDto[] | undefined;
 }) {
   const [dismissedCallouts, setDismissedCallouts] = useState<Set<string>>(new Set());
+  const hasGappedFigure = !!stages?.some((stage) => stage.headline.value === null || stage.atStake.value === null);
+  const [showHint, setShowHint] = useState(false);
+
+  // Auto-shows once the cards are actually on screen, holds briefly, then fades — teaches that
+  // the info icon is hoverable (it was reading as inert on its own), same convention the archived
+  // old-lifecycle stage rail used. Not anchored to a specific card: the row can wrap/scroll, so an
+  // absolutely-positioned bubble pointing at one card could get cut off or drift.
+  useEffect(() => {
+    if (!hasGappedFigure) return;
+    setShowHint(true);
+    const timer = setTimeout(() => setShowHint(false), HINT_VISIBLE_MS);
+    return () => clearTimeout(timer);
+  }, [hasGappedFigure]);
 
   return (
     <div className="space-y-3">
@@ -92,6 +109,23 @@ export function StageRail({
         <p className="font-mono text-[9.5px] font-medium tracking-[1.05px] text-ink-4 uppercase">Stage rollups</p>
         <p className="mt-0.5 text-[11px] text-ink-3">Independent from the matrix</p>
       </div>
+
+      {hasGappedFigure && (
+        <div
+          className={cn(
+            "grid overflow-hidden transition-all duration-500 ease-out",
+            showHint ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          )}
+        >
+          <div className="min-h-0 pb-1.5">
+            <div className="relative inline-flex max-w-57.5 items-start gap-1.5 rounded-2xl bg-ink px-3.5 py-2.5 text-[11.5px] leading-snug text-paper shadow-lg">
+              <span className="absolute -bottom-1.5 left-5 size-3 rotate-45 rounded-xs bg-ink" aria-hidden />
+              <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+              <span>Hover the info icon on a card to see why it's unavailable</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-10">
         {!stages
