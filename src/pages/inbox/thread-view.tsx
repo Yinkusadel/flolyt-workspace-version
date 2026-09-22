@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ArrowUp, Ban, ChevronDown, Plus, Users } from "lucide-react";
+import { ArrowUp, Ban, ChevronDown, MoreVertical, Plus, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
@@ -23,6 +23,7 @@ import { useGetInboxThread } from "@/features/inbox/use-get-inbox-thread";
 import useReplyToInboxThread from "@/features/inbox/use-reply-to-inbox-thread";
 import useUpdateInboxMessage from "@/features/inbox/use-update-inbox-message";
 import useDeleteInboxMessage from "@/features/inbox/use-delete-inbox-message";
+import useClearInboxThread from "@/features/inbox/use-clear-inbox-thread";
 import type { InboxItemDto } from "@/services/api/inbox/get-inbox";
 import type { InboxThreadMessageDto } from "@/services/api/inbox/get-inbox-thread";
 
@@ -225,7 +226,9 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
   const { user } = useAuth();
   const { data, isLoading, isError, error } = useGetInboxThread(item.sourceId);
   const { replyToInboxThread, isPending } = useReplyToInboxThread();
+  const { clearInboxThread, isPending: isClearing } = useClearInboxThread();
   const [draft, setDraft] = React.useState("");
+  const [confirmClear, setConfirmClear] = React.useState(false);
   const bottomRef = React.useRef<HTMLDivElement>(null);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
@@ -338,7 +341,39 @@ export function ThreadView({ item }: { item: InboxItemDto }) {
             )}
           </div>
         </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="Conversation options"
+              className="flex size-7 shrink-0 items-center justify-center rounded-control text-ink-3 transition-colors hover:bg-paper-2 hover:text-ink"
+            >
+              <MoreVertical className="size-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem variant="destructive" onSelect={() => setConfirmClear(true)}>
+              Clear chat
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
+      <ConfirmModal
+        open={confirmClear}
+        onOpenChange={setConfirmClear}
+        title="Clear this conversation?"
+        description="Removes it from your own inbox and sent list. The other side keeps theirs, and it comes back if either of you says something new."
+        confirmLabel="Clear chat"
+        pendingLabel="Clearing…"
+        isPending={isClearing}
+        onConfirm={() =>
+          clearInboxThread(item.sourceId, {
+            onSuccess: (res) => res.succeeded && setConfirmClear(false),
+          })
+        }
+      />
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
         {messages.length === 0 ? (
