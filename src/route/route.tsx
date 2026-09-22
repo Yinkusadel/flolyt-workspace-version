@@ -35,6 +35,8 @@ import { MergeRoute } from "@/pages/rooms/room/merge-route";
 import NewConversationRoute from "@/pages/conversations/new-conversation-route";
 import AiConversationDetailRoute from "@/pages/conversations/detail-route";
 import PlanAndBillingRoute from "@/pages/plan-and-billing";
+import NotificationsRoute from "@/pages/notifications";
+import AuditLogRoute from "@/pages/audit-log";
 import LeakageMap from "@/pages/leakage-map";
 import Inbox from "@/pages/inbox";
 import Playbooks from "@/pages/playbooks";
@@ -152,6 +154,14 @@ export const routes = createBrowserRouter([
               {
                 path: "plan-and-billing",
                 Component: PlanAndBillingRoute,
+              },
+              {
+                path: "notifications",
+                Component: NotificationsRoute,
+              },
+              {
+                path: "audit-log",
+                Component: AuditLogRoute,
               },
               // Leakage Map, Inbox, Playbooks and Business Memory are rebuilt.
               { path: "leakage-map", Component: LeakageMap },
