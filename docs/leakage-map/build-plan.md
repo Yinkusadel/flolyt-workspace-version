@@ -118,10 +118,46 @@ far was `"unavailable"`).
   entries hasn't been used to confirm `marketOptionLabel`/the market-select-and-refetch path yet.
   No console errors.
 
-### Step 2 — Page shell: loading/error/empty, status line, stage rail values — not started
-Drop `LEAKAGE_MAP_STATE`, drive `PageStateBanner` from `useGetLeakage`'s real query state.
-`stage-rail.tsx` reads `data.stages` instead of `STAGES`; drop per-card `coveragePercent` (no
-per-stage coverage field exists).
+### Step 2 — Page shell: loading/error/empty, status line, stage rail values — ✅ done (2026-09-23)
+- Dropped `LEAKAGE_MAP_STATE`; `PageStateBanner` is now driven by `useGetLeakage`'s real
+  `isFetching`/`isError`/`error` state. `useGetLeakage` gained `placeholderData: (prev) => prev` so
+  a filter change shows the "Recomputing exposure…" banner while the *previous* filter's figures
+  stay on screen (confirmed live — see below), instead of flashing back to a skeleton on every
+  change. Error banner shows the real `error.message`; its Retry button calls `refetch()`. Empty
+  state's "Connect a source" button now navigates to `/data-sources`.
+- **"Empty" trigger is an unconfirmed inference**, flagged rather than guessed silently: no real
+  response pulled so far has ever had `customerCount === 0`, so `isEmpty` is defined as
+  `leakage.customerCount === 0` on a resolved, non-error response — a structurally reasonable
+  proxy, but not live-verified. Re-check if/when a genuinely fresh signup workspace is available.
+- `stage-rail.tsx` now takes `stages`/`callouts` straight from `GET /leakage`'s response
+  (`undefined` ⇒ 10-tile skeleton, matching the "no data fetched yet" case). Per card: real
+  `position`/`name`, `headline` (via `formatHeadlineValue`, `InfoTooltip` on the gapped case using
+  the real `missingSource`/`wouldUnlock` sentence — same convention the archived
+  `src/oldpages/everyday/lifecycle/stage-rail.tsx` used for the same `*MeasuredValueDto` wrapper),
+  `atStake` (via `formatAtStakeAmounts`, `InfoTooltip` when gapped). Dropped `metricLines` (no API
+  equivalent — `headline` is the real per-stage KPI instead) and `coveragePercent` (no per-stage
+  coverage field exists) per the ground rule. The dot color is now a purely decorative fixed
+  palette cycled by `position` (the API carries no per-stage color).
+- **Extra cleanup beyond this step's original scope:** deleted `coverage-gap-note.tsx` and its
+  render in `index.tsx` — it was Retain's invented rollup example (mismatch #2), not something a
+  later step could ever wire for real. The mock's authored "Advocacy feeds acquisition" callout is
+  replaced by real ones from the response's own `callouts[]` (dismissible individually, tone
+  mapped to the shared `Callout` component's amber/teal/rose, defaulting to amber for any other
+  string). `data.ts`'s now-fully-orphaned `STAGES`/`ADVOCACY_NOTE_TITLE`/`ADVOCACY_NOTE_BODY` are
+  deleted; `Stage`/`ADOPT_STAGE_DETAIL`/`RETAIN_STAGE_ROLLUP` stay (still used by `detail-panel.tsx`'s
+  still-mock `StageDetailCard`, orphaned-but-present pending Step 3, same precedent as
+  `actions-panel.tsx`). Status line now also shows real `customerCount`/`refreshedAtUtc`/
+  `coverage.percent` (all single-field, no computed math) instead of mock text; added
+  `formatRelativeTime` to `src/lib/format-measured-value.ts` for the "6 min ago" style timestamp.
+- Stage cards have **no click-through modal for now** — the old mock's FloatingCard→StageDetailCard
+  interaction was removed rather than pointed at fake data. Step 3 restores it, backed by a lazy
+  `useGetLeakageStage` fetch on open.
+- **Verified live 2026-09-23** (same `ichigo@yopmail.com` workspace) — real headline/atStake
+  figures and gap tooltips rendered correctly (e.g. Acquire's `atStake` was a real ₦0, the other 9
+  stages correctly showed the gapped `InfoTooltip` with real missing-source/would-unlock copy); the
+  real page-level callout "9 of the 10 stages cannot be measured yet…" rendered from `callouts[]`;
+  a Window filter change showed the loading banner while the previous filter's cards/status line
+  stayed visible, then updated correctly. No console errors.
 
 ### Step 3 — Stage detail card (the modal consolidation) — not started
 One generic `StageDetailCard` from `headline`/`population`/`departedThisMonth`/`movement`/

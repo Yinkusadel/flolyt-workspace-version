@@ -1,15 +1,28 @@
+import { useNavigate } from "react-router-dom";
 import { AlertTriangle, PlugZap, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PAGE_STATES } from "@/pages/leakage-map/data";
 
 /**
- * Loading/empty/error (12-states.svg) — none of them blank the figures. This page has no live
- * source yet, so these are reachable only via LEAKAGE_MAP_STATE in index.tsx, not by any real
- * fetch lifecycle; "partial" (the default) needs no banner of its own — the status line and the
- * coverage panel already carry that job every time the page loads.
+ * Loading/empty/error (12-states.svg), now driven by `useGetLeakage`'s real query state instead of
+ * a hardcoded flag — see index.tsx. Title/body/footnote copy stays `data.ts`'s static chrome (it
+ * doesn't assert any number or fact the API could contradict); the error message and the retry/
+ * connect actions are real. "Empty" is inferred from `customerCount === 0` — unconfirmed live,
+ * since every real response pulled so far had customers; flagged in
+ * docs/leakage-map/build-plan.md.
  */
-export function PageStateBanner({ state }: { state: "loading" | "empty" | "error" }) {
+export function PageStateBanner({
+  state,
+  errorMessage,
+  onRetry,
+}: {
+  state: "loading" | "empty" | "error";
+  errorMessage?: string;
+  onRetry?: () => void;
+}) {
+  const navigate = useNavigate();
+
   if (state === "loading") {
     const copy = PAGE_STATES.loading;
     return (
@@ -32,10 +45,9 @@ export function PageStateBanner({ state }: { state: "loading" | "empty" | "error
         <AlertTriangle className="size-4 shrink-0 text-amber" aria-hidden />
         <div className="min-w-0 flex-1">
           <p className="text-[12.5px] font-medium text-ink">{copy.title}</p>
-          <p className="mt-0.5 text-[11px] text-ink-2">{copy.body}</p>
-          <p className="mt-0.5 text-[10.5px] text-ink-3">{copy.footnote}</p>
+          <p className="mt-0.5 text-[11px] text-ink-2">{errorMessage ?? copy.body}</p>
         </div>
-        <Button type="button" variant="outline" size="sm">
+        <Button type="button" variant="outline" size="sm" onClick={onRetry}>
           {copy.cta}
         </Button>
       </div>
@@ -51,7 +63,7 @@ export function PageStateBanner({ state }: { state: "loading" | "empty" | "error
         <p className="mt-1 text-[12px] text-ink-3">{copy.body}</p>
         <p className="mt-1 text-[11px] text-ink-4">{copy.footnote}</p>
       </div>
-      <Button type="button" size="sm">
+      <Button type="button" size="sm" onClick={() => navigate("/data-sources")}>
         {copy.cta}
       </Button>
     </div>

@@ -1,7 +1,6 @@
 import * as React from "react";
 
 import { StageRail } from "@/pages/leakage-map/stage-rail";
-import { CoverageGapNote } from "@/pages/leakage-map/coverage-gap-note";
 import { LeakageMatrix } from "@/pages/leakage-map/matrix";
 import { MarketBreakdown } from "@/pages/leakage-map/market-breakdown";
 import { StatusLine } from "@/pages/leakage-map/status-line";
@@ -15,27 +14,16 @@ import {
   DEFAULT_FILTERS,
   FALLBACK_HORIZON_OPTIONS,
   FALLBACK_WINDOW_OPTIONS,
+  rangeSelectionLabel,
   toGetLeakageParams,
   type LeakageFilterState,
 } from "@/pages/leakage-map/filters";
-import { filteredOutPercent, type ConfidenceLevel, type PageState, type SeverityLevel } from "@/pages/leakage-map/data";
+import { filteredOutPercent, type ConfidenceLevel, type SeverityLevel } from "@/pages/leakage-map/data";
 
-/**
- * There is no live source behind this page yet (see data.ts) and so no real fetch lifecycle to
- * drive loading/empty/error — flip this to reach those states for review, same convention as
- * other rebuilds' mock-state flags. "partial" is the default and only reachable state in normal
- * use, since 78% coverage is the page's own steady state, not an exception.
- *
- * The filters above this banner (Calc/Window/Horizon/Market/Severity/Confidence) are wired to the
- * real `GET /leakage` — see filters.ts — but the page shell below it (this flag, the stage rail,
- * the matrix) is still mock and lands in the later steps of docs/leakage-map/build-plan.md.
- */
-const LEAKAGE_MAP_STATE: PageState = "partial";
-
-// The matrix and status line still render the page's original mock cell data (Step 4 replaces it
-// with the real `grids[]`), which ranks severity as a 1–5 number and reads "low"/"medium"/"high"
-// confidence directly. The real filter state now sends the API's own "s1"–"s5" strings — these
-// adapters bridge the two conventions until the matrix itself is wired.
+// The matrix and status line's hidden-percent math still run on the page's original mock cell data
+// (Step 4 replaces it with the real `grids[]`), which ranks severity as a 1–5 number and reads
+// "low"/"medium"/"high" confidence directly. The real filter state now sends the API's own
+// "s1"–"s5" strings — these adapters bridge the two conventions until the matrix itself is wired.
 function legacySeverityRank(minSeverity: string | null): SeverityLevel {
   const level = minSeverity ? Number(minSeverity.slice(1)) : 5;
   return (level >= 1 && level <= 5 ? level : 5) as SeverityLevel;
@@ -49,13 +37,24 @@ function legacyConfidenceLevel(minConfidence: string | null): ConfidenceLevel {
  * Rebuilt from flolyt-figma-designs/New-pages-pattern/leakage-new/svg/01–12 — adds a live status
  * line, five cell states instead of two, Severity/Confidence as real filters (not shading
  * choices), and the coverage/actions panels that carry the page's honesty.
+ *
+ * Filters (Calc/Window/Horizon/Market/Severity/Confidence) and the page shell (loading/error/empty,
+ * status line, stage rail) are wired to the real `GET /leakage` — see
+ * docs/leakage-map/build-plan.md Steps 1–2. The matrix, coverage panel, actions panel and market
+ * breakdown are still mock, landing in Steps 3–5.
  */
 export default function LeakageMap() {
   const [filters, setFilters] = React.useState<LeakageFilterState>(DEFAULT_FILTERS);
   const handleFiltersChange = (patch: Partial<LeakageFilterState>) =>
     setFilters((prev) => ({ ...prev, ...patch }));
 
-  const { data: leakageResponse } = useGetLeakage(toGetLeakageParams(filters));
+  const {
+    data: leakageResponse,
+    isFetching,
+    isError,
+    error,
+    refetch,
+  } = useGetLeakage(toGetLeakageParams(filters));
   const leakage = leakageResponse?.data;
 
   const legacySeverityFilter = legacySeverityRank(filters.minSeverity);
@@ -66,7 +65,14 @@ export default function LeakageMap() {
   const setLegacySeverityFilter = (level: SeverityLevel) =>
     handleFiltersChange({ minSeverity: level === 5 ? null : `s${level}` });
 
-  if (LEAKAGE_MAP_STATE === "empty") {
+  const fallbackWindowLabel = rangeSelectionLabel(filters.window, "window");
+  const fallbackHorizonLabel = rangeSelectionLabel(filters.horizon, "horizon");
+
+  // Unconfirmed live (every real pull so far had customers) — flagged in
+  // docs/leakage-map/build-plan.md Step 2.
+  const isEmpty = !isFetching && !isError && !!leakage && leakage.customerCount === 0;
+
+  if (isEmpty) {
     return (
       <div className="space-y-6">
         <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
@@ -77,15 +83,19 @@ export default function LeakageMap() {
 
   return (
     <div className="space-y-6">
-      {LEAKAGE_MAP_STATE !== "partial" && <PageStateBanner state={LEAKAGE_MAP_STATE} />}
+      {isError && <PageStateBanner state="error" errorMessage={error?.message} onRetry={() => refetch()} />}
+      {!isError && isFetching && <PageStateBanner state="loading" />}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
           <StatusLine
             calcMode={filters.calculate}
-            windowLabel={leakage?.window.label ?? "Last 90 days"}
-            horizonLabel={leakage?.horizon.label ?? "Next 90 days"}
+            windowLabel={leakage?.window.label ?? fallbackWindowLabel}
+            horizonLabel={leakage?.horizon.label ?? fallbackHorizonLabel}
+            customerCount={leakage?.customerCount}
+            refreshedAtUtc={leakage?.refreshedAtUtc}
+            coveragePercent={leakage?.coverage.percent}
             hiddenPercent={hiddenPercent}
             minSeverity={filters.minSeverity}
             minConfidence={filters.minConfidence}
@@ -103,11 +113,10 @@ export default function LeakageMap() {
         />
       </div>
 
-      <StageRail />
-      <CoverageGapNote />
+      <StageRail stages={leakage?.stages} callouts={leakage?.callouts} />
 
       <LeakageMatrix
-        shadingCaptionLabel={`${(leakage?.horizon.label ?? "next 90 days").toLowerCase()} exposure`}
+        shadingCaptionLabel={`${(leakage?.horizon.label ?? fallbackHorizonLabel).toLowerCase()} exposure`}
         severityFilter={legacySeverityFilter}
         confidenceFilter={legacyConfidenceFilter}
         onClearFilter={clearFilters}

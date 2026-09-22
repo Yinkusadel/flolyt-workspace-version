@@ -47,26 +47,6 @@ export type Stage = {
   coveragePercent: number;
 };
 
-/** 01–10 · the "STAGE ROLLUPS" rail — independent from the matrix, coverage shown under each figure. */
-export const STAGES: Stage[] = [
-  { id: "acquire", number: "01", label: "Acquire", dot: "#788831", metricLines: ["894k / yr"], value: "₦74M", valueTone: "rose", coveragePercent: 81 },
-  { id: "activate", number: "02", label: "Activate", dot: "#7757AC", metricLines: ["41% reach value"], value: "₦188M", valueTone: "rose", coveragePercent: 69 },
-  { id: "price", number: "03", label: "Price", dot: "#5E67C0", metricLines: ["6 plans"], value: "₦46M", valueTone: "rose", coveragePercent: 58 },
-  { id: "adopt", number: "04", label: "Adopt", dot: "#785BA1", metricLines: ["2.1 of 9 features"], value: "₦112M", valueTone: "rose", coveragePercent: 77 },
-  { id: "retain", number: "05", label: "Retain", dot: "#798933", metricLines: ["1.1M active"], value: "₦412M", valueTone: "rose", coveragePercent: 74 },
-  { id: "expand", number: "06", label: "Expand", dot: "#BB5390", metricLines: ["18% eligible"], value: "₦96M", valueTone: "rose", coveragePercent: 62 },
-  { id: "support", number: "07", label: "Support", dot: "#CC6626", metricLines: ["42k contacts"], value: "₦31M", valueTone: "rose", coveragePercent: 88 },
-  { id: "renew", number: "08", label: "Renew", dot: "#1D947F", metricLines: ["61k renewals"], value: "₦88M", valueTone: "rose", coveragePercent: 71 },
-  { id: "advocate", number: "09", label: "Advocate", dot: "#7A8934", metricLines: ["124k referrers"], value: "₦124M", valueTone: "teal", coveragePercent: 66 },
-  { id: "churn", number: "10", label: "Churn", dot: "#98A0AE", metricLines: ["602k lost"], value: "₦602M", valueTone: "rose", coveragePercent: 79 },
-];
-
-// Source copy used an em dash ("Advocacy feeds acquisition — 124,000 referrers…"); split into a
-// title + body pair instead of carrying that punctuation into user-facing copy.
-export const ADVOCACY_NOTE_TITLE = "Advocacy feeds acquisition";
-export const ADVOCACY_NOTE_BODY =
-  "124,000 referrers brought 31% of last quarter's new customers at a CAC of ₦0.";
-
 /** Adopt keeps its own operational drilldown (customers/median features/slipped-out) — the one
  * stage this export authors a "Learn why" agent handoff for. */
 export const ADOPT_STAGE_DETAIL = {
@@ -96,9 +76,6 @@ export const RETAIN_STAGE_ROLLUP = {
   confidence: "Medium",
   rangeLow: "₦280M",
   rangeHigh: "₦580M",
-  explainerTitle: "Why the stage cards do not sum to the matrix",
-  explainerBody:
-    "Rollups cover 74% of what is detectable at this stage. The other 26% is real and not yet mapped to a mechanism, so it appears in the rollup and in no cell. Saying nothing about that gap is what creates distrust.",
 };
 
 // ---------------------------------------------------------------------------
