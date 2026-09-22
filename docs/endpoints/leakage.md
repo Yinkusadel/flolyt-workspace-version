@@ -134,9 +134,11 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   A condition the business doesn't have is absent from the response entirely; one it has but
   hasn't connected is a dashed cell naming the missing source. `LeakageCellDto` (inside each grid)
   is truncated in the paste — see the ⚠️ section above.
-- **Used by:** `services/api/leakage/get-leakage.ts`, `features/leakage/use-get-leakage.ts`. Not
-  wired into a page yet.
-- **Status:** documented, scaffolded, not wired
+- **Used by:** `services/api/leakage/get-leakage.ts`, `features/leakage/use-get-leakage.ts`. Wired
+  into `src/pages/leakage-map/index.tsx`'s filter bar (Window/Horizon/Calc/Market/Severity/
+  Confidence) — see [[flolyt_leakage_map_wiring]] Step 1. The rest of the page (stage rail, matrix,
+  coverage/actions panels) is still mock, wired in later steps.
+- **Status:** documented, scaffolded, partially wired (filters only)
 
 ## GET /api/v3/leakage/report
 

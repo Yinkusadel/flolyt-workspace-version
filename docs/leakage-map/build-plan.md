@@ -85,17 +85,38 @@ confirmed it throws an HTTP error the existing try/catch already handles correct
 (100% unconfirmed), and an `expected`/`movement` that's actually `"available"` (every example so
 far was `"unavailable"`).
 
-### Step 1 — Filters: Window, Horizon, Severity, Confidence, Market — not started
-- New module (not `data.ts`) for filter state/derivation — option lists read from the live
-  response where the API supplies them (`window.options`, `horizon.options`, `markets[]`), plain
-  generic labels where it doesn't (severity).
-- `filters-menu.tsx`: two sibling submenus (Window, Horizon) replacing the single cascading one,
-  plus a new Market submenu.
-- `index.tsx`: state becomes `{ window, horizon, market, calculate, minSeverity, minConfidence }`,
-  fed into `useGetLeakage(...)`.
-- Delete `data.ts`'s `HORIZON_GROUPS`, `SEVERITY_FILTER_OPTIONS`, `CONFIDENCE_FILTER_OPTIONS`,
-  `CALC_MODE_OPTIONS` and their `DEFAULT_*`s once replaced.
-- Verify: selected filters match the actual network request's query params.
+### Step 1 — Filters: Window, Horizon, Severity, Confidence, Market — ✅ done (2026-09-23)
+- New module `filters.ts` (not `data.ts`) holds filter state/derivation — `LeakageFilterState`
+  (`window`/`horizon`: `{ kind: "preset", value } | { kind: "custom", days }`, `market`,
+  `calculate`, `minSeverity`, `minConfidence`), `toGetLeakageParams`, and label helpers. Presets
+  render from the live response's `window.options`/`horizon.options`/`markets[]` once loaded
+  (`FALLBACK_WINDOW_OPTIONS`/`FALLBACK_HORIZON_OPTIONS` cover the gap before the first response
+  lands). Severity/confidence/calc-mode option *values* are the API's own fixed enums (`s1`–`s5`,
+  `low`/`medium`/`high`, `gross`/`expected`/`net`) with plain labels, no invented editorial copy.
+- `filters-menu.tsx`: rewritten with six sibling top-level cascades (Calc, Window, Horizon, Market,
+  Severity, Confidence) — Window and Horizon are now fully independent, each ending in its own
+  "Custom…" entry. Custom range is a single-date calendar (not a from/to pair — the API only takes
+  a day count) that converts the picked date to a day count via `daysBetween` before applying.
+  `horizon-picker.tsx` is deleted; its date helpers moved into `filters.ts`.
+- `index.tsx`: state is `LeakageFilterState`, fed into `useGetLeakage(toGetLeakageParams(filters))`.
+  The (still-mock, Step 4) matrix/status-line hidden-percent calculation keeps running on the old
+  numeric `SeverityLevel`/`ConfidenceLevel` convention via two small local adapter functions
+  (`legacySeverityRank`/`legacyConfidenceLevel`) — removed once Step 4 wires the real grid.
+- Deleted from `data.ts`: `CalcMode`/`CalcModeOption`/`CALC_MODE_OPTIONS`/`DEFAULT_CALC_MODE`,
+  `HorizonValue`/`HorizonOption`/`HORIZON_GROUPS`/`DEFAULT_HORIZON`/`DEFAULT_HORIZON_DIRECTION`/
+  `HORIZON_FOOTNOTE`, `SeverityFilterOption`/`SEVERITY_FILTER_OPTIONS`/`DEFAULT_SEVERITY_FILTER`,
+  `ConfidenceFilterOption`/`CONFIDENCE_FILTER_OPTIONS`/`DEFAULT_CONFIDENCE_FILTER`. Kept (still used
+  by the mock matrix/detail-panel until Step 4): `SeverityLevel`/`SEVERITY_LABEL`,
+  `ConfidenceLevel`/`CONFIDENCE_RANK`/`CONFIDENCE_LABEL`.
+- **Verified live 2026-09-23** against the real backend (`ichigo@yopmail.com`, finished-onboarding
+  workspace) — every filter change's resulting `GET /leakage` request matched exactly: Window→30
+  sent `window=30`, Horizon→60 sent `horizon=60`, Calc→Expected sent `calculate=expected`,
+  Severity→≥S2 sent `minSeverity=s2`, Confidence→≥High sent `minConfidence=high`, and picking a
+  custom window date converted correctly to `window=17`. Status line showed the response's own
+  `window.label`/`horizon.label` ("the last 90 days" / "the next 90 days"). This workspace's
+  `markets[]` was empty, so only "All markets" was exercised live — a workspace with real market
+  entries hasn't been used to confirm `marketOptionLabel`/the market-select-and-refetch path yet.
+  No console errors.
 
 ### Step 2 — Page shell: loading/error/empty, status line, stage rail values — not started
 Drop `LEAKAGE_MAP_STATE`, drive `PageStateBanner` from `useGetLeakage`'s real query state.

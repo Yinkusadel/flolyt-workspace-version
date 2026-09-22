@@ -1,84 +1,20 @@
 /**
  * Static content for the leakage map, rebuilt from
  * flolyt-figma-designs/New-pages-pattern/leakage-new/svg/01–12. The export's own caption says
- * this is a fixed "live-demo sample" — there is no GET /leakage endpoint behind these numbers, so
- * every control on this page only changes its own label (and, for Severity/Confidence, which
- * cells are hidden); nothing here recomputes the underlying figures.
- *
- * The export's own controls are forward-only (a single "Custom date…" horizon). This page keeps
- * the prior build's backward-looking window and its from/to range picker — grouped into the same
- * Horizon control as a "Looking back" section — so a custom span can still cover the past, not
- * only project through a future date. See horizon-picker.tsx.
+ * this is a fixed "live-demo sample" — kept here now only as a record of what the Figma export
+ * looked like, and shrinking as each section gets wired to `GET /leakage` (see
+ * docs/leakage-map/build-plan.md). Calc mode / Window / Horizon / Severity / Confidence filter
+ * option lists used to live here — they're wired now and live in filters.ts instead, sourced from
+ * the live response where it supplies them, per [[feedback_retire_mock_options_not_extend]].
  */
 
 export type Tone = "rose" | "teal";
 
 // ---------------------------------------------------------------------------
-// Calculation mode
-// ---------------------------------------------------------------------------
-
-export type CalcMode = "gross" | "expected" | "net";
-
-export type CalcModeOption = {
-  value: CalcMode;
-  label: string;
-  note: string;
-};
-
-export const CALC_MODE_OPTIONS: CalcModeOption[] = [
-  { value: "gross", label: "Gross exposure", note: "maximum at risk if nothing changes" },
-  { value: "expected", label: "Expected loss", note: "probability-weighted · default" },
-  { value: "net", label: "Net expected loss", note: "after recovery and intervention" },
-];
-
-export const DEFAULT_CALC_MODE: CalcMode = "expected";
-
-// ---------------------------------------------------------------------------
-// Horizon — forward presets (the export's own list) plus the prior build's backward-looking
-// window presets, grouped into one control. See horizon-picker.tsx for the from/to vs.
-// single-date split this reuses.
-// ---------------------------------------------------------------------------
-
-export type HorizonValue = "30d" | "60d" | "90d" | "qtr" | "12m" | "custom";
-
-export type HorizonOption = {
-  value: HorizonValue;
-  label: string;
-  note: string;
-  direction: "back" | "forward";
-};
-
-export const HORIZON_GROUPS: { heading: string; options: HorizonOption[] }[] = [
-  {
-    heading: "Looking back",
-    options: [
-      { value: "30d", label: "Last 30 days", note: "every source covers this", direction: "back" },
-      { value: "90d", label: "Last 90 days", note: "every source covers this", direction: "back" },
-      { value: "qtr", label: "Quarter to date", note: "every source covers this", direction: "back" },
-      { value: "12m", label: "Last 12 months", note: "product events only start 4 March", direction: "back" },
-    ],
-  },
-  {
-    heading: "Looking forward",
-    options: [
-      { value: "30d", label: "Next 30 days", note: "imminent leaks, still stoppable", direction: "forward" },
-      { value: "60d", label: "Next 60 days", note: "forming leaks, intervention window", direction: "forward" },
-      { value: "90d", label: "Next 90 days", note: "near-term forecast risk · default", direction: "forward" },
-      { value: "qtr", label: "Rest of quarter", note: "commit-window exposure", direction: "forward" },
-      { value: "12m", label: "Next 12 months", note: "annualised run rate", direction: "forward" },
-    ],
-  },
-];
-
-export const DEFAULT_HORIZON: HorizonValue = "90d";
-export const DEFAULT_HORIZON_DIRECTION: "back" | "forward" = "forward";
-
-export const HORIZON_FOOTNOTE =
-  "A longer horizon lowers confidence. The legend and the status line both say which one you chose.";
-
-// ---------------------------------------------------------------------------
-// Severity / confidence thresholds — filters, not shading. A cell below either threshold reads
-// "hidden by filter" instead of its figure (see matrix.tsx / 11-filtered.svg).
+// Severity / confidence — still the mock matrix's own internal risk ranking below (`MATRIX_ROWS`
+// etc.), separate from the real filters.ts values now sent to the API. Collapses into one thing
+// once the matrix itself is wired to the real grid (Step 4) — see the adapter in index.tsx in the
+// meantime.
 // ---------------------------------------------------------------------------
 
 export type SeverityLevel = 1 | 2 | 3 | 4 | 5;
@@ -91,32 +27,10 @@ export const SEVERITY_LABEL: Record<SeverityLevel, string> = {
   5: "S5 — Low",
 };
 
-export type SeverityFilterOption = { value: SeverityLevel; label: string; note: string };
-
-export const SEVERITY_FILTER_OPTIONS: SeverityFilterOption[] = [
-  { value: 1, label: "≥ S1", note: "critical only" },
-  { value: 2, label: "≥ S2", note: "critical and high · default" },
-  { value: 3, label: "≥ S3", note: "adds elevated" },
-  { value: 4, label: "≥ S4", note: "adds moderate" },
-  { value: 5, label: "≥ S5", note: "everything, including low" },
-];
-
-export const DEFAULT_SEVERITY_FILTER: SeverityLevel = 2;
-
 export type ConfidenceLevel = "low" | "medium" | "high";
 
 export const CONFIDENCE_RANK: Record<ConfidenceLevel, number> = { low: 1, medium: 2, high: 3 };
 export const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = { low: "Low", medium: "Medium", high: "High" };
-
-export type ConfidenceFilterOption = { value: ConfidenceLevel; label: string; note: string };
-
-export const CONFIDENCE_FILTER_OPTIONS: ConfidenceFilterOption[] = [
-  { value: "low", label: "≥ Low", note: "everything, including low" },
-  { value: "medium", label: "≥ Medium", note: "medium and high · default" },
-  { value: "high", label: "≥ High", note: "high-confidence only" },
-];
-
-export const DEFAULT_CONFIDENCE_FILTER: ConfidenceLevel = "medium";
 
 // ---------------------------------------------------------------------------
 // Stages
