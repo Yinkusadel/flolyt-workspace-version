@@ -62,7 +62,7 @@ export function EmojiPickerButton({ onSelect, className, "aria-label": ariaLabel
         <button
           type="button"
           aria-label={ariaLabel}
-          className={cn("shrink-0 text-ink-4 hover:text-ink-2", className)}
+          className={cn("shrink-0 text-ink-3 transition-colors hover:text-ultra", className)}
         >
           <Smile className="size-4" />
         </button>
