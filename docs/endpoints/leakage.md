@@ -1,0 +1,306 @@
+# Leakage endpoints
+
+Base path: `/api/v3/leakage` → `LEAKAGE_BASE_URL` / `API_ENDPOINTS.LEAKAGE` in
+[`src/config/apiConfig.ts`](../../src/config/apiConfig.ts). Pasted 2026-09-22 from the
+Scalar/OpenAPI reference doc (prose descriptions + example request/response payloads, same source
+format as [[lifecycle]] and [[rooms]]'s corrected passes) — **not yet independently confirmed
+against a real call**, per [[feedback_verify_against_endpoint_docs]].
+
+This is the leakage map/page's own domain, separate from the pre-redesign `LIFECYCLE.GET_LEAKAGE_MAP`
+scaffold in `src/services/api/lifecycle-old/get-leakage-map.ts` (that one is part of the archived
+pre-rooms-first-home surface — see [[flolyt_archived_sections_note]] and
+[[flolyt_leakage_map_rebuild]] for the current, still mock-only page it belongs to). Nine operations
+below, all newly documented and scaffolded (service + hook), 0/9 wired into a page.
+
+**One correction made while adding this pass:** `ROOMS.OPEN_ROOM_ON_LEAKAGE_CELL` (a never-wired
+placeholder documented in [rooms.md](rooms.md) as `POST /rooms`) had the wrong path and the wrong
+body shape — both were a guess made before this full spec existed. The real endpoint is
+`POST /api/v3/leakage/cells/{grid}/{row}/{condition}/{currency}/room` below, with a `settlement`
+object in the body, not a flat `{grid, rowKey, conditionKey, currency, title}`. The old
+`src/services/api/rooms/open-room-on-leakage-cell.ts` / `src/features/rooms/use-open-room-on-leakage-cell.ts`
+files were deleted and replaced by the corrected ones under `leakage/` below; `rooms.md`'s entry
+now points here instead of describing it independently.
+
+## ⚠️ Two responses in this paste are truncated
+
+Per [[feedback_stop_on_truncated_endpoint_fields]] — flagging this rather than guessing:
+
+- `GET /leakage`'s `grids[].cells[]` example ends with `"...": "[Additional Properties Truncated]"`
+  after `roomId`. `LeakageCellDto` below (in `get-leakage.ts`) only types the fields visible before
+  the cut.
+- `GET /leakage/report`'s `topLeaks[]` example ends the same way after `net`, despite the
+  endpoint's own prose saying each leak carries "its owner" — that field's real name isn't visible
+  anywhere in the capture, so `LeakageTopLeakDto` (in `get-leakage-report.ts`) doesn't include it.
+
+Re-paste both with Scalar's "Show Schema" toggle (not the example tab) to get the rest of these two
+shapes before wiring either response into a UI that needs the cut-off fields.
+
+## Fields inferred rather than confirmed
+
+A handful of fields return bare `null` in every example in this paste (not marked truncated, just
+nullable in the generated example) with no nested shape visible anywhere else in the document:
+`atStake`/`expected` on stage cards, cells, stage detail, and report markets; `movement` on the
+cell panel and stage detail. These are typed using this codebase's existing
+`LifecycleMeasuredValueDto`-style convention plus the endpoint's own prose (e.g. "probability-weighted
+... with an 80% range and a confidence tier — or a gap naming why no base rate exists" for
+`expected`), and flagged inline in the relevant service file with a comment. Treat
+`LeakageAtStakeEntryDto`, `LeakageExpectedEntryDto`, and `LeakageMovementDto` as best-guess shapes,
+not confirmed ones, until a real response is seen.
+
+## Shared shapes
+
+Defined once in `src/services/api/leakage/get-leakage.ts` and imported by the other eight files,
+the way `get-lifecycle-map.ts` anchors the old lifecycle domain:
+
+```ts
+interface LeakageWindowDto {
+  days: number; key: string; label: string; isPrecomputed: boolean; options: string[];
+}
+interface LeakageHorizonDto {
+  days: number; key: string; label: string; mode: string; modeNote: string | null; options: string[];
+}
+interface LeakageSeverityLevelDto { level: string; label: string; cadence: string; }
+interface LeakageSourceDto { id: string; name: string; kind: string; status: string; }
+interface LeakageCalculationDto {
+  method: string; windowStartUtc: string | null; windowEndUtc: string | null; windowDays: number;
+  sources: LeakageSourceDto[]; inputs: { label: string; value: string }[]; caveats: string[];
+}
+interface LeakageOwnerDto { ownerUserId: string; displayName: string; isActive: boolean; }
+interface LeakageHeadlineDto {
+  key: string; label: string; unit: string; value: number | null; missingSource: string | null;
+  wouldUnlock: string | null; computedAtUtc: string | null; yearOverYear: number | null;
+}
+interface LeakageRealizedAmountDto { currency: string; amount: number; }
+```
+
+`window` is one of `30 | 90 | 180 | 365 | "qtd" | <days up to 365>`, default 90, refused otherwise.
+`horizon` is one of `30 | 60 | 90 | "quarter" | 365 | <days>`, default 90 — window looks back,
+horizon looks forward, and every expected-loss figure is computed over the horizon, not the window.
+`severity` is `s1`–`s5` on the workspace's own per-currency materiality ladder; a gap cell is always
+`s5`. Money is never summed across currencies or across conditions, and coverage/`bySeverity` stay
+the whole picture even when `minSeverity`/`minConfidence` hide cells from the grid.
+
+## GET /api/v3/leakage
+
+- **Purpose:** The whole leakage page in one read — ten stage cards, the customer-state/segment ×
+  condition grid(s), the per-market rail, coverage, severity bands, and a calculation block on
+  every figure.
+- **Request:** query `window?`, `market?` (country code), `horizon?`, `calculate?`
+  (`"gross" | "expected" | "net"`, default `"gross"`), `minSeverity?` (`s1`–`s5`),
+  `minConfidence?` (`"low" | "medium" | "high"`).
+- **Response:**
+  ```ts
+  interface LeakagePageData {
+    window: LeakageWindowDto;
+    horizon: LeakageHorizonDto;
+    refreshedAtUtc: string | null;
+    customerCount: number;
+    revenueModel: string | null;
+    stages: LeakageStageCardDto[];   // 10 cards; atStake/expected inferred, see note above
+    callouts: { key: string; tone: string; headline: string; body: string }[];
+    marketLens: { countryCode: string; currencyCode: string; isPrimary: boolean };
+    grids: LeakageGridDto[];         // customer-state and/or segment × condition
+    markets: LeakageMarketRailEntryDto[];
+    coverage: LeakageCoverageDto;    // measured/onMap/percent + the two condition-name lists + sentence
+    filter: { calculate: string; minSeverity: string | null; minConfidence: string | null; cellsHidden: number };
+    bySeverity: { currency: string; bands: { level: string; label: string; cells: number; amount: number }[] }[];
+    ladders: { currency: string; s1From: number; s2From: number; s3From: number }[];
+    calculation: LeakageCalculationDto;
+  }
+  ```
+  A condition the business doesn't have is absent from the response entirely; one it has but
+  hasn't connected is a dashed cell naming the missing source. `LeakageCellDto` (inside each grid)
+  is truncated in the paste — see the ⚠️ section above.
+- **Used by:** `services/api/leakage/get-leakage.ts`, `features/leakage/use-get-leakage.ts`. Not
+  wired into a page yet.
+- **Status:** documented, scaffolded, not wired
+
+## GET /api/v3/leakage/report
+
+- **Purpose:** The exposure framework's report, per market and never blended — gross exposure,
+  expected loss, net expected loss (each with 80% range/confidence/severity), coverage, exclusions,
+  cells by severity, expected/net over every horizon the picker names, the top ten leaks with
+  owners, and the rooms open on them.
+- **Request:** query `window?`, `horizon?` — same options as the page.
+- **Response:**
+  ```ts
+  interface LeakageReportData {
+    window: LeakageWindowDto;
+    horizon: LeakageHorizonDto;
+    refreshedAtUtc: string | null;
+    coverage: LeakageCoverageDto;
+    markets: {
+      currency: string; countryCode: string | null; isPrimary: boolean;
+      gross: number | null; realized: number | null; expected: number | null; net: number | null;
+      conditions: { key: string; label: string; gross: number; severity: LeakageSeverityLevelDto; expected: number | null }[];
+      excludes: string[];
+      bySeverity: { level: string; label: string; cells: number; amount: number }[];
+      byHorizon: { key: string; label: string; days: number; mode: string; expected: number | null; net: number | null }[];
+      topLeaks: LeakageTopLeakDto[]; // truncated in the paste, see ⚠️ above — no `owner` field typed
+      actions: { openRooms: number; owners: string[] };
+    }[];
+    calculation: LeakageCalculationDto;
+  }
+  ```
+  Every figure here is one the page (`GET /leakage`) also shows, composed in the framework's order
+  — this is a report over the same numbers, not a separate calculation.
+- **Used by:** `services/api/leakage/get-leakage-report.ts`, `features/leakage/use-get-leakage-report.ts`. Not wired.
+- **Status:** documented, scaffolded, not wired
+
+## GET /api/v3/leakage/conditions
+
+- **Purpose:** Every condition the workspace's revenue model implies, with the verdict on whether
+  the business has it (`Applies` / `NotApplicable` / `Unknown`), who decided, and why. This is
+  where not-applicable columns the page drops stay visible, along with the override that hid them.
+- **Request:** none.
+- **Response:**
+  ```ts
+  interface LeakageConditionsData {
+    revenueModel: string | null;
+    conditions: {
+      key: string; label: string; revenueModel: string;
+      applicability: "Unknown" | "Applies" | "NotApplicable";
+      because: string; decidedBy: string; measurable: boolean;
+      override: {
+        applicability: "Unknown" | "Applies" | "NotApplicable"; because: string;
+        setByUserId: string; setByName: string; setAtUtc: string;
+      } | null;
+    }[];
+  }
+  ```
+- **Used by:** `services/api/leakage/get-leakage-conditions.ts`, `features/leakage/use-get-leakage-conditions.ts`. Not wired.
+- **Status:** documented, scaffolded, not wired
+
+## PUT /api/v3/leakage/conditions/{key}
+
+- **Purpose:** As an administrator, decide whether a condition applies to this business.
+- **Request:** path `key`; body `{ applicability: "Applies" | "NotApplicable", because: string }`
+  — `because` is required. `"Unknown"` is what inference produces and is refused if sent; the
+  request payload type (`LeakageConditionDecision`) deliberately excludes it rather than reusing
+  the three-way `applicability` union the read side returns.
+- **Response:** the updated condition, same shape as one entry of `GET /conditions`'s list.
+  Setting `Applies` again brings a hidden column back. Recorded with who decided and when.
+- **Used by:** `services/api/leakage/update-leakage-condition.ts`, `features/leakage/use-update-leakage-condition.ts`. Invalidates both `["leakage-conditions"]` and `["leakage"]` on success (a condition's applicability decides whether the page's grid even shows that column). Not wired.
+- **Status:** documented, scaffolded, not wired
+
+## GET /api/v3/leakage/cells/{grid}/{row}/{condition}/{currency}
+
+- **Purpose:** The panel behind a click on a cell. A measured cell carries its figure, who's
+  behind it, what moved since a comparable earlier reading, the room already open on it (if any),
+  and the draft a new room would use. A gap cell carries which of three reasons it is, the sentence
+  to show, how many other cells the same missing source would fill, and the semantic columns it
+  needs.
+- **Request:** path `grid`, `row`, `condition`, `currency`; query `window?`, `horizon?` (default 90
+  — selects the forward period of the `expected` figure carried beside the gross one).
+- **Response:**
+  ```ts
+  interface LeakageCellDetailDto {
+    coordinate: string; grid: string; rowKey: string; rowLabel: string;
+    conditionKey: string; conditionLabel: string; label: string; currency: string; windowDays: number;
+    state: string; amount: number | null; customers: number | null;
+    movement: { direction: string | null; amountChange: number | null; percentChange: number | null; comparedToLabel: string | null } | null; // inferred, see note above
+    expected: LeakageExpectedEntryDto | null; // inferred, see note above
+    horizon: LeakageHorizonDto; severity: LeakageSeverityLevelDto;
+    room: { roomId: string; title: string; openedAtUtc: string; ownerMemberId: string | null; ownerName: string | null; canSeeInside: boolean } | null;
+    draft: {
+      grid: string; rowKey: string; conditionKey: string; currency: string; title: string;
+      settlesWhen: string[]; measuredOverDays: number; primaryMeasure: string; revenueBasis: string;
+      holdoutPercent: number | null; wouldProveUsWrong: string | null;
+    } | null;
+    reason: string | null; // only confirmed literal is "SourceMissing"; see LeakageCellGapReason's note
+    missingSource: string | null; wouldUnlock: string | null; explanation: string | null;
+    alsoFills: number | null; connect: { roles: string[] } | null; neverEstimated: boolean;
+    calculation: LeakageCalculationDto; computedAtUtc: string; realized: number | null;
+    signals: { name: string; description: string; leadTime: string; kind: string; watchable: boolean; citation: string }[];
+    guidance: { name: string; definition: string; leading: string; detection: string; diagnosis: string; fix: string; prevention: string; impact: string; citation: string }[];
+  }
+  ```
+  The surface never decides between "open room" and "create room", and never invents a default —
+  `room` vs `draft` is that decision, made server-side. A cell whose condition has been taken off
+  the map (`NotApplicable`) is refused, not served.
+- **Used by:** `services/api/leakage/get-leakage-cell.ts`, `features/leakage/use-get-leakage-cell.ts` (hook only fires once all four path params are present). Not wired.
+- **Status:** documented, scaffolded, not wired
+
+## POST /api/v3/leakage/cells/{grid}/{row}/{condition}/{currency}/room
+
+- **Purpose:** Opens a room on this cell, from the draft the panel handed back. Second door onto
+  the same command an agent's proposal card runs — the coordinate dedups, so a room opened from
+  the map and one an agent proposed are the same object; clicking a cell somebody's already working
+  joins their room instead of splitting the evidence.
+- **Request:** path `grid`, `row`, `condition`, `currency`; body is the (possibly edited) draft:
+  ```ts
+  interface OpenRoomOnLeakageCellPayload {
+    grid: string; row: string; condition: string; currency: string; title: string | null;
+    settlement: {
+      settlesWhen: string[]; measuredOverDays: number; primaryMeasure: string; revenueBasis: string;
+      holdoutPercent?: number | null; noHoldoutBecause?: string | null; wouldProveUsWrong?: string | null;
+    };
+  }
+  ```
+  Corrected from the earlier `rooms.md` guess — real body nests settlement fields under
+  `settlement`, not flat.
+- **Response:** `{ data: roomId, messages, succeeded }` — `data` is a plain string (uuid).
+- **Used by:** `services/api/leakage/open-room-on-leakage-cell.ts`, `features/leakage/use-open-room-on-leakage-cell.ts`. Invalidates `["rooms"]`, `["leakage-cell"]`, and `["leakage"]` on success. Not wired.
+- **Status:** documented, scaffolded, not wired
+- **Notes:** Refused on a cell with no figure behind it. Supersedes the never-wired
+  `ROOMS.OPEN_ROOM_ON_LEAKAGE_CELL` placeholder — see the correction note at the top of this file.
+
+## POST /api/v3/leakage/stages/{stageKey}/learn-why
+
+- **Purpose:** Ask the stage's own specialist why it's leaking. Opens a conversation seeded with a
+  brief the product writes (coordinate, window, the figure being explained, which sources are
+  connected/not) so an explanation that exceeds the evidence is visible as such, and the same click
+  twice asks the same question.
+- **Request:** path `stageKey`; query `window?`, `horizon?` (default 90 — picks the expected loss
+  the brief states beside the gross figure, where the panel has one). No body.
+- **Response:**
+  ```ts
+  interface LearnWhyConversationDto {
+    conversationId: string; runId: string; agentKey: string; agentName: string;
+    title: string; question: string; windowDays: number;
+  }
+  ```
+  Returns the conversation/run to attach the existing chat panel's SSE to — the turn renders like
+  any other. Refused on a stage with no measured figure ("a gap is not a question").
+- **Used by:** `services/api/leakage/learn-why-leakage-stage.ts`, `features/leakage/use-learn-why-leakage-stage.ts`. Not wired.
+- **Status:** documented, scaffolded, not wired
+
+## POST /api/v3/leakage/cells/{grid}/{row}/{condition}/{currency}/learn-why
+
+- **Purpose:** The same question about one cell rather than a whole stage — where Home's prompts
+  point, since a suggestion carrying a cell coordinate needs a door. Answered by the specialist of
+  the stage the cell rolls up to, or the workspace's own agent where the axis doesn't reach one.
+- **Request:** path `grid`, `row`, `condition`, `currency`; query `window?`, `horizon?`. No body.
+- **Response:** same `LearnWhyConversationDto` shape as the stage version (shared type, defined in
+  `learn-why-leakage-stage.ts`).
+- **Used by:** `services/api/leakage/learn-why-leakage-cell.ts`, `features/leakage/use-learn-why-leakage-cell.ts`. Not wired.
+- **Status:** documented, scaffolded, not wired
+- **Notes:** Refused on a cell the map isn't showing, or one with no figure behind it.
+
+## GET /api/v3/leakage/stages/{stageKey}
+
+- **Purpose:** The panel behind a click on a stage card — money over the window and its movement,
+  population, who left this month, the headline, open-room count, and which customer states the
+  stage spans (so the matrix below can highlight them).
+- **Request:** path `stageKey`; query `window?`, `market?`, `horizon?` (default 90 — selects the
+  forward period of the expected figure, summed over the stage's cells per currency).
+- **Response:**
+  ```ts
+  interface LeakageStageDetailDto {
+    key: string; name: string; position: number; owningTeam: string | null; owner: LeakageOwnerDto | null;
+    reviewCadence: string | null; windowDays: number; horizon: LeakageHorizonDto;
+    marketLens: { countryCode: string; currencyCode: string; isPrimary: boolean };
+    atStake: LeakageAtStakeEntryDto[] | null; expected: LeakageExpectedEntryDto[] | null; // inferred, see note above
+    severity: { currency: string; severity: LeakageSeverityLevelDto }[];
+    movement: /* same inferred shape as the cell panel's */ null | { direction: string | null; amountChange: number | null; percentChange: number | null; comparedToLabel: string | null };
+    population: number | null;
+    departedThisMonth: number | null; // per calendar month, not per window — calculation says so
+    headline: LeakageHeadlineDto; openRoomCount: number;
+    spansStates: string[]; // empty for the 7 stages the customer-state axis doesn't reach — honest, not a gap
+    learnWhy: { agentKey: string; agentName: string };
+    calculation: LeakageCalculationDto; refreshedAtUtc: string | null;
+    realized: LeakageRealizedAmountDto[];
+  }
+  ```
+- **Used by:** `services/api/leakage/get-leakage-stage.ts`, `features/leakage/use-get-leakage-stage.ts`. Not wired.
+- **Status:** documented, scaffolded, not wired
