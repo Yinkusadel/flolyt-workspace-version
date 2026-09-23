@@ -20,6 +20,7 @@ import {
   type LeakageFilterState,
 } from "@/pages/leakage-map/filters";
 import { filteredOutPercent, type ConfidenceLevel, type SeverityLevel } from "@/pages/leakage-map/data";
+import type { GetLeakageStageParams } from "@/services/api/leakage/get-leakage-stage";
 
 // The matrix and status line's hidden-percent math still run on the page's original mock cell data
 // (Step 4 replaces it with the real `grids[]`), which ranks severity as a 1–5 number and reads
@@ -49,14 +50,12 @@ export default function LeakageMap() {
   const handleFiltersChange = (patch: Partial<LeakageFilterState>) =>
     setFilters((prev) => ({ ...prev, ...patch }));
 
-  const {
-    data: leakageResponse,
-    isFetching,
-    isError,
-    error,
-    refetch,
-  } = useGetLeakage(toGetLeakageParams(filters));
+  const params = toGetLeakageParams(filters);
+  const { data: leakageResponse, isFetching, isError, error, refetch } = useGetLeakage(params);
   const leakage = leakageResponse?.data;
+  // GET /leakage/stages/{key} only takes window/market/horizon — not `calculate`/severity/
+  // confidence, which `params` also carries for the page-level GET /leakage.
+  const stageParams: GetLeakageStageParams = { window: params.window, horizon: params.horizon, market: params.market };
 
   const legacySeverityFilter = legacySeverityRank(filters.minSeverity);
   const legacyConfidenceFilter = legacyConfidenceLevel(filters.minConfidence);
@@ -117,7 +116,7 @@ export default function LeakageMap() {
         />
       </div>
 
-      <StageRail stages={leakage?.stages} callouts={leakage?.callouts} />
+      <StageRail stages={leakage?.stages} callouts={leakage?.callouts} stageParams={stageParams} />
 
       <LeakageMatrix
         shadingCaptionLabel={`${(leakage?.horizon.label ?? fallbackHorizonLabel).toLowerCase()} exposure`}

@@ -2,21 +2,22 @@ import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Flag, HelpCircle } from "lucide-react";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
+import { Skeleton } from "@/components/ui/skeleton";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import {
-  ADOPT_STAGE_DETAIL,
   CONFIDENCE_LABEL,
   FEATURED_CELL,
-  RETAIN_STAGE_ROLLUP,
   SEVERITY_LABEL,
   type ConfidenceLevel,
   type SeverityLevel,
-  type Stage,
 } from "@/pages/leakage-map/data";
-
-const VALUE_TONE_CLASS = { rose: "text-rose", teal: "text-teal" } as const;
+import { useGetLeakageStage } from "@/features/leakage/use-get-leakage-stage";
+import { useLearnWhyLeakageStage } from "@/features/leakage/use-learn-why-leakage-stage";
+import { formatAtStakeAmounts, formatCount, formatRelativeTime } from "@/lib/format-measured-value";
+import type { GetLeakageStageParams } from "@/services/api/leakage/get-leakage-stage";
+import type { LeakageExpectedEntryDto } from "@/services/api/leakage/get-leakage";
 
 function StatRow({ label, value }: { label: string; value: string }) {
   return (
@@ -334,112 +335,203 @@ export function FilteredCellCard({
   );
 }
 
-/** The floating card a stage card opens — Adopt keeps its authored operational drilldown + a
- * "Learn why" hop to the existing conversation surface; Retain gets the export's own rollup
- * worked example (coverage, unattributed amount, top mechanisms); every other stage only restates
- * what its own rail card already shows. */
-export function StageDetailCard({ stage }: { stage: Stage }) {
+function DetailGap({ missingSource, wouldUnlock }: { missingSource: string | null; wouldUnlock: string | null }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-[11.5px] text-ink-4">
+      Unavailable <InfoTooltip missingSource={missingSource ?? undefined} wouldUnlock={wouldUnlock ?? undefined} />
+    </span>
+  );
+}
+
+function ExpectedRow({ entry }: { entry: LeakageExpectedEntryDto }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 text-[11.5px]">
+      <span className="text-ink-3">{entry.currency}</span>
+      <span className="font-medium text-ink">
+        {formatAtStakeAmounts([{ currency: entry.currency, amountAtRisk: entry.amount }])}
+        <span className="text-ink-4">
+          {" "}
+          (80% range {formatAtStakeAmounts([{ currency: entry.currency, amountAtRisk: entry.rangeLow }])}–
+          {formatAtStakeAmounts([{ currency: entry.currency, amountAtRisk: entry.rangeHigh }])} ·{" "}
+          {CONFIDENCE_LABEL[entry.confidence as ConfidenceLevel] ?? entry.confidence} confidence)
+        </span>
+      </span>
+    </div>
+  );
+}
+
+function StageDetailSkeleton() {
+  return (
+    <div className="w-80 max-w-[calc(100vw-2rem)] space-y-2.5 p-4">
+      <Skeleton className="h-3 w-24" />
+      <Skeleton className="h-6 w-32" />
+      <Skeleton className="h-3 w-full" />
+      <Skeleton className="h-3 w-3/4" />
+    </div>
+  );
+}
+
+/**
+ * One generic stage detail card for all 10 stages, lazy-fetched via `useGetLeakageStage` on open
+ * — replaces the old mock's three bespoke layouts (Adopt's operational drilldown, Retain's
+ * authored rollup, everyone else's plain restatement), since the real
+ * `GET /leakage/stages/{stageKey}` returns one uniform shape regardless of stage (see
+ * docs/leakage-map/build-plan.md mismatch #1). "Learn why" is wired for every stage now, not just
+ * Adopt, and is refused server-side on a stage with no measured figure — the mutation's own
+ * `onError` toast (see use-learn-why-leakage-stage.ts) surfaces that rather than a client-side
+ * guess at the exact gating rule.
+ */
+export function StageDetailCard({
+  stageKey,
+  dotColor,
+  params,
+}: {
+  stageKey: string;
+  dotColor: string;
+  params: GetLeakageStageParams;
+}) {
   const navigate = useNavigate();
-  const isAdopt = stage.id === ADOPT_STAGE_DETAIL.stageId;
-  const isRetain = stage.id === RETAIN_STAGE_ROLLUP.stageId;
-  const leakWord = stage.valueTone === "teal" ? "generated at this stage" : "leaking at this stage";
+  const { data, isLoading, isError, refetch } = useGetLeakageStage(stageKey, params);
+  const { mutate: learnWhy, isPending: isAskingWhy } = useLearnWhyLeakageStage();
+  const stage = data?.data;
+
+  if (isLoading) return <StageDetailSkeleton />;
+
+  if (isError || !stage) {
+    return (
+      <div className="w-72 max-w-[calc(100vw-2rem)] p-4">
+        <p className="text-[11.5px] text-rose">Couldn't load this stage.</p>
+        <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  const atStakeAmounts = stage.atStake.value !== null ? formatAtStakeAmounts(stage.atStake.value) : null;
+  const expectedEntries = stage.expected.value;
+  const movement = stage.movement.value;
 
   return (
-    <div className="p-4">
+    <div className="w-80 max-w-[calc(100vw-2rem)] p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="size-2 rounded-full" style={{ backgroundColor: stage.dot }} aria-hidden />
+        <span className="size-2 rounded-full" style={{ backgroundColor: dotColor }} aria-hidden />
         <CardEyebrow>
-          {stage.number} · {stage.label}
+          {String(stage.position).padStart(2, "0")} · {stage.name}
         </CardEyebrow>
-        {isAdopt && <span className="text-[10.5px] text-ink-4">{ADOPT_STAGE_DETAIL.owner}</span>}
+        {stage.owner?.displayName && <span className="text-[10.5px] text-ink-4">{stage.owner.displayName}</span>}
       </div>
 
       <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
-        <span className={cn("text-[22px] font-bold", VALUE_TONE_CLASS[stage.valueTone])}>{stage.value}</span>
-        <span className="text-[11.5px] text-ink-3">{leakWord} · last 90 days</span>
+        {atStakeAmounts ? (
+          <span className="text-[22px] font-bold text-rose">{atStakeAmounts}</span>
+        ) : (
+          <DetailGap missingSource={stage.atStake.missingSource ?? null} wouldUnlock={stage.atStake.wouldUnlock ?? null} />
+        )}
+        <span className="text-[11.5px] text-ink-3">at stake · last {stage.windowDays} days</span>
       </div>
-      {!isRetain && (
-        <p className="mt-1 text-[10.5px] text-ink-4">{stage.coveragePercent}% covered · independent from the matrix</p>
+
+      {stage.spansStates.length > 0 && (
+        <p className="mt-1 text-[10.5px] text-ink-4">Spans {stage.spansStates.join(", ")} in the matrix below</p>
       )}
 
-      {isAdopt ? (
-        <>
-          <dl className="mt-2.5 grid grid-cols-3 gap-2 border-t border-line pt-2.5">
-            <div>
-              <dt className="font-mono text-[8px] font-medium tracking-[0.6px] text-ink-4 uppercase">
-                Customers in stage
-              </dt>
-              <dd className="mt-0.5 text-[13px] font-semibold text-ink">{ADOPT_STAGE_DETAIL.customersInStage}</dd>
-            </div>
-            <div>
-              <dt className="font-mono text-[8px] font-medium tracking-[0.6px] text-ink-4 uppercase">
-                Median features
-              </dt>
-              <dd className="mt-0.5 text-[13px] font-semibold text-ink">{ADOPT_STAGE_DETAIL.medianFeaturesReached}</dd>
-            </div>
-            <div>
-              <dt className="font-mono text-[8px] font-medium tracking-[0.6px] text-ink-4 uppercase">
-                Slipped out last quarter
-              </dt>
-              <dd className="mt-0.5 text-[13px] font-semibold text-ink">{ADOPT_STAGE_DETAIL.slippedOutLastQuarter}</dd>
-            </div>
-          </dl>
-          <p className="mt-2.5 border-t border-line pt-2.5 text-[11.5px] text-ink-3">{ADOPT_STAGE_DETAIL.spansNote}</p>
+      <dl className="mt-2.5 grid grid-cols-3 gap-2 border-t border-line pt-2.5">
+        <div>
+          <dt className="font-mono text-[8px] font-medium tracking-[0.6px] text-ink-4 uppercase">Population</dt>
+          <dd className="mt-0.5 text-[13px] font-semibold text-ink">
+            {stage.population.value !== null ? (
+              formatCount(stage.population.value)
+            ) : (
+              <DetailGap missingSource={stage.population.missingSource ?? null} wouldUnlock={stage.population.wouldUnlock ?? null} />
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="font-mono text-[8px] font-medium tracking-[0.6px] text-ink-4 uppercase">Left this month</dt>
+          <dd className="mt-0.5 text-[13px] font-semibold text-ink">
+            {stage.departedThisMonth.value !== null ? (
+              formatCount(stage.departedThisMonth.value)
+            ) : (
+              <DetailGap
+                missingSource={stage.departedThisMonth.missingSource ?? null}
+                wouldUnlock={stage.departedThisMonth.wouldUnlock ?? null}
+              />
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="font-mono text-[8px] font-medium tracking-[0.6px] text-ink-4 uppercase">Open rooms</dt>
+          <dd className="mt-0.5 text-[13px] font-semibold text-ink">{stage.openRoomCount}</dd>
+        </div>
+      </dl>
 
+      <div className="mt-2.5 border-t border-line pt-2.5">
+        <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Movement</p>
+        <p className="mt-1 text-[11.5px] text-ink-2">
+          {movement ? (
+            <>
+              {movement.direction && <span className="capitalize">{movement.direction} </span>}
+              {movement.percentChange !== null && `${movement.percentChange}% `}
+              {movement.comparedToLabel && <span className="text-ink-4">vs {movement.comparedToLabel}</span>}
+            </>
+          ) : (
+            <DetailGap missingSource={stage.movement.missingSource ?? null} wouldUnlock={stage.movement.wouldUnlock ?? null} />
+          )}
+        </p>
+      </div>
+
+      <div className="mt-2.5 border-t border-line pt-2.5">
+        <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Expected loss</p>
+        {expectedEntries && expectedEntries.length > 0 ? (
+          <div className="mt-1 space-y-1">
+            {expectedEntries.map((entry) => (
+              <ExpectedRow key={entry.currency} entry={entry} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-1">
+            <DetailGap missingSource={stage.expected.missingSource ?? null} wouldUnlock={stage.expected.wouldUnlock ?? null} />
+          </p>
+        )}
+      </div>
+
+      {stage.severity.length > 0 && (
+        <div className="mt-2.5 flex flex-wrap gap-1.5 border-t border-line pt-2.5">
+          {stage.severity.map((s) => (
+            <Chip key={s.currency} tone="neutral">
+              {s.currency} · {s.severity.label}
+            </Chip>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-line pt-2.5">
+        {stage.refreshedAtUtc ? (
+          <span className="text-[10px] text-ink-4">Refreshed {formatRelativeTime(stage.refreshedAtUtc)}</span>
+        ) : (
+          <span className="text-[10px] text-ink-4">Not yet refreshed</span>
+        )}
+        {/* The endpoint refuses on a stage with no measured figure ("a gap is not a question") —
+            hidden rather than shown-and-guaranteed-to-fail when nothing here is measured yet, per
+            [[feedback_hold_mostly_gated_feature]]. `atStake`/`headline` are the two figures this
+            card actually shows, so either being real is what makes the stage answerable. */}
+        {(stage.atStake.value !== null || stage.headline.value !== null) && (
           <button
             type="button"
+            disabled={isAskingWhy}
             onClick={() =>
-              navigate("/new-conversation", {
-                state: {
-                  prefillPrompt: `Why is ${stage.value} leaking at the ${stage.label} stage? ${ADOPT_STAGE_DETAIL.customersInStage} customers are in this stage and the median has reached only ${ADOPT_STAGE_DETAIL.medianFeaturesReached} features, with ${ADOPT_STAGE_DETAIL.slippedOutLastQuarter} slipping out before adopting more.`,
-                },
-              })
+              learnWhy(
+                { stageKey, window: params.window, horizon: params.horizon },
+                { onSuccess: (res) => navigate(`/conversations/${res.data.conversationId}`) }
+              )
             }
-            className="mt-2.5 inline-flex items-center gap-1.5 rounded-control border border-line bg-paper-2 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-paper"
+            className="inline-flex items-center gap-1.5 rounded-control border border-line bg-paper-2 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-paper disabled:opacity-60"
           >
             <HelpCircle className="size-3.5" />
-            Learn why
+            {isAskingWhy ? "Asking…" : `Ask ${stage.learnWhy.agentName} why`}
           </button>
-        </>
-      ) : isRetain ? (
-        <>
-          <p className="mt-2.5 border-t border-line pt-2.5 text-[11.5px] text-ink-3">{RETAIN_STAGE_ROLLUP.summary}</p>
-
-          <div className="mt-2.5 border-t border-line pt-2.5">
-            <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Coverage</p>
-            <p className="mt-1 text-[11.5px] text-ink-2">
-              {RETAIN_STAGE_ROLLUP.coveragePercent}% of detectable Retain leaks are in this rollup.
-            </p>
-            <p className="mt-1 text-[10.5px] text-ink-4">
-              Unattributed: {RETAIN_STAGE_ROLLUP.unattributedAmount} ({RETAIN_STAGE_ROLLUP.unattributedPercent}%) —
-              not yet mapped to a mechanism.
-            </p>
-          </div>
-
-          <div className="mt-2.5 border-t border-line pt-2.5">
-            <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Top mechanisms</p>
-            <ol className="mt-1.5 space-y-1">
-              {RETAIN_STAGE_ROLLUP.topMechanisms.map((mechanism, i) => (
-                <li key={mechanism.label} className="flex items-baseline justify-between gap-3 text-[11.5px]">
-                  <span className="text-ink-2">
-                    {i + 1}. {mechanism.label}
-                  </span>
-                  <span className="font-medium text-ink">{mechanism.value}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          <dl className="mt-2.5 flex items-baseline justify-between gap-3 border-t border-line pt-2.5 text-[11.5px]">
-            <dt className="text-ink-3">Confidence · range 80% CI</dt>
-            <dd className="font-medium text-ink">
-              {RETAIN_STAGE_ROLLUP.confidence} · {RETAIN_STAGE_ROLLUP.rangeLow} – {RETAIN_STAGE_ROLLUP.rangeHigh}
-            </dd>
-          </dl>
-        </>
-      ) : (
-        <p className="mt-2.5 border-t border-line pt-2.5 text-[11.5px] text-ink-3">{stage.metricLines.join(" · ")}</p>
-      )}
+        )}
+      </div>
     </div>
   );
 }

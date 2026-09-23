@@ -293,8 +293,22 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   ```
   Returns the conversation/run to attach the existing chat panel's SSE to — the turn renders like
   any other. Refused on a stage with no measured figure ("a gap is not a question").
-- **Used by:** `services/api/leakage/learn-why-leakage-stage.ts`, `features/leakage/use-learn-why-leakage-stage.ts`. Not wired.
-- **Status:** documented, scaffolded, not wired
+- **Used by:** `services/api/leakage/learn-why-leakage-stage.ts`, `features/leakage/use-learn-why-leakage-stage.ts`. Wired into `src/pages/leakage-map/detail-panel.tsx`'s `StageDetailCard` — see [[flolyt_leakage_map_wiring]] Step 3 for the open question this surfaced.
+- **Status:** documented, scaffolded, wired — refusal-gating still under discussion (see below)
+- **Second, previously-undocumented refusal case confirmed live 2026-09-23:** the doc's own prose
+  only names one refusal ("a gap is not a question" — no measured figure at all, i.e. `atStake`/
+  `headline` value is `null`). Clicking "Learn why" on Acquire — whose `atStake.value` was a real,
+  non-null `[{ currency: "NGN", amountAtRisk: 0 }]` — was refused anyway:
+  ```json
+  { "data": null, "messages": ["There is nothing to explain at Acquire: nothing is leaking there over this window — the refresh ran and found nought, which is a result rather than a gap."], "succeeded": false }
+  ```
+  So the server distinguishes **two** unanswerable states, not one: unmeasured (`value: null`, "a
+  gap is not a question") vs. measured-but-zero (a real `0`, "a result rather than a gap"). The
+  current frontend gate (`atStake.value !== null || headline.value !== null`) only catches the
+  first — it let the button show for Acquire, which then hit this second refusal live. Left
+  unfixed intentionally, pending a product decision on how strict the client-side gate should be
+  (e.g. also hiding the button when every currency's `amountAtRisk` is `0`) — see
+  [[flolyt_leakage_map_wiring]] for the blocker note.
 
 ## POST /api/v3/leakage/cells/{grid}/{row}/{condition}/{currency}/learn-why
 

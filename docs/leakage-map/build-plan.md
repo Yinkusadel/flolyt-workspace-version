@@ -159,10 +159,37 @@ far was `"unavailable"`).
   a Window filter change showed the loading banner while the previous filter's cards/status line
   stayed visible, then updated correctly. No console errors.
 
-### Step 3 — Stage detail card (the modal consolidation) — not started
-One generic `StageDetailCard` from `headline`/`population`/`departedThisMonth`/`movement`/
-`spansStates`/`owner`/`openRoomCount`, lazy-fetched via `useGetLeakageStage` on open. "Learn why"
-wired via `useLearnWhyLeakageStage` for all 10 stages.
+### Step 3 — Stage detail card (the modal consolidation) — 🟡 built, one open question (2026-09-23)
+`StageDetailCard` rewritten as one generic template from `LeakageStageDetailDto` — `atStake`
+(headline stat), `population`/`departedThisMonth`/`openRoomCount` (a 3-up stat row), `movement`,
+`expected` (per-currency, with range + confidence), `severity` chips, `refreshedAtUtc` — replacing
+the old mock's three bespoke Adopt/Retain/generic layouts, lazy-fetched via `useGetLeakageStage`
+only once a card is clicked (not for all 10 upfront). `data.ts`'s now-fully-orphaned `Stage`/
+`ADOPT_STAGE_DETAIL`/`RETAIN_STAGE_ROLLUP` deleted. `stage-rail.tsx`'s `StageCard` restores the
+`FloatingCard` click-through, threading `window`/`horizon`/`market` down from the page's active
+filters (not `calculate`/severity/confidence — those aren't part of `GetLeakageStageParams`).
+
+"Learn why" is wired via `useLearnWhyLeakageStage`, navigating to `/conversations/{conversationId}`
+on success — no client-built prompt text, since the server seeds the conversation's first turn
+itself (`title`/`question` on the mutation's own response), unlike the old mock's client-assembled
+`prefillPrompt`. The button is gated to only render when `atStake.value !== null ||
+headline.value !== null` (catches the doc's documented refusal, "a gap is not a question" — no
+measured figure at all), per [[feedback_hold_mostly_gated_feature]] — first shipped without this
+gate, showing the button unconditionally on all 10 stages regardless of coverage.
+
+**🟡 Open blocker, live-confirmed 2026-09-23, holding here pending a product decision:** the
+refusal-gating above is incomplete. The endpoint has a **second, undocumented refusal case**
+distinct from "a gap is not a question": clicking "Learn why" on Acquire — whose `atStake.value`
+was a real, non-null `[{ currency: "NGN", amountAtRisk: 0 }]`, so it passed the current gate — was
+refused with `"There is nothing to explain at Acquire: nothing is leaking there over this window —
+the refresh ran and found nought, which is a result rather than a gap."` So the server treats
+*measured-zero* as equally unanswerable as *unmeasured*, just for a different reason (a real "no
+leak" result vs. an unknown one). The current client gate only checks for `null`, not `0`, so it
+still lets a doomed click through on any stage whose figure is a confirmed real zero. Full detail
+recorded in [docs/endpoints/leakage.md](../endpoints/leakage.md)'s learn-why section. **Not fixed
+yet on purpose** — the user is checking with their team on how strict the client-side gate should
+be (e.g. also hide the button when every currency's `amountAtRisk` is `0`, not just when the
+wrapper's `value` is `null`) before this is touched again.
 
 ### Step 4 — The matrix itself — not started
 Biggest structural change: dynamic rows/conditions/cells from `grids[]` (now handling 2 grids via

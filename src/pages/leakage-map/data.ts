@@ -33,52 +33,6 @@ export const CONFIDENCE_RANK: Record<ConfidenceLevel, number> = { low: 1, medium
 export const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = { low: "Low", medium: "Medium", high: "High" };
 
 // ---------------------------------------------------------------------------
-// Stages
-// ---------------------------------------------------------------------------
-
-export type Stage = {
-  id: string;
-  number: string;
-  label: string;
-  dot: string;
-  metricLines: string[];
-  value: string;
-  valueTone: Tone;
-  coveragePercent: number;
-};
-
-/** Adopt keeps its own operational drilldown (customers/median features/slipped-out) — the one
- * stage this export authors a "Learn why" agent handoff for. */
-export const ADOPT_STAGE_DETAIL = {
-  stageId: "adopt",
-  owner: "Product owns this stage",
-  customersInStage: "640,100",
-  medianFeaturesReached: "2.1 of 9",
-  slippedOutLastQuarter: "74,300",
-  spans: ["active", "slipping"] as const,
-  spansNote: "Adopt spans Active and Slipping in the matrix below — highlighted there now.",
-};
-
-/** Retain is the export's own authored rollup example (06-stage-rollup.svg) — the coverage math
- * that explains why stage cards never sum to the matrix below them. */
-export const RETAIN_STAGE_ROLLUP = {
-  stageId: "retain",
-  summary: "Expected loss across all Retain-stage leaks at the current horizon.",
-  coveragePercent: 74,
-  unattributedAmount: "₦107M",
-  unattributedPercent: 26,
-  topMechanisms: [
-    { label: "Repeat decay", value: "₦212M" },
-    { label: "Involuntary churn", value: "₦98M" },
-    { label: "Abandonment", value: "₦61M" },
-    { label: "Refunds", value: "₦41M" },
-  ],
-  confidence: "Medium",
-  rangeLow: "₦280M",
-  rangeHigh: "₦580M",
-};
-
-// ---------------------------------------------------------------------------
 // Matrix
 // ---------------------------------------------------------------------------
 
