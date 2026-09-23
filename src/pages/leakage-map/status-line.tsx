@@ -17,7 +17,7 @@ export function StatusLine({
   customerCount,
   refreshedAtUtc,
   coveragePercent,
-  hiddenPercent,
+  cellsHidden,
   minSeverity,
   minConfidence,
 }: {
@@ -27,12 +27,15 @@ export function StatusLine({
   customerCount?: number;
   refreshedAtUtc?: string | null;
   coveragePercent?: number;
-  hiddenPercent: number;
+  /** `filter.cellsHidden` — a bare count of cells the server already excluded for
+   * Severity/Confidence, not a derivable percentage (there's no single "total cells" across a
+   * workspace's possibly-multiple grids to divide it by). */
+  cellsHidden: number;
   minSeverity: string | null;
   minConfidence: string | null;
 }) {
   const calcLabel = calculateLabel(calcMode);
-  const isFiltered = hiddenPercent > 0;
+  const isFiltered = cellsHidden > 0;
   const customersLabel = customerCount === undefined ? "—" : `${formatCompactCount(customerCount)} customers`;
   const refreshedLabel = !refreshedAtUtc ? "not yet refreshed" : `Refreshed ${formatRelativeTime(refreshedAtUtc)}`;
   const coverageLabel = coveragePercent === undefined ? "—" : `${Math.round(coveragePercent)}%`;
@@ -47,8 +50,8 @@ export function StatusLine({
       </p>
       {isFiltered && (
         <p className="text-[11.5px] text-amber">
-          Severity {severityLabel(minSeverity)} · Confidence {confidenceLabel(minConfidence)} — {hiddenPercent}% of
-          cells are outside this view
+          Severity {severityLabel(minSeverity)} · Confidence {confidenceLabel(minConfidence)} — {cellsHidden} cell
+          {cellsHidden === 1 ? "" : "s"} outside this view
         </p>
       )}
     </div>

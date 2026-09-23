@@ -19,31 +19,18 @@ import {
   toGetLeakageParams,
   type LeakageFilterState,
 } from "@/pages/leakage-map/filters";
-import { filteredOutPercent, type ConfidenceLevel, type SeverityLevel } from "@/pages/leakage-map/data";
 import type { GetLeakageStageParams } from "@/services/api/leakage/get-leakage-stage";
-
-// The matrix and status line's hidden-percent math still run on the page's original mock cell data
-// (Step 4 replaces it with the real `grids[]`), which ranks severity as a 1–5 number and reads
-// "low"/"medium"/"high" confidence directly. The real filter state now sends the API's own
-// "s1"–"s5" strings — these adapters bridge the two conventions until the matrix itself is wired.
-function legacySeverityRank(minSeverity: string | null): SeverityLevel {
-  const level = minSeverity ? Number(minSeverity.slice(1)) : 5;
-  return (level >= 1 && level <= 5 ? level : 5) as SeverityLevel;
-}
-
-function legacyConfidenceLevel(minConfidence: string | null): ConfidenceLevel {
-  return (minConfidence ?? "low") as ConfidenceLevel;
-}
 
 /**
  * Rebuilt from flolyt-figma-designs/New-pages-pattern/leakage-new/svg/01–12 — adds a live status
- * line, five cell states instead of two, Severity/Confidence as real filters (not shading
- * choices), and the coverage/actions panels that carry the page's honesty.
+ * line, real filters, a fully dynamic matrix, and the coverage/actions panels that carry the
+ * page's honesty.
  *
- * Filters (Calc/Window/Horizon/Market/Severity/Confidence) and the page shell (loading via the
- * floating `RecomputingToast`, error/empty via `PageStateBanner`, status line, stage rail) are
- * wired to the real `GET /leakage` — see docs/leakage-map/build-plan.md Steps 1–2. The matrix,
- * coverage panel, actions panel and market breakdown are still mock, landing in Steps 3–5.
+ * Filters, the page shell (loading via the floating `RecomputingToast`, error/empty via
+ * `PageStateBanner`, status line), the stage rail, and the matrix (grids/cells, dynamic
+ * rows/columns, cell detail, "start a room") are all wired to the real `GET /leakage` — see
+ * docs/leakage-map/build-plan.md Steps 1–4. The coverage panel, actions panel and market
+ * breakdown are still mock, landing in Step 5.
  */
 export default function LeakageMap() {
   const [filters, setFilters] = React.useState<LeakageFilterState>(DEFAULT_FILTERS);
@@ -53,17 +40,24 @@ export default function LeakageMap() {
   const params = toGetLeakageParams(filters);
   const { data: leakageResponse, isFetching, isError, error, refetch } = useGetLeakage(params);
   const leakage = leakageResponse?.data;
-  // GET /leakage/stages/{key} only takes window/market/horizon — not `calculate`/severity/
-  // confidence, which `params` also carries for the page-level GET /leakage.
+  // GET /leakage/stages/{key} and GET /leakage/cells/{...} only take window/market/horizon — not
+  // `calculate`/severity/confidence, which `params` also carries for the page-level GET /leakage.
   const stageParams: GetLeakageStageParams = { window: params.window, horizon: params.horizon, market: params.market };
+  const cellParams = { window: params.window, horizon: params.horizon };
 
-  const legacySeverityFilter = legacySeverityRank(filters.minSeverity);
-  const legacyConfidenceFilter = legacyConfidenceLevel(filters.minConfidence);
-  const hiddenPercent = filteredOutPercent(legacySeverityFilter, legacyConfidenceFilter);
-
-  const clearFilters = () => setFilters((prev) => ({ ...prev, minSeverity: null, minConfidence: null }));
-  const setLegacySeverityFilter = (level: SeverityLevel) =>
-    handleFiltersChange({ minSeverity: level === 5 ? null : `s${level}` });
+  // The active market's currency scopes which of a (possibly multi-currency) grid's cells render
+  // — unconfirmed live, since every `markets[]` pulled so far was empty. Falls back through the
+  // primary market, then any market, then any other top-level field that carries a real currency
+  // (`bySeverity`/`ladders` are workspace-wide, not grid/cell-dependent, so they can be populated
+  // even when `markets`/`cells` are both empty, as seen live). `undefined` here is a genuine "we
+  // don't know yet" — matrix.tsx must not fall back to an invented currency for the cell-detail
+  // fetch, since a wrong path segment there is worse than a disabled cell.
+  const activeCurrency =
+    (filters.market ? leakage?.markets.find((m) => m.countryCode === filters.market)?.currency : undefined) ??
+    leakage?.markets.find((m) => m.isPrimary)?.currency ??
+    leakage?.markets[0]?.currency ??
+    leakage?.bySeverity[0]?.currency ??
+    leakage?.ladders[0]?.currency;
 
   const fallbackWindowLabel = rangeSelectionLabel(filters.window, "window");
   const fallbackHorizonLabel = rangeSelectionLabel(filters.horizon, "horizon");
@@ -99,7 +93,7 @@ export default function LeakageMap() {
             customerCount={leakage?.customerCount}
             refreshedAtUtc={leakage?.refreshedAtUtc}
             coveragePercent={leakage?.coverage.percent}
-            hiddenPercent={hiddenPercent}
+            cellsHidden={leakage?.filter.cellsHidden ?? 0}
             minSeverity={filters.minSeverity}
             minConfidence={filters.minConfidence}
           />
@@ -119,11 +113,11 @@ export default function LeakageMap() {
       <StageRail stages={leakage?.stages} callouts={leakage?.callouts} stageParams={stageParams} />
 
       <LeakageMatrix
+        grids={leakage?.grids}
+        currency={activeCurrency}
+        cellParams={cellParams}
         shadingCaptionLabel={`${(leakage?.horizon.label ?? fallbackHorizonLabel).toLowerCase()} exposure`}
-        severityFilter={legacySeverityFilter}
-        confidenceFilter={legacyConfidenceFilter}
-        onClearFilter={clearFilters}
-        onSetSeverityFilter={setLegacySeverityFilter}
+        cellsHidden={leakage?.filter.cellsHidden ?? 0}
       />
 
       <CoveragePanel />

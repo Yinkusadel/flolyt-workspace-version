@@ -10,197 +10,28 @@
 
 export type Tone = "rose" | "teal";
 
-// ---------------------------------------------------------------------------
-// Severity / confidence — still the mock matrix's own internal risk ranking below (`MATRIX_ROWS`
-// etc.), separate from the real filters.ts values now sent to the API. Collapses into one thing
-// once the matrix itself is wired to the real grid (Step 4) — see the adapter in index.tsx in the
-// meantime.
-// ---------------------------------------------------------------------------
-
-export type SeverityLevel = 1 | 2 | 3 | 4 | 5;
-
-export const SEVERITY_LABEL: Record<SeverityLevel, string> = {
-  1: "S1 — Critical",
-  2: "S2 — High",
-  3: "S3 — Elevated",
-  4: "S4 — Moderate",
-  5: "S5 — Low",
-};
-
 export type ConfidenceLevel = "low" | "medium" | "high";
-
-export const CONFIDENCE_RANK: Record<ConfidenceLevel, number> = { low: 1, medium: 2, high: 3 };
 export const CONFIDENCE_LABEL: Record<ConfidenceLevel, string> = { low: "Low", medium: "Medium", high: "High" };
 
 // ---------------------------------------------------------------------------
-// Matrix
+// Matrix — the mock's hardcoded 5×5 grid, 5 authored cell states, and per-cell severity/confidence
+// ranking are gone as of Step 4 (see docs/leakage-map/build-plan.md): `matrix.tsx` now renders
+// `GET /leakage`'s own dynamic `grids[]`, and the server already excludes severity/confidence-
+// filtered cells from that response rather than the client hiding them. `HEAT_SCALE`/
+// `HEAT_TEXT_CLASS` survive unchanged — purely decorative constants, not mock data — now driven by
+// each real cell's own `intensity` field instead of an authored `heat` property.
 // ---------------------------------------------------------------------------
-
-export type MatrixColumnKey = "repeatDecay" | "involuntaryChurn" | "abandonment" | "refunds" | "discountDependency";
-
-export const MATRIX_COLUMNS: { key: MatrixColumnKey; label: string }[] = [
-  { key: "repeatDecay", label: "Repeat decay" },
-  { key: "involuntaryChurn", label: "Involuntary churn" },
-  { key: "abandonment", label: "Abandonment" },
-  { key: "refunds", label: "Refunds" },
-  { key: "discountDependency", label: "Discount dependency" },
-];
 
 /** Sequential rose-tint heat scale for "how much is at risk in this cell" — 0 is the legend's unused LOW swatch. */
 export const HEAT_SCALE = ["#F5F5F4", "#FBEBE7", "#F4CFC7", "#E5A79B"] as const;
 export const HEAT_TEXT_CLASS = ["text-ink-2", "text-ink-2", "text-ink", "text-ink"] as const;
 
-type RiskMeta = { severity: SeverityLevel; confidence: ConfidenceLevel };
-
-export type MatrixCell =
-  | ({ kind: "value"; value: string; heat: 1 | 2 | 3 } & RiskMeta)
-  | ({
-      kind: "compound";
-      value: string;
-      heat: 1 | 2 | 3;
-      projection: { horizon: string; value: string }[];
-      severityNow: SeverityLevel;
-      severityAt12m: SeverityLevel;
-      rankByAmount: number;
-      rankByThreat: number;
-    } & RiskMeta)
-  | { kind: "zero"; note: string; lastChecked: string }
-  | { kind: "gap"; missingSource: string; explanation: string; recoveryLow: string; recoveryHigh: string };
-
-export type MatrixRow = {
-  key: string;
-  label: string;
-  cells: Record<MatrixColumnKey, MatrixCell>;
-};
-
-export const MATRIX_ROWS: MatrixRow[] = [
-  {
-    key: "new",
-    label: "New",
-    cells: {
-      repeatDecay: { kind: "value", value: "₦41M", heat: 1, severity: 2, confidence: "medium" },
-      involuntaryChurn: { kind: "value", value: "₦12M", heat: 1, severity: 2, confidence: "medium" },
-      abandonment: { kind: "value", value: "₦88M", heat: 3, severity: 1, confidence: "high" },
-      refunds: { kind: "value", value: "₦6M", heat: 1, severity: 2, confidence: "medium" },
-      discountDependency: { kind: "value", value: "₦18M", heat: 1, severity: 2, confidence: "medium" },
-    },
-  },
-  {
-    key: "active",
-    label: "Active",
-    cells: {
-      repeatDecay: { kind: "value", value: "₦96M", heat: 2, severity: 2, confidence: "medium" },
-      involuntaryChurn: { kind: "value", value: "₦61M", heat: 2, severity: 1, confidence: "high" },
-      abandonment: {
-        kind: "compound",
-        value: "₦124M",
-        heat: 3,
-        severity: 2,
-        confidence: "medium",
-        severityNow: 3,
-        severityAt12m: 1,
-        rankByAmount: 6,
-        rankByThreat: 2,
-        projection: [
-          { horizon: "30d", value: "₦12M" },
-          { horizon: "90d", value: "₦124M" },
-          { horizon: "Qtr", value: "₦180M" },
-          { horizon: "12m", value: "₦248M" },
-        ],
-      },
-      refunds: { kind: "value", value: "₦22M", heat: 1, severity: 2, confidence: "medium" },
-      discountDependency: { kind: "value", value: "₦46M", heat: 2, severity: 2, confidence: "medium" },
-    },
-  },
-  {
-    key: "slipping",
-    label: "Slipping",
-    cells: {
-      repeatDecay: { kind: "value", value: "₦412M", heat: 3, severity: 2, confidence: "medium" },
-      involuntaryChurn: { kind: "value", value: "₦27M", heat: 1, severity: 2, confidence: "high" },
-      abandonment: { kind: "value", value: "₦34M", heat: 1, severity: 2, confidence: "medium" },
-      refunds: { kind: "zero", note: "No refunds detected in the slipping state at this horizon and confidence level.", lastChecked: "6 minutes ago" },
-      discountDependency: { kind: "value", value: "₦31M", heat: 1, severity: 2, confidence: "medium" },
-    },
-  },
-  {
-    key: "lapsed",
-    label: "Lapsed",
-    cells: {
-      repeatDecay: { kind: "value", value: "₦188M", heat: 3, severity: 1, confidence: "medium" },
-      involuntaryChurn: {
-        kind: "gap",
-        missingSource: "no dunning feed",
-        explanation: "No dunning feed is connected, so involuntary churn cannot be detected in this state.",
-        recoveryLow: "₦18M",
-        recoveryHigh: "₦34M",
-      },
-      abandonment: { kind: "value", value: "₦11M", heat: 1, severity: 2, confidence: "medium" },
-      refunds: { kind: "value", value: "₦4M", heat: 1, severity: 2, confidence: "medium" },
-      discountDependency: { kind: "value", value: "₦52M", heat: 2, severity: 2, confidence: "medium" },
-    },
-  },
-  {
-    key: "reactivated",
-    label: "Reactivated",
-    cells: {
-      repeatDecay: { kind: "value", value: "₦34M", heat: 1, severity: 2, confidence: "medium" },
-      involuntaryChurn: { kind: "value", value: "₦8M", heat: 1, severity: 2, confidence: "medium" },
-      abandonment: { kind: "value", value: "₦14M", heat: 1, severity: 2, confidence: "medium" },
-      refunds: {
-        kind: "gap",
-        missingSource: "no dunning feed",
-        explanation:
-          "No dunning feed is connected, so Flolyt cannot see which reactivated customers were refunded and which simply churned again.",
-        recoveryLow: "₦6M",
-        recoveryHigh: "₦15M",
-      },
-      discountDependency: { kind: "value", value: "₦74M", heat: 2, severity: 2, confidence: "medium" },
-    },
-  },
-];
-
-/** Only "value" and "compound" cells carry a severity/confidence ranking to filter on — a gap or
- * a zero cell is about data availability, not risk severity, so both stay visible regardless of
- * the Severity/Confidence controls. */
-function isRankedCell(cell: MatrixCell): cell is Extract<MatrixCell, { kind: "value" | "compound" }> {
-  return cell.kind === "value" || cell.kind === "compound";
-}
-
-export function isCellHiddenByFilter(
-  cell: MatrixCell,
-  severityFilter: SeverityLevel,
-  confidenceFilter: ConfidenceLevel
-): boolean {
-  if (!isRankedCell(cell)) return false;
-  return cell.severity > severityFilter || CONFIDENCE_RANK[cell.confidence] < CONFIDENCE_RANK[confidenceFilter];
-}
-
-/** Share of ranked cells the current Severity/Confidence filter hides — drives the status line's
- * amber warning and the matrix's own banner (11-filtered.svg). */
-export function filteredOutPercent(severityFilter: SeverityLevel, confidenceFilter: ConfidenceLevel): number {
-  const ranked = MATRIX_ROWS.flatMap((row) => MATRIX_COLUMNS.map((col) => row.cells[col.key])).filter(isRankedCell);
-  if (ranked.length === 0) return 0;
-  const hidden = ranked.filter((cell) => isCellHiddenByFilter(cell, severityFilter, confidenceFilter)).length;
-  return Math.round((hidden / ranked.length) * 100);
-}
-
-/** The one authored worked example — every other cell only carries what the matrix itself already shows. */
+/** The Actions-triggered panel's one authored worked example (`actions-panel.tsx`, still hidden
+ * for this pass per the Step 1 decision) links to this room — kept only for that reference until
+ * Step 5 removes `ActionsPanel` from `index.tsx` entirely. */
 export const FEATURED_CELL = {
   rowKey: "slipping",
-  columnKey: "repeatDecay" as MatrixColumnKey,
-  threatScore: 82,
-  rangeLow: "₦280M",
-  rangeHigh: "₦580M",
-  recencyDays: "3 days",
-  recoverablePercent: 22,
-  netExpectedLoss: "₦321M",
-  segments: [
-    { label: "Lagos · first order Mar–May", amount: "₦84M" },
-    { label: "Annual NGN plans", amount: "₦61M" },
-    { label: "Mobile-first, no second order", amount: "₦48M" },
-  ],
-  moreSegments: 87,
+  columnKey: "repeatDecay",
   room: { id: "second-order-never-happened", label: "Room 2471 is open on this cell" },
 };
 

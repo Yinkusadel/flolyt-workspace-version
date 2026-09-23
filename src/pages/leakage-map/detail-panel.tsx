@@ -6,333 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
-import {
-  CONFIDENCE_LABEL,
-  FEATURED_CELL,
-  SEVERITY_LABEL,
-  type ConfidenceLevel,
-  type SeverityLevel,
-} from "@/pages/leakage-map/data";
+import { type ConfidenceLevel, CONFIDENCE_LABEL } from "@/pages/leakage-map/data";
 import { useGetLeakageStage } from "@/features/leakage/use-get-leakage-stage";
 import { useLearnWhyLeakageStage } from "@/features/leakage/use-learn-why-leakage-stage";
-import { formatAtStakeAmounts, formatCount, formatRelativeTime } from "@/lib/format-measured-value";
+import { useGetLeakageCell } from "@/features/leakage/use-get-leakage-cell";
+import { useOpenRoomOnLeakageCell } from "@/features/leakage/use-open-room-on-leakage-cell";
+import { useLearnWhyLeakageCell } from "@/features/leakage/use-learn-why-leakage-cell";
+import { formatAtStakeAmounts, formatCompactMoney, formatCount, formatRelativeTime } from "@/lib/format-measured-value";
 import type { GetLeakageStageParams } from "@/services/api/leakage/get-leakage-stage";
+import type { GetLeakageCellParams } from "@/services/api/leakage/get-leakage-cell";
 import type { LeakageExpectedEntryDto } from "@/services/api/leakage/get-leakage";
-
-function StatRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3 text-[12px]">
-      <dt className="text-ink-3">{label}</dt>
-      <dd className="font-semibold text-ink">{value}</dd>
-    </div>
-  );
-}
 
 function CardEyebrow({ children }: { children: React.ReactNode }) {
   return <p className="font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">{children}</p>;
-}
-
-function RiskChips({ severity, confidence }: { severity: SeverityLevel; confidence: ConfidenceLevel }) {
-  return (
-    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-      <Chip tone={severity <= 2 ? "rose" : severity === 3 ? "amber" : "neutral"}>{SEVERITY_LABEL[severity]}</Chip>
-      <Chip tone="neutral">{CONFIDENCE_LABEL[confidence]} confidence</Chip>
-    </div>
-  );
-}
-
-/** The floating card any real-value cell opens — the one authored example (Slipping · Repeat
- * decay) gets the full threat-score / range / recovery / segments readout; every other value cell
- * only carries what the matrix itself already shows, plus a real "start a room" action. */
-export function ValueCellCard({
-  rowKey,
-  columnKey,
-  rowLabel,
-  columnLabel,
-  value,
-  severity,
-  confidence,
-}: {
-  rowKey: string;
-  columnKey: string;
-  rowLabel: string;
-  columnLabel: string;
-  value: string;
-  severity: SeverityLevel;
-  confidence: ConfidenceLevel;
-}) {
-  const isFeatured = rowKey === FEATURED_CELL.rowKey && columnKey === FEATURED_CELL.columnKey;
-
-  if (!isFeatured) {
-    return (
-      <div className="p-4">
-        <CardEyebrow>
-          {rowLabel} · {columnLabel}
-        </CardEyebrow>
-        <div className="mt-1.5 flex items-baseline gap-2">
-          <span className="text-[22px] font-bold text-rose">{value}</span>
-          <span className="text-[11.5px] text-ink-3">expected loss</span>
-        </div>
-        <RiskChips severity={severity} confidence={confidence} />
-        <div className="mt-2.5 flex items-center justify-between gap-3 border-t border-line pt-2.5">
-          <span className="text-[11.5px] text-ink-3">No room is open on this cell yet.</span>
-          <Button asChild size="sm" variant="outline">
-            <Link to="/rooms/new">Start a room</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-4">
-      <div className="flex items-center justify-between gap-3">
-        <CardEyebrow>
-          {rowLabel} · {columnLabel}
-        </CardEyebrow>
-        <span className="text-[10.5px] font-medium text-ink-3">Threat score {FEATURED_CELL.threatScore}/100</span>
-      </div>
-      <div className="mt-1.5 flex items-baseline gap-2">
-        <span className="text-[22px] font-bold text-rose">{value}</span>
-        <span className="text-[11.5px] text-ink-3">expected loss · next 90 days</span>
-      </div>
-      <p className="mt-0.5 text-[10.5px] text-ink-4">Probability-weighted. Not net of intervention.</p>
-
-      <dl className="mt-2.5 space-y-1 border-t border-line pt-2.5">
-        <StatRow label="Range · 80% CI" value={`${FEATURED_CELL.rangeLow} – ${FEATURED_CELL.rangeHigh}`} />
-        <StatRow label="Confidence" value={CONFIDENCE_LABEL[confidence]} />
-        <StatRow label="Severity" value={SEVERITY_LABEL[severity]} />
-        <StatRow label="Recency" value={FEATURED_CELL.recencyDays} />
-      </dl>
-
-      <div className="mt-2.5 border-t border-line pt-2.5">
-        <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Recovery estimate</p>
-        <p className="mt-1 text-[11.5px] text-ink-2">
-          <span className="font-semibold text-ink">{FEATURED_CELL.recoverablePercent}%</span> is realistically
-          saveable → net expected loss <span className="font-semibold text-ink">{FEATURED_CELL.netExpectedLoss}</span>
-        </p>
-      </div>
-
-      <div className="mt-2.5 border-t border-line pt-2.5">
-        <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">
-          Most affected segments
-        </p>
-        <ol className="mt-1.5 space-y-1">
-          {FEATURED_CELL.segments.map((segment, i) => (
-            <li key={segment.label} className="flex items-baseline justify-between gap-3 text-[11.5px]">
-              <span className="text-ink-2">
-                {i + 1}. {segment.label}
-              </span>
-              <span className="font-medium text-ink">{segment.amount}</span>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-1 text-[10.5px] text-ink-4">+ {FEATURED_CELL.moreSegments} more segments</p>
-      </div>
-
-      <Button asChild size="sm" className="mt-2.5 w-full">
-        <Link to={`/rooms/${FEATURED_CELL.room.id}`}>Open operational queue</Link>
-      </Button>
-    </div>
-  );
-}
-
-/** The floating card a compound-risk cell opens (05-cell-compound.svg) — a cell whose amount rank
- * and threat rank disagree, because it grows sharply across horizons. */
-export function CompoundCellCard({
-  rowLabel,
-  columnLabel,
-  value,
-  projection,
-  severityNow,
-  severityAt12m,
-  rankByAmount,
-  rankByThreat,
-}: {
-  rowLabel: string;
-  columnLabel: string;
-  value: string;
-  projection: { horizon: string; value: string }[];
-  severityNow: SeverityLevel;
-  severityAt12m: SeverityLevel;
-  rankByAmount: number;
-  rankByThreat: number;
-}) {
-  return (
-    <div className="p-4">
-      <CardEyebrow>
-        {rowLabel} · {columnLabel}
-      </CardEyebrow>
-      <div className="mt-1.5 flex items-center gap-2">
-        <Chip tone="amber">Compound risk</Chip>
-      </div>
-      <div className="mt-1.5 flex items-baseline gap-2">
-        <span className="text-[22px] font-bold text-ink">{value}</span>
-        <span className="text-[11.5px] text-ink-3">at the current horizon</span>
-      </div>
-
-      <div className="mt-2.5 border-t border-line pt-2.5">
-        <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">
-          This leak grows across horizons
-        </p>
-        <div className="mt-2 grid grid-cols-4 gap-2">
-          {projection.map((point) => (
-            <div key={point.horizon} className="rounded-control bg-paper-2 px-2 py-1.5 text-center">
-              <p className="font-mono text-[8.5px] font-medium text-ink-4 uppercase">{point.horizon}</p>
-              <p className="mt-0.5 text-[11.5px] font-semibold text-ink">{point.value}</p>
-            </div>
-          ))}
-        </div>
-        <p className="mt-2 text-[11px] text-ink-3">
-          Currently <span className="font-semibold text-ink">{SEVERITY_LABEL[severityNow]}</span>. Projects to{" "}
-          <span className="font-semibold text-ink">{SEVERITY_LABEL[severityAt12m]}</span> by 12 months.
-        </p>
-      </div>
-
-      <Button size="sm" variant="outline" className="mt-2.5 w-full">
-        View compound projection
-      </Button>
-
-      <p className="mt-2.5 border-t border-line pt-2.5 text-[11px] text-ink-2">
-        Ranked {ordinal(rankByAmount)} by amount, {ordinal(rankByThreat)} by threat score.
-      </p>
-    </div>
-  );
-}
-
-export function ordinal(n: number) {
-  const suffixes: Record<number, string> = { 1: "1st", 2: "2nd", 3: "3rd" };
-  return suffixes[n] ?? `${n}th`;
-}
-
-/** The floating card a "no exposure" cell opens (04-cell-zero.svg) — measured and empty, and
- * explicitly not the same thing as Unknown or Hidden by filter. */
-export function ZeroCellCard({
-  rowLabel,
-  columnLabel,
-  note,
-  lastChecked,
-}: {
-  rowLabel: string;
-  columnLabel: string;
-  note: string;
-  lastChecked: string;
-}) {
-  return (
-    <div className="p-4">
-      <CardEyebrow>
-        {rowLabel} · {columnLabel}
-      </CardEyebrow>
-      <p className="mt-1.5 text-[16px] font-semibold text-ink">No exposure</p>
-      <p className="mt-1.5 text-[12px] leading-relaxed text-ink-2">{note}</p>
-
-      <div className="mt-2.5 rounded-control border border-line bg-paper-2 p-2.5">
-        <p className="text-[11.5px] text-ink-2">Not necessarily zero — it could sit below the detection threshold.</p>
-      </div>
-      <p className="mt-2 text-[10.5px] text-ink-4">Last checked {lastChecked}</p>
-    </div>
-  );
-}
-
-/** The floating card a gap cell opens (03-cell-unknown.svg) — works for any dashed cell, not
- * just the one the export shows: `explanation` is per-cell. "Connect Stripe" is a placeholder
- * for now — wiring it to the real onboarding connect flow (ConnectSourceModal) glitched here,
- * nested inside this page's own FloatingCard portal; revisit once that's untangled. */
-export function GapCellCard({
-  rowLabel,
-  columnLabel,
-  explanation,
-  recoveryLow,
-  recoveryHigh,
-}: {
-  rowLabel: string;
-  columnLabel: string;
-  explanation: string;
-  recoveryLow: string;
-  recoveryHigh: string;
-}) {
-  return (
-    <div className="p-4">
-      <CardEyebrow>
-        {rowLabel} · {columnLabel}
-      </CardEyebrow>
-      <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
-        <span className="text-[20px] font-semibold text-ink">Unknown</span>
-        <span className="text-[12px] text-ink-3">exposure is not measurable here</span>
-      </div>
-
-      <div className="mt-2.5 flex gap-2 rounded-control border border-amber-border bg-amber-bg p-3">
-        <Flag className="mt-0.5 size-3.5 shrink-0 text-amber" aria-hidden />
-        <div>
-          <p className="text-[12px] font-semibold text-amber">This is a data gap, not a zero</p>
-          <p className="mt-0.5 text-[11px] text-amber">The number exists. No connected source can see it.</p>
-        </div>
-      </div>
-
-      <div className="mt-2.5 border-t border-line pt-2.5">
-        <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Why</p>
-        <p className="mt-1 text-[11.5px] leading-relaxed text-ink-2">{explanation}</p>
-      </div>
-
-      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-2.5">
-        <div>
-          <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">If you fix it</p>
-          <p className="mt-1 text-[11.5px] text-ink-2">
-            Estimated additional coverage{" "}
-            <span className="font-semibold text-ink">{recoveryLow} – {recoveryHigh}</span>
-          </p>
-        </div>
-        <Button type="button" size="sm" className="shrink-0">
-          Connect dunning feed
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/** The floating card a cell hidden by the Severity/Confidence filter opens (11-filtered.svg) —
- * the cell is real, just outside the current view. */
-export function FilteredCellCard({
-  rowLabel,
-  columnLabel,
-  severity,
-  confidence,
-  amount,
-  onClearFilter,
-  onLowerSeverityTo,
-}: {
-  rowLabel: string;
-  columnLabel: string;
-  severity: SeverityLevel;
-  confidence: ConfidenceLevel;
-  amount: string;
-  onClearFilter: () => void;
-  onLowerSeverityTo: (level: SeverityLevel) => void;
-}) {
-  return (
-    <div className="p-4">
-      <CardEyebrow>
-        {rowLabel} · {columnLabel}
-      </CardEyebrow>
-      <p className="mt-1.5 text-[16px] font-semibold text-ink">Hidden by your filter</p>
-      <p className="text-[11.5px] text-ink-3">The cell is measured. It is outside the view you chose.</p>
-
-      <dl className="mt-2.5 space-y-1 border-t border-line pt-2.5">
-        <StatRow label="Severity" value={`${SEVERITY_LABEL[severity]} — below your current filter`} />
-        <StatRow label="Confidence" value={CONFIDENCE_LABEL[confidence]} />
-        <StatRow label="Amount" value={amount} />
-      </dl>
-
-      <div className="mt-2.5 flex flex-wrap gap-2 border-t border-line pt-2.5">
-        <Button type="button" size="sm" variant="outline" onClick={onClearFilter}>
-          Clear severity filter
-        </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={() => onLowerSeverityTo(severity)}>
-          Or lower it to {SEVERITY_LABEL[severity].split(" ")[0]}
-        </Button>
-      </div>
-    </div>
-  );
 }
 
 function DetailGap({ missingSource, wouldUnlock }: { missingSource: string | null; wouldUnlock: string | null }) {
@@ -529,6 +215,205 @@ export function StageDetailCard({
           >
             <HelpCircle className="size-3.5" />
             {isAskingWhy ? "Asking…" : `Ask ${stage.learnWhy.agentName} why`}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CellDetailSkeleton() {
+  return (
+    <div className="w-full space-y-2.5 p-4">
+      <Skeleton className="h-3 w-24" />
+      <Skeleton className="h-6 w-32" />
+      <Skeleton className="h-3 w-full" />
+      <Skeleton className="h-3 w-3/4" />
+    </div>
+  );
+}
+
+/**
+ * The floating card any matrix cell opens, lazy-fetched via `useGetLeakageCell` — replaces the
+ * mock's five authored cell-card variants (value/compound/zero/gap/filtered) with one template
+ * over the real two states `LeakageCellDetailDto` distinguishes: measured (`amount` present) or
+ * gap (`reason`/`missingSource`/`wouldUnlock`/`explanation`/`alsoFills`/`connect` instead). The
+ * surface never decides between "open room" and "create room" — `room` vs `draft` on the response
+ * is that decision, made server-side (see docs/endpoints/leakage.md).
+ */
+export function CellDetailCard({
+  grid,
+  row,
+  condition,
+  currency,
+  rowLabel,
+  conditionLabel,
+  params,
+}: {
+  grid: string;
+  row: string;
+  condition: string;
+  currency: string;
+  rowLabel: string;
+  conditionLabel: string;
+  params: Pick<GetLeakageCellParams, "window" | "horizon">;
+}) {
+  const navigate = useNavigate();
+  const { data, isLoading, isError, refetch } = useGetLeakageCell({ grid, row, condition, currency, ...params });
+  const { mutate: openRoom, isPending: isOpeningRoom } = useOpenRoomOnLeakageCell();
+  const { mutate: learnWhy, isPending: isAskingWhy } = useLearnWhyLeakageCell();
+  const cell = data?.data;
+
+  if (isLoading) return <CellDetailSkeleton />;
+
+  if (isError || !cell) {
+    return (
+      <div className="w-72 max-w-[calc(100vw-2rem)] p-4">
+        <p className="text-[11.5px] text-rose">Couldn't load this cell.</p>
+        <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  const measured = cell.amount !== null;
+  const movement = cell.movement.value;
+  const expected = cell.expected.value;
+
+  const handleStartRoom = () => {
+    if (!cell.draft) return;
+    openRoom(
+      {
+        grid: cell.grid,
+        row: cell.rowKey,
+        condition: cell.conditionKey,
+        currency: cell.currency,
+        title: cell.draft.title,
+        settlement: {
+          settlesWhen: cell.draft.settlesWhen,
+          measuredOverDays: cell.draft.measuredOverDays,
+          primaryMeasure: cell.draft.primaryMeasure,
+          revenueBasis: cell.draft.revenueBasis,
+          holdoutPercent: cell.draft.holdoutPercent,
+          wouldProveUsWrong: cell.draft.wouldProveUsWrong,
+        },
+      },
+      { onSuccess: (res) => res.succeeded && navigate(`/rooms/${res.data}`) }
+    );
+  };
+
+  return (
+    <div className="p-4">
+      <CardEyebrow>
+        {rowLabel} · {conditionLabel}
+      </CardEyebrow>
+
+      <div className="mt-1.5 flex items-baseline gap-2">
+        {measured ? (
+          <span className="text-[22px] font-bold text-rose">{formatCompactMoney(cell.amount!, cell.currency)}</span>
+        ) : (
+          <span className="text-[20px] font-semibold text-ink">Unknown</span>
+        )}
+        <span className="text-[11.5px] text-ink-3">
+          {measured ? `over the last ${cell.windowDays} days` : "exposure is not measurable here"}
+        </span>
+      </div>
+
+      {measured ? (
+        <>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <Chip tone="neutral">{cell.severity.label}</Chip>
+            {cell.customers !== null && <Chip tone="neutral">{formatCount(cell.customers)} customers</Chip>}
+          </div>
+
+          <div className="mt-2.5 border-t border-line pt-2.5">
+            <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Movement</p>
+            <p className="mt-1 text-[11.5px] text-ink-2">
+              {movement ? (
+                <>
+                  {movement.direction && <span className="capitalize">{movement.direction} </span>}
+                  {movement.percentChange !== null && `${movement.percentChange}% `}
+                  {movement.comparedToLabel && <span className="text-ink-4">vs {movement.comparedToLabel}</span>}
+                </>
+              ) : (
+                <DetailGap missingSource={cell.movement.missingSource ?? null} wouldUnlock={cell.movement.wouldUnlock ?? null} />
+              )}
+            </p>
+          </div>
+
+          <div className="mt-2.5 border-t border-line pt-2.5">
+            <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Expected loss</p>
+            {expected ? (
+              <div className="mt-1">
+                <ExpectedRow entry={expected} />
+              </div>
+            ) : (
+              <p className="mt-1">
+                <DetailGap missingSource={cell.expected.missingSource ?? null} wouldUnlock={cell.expected.wouldUnlock ?? null} />
+              </p>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="mt-2.5 flex gap-2 rounded-control border border-amber-border bg-amber-bg p-3">
+            <Flag className="mt-0.5 size-3.5 shrink-0 text-amber" aria-hidden />
+            <div>
+              <p className="text-[12px] font-semibold text-amber">This is a data gap, not a zero</p>
+              {cell.missingSource && <p className="mt-0.5 text-[11px] text-amber">{cell.missingSource}</p>}
+            </div>
+          </div>
+
+          {cell.explanation && (
+            <div className="mt-2.5 border-t border-line pt-2.5">
+              <p className="font-mono text-[9px] font-medium tracking-[0.6px] text-ink-4 uppercase">Why</p>
+              <p className="mt-1 text-[11.5px] leading-relaxed text-ink-2">{cell.explanation}</p>
+            </div>
+          )}
+
+          {cell.wouldUnlock && (
+            <p className="mt-2.5 border-t border-line pt-2.5 text-[11.5px] text-ink-2">{cell.wouldUnlock}</p>
+          )}
+
+          {cell.alsoFills !== null && cell.alsoFills > 0 && (
+            <p className="mt-1 text-[10.5px] text-ink-4">Connecting this source would also fill {cell.alsoFills} other cell{cell.alsoFills === 1 ? "" : "s"}.</p>
+          )}
+        </>
+      )}
+
+      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2.5">
+        {cell.room ? (
+          <Button asChild size="sm" variant="outline">
+            <Link to={`/rooms/${cell.room.roomId}`}>Open room</Link>
+          </Button>
+        ) : cell.draft ? (
+          <Button type="button" size="sm" variant="outline" disabled={isOpeningRoom} onClick={handleStartRoom}>
+            {isOpeningRoom ? "Starting…" : "Start a room"}
+          </Button>
+        ) : (
+          <span />
+        )}
+
+        {/* Same gate as the stage card's "Learn why" — refused server-side with no measured
+            figure ("a gap is not a question" per the stage endpoint's own prose, the cell version
+            says "or one with no figure behind it"). Whether a real, non-zero cell can still be
+            refused the way Acquire's stage was is unconfirmed here too — see
+            [[flolyt_leakage_map_wiring]]. */}
+        {measured && (
+          <button
+            type="button"
+            disabled={isAskingWhy}
+            onClick={() =>
+              learnWhy(
+                { grid, row, condition, currency, window: params.window, horizon: params.horizon },
+                { onSuccess: (res) => navigate(`/conversations/${res.data.conversationId}`) }
+              )
+            }
+            className="inline-flex items-center gap-1.5 rounded-control border border-line bg-paper-2 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-paper disabled:opacity-60"
+          >
+            <HelpCircle className="size-3.5" />
+            {isAskingWhy ? "Asking…" : "Learn why"}
           </button>
         )}
       </div>

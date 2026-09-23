@@ -3,12 +3,13 @@
 Base path: `/api/v3/leakage` → `LEAKAGE_BASE_URL` / `API_ENDPOINTS.LEAKAGE` in
 [`src/config/apiConfig.ts`](../../src/config/apiConfig.ts). Pasted 2026-09-22 from the
 Scalar/OpenAPI reference doc (prose descriptions + example request/response payloads, same source
-format as [[lifecycle]] and [[rooms]]'s corrected passes). **A real `GET /leakage` and
-`GET /leakage/stages/{stageKey}` response were confirmed live 2026-09-22** (workspace with no
-completed refresh yet — `coverage.measured: 0`, so `cells` was empty everywhere and no `expected`/
-`movement` was ever `"available"`); `GET /leakage/cells/{...}` was confirmed to refuse with a
-plain thrown error (see its section below) rather than a `200` with `data: null`. `report` and
-`conditions` are still unconfirmed against a real call — per [[feedback_verify_against_endpoint_docs]].
+format as [[lifecycle]] and [[rooms]]'s corrected passes). **A real `GET /leakage`,
+`GET /leakage/stages/{stageKey}`, and `GET /leakage/report` response were confirmed live**
+(2026-09-22 and 2026-09-23 respectively — same workspace with no completed refresh yet,
+`coverage.measured: 0`, so `cells` was empty everywhere, no `expected`/`movement` was ever
+`"available"`, and `report`'s own `markets: []`); `GET /leakage/cells/{...}` was confirmed to
+refuse with a plain thrown error (see its section below) rather than a `200` with `data: null`.
+`conditions` is still unconfirmed against a real call — per [[feedback_verify_against_endpoint_docs]].
 
 This is the leakage map/page's own domain, separate from the pre-redesign `LIFECYCLE.GET_LEAKAGE_MAP`
 scaffold in `src/services/api/lifecycle-old/get-leakage-map.ts` (that one is part of the archived
@@ -57,8 +58,19 @@ and `movement` seen live so far was `state: "unavailable"`, so `LeakageExpectedE
 the endpoints' own prose. The grid's inline `LeakageCellDto` (`amount`/`customers`) is left as
 plain nullable scalars, matching the original truncated example, but note the wrapper pattern
 turned out to apply everywhere else in this API family — treat that choice as unconfirmed too.
-`GET /leakage/report`'s `gross`/`realized`/`expected`/`net` are still typed as plain
-`number | null`, entirely unconfirmed — no live report response has been pulled yet.
+
+**`GET /leakage/report` confirmed live 2026-09-23** (same no-refresh-yet workspace) — but only its
+**top-level shape**: `window`/`horizon`/`refreshedAtUtc`/`coverage`/`calculation` all matched the
+already-documented `LeakageWindowDto`/`LeakageHorizonDto`/`LeakageCoverageDto`/`LeakageCalculationDto`
+exactly, field-for-field, no surprises. `markets` came back `[]` (no completed refresh), so the
+**per-market entry shape is still 100% unconfirmed** — `gross`/`realized`/`expected`/`net`/
+`conditions`/`bySeverity`/`byHorizon`/`topLeaks`/`actions` all remain typed from prose alone.
+Re-check once a workspace with `coverage.measured > 0` produces a non-empty `markets[]`.
+Incidentally, this response's `coverage.unmeasuredConditions` names this workspace's real 10
+conditions (Repeat decay, Involuntary churn, Abandonment, Refunds, Discount dependency, Spoilage,
+Leakage, Churn risk, Activation, Expansion gap) — confirms a real workspace has **10** conditions
+on its map, not the old mock's 5, reinforcing why the matrix's columns must render from
+`grid.conditions` dynamically (see docs/leakage-map/build-plan.md mismatch #4).
 
 ## Shared shapes
 
@@ -243,8 +255,11 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   The surface never decides between "open room" and "create room", and never invents a default —
   `room` vs `draft` is that decision, made server-side. A cell whose condition has been taken off
   the map (`NotApplicable`) is refused, not served.
-- **Used by:** `services/api/leakage/get-leakage-cell.ts`, `features/leakage/use-get-leakage-cell.ts` (hook only fires once all four path params are present). Not wired.
-- **Status:** documented, scaffolded, not wired
+- **Used by:** `services/api/leakage/get-leakage-cell.ts`, `features/leakage/use-get-leakage-cell.ts` (hook only fires once all four path params are present). Wired into `src/pages/leakage-map/detail-panel.tsx`'s `CellDetailCard`, opened from a matrix cell click in `matrix.tsx`.
+- **Status:** documented, scaffolded, wired — **not live-exercised**: this workspace has no
+  currency signal anywhere (`markets`/`bySeverity`/`ladders` all empty), so `matrix.tsx` correctly
+  renders every cell disabled rather than fetch with an invented currency — see
+  [[flolyt_leakage_map_wiring]] Step 4.
 - **Confirmed live 2026-09-22:** a refused coordinate (no cell at that address) comes back as a
   thrown HTTP error — `{ data: null, messages: ["That cell is not on the leakage map…"], succeeded:
   false }` on a non-2xx status — not a `200` with `data: null`. `getServerErrorMessage` already
@@ -271,8 +286,8 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   Corrected from the earlier `rooms.md` guess — real body nests settlement fields under
   `settlement`, not flat.
 - **Response:** `{ data: roomId, messages, succeeded }` — `data` is a plain string (uuid).
-- **Used by:** `services/api/leakage/open-room-on-leakage-cell.ts`, `features/leakage/use-open-room-on-leakage-cell.ts`. Invalidates `["rooms"]`, `["leakage-cell"]`, and `["leakage"]` on success. Not wired.
-- **Status:** documented, scaffolded, not wired
+- **Used by:** `services/api/leakage/open-room-on-leakage-cell.ts`, `features/leakage/use-open-room-on-leakage-cell.ts`. Invalidates `["rooms"]`, `["leakage-cell"]`, and `["leakage"]` on success. Wired into `CellDetailCard`'s "Start a room" button — sends the cell's own `draft` object as-is, no client-side edit form. **Not live-exercised** (same reason as the GET above).
+- **Status:** documented, scaffolded, wired — not live-exercised
 - **Notes:** Refused on a cell with no figure behind it. Supersedes the never-wired
   `ROOMS.OPEN_ROOM_ON_LEAKAGE_CELL` placeholder — see the correction note at the top of this file.
 
@@ -318,8 +333,8 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
 - **Request:** path `grid`, `row`, `condition`, `currency`; query `window?`, `horizon?`. No body.
 - **Response:** same `LearnWhyConversationDto` shape as the stage version (shared type, defined in
   `learn-why-leakage-stage.ts`).
-- **Used by:** `services/api/leakage/learn-why-leakage-cell.ts`, `features/leakage/use-learn-why-leakage-cell.ts`. Not wired.
-- **Status:** documented, scaffolded, not wired
+- **Used by:** `services/api/leakage/learn-why-leakage-cell.ts`, `features/leakage/use-learn-why-leakage-cell.ts`. Wired into `CellDetailCard`'s "Learn why" button, gated on `amount !== null` — same client-side gate as the stage version, and likely has the same unconfirmed "measured-zero still refused" gap (see the stage learn-why section above). **Not live-exercised.**
+- **Status:** documented, scaffolded, wired — not live-exercised
 - **Notes:** Refused on a cell the map isn't showing, or one with no figure behind it.
 
 ## GET /api/v3/leakage/stages/{stageKey}
@@ -348,8 +363,8 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
     realized: LeakageRealizedAmountDto[];
   }
   ```
-- **Used by:** `services/api/leakage/get-leakage-stage.ts`, `features/leakage/use-get-leakage-stage.ts`. Not wired.
-- **Status:** documented, scaffolded, not wired
+- **Used by:** `services/api/leakage/get-leakage-stage.ts`, `features/leakage/use-get-leakage-stage.ts`. Wired into `StageDetailCard` (lazy-fetched on a stage card click) — see [[flolyt_leakage_map_wiring]] Step 3.
+- **Status:** documented, scaffolded, wired and live-verified
 - **Confirmed live 2026-09-22** for the `acquire` stage on a workspace with no completed refresh —
   every gapped field's `missingSource`/`wouldUnlock` sentence reads exactly as described in the
   endpoint's prose. `atStake` was `available` (`[{ currency: "NGN", amountAtRisk: 0 }]`); every

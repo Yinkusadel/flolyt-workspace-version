@@ -81,9 +81,13 @@ refresh, `coverage.measured: 0`) corrected several guessed shapes in
 (`LeakageMeasuredValueDto<T>` wrapper, `amountAtRisk` field name, nullable `marketLens`).
 `GET /leakage/cells/{...}` was called too but only returned a refusal (invalid coordinate) —
 confirmed it throws an HTTP error the existing try/catch already handles correctly.
-**Still open, get before Step 4:** a real measured cell, a real `GET /leakage/report` response
-(100% unconfirmed), and an `expected`/`movement` that's actually `"available"` (every example so
-far was `"unavailable"`).
+**Still open before the matrix can be fully live-verified:** a real measured cell (this workspace
+has stayed at 0% coverage all session) and an `expected`/`movement` that's actually `"available"`
+(every example so far was `"unavailable"`) — neither blocks *building* Step 4 against the
+documented shape, just verifying it end-to-end. `GET /leakage/report` was confirmed live
+2026-09-23 — top-level shape only (its `markets[]` came back empty), see
+[docs/endpoints/leakage.md](../endpoints/leakage.md); that endpoint feeds Step 5 (Market
+breakdown), not Step 4 (the matrix pulls from `GET /leakage`'s own `grids[]`, already documented).
 
 ### Step 1 — Filters: Window, Horizon, Severity, Confidence, Market — ✅ done (2026-09-23)
 - New module `filters.ts` (not `data.ts`) holds filter state/derivation — `LeakageFilterState`
@@ -191,10 +195,52 @@ yet on purpose** — the user is checking with their team on how strict the clie
 be (e.g. also hide the button when every currency's `amountAtRisk` is `0`, not just when the
 wrapper's `value` is `null`) before this is touched again.
 
-### Step 4 — The matrix itself — not started
-Biggest structural change: dynamic rows/conditions/cells from `grids[]` (now handling 2 grids via
-a tab, per finding #6), currency-scoped, 2 render states instead of 5, cell click lazy-fetches
-`useGetLeakageCell`, "start a room" wired to `useOpenRoomOnLeakageCell`.
+### Step 4 — The matrix itself — ✅ done (2026-09-23)
+`matrix.tsx` rewritten to render `GET /leakage`'s own `grids[]` dynamically — columns from
+`grid.conditions.filter(applicability !== "NotApplicable")`, rows from `grid.rows`, cells looked up
+from a `${row}:${condition}` map built from `grid.cells` (scoped to the active currency). Only 2
+real render states survive (measured — `amount` present, heat-shaded by the real `intensity` field
+— or gap — dashed "Unknown"); the mock's "compound"/"zero"/"filtered" states are gone, per
+mismatch #3 (severity/confidence filtering is already server-side — `filter.cellsHidden` is
+rendered as a bare count banner, no client-side hiding logic left at all).
+
+**Grid switcher confirmed live** — this workspace really does carry both `lifecycle_stage` and
+`segment` grids at once (mismatch #6), each with its **own distinct 5 conditions** (lifecycle_stage:
+Repeat decay/Involuntary churn/Abandonment/Refunds/Discount dependency; segment: Spoilage/Leakage/
+Churn risk/Activation/Expansion gap) — together the real 10 conditions `GET /leakage/report`
+confirmed. `segment`'s `rows: []` came back empty live, so a "No rows defined for this grid yet."
+empty state was added (the DataTable-empty-state convention, applied here too).
+
+Cell click lazy-fetches `GET /leakage/cells/{...}` via a new `CellDetailCard` in `detail-panel.tsx`,
+replacing the mock's five authored cell-card variants (`ValueCellCard`/`CompoundCellCard`/
+`ZeroCellCard`/`GapCellCard`/`FilteredCellCard`, plus `RiskChips`/`ordinal` — all deleted). "Start a
+room" sends the cell's own server-provided `draft` object as-is (no client-side edit form — out of
+this step's scope) via `useOpenRoomOnLeakageCell`, navigating to the new room on success; "Learn
+why" wired via `useLearnWhyLeakageCell`, gated the same way as the stage version (`amount !== null`)
+— the same "measured-zero still gets refused" ambiguity flagged on the stage endpoint likely
+applies here too ("or one with no figure behind it" in this endpoint's own prose), unconfirmed.
+
+**Real bug caught and fixed during live verification:** the active currency (needed as a path
+segment for the cell-detail fetch) has no source at all when `markets`, `bySeverity`, and `ladders`
+are *all* empty (confirmed live — every field this workspace could supply a currency from was
+empty). The first pass fell back to an empty string, which silently disabled the query and then
+misreported as "Couldn't load this cell." Fixed: `index.tsx` now falls through
+primary-market → any-market → `bySeverity[0]` → `ladders[0]`, and when every source comes up empty,
+`matrix.tsx` renders that cell as a plain disabled button instead of firing a request with an
+invented currency. **This means the cell-click flow itself (`CellDetailCard`, start-a-room,
+learn-why-cell) could not be live-verified end-to-end this session** — every cell in this workspace
+is currently inert for exactly this reason. Needs a workspace with at least one configured market
+(or a completed refresh populating `bySeverity`/`ladders`) to actually exercise it.
+
+`data.ts`'s `SeverityLevel`/`SEVERITY_LABEL`/`CONFIDENCE_RANK`/`MatrixColumnKey`/`MATRIX_COLUMNS`/
+`MatrixCell`/`MatrixRow`/`MATRIX_ROWS`/`isCellHiddenByFilter`/`filteredOutPercent` are all deleted
+— fully retired now that severity/confidence filtering happens server-side and the grid is real.
+`index.tsx`'s `legacySeverityRank`/`legacyConfidenceLevel` adapters (Step 1's bridge for the
+still-mock matrix) are gone too. `HEAT_SCALE`/`HEAT_TEXT_CLASS` survive (reused, now driven by real
+`intensity`); `FEATURED_CELL` survives in trimmed form (only `.room.id`, still referenced by the
+still-mock, still-hidden `ActionsPanel` — Step 5's job to remove). `StatusLine`'s Severity/
+Confidence amber line now shows the real `filter.cellsHidden` count instead of a fabricated
+percentage (there's no single "total cells" to divide by across two differently-sized grids).
 
 ### Step 5 — Coverage panel, "How is this calculated", Market breakdown — not started
 Thin coverage panel to real `coverage` fields; real `calculation` block in the dialog; market
