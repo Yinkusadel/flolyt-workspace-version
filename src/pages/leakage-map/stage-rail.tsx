@@ -143,10 +143,12 @@ export function StageRail({
           rendered — but this must not contribute a layout gap of its own while collapsed: a
           `space-y-*` parent gives every sibling its margin-top regardless of that sibling's own
           visible height, so this wrapper being *present at all* (even collapsed to zero height)
-          silently doubled the header-to-cards gap once a gapped stage existed. Fixed by giving
-          this wrapper no outer margin of its own — the gap it shows while visible lives in its own
-          collapsing `pt-3`, and the cards grid gets a fixed `mt-3` below that stays constant
-          whether this hint is shown, collapsed, or never rendered at all. */}
+          silently doubled the header-to-cards gap once a gapped stage existed. This wrapper itself
+          carries no margin or padding, so it can genuinely reach 0px when collapsed — the gap it
+          shows while visible is a `mt-3` on the bubble itself (a *margin*, unlike padding, doesn't
+          force the collapsed 0fr row to be at least that tall), and the cards grid below gets its
+          own fixed `mt-3` that stays constant whether this hint is shown, collapsed, or never
+          rendered at all. */}
       {hasGappedFigure && (
         <div
           className={cn(
@@ -154,8 +156,8 @@ export function StageRail({
             showHint ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
           )}
         >
-          <div className="min-h-0 pt-3">
-            <div className="relative inline-flex max-w-57.5 items-start gap-1.5 rounded-2xl bg-ink px-3.5 py-2.5 text-[11.5px] leading-snug text-paper shadow-lg">
+          <div className="min-h-0">
+            <div className="relative mt-3 inline-flex max-w-57.5 items-start gap-1.5 rounded-2xl bg-ink px-3.5 py-2.5 text-[11.5px] leading-snug text-paper shadow-lg">
               <span className="absolute -bottom-1.5 left-5 size-3 rotate-45 rounded-xs bg-ink" aria-hidden />
               <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
               <span>Hover the info icon on a card to see why it's unavailable</span>
