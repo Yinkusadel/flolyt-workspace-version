@@ -353,18 +353,12 @@ export const PAGE_FOOTER = {
 };
 
 // ---------------------------------------------------------------------------
-// Page states (12-states.svg) — this page has no live source yet, so loading/empty/error are
-// reachable only by editing LEAKAGE_MAP_STATE in index.tsx, same convention as other rebuilds.
+// Page states (12-states.svg) — empty/error render as a `PageStateBanner`; loading is now
+// `recomputing-toast.tsx`'s own floating toast (a fixed-position overlay, not in-flow, so a
+// refetch never shifts the page — see that file).
 // ---------------------------------------------------------------------------
 
-export type PageState = "loading" | "empty" | "partial" | "error";
-
 export const PAGE_STATES = {
-  loading: {
-    title: "Recomputing exposure for next 90 days…",
-    body: "Cells refresh in about two seconds.",
-    footnote: "The previous figures stay visible and greyed until the new ones land.",
-  },
   empty: {
     title: "No leakage data yet",
     body: "Connect at least one source to see your exposure map.",

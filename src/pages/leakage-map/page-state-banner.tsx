@@ -1,42 +1,27 @@
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, PlugZap, RefreshCw } from "lucide-react";
+import { AlertTriangle, PlugZap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PAGE_STATES } from "@/pages/leakage-map/data";
 
 /**
- * Loading/empty/error (12-states.svg), now driven by `useGetLeakage`'s real query state instead of
- * a hardcoded flag — see index.tsx. Title/body/footnote copy stays `data.ts`'s static chrome (it
- * doesn't assert any number or fact the API could contradict); the error message and the retry/
- * connect actions are real. "Empty" is inferred from `customerCount === 0` — unconfirmed live,
- * since every real response pulled so far had customers; flagged in
- * docs/leakage-map/build-plan.md.
+ * Empty/error (12-states.svg), driven by `useGetLeakage`'s real query state — see index.tsx.
+ * Title/body/footnote copy stays `data.ts`'s static chrome (it doesn't assert any number or fact
+ * the API could contradict); the error message and the retry/connect actions are real. "Empty" is
+ * inferred from `customerCount === 0` — unconfirmed live, since every real response pulled so far
+ * had customers; flagged in docs/leakage-map/build-plan.md. The in-flight "recomputing" state is a
+ * separate floating toast (`recomputing-toast.tsx`), not a banner here — see that file for why.
  */
 export function PageStateBanner({
   state,
   errorMessage,
   onRetry,
 }: {
-  state: "loading" | "empty" | "error";
+  state: "empty" | "error";
   errorMessage?: string;
   onRetry?: () => void;
 }) {
   const navigate = useNavigate();
-
-  if (state === "loading") {
-    const copy = PAGE_STATES.loading;
-    return (
-      <div className="flex items-center gap-3 rounded-card border border-line bg-paper-2 px-4 py-3">
-        <RefreshCw className="size-4 shrink-0 animate-spin text-ink-3" aria-hidden />
-        <div>
-          <p className="text-[12.5px] font-medium text-ink">{copy.title}</p>
-          <p className="mt-0.5 text-[11px] text-ink-3">
-            {copy.body} {copy.footnote}
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   if (state === "error") {
     const copy = PAGE_STATES.error;

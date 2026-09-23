@@ -9,6 +9,7 @@ import { CoveragePanel } from "@/pages/leakage-map/coverage-panel";
 import { ActionsPanel } from "@/pages/leakage-map/actions-panel";
 import { PageFooter } from "@/pages/leakage-map/page-footer";
 import { PageStateBanner } from "@/pages/leakage-map/page-state-banner";
+import { RecomputingToast } from "@/pages/leakage-map/recomputing-toast";
 import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import {
   DEFAULT_FILTERS,
@@ -38,10 +39,10 @@ function legacyConfidenceLevel(minConfidence: string | null): ConfidenceLevel {
  * line, five cell states instead of two, Severity/Confidence as real filters (not shading
  * choices), and the coverage/actions panels that carry the page's honesty.
  *
- * Filters (Calc/Window/Horizon/Market/Severity/Confidence) and the page shell (loading/error/empty,
- * status line, stage rail) are wired to the real `GET /leakage` — see
- * docs/leakage-map/build-plan.md Steps 1–2. The matrix, coverage panel, actions panel and market
- * breakdown are still mock, landing in Steps 3–5.
+ * Filters (Calc/Window/Horizon/Market/Severity/Confidence) and the page shell (loading via the
+ * floating `RecomputingToast`, error/empty via `PageStateBanner`, status line, stage rail) are
+ * wired to the real `GET /leakage` — see docs/leakage-map/build-plan.md Steps 1–2. The matrix,
+ * coverage panel, actions panel and market breakdown are still mock, landing in Steps 3–5.
  */
 export default function LeakageMap() {
   const [filters, setFilters] = React.useState<LeakageFilterState>(DEFAULT_FILTERS);
@@ -83,8 +84,11 @@ export default function LeakageMap() {
 
   return (
     <div className="space-y-6">
+      <RecomputingToast
+        visible={!isError && isFetching}
+        horizonLabel={leakage?.horizon.label ?? fallbackHorizonLabel}
+      />
       {isError && <PageStateBanner state="error" errorMessage={error?.message} onRetry={() => refetch()} />}
-      {!isError && isFetching && <PageStateBanner state="loading" />}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
