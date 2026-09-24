@@ -8,6 +8,7 @@ import {
   ChevronRight,
   CreditCard,
   Database,
+  Globe,
   LogOut,
   ScrollText,
   Settings,
@@ -39,6 +40,7 @@ const DATA_LINKS: MenuLink[] = [
 
 const SETTINGS_LINKS: MenuLink[] = [
   { label: "Members", href: "/members", icon: Users },
+  { label: "Markets", href: "/markets", icon: Globe },
   // { label: "Security", href: "/security", icon: Lock },
   { label: "Audit log", href: "/audit-log", icon: ScrollText },
   // { label: "Data and residency", href: "/data-and-residency", icon: Globe },
