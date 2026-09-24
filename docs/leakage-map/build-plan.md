@@ -290,21 +290,29 @@ percentage (there's no single "total cells" to divide by across two differently-
   `HEAT_TEXT_CLASS`/`PAGE_STATES` survive (still used elsewhere on the page).
 - **Coverage panel confirmed live 2026-09-24** — `coverage.percent` (20%) and `coverage.sentence`
   rendered exactly as the response gave them, no fixes needed.
-- **Market breakdown live-verified 2026-09-24 and two real bugs caught and fixed.** First populated
-  `markets[]` this endpoint has ever produced (5 currencies). (1) `gross`/`realized`/`expected`/
-  `net` are `LeakageMeasuredValueDto`-wrapped, not the plain nullable number the endpoint's prose
-  had implied — the first pass's `market.gross` was actually an object, and
+- **Market breakdown live-verified 2026-09-24 and three real bugs caught and fixed.** First
+  populated `markets[]` this endpoint has ever produced (5 currencies). (1) `gross`/`realized`/
+  `expected`/`net` are `LeakageMeasuredValueDto`-wrapped, not the plain nullable number the
+  endpoint's prose had implied — the first pass's `market.gross` was actually an object, and
   `formatCompactMoney(market.gross, …)` rendered it as a literal `[object Object]` next to every
   currency. Fixed in `get-leakage-report.ts` (types) and `market-breakdown.tsx` (reads
   `market.gross.value`). (2) Every non-primary market had `countryCode: null` — the shared
   `marketOptionLabel` (filters.ts) correctly falls back to "Unlabeled market" for the filter
   dropdown, but reused here it repeated across 4 of 5 rows with nothing to tell them apart (the
   currency was already shown on the row, but not as the label). Fixed with a local
-  `marketRowLabel` in `market-breakdown.tsx` that falls back to the currency itself instead. Also
-  corrected `LeakageTopLeakDto`'s three previously-truncated fields (`severity`/`owner`/`roomId`) —
-  not yet rendered anywhere on the page, but fixed while the real shape was in hand rather than
-  left for a future step to guess again. See docs/endpoints/leakage.md's `GET /leakage/report`
-  section for the full before/after.
+  `marketRowLabel` in `market-breakdown.tsx` that falls back to the currency itself instead.
+  (3) **The bar's relative width was itself a mistake, caught live once real cross-currency data
+  existed to expose it** — each row's width was `gross.value / (max gross.value across the list)`,
+  which compares raw magnitudes across different currencies with no FX rate (₦9.4M read as 100%
+  "dominant" purely because the Naira has more digits per unit of value than CAD/EUR/GBP/USD, not
+  because it necessarily carries more real exposure) — visually contradicting this same panel's own
+  "money is never summed across currencies" message, and itself a form of
+  [[feedback_no_frontend_business_math]] since it's a comparison the backend never made. The
+  endpoint has no share/percent field to wire instead, so the bar is removed outright rather than
+  replaced with another derived number. Also corrected `LeakageTopLeakDto`'s three
+  previously-truncated fields (`severity`/`owner`/`roomId`) — not yet rendered anywhere on the
+  page, but fixed while the real shape was in hand rather than left for a future step to guess
+  again. See docs/endpoints/leakage.md's `GET /leakage/report` section for the full before/after.
 - **"How is this calculated" dialog not yet live-clicked** — built against the documented
   `calculation` shape (same wrapper structure confirmed live elsewhere on this page), but the
   dialog itself hasn't been opened against a real response yet.
