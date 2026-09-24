@@ -161,14 +161,16 @@ export interface LeakageGridRowDto {
   label: string;
 }
 
-// Still unconfirmed — a live pull of this endpoint (2026-09-22) returned `cells: []` for every
-// grid (nothing has been measured for that workspace yet), so this truncated shape has not been
-// re-checked. `amount`/`customers` are kept as plain nullable scalars (matching the original
-// example, where they sit as bare siblings of `state`) rather than wrapped in
-// LeakageMeasuredValueDto — but note that wrapper turned out to apply to *every* other
-// independently-gappable figure in this API family, so treat that choice as a guess too. `expected`
-// is wrapped on the same reasoning as the stage-level fix. Re-paste once a workspace with
-// `coverage.measured > 0` is available.
+// Confirmed live 2026-09-24 against a workspace with a connected source and real coverage — the
+// 2026-09-22 truncated paste was missing six fields entirely (`reason`/`missingSource`/
+// `wouldUnlock`/`neverEstimated`/`calculation`/`realized`), all real and populated on the grid's
+// own inline cell, not just the click-through detail. `amount`/`customers`/`intensity` stay plain
+// nullable scalars (not `LeakageMeasuredValueDto`, unlike the rest of this API family) — confirmed
+// by a real measured cell (`state: "available"`, `amount: 7023.98`, `customers: 24`,
+// `intensity: 1`) sitting right next to gap ones (`state: "unavailable"`, every other field null,
+// `reason: "NotMeasuredByFlolyt"`). A real zero is genuinely `state: "available"`, `amount: 0`, not
+// a gap — confirmed live, matches `measured = amount != null`. `calculation`/`realized` are
+// populated only when measured (`null` on a gap cell).
 export interface LeakageCellDto {
   row: string;
   condition: string;
@@ -180,6 +182,14 @@ export interface LeakageCellDto {
   severity: LeakageSeverityLevelDto;
   intensity: number | null;
   roomId: string | null;
+  /** Confirmed live value so far: "NotMeasuredByFlolyt" (a different literal than the click-through
+   * detail's own `reason`, which only ever showed "SourceMissing") — plain string, not an enum. */
+  reason: string | null;
+  missingSource: string | null;
+  wouldUnlock: string | null;
+  neverEstimated: boolean;
+  calculation: LeakageCalculationDto | null;
+  realized: number | null;
 }
 
 export interface LeakageGridDto {

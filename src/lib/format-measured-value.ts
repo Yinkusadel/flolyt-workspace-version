@@ -28,11 +28,13 @@ export function formatCompactMoney(value: number, currencyCode: string): string 
  * atStake's `value` is an array of per-currency amounts, not a bare number — confirmed live
  * 2026-09-10 (`[{ currency: "NGN", amountAtRisk: 0 }]`). Never sums across entries (money is
  * never blended across currencies, per formatCompactMoney); a genuinely multi-currency stake
- * renders as one figure per currency joined with " + " instead of one invented total.
+ * renders as one figure per currency joined with " · " — not " + ", which reads as arithmetic
+ * addition and would visually contradict the very rule this exists to enforce (caught live
+ * 2026-09-24 on a real 5-currency `atStake` array).
  */
 export function formatAtStakeAmounts(amounts: { currency: string; amountAtRisk: number }[]): string {
   if (amounts.length === 0) return "Unavailable";
-  return amounts.map((a) => formatCompactMoney(a.amountAtRisk, a.currency)).join(" + ");
+  return amounts.map((a) => formatCompactMoney(a.amountAtRisk, a.currency)).join(" · ");
 }
 
 /** Comma-grouped count, for a measured figure meant to read as an exact-looking total (e.g. a 12-month population). */

@@ -4,12 +4,16 @@ Base path: `/api/v3/leakage` → `LEAKAGE_BASE_URL` / `API_ENDPOINTS.LEAKAGE` in
 [`src/config/apiConfig.ts`](../../src/config/apiConfig.ts). Pasted 2026-09-22 from the
 Scalar/OpenAPI reference doc (prose descriptions + example request/response payloads, same source
 format as [[lifecycle]] and [[rooms]]'s corrected passes). **A real `GET /leakage`,
-`GET /leakage/stages/{stageKey}`, and `GET /leakage/report` response were confirmed live**
-(2026-09-22 and 2026-09-23 respectively — same workspace with no completed refresh yet,
-`coverage.measured: 0`, so `cells` was empty everywhere, no `expected`/`movement` was ever
-`"available"`, and `report`'s own `markets: []`); `GET /leakage/cells/{...}` was confirmed to
-refuse with a plain thrown error (see its section below) rather than a `200` with `data: null`.
-`conditions` is still unconfirmed against a real call — per [[feedback_verify_against_endpoint_docs]].
+`GET /leakage/stages/{stageKey}`, `GET /leakage/report`, and `GET /leakage/cells/{...}` response
+were all confirmed live** across three passes: 2026-09-22/23 on a workspace with no completed
+refresh yet (`coverage.measured: 0`, `cells` empty everywhere, `report`'s `markets: []`), then
+**2026-09-24 on the same workspace after a real data source was connected** — the first genuinely
+measured cells/stages/coverage this domain has seen (`coverage.percent: 20`, real multi-currency
+`atStake` arrays, a real measured grid cell). `GET /leakage/cells/{...}` refuses a bad coordinate
+with a plain thrown error rather than a `200` with `data: null` (still true), but was also
+confirmed live for a **real, successfully measured** coordinate (see its section below).
+`conditions` and `GET /leakage/report`'s per-market entry shape are still unconfirmed against a
+real call — per [[feedback_verify_against_endpoint_docs]].
 
 This is the leakage map/page's own domain, separate from the pre-redesign `LIFECYCLE.GET_LEAKAGE_MAP`
 scaffold in `src/services/api/lifecycle-old/get-leakage-map.ts` (that one is part of the archived
@@ -26,19 +30,18 @@ object in the body, not a flat `{grid, rowKey, conditionKey, currency, title}`. 
 files were deleted and replaced by the corrected ones under `leakage/` below; `rooms.md`'s entry
 now points here instead of describing it independently.
 
-## ⚠️ Two responses in this paste are truncated
+## ⚠️ One response in this paste is still truncated
 
 Per [[feedback_stop_on_truncated_endpoint_fields]] — flagging this rather than guessing:
 
-- `GET /leakage`'s `grids[].cells[]` example ends with `"...": "[Additional Properties Truncated]"`
-  after `roomId`. `LeakageCellDto` below (in `get-leakage.ts`) only types the fields visible before
-  the cut.
-- `GET /leakage/report`'s `topLeaks[]` example ends the same way after `net`, despite the
-  endpoint's own prose saying each leak carries "its owner" — that field's real name isn't visible
-  anywhere in the capture, so `LeakageTopLeakDto` (in `get-leakage-report.ts`) doesn't include it.
-
-Re-paste both with Scalar's "Show Schema" toggle (not the example tab) to get the rest of these two
-shapes before wiring either response into a UI that needs the cut-off fields.
+- `GET /leakage/report`'s `topLeaks[]` example ends with `"...": "[Additional Properties
+  Truncated]"` after `net`, despite the endpoint's own prose saying each leak carries "its owner" —
+  that field's real name isn't visible anywhere in the capture, so `LeakageTopLeakDto` (in
+  `get-leakage-report.ts`) doesn't include it. Re-paste with Scalar's "Show Schema" toggle (not the
+  example tab) before wiring `topLeaks` into a UI.
+- `GET /leakage`'s `grids[].cells[]` was ALSO truncated in the original 2026-09-22 paste (cut off
+  after `roomId`), but a full, untruncated real cell was pasted live 2026-09-24 — see "Fields
+  confirmed live" below. `LeakageCellDto` is now complete.
 
 ## Fields confirmed live vs. still inferred
 
@@ -53,11 +56,22 @@ array is confirmed to use `{ currency, amountAtRisk }` (not `amount`), which is 
 confirmed to be `null` itself (not just its sub-fields) when the workspace has no market data yet.
 
 **Still inferred (outer wrapper confirmed by analogy, inner content is not):** every `expected`
-and `movement` seen live so far was `state: "unavailable"`, so `LeakageExpectedEntryDto`'s and
-`LeakageMovementValueDto`'s fields (what `.value` looks like once populated) remain a guess from
-the endpoints' own prose. The grid's inline `LeakageCellDto` (`amount`/`customers`) is left as
-plain nullable scalars, matching the original truncated example, but note the wrapper pattern
-turned out to apply everywhere else in this API family — treat that choice as unconfirmed too.
+and `movement` seen live so far — including 2026-09-24's real-coverage pull — was still
+`state: "unavailable"`, so `LeakageExpectedEntryDto`'s and `LeakageMovementValueDto`'s fields (what
+`.value` looks like once populated) remain a guess from the endpoints' own prose.
+
+**`GET /leakage`'s grid-inline `LeakageCellDto` fully confirmed live 2026-09-24**, correcting the
+2026-09-22 truncated guess in two ways: (1) `amount`/`customers`/`intensity` really are plain
+nullable scalars, not `LeakageMeasuredValueDto`-wrapped like the rest of this API family — confirmed
+by a real measured cell (`state: "available"`, `amount: 7023.98`, `customers: 24`, `intensity: 1`)
+sitting right next to gap ones; (2) the cell carries **six more fields the truncated paste never
+showed**: `reason` (confirmed literal `"NotMeasuredByFlolyt"` — a different string than the
+click-through detail's own `reason`, which only ever showed `"SourceMissing"`), `missingSource`,
+`wouldUnlock`, `neverEstimated` (boolean), `calculation` (populated only when measured, `null` on a
+gap), and `realized` (a plain number when measured, `null` on a gap). A genuine measured zero is
+real too (`state: "available"`, `amount: 0`, `customers: 0`) — not a gap, confirmed live. `intensity`
+looks bounded like a 0–1 score (a real measured cell was `1`; several real-zero cells were `0`),
+though only those two endpoints have been observed.
 
 **`GET /leakage/report` confirmed live 2026-09-23** (same no-refresh-yet workspace) — but only its
 **top-level shape**: `window`/`horizon`/`refreshedAtUtc`/`coverage`/`calculation` all matched the
@@ -256,16 +270,17 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   `room` vs `draft` is that decision, made server-side. A cell whose condition has been taken off
   the map (`NotApplicable`) is refused, not served.
 - **Used by:** `services/api/leakage/get-leakage-cell.ts`, `features/leakage/use-get-leakage-cell.ts` (hook only fires once all four path params are present). Wired into `src/pages/leakage-map/detail-panel.tsx`'s `CellDetailCard`, opened from a matrix cell click in `matrix.tsx`.
-- **Status:** documented, scaffolded, wired — **not live-exercised**: this workspace has no
-  currency signal anywhere (`markets`/`bySeverity`/`ladders` all empty), so `matrix.tsx` correctly
-  renders every cell disabled rather than fetch with an invented currency — see
-  [[flolyt_leakage_map_wiring]] Step 4.
+- **Status:** documented, scaffolded, wired, **live-verified end-to-end 2026-09-24**
 - **Confirmed live 2026-09-22:** a refused coordinate (no cell at that address) comes back as a
   thrown HTTP error — `{ data: null, messages: ["That cell is not on the leakage map…"], succeeded:
   false }` on a non-2xx status — not a `200` with `data: null`. `getServerErrorMessage` already
-  reads `messages[]` correctly, so the existing try/catch in `get-leakage-cell.ts` needed no
-  change. A genuinely measured cell (`room`/`draft`/`signals`/`guidance` populated) has not been
-  seen live yet.
+  reads `messages[]` correctly, so the existing try/catch in `get-leakage-cell.ts` needed no change.
+- **Confirmed live 2026-09-24** for `active × repeat_decay × NGN` on the newly-connected-source
+  workspace: clicking a real `₦4.3M` matrix cell fired `GET .../cells/lifecycle_stage/active/
+  repeat_decay/NGN?window=90&horizon=90` and rendered the real amount, severity ("Low"), and
+  customer count (11), with `movement`/`expected` correctly gapped and a "Start a room" button
+  present (so `draft` was non-null) — no console errors. `room`/`signals`/`guidance` populated
+  still hasn't been seen (this cell had none open).
 
 ## POST /api/v3/leakage/cells/{grid}/{row}/{condition}/{currency}/room
 
@@ -286,8 +301,11 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   Corrected from the earlier `rooms.md` guess — real body nests settlement fields under
   `settlement`, not flat.
 - **Response:** `{ data: roomId, messages, succeeded }` — `data` is a plain string (uuid).
-- **Used by:** `services/api/leakage/open-room-on-leakage-cell.ts`, `features/leakage/use-open-room-on-leakage-cell.ts`. Invalidates `["rooms"]`, `["leakage-cell"]`, and `["leakage"]` on success. Wired into `CellDetailCard`'s "Start a room" button — sends the cell's own `draft` object as-is, no client-side edit form. **Not live-exercised** (same reason as the GET above).
-- **Status:** documented, scaffolded, wired — not live-exercised
+- **Used by:** `services/api/leakage/open-room-on-leakage-cell.ts`, `features/leakage/use-open-room-on-leakage-cell.ts`. Invalidates `["rooms"]`, `["leakage-cell"]`, and `["leakage"]` on success. Wired into `CellDetailCard`'s "Start a room" button — sends the cell's own `draft` object as-is, no client-side edit form.
+- **Status:** documented, scaffolded, wired — **button confirmed present and correctly gated live**
+  2026-09-24 (a real cell with a non-null `draft` showed it), but the mutation itself was
+  deliberately not clicked during that pass (it creates a real, persistent room) — per
+  [[feedback_mutation_flows_need_live_submit]], the actual POST is still unconfirmed.
 - **Notes:** Refused on a cell with no figure behind it. Supersedes the never-wired
   `ROOMS.OPEN_ROOM_ON_LEAKAGE_CELL` placeholder — see the correction note at the top of this file.
 
@@ -333,7 +351,7 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
 - **Request:** path `grid`, `row`, `condition`, `currency`; query `window?`, `horizon?`. No body.
 - **Response:** same `LearnWhyConversationDto` shape as the stage version (shared type, defined in
   `learn-why-leakage-stage.ts`).
-- **Used by:** `services/api/leakage/learn-why-leakage-cell.ts`, `features/leakage/use-learn-why-leakage-cell.ts`. Wired into `CellDetailCard`'s "Learn why" button, gated on `amount !== null` — same client-side gate as the stage version, and likely has the same unconfirmed "measured-zero still refused" gap (see the stage learn-why section above). **Not live-exercised.**
+- **Used by:** `services/api/leakage/learn-why-leakage-cell.ts`, `features/leakage/use-learn-why-leakage-cell.ts`. Wired into `CellDetailCard`'s "Learn why" button, gated on `amount !== null` — same client-side gate as the stage version, and likely has the same unconfirmed "measured-zero still refused" gap (see the stage learn-why section above). **Button confirmed present live 2026-09-24; the mutation itself wasn't clicked (creates a real conversation).**
 - **Status:** documented, scaffolded, wired — not live-exercised
 - **Notes:** Refused on a cell the map isn't showing, or one with no figure behind it.
 

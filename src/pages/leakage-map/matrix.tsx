@@ -2,6 +2,7 @@ import { Fragment, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { FloatingCard } from "@/pages/leakage-map/floating-card";
 import { CellDetailCard } from "@/pages/leakage-map/detail-panel";
 import { formatCompactMoney } from "@/lib/format-measured-value";
@@ -9,9 +10,9 @@ import { HEAT_SCALE, HEAT_TEXT_CLASS } from "@/pages/leakage-map/data";
 import type { LeakageGridDto } from "@/services/api/leakage/get-leakage";
 import type { GetLeakageCellParams } from "@/services/api/leakage/get-leakage-cell";
 
-/** Buckets a raw `intensity` (0–1, unconfirmed — never seen populated live; every cell pulled so
- * far was a gap) into the existing 4-step heat scale. Clamped defensively since the real range has
- * never been confirmed. */
+/** Buckets a raw `intensity` into the existing 4-step heat scale — confirmed live 2026-09-24 to be
+ * bounded like a 0–1 score (a real measured cell was `1`, several real-zero cells were `0`).
+ * Clamped defensively anyway, since only those two endpoints have been observed so far. */
 function heatBucket(intensity: number | null): 0 | 1 | 2 | 3 {
   if (intensity === null) return 0;
   const clamped = Math.max(0, Math.min(1, intensity));
@@ -49,9 +50,13 @@ function MatrixSkeleton() {
  *   client-side severity/confidence gating left to do in this component.
  * - "compound" (a horizon-projection cell) and "zero" (measured-and-empty) have no equivalent
  *   field on `LeakageCellDto` — every cell collapses to one of two real states: measured (`amount`
- *   present) or gap (absent from `cells[]`, or present with `amount: null`).
- * A cell click lazy-fetches the full `GET /leakage/cells/{...}` detail (movement/expected/room/
- * draft/signals/guidance) — never fetched upfront for the whole grid.
+ *   present) or gap (absent from `cells[]`, or present with `amount: null`). A real zero is
+ *   genuinely measured (`state: "available"`, `amount: 0`), not a gap — confirmed live.
+ * A gap cell's own `missingSource`/`wouldUnlock` are real fields on the grid response itself
+ * (confirmed live 2026-09-24 — an earlier pass guessed this needed the click-through detail fetch;
+ * it doesn't), so a gap cell shows an `InfoTooltip` inline with no request at all. Clicking any
+ * cell still lazy-fetches the full `GET /leakage/cells/{...}` detail (movement/expected/room/
+ * draft/signals/guidance) for the richer floating card.
  */
 export function LeakageMatrix({
   grids,
@@ -150,19 +155,28 @@ export function LeakageMatrix({
                 const resolvedCurrency = currency ?? cell?.currency;
                 const cellClassName = (open: boolean) =>
                   cn(
-                    "flex h-14 w-full items-center justify-center rounded-control text-[14px] font-semibold",
+                    "flex h-14 w-full items-center justify-center gap-1.5 rounded-control text-[14px] font-semibold",
                     measured
                       ? HEAT_TEXT_CLASS[heat]
                       : "border border-dashed border-ink-4/40 bg-paper-2/60 text-[10.5px] text-ink-4 disabled:cursor-not-allowed",
                     open && "ring-2 ring-ultra ring-offset-1 ring-offset-paper"
                   );
-                const cellLabel = measured ? formatCompactMoney(cell!.amount!, cell!.currency) : "Unknown";
+                const cellContent = measured ? (
+                  formatCompactMoney(cell!.amount!, cell!.currency)
+                ) : (
+                  <>
+                    Unknown
+                    {cell && (
+                      <InfoTooltip missingSource={cell.missingSource ?? undefined} wouldUnlock={cell.wouldUnlock ?? undefined} />
+                    )}
+                  </>
+                );
                 const cellStyle = measured ? { backgroundColor: HEAT_SCALE[heat] } : undefined;
 
                 if (!resolvedCurrency) {
                   return (
                     <button key={col.key} type="button" disabled style={cellStyle} className={cellClassName(false)}>
-                      {cellLabel}
+                      {cellContent}
                     </button>
                   );
                 }
@@ -174,7 +188,7 @@ export function LeakageMatrix({
                     panelClassName="w-[26rem] max-w-[calc(100vw-2rem)]"
                     renderTrigger={({ open, toggle, ref }) => (
                       <button ref={ref} type="button" onClick={toggle} style={cellStyle} className={cellClassName(open)}>
-                        {cellLabel}
+                        {cellContent}
                       </button>
                     )}
                   >

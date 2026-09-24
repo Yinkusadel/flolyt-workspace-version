@@ -222,15 +222,26 @@ applies here too ("or one with no figure behind it" in this endpoint's own prose
 
 **Real bug caught and fixed during live verification:** the active currency (needed as a path
 segment for the cell-detail fetch) has no source at all when `markets`, `bySeverity`, and `ladders`
-are *all* empty (confirmed live — every field this workspace could supply a currency from was
-empty). The first pass fell back to an empty string, which silently disabled the query and then
-misreported as "Couldn't load this cell." Fixed: `index.tsx` now falls through
+are *all* empty. The first pass fell back to an empty string, which silently disabled the query and
+then misreported as "Couldn't load this cell." Fixed: `index.tsx` now falls through
 primary-market → any-market → `bySeverity[0]` → `ladders[0]`, and when every source comes up empty,
 `matrix.tsx` renders that cell as a plain disabled button instead of firing a request with an
-invented currency. **This means the cell-click flow itself (`CellDetailCard`, start-a-room,
-learn-why-cell) could not be live-verified end-to-end this session** — every cell in this workspace
-is currently inert for exactly this reason. Needs a workspace with at least one configured market
-(or a completed refresh populating `bySeverity`/`ladders`) to actually exercise it.
+invented currency.
+
+**✅ Cell-click flow fully live-verified 2026-09-24** after the user connected a real data source to
+the test workspace. Clicking a real `₦4.3M` cell (`active × repeat_decay × NGN`) fired
+`GET .../cells/lifecycle_stage/active/repeat_decay/NGN?window=90&horizon=90` and rendered the real
+amount/severity/customer count correctly, with `movement`/`expected` honestly gapped and a
+correctly-gated "Start a room" button present. This also surfaced that the grid-inline
+`LeakageCellDto` was missing 6 real fields (`reason`/`missingSource`/`wouldUnlock`/
+`neverEstimated`/`calculation`/`realized`) the original truncated paste never showed — fixed in
+`get-leakage.ts`, and `matrix.tsx`'s gap cells now show an `InfoTooltip` with the real
+`missingSource`/`wouldUnlock` inline (no click needed). "Start a room" and "Learn why" buttons were
+confirmed present and correctly gated but deliberately not clicked (they create a real room /
+conversation) — see [[feedback_mutation_flows_need_live_submit]]; those two mutations are still
+unconfirmed. Also fixed: `formatAtStakeAmounts` joined multi-currency amounts with `" + "`, which
+visually implies summation — backwards for a value explicitly never summed across currencies; now
+`" · "`.
 
 `data.ts`'s `SeverityLevel`/`SEVERITY_LABEL`/`CONFIDENCE_RANK`/`MatrixColumnKey`/`MATRIX_COLUMNS`/
 `MatrixCell`/`MatrixRow`/`MATRIX_ROWS`/`isCellHiddenByFilter`/`filteredOutPercent` are all deleted
