@@ -302,10 +302,9 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   `settlement`, not flat.
 - **Response:** `{ data: roomId, messages, succeeded }` — `data` is a plain string (uuid).
 - **Used by:** `services/api/leakage/open-room-on-leakage-cell.ts`, `features/leakage/use-open-room-on-leakage-cell.ts`. Invalidates `["rooms"]`, `["leakage-cell"]`, and `["leakage"]` on success. Wired into `CellDetailCard`'s "Start a room" button — sends the cell's own `draft` object as-is, no client-side edit form.
-- **Status:** documented, scaffolded, wired — **button confirmed present and correctly gated live**
-  2026-09-24 (a real cell with a non-null `draft` showed it), but the mutation itself was
-  deliberately not clicked during that pass (it creates a real, persistent room) — per
-  [[feedback_mutation_flows_need_live_submit]], the actual POST is still unconfirmed.
+- **Status:** documented, scaffolded, wired, **live-confirmed end-to-end 2026-09-24** — button
+  present and correctly gated on a real cell with a non-null `draft`, and the "Start a room" click
+  itself (the actual POST) confirmed working, navigating to the new room.
 - **Notes:** Refused on a cell with no figure behind it. Supersedes the never-wired
   `ROOMS.OPEN_ROOM_ON_LEAKAGE_CELL` placeholder — see the correction note at the top of this file.
 

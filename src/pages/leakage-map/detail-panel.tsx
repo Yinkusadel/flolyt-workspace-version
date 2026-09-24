@@ -385,7 +385,11 @@ export function CellDetailCard({
           )}
 
           {cell.alsoFills !== null && cell.alsoFills > 0 && (
-            <p className="mt-1 text-[10.5px] text-ink-4">Connecting this source would also fill {cell.alsoFills} other cell{cell.alsoFills === 1 ? "" : "s"}.</p>
+            <p className="mt-1 text-[10.5px] text-ink-4">
+              {cell.connect
+                ? `Connecting this source would also fill ${cell.alsoFills} other cell${cell.alsoFills === 1 ? "" : "s"}.`
+                : `This calculation would also fill ${cell.alsoFills} other cell${cell.alsoFills === 1 ? "" : "s"}.`}
+            </p>
           )}
         </>
       )}
