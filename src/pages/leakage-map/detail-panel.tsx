@@ -331,7 +331,7 @@ export function CellDetailCard({
       {measured ? (
         <>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <Chip tone="neutral">{cell.severity.label}</Chip>
+            <Chip tone="neutral">Severity: {cell.severity.label}</Chip>
             {cell.customers !== null && <Chip tone="neutral">{formatCount(cell.customers)} customers</Chip>}
           </div>
 
