@@ -163,7 +163,7 @@ breakdown), not Step 4 (the matrix pulls from `GET /leakage`'s own `grids[]`, al
   a Window filter change showed the loading banner while the previous filter's cards/status line
   stayed visible, then updated correctly. No console errors.
 
-### Step 3 — Stage detail card (the modal consolidation) — 🟡 built, one open question (2026-09-23)
+### Step 3 — Stage detail card (the modal consolidation) — ✅ done (2026-09-23, blocker fixed 2026-09-24)
 `StageDetailCard` rewritten as one generic template from `LeakageStageDetailDto` — `atStake`
 (headline stat), `population`/`departedThisMonth`/`openRoomCount` (a 3-up stat row), `movement`,
 `expected` (per-currency, with range + confidence), `severity` chips, `refreshedAtUtc` — replacing
@@ -181,19 +181,19 @@ headline.value !== null` (catches the doc's documented refusal, "a gap is not a 
 measured figure at all), per [[feedback_hold_mostly_gated_feature]] — first shipped without this
 gate, showing the button unconditionally on all 10 stages regardless of coverage.
 
-**🟡 Open blocker, live-confirmed 2026-09-23, holding here pending a product decision:** the
-refusal-gating above is incomplete. The endpoint has a **second, undocumented refusal case**
-distinct from "a gap is not a question": clicking "Learn why" on Acquire — whose `atStake.value`
-was a real, non-null `[{ currency: "NGN", amountAtRisk: 0 }]`, so it passed the current gate — was
-refused with `"There is nothing to explain at Acquire: nothing is leaking there over this window —
-the refresh ran and found nought, which is a result rather than a gap."` So the server treats
-*measured-zero* as equally unanswerable as *unmeasured*, just for a different reason (a real "no
-leak" result vs. an unknown one). The current client gate only checks for `null`, not `0`, so it
-still lets a doomed click through on any stage whose figure is a confirmed real zero. Full detail
-recorded in [docs/endpoints/leakage.md](../endpoints/leakage.md)'s learn-why section. **Not fixed
-yet on purpose** — the user is checking with their team on how strict the client-side gate should
-be (e.g. also hide the button when every currency's `amountAtRisk` is `0`, not just when the
-wrapper's `value` is `null`) before this is touched again.
+**✅ Blocker fixed 2026-09-24, live-confirmed 2026-09-23:** the refusal-gating above was incomplete.
+The endpoint has a **second, undocumented refusal case** distinct from "a gap is not a question":
+clicking "Learn why" on Acquire — whose `atStake.value` was a real, non-null
+`[{ currency: "NGN", amountAtRisk: 0 }]`, so it passed the old gate — was refused with `"There is
+nothing to explain at Acquire: nothing is leaking there over this window — the refresh ran and
+found nought, which is a result rather than a gap."` So the server treats *measured-zero* as
+equally unanswerable as *unmeasured*, just for a different reason (a real "no leak" result vs. an
+unknown one). Fixed alongside the `AtStakeAmounts` zero-render fix: the gate is now
+`hasLeakToExplain = stage.atStake.value?.some((amount) => amount.amountAtRisk > 0)` — `> 0`, not
+just non-`null` — so an all-zero stage no longer shows a button guaranteed to hit this refusal.
+Full detail recorded in [docs/endpoints/leakage.md](../endpoints/leakage.md)'s learn-why section.
+**The cell-level "Learn why" in Step 4 was not updated to match** — it still gates on
+`cell.amount !== null` only, so it likely has the same latent gap. Flagged, not yet fixed.
 
 ### Step 4 — The matrix itself — ✅ done (2026-09-23)
 `matrix.tsx` rewritten to render `GET /leakage`'s own `grids[]` dynamically — columns from
@@ -237,11 +237,13 @@ correctly-gated "Start a room" button present. This also surfaced that the grid-
 `neverEstimated`/`calculation`/`realized`) the original truncated paste never showed — fixed in
 `get-leakage.ts`, and `matrix.tsx`'s gap cells now show an `InfoTooltip` with the real
 `missingSource`/`wouldUnlock` inline (no click needed). "Start a room" and "Learn why" buttons were
-confirmed present and correctly gated but deliberately not clicked (they create a real room /
-conversation) — see [[feedback_mutation_flows_need_live_submit]]; those two mutations are still
-unconfirmed. Also fixed: `formatAtStakeAmounts` joined multi-currency amounts with `" + "`, which
-visually implies summation — backwards for a value explicitly never summed across currencies; now
-`" · "`.
+confirmed present and correctly gated; **"Start a room" was live-clicked and confirmed working
+2026-09-24** — the real POST created a room and navigated to it. The cell "Learn why" mutation is
+still unclicked (creates a real conversation) — see [[feedback_mutation_flows_need_live_submit]] —
+and its gate (`cell.amount !== null`) was not updated to match the stage version's `> 0` fix above,
+so it likely still has the same measured-zero refusal gap. Also fixed: `formatAtStakeAmounts`
+joined multi-currency amounts with `" + "`, which visually implies summation — backwards for a
+value explicitly never summed across currencies; now `" · "`.
 
 `data.ts`'s `SeverityLevel`/`SEVERITY_LABEL`/`CONFIDENCE_RANK`/`MatrixColumnKey`/`MATRIX_COLUMNS`/
 `MatrixCell`/`MatrixRow`/`MATRIX_ROWS`/`isCellHiddenByFilter`/`filteredOutPercent` are all deleted

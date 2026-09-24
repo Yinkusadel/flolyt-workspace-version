@@ -325,22 +325,20 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   ```
   Returns the conversation/run to attach the existing chat panel's SSE to — the turn renders like
   any other. Refused on a stage with no measured figure ("a gap is not a question").
-- **Used by:** `services/api/leakage/learn-why-leakage-stage.ts`, `features/leakage/use-learn-why-leakage-stage.ts`. Wired into `src/pages/leakage-map/detail-panel.tsx`'s `StageDetailCard` — see [[flolyt_leakage_map_wiring]] Step 3 for the open question this surfaced.
-- **Status:** documented, scaffolded, wired — refusal-gating still under discussion (see below)
-- **Second, previously-undocumented refusal case confirmed live 2026-09-23:** the doc's own prose
-  only names one refusal ("a gap is not a question" — no measured figure at all, i.e. `atStake`/
-  `headline` value is `null`). Clicking "Learn why" on Acquire — whose `atStake.value` was a real,
-  non-null `[{ currency: "NGN", amountAtRisk: 0 }]` — was refused anyway:
+- **Used by:** `services/api/leakage/learn-why-leakage-stage.ts`, `features/leakage/use-learn-why-leakage-stage.ts`. Wired into `src/pages/leakage-map/detail-panel.tsx`'s `StageDetailCard` — see [[flolyt_leakage_map_wiring]] Step 3.
+- **Status:** documented, scaffolded, wired — refusal-gating **fixed**
+- **Second, previously-undocumented refusal case confirmed live 2026-09-23, now fixed:** the doc's
+  prose originally named only one refusal ("a gap is not a question" — no measured figure at all,
+  i.e. `atStake`/`headline` value is `null`). Clicking "Learn why" on Acquire — whose `atStake.value`
+  was a real, non-null `[{ currency: "NGN", amountAtRisk: 0 }]` — was refused anyway:
   ```json
   { "data": null, "messages": ["There is nothing to explain at Acquire: nothing is leaking there over this window — the refresh ran and found nought, which is a result rather than a gap."], "succeeded": false }
   ```
   So the server distinguishes **two** unanswerable states, not one: unmeasured (`value: null`, "a
   gap is not a question") vs. measured-but-zero (a real `0`, "a result rather than a gap"). The
-  current frontend gate (`atStake.value !== null || headline.value !== null`) only catches the
-  first — it let the button show for Acquire, which then hit this second refusal live. Left
-  unfixed intentionally, pending a product decision on how strict the client-side gate should be
-  (e.g. also hiding the button when every currency's `amountAtRisk` is `0`) — see
-  [[flolyt_leakage_map_wiring]] for the blocker note.
+  frontend gate is now `hasLeakToExplain = stage.atStake.value?.some((amount) => amount.amountAtRisk > 0)`
+  ([detail-panel.tsx:100](../../src/pages/leakage-map/detail-panel.tsx)) — `> 0`, not just
+  non-`null`, so an all-zero stage no longer shows a button guaranteed to hit this refusal.
 
 ## POST /api/v3/leakage/cells/{grid}/{row}/{condition}/{currency}/learn-why
 
@@ -350,8 +348,8 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
 - **Request:** path `grid`, `row`, `condition`, `currency`; query `window?`, `horizon?`. No body.
 - **Response:** same `LearnWhyConversationDto` shape as the stage version (shared type, defined in
   `learn-why-leakage-stage.ts`).
-- **Used by:** `services/api/leakage/learn-why-leakage-cell.ts`, `features/leakage/use-learn-why-leakage-cell.ts`. Wired into `CellDetailCard`'s "Learn why" button, gated on `amount !== null` — same client-side gate as the stage version, and likely has the same unconfirmed "measured-zero still refused" gap (see the stage learn-why section above). **Button confirmed present live 2026-09-24; the mutation itself wasn't clicked (creates a real conversation).**
-- **Status:** documented, scaffolded, wired — not live-exercised
+- **Used by:** `services/api/leakage/learn-why-leakage-cell.ts`, `features/leakage/use-learn-why-leakage-cell.ts`. Wired into `CellDetailCard`'s "Learn why" button, gated on `cell.amount !== null` ([detail-panel.tsx:415](../../src/pages/leakage-map/detail-panel.tsx)) — **unlike the now-fixed stage gate, this one is still non-`null`-only, not `> 0`**, so it likely still has the same "measured-zero still refused" gap the stage version had before its fix. **Button confirmed present live 2026-09-24; the mutation itself wasn't clicked (creates a real conversation).**
+- **Status:** documented, scaffolded, wired — not live-exercised; gate not yet aligned with the stage fix
 - **Notes:** Refused on a cell the map isn't showing, or one with no figure behind it.
 
 ## GET /api/v3/leakage/stages/{stageKey}
