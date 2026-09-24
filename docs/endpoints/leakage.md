@@ -195,8 +195,8 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   ```
   Every figure here is one the page (`GET /leakage`) also shows, composed in the framework's order
   — this is a report over the same numbers, not a separate calculation.
-- **Used by:** `services/api/leakage/get-leakage-report.ts`, `features/leakage/use-get-leakage-report.ts`. Not wired.
-- **Status:** documented, scaffolded, not wired
+- **Used by:** `services/api/leakage/get-leakage-report.ts`, `features/leakage/use-get-leakage-report.ts`. Wired into `src/pages/leakage-map/index.tsx` (fetched independently of the page's own `GET /leakage` call, with just `window`/`horizon` — this endpoint doesn't take `calculate`/severity/confidence) and `market-breakdown.tsx`'s per-market `gross` bars.
+- **Status:** documented, scaffolded, wired 2026-09-24 — **not yet live-verified**, since `markets[]` has only ever come back empty (see the note at the top of this file); the per-market entry shape (`gross`/`realized`/`expected`/`net`/`conditions`/`bySeverity`/`byHorizon`/`topLeaks`/`actions`) is still typed from prose alone
 
 ## GET /api/v3/leakage/conditions
 

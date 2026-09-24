@@ -1,6 +1,6 @@
 import { FiltersMenu } from "@/pages/leakage-map/filters-menu";
 import { HowCalculatedDialog } from "@/pages/leakage-map/how-calculated-dialog";
-import type { LeakageMarketRailEntryDto } from "@/services/api/leakage/get-leakage";
+import type { LeakageCalculationDto, LeakageMarketRailEntryDto } from "@/services/api/leakage/get-leakage";
 import type { LeakageFilterState } from "@/pages/leakage-map/filters";
 
 export function ControlsBar({
@@ -11,6 +11,7 @@ export function ControlsBar({
   markets,
   currentWindowLabel,
   currentHorizonLabel,
+  calculation,
 }: {
   filters: LeakageFilterState;
   onFiltersChange: (patch: Partial<LeakageFilterState>) => void;
@@ -19,6 +20,7 @@ export function ControlsBar({
   markets: LeakageMarketRailEntryDto[];
   currentWindowLabel?: string;
   currentHorizonLabel?: string;
+  calculation?: LeakageCalculationDto;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
@@ -31,7 +33,7 @@ export function ControlsBar({
         currentWindowLabel={currentWindowLabel}
         currentHorizonLabel={currentHorizonLabel}
       />
-      <HowCalculatedDialog />
+      <HowCalculatedDialog calculation={calculation} />
     </div>
   );
 }

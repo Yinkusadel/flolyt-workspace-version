@@ -257,9 +257,42 @@ still-mock, still-hidden `ActionsPanel` — Step 5's job to remove). `StatusLine
 Confidence amber line now shows the real `filter.cellsHidden` count instead of a fabricated
 percentage (there's no single "total cells" to divide by across two differently-sized grids).
 
-### Step 5 — Coverage panel, "How is this calculated", Market breakdown — not started
-Thin coverage panel to real `coverage` fields; real `calculation` block in the dialog; market
-breakdown switches to `useGetLeakageReport`; remove `ActionsPanel` usage from `index.tsx`.
+### Step 5 — Coverage panel, "How is this calculated", Market breakdown — ✅ built (2026-09-24), not yet live-verified
+- `coverage-panel.tsx` rewritten to `LeakageCoverageDto` — `percent` as a header chip, the server's
+  own `sentence` as the description (not client-authored copy), and two condition-name lists
+  (`measuredConditions`/`unmeasuredConditions`) rendered as-is. These are already display-ready
+  labels ("Repeat decay", "Involuntary churn", …), confirmed live 2026-09-23 in
+  `coverage.unmeasuredConditions` — no key-to-label lookup needed. Dropped entirely (mismatch #7,
+  no API equivalent): customer %, per-line dollar "not covered" detail, "How to improve" boost %s,
+  "Last updated" stamp.
+- `how-calculated-dialog.tsx` rewritten to the page's own top-level `calculation`
+  (`LeakageCalculationDto`) — `method` in the server's own prose, the window it ran over, connected
+  `sources`, concrete `inputs`, and `caveats`. Dropped (mismatch #8, no API equivalent): the
+  formulas block, the five authored terms (Probability/Impact/Ramp factor/Recovery rate/
+  Confidence), "What is not included", and the calibration-date stat row. Threaded through
+  `controls-bar.tsx` as a new `calculation` prop.
+- `market-breakdown.tsx` switched to `useGetLeakageReport`'s per-market `gross`
+  (`LeakageReportMarketDto`), fetched independently in `index.tsx` (that endpoint only takes
+  `window`/`horizon`, not the page's severity/confidence/calculate filters — mismatch #9, avoids
+  [[feedback_no_frontend_business_math]]). Row label reuses `marketOptionLabel` from `filters.ts`
+  (the same country-code convention the market switcher already uses) rather than inventing a
+  second one. Bar width is the only derived number — a purely visual proportion against this list's
+  own max `gross`, never shown as data. Per-market `customers` has no field on this DTO, so it's
+  dropped rather than invented. Renders nothing (not a skeleton) when `markets` is empty or
+  undefined.
+- `ActionsPanel`/`actions-panel.tsx` and `PageFooter`/`page-footer.tsx` deleted outright, along with
+  their `data.ts` exports (`ACTIONS_PANEL`, `ActionRow`, `PAGE_FOOTER`) and `FEATURED_CELL` — no
+  leakage endpoint carries SLA/ownership-queue data at all (locked in at Step 1), and `PageFooter`'s
+  own figures (`totalLine`/`expectedSaveLine`) were derived entirely from `ACTIONS_PANEL`'s invented
+  numbers, so once that's gone there was nothing left for the footer to show that wasn't already
+  fabricated. `data.ts`'s now-fully-orphaned `Tone`/`COVERAGE_PANEL`/`HOW_CALCULATED`/`Market`/
+  `MARKETS`/`NO_SINGLE_TOTAL` deleted too; `ConfidenceLevel`/`CONFIDENCE_LABEL`/`HEAT_SCALE`/
+  `HEAT_TEXT_CLASS`/`PAGE_STATES` survive (still used elsewhere on the page).
+- **Not yet live-verified.** `npx tsc -b` is clean, but no dev-server pass against the real backend
+  has happened yet — in particular, `GET /leakage/report`'s per-market shape is **still 100%
+  unconfirmed live** (every real pull so far returned `markets: []`, no completed refresh — see
+  docs/endpoints/leakage.md), so `market-breakdown.tsx` is built against the documented shape only.
+  Re-check once a workspace with `coverage.measured > 0` produces a non-empty `markets[]`.
 
 ### Step 6 — This doc + `docs/endpoints/leakage.md` status — ongoing
 Update both as each step lands (Status/Used by per endpoint, step checkboxes above).
