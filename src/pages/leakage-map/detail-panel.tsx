@@ -288,6 +288,9 @@ export function CellDetailCard({
   const measured = cell.amount !== null;
   const movement = cell.movement.value;
   const expected = cell.expected.value;
+  // Same two-refusal shape as the stage endpoint (see docs/endpoints/leakage.md's learn-why
+  // section): a measured real zero is "a result rather than a gap", not a question to ask.
+  const hasLeakToExplain = measured && cell.amount! > 0;
 
   const handleStartRoom = () => {
     if (!cell.draft) return;
@@ -407,12 +410,11 @@ export function CellDetailCard({
           <span />
         )}
 
-        {/* Same gate as the stage card's "Learn why" — refused server-side with no measured
-            figure ("a gap is not a question" per the stage endpoint's own prose, the cell version
-            says "or one with no figure behind it"). Whether a real, non-zero cell can still be
-            refused the way Acquire's stage was is unconfirmed here too — see
-            [[flolyt_leakage_map_wiring]]. */}
-        {measured && (
+        {/* Same two-refusal gate as the stage card's "Learn why": no figure at all ("a gap is not
+            a question") and a measured real zero ("a result rather than a gap", confirmed live on
+            a lapsed · Repeat decay cell showing ₦0) are both unanswerable — see
+            docs/endpoints/leakage.md's learn-why section. */}
+        {hasLeakToExplain && (
           <button
             type="button"
             disabled={isAskingWhy}

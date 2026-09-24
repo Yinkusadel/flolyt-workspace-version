@@ -239,11 +239,13 @@ correctly-gated "Start a room" button present. This also surfaced that the grid-
 `missingSource`/`wouldUnlock` inline (no click needed). "Start a room" and "Learn why" buttons were
 confirmed present and correctly gated; **"Start a room" was live-clicked and confirmed working
 2026-09-24** — the real POST created a room and navigated to it. The cell "Learn why" mutation is
-still unclicked (creates a real conversation) — see [[feedback_mutation_flows_need_live_submit]] —
-and its gate (`cell.amount !== null`) was not updated to match the stage version's `> 0` fix above,
-so it likely still has the same measured-zero refusal gap. Also fixed: `formatAtStakeAmounts`
-joined multi-currency amounts with `" + "`, which visually implies summation — backwards for a
-value explicitly never summed across currencies; now `" · "`.
+still unclicked (creates a real conversation) — see [[feedback_mutation_flows_need_live_submit]].
+Its gate initially lagged the stage version's `> 0` fix — **confirmed live 2026-09-24** on a
+`lapsed · Repeat decay` cell measured at a real ₦0 that showed the button anyway — now fixed to
+`hasLeakToExplain = cell.amount !== null && cell.amount > 0`, same two-refusal reasoning as the
+stage gate. Also fixed: `formatAtStakeAmounts` joined multi-currency amounts with `" + "`, which
+visually implies summation — backwards for a value explicitly never summed across currencies; now
+`" · "`.
 
 `data.ts`'s `SeverityLevel`/`SEVERITY_LABEL`/`CONFIDENCE_RANK`/`MatrixColumnKey`/`MATRIX_COLUMNS`/
 `MatrixCell`/`MatrixRow`/`MATRIX_ROWS`/`isCellHiddenByFilter`/`filteredOutPercent` are all deleted

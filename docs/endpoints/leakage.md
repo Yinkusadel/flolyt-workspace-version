@@ -348,8 +348,8 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
 - **Request:** path `grid`, `row`, `condition`, `currency`; query `window?`, `horizon?`. No body.
 - **Response:** same `LearnWhyConversationDto` shape as the stage version (shared type, defined in
   `learn-why-leakage-stage.ts`).
-- **Used by:** `services/api/leakage/learn-why-leakage-cell.ts`, `features/leakage/use-learn-why-leakage-cell.ts`. Wired into `CellDetailCard`'s "Learn why" button, gated on `cell.amount !== null` ([detail-panel.tsx:415](../../src/pages/leakage-map/detail-panel.tsx)) — **unlike the now-fixed stage gate, this one is still non-`null`-only, not `> 0`**, so it likely still has the same "measured-zero still refused" gap the stage version had before its fix. **Button confirmed present live 2026-09-24; the mutation itself wasn't clicked (creates a real conversation).**
-- **Status:** documented, scaffolded, wired — not live-exercised; gate not yet aligned with the stage fix
+- **Used by:** `services/api/leakage/learn-why-leakage-cell.ts`, `features/leakage/use-learn-why-leakage-cell.ts`. Wired into `CellDetailCard`'s "Learn why" button, gated on `hasLeakToExplain = cell.amount !== null && cell.amount > 0` ([detail-panel.tsx:293](../../src/pages/leakage-map/detail-panel.tsx)) — aligned with the stage fix after a live `lapsed · Repeat decay` cell measured at a real ₦0 showed the button anyway. **Button confirmed present live 2026-09-24; the "Learn why" mutation itself still hasn't been clicked (creates a real conversation).**
+- **Status:** documented, scaffolded, wired — refusal-gating fixed 2026-09-24; mutation not yet live-exercised
 - **Notes:** Refused on a cell the map isn't showing, or one with no figure behind it.
 
 ## GET /api/v3/leakage/stages/{stageKey}
