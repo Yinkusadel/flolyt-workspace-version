@@ -43,7 +43,13 @@ export interface LeakageStageDetailDto {
   openRoomCount: number;
   /** Empty for the seven stages the customer-state axis doesn't reach — the honest answer, not a gap. */
   spansStates: string[];
-  learnWhy: LeakageStageLearnWhyDto;
+  /**
+   * Null when the stage has no specialist to ask — confirmed live 2026-09-24 on `churn`, the one
+   * stage whose page-level entry also carries `leadAgentKey: null` / `leadAgentName: null`. Was
+   * typed non-nullable from the doc's example, which only showed a stage that had one; reading
+   * `.agentName` off it crashed the whole route when that stage's panel opened.
+   */
+  learnWhy: LeakageStageLearnWhyDto | null;
   calculation: LeakageCalculationDto;
   refreshedAtUtc: string | null;
   realized: LeakageRealizedAmountDto[];

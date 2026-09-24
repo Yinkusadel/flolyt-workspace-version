@@ -97,6 +97,7 @@ export function StageDetailCard({
   const atStakeAmounts = stage.atStake.value !== null ? formatAtStakeAmounts(stage.atStake.value) : null;
   const expectedEntries = stage.expected.value;
   const movement = stage.movement.value;
+  const hasLeakToExplain = !!stage.atStake.value?.some((amount) => amount.amountAtRisk > 0);
 
   return (
     <div className="w-80 max-w-[calc(100vw-2rem)] p-4">
@@ -197,11 +198,16 @@ export function StageDetailCard({
         ) : (
           <span className="text-[10px] text-ink-4">Not yet refreshed</span>
         )}
-        {/* The endpoint refuses on a stage with no measured figure ("a gap is not a question") —
-            hidden rather than shown-and-guaranteed-to-fail when nothing here is measured yet, per
-            [[feedback_hold_mostly_gated_feature]]. `atStake`/`headline` are the two figures this
-            card actually shows, so either being real is what makes the stage answerable. */}
-        {(stage.atStake.value !== null || stage.headline.value !== null) && (
+        {/* The endpoint refuses twice over, and both refusals mean the same thing for this button:
+            on a stage with nothing measured ("a gap is not a question") and on one measured at a
+            real zero ("nothing is leaking there over this window — the refresh ran and found
+            nought, which is a result rather than a gap", confirmed live on `acquire`). So the only
+            stage worth offering this on is one where some currency actually carries an amount —
+            an all-zero stage is a finished answer, not a question. Per
+            [[feedback_hold_mostly_gated_feature]], hidden beats shown-and-guaranteed-to-fail.
+            (`> 0` matches the same test the stage card's money block uses; a negative amount has
+            never been seen, and would read as "no leak" in both places.) */}
+        {hasLeakToExplain && (
           <button
             type="button"
             disabled={isAskingWhy}
@@ -214,7 +220,9 @@ export function StageDetailCard({
             className="inline-flex items-center gap-1.5 rounded-control border border-line bg-paper-2 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:bg-paper disabled:opacity-60"
           >
             <HelpCircle className="size-3.5" />
-            {isAskingWhy ? "Asking…" : `Ask ${stage.learnWhy.agentName} why`}
+            {/* `learnWhy` is null on a stage with no specialist (churn) — name the agent when
+                there is one, otherwise the same plain label the cell card already uses. */}
+            {isAskingWhy ? "Asking…" : stage.learnWhy ? `Ask ${stage.learnWhy.agentName} why` : "Learn why"}
           </button>
         )}
       </div>

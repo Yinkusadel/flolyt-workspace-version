@@ -376,13 +376,24 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
     departedThisMonth: LeakageMeasuredValueDto<number>; // per calendar month, not per window — calculation says so
     headline: LeakageHeadlineDto; openRoomCount: number;
     spansStates: string[]; // empty for the 7 stages the customer-state axis doesn't reach — honest, not a gap
-    learnWhy: { agentKey: string; agentName: string };
+    learnWhy: { agentKey: string; agentName: string } | null; // confirmed nullable — see below
     calculation: LeakageCalculationDto; refreshedAtUtc: string | null;
     realized: LeakageRealizedAmountDto[];
   }
   ```
 - **Used by:** `services/api/leakage/get-leakage-stage.ts`, `features/leakage/use-get-leakage-stage.ts`. Wired into `StageDetailCard` (lazy-fetched on a stage card click) — see [[flolyt_leakage_map_wiring]] Step 3.
 - **Status:** documented, scaffolded, wired and live-verified
+- **`learnWhy` confirmed nullable live 2026-09-24:** it is `null` for `churn`, the one stage whose
+  page-level entry also has `leadAgentKey: null` / `leadAgentName: null` — no specialist exists to
+  ask. It was typed non-nullable from the doc's example (which only showed a stage that had one),
+  so `StageDetailCard` read `.agentName` off it unguarded and threw
+  `Cannot read properties of null (reading 'agentName')` during render, escaping to the route-level
+  error boundary and taking the whole page down with "Something went wrong". Type corrected and the
+  label made null-safe. **Still open:** the "Learn why" button's own gate
+  (`atStake.value?.some((a) => a.amountAtRisk > 0)`) asks whether a leak is measured, not whether
+  there is an agent to ask — so on any stage carrying a real amount but no specialist the button
+  still renders, under the plain "Learn why" label. Deliberately left as-is pending a product
+  decision, same as the measured-zero refusal question above.
 - **Confirmed live 2026-09-22** for the `acquire` stage on a workspace with no completed refresh —
   every gapped field's `missingSource`/`wouldUnlock` sentence reads exactly as described in the
   endpoint's prose. `atStake` was `available` (`[{ currency: "NGN", amountAtRisk: 0 }]`); every
