@@ -7,8 +7,12 @@ import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { Callout } from "@/components/ui/rail";
 import { FloatingCard } from "@/pages/leakage-map/floating-card";
 import { StageDetailCard } from "@/pages/leakage-map/detail-panel";
-import { formatAtStakeAmounts, formatHeadlineValue } from "@/lib/format-measured-value";
-import type { LeakageCalloutDto, LeakageStageCardDto } from "@/services/api/leakage/get-leakage";
+import { formatCompactMoney, formatHeadlineValue } from "@/lib/format-measured-value";
+import type {
+  LeakageAtStakeAmountDto,
+  LeakageCalloutDto,
+  LeakageStageCardDto,
+} from "@/services/api/leakage/get-leakage";
 import type { GetLeakageStageParams } from "@/services/api/leakage/get-leakage-stage";
 
 const HINT_VISIBLE_MS = 5000;
@@ -20,6 +24,59 @@ const DOT_COLORS = ["#788831", "#7757AC", "#5E67C0", "#785BA1", "#798933", "#BB5
 const CALLOUT_TONES = new Set(["amber", "teal", "rose"]);
 function calloutTone(tone: string): "amber" | "teal" | "rose" {
   return CALLOUT_TONES.has(tone) ? (tone as "amber" | "teal" | "rose") : "amber";
+}
+
+/**
+ * `atStake` is an array of per-currency figures that must never be added together, and this card
+ * is barely 110px wide — running them together as "CAD 3.1k · EUR 2.4k · GBP 4.5k · ₦9.4M · USD
+ * 12.6k" wrapped into four ragged lines where no amount lined up with any other, and a stage
+ * measured at zero everywhere spent those four lines saying nothing.
+ *
+ * So: one row per currency, code left and amount right, so the figures align down a column and
+ * each reads as its own number rather than part of a sum. Zero rows stay visible (the set is the
+ * honest picture) but drop to muted weight so the eye lands on real money, and a stage that is
+ * zero in every currency collapses to a single line. Order is the response's own — re-sorting by
+ * amount would be a comparison across currencies, which this domain never makes.
+ */
+function AtStakeAmounts({ amounts }: { amounts: LeakageAtStakeAmountDto[] }) {
+  if (amounts.length === 0) return <p className="text-[11px] text-ink-4">No currency measured</p>;
+
+  if (!amounts.some((amount) => amount.amountAtRisk > 0)) {
+    return (
+      <>
+        <p className="text-[12.5px] font-semibold text-ink-2">Nothing at stake</p>
+        <p className="mt-0.5 text-[9.5px] text-ink-4">
+          0 across {amounts.length} {amounts.length === 1 ? "currency" : "currencies"}
+        </p>
+      </>
+    );
+  }
+
+  return (
+    <ul className="space-y-0.5">
+      {amounts.map((amount) => {
+        const formatted = formatCompactMoney(amount.amountAtRisk, amount.currency);
+        // Drop a leading "CAD "/"USD " so the code isn't printed twice; a symbol prefix (₦) stays,
+        // since it reads as part of the figure rather than a repeat of the column beside it.
+        const figure = formatted.replace(new RegExp(`^${amount.currency}\\s`), "");
+        const isReal = amount.amountAtRisk > 0;
+
+        return (
+          <li key={amount.currency} className="flex items-baseline justify-between gap-1.5">
+            <span className="font-mono text-[9px] tracking-[0.4px] text-ink-4">{amount.currency}</span>
+            <span
+              className={cn(
+                "text-[12.5px] font-semibold tabular-nums",
+                isReal ? "text-rose" : "text-ink-4"
+              )}
+            >
+              {figure}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 function StageCardSkeleton() {
@@ -52,7 +109,7 @@ function StageCard({
   stageParams: GetLeakageStageParams;
 }) {
   const metricValue = formatHeadlineValue(stage.headline);
-  const atStakeValue = stage.atStake.value !== null ? formatAtStakeAmounts(stage.atStake.value) : null;
+  const atStakeAmounts = stage.atStake.value;
 
   return (
     <FloatingCard
@@ -88,8 +145,8 @@ function StageCard({
           </div>
 
           <div className="mt-auto border-t border-dashed border-line pt-2.5">
-            {atStakeValue ? (
-              <p className="text-[15px] font-semibold text-rose">{atStakeValue}</p>
+            {atStakeAmounts ? (
+              <AtStakeAmounts amounts={atStakeAmounts} />
             ) : (
               <InfoTooltip missingSource={stage.atStake.missingSource ?? undefined} wouldUnlock={stage.atStake.wouldUnlock ?? undefined} />
             )}
