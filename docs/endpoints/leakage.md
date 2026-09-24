@@ -182,12 +182,13 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
     coverage: LeakageCoverageDto;
     markets: {
       currency: string; countryCode: string | null; isPrimary: boolean;
-      gross: number | null; realized: number | null; expected: number | null; net: number | null;
-      conditions: { key: string; label: string; gross: number; severity: LeakageSeverityLevelDto; expected: number | null }[];
+      gross: LeakageMeasuredValueDto<number>; realized: LeakageMeasuredValueDto<number>;
+      expected: LeakageMeasuredValueDto<number>; net: LeakageMeasuredValueDto<number>;
+      conditions: { key: string; label: string; gross: number; severity: LeakageSeverityLevelDto; expected: LeakageMeasuredValueDto<number> }[];
       excludes: string[];
       bySeverity: { level: string; label: string; cells: number; amount: number }[];
-      byHorizon: { key: string; label: string; days: number; mode: string; expected: number | null; net: number | null }[];
-      topLeaks: LeakageTopLeakDto[]; // truncated in the paste, see ⚠️ above — no `owner` field typed
+      byHorizon: { key: string; label: string; days: number; mode: string; expected: LeakageMeasuredValueDto<number>; net: LeakageMeasuredValueDto<number> }[];
+      topLeaks: LeakageTopLeakDto[]; // rank/grid/rowKey/rowLabel/conditionKey/conditionLabel/label/gross/expected/net/severity/owner/roomId
       actions: { openRooms: number; owners: string[] };
     }[];
     calculation: LeakageCalculationDto;
@@ -196,7 +197,18 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   Every figure here is one the page (`GET /leakage`) also shows, composed in the framework's order
   — this is a report over the same numbers, not a separate calculation.
 - **Used by:** `services/api/leakage/get-leakage-report.ts`, `features/leakage/use-get-leakage-report.ts`. Wired into `src/pages/leakage-map/index.tsx` (fetched independently of the page's own `GET /leakage` call, with just `window`/`horizon` — this endpoint doesn't take `calculate`/severity/confidence) and `market-breakdown.tsx`'s per-market `gross` bars.
-- **Status:** documented, scaffolded, wired 2026-09-24 — **not yet live-verified**, since `markets[]` has only ever come back empty (see the note at the top of this file); the per-market entry shape (`gross`/`realized`/`expected`/`net`/`conditions`/`bySeverity`/`byHorizon`/`topLeaks`/`actions`) is still typed from prose alone
+- **Status:** documented, scaffolded, wired, **confirmed live 2026-09-24** — first populated
+  `markets[]` this endpoint has produced (5 currencies, one primary NGN with a real `countryCode`,
+  four with `countryCode: null`)
+- **Two guessed shapes corrected against the real response:** (1) per-market `gross`/`realized`/
+  `expected`/`net`, per-condition `expected`, and per-horizon-row `expected`/`net` are all the same
+  `LeakageMeasuredValueDto<number>` wrapper the rest of this API family uses — the endpoint's prose
+  had implied a plain nullable number, and the frontend's first pass built against that guess,
+  which rendered as a literal `[object Object]` on screen until fixed. `gross` on a condition/
+  top-leak stays a plain number, matching the grid cell's own `amount`. (2) `LeakageTopLeakDto`'s
+  three previously-truncated fields are confirmed: `severity` (`LeakageSeverityLevelDto`), `owner`
+  (a plain nullable string, e.g. `"Marketing"`, not a nested person object), `roomId` (nullable).
+  `bySeverity`/`actions` matched the documented shape exactly.
 
 ## GET /api/v3/leakage/conditions
 

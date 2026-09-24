@@ -257,7 +257,7 @@ still-mock, still-hidden `ActionsPanel` — Step 5's job to remove). `StatusLine
 Confidence amber line now shows the real `filter.cellsHidden` count instead of a fabricated
 percentage (there's no single "total cells" to divide by across two differently-sized grids).
 
-### Step 5 — Coverage panel, "How is this calculated", Market breakdown — ✅ built (2026-09-24), not yet live-verified
+### Step 5 — Coverage panel, "How is this calculated", Market breakdown — ✅ done (2026-09-24)
 - `coverage-panel.tsx` rewritten to `LeakageCoverageDto` — `percent` as a header chip, the server's
   own `sentence` as the description (not client-authored copy), and two condition-name lists
   (`measuredConditions`/`unmeasuredConditions`) rendered as-is. These are already display-ready
@@ -288,11 +288,26 @@ percentage (there's no single "total cells" to divide by across two differently-
   fabricated. `data.ts`'s now-fully-orphaned `Tone`/`COVERAGE_PANEL`/`HOW_CALCULATED`/`Market`/
   `MARKETS`/`NO_SINGLE_TOTAL` deleted too; `ConfidenceLevel`/`CONFIDENCE_LABEL`/`HEAT_SCALE`/
   `HEAT_TEXT_CLASS`/`PAGE_STATES` survive (still used elsewhere on the page).
-- **Not yet live-verified.** `npx tsc -b` is clean, but no dev-server pass against the real backend
-  has happened yet — in particular, `GET /leakage/report`'s per-market shape is **still 100%
-  unconfirmed live** (every real pull so far returned `markets: []`, no completed refresh — see
-  docs/endpoints/leakage.md), so `market-breakdown.tsx` is built against the documented shape only.
-  Re-check once a workspace with `coverage.measured > 0` produces a non-empty `markets[]`.
+- **Coverage panel confirmed live 2026-09-24** — `coverage.percent` (20%) and `coverage.sentence`
+  rendered exactly as the response gave them, no fixes needed.
+- **Market breakdown live-verified 2026-09-24 and two real bugs caught and fixed.** First populated
+  `markets[]` this endpoint has ever produced (5 currencies). (1) `gross`/`realized`/`expected`/
+  `net` are `LeakageMeasuredValueDto`-wrapped, not the plain nullable number the endpoint's prose
+  had implied — the first pass's `market.gross` was actually an object, and
+  `formatCompactMoney(market.gross, …)` rendered it as a literal `[object Object]` next to every
+  currency. Fixed in `get-leakage-report.ts` (types) and `market-breakdown.tsx` (reads
+  `market.gross.value`). (2) Every non-primary market had `countryCode: null` — the shared
+  `marketOptionLabel` (filters.ts) correctly falls back to "Unlabeled market" for the filter
+  dropdown, but reused here it repeated across 4 of 5 rows with nothing to tell them apart (the
+  currency was already shown on the row, but not as the label). Fixed with a local
+  `marketRowLabel` in `market-breakdown.tsx` that falls back to the currency itself instead. Also
+  corrected `LeakageTopLeakDto`'s three previously-truncated fields (`severity`/`owner`/`roomId`) —
+  not yet rendered anywhere on the page, but fixed while the real shape was in hand rather than
+  left for a future step to guess again. See docs/endpoints/leakage.md's `GET /leakage/report`
+  section for the full before/after.
+- **"How is this calculated" dialog not yet live-clicked** — built against the documented
+  `calculation` shape (same wrapper structure confirmed live elsewhere on this page), but the
+  dialog itself hasn't been opened against a real response yet.
 
 ### Step 6 — This doc + `docs/endpoints/leakage.md` status — ongoing
 Update both as each step lands (Status/Used by per endpoint, step checkboxes above).

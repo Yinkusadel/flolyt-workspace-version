@@ -6,16 +6,22 @@ import type {
   LeakageCalculationDto,
   LeakageCoverageDto,
   LeakageHorizonDto,
+  LeakageMeasuredValueDto,
   LeakageSeverityLevelDto,
   LeakageWindowDto,
 } from "@/services/api/leakage/get-leakage";
 
+// Confirmed live 2026-09-24 (first populated `markets[]` this endpoint has produced) —
+// `gross`/`realized`/`expected`/`net` on the per-market entry, `expected` on each condition, and
+// `expected`/`net` on each horizon row are all the same `LeakageMeasuredValueDto<number>` wrapper
+// the rest of this API family uses, not the plain nullable number the endpoint's prose implied.
+// `gross` on a condition/top-leak stays a plain number, matching the grid cell's own `amount`.
 export interface LeakageReportConditionDto {
   key: string;
   label: string;
   gross: number;
   severity: LeakageSeverityLevelDto;
-  expected: number | null;
+  expected: LeakageMeasuredValueDto<number>;
 }
 
 export interface LeakageReportSeverityBandDto {
@@ -30,14 +36,14 @@ export interface LeakageReportHorizonRowDto {
   label: string;
   days: number;
   mode: string;
-  expected: number | null;
-  net: number | null;
+  expected: LeakageMeasuredValueDto<number>;
+  net: LeakageMeasuredValueDto<number>;
 }
 
-// The pasted example truncates each row after `net` (`"...": "[Additional Properties
-// Truncated]"`) — the endpoint's own prose says each leak carries "its owner", but the field
-// name for that isn't visible in the capture. Re-paste with Scalar's "Show Schema" toggle to add
-// it rather than guessing the key.
+// `owner`/`roomId`/`severity` confirmed live 2026-09-24 — the original truncated paste cut every
+// row off after `net`, so these three were undocumented guesses until now. `owner` is a plain
+// string (e.g. "Marketing"), not a nested person object; both are nullable in practice (segment
+// grid leaks with no room open had `owner: null`).
 export interface LeakageTopLeakDto {
   rank: number;
   grid: string;
@@ -47,8 +53,11 @@ export interface LeakageTopLeakDto {
   conditionLabel: string;
   label: string;
   gross: number;
-  expected: number | null;
-  net: number | null;
+  expected: LeakageMeasuredValueDto<number>;
+  net: LeakageMeasuredValueDto<number>;
+  severity: LeakageSeverityLevelDto;
+  owner: string | null;
+  roomId: string | null;
 }
 
 export interface LeakageReportActionsDto {
@@ -60,10 +69,10 @@ export interface LeakageReportMarketDto {
   currency: string;
   countryCode: string | null;
   isPrimary: boolean;
-  gross: number | null;
-  realized: number | null;
-  expected: number | null;
-  net: number | null;
+  gross: LeakageMeasuredValueDto<number>;
+  realized: LeakageMeasuredValueDto<number>;
+  expected: LeakageMeasuredValueDto<number>;
+  net: LeakageMeasuredValueDto<number>;
   conditions: LeakageReportConditionDto[];
   excludes: string[];
   bySeverity: LeakageReportSeverityBandDto[];
