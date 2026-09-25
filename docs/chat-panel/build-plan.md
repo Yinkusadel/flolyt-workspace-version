@@ -675,3 +675,46 @@ of thing worth checking back on before touching `AiResponseActions`
   the `AskAgent` special case), so this hasn't broken anything — `SuggestedActionV2["kind"]` was
   just widened to accept any string. Don't tighten it back to the doc's literal union without
   re-confirming real casing live first.
+
+## Progress (2026-09-25) — Stop, steer, and reconnect wired
+
+Third slice: the `agent-runs` hooks built earlier now have callers. All three share one thing —
+the SSE event-handling switch used to live only inside `sendMessage`, and reconnect needed the
+exact same handling a second time for a GET stream instead of a POST one. Rather than duplicate
+it, `use-ai-conversation-messages.ts` was split into:
+- `dispatchStreamEvent(parsed, resolvedEventType)` — the switch itself, now returning `true` for a
+  terminal event (`error`, `run_cancelled`) instead of `return`-ing out of a shared loop it no
+  longer owns directly.
+- `consumeStream(response)` — the chunk-read/buffer/parse loop, calling `dispatchStreamEvent` per
+  event and stopping when it returns `true` or `state === "complete"` finishes the message.
+- `sendMessage` and the new `reconnectRun` both just build their own request (POST vs. GET,
+  different URL) and hand the `Response` to `consumeStream` — no other logic duplicated.
+
+**Reconnect** (`reconnectRun(runId)` in the hook, wired in `detail-route.tsx`): on loading an
+existing conversation, reads `history.data.activeRunId`; if present, fetches `GET
+/api/v3/runs/{id}` via the already-built `useGetAgentRun`, and only opens the run's own stream
+(`GET /api/v3/runs/{id}/stream`) when its status is `queued`/`running`/`awaiting_approval` — a
+`done`/`failed`/`cancelled` run needs no reconnect, its message is already in the persisted
+history. Guarded against re-firing for the same runId (`reconnectedRunIdRef`, same idiom as the
+bootstrap-token guard already in this file) and against double-connecting over a send already
+streaming live in this tab (`!isStreaming`). `reconnectRun` sets `activeRunId` directly from its
+argument rather than waiting on a `run_queued` event — confirmed by reading the stream contract
+that reopening an existing run's stream doesn't re-emit `run_queued`, so waiting for one would
+mean Stop/steer never becoming available after a reconnect.
+
+**Stop**: a small "Stop" chip next to the working-status line while `activeRunId` exists. Calls
+`useCancelAgentRun().cancelRun(activeRunId)` (the documented "request cancellation" — doesn't
+promise the run stops instantly) **and** the hook's own `abortStream()` in the same click, so the
+local UI stops immediately rather than waiting for a `run_cancelled` event to round-trip back.
+
+**Steer**: a second chip toggles a one-line inline input (Escape to cancel) that calls
+`useSteerAgentRun().steerRun({ runId, text })`. **Still unverified:** the request body shape —
+flagged when the service was first built and still true now that it has a real caller — the
+handoff doc never states `/runs/{id}/steer`'s POST body, only the stored `steering[].text` shape;
+sending `{ text }` is inferred, not confirmed. Watch the first live steer attempt for a 4xx.
+
+**Verified:** `npx tsc -b` and `npm run build` both clean.
+**Not verified live:** none of Stop/steer/reconnect has been exercised against the real backend
+yet — no run has lasted long enough in a live session to click Stop, no reconnect scenario (kill
+the page mid-run, reopen) has been tried, and steer's body shape is still a guess. All three need
+a real session to confirm.

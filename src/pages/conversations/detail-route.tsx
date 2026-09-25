@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, ArrowUp, Link2, Loader2 } from "lucide-react";
+import { AlertTriangle, ArrowUp, Link2, Loader2, MessageSquarePlus, Square } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { usePageBreadcrumb } from "@/components/breadcrumb-context";
@@ -9,6 +9,9 @@ import { useAiConversationMessages } from "@/features/ai-conversations/use-ai-co
 import { useGetAiConversationById } from "@/features/ai-conversations/use-get-ai-conversation-by-id";
 import type { AiConversationMessage } from "@/features/ai-conversations/ai-conversation-types";
 import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
+import { useGetAgentRun } from "@/features/agent-runs/use-get-agent-run";
+import { useCancelAgentRun } from "@/features/agent-runs/use-cancel-agent-run";
+import { useSteerAgentRun } from "@/features/agent-runs/use-steer-agent-run";
 import { ProposalCard, type ProposalCardData } from "./proposal-card";
 import { PromptToggles } from "./prompt-toggles";
 import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
@@ -114,6 +117,9 @@ export default function AiConversationDetailRoute() {
   const [planMode, setPlanMode] = useState(true);
   const [suggestedActionsOpen, setSuggestedActionsOpen] = useState(true);
 
+  const [steerOpen, setSteerOpen] = useState(false);
+  const [steerText, setSteerText] = useState("");
+
   const {
     messages: streamedMessages,
     progress,
@@ -122,7 +128,10 @@ export default function AiConversationDetailRoute() {
     isStreaming,
     currentPhase,
     currentPhaseMessage,
+    activeRunId,
     sendMessage,
+    reconnectRun,
+    abortStream,
   } = useAiConversationMessages(isNew ? undefined : id, {
     onConversationCreated: (newId) => {
       navigate(`/conversations/${newId}`, { replace: true });
@@ -132,6 +141,47 @@ export default function AiConversationDetailRoute() {
   const { data: history, isLoading: isHistoryLoading } = useGetAiConversationById(
     !isNew ? id : undefined
   );
+
+  // Reconnect recipe from the v3 handoff: if the persisted conversation says a run is still
+  // active, reopen its stream instead of leaving the page blank after a refresh mid-run. Guarded
+  // against `isStreaming` so this never double-connects over a send already happening live in
+  // this tab, and against re-firing for the same runId once it's been tried.
+  const activeRunIdFromHistory = history?.data.activeRunId ?? null;
+  const { data: agentRunData } = useGetAgentRun(activeRunIdFromHistory, {
+    enabled: !isNew && !!activeRunIdFromHistory,
+  });
+  const reconnectedRunIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (isNew || isStreaming || !activeRunIdFromHistory) return;
+    if (reconnectedRunIdRef.current === activeRunIdFromHistory) return;
+
+    const status = agentRunData?.data.status;
+    if (status !== "queued" && status !== "running" && status !== "awaiting_approval") return;
+
+    reconnectedRunIdRef.current = activeRunIdFromHistory;
+    reconnectRun(activeRunIdFromHistory);
+  }, [isNew, isStreaming, activeRunIdFromHistory, agentRunData, reconnectRun]);
+
+  const { cancelRun, isCancelling } = useCancelAgentRun();
+  const { steerRun, isSteering } = useSteerAgentRun();
+
+  const handleStop = () => {
+    if (!activeRunId) return;
+    cancelRun(activeRunId);
+    // Best-effort: stop showing the local streaming state immediately rather than waiting for the
+    // server's own `run_cancelled` event to round-trip back over the connection.
+    abortStream();
+  };
+
+  const handleSteerSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const text = steerText.trim();
+    if (!text || !activeRunId) return;
+    steerRun({ runId: activeRunId, text });
+    setSteerText("");
+    setSteerOpen(false);
+  };
 
   // No backend field for "how long has this run been going" — this is a plain wall-clock timer
   // tied to the real isStreaming lifecycle from the hook, restarted at 0 each time a send begins.
@@ -355,6 +405,59 @@ export default function AiConversationDetailRoute() {
               subline={workingSubline}
               isPhaseOnly={!latestActivity}
             />
+
+            {/* Stop/steer only make sense once a runId actually exists — the very first moment
+                after hitting send (before `run_queued` arrives) has nothing to cancel/steer yet. */}
+            {activeRunId && !steerOpen && (
+              <div className="flex items-center gap-1.5 pl-0.5">
+                <button
+                  type="button"
+                  onClick={handleStop}
+                  disabled={isCancelling}
+                  className="inline-flex items-center gap-1 rounded-chip border border-line bg-paper px-2 py-1 text-[10.5px] font-medium text-ink-3 transition-colors hover:border-ink-4 hover:text-ink disabled:opacity-60"
+                >
+                  <Square className="size-2.5" />
+                  Stop
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSteerOpen(true)}
+                  className="inline-flex items-center gap-1 rounded-chip border border-line bg-paper px-2 py-1 text-[10.5px] font-medium text-ink-3 transition-colors hover:border-ink-4 hover:text-ink"
+                >
+                  <MessageSquarePlus className="size-2.5" />
+                  Add a note
+                </button>
+              </div>
+            )}
+
+            {activeRunId && steerOpen && (
+              <form onSubmit={handleSteerSubmit} className="flex w-full max-w-[85%] min-w-0 items-center gap-1.5 pl-0.5">
+                <input
+                  autoFocus
+                  value={steerText}
+                  onChange={(e) => setSteerText(e.currentTarget.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setSteerOpen(false);
+                      setSteerText("");
+                    }
+                  }}
+                  placeholder="Add a note for the next step…"
+                  disabled={isSteering}
+                  className="min-w-0 flex-1 rounded-chip border border-line bg-paper px-2.5 py-1 text-[11px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
+                />
+                <button
+                  type="submit"
+                  disabled={!steerText.trim() || isSteering}
+                  className={cn(
+                    "flex size-6 shrink-0 items-center justify-center rounded-full transition-colors",
+                    steerText.trim() && !isSteering ? "bg-ultra text-paper" : "bg-paper-2 text-ink-4"
+                  )}
+                >
+                  <ArrowUp size={11} strokeWidth={2.5} />
+                </button>
+              </form>
+            )}
 
             {animatedStreamingText && (
               <p className="max-w-[85%] min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-ink">
