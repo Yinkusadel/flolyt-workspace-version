@@ -424,3 +424,45 @@ actionable like a credit top-up prompt.
   message itself; add a "Buy credits" action once that surface exists.
 
 Build-verified, not yet re-confirmed live.
+
+## v3 API handoff received (2026-09-25) — supersedes the endpoint list and event vocabulary above
+
+Backend sent a full v3 handoff doc:
+[`frontend-agent-v3-handoff.md`](./frontend-agent-v3-handoff.md). This is now the authoritative
+spec for this whole feature — everything above in this file describing `/api/flolyt/ai/*` and the
+`tool_call`/`reasoning_step`/`response_chunk` event vocabulary was written against the old
+contract and needs re-verification before it's trusted again. Old routes stay live as
+**temporary legacy aliases** during migration (`Deprecation: true` header, `successor-version`
+link on routes with a v3 equivalent), so nothing already built is broken today — but new or
+changed work should target v3 directly.
+
+**Biggest breaking change for what's already built here:** the current `ReasoningTrace` UI in
+`detail-route.tsx` renders `tool_call` and `reasoning_step` events (added 2026-09-09, see the
+"Progress" entries above). The v3 doc explicitly says *"Do not render `reasoningSteps`,
+`reasoning_step`, or `tool_call` for agent runs... those legacy fields remain only for
+compatibility with other application surfaces."* The v3 model replaces that trace with a
+`progress` event (`progress.message` only — deliberately scrubbed of tool names, arguments, SQL,
+credentials, and model reasoning) and a terminal `final_response` carrying a structured
+`AgentResponseV2` (`markdown` + `findings[]`/`metrics[]`/`evidence[]`/`caveats[]`/`actions[]`), not
+a plain-text `response_chunk`. `response_chunk` and `suggested_action` still exist but only as
+"temporary v1 projections" for back-compat.
+
+Other things that change once we migrate:
+- Endpoint base moves `/api/flolyt/ai/*` → `/api/v3/conversations|runs|proposals|evidence/*`; add
+  header `X-Flolyt-Agent-Contract: v3` on every agent request so backend telemetry attributes it
+  to this client.
+- `POST /api/v3/conversations/messages` keeps the same `conversationId`/`message`/`mode`/
+  `interactiveReply` body shape already anticipated in this doc — no request-body change.
+- The run lifecycle is now a first-class, documented resource (`GET /api/v3/runs/{runId}`,
+  `.../stream`, `.../cancel`, `.../steer`) — this is the Stop/steer/reconnect "hardening" work
+  this file already deferred (see [[flolyt_chat_panel_build]]'s "Not started" note); v3 gives it a
+  real contract to build against instead of the old design-doc guess.
+- New evidence-traversal endpoint (`GET /api/v3/evidence/{kind}/{referenceId}`) has no v1
+  equivalent — entirely new surface, for rendering findings' evidence/source-resolution graph.
+- New `AgentRun.execution` diagnostics block (routing kind, source resolution, knowledge
+  retrieval, execution plan) — explicitly diagnostic/read-only, not to be presented as model
+  reasoning or a user-editable control.
+
+**Not building against this yet.** This entry is the "read it, don't act on it" checkpoint before
+the next chat-panel work session. Re-read the full handoff doc fresh when that work starts —
+don't rely on this summary alone.
