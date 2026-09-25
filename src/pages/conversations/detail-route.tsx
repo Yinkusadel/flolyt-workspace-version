@@ -157,8 +157,13 @@ export default function AiConversationDetailRoute() {
     if (reconnectedRunIdRef.current === activeRunIdFromHistory) return;
 
     const status = agentRunData?.data.status;
-    if (status !== "queued" && status !== "running" && status !== "awaiting_approval") return;
+    if (!status) return; // still loading GET /runs/{id} — wait for it rather than skip silently
+    if (status !== "queued" && status !== "running" && status !== "awaiting_approval") {
+      console.log("🔄 Reconnect skipped, run already terminal:", { runId: activeRunIdFromHistory, status });
+      return;
+    }
 
+    console.log("🔄 Reconnecting to run:", { runId: activeRunIdFromHistory, status });
     reconnectedRunIdRef.current = activeRunIdFromHistory;
     reconnectRun(activeRunIdFromHistory);
   }, [isNew, isStreaming, activeRunIdFromHistory, agentRunData, reconnectRun]);
@@ -167,6 +172,7 @@ export default function AiConversationDetailRoute() {
   const { steerRun, isSteering } = useSteerAgentRun();
 
   const handleStop = () => {
+    console.log("🛑 Stop clicked:", { activeRunId, conversationId: !isNew ? id : null });
     // Local stop always works, even in the brief window before `run_queued` has arrived and
     // `activeRunId` is still null — the button must respond the instant it's clicked, same as
     // Claude's own stop button, not only once a server-issued id happens to exist yet.
@@ -178,6 +184,7 @@ export default function AiConversationDetailRoute() {
     e.preventDefault();
     const text = steerText.trim();
     if (!text || !activeRunId) return;
+    console.log("📝 Steer submitted:", { activeRunId, text });
     steerRun({ runId: activeRunId, text });
     setSteerText("");
     setSteerOpen(false);
