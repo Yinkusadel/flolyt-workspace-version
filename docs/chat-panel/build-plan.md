@@ -718,3 +718,25 @@ sending `{ text }` is inferred, not confirmed. Watch the first live steer attemp
 yet — no run has lasted long enough in a live session to click Stop, no reconnect scenario (kill
 the page mid-run, reopen) has been tried, and steer's body shape is still a guess. All three need
 a real session to confirm.
+
+## Correction (2026-09-26) — Stop moved onto the composer's send button
+
+First pass put Stop as its own chip next to the working-status line, alongside the "Add a note"
+steer chip. Flagged as the wrong affordance — Claude's own chat UI (screenshot supplied) puts stop
+in the send button's own spot: the same control that sends a message becomes the stop button in
+place once one is streaming, not a separate control elsewhere. Corrected:
+
+- The composer's send button (`ArrowUp` in `detail-route.tsx`) now does double duty — `onClick`
+  switches between `handleSend`/`handleStop` and the icon between `ArrowUp`/`Square` based on
+  `isStreaming`, styled `bg-ink` while in stop mode. Removed the standalone Stop chip entirely.
+  Steer's "Add a note" chip stays where it was — it's a genuinely separate action, not another way
+  to stop, so it wasn't part of what was wrong.
+- **`handleStop` also had a latent bug this surfaced:** it required `activeRunId` to be set before
+  doing anything, so clicking it in the brief window between hitting send and the `run_queued`
+  event arriving would silently no-op — the button would look clickable but do nothing. Fixed to
+  always call `abortStream()` (the local stop) unconditionally first, and only call the server-side
+  `cancelRun` when `activeRunId` happens to be known yet. Matches the reference UI's stop button,
+  which responds the instant it's clicked regardless of server-side state.
+
+**Verified:** `npx tsc -b` + `npm run build` clean. **Not verified live** — same as the rest of
+this slice, still needs a real click during an actual streaming response.

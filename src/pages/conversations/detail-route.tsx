@@ -163,15 +163,15 @@ export default function AiConversationDetailRoute() {
     reconnectRun(activeRunIdFromHistory);
   }, [isNew, isStreaming, activeRunIdFromHistory, agentRunData, reconnectRun]);
 
-  const { cancelRun, isCancelling } = useCancelAgentRun();
+  const { cancelRun } = useCancelAgentRun();
   const { steerRun, isSteering } = useSteerAgentRun();
 
   const handleStop = () => {
-    if (!activeRunId) return;
-    cancelRun(activeRunId);
-    // Best-effort: stop showing the local streaming state immediately rather than waiting for the
-    // server's own `run_cancelled` event to round-trip back over the connection.
+    // Local stop always works, even in the brief window before `run_queued` has arrived and
+    // `activeRunId` is still null — the button must respond the instant it's clicked, same as
+    // Claude's own stop button, not only once a server-issued id happens to exist yet.
     abortStream();
+    if (activeRunId) cancelRun(activeRunId);
   };
 
   const handleSteerSubmit = (e: FormEvent) => {
@@ -406,28 +406,19 @@ export default function AiConversationDetailRoute() {
               isPhaseOnly={!latestActivity}
             />
 
-            {/* Stop/steer only make sense once a runId actually exists — the very first moment
-                after hitting send (before `run_queued` arrives) has nothing to cancel/steer yet. */}
+            {/* Stop lives on the composer's send button (it swaps to a stop icon in place while
+                streaming, same as Claude's own chat UI) — not a separate control here. Steer is
+                its own thing, only offered once a runId actually exists (the brief window right
+                after hitting send, before `run_queued` arrives, has no run to steer yet). */}
             {activeRunId && !steerOpen && (
-              <div className="flex items-center gap-1.5 pl-0.5">
-                <button
-                  type="button"
-                  onClick={handleStop}
-                  disabled={isCancelling}
-                  className="inline-flex items-center gap-1 rounded-chip border border-line bg-paper px-2 py-1 text-[10.5px] font-medium text-ink-3 transition-colors hover:border-ink-4 hover:text-ink disabled:opacity-60"
-                >
-                  <Square className="size-2.5" />
-                  Stop
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSteerOpen(true)}
-                  className="inline-flex items-center gap-1 rounded-chip border border-line bg-paper px-2 py-1 text-[10.5px] font-medium text-ink-3 transition-colors hover:border-ink-4 hover:text-ink"
-                >
-                  <MessageSquarePlus className="size-2.5" />
-                  Add a note
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setSteerOpen(true)}
+                className="inline-flex items-center gap-1 self-start rounded-chip border border-line bg-paper px-2 py-1 text-[10.5px] font-medium text-ink-3 transition-colors hover:border-ink-4 hover:text-ink"
+              >
+                <MessageSquarePlus className="size-2.5" />
+                Add a note
+              </button>
             )}
 
             {activeRunId && steerOpen && (
@@ -545,16 +536,26 @@ export default function AiConversationDetailRoute() {
                     onPlanModeChange={setPlanMode}
                   />
 
+                  {/* Same control, two modes — mirrors Claude's own composer: this button IS the
+                      stop button while a response is streaming, not a separate control elsewhere,
+                      and swaps back the instant the run ends. */}
                   <button
                     type="button"
-                    onClick={handleSend}
-                    disabled={!input.trim() || isStreaming}
+                    onClick={isStreaming ? handleStop : handleSend}
+                    disabled={!isStreaming && !input.trim()}
+                    title={isStreaming ? "Stop" : undefined}
                     className={cn(
                       "flex size-6.5 items-center justify-center rounded-md transition-all",
-                      input.trim() && !isStreaming ? "bg-ultra text-paper hover:opacity-90" : "bg-paper text-ink-4"
+                      isStreaming
+                        ? "bg-ink text-paper hover:opacity-90"
+                        : input.trim() ? "bg-ultra text-paper hover:opacity-90" : "bg-paper text-ink-4"
                     )}
                   >
-                    {isStreaming ? <Loader2 className="size-3.25 animate-spin" /> : <ArrowUp size={13} strokeWidth={2.5} />}
+                    {isStreaming ? (
+                      <Square className="size-2.75 fill-current" strokeWidth={0} />
+                    ) : (
+                      <ArrowUp size={13} strokeWidth={2.5} />
+                    )}
                   </button>
                 </div>
               </div>
