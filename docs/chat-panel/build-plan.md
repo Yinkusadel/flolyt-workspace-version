@@ -515,3 +515,74 @@ clean, no new errors or unused-import warnings.
 **Still open, deferred on purpose:** wiring any of this into the SSE hook or UI — `activeRunId`/
 `structuredResponse` aren't read anywhere yet, and the run/evidence hooks have no caller. That's
 the next slice, whenever it's picked up.
+
+## Progress (2026-09-25) — SSE hook and message UI migrated to the v3 event vocabulary
+
+Second slice of the v3 migration: `use-ai-conversation-messages.ts` now speaks the documented v3
+events instead of the old `tool_call`/`reasoning_step` ones, and `detail-route.tsx` renders the
+structured response's caveats/actions. The run/evidence hooks from the previous slice still have
+no caller — Stop/steer buttons and a reconnect flow are separate, still-deferred work.
+
+- **`tool_call`/`reasoning_step` cases removed outright**, not just ignored — v3 explicitly says
+  not to render either for agent runs. Checked first whether this was actually the "biggest
+  breaking change" flagged when the handoff doc first arrived: it's smaller in practice than
+  feared, because this app's `WorkingStatus` component only ever showed a single current-activity
+  line (`latestStep`'s description), never a full reasoning-trace list — there was no multi-step
+  trace UI to tear out, just one derived string to re-source.
+- **`progress` is now that string's source.** New `progress: AgentProgressEvent | null` hook state,
+  set on the `progress` SSE case, replaces `reasoningSteps`' role in `WorkingStatus`'s subline and
+  in the "is a proposal or a progress update more recent" comparison (previously compared against
+  the last reasoning step's timestamp). `ReasoningStep` the type is deleted — grepped first to
+  confirm it (and `reasoningSteps`/`onReasoningStep`) had exactly three callers, all touched here.
+- **`final_response` now drives what actually gets stored as the assistant message.** New
+  `finalResponseRef` holds the event's `structuredResponse`/`responseContractVersion` the moment
+  it arrives; the existing completion path (still triggered by `state === "complete"`, unchanged)
+  now prefers `structuredResponse.markdown` over the plain accumulated `response_chunk` text, and
+  attaches `structuredResponse`/`responseContractVersion` onto the pushed `AiConversationMessage`.
+  `response_chunk` keeps driving the live typewriter exactly as before — the doc says it carries
+  "the same Markdown as the final response," so the visible text shouldn't visibly change, but the
+  message now also carries the structured findings/caveats/actions data once it lands.
+- **New cases, all additive, matching the doc's own descriptions:** `run_queued` (captures
+  `runId` into a new `activeRunId` state — this SSE event previously had no case at all, despite a
+  since-removed comment claiming it was "captured, unused"; it wasn't, actually check before
+  trusting an old capture-comment), `input_request` (captured into a loosely-typed `inputRequest`
+  state — the doc doesn't define this payload's shape beyond "render the choices/free-text
+  control," so no UI reads it yet), `run_state` (folds `message` into `currentPhaseMessage` so a
+  stray reconcile-after-reconnect event doesn't silently vanish, even with no reconnect flow built).
+  `run_cancelled` stops the stream (`setIsStreaming(false)`) without pushing a message — no Stop
+  button exists yet to trigger this from the UI side, but a server/other-surface cancellation
+  arriving on this connection is now handled instead of falling through unmatched.
+- **UI: caveats and actions**, rendered under `AiResponseRenderer` for any message carrying
+  `structuredResponse`. `AiResponseCaveats` (`src/pages/conversations/ai-response/response-caveats.tsx`)
+  is a plain amber `Info`-icon callout per finding's caveat, mirroring [[lifecycle_callout_info_icon]]'s
+  convention. `AiResponseActions` (`.../response-actions.tsx`) renders `SuggestedActionV2[]` as
+  chip-style buttons: `AskAgent` sends the label as a follow-up prompt (reuses the existing
+  suggested-prompt send path); everything else resolves through a new
+  `resolveSuggestedActionRoute` (`src/features/ai-conversations/map-suggested-action-target.ts`).
+- **Real gap found while writing that resolver, not invented:** the doc's initial action-resource
+  catalog is `segment`, `campaign`, `datasources`, `channels`, `room` — grepped `route.tsx` and only
+  `room` (`/rooms/:roomId`) and `data-sources` are live top-level routes today. `segment`/`channels`
+  only exist inside the archived `src/oldpages` lifecycle build; `campaign` has no route at all.
+  Per the doc's own instruction ("ignore unknown resource names... never treat a label/parameter/
+  model-authored text as a URL"), those three resolve to `null` and the action is hidden — same
+  outcome as an actually-unknown resource, not a guess at a dead or archived page. Revisit once
+  those surfaces exist live.
+- **`Info` icon caveat + chip action styling is a first pass, not a validated design** — no Figma
+  reference exists for this feature (per the top of this doc) and the v3 findings/metrics/evidence
+  card UI the doc frames as the primary way to show structured data is explicitly **not** attempted
+  here; this pass only surfaces caveats/actions since those map cleanly onto affordances this app
+  already has (the Callout convention, chip-style buttons). A real findings/metrics/evidence
+  presentation is separate design work, still open.
+
+**Verified:** `npx tsc -b` and `npm run build` both clean, no new errors.
+**Not verified live:** none of this has been exercised against a real streaming response yet —
+whether the backend actually emits `progress`/`final_response`/`run_queued` on this connection
+(as opposed to only the old `tool_call`/`reasoning_step`/`response_chunk` events it was confirmed
+to send live on 2026-09-10) is unconfirmed. If it doesn't yet, this UI will just show the
+generic phase fallback with no live activity text and no structured caveats/actions until the
+backend's SSE payload actually catches up to the handoff doc — worth a real session to check.
+
+**Still open, deferred on purpose:** Stop/steer buttons (the `agent-runs` hooks from the previous
+slice have no caller yet), the reconnect flow (`activeRunId` on the conversation detail response
+isn't read either), `input_request`'s actual choice/free-text UI, and a real findings/metrics/
+evidence presentation.

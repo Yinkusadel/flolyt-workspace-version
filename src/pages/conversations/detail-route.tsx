@@ -13,6 +13,8 @@ import { ProposalCard, type ProposalCardData } from "./proposal-card";
 import { PromptToggles } from "./prompt-toggles";
 import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
 import { AiResponseRenderer } from "./ai-response/response-renderer";
+import { AiResponseCaveats } from "./ai-response/response-caveats";
+import { AiResponseActions } from "./ai-response/response-actions";
 import flolytLogo from "../../../assets/logo.png";
 
 // ❌ Backend does NOT provide a suggested-next-actions endpoint yet — mocked until one exists.
@@ -67,9 +69,9 @@ function dedupeMessages(messages: AiConversationMessage[]): ChatMessage[] {
 
 // No card, no click-to-expand — mirrors Claude's own in-progress status: a single "is working"
 // header with a live timer, and one current-activity line underneath that swaps out as new SSE
-// events arrive rather than accumulating into a list. Past steps are intentionally discarded once
-// replaced (see reasoningSteps in useAiConversationMessages — kept for the send lifecycle, not for
-// history display).
+// events arrive rather than accumulating into a list. Past activity is intentionally discarded
+// once replaced (see `progress` in useAiConversationMessages — only the latest is kept, there's
+// no history-of-steps display).
 function WorkingStatus({ elapsedSeconds, subline, isPhaseOnly }: { elapsedSeconds: number; subline: string; isPhaseOnly: boolean }) {
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
@@ -114,7 +116,7 @@ export default function AiConversationDetailRoute() {
 
   const {
     messages: streamedMessages,
-    reasoningSteps,
+    progress,
     proposals: streamedProposals,
     animatedStreamingText,
     isStreaming,
@@ -147,22 +149,23 @@ export default function AiConversationDetailRoute() {
   }, [isStreaming]);
 
   // The current-activity line always reflects the latest real SSE data. A `proposal` event is
-  // just as much "activity" as a tool_call/reasoning_step, but it lands in its own array
-  // (streamedProposals, below) — compare real timestamps across both to find whichever actually
-  // happened last, rather than only ever looking at reasoningSteps and silently dropping proposal
-  // activity. Falls back to the current lifecycle phase before either has produced anything.
-  const latestStep = reasoningSteps[reasoningSteps.length - 1];
+  // just as much "activity" as a `progress` event, but it lands in its own array (streamedProposals,
+  // below) — compare real timestamps across both to find whichever actually happened last, rather
+  // than only ever looking at progress and silently dropping proposal activity. Falls back to the
+  // current lifecycle phase before either has produced anything. (Previously compared against the
+  // last `reasoningSteps` entry — removed along with tool_call/reasoning_step rendering, since v3
+  // says not to render those for agent runs; `progress` is the sanctioned replacement signal.)
   const latestProposal = streamedProposals[streamedProposals.length - 1];
   const proposalIsLatest =
     !!latestProposal &&
-    (!latestStep || new Date(latestProposal.createdAtUtc) >= new Date(latestStep.timestamp));
+    (!progress || new Date(latestProposal.createdAtUtc) >= new Date(progress.atUtc));
 
-  const latestActivity = latestStep || latestProposal;
+  const latestActivity = proposalIsLatest ? latestProposal : progress;
   // Prefer the backend's own phase copy ("Analyzing your request...", "Processing...") over the
   // PHASE_LABEL map — that map is only a fallback for a phase the backend didn't send text for.
   const workingSubline = proposalIsLatest
     ? `Preparing proposal: ${latestProposal!.toolName}`
-    : (latestStep?.description ?? currentPhaseMessage ?? PHASE_LABEL[currentPhase ?? ""] ?? "Working…");
+    : (progress?.message ?? currentPhaseMessage ?? PHASE_LABEL[currentPhase ?? ""] ?? "Working…");
 
   // The SSE `proposal` event is a live nudge, not the source of truth — GET /ai/proposals is,
   // and is what makes a still-pending proposal survive a page reload. Merge the two: prefer the
@@ -327,6 +330,15 @@ export default function AiConversationDetailRoute() {
             // then overflow straight past the pane's edge instead of being capped at 85%.
             <div key={message.key} className="flex w-full min-w-0 flex-col items-start gap-1.5">
               <AiResponseRenderer content={message.content} />
+              {message.structuredResponse?.caveats?.length ? (
+                <AiResponseCaveats caveats={message.structuredResponse.caveats} />
+              ) : null}
+              {message.structuredResponse?.actions?.length ? (
+                <AiResponseActions
+                  actions={message.structuredResponse.actions}
+                  onAskAgent={handleSelectSuggestion}
+                />
+              ) : null}
             </div>
           )
         )}

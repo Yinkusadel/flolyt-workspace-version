@@ -4,14 +4,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { COOKIE_KEYS, getCookie } from "@/utils/cookies";
 import type {
+  AgentProgressEvent,
   AgentStreamEvent,
   AiConversationMessage,
-  ReasoningStep,
   StreamProposal,
 } from "./ai-conversation-types";
+import type { AgentResponseV2 } from "./agent-response-types";
 
 interface UseAiConversationMessagesOptions {
-  onReasoningStep?: (step: ReasoningStep) => void;
   onConversationCreated?: (id: string) => void;
 }
 
@@ -26,7 +26,6 @@ export const useAiConversationMessages = (
   const optionsRef = useRef<UseAiConversationMessagesOptions | undefined>(options);
   const [conversationId, setConversationId] = useState<string | null>(initialConversationId ?? null);
   const [messages, setMessages] = useState<AiConversationMessage[]>([]);
-  const [reasoningSteps, setReasoningSteps] = useState<ReasoningStep[]>([]);
   const [proposals, setProposals] = useState<StreamProposal[]>([]);
   const [streamingText, setStreamingText] = useState("");
   const [animatedStreamingText, setAnimatedStreamingText] = useState("");
@@ -36,10 +35,22 @@ export const useAiConversationMessages = (
   // "Processing...") — kept separate from currentPhase (the raw state code) so the UI can show
   // the real copy instead of a made-up label per state code.
   const [currentPhaseMessage, setCurrentPhaseMessage] = useState<string | null>(null);
+  // Replaces the old tool_call/reasoning_step trace as the "what's it doing right now" signal —
+  // v3 explicitly says not to render those events for agent runs; `progress` is the sanctioned
+  // status-only replacement (no tool names/args/SQL/credentials/reasoning in its message).
+  const [progress, setProgress] = useState<AgentProgressEvent | null>(null);
+  // Captured for a future Stop/steer/reconnect UI — not consumed by anything yet, same
+  // "capture now, wire later" reasoning `runId` itself was already following before this.
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [inputRequest, setInputRequest] = useState<Record<string, unknown> | null>(null);
 
   const conversationIdRef = useRef<string | null>(initialConversationId ?? null);
   const abortRef = useRef<AbortController | null>(null);
   const responseAccRef = useRef("");
+  const finalResponseRef = useRef<{
+    structuredResponse: AgentResponseV2 | null;
+    responseContractVersion: string | null;
+  } | null>(null);
   const bufferRef = useRef("");
   const pendingCharsRef = useRef("");
   const typewriterTimerRef = useRef<number | null>(null);
@@ -62,6 +73,7 @@ export const useAiConversationMessages = (
     abortRef.current = null;
     completePendingRef.current = false;
     responseAccRef.current = "";
+    finalResponseRef.current = null;
     bufferRef.current = "";
     pendingCharsRef.current = "";
     if (typewriterTimerRef.current) window.clearTimeout(typewriterTimerRef.current);
@@ -72,13 +84,15 @@ export const useAiConversationMessages = (
     conversationIdRef.current = nextConversationId;
     setConversationId(nextConversationId);
     setMessages([]);
-    setReasoningSteps([]);
     setProposals([]);
     setStreamingText("");
     setAnimatedStreamingText("");
     setIsStreaming(false);
     setCurrentPhase(null);
     setCurrentPhaseMessage(null);
+    setProgress(null);
+    setActiveRunId(null);
+    setInputRequest(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialConversationId]);
 
@@ -112,15 +126,28 @@ export const useAiConversationMessages = (
         completePendingRef.current = false;
         setIsStreaming(false);
         setCurrentPhase(null);
+        setProgress(null);
 
-        const finalText = responseAccRef.current;
+        // `final_response` carries the validated structured payload — prefer its markdown (and
+        // attach the structured fields for findings/caveats/actions) over the plain accumulated
+        // response_chunk text once it's arrived. Falls back to the accumulated text if the run
+        // finished without one (e.g. an older/legacy-path response).
+        const final = finalResponseRef.current;
+        const finalText = final?.structuredResponse?.markdown || responseAccRef.current;
         if (finalText) {
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: finalText, timestamp: new Date().toISOString() },
+            {
+              role: "assistant",
+              content: finalText,
+              timestamp: new Date().toISOString(),
+              structuredResponse: final?.structuredResponse ?? null,
+              responseContractVersion: final?.responseContractVersion ?? null,
+            },
           ]);
           setStreamingText("");
         }
+        finalResponseRef.current = null;
       }
 
       if (!pendingCharsRef.current.length && !completePendingRef.current) {
@@ -150,10 +177,12 @@ export const useAiConversationMessages = (
       // "Thinking…" state too, not a blank one.
       setCurrentPhase("submitted");
       setCurrentPhaseMessage(null);
-      setReasoningSteps([]);
+      setProgress(null);
+      setInputRequest(null);
       setStreamingText("");
       clearTypewriter();
       responseAccRef.current = "";
+      finalResponseRef.current = null;
 
       // Optimistic user message
       setMessages((prev) => [
@@ -171,6 +200,7 @@ export const useAiConversationMessages = (
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
             Accept: "text/event-stream",
+            "X-Flolyt-Agent-Contract": "v3",
           },
           body: JSON.stringify({ conversationId: conversationIdRef.current, message }),
           signal: abortRef.current.signal,
@@ -249,20 +279,17 @@ export const useAiConversationMessages = (
                 break;
               }
 
-              case "tool_call": {
-                const step = parsed.reasoningSteps?.[0];
-                if (step) setReasoningSteps((prev) => [...prev, { ...step, kind: "tool_call" }]);
-                setCurrentPhase("readingSource");
+              case "run_queued": {
+                if (parsed.runId) setActiveRunId(parsed.runId);
                 break;
               }
 
-              case "reasoning_step": {
-                const step = parsed.reasoningSteps?.[0];
-                if (step) {
-                  const tagged: ReasoningStep = { ...step, kind: "reasoning_step" };
-                  setReasoningSteps((prev) => [...prev, tagged]);
-                  optionsRef.current?.onReasoningStep?.(tagged);
-                }
+              // Deliberately no `tool_call`/`reasoning_step` cases — v3 says not to render those
+              // for agent runs; `progress` below is the sanctioned replacement. If the backend
+              // still sends them (compatibility with other surfaces), the switch just ignores them.
+
+              case "progress": {
+                if (parsed.progress) setProgress(parsed.progress);
                 break;
               }
 
@@ -276,9 +303,36 @@ export const useAiConversationMessages = (
                 break;
               }
 
+              case "final_response": {
+                finalResponseRef.current = {
+                  structuredResponse: parsed.structuredResponse ?? null,
+                  responseContractVersion: parsed.responseContractVersion ?? null,
+                };
+                break;
+              }
+
+              case "input_request": {
+                setInputRequest(parsed.inputRequest ?? null);
+                break;
+              }
+
               case "proposal": {
                 if (parsed.proposal) setProposals((prev) => [...prev, parsed.proposal!]);
                 break;
+              }
+
+              case "run_state": {
+                // Reconcile-after-reconnect status text — no reconnect flow is built yet, but a
+                // stray run_state on the live connection still gets a real phase message instead
+                // of being silently dropped.
+                if (parsed.message) setCurrentPhaseMessage(parsed.message);
+                break;
+              }
+
+              case "run_cancelled": {
+                setIsStreaming(false);
+                clearTypewriter();
+                return;
               }
 
               case "error": {
@@ -335,13 +389,15 @@ export const useAiConversationMessages = (
   return {
     conversationId,
     messages,
-    reasoningSteps,
     proposals,
     streamingText,
     animatedStreamingText,
     isStreaming,
     currentPhase, // "submitted" | "readingSource" | "streaming" | null
     currentPhaseMessage,
+    progress,
+    activeRunId,
+    inputRequest,
     sendMessage,
     abortStream,
   };
