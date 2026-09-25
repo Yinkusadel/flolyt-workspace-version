@@ -289,7 +289,15 @@ export const useAiConversationMessages = (
               // still sends them (compatibility with other surfaces), the switch just ignores them.
 
               case "progress": {
-                if (parsed.progress) setProgress(parsed.progress);
+                // Confirmed live 2026-09-25: the very first `progress` event of a send carries the
+                // same internal "conversation_id:<id>" sentinel the `status` case already filters
+                // out of user-facing copy — but this arrives as `progress.message`, a different
+                // field, so that filter never caught it. Without this guard it flashed the raw
+                // guid in the WorkingStatus subline for one render before the next progress event
+                // (the real "Preparing the analysis." text) overwrote it a moment later.
+                if (parsed.progress && !parsed.progress.message?.startsWith("conversation_id:")) {
+                  setProgress(parsed.progress);
+                }
                 break;
               }
 

@@ -44,7 +44,12 @@ export interface AgentResponseV2 {
 // label/parameter/model-authored text as a URL. Hide actions where `eligibility.eligible === false`.
 export interface SuggestedActionV2 {
   id: string;
-  kind: "OpenRecord" | "OpenWorkspaceSurface" | "OpenRoom" | "ConnectSource" | "AskAgent";
+  // The handoff doc lists this as a PascalCase enum ("OpenRoom", etc.), but a live capture on
+  // 2026-09-25 sent "openRoom" (camelCase) instead. Resolution is keyed off `target.resource`, not
+  // `kind` (except the `AskAgent` special case), so the mismatch doesn't break anything — but
+  // widened to accept any string rather than pretend the doc's casing is confirmed. Re-tighten
+  // only after re-checking a live payload.
+  kind: "OpenRecord" | "OpenWorkspaceSurface" | "OpenRoom" | "ConnectSource" | "AskAgent" | (string & {});
   label: string;
   target: { resource: string; resourceId?: string | null };
   parameters?: Record<string, string> | null;

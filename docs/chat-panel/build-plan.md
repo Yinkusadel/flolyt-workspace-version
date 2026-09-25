@@ -586,3 +586,92 @@ backend's SSE payload actually catches up to the handoff doc — worth a real se
 slice have no caller yet), the reconnect flow (`activeRunId` on the conversation detail response
 isn't read either), `input_request`'s actual choice/free-text UI, and a real findings/metrics/
 evidence presentation.
+
+## Progress (2026-09-25) — first live v3 SSE capture, one real bug found and fixed
+
+The user ran two real sends against the live backend and captured the full event log for both —
+the first live confirmation of the v3 event vocabulary itself (previous live confirmations, back
+on 2026-09-09/10, only ever saw the old `tool_call`/`reasoning_step`/`response_chunk` vocabulary).
+
+**Confirmed correct, matches what was built:**
+- `run_queued` really does arrive as its own event with a bare `runId`, no `progress`/other
+  fields — `activeRunId` capture works as written.
+- `progress` events match the implemented `AgentProgressEvent` shape exactly (`stage`, `message`,
+  `atUtc`); no `percent` field was sent, consistent with it being documented optional.
+- `response_chunk`'s streamed text and `final_response.structuredResponse.markdown` were
+  byte-identical in both captured exchanges — confirms the "swapping in structuredResponse.markdown
+  won't visibly change the rendered text" assumption from the previous entry was correct, not just
+  a guess from the doc's wording.
+- The legacy `suggested_action` event fired **alongside** `final_response`, carrying the same
+  action as `structuredResponse.actions[0]` in one exchange — confirms ignoring `suggested_action`
+  (no case for it in the switch) was the right call: it's genuinely duplicate data, already
+  covered by the richer channel, not a silently-dropped signal.
+
+**One real bug found and fixed:** the first `progress` event of every send carries the same
+internal `"conversation_id:<id>"` sentinel the `status` case already knows to filter out of
+user-facing copy — but it arrives in `progress.message`, a field the `status` filter never
+touches. Before this fix, the raw guid would flash in the `WorkingStatus` subline for one render
+until the next `progress` event (the real "Preparing the analysis." text) overwrote it a moment
+later. Fixed by skipping that specific `progress` update in the switch case
+(`use-ai-conversation-messages.ts`) rather than trying to generalize the `status` case's filter.
+
+**A second exchange also surfaced a real gap in the actions work from the previous slice** — a
+live `openRoom` action whose `target.resource` was `"room"` with **no `resourceId`**, carrying
+`grid`/`rowKey`/`conditionKey`/`currency` in `parameters` instead. The previous slice's
+`resolveSuggestedActionRoute` fell back to the bare `/rooms` list for exactly this shape, which
+would have silently discarded all four of those params and sent the user to the wrong place
+(worse than not showing a button at all). Fixed by removing that fallback — full detail, including
+the live payload, is in the new reference section below. Also caught: the live `kind` value was
+`"openRoom"` (camelCase), not the doc's documented `"OpenRoom"` (PascalCase) — harmless today since
+resolution keys off `target.resource`, not `kind`, but `SuggestedActionV2["kind"]` was widened to
+accept any string rather than assert a casing that's now known to be unconfirmed.
+
+**Verified:** `npx tsc -b` clean after all three fixes.
+**Still not exercised live:** Stop/steer/reconnect (no caller yet), `input_request` (no live
+example seen yet either — both captured exchanges completed without one), and the actual New Room
+wizard prefill that would make the `openRoom`-without-`resourceId` action work end to end.
+
+## Reference: action-resource routing (`SuggestedActionV2`) — what resolves and what doesn't
+
+Kept as its own lookup section (not buried in a dated entry above) since this is exactly the kind
+of thing worth checking back on before touching `AiResponseActions`
+(`src/pages/conversations/ai-response/response-actions.tsx`) or `resolveSuggestedActionRoute`
+(`src/features/ai-conversations/map-suggested-action-target.ts`) again.
+
+**Resolves to a real page today:**
+- `resource: "datasources"` → `/data-sources`, always (no `resourceId` needed).
+- `resource: "room"` **with a `resourceId`** → `/rooms/{resourceId}`.
+
+**Hidden — no live destination, or not enough information to build one. Not a guess:**
+- `resource: "segment"` / `"channels"` — no live top-level route. Both exist only inside the
+  archived `src/oldpages` lifecycle build (`stage-tabs-config.ts`'s `segments`/`channels` tabs).
+  Needs a real live page for either before this can resolve to anything.
+- `resource: "campaign"` — no route at all anywhere in `route.tsx`. Same: needs a real page first.
+- `resource: "room"` **without a `resourceId`** — confirmed live 2026-09-25 that the backend sends
+  exactly this shape for an "open a room from a leak" suggestion:
+  ```json
+  {
+    "id": "rooms.open_from_leak",
+    "kind": "openRoom",
+    "label": "Open or join a room on flolyt intelligence — second-purchase window · churn risk",
+    "target": { "resource": "room" },
+    "parameters": { "grid": "segment", "rowKey": "<guid>", "conditionKey": "churn_risk", "currency": "NGN" },
+    "eligibility": { "eligible": true, "requiredCapabilities": ["open_room_on_leak"] }
+  }
+  ```
+  There's no id to link to — the real identifying info lives in `parameters`. Those four fields
+  line up with the **New Room wizard**'s Step 1 condition
+  (`src/pages/rooms/new/step-condition.tsx`, a `{ title, conditionKey }` value) and Step 2 audience
+  rules (`RoomSegmentRuleInput`, `src/services/api/rooms/estimate-new-room-cohort.ts`), not a plain
+  route. Building this for real means the wizard (`src/pages/rooms/new/index.tsx`) accepting these
+  four params as one-shot prefill data (distinct from [[url_param_over_state_for_page_flow]], which
+  is about *step position*, not initial field values — likely still nav `state`, not a query
+  param) and seeding `StepCondition`/`StepAudience`'s initial values from them. Until that exists,
+  this shape is hidden rather than linked to the bare `/rooms` list, which would silently discard
+  all four params — a wrong destination is worse than no button.
+- **`kind` doesn't reliably match the handoff doc's enum** — the doc lists `'OpenRecord' |
+  'OpenWorkspaceSurface' | 'OpenRoom' | 'ConnectSource' | 'AskAgent'` (PascalCase); the live payload
+  above sent `"openRoom"` (camelCase). Resolution keys off `target.resource`, not `kind` (except
+  the `AskAgent` special case), so this hasn't broken anything — `SuggestedActionV2["kind"]` was
+  just widened to accept any string. Don't tighten it back to the doc's literal union without
+  re-confirming real casing live first.
