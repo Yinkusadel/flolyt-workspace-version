@@ -466,3 +466,52 @@ Other things that change once we migrate:
 **Not building against this yet.** This entry is the "read it, don't act on it" checkpoint before
 the next chat-panel work session. Re-read the full handoff doc fresh when that work starts —
 don't rely on this summary alone.
+
+## Progress (2026-09-25) — v3 endpoints, services, hooks, and types added (SSE hook/UI untouched)
+
+First real slice of the v3 migration, scoped deliberately to endpoint plumbing only — no changes
+to the SSE hook's event handling or to any rendered UI (`ReasoningTrace` still renders
+`tool_call`/`reasoning_step` as before; that rework is still pending, see the section above).
+
+- **Found and fixed a real routing bug while cross-checking, not something the doc changed:**
+  `AGENT_RUNS_BASE_URL` in `apiConfig.ts` pointed at `/api/v3/command-center/runs`, which matches
+  neither the v3 doc's `/api/v3/runs/{runId}` nor its documented legacy alias
+  (`/api/flolyt/ai/runs/*`). Had zero callers anywhere in the app at the time, so fixing it broke
+  nothing. Also added the missing `AGENT_RUNS.STREAM` route and a new `AI_EVIDENCE` block — neither
+  existed before.
+- **`AI_CONVERSATIONS_BASE_URL`/`AI_PROPOSALS_BASE_URL` needed no path change** — this app already
+  prefixes every domain with `/api/v3/` as its own general versioning convention (`ROOMS_BASE_URL`,
+  `TEAMS_BASE_URL`, etc. all do this), unrelated to the doc's "Agent API v3" naming. Only new work
+  here was the header (see below).
+- **New types**, split by where the shapes are actually shared rather than duplicated per file:
+  `src/features/ai-conversations/agent-intelligence-types.ts` (`IntelligenceReference`,
+  `ImpactStatement`, `EvidenceStatusAssessment`, `EvidenceStatus` — used by both structured
+  responses and evidence traversal), `agent-response-types.ts` (`AgentResponseV2`,
+  `SuggestedActionV2`, `ResponseProvenanceBundle`), `src/features/agent-runs/agent-run-types.ts`
+  (`AgentRun`, `SourceResolution`, `SourceCandidateState`), `src/features/ai-evidence/ai-evidence-types.ts`
+  (`CanonicalIntelligenceProjection`). Deliberately left out `PromptStateEvent`/`AgentProgressEvent`
+  (the SSE-only types) — those belong to the still-deferred SSE rework, not this endpoints pass.
+- **New services + hooks**, following the existing `ai-conversations`/`ai-proposals` axios+
+  react-query shape (standard `{ data, messages, succeeded }` envelope, try/catch → thrown `Error`):
+  `src/services/api/agent-runs/{get-agent-run,cancel-agent-run,steer-agent-run}.ts` +
+  `src/features/agent-runs/use-{get,cancel,steer}-agent-run.ts`; `src/services/api/ai-evidence/get-evidence.ts`
+  + `src/features/ai-evidence/use-get-evidence.ts`. All four agent-run/evidence calls send
+  `X-Flolyt-Agent-Contract: v3` as a **per-call** header (not added to the shared `axiosInstance`
+  globally), since the doc frames it as identifying agent-API traffic specifically, not every
+  request the app makes.
+- **`steerAgentRun`'s request body is a guess** — the doc never states the POST body shape for
+  `/runs/{id}/steer`, only that a stored steering entry looks like `{ text, addedBy, addedAtUtc,
+  consumed }`. Sending `{ text }`; flagged in a code comment. Confirm against Scalar before wiring
+  any UI to this call.
+- **Existing conversation types extended, additively:** `AiConversationDetailDto` gained
+  `activeRunId?: string | null` (GET_BY_ID's documented reconnect field — nothing consumes it yet,
+  same "capture now, wire later" pattern as `runId` before it) and `AiConversationMessage` gained
+  `structuredResponse?: AgentResponseV2 | null` + `responseContractVersion?: string | null` (the
+  doc says history reads and sync JSON responses expose these; nothing reads them yet either).
+
+**Verified:** `npm run build` (`tsc -b && vite build`) and a standalone `npx tsc -b` both pass
+clean, no new errors or unused-import warnings.
+
+**Still open, deferred on purpose:** wiring any of this into the SSE hook or UI — `activeRunId`/
+`structuredResponse` aren't read anywhere yet, and the run/evidence hooks have no caller. That's
+the next slice, whenever it's picked up.

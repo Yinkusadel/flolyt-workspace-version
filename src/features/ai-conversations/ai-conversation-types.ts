@@ -1,3 +1,5 @@
+import type { AgentResponseV2 } from "./agent-response-types";
+
 export interface AiConversationMessage {
   // "context" also comes back from history (GET_BY_ID) — a tool-call/data-context summary line
   // the backend logs into the message array, not part of the actual conversation. Confirmed live
@@ -8,6 +10,11 @@ export interface AiConversationMessage {
   role: "user" | "assistant" | "context" | "error";
   content: string;
   timestamp: string;
+  // Per the v3 handoff: history reads (and synchronous JSON message responses) also expose the
+  // structured payload directly on the message. Prefer this over `content` when present — `content`
+  // stays as the plain-markdown fallback during migration.
+  structuredResponse?: AgentResponseV2 | null;
+  responseContractVersion?: string | null;
 }
 
 export interface ReasoningStep {
