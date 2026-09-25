@@ -24,6 +24,7 @@ wired into code yet, so we always have a source of truth to check against and co
 | Wallet | [wallet.md](wallet.md) | 5/5 documented and scaffolded (service+hook), 3/5 wired (`GET /balance`, `GET /transactions`, `POST /topup`, into `plan-and-billing`) |
 | AI proposals | [ai-proposals.md](ai-proposals.md) | 4/4 documented and wired into the chat panel (`conversations/detail-route.tsx` + `proposal-card.tsx`); Inbox side not built yet |
 | Data Platform | [data-platform.md](data-platform.md) | 1/15 documented and wired (`GET /schema-explorer`, into `/schema`); other 14 pasted but not yet scaffolded |
+| Leakage | [leakage.md](leakage.md) | 9/9 documented and scaffolded (service+hook), 0/9 wired; supersedes the never-wired `ROOMS.OPEN_ROOM_ON_LEAKAGE_CELL` guess (see file); 2 responses truncated in the paste, flagged in the file; wiring plan for `/leakage-map` at [../leakage-map/build-plan.md](../leakage-map/build-plan.md) |
 
 ## Per-endpoint entry format
 

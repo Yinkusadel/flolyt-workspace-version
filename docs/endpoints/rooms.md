@@ -130,14 +130,20 @@ Mutations show their real top-level shape including the envelope.
 - **Status:** service/hook ready, not wired.
 - **Notes:** Open only unless `includeArchived` or an explicit `state` set. `state` values (`open`/`recovering`/`stale`/`archived`) **overlap and don't sum to total** — recovering/stale are both subsets of open. `minAmountAtRisk` compares within each room's own currency, never across — pair with `currency`. `isStale` = untouched 14 days. `stoppedBecause` (`never-assigned`/`owner-left`/`owner-overloaded`/`unknown`) is a real answer, not a gap. `amountBehindStale` is per-currency, never one figure. Each room carries both its opening figure and the live leakage-map figure; the live one is `null` (not stale) when its cell has become unavailable. **Updated 2026-09-08:** each row now also carries what the list draws without a second call — `ownerName` (null when unowned), `agents` (key/displayName/role), `pendingDecisions` (pending plays on the room, counted the way the inbox counts them), `needsYou` (one of them waits on the caller). On a restricted room those four are `null`, `[]`, `0` and `false` — they are the inside of it.
 
-### POST /rooms
+### POST /rooms ⚠️ superseded — see [leakage.md](leakage.md)
 
-- **Purpose:** Opens a war room on one cell of the leakage map, snapshotting population/revenue-at-risk so the outcome can later be measured against the same figure.
-- **Auth:** Bearer token.
-- **Request:** body `{ grid: string, rowKey: string, conditionKey: string, currency: string, title: string | null }`.
-- **Response:** `{ data: roomId, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/open-room-on-leakage-cell.ts` / `src/features/rooms/use-open-room-on-leakage-cell.ts`), not wired into a page yet — "open a war room" action from the leakage map.
-- **Status:** service/hook ready, not wired.
+- **Corrected 2026-09-22:** this entry was a guess made before the full leakage spec existed. The
+  real path is `POST /api/v3/leakage/cells/{grid}/{row}/{condition}/{currency}/room` (path params,
+  not `/rooms`), and the real body nests settlement fields under a `settlement` object rather than
+  the flat `{ grid, rowKey, conditionKey, currency, title }` shown below — see
+  [leakage.md](leakage.md#post-apiv3leakagecellsgridrowconditioncurrencyroom) for the confirmed
+  request/response shape. The old `src/services/api/rooms/open-room-on-leakage-cell.ts` /
+  `src/features/rooms/use-open-room-on-leakage-cell.ts` were deleted; the corrected service/hook
+  live under `src/services/api/leakage/` / `src/features/leakage/` instead.
+- **Purpose (as originally guessed):** Opens a war room on one cell of the leakage map, snapshotting population/revenue-at-risk so the outcome can later be measured against the same figure.
+- **Request (as originally guessed):** body `{ grid: string, rowKey: string, conditionKey: string, currency: string, title: string | null }`.
+- **Response:** `{ data: roomId, messages, succeeded }` — this part held up.
+- **Status:** superseded by leakage.md, not wired.
 - **Notes:** Refused on a cell with no figure behind it (fix is connecting the source, not opening a room). If a room is already open on the same coordinate, this joins that one instead of opening a duplicate.
 
 ### GET /rooms/{roomId}/close-preview

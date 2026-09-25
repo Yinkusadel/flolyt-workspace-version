@@ -1,224 +1,183 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { FloatingCard } from "@/pages/leakage-map/floating-card";
-import { Button } from "@/components/ui/button";
-import {
-  CompoundCellCard,
-  FilteredCellCard,
-  GapCellCard,
-  ValueCellCard,
-  ZeroCellCard,
-} from "@/pages/leakage-map/detail-panel";
-import {
-  HEAT_SCALE,
-  HEAT_TEXT_CLASS,
-  MATRIX_COLUMNS,
-  MATRIX_ROWS,
-  filteredOutPercent,
-  isCellHiddenByFilter,
-  type ConfidenceLevel,
-  type SeverityLevel,
-} from "@/pages/leakage-map/data";
+import { CellDetailCard } from "@/pages/leakage-map/detail-panel";
+import { formatCompactMoney } from "@/lib/format-measured-value";
+import { HEAT_SCALE, HEAT_TEXT_CLASS } from "@/pages/leakage-map/data";
+import type { LeakageGridDto } from "@/services/api/leakage/get-leakage";
+import type { GetLeakageCellParams } from "@/services/api/leakage/get-leakage-cell";
+
+/** Buckets a raw `intensity` into the existing 4-step heat scale — confirmed live 2026-09-24 to be
+ * bounded like a 0–1 score (a real measured cell was `1`, several real-zero cells were `0`).
+ * Clamped defensively anyway, since only those two endpoints have been observed so far. */
+function heatBucket(intensity: number | null): 0 | 1 | 2 | 3 {
+  if (intensity === null) return 0;
+  const clamped = Math.max(0, Math.min(1, intensity));
+  if (clamped >= 0.66) return 3;
+  if (clamped >= 0.33) return 2;
+  if (clamped > 0) return 1;
+  return 0;
+}
+
+function MatrixSkeleton() {
+  return (
+    <div className="rounded-card border border-line bg-paper p-4">
+      <div className="flex gap-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-3 w-20" />
+        ))}
+      </div>
+      <div className="mt-3 space-y-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-14 w-full" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /**
- * Each cell opens its own FloatingCard — a click opens a small card right against that cell,
- * matching the export's own floating-card screens (02–05, 11) rather than a full-screen dialog.
- * Five kinds now render here: value, compound (a value cell whose amount and threat rank
- * disagree), zero ("no exposure"), gap ("unknown — data gap"), and — computed from the current
- * Severity/Confidence controls, not authored data — hidden-by-filter.
+ * The customer-state/segment × condition grid(s) — rewritten from the mock's hardcoded 5×5 table
+ * with 5 authored cell states into a fully dynamic render of `GET /leakage`'s own `grids[]` (see
+ * docs/leakage-map/build-plan.md Step 4). Real distinctions the mock's five states (value/compound/
+ * zero/gap/filtered) don't map onto:
+ * - "filtered" doesn't exist here at all — `minSeverity`/`minConfidence` are sent to the server,
+ *   which excludes hidden cells from `cells[]` entirely rather than returning them dashed-out
+ *   (confirmed by `filter.cellsHidden` being a bare count, not per-cell data) — so there is no
+ *   client-side severity/confidence gating left to do in this component.
+ * - "compound" (a horizon-projection cell) and "zero" (measured-and-empty) have no equivalent
+ *   field on `LeakageCellDto` — every cell collapses to one of two real states: measured (`amount`
+ *   present) or gap (absent from `cells[]`, or present with `amount: null`). A real zero is
+ *   genuinely measured (`state: "available"`, `amount: 0`), not a gap — confirmed live.
+ * A gap cell's own `missingSource`/`wouldUnlock` are real fields on the grid response itself
+ * (confirmed live 2026-09-24 — an earlier pass guessed this needed the click-through detail fetch;
+ * it doesn't), so a gap cell shows an `InfoTooltip` inline with no request at all. Clicking any
+ * cell still lazy-fetches the full `GET /leakage/cells/{...}` detail (movement/expected/room/
+ * draft/signals/guidance) for the richer floating card.
  */
 export function LeakageMatrix({
+  grids,
+  currency,
+  cellParams,
   shadingCaptionLabel,
-  severityFilter,
-  confidenceFilter,
-  onClearFilter,
-  onSetSeverityFilter,
+  cellsHidden,
 }: {
+  grids: LeakageGridDto[] | undefined;
+  /** The active market's currency, scoping which of a grid's (possibly multi-currency) cells
+   * render — unconfirmed live, since every market rail pulled so far was empty. */
+  currency: string | undefined;
+  cellParams: Pick<GetLeakageCellParams, "window" | "horizon">;
   shadingCaptionLabel: string;
-  severityFilter: SeverityLevel;
-  confidenceFilter: ConfidenceLevel;
-  onClearFilter: () => void;
-  onSetSeverityFilter: (value: SeverityLevel) => void;
+  /** Cells the server already excluded via `minSeverity`/`minConfidence` — a bare count, not a
+   * derivable percentage across (possibly two, differently-sized) grids. */
+  cellsHidden: number;
 }) {
-  const hiddenPercent = filteredOutPercent(severityFilter, confidenceFilter);
+  const [activeGridKey, setActiveGridKey] = useState<string | null>(null);
+
+  if (!grids) return <MatrixSkeleton />;
+
+  if (grids.length === 0) {
+    return (
+      <div className="rounded-card border border-dashed border-line bg-paper p-6 text-center text-[12px] text-ink-3">
+        No grid to show for this business's revenue model yet.
+      </div>
+    );
+  }
+
+  const activeGrid = grids.find((g) => g.grid === activeGridKey) ?? grids[0];
+  const columns = activeGrid.conditions.filter((c) => c.applicability !== "NotApplicable");
+  const cellsByKey = new Map(
+    activeGrid.cells.filter((cell) => !currency || cell.currency === currency).map((cell) => [`${cell.row}:${cell.condition}`, cell])
+  );
 
   return (
     <div className="rounded-card border border-line bg-paper py-4">
-      {hiddenPercent > 0 && (
-        <div className="mx-4 mb-3 flex flex-wrap items-start justify-between gap-2 rounded-control border border-amber-border bg-amber-bg px-3 py-2 text-[11.5px] text-amber">
-          <div>
-            <p>Filter is hiding {hiddenPercent}% of cells. Totals below reflect visible cells only.</p>
-            <p className="mt-1 text-[10.5px]">
-              Every figure on this page now describes {100 - hiddenPercent}% of the cells — a filtered total is not a
-              total.
-            </p>
-          </div>
-          <Button type="button" variant="outline" size="xs" onClick={onClearFilter}>
-            Clear filter
-          </Button>
+      {grids.length > 1 && (
+        <div className="mb-3 flex items-center gap-1 border-b border-line px-4">
+          {grids.map((grid) => (
+            <button
+              key={grid.grid}
+              type="button"
+              onClick={() => setActiveGridKey(grid.grid)}
+              className={cn(
+                "shrink-0 rounded-t-panel border-b-2 px-3 py-2 text-[11.5px] whitespace-nowrap",
+                grid.grid === activeGrid.grid
+                  ? "border-ink font-semibold text-ink"
+                  : "border-transparent font-normal text-ink-3 hover:text-ink-2"
+              )}
+            >
+              {grid.grid}
+            </button>
+          ))}
         </div>
       )}
 
-      {/* Padding lives on the scrolling element itself, not the card around it — a card-level
-          `p-4` still looks flush at max scroll because the scroller's own content (not the
-          static card padding) is what defines how far right you can actually scroll to.
-          `py-1.5` matters too, not just `px-4`: setting only `overflow-x` to `auto` makes the
-          browser compute `overflow-y` as `auto` as well (a CSS spec rule, not a Tailwind quirk),
-          so the selection ring on the bottom-row cells — which paints outside their own box,
-          same as the right-column ones — was getting clipped by that now-non-visible y-axis too. */}
-      <div className="overflow-x-auto px-4 py-1.5">
-        <div className="grid min-w-180 grid-cols-[110px_repeat(5,1fr)] gap-2">
-          <div />
-          {MATRIX_COLUMNS.map((col) => (
-            <p
-              key={col.key}
-              className="self-end px-1 pb-2 text-center font-mono text-[8.5px] font-medium tracking-[0.7px] text-ink-4 uppercase"
-            >
-              {col.label}
-            </p>
-          ))}
+      {cellsHidden > 0 && (
+        <div className="mx-4 mb-3 rounded-control border border-amber-border bg-amber-bg px-3 py-2 text-[11.5px] text-amber">
+          Your Severity/Confidence filter is hiding {cellsHidden} cell{cellsHidden === 1 ? "" : "s"} — change it in
+          Filters to see them.
+        </div>
+      )}
 
-          {MATRIX_ROWS.map((row) => (
+      {activeGrid.rows.length === 0 && (
+        <p className="px-4 pb-3 text-[12px] text-ink-3">No rows defined for this grid yet.</p>
+      )}
+
+      <div className="overflow-x-auto px-4 py-1.5">
+        <div
+          className="grid gap-2"
+          style={{ gridTemplateColumns: `110px repeat(${columns.length}, 1fr)`, minWidth: `${110 + columns.length * 110}px` }}
+        >
+          <div />
+          {activeGrid.rows.length > 0 &&
+            columns.map((col) => (
+              <p
+                key={col.key}
+                className="self-end px-1 pb-2 text-center font-mono text-[8.5px] font-medium tracking-[0.7px] text-ink-4 uppercase"
+              >
+                {col.label}
+              </p>
+            ))}
+
+          {activeGrid.rows.map((row) => (
             <Fragment key={row.key}>
               <p className="flex items-center text-[12.5px] font-medium text-ink">{row.label}</p>
-              {MATRIX_COLUMNS.map((col) => {
-                const cell = row.cells[col.key];
-
-                if (cell.kind === "gap") {
-                  return (
-                    <FloatingCard
-                      key={col.key}
-                      align="center"
-                      panelClassName="w-[26rem] max-w-[calc(100vw-2rem)]"
-                      renderTrigger={({ open, toggle, ref }) => (
-                        <button
-                          ref={ref}
-                          type="button"
-                          onClick={toggle}
-                          className={cn(
-                            "flex h-14 w-full flex-col items-center justify-center rounded-control border border-dashed border-line bg-paper text-center",
-                            open && "border-ultra ring-2 ring-ultra/30"
-                          )}
-                        >
-                          <span className="text-[11px] text-ink-3">Unknown</span>
-                          <span className="text-[9.5px] text-ink-4">data gap · {cell.missingSource}</span>
-                        </button>
-                      )}
-                    >
-                      <GapCellCard
-                        rowLabel={row.label}
-                        columnLabel={col.label}
-                        explanation={cell.explanation}
-                        recoveryLow={cell.recoveryLow}
-                        recoveryHigh={cell.recoveryHigh}
-                      />
-                    </FloatingCard>
+              {columns.map((col) => {
+                const cell = cellsByKey.get(`${row.key}:${col.key}`);
+                const measured = cell?.amount != null;
+                const heat = measured ? heatBucket(cell!.intensity) : 0;
+                // A gap cell with no market currency known yet (this workspace's `markets`/
+                // `bySeverity`/`ladders` were all empty) has no valid currency path segment to
+                // fetch with — shown but inert rather than firing a request with a made-up value.
+                const resolvedCurrency = currency ?? cell?.currency;
+                const cellClassName = (open: boolean) =>
+                  cn(
+                    "flex h-14 w-full items-center justify-center gap-1.5 rounded-control text-[14px] font-semibold",
+                    measured
+                      ? HEAT_TEXT_CLASS[heat]
+                      : "border border-dashed border-ink-4/40 bg-paper-2/60 text-[10.5px] text-ink-4 disabled:cursor-not-allowed",
+                    open && "ring-2 ring-ultra ring-offset-1 ring-offset-paper"
                   );
-                }
+                const cellContent = measured ? (
+                  formatCompactMoney(cell!.amount!, cell!.currency)
+                ) : (
+                  <>
+                    Unknown
+                    {cell && (
+                      <InfoTooltip missingSource={cell.missingSource ?? undefined} wouldUnlock={cell.wouldUnlock ?? undefined} />
+                    )}
+                  </>
+                );
+                const cellStyle = measured ? { backgroundColor: HEAT_SCALE[heat] } : undefined;
 
-                if (cell.kind === "zero") {
+                if (!resolvedCurrency) {
                   return (
-                    <FloatingCard
-                      key={col.key}
-                      align="center"
-                      panelClassName="w-[26rem] max-w-[calc(100vw-2rem)]"
-                      renderTrigger={({ open, toggle, ref }) => (
-                        <button
-                          ref={ref}
-                          type="button"
-                          onClick={toggle}
-                          className={cn(
-                            "flex h-14 w-full flex-col items-center justify-center rounded-control border border-line bg-paper-2 text-center",
-                            open && "border-ultra ring-2 ring-ultra/30"
-                          )}
-                        >
-                          <span className="text-[11px] text-ink-3">No exposure</span>
-                          <span className="text-[9.5px] text-ink-4">none detected</span>
-                        </button>
-                      )}
-                    >
-                      <ZeroCellCard
-                        rowLabel={row.label}
-                        columnLabel={col.label}
-                        note={cell.note}
-                        lastChecked={cell.lastChecked}
-                      />
-                    </FloatingCard>
-                  );
-                }
-
-                const hidden = isCellHiddenByFilter(cell, severityFilter, confidenceFilter);
-
-                if (hidden) {
-                  return (
-                    <FloatingCard
-                      key={col.key}
-                      align="center"
-                      panelClassName="w-[26rem] max-w-[calc(100vw-2rem)]"
-                      renderTrigger={({ open, toggle, ref }) => (
-                        <button
-                          ref={ref}
-                          type="button"
-                          onClick={toggle}
-                          className={cn(
-                            "flex h-14 w-full flex-col items-center justify-center rounded-control border border-dashed border-ink-4/40 bg-paper-2/60 text-center",
-                            open && "border-ultra ring-2 ring-ultra/30"
-                          )}
-                        >
-                          <span className="text-[10.5px] text-ink-4">hidden by filter</span>
-                        </button>
-                      )}
-                    >
-                      <FilteredCellCard
-                        rowLabel={row.label}
-                        columnLabel={col.label}
-                        severity={cell.severity}
-                        confidence={cell.confidence}
-                        amount={cell.value}
-                        onClearFilter={onClearFilter}
-                        onLowerSeverityTo={onSetSeverityFilter}
-                      />
-                    </FloatingCard>
-                  );
-                }
-
-                if (cell.kind === "compound") {
-                  return (
-                    <FloatingCard
-                      key={col.key}
-                      align="center"
-                      panelClassName="w-[26rem] max-w-[calc(100vw-2rem)]"
-                      renderTrigger={({ open, toggle, ref }) => (
-                        <button
-                          ref={ref}
-                          type="button"
-                          onClick={toggle}
-                          style={{ backgroundColor: HEAT_SCALE[cell.heat] }}
-                          className={cn(
-                            "flex h-14 w-full flex-col items-center justify-center gap-0.5 rounded-control",
-                            HEAT_TEXT_CLASS[cell.heat],
-                            open && "ring-2 ring-ultra ring-offset-1 ring-offset-paper"
-                          )}
-                        >
-                          <span className="text-[14px] font-semibold">{cell.value}</span>
-                          <span className="flex items-center gap-1 text-[8.5px] font-medium text-amber">
-                            ⚠ compound risk
-                          </span>
-                        </button>
-                      )}
-                    >
-                      <CompoundCellCard
-                        rowLabel={row.label}
-                        columnLabel={col.label}
-                        value={cell.value}
-                        projection={cell.projection}
-                        severityNow={cell.severityNow}
-                        severityAt12m={cell.severityAt12m}
-                        rankByAmount={cell.rankByAmount}
-                        rankByThreat={cell.rankByThreat}
-                      />
-                    </FloatingCard>
+                    <button key={col.key} type="button" disabled style={cellStyle} className={cellClassName(false)}>
+                      {cellContent}
+                    </button>
                   );
                 }
 
@@ -228,29 +187,19 @@ export function LeakageMatrix({
                     align="center"
                     panelClassName="w-[26rem] max-w-[calc(100vw-2rem)]"
                     renderTrigger={({ open, toggle, ref }) => (
-                      <button
-                        ref={ref}
-                        type="button"
-                        onClick={toggle}
-                        style={{ backgroundColor: HEAT_SCALE[cell.heat] }}
-                        className={cn(
-                          "flex h-14 w-full items-center justify-center rounded-control text-[14px] font-semibold",
-                          HEAT_TEXT_CLASS[cell.heat],
-                          open && "ring-2 ring-ultra ring-offset-1 ring-offset-paper"
-                        )}
-                      >
-                        {cell.value}
+                      <button ref={ref} type="button" onClick={toggle} style={cellStyle} className={cellClassName(open)}>
+                        {cellContent}
                       </button>
                     )}
                   >
-                    <ValueCellCard
-                      rowKey={row.key}
-                      columnKey={col.key}
+                    <CellDetailCard
+                      grid={activeGrid.grid}
+                      row={row.key}
+                      condition={col.key}
+                      currency={resolvedCurrency}
                       rowLabel={row.label}
-                      columnLabel={col.label}
-                      value={cell.value}
-                      severity={cell.severity}
-                      confidence={cell.confidence}
+                      conditionLabel={col.label}
+                      params={cellParams}
                     />
                   </FloatingCard>
                 );
@@ -268,9 +217,7 @@ export function LeakageMatrix({
           ))}
         </div>
         <span className="font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">High</span>
-        <span className="text-ink-3">
-          Shading is {shadingCaptionLabel}. Cell ranking uses threat score, not amount.
-        </span>
+        <span className="text-ink-3">Shading is {shadingCaptionLabel}.</span>
       </div>
     </div>
   );

@@ -28,11 +28,13 @@ export function formatCompactMoney(value: number, currencyCode: string): string 
  * atStake's `value` is an array of per-currency amounts, not a bare number — confirmed live
  * 2026-09-10 (`[{ currency: "NGN", amountAtRisk: 0 }]`). Never sums across entries (money is
  * never blended across currencies, per formatCompactMoney); a genuinely multi-currency stake
- * renders as one figure per currency joined with " + " instead of one invented total.
+ * renders as one figure per currency joined with " · " — not " + ", which reads as arithmetic
+ * addition and would visually contradict the very rule this exists to enforce (caught live
+ * 2026-09-24 on a real 5-currency `atStake` array).
  */
 export function formatAtStakeAmounts(amounts: { currency: string; amountAtRisk: number }[]): string {
   if (amounts.length === 0) return "Unavailable";
-  return amounts.map((a) => formatCompactMoney(a.amountAtRisk, a.currency)).join(" + ");
+  return amounts.map((a) => formatCompactMoney(a.amountAtRisk, a.currency)).join(" · ");
 }
 
 /** Comma-grouped count, for a measured figure meant to read as an exact-looking total (e.g. a 12-month population). */
@@ -71,6 +73,20 @@ export function formatShortDateWithYear(isoDate: string): string {
 /** An ISO datetime to a "Aug 2026" style month, for a cohort's arrival period. */
 export function formatMonthYear(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+/** An ISO datetime to a "6 min ago" / "3 hours ago" / "2 days ago" style relative stamp, for a
+ * "last refreshed" line. Falls back to a short date past 6 days out rather than "47 days ago". */
+export function formatRelativeTime(isoDate: string): string {
+  const diffMs = Date.now() - new Date(isoDate).getTime();
+  const minutes = Math.round(diffMs / 60_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+  return formatShortDate(isoDate);
 }
 
 /**

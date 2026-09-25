@@ -37,7 +37,7 @@ export function SuggestedActions({ actions, isOpen, onOpenChange, onSelect }: Su
       <button
         type="button"
         onClick={() => onOpenChange(true)}
-        className="mb-3 flex items-center gap-2 self-start rounded-full border border-line bg-paper-2 px-3.5 py-2 text-[11.5px] font-medium text-ink-3 shadow-xs transition-colors animate-in fade-in slide-in-from-bottom-1 hover:border-ink-4"
+        className="mb-1.5 flex items-center gap-2 self-start rounded-full border border-line bg-paper-2 px-3.5 py-2 text-[11.5px] font-medium text-ink-3 shadow-xs transition-colors animate-in fade-in slide-in-from-bottom-1 hover:border-ink-4"
       >
         <Lightbulb className="size-3.5 shrink-0 text-ink-4" />
         Suggested Next Actions
@@ -47,7 +47,7 @@ export function SuggestedActions({ actions, isOpen, onOpenChange, onSelect }: Su
   }
 
   return (
-    <div className="mb-3 overflow-hidden rounded-card border border-line bg-paper shadow-xs animate-in fade-in slide-in-from-bottom-1">
+    <div className="mb-1.5 overflow-hidden rounded-card border border-line bg-paper shadow-xs animate-in fade-in slide-in-from-bottom-1">
       <div className="flex items-center gap-2 px-3.5 py-2.5">
         <Lightbulb className="size-3.5 shrink-0 text-ink-4" />
         <span className="flex-1 text-[11.5px] font-semibold text-ink-3">Suggested Next Actions</span>

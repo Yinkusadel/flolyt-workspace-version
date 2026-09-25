@@ -36,6 +36,7 @@ export const CURRENCY_BASE_URL = `${API_BASE_URL}/api/v3/currency`;
 export const WORKSPACE_BASE_URL = `${API_BASE_URL}/api/v3/workspace`;
 export const LIFECYCLE_BASE_URL = `${API_BASE_URL}/api/v3/lifecycle`;
 export const ROOMS_BASE_URL = `${API_BASE_URL}/api/v3/rooms`;
+export const LEAKAGE_BASE_URL = `${API_BASE_URL}/api/v3/leakage`;
 export const PLAYS_BASE_URL = `${API_BASE_URL}/api/v3/plays`;
 export const HOME_BASE_URL = `${API_BASE_URL}/api/v3/home`;
 export const INBOX_BASE_URL = `${API_BASE_URL}/api/v3/inbox`;
@@ -605,7 +606,6 @@ export const API_ENDPOINTS = {
     UPDATE_ROOM_VIEW: `${ROOMS_BASE_URL}/views/{viewId}`,
     DELETE_ROOM_VIEW: `${ROOMS_BASE_URL}/views/{viewId}`,
     GET_ROOMS: `${ROOMS_BASE_URL}`,
-    OPEN_ROOM_ON_LEAKAGE_CELL: `${ROOMS_BASE_URL}`,
     GET_ROOM_CLOSE_PREVIEW: `${ROOMS_BASE_URL}/{roomId}/close-preview`,
     CLOSE_ROOM: `${ROOMS_BASE_URL}/{roomId}/close`,
     GET_ROOM_DECISION: `${ROOMS_BASE_URL}/{roomId}/decision`,
@@ -657,6 +657,22 @@ export const API_ENDPOINTS = {
     GET_ALL_PLAYS: `${PLAYS_BASE_URL}`,
     GET_PLAY: `${PLAYS_BASE_URL}/{proposalId}`,
     REOPEN_ROOM: `${ROOMS_BASE_URL}/{roomId}/reopen`,
+  },
+
+  // Added 2026-09-22 — the leakage page's own domain (`/api/v3/leakage`), pasted from the
+  // Scalar/OpenAPI reference doc. Supersedes the never-wired, wrong-shaped
+  // `ROOMS.OPEN_ROOM_ON_LEAKAGE_CELL` placeholder (`POST /rooms`, removed above) — the real path
+  // and body for that action are `OPEN_ROOM_ON_LEAKAGE_CELL` below. See docs/endpoints/leakage.md.
+  LEAKAGE: {
+    GET_LEAKAGE: `${LEAKAGE_BASE_URL}`,
+    GET_LEAKAGE_REPORT: `${LEAKAGE_BASE_URL}/report`,
+    GET_LEAKAGE_CONDITIONS: `${LEAKAGE_BASE_URL}/conditions`,
+    UPDATE_LEAKAGE_CONDITION: `${LEAKAGE_BASE_URL}/conditions/{key}`,
+    GET_LEAKAGE_CELL: `${LEAKAGE_BASE_URL}/cells/{grid}/{row}/{condition}/{currency}`,
+    OPEN_ROOM_ON_LEAKAGE_CELL: `${LEAKAGE_BASE_URL}/cells/{grid}/{row}/{condition}/{currency}/room`,
+    LEARN_WHY_LEAKAGE_STAGE: `${LEAKAGE_BASE_URL}/stages/{stageKey}/learn-why`,
+    LEARN_WHY_LEAKAGE_CELL: `${LEAKAGE_BASE_URL}/cells/{grid}/{row}/{condition}/{currency}/learn-why`,
+    GET_LEAKAGE_STAGE: `${LEAKAGE_BASE_URL}/stages/{stageKey}`,
   },
 
 };
