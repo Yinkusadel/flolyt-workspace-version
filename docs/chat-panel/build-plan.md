@@ -15,6 +15,10 @@ than making someone read the whole log.
 - v3 SSE event vocabulary (`run_queued`/`progress`/`response_chunk`/`final_response`) — confirmed
   via real captured exchanges, matches what's implemented in `use-ai-conversation-messages.ts`.
 - Caveats/actions rendering under an assistant message (`AiResponseCaveats`/`AiResponseActions`).
+  Confirmed again 2026-09-26 with a real `structuredResponse.actions` payload carrying a
+  `connectSource`/`datasources` action and an `openRoom`/`room` action, both resolving to live
+  routes; the legacy `suggested_action` SSE event fired alongside it with duplicate data, ignored
+  as designed.
 - The `openRoom`-from-leak chat action — click → fetch the real leak cell → open/join a room →
   navigate there. Tested end to end 2026-09-26 with a real login, real network calls, landed on a
   freshly created real room.
@@ -22,14 +26,18 @@ than making someone read the whole log.
   render as real HTML now, not literal `##`/`**`/`|` syntax.
 - The action button's visual styling (ultra-accent chip, not the original flat-gray box that read
   as plain text).
-
-**Built, but NOT yet live-verified:**
-- Stop (composer button swaps to a stop icon while streaming) — no run has been clicked mid-stream
-  yet in a real session.
-- Reconnect (`activeRunId` → `GET /runs/{id}` → reopen stream if still active) — no refresh-mid-run
-  scenario has been tried live yet.
-- Steer (`useSteerAgentRun`) — request body (`{ text }`) is still an inferred guess, the doc never
-  states it; untested against the real endpoint.
+- **Stop, steer, and reconnect** — all three exercised live 2026-09-26 (Playwright + the real
+  backend, `ichigo@yopmail.com` session):
+  - *Steer*: clicked "Add a note" mid-run, submitted a note — `POST /runs/{id}/steer` → 200 with
+    body `{ text }`, confirming the previously-flagged guessed shape is correct. The run continued
+    and finished normally afterward (steering doesn't interrupt the turn).
+  - *Stop*: clicked the composer's stop button mid-stream — `POST /runs/{id}/cancel` → 200, and the
+    UI reverted to the send button immediately (local abort, doesn't wait on the network response).
+  - *Reconnect*: reloaded the page mid-stream — `GET /runs/{id}` → 200 (`status: "running"`), then
+    `GET /runs/{id}/stream` → 200, and the page resumed showing live `progress` events under the
+    same run id.
+  No 4xx anywhere in any of the three. Full console/network capture available on request (not
+  checked into the repo).
 
 **Decided but not built:**
 - Merge the standalone steer input into the main composer (context-aware: same box sends a new
@@ -883,3 +891,59 @@ real rendered table, real bold/headings, and the now-visible action button all c
 same response. One unrelated pre-existing issue noticed in passing, not caused by anything here:
 `POST /rooms/{id}/opened` 404'd right after landing on the freshly-created room — that's the room
 page's own existing "mark as opened" call, nothing to do with the chat-panel work.
+
+## Live-verified (2026-09-26) — Stop, steer, and reconnect, all three against the real backend
+
+Logged in as `ichigo@yopmail.com` (Playwright, real backend, same saved session as the entry
+above). Three sequential real sends in one conversation, one hardening feature exercised per send.
+
+**Steer.** Sent a message designed to run long (a full leakage-cause breakdown, genuinely took
+~35s end to end). Once `run_queued` landed and "Add a note" appeared, clicked it and submitted
+"Please also cross-check next week's forecast against this." Network:
+
+```
+POST https://kckraft.com/flolyt/api/v3/runs/01a0dce6-6d70-79ba-bd8c-575d423441e5/steer → 200
+📝 Steer run response: { runId: 01a0dce6-..., data: { succeeded: true, ... } }
+```
+
+This confirms the request body this app sends (`{ text }`) is correct — flagged as an unverified
+guess ever since `steer-agent-run.ts` was written (the handoff doc never states the shape). The run
+kept streaming after the steer call and produced a normal `final_response` — steering genuinely
+doesn't interrupt the current turn, matching the doc's "note for the next turn boundary" framing.
+Same run's `final_response` also carried a real, non-empty `structuredResponse.actions` (a
+`connectSource`/`datasources` action and an `openRoom`/`room` action with real leak-cell
+parameters) — first live confirmation that the v2 actions array isn't always empty like the
+findings/metrics side has been; see the "Reference: action-resource routing" section above, still
+accurate.
+
+**Stop.** Sent a second message, waited for `run_queued`, then clicked the composer's stop button
+(the `Square` icon in place of the send arrow) about 1.5s into the run — deliberately mid-stream,
+not on the first possible frame. Network:
+
+```
+POST https://kckraft.com/flolyt/api/v3/runs/01a0dce7-356e-769d-9145-9840c24d238a/cancel → 200
+🛑 Cancel run response: { runId: 01a0dce7-..., data: { succeeded: true, ... } }
+```
+
+The UI reverted to the send button immediately, before the cancel response even came back —
+confirms `abortStream()`'s local-first design works as intended: the button doesn't wait on a
+round trip to feel responsive.
+
+**Reconnect.** Sent a third message, waited for `run_queued`, then did a full `page.reload()` while
+the run was still actively streaming (not a controlled unmount — a real navigation-away-and-back).
+After reload:
+
+```
+GET https://kckraft.com/flolyt/api/v3/runs/01a0dce7-41cc-7bf5-a89e-993a126e25d1 → 200 (status: "running")
+🔄 Reconnecting to run: { runId: 01a0dce7-..., status: running }
+GET https://kckraft.com/flolyt/api/v3/runs/01a0dce7-41cc-7bf5-a89e-993a126e25d1/stream → 200
+```
+
+The page picked `activeRunId` back up from `GET /conversations/{id}`, correctly judged it still
+live, reopened the stream, and resumed rendering `progress` events under the same run id — the
+full reconnect recipe from the handoff doc's "Reconnect and refresh" section, working end to end
+against a run this session didn't originate the request for.
+
+**Net result:** all three of Stop/steer/reconnect move from "built, not live-verified" to
+live-verified — no 4xx, no guessed shape left unconfirmed, no UI regression. Nothing here was a
+bug fix; everything worked as built on the first live attempt.
