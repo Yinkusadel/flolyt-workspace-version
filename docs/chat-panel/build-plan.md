@@ -740,3 +740,95 @@ place once one is streaming, not a separate control elsewhere. Corrected:
 
 **Verified:** `npx tsc -b` + `npm run build` clean. **Not verified live** — same as the rest of
 this slice, still needs a real click during an actual streaming response.
+
+## Progress (2026-09-26) — findings/metrics/evidence held; room-action leak flow built instead
+
+Two things happened in the same session: a third live capture ruled out building the findings/
+metrics/evidence UI for now, and that same capture's action turned out to have a real, buildable
+resolution after all — just not the one guessed on 2026-09-25.
+
+**Findings/metrics/evidence: held, not built.** Three separate live captures now (a plain greeting,
+a general "where should I focus" ask, and this session's direct "give me exact figures and
+provenance" ask) have all come back with `findings: [{ metrics: [], evidence: [] }]` and
+`evidenceStatus: "UNVERIFIED"` — even the one that explicitly asked for provenance, where the
+answer's own markdown contained a full data table (grid/segment/customers/amount/computed-at) that
+never made it into the structured fields. Each capture's `provenance.findings[].sourceResolution`
+also showed `decision: "no_source_required"` — the orchestrator (`flolyt.maestro`) is consistently
+deciding this conversational surface doesn't need the pipeline that would populate `metrics`/
+`evidence`. Building a findings/metrics/evidence UI now would mean designing against a shape that
+has never once had content in three tries — held until a live response actually populates it
+(possibly only happens for a different flow, like a formal investigation that needs real source
+resolution — untested).
+
+**The `openRoom`-without-`resourceId` action, hidden 2026-09-25, is now built for real.** The 2026-09-26
+capture sent the *identical* `grid`/`rowKey`/`conditionKey`/`currency` shape as 2026-09-25's — same
+coordinate, in fact (`rowKey: 01a0483d-fe5b-7564-bd00-ddff6db26614`). The 2026-09-25 writeup guessed
+this needed New Room wizard prefill; that guess was wrong. Checking the leakage-map feature first
+found it already has this exact problem solved: `CellDetailCard.handleStartRoom` in
+`src/pages/leakage-map/detail-panel.tsx` resolves a `grid`/`row`/`condition`/`currency` coordinate
+into a room via `GET /leakage/cells/{grid}/{row}/{condition}/{currency}` (join `cell.room` if one's
+already open, otherwise `POST .../room` using `cell.draft`'s server-computed title/settlement — the
+UI never invents those fields itself) + `POST /leakage/cells/.../room`. That's exactly the chat
+action's shape, just triggered from a different surface.
+
+- **New:** `src/features/ai-conversations/use-open-room-from-leak.ts` — wraps that same two-call
+  flow (`getLeakageCell` → `openRoomOnLeakageCell` when there's a draft and no existing room) as
+  one mutation, returning the room id to navigate to (or `null` if the cell has neither a room nor
+  a draft — a data-gap cell, can't back a room at all).
+- **`map-suggested-action-target.ts`** gained `extractLeakRoomParams(action)` — returns the four
+  params when an action is exactly this shape (`resource: "room"`, no `resourceId`, all four
+  `parameters` present), `null` for every other resourceless `room` shape (still hidden, unchanged
+  policy).
+- **`AiResponseActions`** now has three branches instead of two: `AskAgent` (send as prompt),
+  leak-room (async — fetch cell, join-or-open, navigate, with a spinner while pending), and the
+  existing plain-route resolution. Logs `🏠 Open room from leak requested/resolved` for tracking.
+
+**Verified:** `npx tsc -b` + `npm run build` clean. **Not verified live** — the underlying
+`getLeakageCell`/`openRoomOnLeakageCell` calls are proven (they're the leakage map's own existing,
+already-shipped code path), but clicking this specific action from a chat response hasn't been
+tried yet.
+
+## Live-verified (2026-09-26) — the room-from-leak action works end to end, plus two bugs found and fixed
+
+Logged in as `ichigo@yopmail.com` (Playwright, real backend) and clicked the actual "Open or join a
+room…" button on the live conversation. Confirmed via the network log:
+
+```
+GET https://kckraft.com/flolyt/api/v3/leakage/cells/segment/01a0483d.../churn_risk/NGN → 200
+🏠 Open room from leak resolved: { roomId: 01a0dcd2-4075-7423-af76-13963c354f5b }
+→ navigated to /rooms/01a0dcd2-4075-7423-af76-13963c354f5b
+```
+
+This cell had no existing room, so it exercised the full create-from-draft path (not just the
+join-existing-room shortcut) — the harder of the two branches — and it worked cleanly.
+
+**Two more things surfaced in the same live session, both fixed:**
+
+- **The action button was visually indistinguishable from plain bordered text** — flagged directly
+  by the user, who couldn't tell it was clickable in a screenshot. All three `AiResponseActions`
+  button variants (`AskAgent`, leak-room, plain-route) were on a flat gray `border-line`/`bg-paper`
+  style. Unified them onto the same ultra-accent treatment the `AskAgent` chip already had
+  (`border-ultra-border bg-ultra-bg text-ultra`), added `shadow-xs`/`hover:shadow-sm` and bumped to
+  `font-semibold` so it reads as an elevated, clickable control at rest — confirmed visually in the
+  same live screenshot pass.
+- **Real markdown wasn't being rendered at all** — also flagged directly by the user, who saw
+  literal `**bold**`, `## Heading`, and `| pipe | table |` syntax in the actual response text.
+  `AiResponseRenderer`'s "text" segments were rendered as plain `whitespace-pre-wrap` paragraphs —
+  `response-parser.ts`'s block-parsing only ever handled this app's own proprietary inline
+  `DATA_TABLE`/`DATA_CHART`/`NAV_LINK` HTML-comment blocks, never actual GitHub-flavored markdown,
+  and the v3 backend's `structuredResponse.markdown` is genuine GFM text (headers, bold, real pipe
+  tables), not that old convention. Added `react-markdown` + `remark-gfm` (new dependency, works
+  fine under this app's Preact/compat setup — no different from `react-router-dom`, already used
+  everywhere) and a new `AiMarkdownText` component
+  (`src/pages/conversations/ai-response/markdown-text.tsx`) with a full `components` override map
+  styled to match this app's existing tokens (borrows `AiDataTable`'s table look for markdown
+  tables). `rehypeRaw` deliberately **not** enabled — raw HTML in the source stays inert text, per
+  the handoff doc's "safe Markdown renderer... raw-HTML mode disabled" instruction. Only the
+  *finalized* message goes through this — the live typewriter's in-progress text stays plain, same
+  as before, since a table half-rendered mid-stream would look broken.
+
+**Verified:** `npx tsc -b` + `npm run build` clean, and a live screenshot after both fixes shows a
+real rendered table, real bold/headings, and the now-visible action button all correctly on the
+same response. One unrelated pre-existing issue noticed in passing, not caused by anything here:
+`POST /rooms/{id}/opened` 404'd right after landing on the freshly-created room — that's the room
+page's own existing "mark as opened" call, nothing to do with the chat-panel work.

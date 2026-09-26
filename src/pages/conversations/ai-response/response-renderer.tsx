@@ -4,6 +4,7 @@ import { parseAgentResponse } from "@/features/ai-conversations/response-parser"
 import { AiDataChart } from "./data-chart";
 import { AiDataTable } from "./data-table";
 import { AiNavLinkGroup } from "./nav-link-group";
+import { AiMarkdownText } from "./markdown-text";
 
 // Splits an assistant message's raw text into plain-text / table / chart segments and renders
 // each with the right component. Only call this on a finished message — a DATA_TABLE/DATA_CHART
@@ -20,12 +21,9 @@ export function AiResponseRenderer({ content }: { content: string }) {
       {segments.map((segment, idx) => {
         if (segment.type === "text") {
           return (
-            <p
-              key={idx}
-              className="max-w-[85%] min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-ink"
-            >
-              {segment.content}
-            </p>
+            <div key={idx} className="max-w-[85%] min-w-0">
+              <AiMarkdownText content={segment.content} />
+            </div>
           );
         }
         if (segment.type === "table") {
