@@ -5,6 +5,57 @@ in the sibling repo `flolyt-dashboard` (`Flolyts-space/flolyt-dashboard`, a diff
 checkout, not part of this repo). This file is the working plan: what exists over there, what's
 copied here for reference, and what's still undecided before wiring starts here.
 
+## Current status & issue list (as of 2026-09-26 — read this first)
+
+Everything below this section is the chronological build log — useful for "why is it built this
+way," but long. This section is the up-to-date summary; update it whenever a status changes rather
+than making someone read the whole log.
+
+**Live-verified working, end to end, against the real backend:**
+- v3 SSE event vocabulary (`run_queued`/`progress`/`response_chunk`/`final_response`) — confirmed
+  via real captured exchanges, matches what's implemented in `use-ai-conversation-messages.ts`.
+- Caveats/actions rendering under an assistant message (`AiResponseCaveats`/`AiResponseActions`).
+- The `openRoom`-from-leak chat action — click → fetch the real leak cell → open/join a room →
+  navigate there. Tested end to end 2026-09-26 with a real login, real network calls, landed on a
+  freshly created real room.
+- Real markdown rendering (`AiMarkdownText`, `react-markdown` + `remark-gfm`) — headers/bold/tables
+  render as real HTML now, not literal `##`/`**`/`|` syntax.
+- The action button's visual styling (ultra-accent chip, not the original flat-gray box that read
+  as plain text).
+
+**Built, but NOT yet live-verified:**
+- Stop (composer button swaps to a stop icon while streaming) — no run has been clicked mid-stream
+  yet in a real session.
+- Reconnect (`activeRunId` → `GET /runs/{id}` → reopen stream if still active) — no refresh-mid-run
+  scenario has been tried live yet.
+- Steer (`useSteerAgentRun`) — request body (`{ text }`) is still an inferred guess, the doc never
+  states it; untested against the real endpoint.
+
+**Decided but not built:**
+- Merge the standalone steer input into the main composer (context-aware: same box sends a new
+  message or steers the active run depending on `isStreaming`) — see [[flolyt_chat_panel_steer_ux]].
+  Two confirmation-UX sub-options still undecided (toast-only vs. toast + ephemeral inline marker).
+
+**Deliberately held, not built:**
+- Findings/metrics/evidence UI — the doc's primary structured-content model. Held because three
+  separate live captures all came back with empty `metrics`/`evidence` arrays and
+  `sourceResolution.decision: "no_source_required"`, even one that explicitly asked for exact
+  figures and provenance. Don't build this until a real response actually populates it.
+- `input_request` UI (choice/free-text control) — no live example has appeared yet in any captured
+  exchange; the doc doesn't fully specify its payload shape either.
+
+**Known, accepted gaps (by design, not bugs):**
+- Three of the v3 doc's five action resources (`segment`, `campaign`, `channels`) have no live
+  route in this app and are hidden rather than linked to a dead/archived page — see the "Reference:
+  action-resource routing" section below for the full breakdown and what re-enabling each would need.
+- The legacy `/api/flolyt/ai/*` aliases are untouched — no migration deadline exists yet per the
+  handoff doc's own 30-day-zero-traffic gate.
+
+**Noticed in passing, not this feature's bug:** `POST /rooms/{id}/opened` 404'd immediately after
+landing on a room freshly created via the leak action, during the 2026-09-26 live test. That's the
+room page's own pre-existing "mark as opened" call — unrelated to anything built here, but worth a
+look next time someone's in that code.
+
 ## Source material (lives in `flolyt-dashboard`, NOT this repo)
 
 | What | Path in `flolyt-dashboard` |
