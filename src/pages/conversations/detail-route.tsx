@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, ArrowUp, Link2, Loader2 } from "lucide-react";
+import { AlertTriangle, ArrowUp, Link2, Loader2, MessageSquarePlus, Square } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { usePageBreadcrumb } from "@/components/breadcrumb-context";
@@ -9,10 +9,15 @@ import { useAiConversationMessages } from "@/features/ai-conversations/use-ai-co
 import { useGetAiConversationById } from "@/features/ai-conversations/use-get-ai-conversation-by-id";
 import type { AiConversationMessage } from "@/features/ai-conversations/ai-conversation-types";
 import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
+import { useGetAgentRun } from "@/features/agent-runs/use-get-agent-run";
+import { useCancelAgentRun } from "@/features/agent-runs/use-cancel-agent-run";
+import { useSteerAgentRun } from "@/features/agent-runs/use-steer-agent-run";
 import { ProposalCard, type ProposalCardData } from "./proposal-card";
 import { PromptToggles } from "./prompt-toggles";
 import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
 import { AiResponseRenderer } from "./ai-response/response-renderer";
+import { AiResponseCaveats } from "./ai-response/response-caveats";
+import { AiResponseActions } from "./ai-response/response-actions";
 import flolytLogo from "../../../assets/logo.png";
 
 // ❌ Backend does NOT provide a suggested-next-actions endpoint yet — mocked until one exists.
@@ -67,9 +72,9 @@ function dedupeMessages(messages: AiConversationMessage[]): ChatMessage[] {
 
 // No card, no click-to-expand — mirrors Claude's own in-progress status: a single "is working"
 // header with a live timer, and one current-activity line underneath that swaps out as new SSE
-// events arrive rather than accumulating into a list. Past steps are intentionally discarded once
-// replaced (see reasoningSteps in useAiConversationMessages — kept for the send lifecycle, not for
-// history display).
+// events arrive rather than accumulating into a list. Past activity is intentionally discarded
+// once replaced (see `progress` in useAiConversationMessages — only the latest is kept, there's
+// no history-of-steps display).
 function WorkingStatus({ elapsedSeconds, subline, isPhaseOnly }: { elapsedSeconds: number; subline: string; isPhaseOnly: boolean }) {
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
@@ -112,15 +117,21 @@ export default function AiConversationDetailRoute() {
   const [planMode, setPlanMode] = useState(true);
   const [suggestedActionsOpen, setSuggestedActionsOpen] = useState(true);
 
+  const [steerOpen, setSteerOpen] = useState(false);
+  const [steerText, setSteerText] = useState("");
+
   const {
     messages: streamedMessages,
-    reasoningSteps,
+    progress,
     proposals: streamedProposals,
     animatedStreamingText,
     isStreaming,
     currentPhase,
     currentPhaseMessage,
+    activeRunId,
     sendMessage,
+    reconnectRun,
+    abortStream,
   } = useAiConversationMessages(isNew ? undefined : id, {
     onConversationCreated: (newId) => {
       navigate(`/conversations/${newId}`, { replace: true });
@@ -130,6 +141,54 @@ export default function AiConversationDetailRoute() {
   const { data: history, isLoading: isHistoryLoading } = useGetAiConversationById(
     !isNew ? id : undefined
   );
+
+  // Reconnect recipe from the v3 handoff: if the persisted conversation says a run is still
+  // active, reopen its stream instead of leaving the page blank after a refresh mid-run. Guarded
+  // against `isStreaming` so this never double-connects over a send already happening live in
+  // this tab, and against re-firing for the same runId once it's been tried.
+  const activeRunIdFromHistory = history?.data.activeRunId ?? null;
+  const { data: agentRunData } = useGetAgentRun(activeRunIdFromHistory, {
+    enabled: !isNew && !!activeRunIdFromHistory,
+  });
+  const reconnectedRunIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (isNew || isStreaming || !activeRunIdFromHistory) return;
+    if (reconnectedRunIdRef.current === activeRunIdFromHistory) return;
+
+    const status = agentRunData?.data.status;
+    if (!status) return; // still loading GET /runs/{id} — wait for it rather than skip silently
+    if (status !== "queued" && status !== "running" && status !== "awaiting_approval") {
+      console.log("🔄 Reconnect skipped, run already terminal:", { runId: activeRunIdFromHistory, status });
+      return;
+    }
+
+    console.log("🔄 Reconnecting to run:", { runId: activeRunIdFromHistory, status });
+    reconnectedRunIdRef.current = activeRunIdFromHistory;
+    reconnectRun(activeRunIdFromHistory);
+  }, [isNew, isStreaming, activeRunIdFromHistory, agentRunData, reconnectRun]);
+
+  const { cancelRun } = useCancelAgentRun();
+  const { steerRun, isSteering } = useSteerAgentRun();
+
+  const handleStop = () => {
+    console.log("🛑 Stop clicked:", { activeRunId, conversationId: !isNew ? id : null });
+    // Local stop always works, even in the brief window before `run_queued` has arrived and
+    // `activeRunId` is still null — the button must respond the instant it's clicked, same as
+    // Claude's own stop button, not only once a server-issued id happens to exist yet.
+    abortStream();
+    if (activeRunId) cancelRun(activeRunId);
+  };
+
+  const handleSteerSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const text = steerText.trim();
+    if (!text || !activeRunId) return;
+    console.log("📝 Steer submitted:", { activeRunId, text });
+    steerRun({ runId: activeRunId, text });
+    setSteerText("");
+    setSteerOpen(false);
+  };
 
   // No backend field for "how long has this run been going" — this is a plain wall-clock timer
   // tied to the real isStreaming lifecycle from the hook, restarted at 0 each time a send begins.
@@ -147,22 +206,23 @@ export default function AiConversationDetailRoute() {
   }, [isStreaming]);
 
   // The current-activity line always reflects the latest real SSE data. A `proposal` event is
-  // just as much "activity" as a tool_call/reasoning_step, but it lands in its own array
-  // (streamedProposals, below) — compare real timestamps across both to find whichever actually
-  // happened last, rather than only ever looking at reasoningSteps and silently dropping proposal
-  // activity. Falls back to the current lifecycle phase before either has produced anything.
-  const latestStep = reasoningSteps[reasoningSteps.length - 1];
+  // just as much "activity" as a `progress` event, but it lands in its own array (streamedProposals,
+  // below) — compare real timestamps across both to find whichever actually happened last, rather
+  // than only ever looking at progress and silently dropping proposal activity. Falls back to the
+  // current lifecycle phase before either has produced anything. (Previously compared against the
+  // last `reasoningSteps` entry — removed along with tool_call/reasoning_step rendering, since v3
+  // says not to render those for agent runs; `progress` is the sanctioned replacement signal.)
   const latestProposal = streamedProposals[streamedProposals.length - 1];
   const proposalIsLatest =
     !!latestProposal &&
-    (!latestStep || new Date(latestProposal.createdAtUtc) >= new Date(latestStep.timestamp));
+    (!progress || new Date(latestProposal.createdAtUtc) >= new Date(progress.atUtc));
 
-  const latestActivity = latestStep || latestProposal;
+  const latestActivity = proposalIsLatest ? latestProposal : progress;
   // Prefer the backend's own phase copy ("Analyzing your request...", "Processing...") over the
   // PHASE_LABEL map — that map is only a fallback for a phase the backend didn't send text for.
   const workingSubline = proposalIsLatest
     ? `Preparing proposal: ${latestProposal!.toolName}`
-    : (latestStep?.description ?? currentPhaseMessage ?? PHASE_LABEL[currentPhase ?? ""] ?? "Working…");
+    : (progress?.message ?? currentPhaseMessage ?? PHASE_LABEL[currentPhase ?? ""] ?? "Working…");
 
   // The SSE `proposal` event is a live nudge, not the source of truth — GET /ai/proposals is,
   // and is what makes a still-pending proposal survive a page reload. Merge the two: prefer the
@@ -327,6 +387,15 @@ export default function AiConversationDetailRoute() {
             // then overflow straight past the pane's edge instead of being capped at 85%.
             <div key={message.key} className="flex w-full min-w-0 flex-col items-start gap-1.5">
               <AiResponseRenderer content={message.content} />
+              {message.structuredResponse?.caveats?.length ? (
+                <AiResponseCaveats caveats={message.structuredResponse.caveats} />
+              ) : null}
+              {message.structuredResponse?.actions?.length ? (
+                <AiResponseActions
+                  actions={message.structuredResponse.actions}
+                  onAskAgent={handleSelectSuggestion}
+                />
+              ) : null}
             </div>
           )
         )}
@@ -343,6 +412,50 @@ export default function AiConversationDetailRoute() {
               subline={workingSubline}
               isPhaseOnly={!latestActivity}
             />
+
+            {/* Stop lives on the composer's send button (it swaps to a stop icon in place while
+                streaming, same as Claude's own chat UI) — not a separate control here. Steer is
+                its own thing, only offered once a runId actually exists (the brief window right
+                after hitting send, before `run_queued` arrives, has no run to steer yet). */}
+            {activeRunId && !steerOpen && (
+              <button
+                type="button"
+                onClick={() => setSteerOpen(true)}
+                className="inline-flex items-center gap-1 self-start rounded-chip border border-line bg-paper px-2 py-1 text-[10.5px] font-medium text-ink-3 transition-colors hover:border-ink-4 hover:text-ink"
+              >
+                <MessageSquarePlus className="size-2.5" />
+                Add a note
+              </button>
+            )}
+
+            {activeRunId && steerOpen && (
+              <form onSubmit={handleSteerSubmit} className="flex w-full max-w-[85%] min-w-0 items-center gap-1.5 pl-0.5">
+                <input
+                  autoFocus
+                  value={steerText}
+                  onChange={(e) => setSteerText(e.currentTarget.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setSteerOpen(false);
+                      setSteerText("");
+                    }
+                  }}
+                  placeholder="Add a note for the next step…"
+                  disabled={isSteering}
+                  className="min-w-0 flex-1 rounded-chip border border-line bg-paper px-2.5 py-1 text-[11px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
+                />
+                <button
+                  type="submit"
+                  disabled={!steerText.trim() || isSteering}
+                  className={cn(
+                    "flex size-6 shrink-0 items-center justify-center rounded-full transition-colors",
+                    steerText.trim() && !isSteering ? "bg-ultra text-paper" : "bg-paper-2 text-ink-4"
+                  )}
+                >
+                  <ArrowUp size={11} strokeWidth={2.5} />
+                </button>
+              </form>
+            )}
 
             {animatedStreamingText && (
               <p className="max-w-[85%] min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-ink">
@@ -430,16 +543,26 @@ export default function AiConversationDetailRoute() {
                     onPlanModeChange={setPlanMode}
                   />
 
+                  {/* Same control, two modes — mirrors Claude's own composer: this button IS the
+                      stop button while a response is streaming, not a separate control elsewhere,
+                      and swaps back the instant the run ends. */}
                   <button
                     type="button"
-                    onClick={handleSend}
-                    disabled={!input.trim() || isStreaming}
+                    onClick={isStreaming ? handleStop : handleSend}
+                    disabled={!isStreaming && !input.trim()}
+                    title={isStreaming ? "Stop" : undefined}
                     className={cn(
                       "flex size-6.5 items-center justify-center rounded-md transition-all",
-                      input.trim() && !isStreaming ? "bg-ultra text-paper hover:opacity-90" : "bg-paper text-ink-4"
+                      isStreaming
+                        ? "bg-ink text-paper hover:opacity-90"
+                        : input.trim() ? "bg-ultra text-paper hover:opacity-90" : "bg-paper text-ink-4"
                     )}
                   >
-                    {isStreaming ? <Loader2 className="size-3.25 animate-spin" /> : <ArrowUp size={13} strokeWidth={2.5} />}
+                    {isStreaming ? (
+                      <Square className="size-2.75 fill-current" strokeWidth={0} />
+                    ) : (
+                      <ArrowUp size={13} strokeWidth={2.5} />
+                    )}
                   </button>
                 </div>
               </div>

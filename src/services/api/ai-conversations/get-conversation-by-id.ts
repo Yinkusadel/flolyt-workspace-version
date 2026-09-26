@@ -10,6 +10,9 @@ export interface AiConversationDetailDto {
   messages: AiConversationMessage[];
   createdAt: string;
   lastMessageAt: string;
+  // Present per the v3 handoff's reconnect recipe: a non-null id means a run is queued/running/
+  // awaiting_approval — fetch it via useGetAgentRun and, if still active, reopen its stream.
+  activeRunId?: string | null;
 }
 
 export interface GetAiConversationByIdResponse {

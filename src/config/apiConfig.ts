@@ -21,12 +21,15 @@ export const CHANNELS_BASE_URL = `${API_BASE_URL}/api/v3/channels`;
 export const CREDENTIALS_BASE_URL = `${API_BASE_URL}/api/v3/`;
 export const PERSONALIZATION_BASE_URL = `${API_BASE_URL}/api/v3/personalization`;
 export const COMMAND_CENTER_BASE_URL = `${API_BASE_URL}/api/v3/command-center`;
-// Agent runs live under command-center/ for historical reasons only. They are surface-agnostic —
-// the AI conversation surface uses these same routes. Do not add a second set for chat.
-export const AGENT_RUNS_BASE_URL = `${COMMAND_CENTER_BASE_URL}/runs`;
+// Per the agent-api v3 handoff (docs/chat-panel/frontend-agent-v3-handoff.md), runs are a
+// top-level resource, not nested under command-center. Corrected 2026-09-25 — this was previously
+// `${COMMAND_CENTER_BASE_URL}/runs`, which matched neither the v3 path nor its documented legacy
+// alias (`/api/flolyt/ai/runs/*`); had zero callers at the time, so nothing broke.
+export const AGENT_RUNS_BASE_URL = `${API_BASE_URL}/api/v3/runs`;
 export const SKILLS_BASE_URL = `${API_BASE_URL}/api/v3/skills`;
 export const AI_CONVERSATIONS_BASE_URL = `${API_BASE_URL}/api/v3/conversations`;
 export const AI_PROPOSALS_BASE_URL = `${API_BASE_URL}/api/v3/proposals`;
+export const AI_EVIDENCE_BASE_URL = `${API_BASE_URL}/api/v3/evidence`;
 export const NOTIFICATIONS_BASE_URL = `${API_BASE_URL}/api/v3/notifications`;
 export const AICREDITS_BASE_URL = `${API_BASE_URL}/api/v3/payments/credits`;
 export const GOVERNANCE_BASE_URL = `${API_BASE_URL}/api/v3/governance`;
@@ -364,8 +367,13 @@ export const API_ENDPOINTS = {
 
   AGENT_RUNS: {
     GET_BY_ID: `${AGENT_RUNS_BASE_URL}/{id}`,
+    STREAM: `${AGENT_RUNS_BASE_URL}/{id}/stream`,
     CANCEL: `${AGENT_RUNS_BASE_URL}/{id}/cancel`,
     STEER: `${AGENT_RUNS_BASE_URL}/{id}/steer`,
+  },
+
+  AI_EVIDENCE: {
+    GET_BY_REFERENCE: `${AI_EVIDENCE_BASE_URL}/{kind}/{referenceId}`,
   },
 
 

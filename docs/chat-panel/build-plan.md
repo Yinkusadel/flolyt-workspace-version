@@ -5,6 +5,65 @@ in the sibling repo `flolyt-dashboard` (`Flolyts-space/flolyt-dashboard`, a diff
 checkout, not part of this repo). This file is the working plan: what exists over there, what's
 copied here for reference, and what's still undecided before wiring starts here.
 
+## Current status & issue list (as of 2026-09-26 — read this first)
+
+Everything below this section is the chronological build log — useful for "why is it built this
+way," but long. This section is the up-to-date summary; update it whenever a status changes rather
+than making someone read the whole log.
+
+**Live-verified working, end to end, against the real backend:**
+- v3 SSE event vocabulary (`run_queued`/`progress`/`response_chunk`/`final_response`) — confirmed
+  via real captured exchanges, matches what's implemented in `use-ai-conversation-messages.ts`.
+- Caveats/actions rendering under an assistant message (`AiResponseCaveats`/`AiResponseActions`).
+  Confirmed again 2026-09-26 with a real `structuredResponse.actions` payload carrying a
+  `connectSource`/`datasources` action and an `openRoom`/`room` action, both resolving to live
+  routes; the legacy `suggested_action` SSE event fired alongside it with duplicate data, ignored
+  as designed.
+- The `openRoom`-from-leak chat action — click → fetch the real leak cell → open/join a room →
+  navigate there. Tested end to end 2026-09-26 with a real login, real network calls, landed on a
+  freshly created real room.
+- Real markdown rendering (`AiMarkdownText`, `react-markdown` + `remark-gfm`) — headers/bold/tables
+  render as real HTML now, not literal `##`/`**`/`|` syntax.
+- The action button's visual styling (ultra-accent chip, not the original flat-gray box that read
+  as plain text).
+- **Stop, steer, and reconnect** — all three exercised live 2026-09-26 (Playwright + the real
+  backend, `ichigo@yopmail.com` session):
+  - *Steer*: clicked "Add a note" mid-run, submitted a note — `POST /runs/{id}/steer` → 200 with
+    body `{ text }`, confirming the previously-flagged guessed shape is correct. The run continued
+    and finished normally afterward (steering doesn't interrupt the turn).
+  - *Stop*: clicked the composer's stop button mid-stream — `POST /runs/{id}/cancel` → 200, and the
+    UI reverted to the send button immediately (local abort, doesn't wait on the network response).
+  - *Reconnect*: reloaded the page mid-stream — `GET /runs/{id}` → 200 (`status: "running"`), then
+    `GET /runs/{id}/stream` → 200, and the page resumed showing live `progress` events under the
+    same run id.
+  No 4xx anywhere in any of the three. Full console/network capture available on request (not
+  checked into the repo).
+
+**Decided but not built:**
+- Merge the standalone steer input into the main composer (context-aware: same box sends a new
+  message or steers the active run depending on `isStreaming`) — see [[flolyt_chat_panel_steer_ux]].
+  Two confirmation-UX sub-options still undecided (toast-only vs. toast + ephemeral inline marker).
+
+**Deliberately held, not built:**
+- Findings/metrics/evidence UI — the doc's primary structured-content model. Held because three
+  separate live captures all came back with empty `metrics`/`evidence` arrays and
+  `sourceResolution.decision: "no_source_required"`, even one that explicitly asked for exact
+  figures and provenance. Don't build this until a real response actually populates it.
+- `input_request` UI (choice/free-text control) — no live example has appeared yet in any captured
+  exchange; the doc doesn't fully specify its payload shape either.
+
+**Known, accepted gaps (by design, not bugs):**
+- Three of the v3 doc's five action resources (`segment`, `campaign`, `channels`) have no live
+  route in this app and are hidden rather than linked to a dead/archived page — see the "Reference:
+  action-resource routing" section below for the full breakdown and what re-enabling each would need.
+- The legacy `/api/flolyt/ai/*` aliases are untouched — no migration deadline exists yet per the
+  handoff doc's own 30-day-zero-traffic gate.
+
+**Noticed in passing, not this feature's bug:** `POST /rooms/{id}/opened` 404'd immediately after
+landing on a room freshly created via the leak action, during the 2026-09-26 live test. That's the
+room page's own pre-existing "mark as opened" call — unrelated to anything built here, but worth a
+look next time someone's in that code.
+
 ## Source material (lives in `flolyt-dashboard`, NOT this repo)
 
 | What | Path in `flolyt-dashboard` |
@@ -424,3 +483,467 @@ actionable like a credit top-up prompt.
   message itself; add a "Buy credits" action once that surface exists.
 
 Build-verified, not yet re-confirmed live.
+
+## v3 API handoff received (2026-09-25) — supersedes the endpoint list and event vocabulary above
+
+Backend sent a full v3 handoff doc:
+[`frontend-agent-v3-handoff.md`](./frontend-agent-v3-handoff.md). This is now the authoritative
+spec for this whole feature — everything above in this file describing `/api/flolyt/ai/*` and the
+`tool_call`/`reasoning_step`/`response_chunk` event vocabulary was written against the old
+contract and needs re-verification before it's trusted again. Old routes stay live as
+**temporary legacy aliases** during migration (`Deprecation: true` header, `successor-version`
+link on routes with a v3 equivalent), so nothing already built is broken today — but new or
+changed work should target v3 directly.
+
+**Biggest breaking change for what's already built here:** the current `ReasoningTrace` UI in
+`detail-route.tsx` renders `tool_call` and `reasoning_step` events (added 2026-09-09, see the
+"Progress" entries above). The v3 doc explicitly says *"Do not render `reasoningSteps`,
+`reasoning_step`, or `tool_call` for agent runs... those legacy fields remain only for
+compatibility with other application surfaces."* The v3 model replaces that trace with a
+`progress` event (`progress.message` only — deliberately scrubbed of tool names, arguments, SQL,
+credentials, and model reasoning) and a terminal `final_response` carrying a structured
+`AgentResponseV2` (`markdown` + `findings[]`/`metrics[]`/`evidence[]`/`caveats[]`/`actions[]`), not
+a plain-text `response_chunk`. `response_chunk` and `suggested_action` still exist but only as
+"temporary v1 projections" for back-compat.
+
+Other things that change once we migrate:
+- Endpoint base moves `/api/flolyt/ai/*` → `/api/v3/conversations|runs|proposals|evidence/*`; add
+  header `X-Flolyt-Agent-Contract: v3` on every agent request so backend telemetry attributes it
+  to this client.
+- `POST /api/v3/conversations/messages` keeps the same `conversationId`/`message`/`mode`/
+  `interactiveReply` body shape already anticipated in this doc — no request-body change.
+- The run lifecycle is now a first-class, documented resource (`GET /api/v3/runs/{runId}`,
+  `.../stream`, `.../cancel`, `.../steer`) — this is the Stop/steer/reconnect "hardening" work
+  this file already deferred (see [[flolyt_chat_panel_build]]'s "Not started" note); v3 gives it a
+  real contract to build against instead of the old design-doc guess.
+- New evidence-traversal endpoint (`GET /api/v3/evidence/{kind}/{referenceId}`) has no v1
+  equivalent — entirely new surface, for rendering findings' evidence/source-resolution graph.
+- New `AgentRun.execution` diagnostics block (routing kind, source resolution, knowledge
+  retrieval, execution plan) — explicitly diagnostic/read-only, not to be presented as model
+  reasoning or a user-editable control.
+
+**Not building against this yet.** This entry is the "read it, don't act on it" checkpoint before
+the next chat-panel work session. Re-read the full handoff doc fresh when that work starts —
+don't rely on this summary alone.
+
+## Progress (2026-09-25) — v3 endpoints, services, hooks, and types added (SSE hook/UI untouched)
+
+First real slice of the v3 migration, scoped deliberately to endpoint plumbing only — no changes
+to the SSE hook's event handling or to any rendered UI (`ReasoningTrace` still renders
+`tool_call`/`reasoning_step` as before; that rework is still pending, see the section above).
+
+- **Found and fixed a real routing bug while cross-checking, not something the doc changed:**
+  `AGENT_RUNS_BASE_URL` in `apiConfig.ts` pointed at `/api/v3/command-center/runs`, which matches
+  neither the v3 doc's `/api/v3/runs/{runId}` nor its documented legacy alias
+  (`/api/flolyt/ai/runs/*`). Had zero callers anywhere in the app at the time, so fixing it broke
+  nothing. Also added the missing `AGENT_RUNS.STREAM` route and a new `AI_EVIDENCE` block — neither
+  existed before.
+- **`AI_CONVERSATIONS_BASE_URL`/`AI_PROPOSALS_BASE_URL` needed no path change** — this app already
+  prefixes every domain with `/api/v3/` as its own general versioning convention (`ROOMS_BASE_URL`,
+  `TEAMS_BASE_URL`, etc. all do this), unrelated to the doc's "Agent API v3" naming. Only new work
+  here was the header (see below).
+- **New types**, split by where the shapes are actually shared rather than duplicated per file:
+  `src/features/ai-conversations/agent-intelligence-types.ts` (`IntelligenceReference`,
+  `ImpactStatement`, `EvidenceStatusAssessment`, `EvidenceStatus` — used by both structured
+  responses and evidence traversal), `agent-response-types.ts` (`AgentResponseV2`,
+  `SuggestedActionV2`, `ResponseProvenanceBundle`), `src/features/agent-runs/agent-run-types.ts`
+  (`AgentRun`, `SourceResolution`, `SourceCandidateState`), `src/features/ai-evidence/ai-evidence-types.ts`
+  (`CanonicalIntelligenceProjection`). Deliberately left out `PromptStateEvent`/`AgentProgressEvent`
+  (the SSE-only types) — those belong to the still-deferred SSE rework, not this endpoints pass.
+- **New services + hooks**, following the existing `ai-conversations`/`ai-proposals` axios+
+  react-query shape (standard `{ data, messages, succeeded }` envelope, try/catch → thrown `Error`):
+  `src/services/api/agent-runs/{get-agent-run,cancel-agent-run,steer-agent-run}.ts` +
+  `src/features/agent-runs/use-{get,cancel,steer}-agent-run.ts`; `src/services/api/ai-evidence/get-evidence.ts`
+  + `src/features/ai-evidence/use-get-evidence.ts`. All four agent-run/evidence calls send
+  `X-Flolyt-Agent-Contract: v3` as a **per-call** header (not added to the shared `axiosInstance`
+  globally), since the doc frames it as identifying agent-API traffic specifically, not every
+  request the app makes.
+- **`steerAgentRun`'s request body is a guess** — the doc never states the POST body shape for
+  `/runs/{id}/steer`, only that a stored steering entry looks like `{ text, addedBy, addedAtUtc,
+  consumed }`. Sending `{ text }`; flagged in a code comment. Confirm against Scalar before wiring
+  any UI to this call.
+- **Existing conversation types extended, additively:** `AiConversationDetailDto` gained
+  `activeRunId?: string | null` (GET_BY_ID's documented reconnect field — nothing consumes it yet,
+  same "capture now, wire later" pattern as `runId` before it) and `AiConversationMessage` gained
+  `structuredResponse?: AgentResponseV2 | null` + `responseContractVersion?: string | null` (the
+  doc says history reads and sync JSON responses expose these; nothing reads them yet either).
+
+**Verified:** `npm run build` (`tsc -b && vite build`) and a standalone `npx tsc -b` both pass
+clean, no new errors or unused-import warnings.
+
+**Still open, deferred on purpose:** wiring any of this into the SSE hook or UI — `activeRunId`/
+`structuredResponse` aren't read anywhere yet, and the run/evidence hooks have no caller. That's
+the next slice, whenever it's picked up.
+
+## Progress (2026-09-25) — SSE hook and message UI migrated to the v3 event vocabulary
+
+Second slice of the v3 migration: `use-ai-conversation-messages.ts` now speaks the documented v3
+events instead of the old `tool_call`/`reasoning_step` ones, and `detail-route.tsx` renders the
+structured response's caveats/actions. The run/evidence hooks from the previous slice still have
+no caller — Stop/steer buttons and a reconnect flow are separate, still-deferred work.
+
+- **`tool_call`/`reasoning_step` cases removed outright**, not just ignored — v3 explicitly says
+  not to render either for agent runs. Checked first whether this was actually the "biggest
+  breaking change" flagged when the handoff doc first arrived: it's smaller in practice than
+  feared, because this app's `WorkingStatus` component only ever showed a single current-activity
+  line (`latestStep`'s description), never a full reasoning-trace list — there was no multi-step
+  trace UI to tear out, just one derived string to re-source.
+- **`progress` is now that string's source.** New `progress: AgentProgressEvent | null` hook state,
+  set on the `progress` SSE case, replaces `reasoningSteps`' role in `WorkingStatus`'s subline and
+  in the "is a proposal or a progress update more recent" comparison (previously compared against
+  the last reasoning step's timestamp). `ReasoningStep` the type is deleted — grepped first to
+  confirm it (and `reasoningSteps`/`onReasoningStep`) had exactly three callers, all touched here.
+- **`final_response` now drives what actually gets stored as the assistant message.** New
+  `finalResponseRef` holds the event's `structuredResponse`/`responseContractVersion` the moment
+  it arrives; the existing completion path (still triggered by `state === "complete"`, unchanged)
+  now prefers `structuredResponse.markdown` over the plain accumulated `response_chunk` text, and
+  attaches `structuredResponse`/`responseContractVersion` onto the pushed `AiConversationMessage`.
+  `response_chunk` keeps driving the live typewriter exactly as before — the doc says it carries
+  "the same Markdown as the final response," so the visible text shouldn't visibly change, but the
+  message now also carries the structured findings/caveats/actions data once it lands.
+- **New cases, all additive, matching the doc's own descriptions:** `run_queued` (captures
+  `runId` into a new `activeRunId` state — this SSE event previously had no case at all, despite a
+  since-removed comment claiming it was "captured, unused"; it wasn't, actually check before
+  trusting an old capture-comment), `input_request` (captured into a loosely-typed `inputRequest`
+  state — the doc doesn't define this payload's shape beyond "render the choices/free-text
+  control," so no UI reads it yet), `run_state` (folds `message` into `currentPhaseMessage` so a
+  stray reconcile-after-reconnect event doesn't silently vanish, even with no reconnect flow built).
+  `run_cancelled` stops the stream (`setIsStreaming(false)`) without pushing a message — no Stop
+  button exists yet to trigger this from the UI side, but a server/other-surface cancellation
+  arriving on this connection is now handled instead of falling through unmatched.
+- **UI: caveats and actions**, rendered under `AiResponseRenderer` for any message carrying
+  `structuredResponse`. `AiResponseCaveats` (`src/pages/conversations/ai-response/response-caveats.tsx`)
+  is a plain amber `Info`-icon callout per finding's caveat, mirroring [[lifecycle_callout_info_icon]]'s
+  convention. `AiResponseActions` (`.../response-actions.tsx`) renders `SuggestedActionV2[]` as
+  chip-style buttons: `AskAgent` sends the label as a follow-up prompt (reuses the existing
+  suggested-prompt send path); everything else resolves through a new
+  `resolveSuggestedActionRoute` (`src/features/ai-conversations/map-suggested-action-target.ts`).
+- **Real gap found while writing that resolver, not invented:** the doc's initial action-resource
+  catalog is `segment`, `campaign`, `datasources`, `channels`, `room` — grepped `route.tsx` and only
+  `room` (`/rooms/:roomId`) and `data-sources` are live top-level routes today. `segment`/`channels`
+  only exist inside the archived `src/oldpages` lifecycle build; `campaign` has no route at all.
+  Per the doc's own instruction ("ignore unknown resource names... never treat a label/parameter/
+  model-authored text as a URL"), those three resolve to `null` and the action is hidden — same
+  outcome as an actually-unknown resource, not a guess at a dead or archived page. Revisit once
+  those surfaces exist live.
+- **`Info` icon caveat + chip action styling is a first pass, not a validated design** — no Figma
+  reference exists for this feature (per the top of this doc) and the v3 findings/metrics/evidence
+  card UI the doc frames as the primary way to show structured data is explicitly **not** attempted
+  here; this pass only surfaces caveats/actions since those map cleanly onto affordances this app
+  already has (the Callout convention, chip-style buttons). A real findings/metrics/evidence
+  presentation is separate design work, still open.
+
+**Verified:** `npx tsc -b` and `npm run build` both clean, no new errors.
+**Not verified live:** none of this has been exercised against a real streaming response yet —
+whether the backend actually emits `progress`/`final_response`/`run_queued` on this connection
+(as opposed to only the old `tool_call`/`reasoning_step`/`response_chunk` events it was confirmed
+to send live on 2026-09-10) is unconfirmed. If it doesn't yet, this UI will just show the
+generic phase fallback with no live activity text and no structured caveats/actions until the
+backend's SSE payload actually catches up to the handoff doc — worth a real session to check.
+
+**Still open, deferred on purpose:** Stop/steer buttons (the `agent-runs` hooks from the previous
+slice have no caller yet), the reconnect flow (`activeRunId` on the conversation detail response
+isn't read either), `input_request`'s actual choice/free-text UI, and a real findings/metrics/
+evidence presentation.
+
+## Progress (2026-09-25) — first live v3 SSE capture, one real bug found and fixed
+
+The user ran two real sends against the live backend and captured the full event log for both —
+the first live confirmation of the v3 event vocabulary itself (previous live confirmations, back
+on 2026-09-09/10, only ever saw the old `tool_call`/`reasoning_step`/`response_chunk` vocabulary).
+
+**Confirmed correct, matches what was built:**
+- `run_queued` really does arrive as its own event with a bare `runId`, no `progress`/other
+  fields — `activeRunId` capture works as written.
+- `progress` events match the implemented `AgentProgressEvent` shape exactly (`stage`, `message`,
+  `atUtc`); no `percent` field was sent, consistent with it being documented optional.
+- `response_chunk`'s streamed text and `final_response.structuredResponse.markdown` were
+  byte-identical in both captured exchanges — confirms the "swapping in structuredResponse.markdown
+  won't visibly change the rendered text" assumption from the previous entry was correct, not just
+  a guess from the doc's wording.
+- The legacy `suggested_action` event fired **alongside** `final_response`, carrying the same
+  action as `structuredResponse.actions[0]` in one exchange — confirms ignoring `suggested_action`
+  (no case for it in the switch) was the right call: it's genuinely duplicate data, already
+  covered by the richer channel, not a silently-dropped signal.
+
+**One real bug found and fixed:** the first `progress` event of every send carries the same
+internal `"conversation_id:<id>"` sentinel the `status` case already knows to filter out of
+user-facing copy — but it arrives in `progress.message`, a field the `status` filter never
+touches. Before this fix, the raw guid would flash in the `WorkingStatus` subline for one render
+until the next `progress` event (the real "Preparing the analysis." text) overwrote it a moment
+later. Fixed by skipping that specific `progress` update in the switch case
+(`use-ai-conversation-messages.ts`) rather than trying to generalize the `status` case's filter.
+
+**A second exchange also surfaced a real gap in the actions work from the previous slice** — a
+live `openRoom` action whose `target.resource` was `"room"` with **no `resourceId`**, carrying
+`grid`/`rowKey`/`conditionKey`/`currency` in `parameters` instead. The previous slice's
+`resolveSuggestedActionRoute` fell back to the bare `/rooms` list for exactly this shape, which
+would have silently discarded all four of those params and sent the user to the wrong place
+(worse than not showing a button at all). Fixed by removing that fallback — full detail, including
+the live payload, is in the new reference section below. Also caught: the live `kind` value was
+`"openRoom"` (camelCase), not the doc's documented `"OpenRoom"` (PascalCase) — harmless today since
+resolution keys off `target.resource`, not `kind`, but `SuggestedActionV2["kind"]` was widened to
+accept any string rather than assert a casing that's now known to be unconfirmed.
+
+**Verified:** `npx tsc -b` clean after all three fixes.
+**Still not exercised live:** Stop/steer/reconnect (no caller yet), `input_request` (no live
+example seen yet either — both captured exchanges completed without one), and the actual New Room
+wizard prefill that would make the `openRoom`-without-`resourceId` action work end to end.
+
+## Reference: action-resource routing (`SuggestedActionV2`) — what resolves and what doesn't
+
+Kept as its own lookup section (not buried in a dated entry above) since this is exactly the kind
+of thing worth checking back on before touching `AiResponseActions`
+(`src/pages/conversations/ai-response/response-actions.tsx`) or `resolveSuggestedActionRoute`
+(`src/features/ai-conversations/map-suggested-action-target.ts`) again.
+
+**Resolves to a real page today:**
+- `resource: "datasources"` → `/data-sources`, always (no `resourceId` needed).
+- `resource: "room"` **with a `resourceId`** → `/rooms/{resourceId}`.
+
+**Hidden — no live destination, or not enough information to build one. Not a guess:**
+- `resource: "segment"` / `"channels"` — no live top-level route. Both exist only inside the
+  archived `src/oldpages` lifecycle build (`stage-tabs-config.ts`'s `segments`/`channels` tabs).
+  Needs a real live page for either before this can resolve to anything.
+- `resource: "campaign"` — no route at all anywhere in `route.tsx`. Same: needs a real page first.
+- `resource: "room"` **without a `resourceId`** — confirmed live 2026-09-25 that the backend sends
+  exactly this shape for an "open a room from a leak" suggestion:
+  ```json
+  {
+    "id": "rooms.open_from_leak",
+    "kind": "openRoom",
+    "label": "Open or join a room on flolyt intelligence — second-purchase window · churn risk",
+    "target": { "resource": "room" },
+    "parameters": { "grid": "segment", "rowKey": "<guid>", "conditionKey": "churn_risk", "currency": "NGN" },
+    "eligibility": { "eligible": true, "requiredCapabilities": ["open_room_on_leak"] }
+  }
+  ```
+  There's no id to link to — the real identifying info lives in `parameters`. Those four fields
+  line up with the **New Room wizard**'s Step 1 condition
+  (`src/pages/rooms/new/step-condition.tsx`, a `{ title, conditionKey }` value) and Step 2 audience
+  rules (`RoomSegmentRuleInput`, `src/services/api/rooms/estimate-new-room-cohort.ts`), not a plain
+  route. Building this for real means the wizard (`src/pages/rooms/new/index.tsx`) accepting these
+  four params as one-shot prefill data (distinct from [[url_param_over_state_for_page_flow]], which
+  is about *step position*, not initial field values — likely still nav `state`, not a query
+  param) and seeding `StepCondition`/`StepAudience`'s initial values from them. Until that exists,
+  this shape is hidden rather than linked to the bare `/rooms` list, which would silently discard
+  all four params — a wrong destination is worse than no button.
+- **`kind` doesn't reliably match the handoff doc's enum** — the doc lists `'OpenRecord' |
+  'OpenWorkspaceSurface' | 'OpenRoom' | 'ConnectSource' | 'AskAgent'` (PascalCase); the live payload
+  above sent `"openRoom"` (camelCase). Resolution keys off `target.resource`, not `kind` (except
+  the `AskAgent` special case), so this hasn't broken anything — `SuggestedActionV2["kind"]` was
+  just widened to accept any string. Don't tighten it back to the doc's literal union without
+  re-confirming real casing live first.
+
+## Progress (2026-09-25) — Stop, steer, and reconnect wired
+
+Third slice: the `agent-runs` hooks built earlier now have callers. All three share one thing —
+the SSE event-handling switch used to live only inside `sendMessage`, and reconnect needed the
+exact same handling a second time for a GET stream instead of a POST one. Rather than duplicate
+it, `use-ai-conversation-messages.ts` was split into:
+- `dispatchStreamEvent(parsed, resolvedEventType)` — the switch itself, now returning `true` for a
+  terminal event (`error`, `run_cancelled`) instead of `return`-ing out of a shared loop it no
+  longer owns directly.
+- `consumeStream(response)` — the chunk-read/buffer/parse loop, calling `dispatchStreamEvent` per
+  event and stopping when it returns `true` or `state === "complete"` finishes the message.
+- `sendMessage` and the new `reconnectRun` both just build their own request (POST vs. GET,
+  different URL) and hand the `Response` to `consumeStream` — no other logic duplicated.
+
+**Reconnect** (`reconnectRun(runId)` in the hook, wired in `detail-route.tsx`): on loading an
+existing conversation, reads `history.data.activeRunId`; if present, fetches `GET
+/api/v3/runs/{id}` via the already-built `useGetAgentRun`, and only opens the run's own stream
+(`GET /api/v3/runs/{id}/stream`) when its status is `queued`/`running`/`awaiting_approval` — a
+`done`/`failed`/`cancelled` run needs no reconnect, its message is already in the persisted
+history. Guarded against re-firing for the same runId (`reconnectedRunIdRef`, same idiom as the
+bootstrap-token guard already in this file) and against double-connecting over a send already
+streaming live in this tab (`!isStreaming`). `reconnectRun` sets `activeRunId` directly from its
+argument rather than waiting on a `run_queued` event — confirmed by reading the stream contract
+that reopening an existing run's stream doesn't re-emit `run_queued`, so waiting for one would
+mean Stop/steer never becoming available after a reconnect.
+
+**Stop**: a small "Stop" chip next to the working-status line while `activeRunId` exists. Calls
+`useCancelAgentRun().cancelRun(activeRunId)` (the documented "request cancellation" — doesn't
+promise the run stops instantly) **and** the hook's own `abortStream()` in the same click, so the
+local UI stops immediately rather than waiting for a `run_cancelled` event to round-trip back.
+
+**Steer**: a second chip toggles a one-line inline input (Escape to cancel) that calls
+`useSteerAgentRun().steerRun({ runId, text })`. **Still unverified:** the request body shape —
+flagged when the service was first built and still true now that it has a real caller — the
+handoff doc never states `/runs/{id}/steer`'s POST body, only the stored `steering[].text` shape;
+sending `{ text }` is inferred, not confirmed. Watch the first live steer attempt for a 4xx.
+
+**Verified:** `npx tsc -b` and `npm run build` both clean.
+**Not verified live:** none of Stop/steer/reconnect has been exercised against the real backend
+yet — no run has lasted long enough in a live session to click Stop, no reconnect scenario (kill
+the page mid-run, reopen) has been tried, and steer's body shape is still a guess. All three need
+a real session to confirm.
+
+## Correction (2026-09-26) — Stop moved onto the composer's send button
+
+First pass put Stop as its own chip next to the working-status line, alongside the "Add a note"
+steer chip. Flagged as the wrong affordance — Claude's own chat UI (screenshot supplied) puts stop
+in the send button's own spot: the same control that sends a message becomes the stop button in
+place once one is streaming, not a separate control elsewhere. Corrected:
+
+- The composer's send button (`ArrowUp` in `detail-route.tsx`) now does double duty — `onClick`
+  switches between `handleSend`/`handleStop` and the icon between `ArrowUp`/`Square` based on
+  `isStreaming`, styled `bg-ink` while in stop mode. Removed the standalone Stop chip entirely.
+  Steer's "Add a note" chip stays where it was — it's a genuinely separate action, not another way
+  to stop, so it wasn't part of what was wrong.
+- **`handleStop` also had a latent bug this surfaced:** it required `activeRunId` to be set before
+  doing anything, so clicking it in the brief window between hitting send and the `run_queued`
+  event arriving would silently no-op — the button would look clickable but do nothing. Fixed to
+  always call `abortStream()` (the local stop) unconditionally first, and only call the server-side
+  `cancelRun` when `activeRunId` happens to be known yet. Matches the reference UI's stop button,
+  which responds the instant it's clicked regardless of server-side state.
+
+**Verified:** `npx tsc -b` + `npm run build` clean. **Not verified live** — same as the rest of
+this slice, still needs a real click during an actual streaming response.
+
+## Progress (2026-09-26) — findings/metrics/evidence held; room-action leak flow built instead
+
+Two things happened in the same session: a third live capture ruled out building the findings/
+metrics/evidence UI for now, and that same capture's action turned out to have a real, buildable
+resolution after all — just not the one guessed on 2026-09-25.
+
+**Findings/metrics/evidence: held, not built.** Three separate live captures now (a plain greeting,
+a general "where should I focus" ask, and this session's direct "give me exact figures and
+provenance" ask) have all come back with `findings: [{ metrics: [], evidence: [] }]` and
+`evidenceStatus: "UNVERIFIED"` — even the one that explicitly asked for provenance, where the
+answer's own markdown contained a full data table (grid/segment/customers/amount/computed-at) that
+never made it into the structured fields. Each capture's `provenance.findings[].sourceResolution`
+also showed `decision: "no_source_required"` — the orchestrator (`flolyt.maestro`) is consistently
+deciding this conversational surface doesn't need the pipeline that would populate `metrics`/
+`evidence`. Building a findings/metrics/evidence UI now would mean designing against a shape that
+has never once had content in three tries — held until a live response actually populates it
+(possibly only happens for a different flow, like a formal investigation that needs real source
+resolution — untested).
+
+**The `openRoom`-without-`resourceId` action, hidden 2026-09-25, is now built for real.** The 2026-09-26
+capture sent the *identical* `grid`/`rowKey`/`conditionKey`/`currency` shape as 2026-09-25's — same
+coordinate, in fact (`rowKey: 01a0483d-fe5b-7564-bd00-ddff6db26614`). The 2026-09-25 writeup guessed
+this needed New Room wizard prefill; that guess was wrong. Checking the leakage-map feature first
+found it already has this exact problem solved: `CellDetailCard.handleStartRoom` in
+`src/pages/leakage-map/detail-panel.tsx` resolves a `grid`/`row`/`condition`/`currency` coordinate
+into a room via `GET /leakage/cells/{grid}/{row}/{condition}/{currency}` (join `cell.room` if one's
+already open, otherwise `POST .../room` using `cell.draft`'s server-computed title/settlement — the
+UI never invents those fields itself) + `POST /leakage/cells/.../room`. That's exactly the chat
+action's shape, just triggered from a different surface.
+
+- **New:** `src/features/ai-conversations/use-open-room-from-leak.ts` — wraps that same two-call
+  flow (`getLeakageCell` → `openRoomOnLeakageCell` when there's a draft and no existing room) as
+  one mutation, returning the room id to navigate to (or `null` if the cell has neither a room nor
+  a draft — a data-gap cell, can't back a room at all).
+- **`map-suggested-action-target.ts`** gained `extractLeakRoomParams(action)` — returns the four
+  params when an action is exactly this shape (`resource: "room"`, no `resourceId`, all four
+  `parameters` present), `null` for every other resourceless `room` shape (still hidden, unchanged
+  policy).
+- **`AiResponseActions`** now has three branches instead of two: `AskAgent` (send as prompt),
+  leak-room (async — fetch cell, join-or-open, navigate, with a spinner while pending), and the
+  existing plain-route resolution. Logs `🏠 Open room from leak requested/resolved` for tracking.
+
+**Verified:** `npx tsc -b` + `npm run build` clean. **Not verified live** — the underlying
+`getLeakageCell`/`openRoomOnLeakageCell` calls are proven (they're the leakage map's own existing,
+already-shipped code path), but clicking this specific action from a chat response hasn't been
+tried yet.
+
+## Live-verified (2026-09-26) — the room-from-leak action works end to end, plus two bugs found and fixed
+
+Logged in as `ichigo@yopmail.com` (Playwright, real backend) and clicked the actual "Open or join a
+room…" button on the live conversation. Confirmed via the network log:
+
+```
+GET https://kckraft.com/flolyt/api/v3/leakage/cells/segment/01a0483d.../churn_risk/NGN → 200
+🏠 Open room from leak resolved: { roomId: 01a0dcd2-4075-7423-af76-13963c354f5b }
+→ navigated to /rooms/01a0dcd2-4075-7423-af76-13963c354f5b
+```
+
+This cell had no existing room, so it exercised the full create-from-draft path (not just the
+join-existing-room shortcut) — the harder of the two branches — and it worked cleanly.
+
+**Two more things surfaced in the same live session, both fixed:**
+
+- **The action button was visually indistinguishable from plain bordered text** — flagged directly
+  by the user, who couldn't tell it was clickable in a screenshot. All three `AiResponseActions`
+  button variants (`AskAgent`, leak-room, plain-route) were on a flat gray `border-line`/`bg-paper`
+  style. Unified them onto the same ultra-accent treatment the `AskAgent` chip already had
+  (`border-ultra-border bg-ultra-bg text-ultra`), added `shadow-xs`/`hover:shadow-sm` and bumped to
+  `font-semibold` so it reads as an elevated, clickable control at rest — confirmed visually in the
+  same live screenshot pass.
+- **Real markdown wasn't being rendered at all** — also flagged directly by the user, who saw
+  literal `**bold**`, `## Heading`, and `| pipe | table |` syntax in the actual response text.
+  `AiResponseRenderer`'s "text" segments were rendered as plain `whitespace-pre-wrap` paragraphs —
+  `response-parser.ts`'s block-parsing only ever handled this app's own proprietary inline
+  `DATA_TABLE`/`DATA_CHART`/`NAV_LINK` HTML-comment blocks, never actual GitHub-flavored markdown,
+  and the v3 backend's `structuredResponse.markdown` is genuine GFM text (headers, bold, real pipe
+  tables), not that old convention. Added `react-markdown` + `remark-gfm` (new dependency, works
+  fine under this app's Preact/compat setup — no different from `react-router-dom`, already used
+  everywhere) and a new `AiMarkdownText` component
+  (`src/pages/conversations/ai-response/markdown-text.tsx`) with a full `components` override map
+  styled to match this app's existing tokens (borrows `AiDataTable`'s table look for markdown
+  tables). `rehypeRaw` deliberately **not** enabled — raw HTML in the source stays inert text, per
+  the handoff doc's "safe Markdown renderer... raw-HTML mode disabled" instruction. Only the
+  *finalized* message goes through this — the live typewriter's in-progress text stays plain, same
+  as before, since a table half-rendered mid-stream would look broken.
+
+**Verified:** `npx tsc -b` + `npm run build` clean, and a live screenshot after both fixes shows a
+real rendered table, real bold/headings, and the now-visible action button all correctly on the
+same response. One unrelated pre-existing issue noticed in passing, not caused by anything here:
+`POST /rooms/{id}/opened` 404'd right after landing on the freshly-created room — that's the room
+page's own existing "mark as opened" call, nothing to do with the chat-panel work.
+
+## Live-verified (2026-09-26) — Stop, steer, and reconnect, all three against the real backend
+
+Logged in as `ichigo@yopmail.com` (Playwright, real backend, same saved session as the entry
+above). Three sequential real sends in one conversation, one hardening feature exercised per send.
+
+**Steer.** Sent a message designed to run long (a full leakage-cause breakdown, genuinely took
+~35s end to end). Once `run_queued` landed and "Add a note" appeared, clicked it and submitted
+"Please also cross-check next week's forecast against this." Network:
+
+```
+POST https://kckraft.com/flolyt/api/v3/runs/01a0dce6-6d70-79ba-bd8c-575d423441e5/steer → 200
+📝 Steer run response: { runId: 01a0dce6-..., data: { succeeded: true, ... } }
+```
+
+This confirms the request body this app sends (`{ text }`) is correct — flagged as an unverified
+guess ever since `steer-agent-run.ts` was written (the handoff doc never states the shape). The run
+kept streaming after the steer call and produced a normal `final_response` — steering genuinely
+doesn't interrupt the current turn, matching the doc's "note for the next turn boundary" framing.
+Same run's `final_response` also carried a real, non-empty `structuredResponse.actions` (a
+`connectSource`/`datasources` action and an `openRoom`/`room` action with real leak-cell
+parameters) — first live confirmation that the v2 actions array isn't always empty like the
+findings/metrics side has been; see the "Reference: action-resource routing" section above, still
+accurate.
+
+**Stop.** Sent a second message, waited for `run_queued`, then clicked the composer's stop button
+(the `Square` icon in place of the send arrow) about 1.5s into the run — deliberately mid-stream,
+not on the first possible frame. Network:
+
+```
+POST https://kckraft.com/flolyt/api/v3/runs/01a0dce7-356e-769d-9145-9840c24d238a/cancel → 200
+🛑 Cancel run response: { runId: 01a0dce7-..., data: { succeeded: true, ... } }
+```
+
+The UI reverted to the send button immediately, before the cancel response even came back —
+confirms `abortStream()`'s local-first design works as intended: the button doesn't wait on a
+round trip to feel responsive.
+
+**Reconnect.** Sent a third message, waited for `run_queued`, then did a full `page.reload()` while
+the run was still actively streaming (not a controlled unmount — a real navigation-away-and-back).
+After reload:
+
+```
+GET https://kckraft.com/flolyt/api/v3/runs/01a0dce7-41cc-7bf5-a89e-993a126e25d1 → 200 (status: "running")
+🔄 Reconnecting to run: { runId: 01a0dce7-..., status: running }
+GET https://kckraft.com/flolyt/api/v3/runs/01a0dce7-41cc-7bf5-a89e-993a126e25d1/stream → 200
+```
+
+The page picked `activeRunId` back up from `GET /conversations/{id}`, correctly judged it still
+live, reopened the stream, and resumed rendering `progress` events under the same run id — the
+full reconnect recipe from the handoff doc's "Reconnect and refresh" section, working end to end
+against a run this session didn't originate the request for.
+
+**Net result:** all three of Stop/steer/reconnect move from "built, not live-verified" to
+live-verified — no 4xx, no guessed shape left unconfirmed, no UI regression. Nothing here was a
+bug fix; everything worked as built on the first live attempt.
