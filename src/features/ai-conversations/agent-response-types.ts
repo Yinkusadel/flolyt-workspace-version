@@ -32,6 +32,8 @@ export interface AgentResponseV2 {
       observedAtUtc?: string | null;
       coverage?: number | null;
       lineage?: number | null;
+      method?: string | null;
+      period?: { fromUtc: string; toUtc: string } | null;
     }>;
   }>;
   caveats: Array<{ code: string; message: string }>;

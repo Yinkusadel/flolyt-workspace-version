@@ -53,10 +53,12 @@ export interface SourceResolution {
 }
 
 // `execution`, `executionRationaleId`, and everything inside `execution` are diagnostic/support
-// data only — never present as model reasoning or a user-editable control. `sourceResolution` and
-// `knowledgeRetrieval` are shadow-mode fields: show them only on diagnostic/data-readiness
-// surfaces (keep using the existing roster-readiness projection elsewhere) until backend
-// enforcement is announced. Older runs return these as null or omit them entirely.
+// data only — never present as model reasoning or a user-editable control. Per the v3 handoff,
+// `sourceResolutionEnforced`/`responseIntegrityEnforced` record the policy frozen for a given run
+// (support diagnostics, not frontend feature flags), and `sourceResolution`/`knowledgeRetrieval`
+// stay diagnostic/data-readiness-surface-only regardless — render citations only when they appear
+// in a final structured finding, never raw retrieved passages. Older runs can return false or omit
+// any of these entirely.
 export interface AgentRun {
   id: string;
   sessionId: string;
@@ -77,6 +79,11 @@ export interface AgentRun {
     effectiveVersion: string;
     boundToolNames: string[];
     methodIds: string[];
+    // Typed as required booleans on the wire per the handoff's TS block, but the same doc notes
+    // older runs "can return false or omit" them — optional here so a run recorded before these
+    // existed doesn't type-lie as `false`.
+    sourceResolutionEnforced?: boolean;
+    responseIntegrityEnforced?: boolean;
     sourceResolution?: SourceResolution | null;
     knowledgeRetrieval?: {
       mode: "undeclared" | "exact" | "lexical" | "hybrid_shadow" | "shadow_error";
@@ -113,11 +120,28 @@ export interface AgentRun {
       }>;
       synthesis: { stepId: string; agentId: "flolyt.maestro"; brief: string };
     } | null;
+    // Support-only audit view of the frozen model-selection policy for this run — no customer-
+    // facing selector, no change to message rendering. An internal diagnostics panel may show
+    // this; older runs omit it entirely.
+    modelRouting?: {
+      policyVersion: string;
+      mode: "off" | "shadow" | "active" | "fallback" | string;
+      cohortKey: string;
+      baselineModelId: string;
+      candidateModelId?: string | null;
+      recommendedModelId: string;
+      selectedModelId: string;
+      reason: string;
+      isHoldout: boolean;
+      baselineSamples: number;
+      candidateSamples: number;
+      consecutivePasses: number;
+    } | null;
   } | null;
   executionRationaleId?: string | null;
   finalResponse?: AgentResponseV2 | null;
   responseContractVersion?: string | null;
-  steering: Array<{ text: string; addedBy: string; addedAtUtc: string; consumed: boolean }>;
+  steering: Array<{ id: string; text: string; addedBy: string; addedAtUtc: string; consumed: boolean }>;
   createdAtUtc: string;
   finishedAtUtc?: string | null;
 }
