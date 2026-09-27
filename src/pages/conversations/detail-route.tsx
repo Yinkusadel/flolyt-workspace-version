@@ -346,7 +346,7 @@ export default function AiConversationDetailRoute() {
             <span className="flex size-12 items-center justify-center rounded-full border border-ultra-border bg-ultra-bg">
               <img src={flolytLogo} alt="" className="size-7 object-contain" />
             </span>
-            <p className="mt-4 text-[12.5px] text-ink-3">Ask Flolyt to look something up or take an action.</p>
+            <p className="mt-4 text-[13.5px] text-ink-3">Ask Flolyt to look something up or take an action.</p>
           </div>
         )}
 
@@ -367,7 +367,7 @@ export default function AiConversationDetailRoute() {
                     borderColor: "var(--color-ultra) transparent transparent transparent",
                   }}
                 />
-                <div className="rounded-2xl rounded-tr-none bg-ultra px-4 py-2.5 text-[12.5px] leading-relaxed wrap-break-word text-paper shadow-xs">
+                <div className="rounded-2xl rounded-tr-none bg-ultra px-4 py-2.5 text-[13.5px] leading-relaxed wrap-break-word text-paper shadow-xs">
                   {message.content}
                 </div>
               </div>
@@ -376,7 +376,7 @@ export default function AiConversationDetailRoute() {
             <div key={message.key} className="flex min-w-0 justify-start">
               <div className="flex max-w-[85%] min-w-0 items-start gap-2 rounded-card border border-rose-border bg-rose-bg px-3.5 py-2.5">
                 <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-rose" />
-                <p className="min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-rose">
+                <p className="min-w-0 text-[13.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-rose">
                   {message.content}
                 </p>
               </div>
@@ -502,7 +502,7 @@ export default function AiConversationDetailRoute() {
                   // run instead of starting a new one (same box, same button, per the v3 handoff's
                   // composer-based steering contract).
                   disabled={isStreaming && !activeRunId}
-                  className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3 pb-1.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
+                  className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3 pb-1.5 text-[13.5px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
                 />
 
                 <div className="flex items-center justify-between px-2.5 py-1.5">

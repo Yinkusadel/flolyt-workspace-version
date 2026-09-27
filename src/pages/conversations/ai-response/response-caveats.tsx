@@ -12,7 +12,7 @@ export function AiResponseCaveats({ caveats }: { caveats: AgentResponseV2["cavea
           className="flex min-w-0 items-start gap-2 rounded-card border border-amber-border bg-amber-bg px-3 py-2"
         >
           <Info className="mt-0.5 size-3.5 shrink-0 text-amber" />
-          <p className="min-w-0 text-[11px] leading-relaxed wrap-break-word text-amber">
+          <p className="min-w-0 text-[12px] leading-relaxed wrap-break-word text-amber">
             {caveat.message}
           </p>
         </div>

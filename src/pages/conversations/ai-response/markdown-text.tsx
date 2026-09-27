@@ -8,15 +8,15 @@ import remarkGfm from "remark-gfm";
 // text rather than being injected into the DOM.
 const MARKDOWN_COMPONENTS: Components = {
   p: ({ children }) => (
-    <p className="mt-2 text-[12.5px] leading-relaxed wrap-break-word text-ink first:mt-0">{children}</p>
+    <p className="mt-2 text-[13.5px] leading-relaxed wrap-break-word text-ink first:mt-0">{children}</p>
   ),
-  h1: ({ children }) => <h1 className="mt-4 text-[15px] font-semibold text-ink first:mt-0">{children}</h1>,
-  h2: ({ children }) => <h2 className="mt-4 text-[13.5px] font-semibold text-ink first:mt-0">{children}</h2>,
-  h3: ({ children }) => <h3 className="mt-3 text-[12.5px] font-semibold text-ink first:mt-0">{children}</h3>,
+  h1: ({ children }) => <h1 className="mt-4 text-[16.5px] font-semibold text-ink first:mt-0">{children}</h1>,
+  h2: ({ children }) => <h2 className="mt-4 text-[15px] font-semibold text-ink first:mt-0">{children}</h2>,
+  h3: ({ children }) => <h3 className="mt-3 text-[13.5px] font-semibold text-ink first:mt-0">{children}</h3>,
   strong: ({ children }) => <strong className="font-semibold text-ink">{children}</strong>,
   em: ({ children }) => <em className="italic">{children}</em>,
-  ul: ({ children }) => <ul className="mt-2 list-disc space-y-1 pl-4 text-[12.5px] text-ink first:mt-0">{children}</ul>,
-  ol: ({ children }) => <ol className="mt-2 list-decimal space-y-1 pl-4 text-[12.5px] text-ink first:mt-0">{children}</ol>,
+  ul: ({ children }) => <ul className="mt-2 list-disc space-y-1 pl-4 text-[13.5px] text-ink first:mt-0">{children}</ul>,
+  ol: ({ children }) => <ol className="mt-2 list-decimal space-y-1 pl-4 text-[13.5px] text-ink first:mt-0">{children}</ol>,
   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
   a: ({ children, href }) => (
     <a href={href} target="_blank" rel="noreferrer" className="text-ultra hover:underline">
@@ -28,10 +28,10 @@ const MARKDOWN_COMPONENTS: Components = {
     <blockquote className="mt-2 border-l-2 border-line pl-3 text-ink-3 italic first:mt-0">{children}</blockquote>
   ),
   code: ({ children }) => (
-    <code className="rounded bg-paper-2 px-1 py-0.5 font-mono text-[11.5px] text-ink">{children}</code>
+    <code className="rounded bg-paper-2 px-1 py-0.5 font-mono text-[12.5px] text-ink">{children}</code>
   ),
   pre: ({ children }) => (
-    <pre className="mt-2 overflow-x-auto rounded-card bg-paper-2 p-3 font-mono text-[11.5px] text-ink first:mt-0">
+    <pre className="mt-2 overflow-x-auto rounded-card bg-paper-2 p-3 font-mono text-[12.5px] text-ink first:mt-0">
       {children}
     </pre>
   ),
@@ -42,12 +42,12 @@ const MARKDOWN_COMPONENTS: Components = {
   ),
   thead: ({ children }) => <thead className="border-b border-line bg-paper-2">{children}</thead>,
   th: ({ children }) => (
-    <th className="px-3 py-2 text-[10.5px] font-medium tracking-[0.4px] whitespace-nowrap text-ink-4 uppercase">
+    <th className="px-3 py-2 text-[11px] font-medium tracking-[0.4px] whitespace-nowrap text-ink-4 uppercase">
       {children}
     </th>
   ),
   tr: ({ children }) => <tr className="border-b border-line last:border-b-0">{children}</tr>,
-  td: ({ children }) => <td className="px-3 py-2 text-[12px] wrap-break-word text-ink">{children}</td>,
+  td: ({ children }) => <td className="px-3 py-2 text-[13px] wrap-break-word text-ink">{children}</td>,
 };
 
 export function AiMarkdownText({ content }: { content: string }) {
