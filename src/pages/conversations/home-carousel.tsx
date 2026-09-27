@@ -125,26 +125,23 @@ function FactsCard({ facts, onAsk }: { facts: HomeFact[]; onAsk: (question: stri
   );
 }
 
-/** One row inside a `cards[]`-backed panel — a card's title carries the link (per this app's
- *  link-hover convention) when it has an href; cards with no href just render as plain text. */
+/** One row inside a `cards[]`-backed panel — `title`/`detail`/`figures` read as plain description
+ *  text (matching `FactsCard`'s fact sentence), with the `href` (when present) surfaced as its own
+ *  "Go to this →" button below, since navigating away is a different action from asking a question. */
 function CardRow({ card }: { card: HomeCard }) {
-  const titleClass = "line-clamp-2 text-[11.5px] leading-snug font-medium";
-  const title = card.href ? (
-    <Link to={card.href} className={cn(titleClass, "text-ultra hover:underline")}>
-      {card.title}
-    </Link>
-  ) : (
-    <p className={cn(titleClass, "text-ink-2")}>{card.title}</p>
-  );
-
   return (
     <div className="py-2.5 first:pt-0 last:pb-0">
-      {title}
+      <p className="line-clamp-2 text-[11.5px] leading-snug text-ink-2">{card.title}</p>
       {card.detail && (
         <p className="mt-1 line-clamp-1 text-[11px] leading-snug text-ink-4">{card.detail}</p>
       )}
       {card.figures.length > 0 && (
         <p className="mt-1 font-serif text-[15px] text-ink">{card.figures.map(formatFigure).join(" + ")}</p>
+      )}
+      {card.href && (
+        <Link to={card.href} className="mt-1 inline-block text-[11.5px] font-medium text-ultra hover:underline">
+          Go to this →
+        </Link>
       )}
     </div>
   );
