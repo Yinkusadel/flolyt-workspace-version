@@ -34,7 +34,7 @@ export default function NewConversationRoute() {
   } = useGetHomePrompts();
   const greeting = promptsData?.data.greeting;
   const promptPhrases = (promptsData?.data.prompts ?? []).map((p) => p.text);
-  const { text: placeholderText, caret } = useTypewriter(promptPhrases);
+  const { text: placeholderText, caret, full: placeholderFull } = useTypewriter(promptPhrases);
 
   // Crossfades the greeting whenever it actually changes value, instead of the text just
   // snapping the instant a background refetch resolves.
@@ -130,6 +130,10 @@ export default function NewConversationRoute() {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   handleSubmit();
+                }
+                if (e.key === "Tab" && !prompt && placeholderFull) {
+                  e.preventDefault();
+                  setPrompt(placeholderFull);
                 }
               }}
               rows={3}
