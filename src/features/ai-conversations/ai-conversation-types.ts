@@ -7,7 +7,10 @@ export interface AiConversationMessage {
   // in the chat as though Flolyt said it. Never emitted by the live SSE stream itself, only history.
   // "error" is a local role — pushed by the hook itself when the stream fails or errors out, not
   // something the backend ever sends. Lets the UI style it as an error instead of a normal reply.
-  role: "user" | "assistant" | "context" | "error";
+  // "steering" is a mid-run note sent through the same composer while a run is active — per the
+  // v3 handoff it's a first-class timeline entry (chronological, alongside user/assistant turns),
+  // rendered identically to a "user" bubble (see detail-route) rather than as its own widget.
+  role: "user" | "assistant" | "context" | "error" | "steering";
   content: string;
   timestamp: string;
   // Per the v3 handoff: history reads (and synchronous JSON message responses) also expose the

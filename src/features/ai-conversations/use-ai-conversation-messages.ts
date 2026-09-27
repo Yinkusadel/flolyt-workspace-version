@@ -364,6 +364,15 @@ export const useAiConversationMessages = (
       clearTypewriter();
       responseAccRef.current = "";
       finalResponseRef.current = null;
+      // Clear the previous run's id up front rather than leaving it until the new run's own
+      // `run_queued` event overwrites it. Without this, `activeRunId` stays pointed at the just-
+      // finished run for the gap between this request going out and that event coming back —
+      // during which the composer's steer path (`canSteer` in detail-route) would read it as "a
+      // run exists to steer" and POST a steer against a run the backend already considers done,
+      // getting rejected with "Run already finished." instead of ever reaching the new run.
+      // Confirmed live 2026-09-27: a message sent ~50ms after the prior run's completion carried
+      // the stale id and was rejected exactly this way.
+      setActiveRunId(null);
 
       // Optimistic user message
       setMessages((prev) => [
@@ -409,6 +418,55 @@ export const useAiConversationMessages = (
       }
     },
     [clearTypewriter, consumeStream, queryClient]
+  );
+
+  // Steers the active run through the same composer instead of the standalone `/runs/{id}/steer`
+  // route. Per the v3 handoff, posting `{ conversationId, activeRunId, message }` to the normal
+  // messages endpoint validates the run belongs to this conversation, appends the instruction to
+  // it, and returns a synchronous result — it does not open a new stream or touch the run's own
+  // ongoing SSE connection, so this is a plain JSON request, not `consumeStream`.
+  const steerMessage = useCallback(
+    async (message: string) => {
+      const conversationId = conversationIdRef.current;
+      const runId = activeRunId;
+      if (!conversationId || !runId) return;
+
+      // Rendered as a normal "steering"-role entry, styled identically to a user bubble — no
+      // separate widget, no delivery indicator (see detail-route).
+      setMessages((prev) => [
+        ...prev,
+        { role: "steering", content: message, timestamp: new Date().toISOString() },
+      ]);
+
+      const token = getCookie(COOKIE_KEYS.AUTH_TOKEN);
+
+      try {
+        const res = await fetch(API_ENDPOINTS.AI_CONVERSATIONS.SEND_MESSAGE, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "X-Flolyt-Agent-Contract": "v3",
+          },
+          body: JSON.stringify({ conversationId, activeRunId: runId, message }),
+          credentials: "include",
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!res.ok || data?.succeeded === false) {
+          throw new Error(data?.messages?.[0] || `HTTP ${res.status}`);
+        }
+      } catch (err: unknown) {
+        console.error("❌ Steer failed:", err);
+        const errorMessage = err instanceof Error ? err.message : "Failed to send the steering note";
+        setMessages((prev) => [
+          ...prev,
+          { role: "error", content: errorMessage, timestamp: new Date().toISOString() },
+        ]);
+      }
+    },
+    [activeRunId]
   );
 
   // Reopens an existing run's own stream — the reconnect half of the v3 handoff's recipe: load
@@ -489,6 +547,7 @@ export const useAiConversationMessages = (
     activeRunId,
     inputRequest,
     sendMessage,
+    steerMessage,
     reconnectRun,
     abortStream,
   };

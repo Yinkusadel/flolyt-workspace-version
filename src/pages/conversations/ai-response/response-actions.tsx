@@ -19,7 +19,7 @@ interface AiResponseActionsProps {
 // just on hover discovery. First pass used a flat gray border-only style here, which a live look
 // confirmed was indistinguishable from plain bordered text — corrected 2026-09-26.
 const ACTION_BUTTON_CLASS =
-  "inline-flex items-center gap-1.5 rounded-chip border border-ultra-border bg-ultra-bg px-3 py-1.5 text-[11px] font-semibold text-ultra shadow-xs transition-all hover:bg-ultra-bg/70 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none";
+  "inline-flex items-center gap-1.5 rounded-chip border border-ultra-border bg-ultra-bg px-3 py-1.5 text-[12px] font-semibold text-ultra shadow-xs transition-all hover:bg-ultra-bg/70 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none";
 
 // Three kinds of action, three different click behaviors:
 // - "AskAgent" doesn't navigate — it's a suggested follow-up prompt, sent the same way as a
@@ -97,7 +97,7 @@ export function AiResponseActions({ actions, onAskAgent }: AiResponseActionsProp
               const route = resolveSuggestedActionRoute(action);
               if (route) navigate(route);
             }}
-            className="inline-flex items-center gap-1.5 rounded-chip border border-line bg-paper px-3 py-1.5 text-[11px] font-medium text-ink transition-colors hover:border-ink-4"
+            className="inline-flex items-center gap-1.5 rounded-chip border border-line bg-paper px-3 py-1.5 text-[12px] font-medium text-ink transition-colors hover:border-ink-4"
           >
             {action.label}
             <ArrowRight className="size-3 text-ink-4" />

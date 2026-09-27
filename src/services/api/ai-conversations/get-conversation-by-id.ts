@@ -30,7 +30,8 @@ export const getAiConversationById = async (
 ): Promise<GetAiConversationByIdResponse> => {
   try {
     const response = await axiosInstance.get<GetAiConversationByIdResponse>(
-      GET_BY_ID.replace("{id}", id)
+      GET_BY_ID.replace("{id}", id),
+      { headers: { "X-Flolyt-Agent-Contract": "v3" } }
     );
 
     return response.data;

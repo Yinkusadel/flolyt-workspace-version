@@ -59,7 +59,7 @@ export function AiDataTable({ data }: { data: DataTablePayload }) {
                   <button
                     type="button"
                     onClick={() => toggleSort(idx)}
-                    className="inline-flex items-center gap-1 text-[10.5px] font-medium tracking-[0.4px] whitespace-nowrap text-ink-4 uppercase"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium tracking-[0.4px] whitespace-nowrap text-ink-4 uppercase"
                   >
                     {column}
                     {sort?.column === idx &&
@@ -77,7 +77,7 @@ export function AiDataTable({ data }: { data: DataTablePayload }) {
             {visibleRows.map((row, rowIdx) => (
               <tr key={rowIdx} className={cn("border-b border-line last:border-b-0", rowIdx % 2 === 1 && "bg-paper-2/50")}>
                 {row.map((cell, cellIdx) => (
-                  <td key={cellIdx} className="px-3.5 py-2 text-[12px] whitespace-nowrap text-ink">
+                  <td key={cellIdx} className="px-3.5 py-2 text-[13px] whitespace-nowrap text-ink">
                     {cell}
                   </td>
                 ))}

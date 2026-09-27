@@ -5,11 +5,23 @@ in the sibling repo `flolyt-dashboard` (`Flolyts-space/flolyt-dashboard`, a diff
 checkout, not part of this repo). This file is the working plan: what exists over there, what's
 copied here for reference, and what's still undecided before wiring starts here.
 
-## Current status & issue list (as of 2026-09-26 — read this first)
+## Current status & issue list (as of 2026-09-27 — read this first)
 
 Everything below this section is the chronological build log — useful for "why is it built this
 way," but long. This section is the up-to-date summary; update it whenever a status changes rather
 than making someone read the whole log.
+
+**Backend sent an updated handoff doc, 2026-09-27** — `docs/chat-panel/frontend-agent-v3-handoff.md`
+was replaced in place (old version deleted, new one renamed to the canonical filename; git history
+has the diff). Headline change: steering now has a composer-based contract — `SendAgentMessage`
+gained `activeRunId`, and posting it alongside `conversationId` to the normal `POST
+/conversations/messages` route steers the active run instead of starting a new one (the standalone
+`POST /runs/{id}/steer` route still exists "for non-composer clients," but the doc says the
+composer should use the messages route). Also added: `steering_queued` SSE event (unused here —
+composer steering goes out as plain JSON, not SSE), `sourceResolutionEnforced`/
+`responseIntegrityEnforced` booleans and a `modelRouting` diagnostic block on `AgentRun.execution`,
+an `id` on each `AgentRun.steering[]` entry, and `method`/`period` on response-finding evidence
+items.
 
 **Live-verified working, end to end, against the real backend:**
 - v3 SSE event vocabulary (`run_queued`/`progress`/`response_chunk`/`final_response`) — confirmed
@@ -38,17 +50,59 @@ than making someone read the whole log.
     same run id.
   No 4xx anywhere in any of the three. Full console/network capture available on request (not
   checked into the repo).
-
-**Decided but not built:**
-- Merge the standalone steer input into the main composer (context-aware: same box sends a new
-  message or steers the active run depending on `isStreaming`) — see [[flolyt_chat_panel_steer_ux]].
-  Two confirmation-UX sub-options still undecided (toast-only vs. toast + ephemeral inline marker).
+- **Composer-based steering, 2026-09-27** — the standalone "Add a note" chip/input is gone. The
+  same composer textarea now doubles as the steer input: while a run is active, the send button
+  swaps Stop → Send the instant the box has text (Enter/click either steers or stops depending on
+  content), and submitting POSTs plain JSON `{ conversationId, activeRunId, message }` to the
+  normal messages route per the new handoff's contract (not SSE — the run's own stream stays
+  untouched). Steering entries render as a plain user-style chat bubble — **no delivery-status
+  indicator at all**, per explicit user decision (dropped both the inline-badge and toast options
+  that were on the table). Live-verified against the real backend: submitted a steer mid-run, got
+  `200 { succeeded: true, "Steering added." }`, and the run's own final answer referenced the
+  steered text. Resolves [[flolyt_chat_panel_steer_ux]] — that memory's two open UX questions are
+  answered (merged into composer; no confirmation UI of any kind).
+- **Stale-`activeRunId` bug, found and fixed 2026-09-27** — surfaced by the steering rewiring above.
+  `activeRunId` was never cleared when a run finished, only overwritten by the next run's
+  `run_queued` event. In the gap between sending a new message (`isStreaming` flips true
+  immediately) and that new run's own `run_queued` arriving, `activeRunId` still pointed at the
+  *previous, already-finished* run. A fast follow-up send in that window read as "a run exists to
+  steer," POSTed a steer against the finished run, and got rejected with `"Run already finished."`
+  — silently losing that message instead of ever reaching the new run. Reproduced live via
+  Playwright (`activeRunId` in the 3rd request matched the *first* run's id, 400 back with that
+  exact message) and confirmed fixed with the identical repro afterward (steer now carries the
+  correct run id, `200 succeeded: true`). Fix: `sendMessage` now clears `activeRunId` to `null` up
+  front, so there's nothing stale to steer against until the new run's own `run_queued` sets the
+  real one.
+- **`X-Flolyt-Agent-Contract: v3` header gap, found and fixed 2026-09-27** — present on
+  send-message/steer/cancel-run/get-run/get-evidence but missing on conversations
+  LIST/GET_BY_ID/ARCHIVE and all four proposal endpoints (accept/defer/reject/list). Added to all
+  seven, so every v3 agent-API call now counts correctly toward the doc's adoption telemetry.
+- **Type gaps from the updated handoff closed, 2026-09-27** — additive only, nothing renders these
+  yet: `AgentRun.execution.sourceResolutionEnforced`/`responseIntegrityEnforced` (typed optional —
+  the doc itself says older runs can omit them despite the non-optional TS block), `AgentRun.
+  execution.modelRouting`, `AgentRun.steering[].id`, `AgentResponseV2.findings[].evidence[].method`/
+  `.period`.
 
 **Deliberately held, not built:**
-- Findings/metrics/evidence UI — the doc's primary structured-content model. Held because three
-  separate live captures all came back with empty `metrics`/`evidence` arrays and
-  `sourceResolution.decision: "no_source_required"`, even one that explicitly asked for exact
-  figures and provenance. Don't build this until a real response actually populates it.
+- **Findings/metrics/evidence UI** — the doc's primary structured-content model. Still held, and
+  the picture got murkier 2026-09-27: two fresh live probes (different natural prompts, a fresh
+  `ichigo@yopmail.com` session — confirmed *not* a rate/credit-limited account) both hit a
+  **different, harder failure** than the original one. Instead of a successful response with empty
+  `metrics`/`evidence` arrays, the whole response got replaced by the backend's own integrity gate:
+  `caveats: [{ code: "response_validation_failed", message: "Every finding requires an id, title,
+  and summary." }]`, `markdown: "I couldn't produce a safe response for this request. Please try
+  again."`, and a single placeholder finding (`id: "response_withheld"`). This is backend-side
+  generation/validation behavior, not a frontend contract question — nothing to build against here.
+  The user is checking with the backend team; they also have a browser-console fetch-sniffer
+  snippet to self-capture a real `final_response` payload from their own account if a genuinely
+  successful, content-bearing response comes through, to check whether metrics/evidence populate
+  there. Update this entry once that comes back either way.
+- **Evidence traversal** (`GET /evidence/{kind}/{referenceId}`) — service/hook/types exist
+  (`src/features/ai-evidence/`) but nothing calls them from any page. Turns out this isn't just an
+  unwired hook: `structuredResponse.findings` itself is never rendered anywhere in the UI today
+  (only `markdown`/`caveats`/`actions` are) — there's no finding card or evidence citation for a
+  user to click "traverse" from in the first place. Blocked on the findings question above; no
+  point designing a drill-down UI for data that may not reliably reach the frontend.
 - `input_request` UI (choice/free-text control) — no live example has appeared yet in any captured
   exchange; the doc doesn't fully specify its payload shape either.
 

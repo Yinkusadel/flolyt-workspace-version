@@ -51,5 +51,7 @@ export function useTypewriter(
     return () => window.clearTimeout(timer);
   }, [phrases, phraseIndex, phase, text, typingSpeed, deletingSpeed, holdMs, pauseMs]);
 
-  return { text, caret: true };
+  const full = phrases.length > 0 ? phrases[phraseIndex % phrases.length] : "";
+
+  return { text, caret: true, full };
 }

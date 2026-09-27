@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, ArrowUp, Link2, Loader2, MessageSquarePlus, Square } from "lucide-react";
+import { AlertTriangle, ArrowUp, Link2, Loader2, Square } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { usePageBreadcrumb } from "@/components/breadcrumb-context";
@@ -11,11 +11,12 @@ import type { AiConversationMessage } from "@/features/ai-conversations/ai-conve
 import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
 import { useGetAgentRun } from "@/features/agent-runs/use-get-agent-run";
 import { useCancelAgentRun } from "@/features/agent-runs/use-cancel-agent-run";
-import { useSteerAgentRun } from "@/features/agent-runs/use-steer-agent-run";
 import { ProposalCard, type ProposalCardData } from "./proposal-card";
 import { PromptToggles } from "./prompt-toggles";
 import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
 import { AiResponseRenderer } from "./ai-response/response-renderer";
+import { AiMarkdownText } from "./ai-response/markdown-text";
+import { hideIncompleteMarkdownTail } from "./ai-response/hide-incomplete-markdown";
 import { AiResponseCaveats } from "./ai-response/response-caveats";
 import { AiResponseActions } from "./ai-response/response-actions";
 import flolytLogo from "../../../assets/logo.png";
@@ -117,9 +118,6 @@ export default function AiConversationDetailRoute() {
   const [planMode, setPlanMode] = useState(true);
   const [suggestedActionsOpen, setSuggestedActionsOpen] = useState(true);
 
-  const [steerOpen, setSteerOpen] = useState(false);
-  const [steerText, setSteerText] = useState("");
-
   const {
     messages: streamedMessages,
     progress,
@@ -130,6 +128,7 @@ export default function AiConversationDetailRoute() {
     currentPhaseMessage,
     activeRunId,
     sendMessage,
+    steerMessage,
     reconnectRun,
     abortStream,
   } = useAiConversationMessages(isNew ? undefined : id, {
@@ -169,7 +168,6 @@ export default function AiConversationDetailRoute() {
   }, [isNew, isStreaming, activeRunIdFromHistory, agentRunData, reconnectRun]);
 
   const { cancelRun } = useCancelAgentRun();
-  const { steerRun, isSteering } = useSteerAgentRun();
 
   const handleStop = () => {
     console.log("🛑 Stop clicked:", { activeRunId, conversationId: !isNew ? id : null });
@@ -180,14 +178,17 @@ export default function AiConversationDetailRoute() {
     if (activeRunId) cancelRun(activeRunId);
   };
 
-  const handleSteerSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const text = steerText.trim();
+  // Steering now shares the composer's own textarea: while a run is active, typing something and
+  // submitting steers that run instead of starting a new one. The composer button below swaps
+  // between Stop (empty input) and Send (non-empty input) accordingly.
+  const canSteer = isStreaming && !!input.trim() && !!activeRunId;
+
+  const handleSteerSend = () => {
+    const text = input.trim();
     if (!text || !activeRunId) return;
     console.log("📝 Steer submitted:", { activeRunId, text });
-    steerRun({ runId: activeRunId, text });
-    setSteerText("");
-    setSteerOpen(false);
+    setInput("");
+    steerMessage(text);
   };
 
   // No backend field for "how long has this run been going" — this is a plain wall-clock timer
@@ -345,12 +346,12 @@ export default function AiConversationDetailRoute() {
             <span className="flex size-12 items-center justify-center rounded-full border border-ultra-border bg-ultra-bg">
               <img src={flolytLogo} alt="" className="size-7 object-contain" />
             </span>
-            <p className="mt-4 text-[12.5px] text-ink-3">Ask Flolyt to look something up or take an action.</p>
+            <p className="mt-4 text-[13.5px] text-ink-3">Ask Flolyt to look something up or take an action.</p>
           </div>
         )}
 
         {messages.map((message) =>
-          message.role === "user" ? (
+          message.role === "user" || message.role === "steering" ? (
             <div key={message.key} className="flex justify-end">
               {/* pr-2 reserves room for the tail below so it sits inside this box's own edge
                   instead of overflowing past it (was forcing the whole page to scroll sideways). */}
@@ -366,7 +367,7 @@ export default function AiConversationDetailRoute() {
                     borderColor: "var(--color-ultra) transparent transparent transparent",
                   }}
                 />
-                <div className="rounded-2xl rounded-tr-none bg-ultra px-4 py-2.5 text-[12.5px] leading-relaxed wrap-break-word text-paper shadow-xs">
+                <div className="rounded-2xl rounded-tr-none bg-ultra px-4 py-2.5 text-[13.5px] leading-relaxed wrap-break-word text-paper shadow-xs">
                   {message.content}
                 </div>
               </div>
@@ -375,7 +376,7 @@ export default function AiConversationDetailRoute() {
             <div key={message.key} className="flex min-w-0 justify-start">
               <div className="flex max-w-[85%] min-w-0 items-start gap-2 rounded-card border border-rose-border bg-rose-bg px-3.5 py-2.5">
                 <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-rose" />
-                <p className="min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-rose">
+                <p className="min-w-0 text-[13.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-rose">
                   {message.content}
                 </p>
               </div>
@@ -413,54 +414,15 @@ export default function AiConversationDetailRoute() {
               isPhaseOnly={!latestActivity}
             />
 
-            {/* Stop lives on the composer's send button (it swaps to a stop icon in place while
-                streaming, same as Claude's own chat UI) — not a separate control here. Steer is
-                its own thing, only offered once a runId actually exists (the brief window right
-                after hitting send, before `run_queued` arrives, has no run to steer yet). */}
-            {activeRunId && !steerOpen && (
-              <button
-                type="button"
-                onClick={() => setSteerOpen(true)}
-                className="inline-flex items-center gap-1 self-start rounded-chip border border-line bg-paper px-2 py-1 text-[10.5px] font-medium text-ink-3 transition-colors hover:border-ink-4 hover:text-ink"
-              >
-                <MessageSquarePlus className="size-2.5" />
-                Add a note
-              </button>
-            )}
-
-            {activeRunId && steerOpen && (
-              <form onSubmit={handleSteerSubmit} className="flex w-full max-w-[85%] min-w-0 items-center gap-1.5 pl-0.5">
-                <input
-                  autoFocus
-                  value={steerText}
-                  onChange={(e) => setSteerText(e.currentTarget.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") {
-                      setSteerOpen(false);
-                      setSteerText("");
-                    }
-                  }}
-                  placeholder="Add a note for the next step…"
-                  disabled={isSteering}
-                  className="min-w-0 flex-1 rounded-chip border border-line bg-paper px-2.5 py-1 text-[11px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
-                />
-                <button
-                  type="submit"
-                  disabled={!steerText.trim() || isSteering}
-                  className={cn(
-                    "flex size-6 shrink-0 items-center justify-center rounded-full transition-colors",
-                    steerText.trim() && !isSteering ? "bg-ultra text-paper" : "bg-paper-2 text-ink-4"
-                  )}
-                >
-                  <ArrowUp size={11} strokeWidth={2.5} />
-                </button>
-              </form>
-            )}
-
             {animatedStreamingText && (
-              <p className="max-w-[85%] min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-ink">
-                {animatedStreamingText}
-              </p>
+              // Rendered through the same markdown renderer as the finished message (just not
+              // AiResponseRenderer's table/chart segment parsing — see that component's own note
+              // on why mid-stream JSON can't be parsed yet) so text formats live as it streams in,
+              // instead of showing raw `**`/`##`/`-` characters that only turn into bold/headers/
+              // lists once the message is complete and swaps over to AiResponseRenderer.
+              <div className="max-w-[85%] min-w-0">
+                <AiMarkdownText content={hideIncompleteMarkdownTail(animatedStreamingText)} />
+              </div>
             )}
           </div>
         )}
@@ -526,13 +488,21 @@ export default function AiConversationDetailRoute() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
-                      handleSend();
+                      if (isStreaming) {
+                        handleSteerSend();
+                      } else {
+                        handleSend();
+                      }
                     }
                   }}
                   rows={2}
-                  placeholder="Ask a follow-up…"
-                  disabled={isStreaming}
-                  className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3 pb-1.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
+                  placeholder={isStreaming ? "Send a note for this run…" : "Ask a follow-up…"}
+                  // Disabled only in the brief window before `run_queued` arrives and there's no
+                  // run yet to steer — once `activeRunId` exists, typing here steers the active
+                  // run instead of starting a new one (same box, same button, per the v3 handoff's
+                  // composer-based steering contract).
+                  disabled={isStreaming && !activeRunId}
+                  className="w-full resize-none rounded-t-card bg-transparent px-4 pt-3 pb-1.5 text-[13.5px] text-ink outline-none placeholder:text-ink-4 disabled:opacity-60"
                 />
 
                 <div className="flex items-center justify-between px-2.5 py-1.5">
@@ -543,22 +513,25 @@ export default function AiConversationDetailRoute() {
                     onPlanModeChange={setPlanMode}
                   />
 
-                  {/* Same control, two modes — mirrors Claude's own composer: this button IS the
-                      stop button while a response is streaming, not a separate control elsewhere,
-                      and swaps back the instant the run ends. */}
+                  {/* Same control, three modes — mirrors Claude's own composer: this button IS the
+                      stop button while a response is streaming, swaps back the instant the run
+                      ends, and while streaming AND the box has text it swaps again to Send —
+                      submitting steers the active run instead of starting a new one. */}
                   <button
                     type="button"
-                    onClick={isStreaming ? handleStop : handleSend}
+                    onClick={isStreaming ? (canSteer ? handleSteerSend : handleStop) : handleSend}
                     disabled={!isStreaming && !input.trim()}
-                    title={isStreaming ? "Stop" : undefined}
+                    title={isStreaming && !canSteer ? "Stop" : undefined}
                     className={cn(
                       "flex size-6.5 items-center justify-center rounded-md transition-all",
                       isStreaming
-                        ? "bg-ink text-paper hover:opacity-90"
+                        ? canSteer
+                          ? "bg-ultra text-paper hover:opacity-90"
+                          : "bg-ink text-paper hover:opacity-90"
                         : input.trim() ? "bg-ultra text-paper hover:opacity-90" : "bg-paper text-ink-4"
                     )}
                   >
-                    {isStreaming ? (
+                    {isStreaming && !canSteer ? (
                       <Square className="size-2.75 fill-current" strokeWidth={0} />
                     ) : (
                       <ArrowUp size={13} strokeWidth={2.5} />
