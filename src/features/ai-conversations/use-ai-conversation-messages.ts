@@ -364,6 +364,15 @@ export const useAiConversationMessages = (
       clearTypewriter();
       responseAccRef.current = "";
       finalResponseRef.current = null;
+      // Clear the previous run's id up front rather than leaving it until the new run's own
+      // `run_queued` event overwrites it. Without this, `activeRunId` stays pointed at the just-
+      // finished run for the gap between this request going out and that event coming back —
+      // during which the composer's steer path (`canSteer` in detail-route) would read it as "a
+      // run exists to steer" and POST a steer against a run the backend already considers done,
+      // getting rejected with "Run already finished." instead of ever reaching the new run.
+      // Confirmed live 2026-09-27: a message sent ~50ms after the prior run's completion carried
+      // the stale id and was rejected exactly this way.
+      setActiveRunId(null);
 
       // Optimistic user message
       setMessages((prev) => [
