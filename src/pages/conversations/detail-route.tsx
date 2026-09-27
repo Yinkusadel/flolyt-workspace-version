@@ -16,6 +16,7 @@ import { ProposalCard, type ProposalCardData } from "./proposal-card";
 import { PromptToggles } from "./prompt-toggles";
 import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
 import { AiResponseRenderer } from "./ai-response/response-renderer";
+import { AiMarkdownText } from "./ai-response/markdown-text";
 import { AiResponseCaveats } from "./ai-response/response-caveats";
 import { AiResponseActions } from "./ai-response/response-actions";
 import flolytLogo from "../../../assets/logo.png";
@@ -458,9 +459,14 @@ export default function AiConversationDetailRoute() {
             )}
 
             {animatedStreamingText && (
-              <p className="max-w-[85%] min-w-0 text-[12.5px] leading-relaxed wrap-break-word whitespace-pre-wrap text-ink">
-                {animatedStreamingText}
-              </p>
+              // Rendered through the same markdown renderer as the finished message (just not
+              // AiResponseRenderer's table/chart segment parsing — see that component's own note
+              // on why mid-stream JSON can't be parsed yet) so text formats live as it streams in,
+              // instead of showing raw `**`/`##`/`-` characters that only turn into bold/headers/
+              // lists once the message is complete and swaps over to AiResponseRenderer.
+              <div className="max-w-[85%] min-w-0">
+                <AiMarkdownText content={animatedStreamingText} />
+              </div>
             )}
           </div>
         )}
