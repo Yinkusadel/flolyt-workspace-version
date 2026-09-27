@@ -8,14 +8,14 @@
 
 | Method | Route | Purpose |
 | --- | --- | --- |
-| `POST` | `/api/v3/conversations/messages` | Send a message; request SSE for a durable run |
+| `POST` | `/api/v3/conversations/messages` | Start a durable run, or steer the active run with `activeRunId` |
 | `GET` | `/api/v3/conversations?pageNumber=1&pageSize=20&scope=Visible` | List visible conversations |
 | `GET` | `/api/v3/conversations/{conversationId}` | Read a transcript and its `activeRunId` |
 | `DELETE` | `/api/v3/conversations/{conversationId}` | Archive a conversation |
 | `GET` | `/api/v3/runs/{runId}` | Read durable run state and execution metadata |
 | `GET` | `/api/v3/runs/{runId}/stream` | Reconnect to a run's SSE stream |
 | `POST` | `/api/v3/runs/{runId}/cancel` | Request cancellation |
-| `POST` | `/api/v3/runs/{runId}/steer` | Add a note for the next turn boundary |
+| `POST` | `/api/v3/runs/{runId}/steer` | Direct steering API for non-composer clients |
 | `GET` | `/api/v3/proposals?conversationId={id}&includeDecided=false` | Read proposal cards |
 | `POST` | `/api/v3/proposals/{id}/accept` | Accept, optionally with edited arguments |
 | `POST` | `/api/v3/proposals/{id}/defer` | Hold with a required reason |
@@ -36,6 +36,7 @@ export type SendAgentMessage = {
   message: string;
   mode?: string | null;
   interactiveReply?: Record<string, string> | null;
+  activeRunId?: string | null;
 };
 
 const response = await fetch('/api/v3/conversations/messages', {
@@ -59,6 +60,43 @@ name as well as the JSON in `data:`.
 The server first emits a `status` event whose message contains
 `conversation_id:{conversationId}`, then a `run_queued` event with `runId`. Store both immediately.
 The run ID enables stop, steer, polling, and reconnect.
+
+## Steer through the normal composer
+
+When the loaded conversation has a non-null `activeRunId`, keep the same composer visible and submit
+its text to the same messages endpoint with both identifiers:
+
+```ts
+const result = await fetch('/api/v3/conversations/messages', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+  body: JSON.stringify({
+    conversationId,
+    activeRunId,
+    message: 'Include the failed-payment cohort and state the count explicitly.',
+  } satisfies SendAgentMessage),
+});
+```
+
+That request does not create another run. It validates that `activeRunId` belongs to
+`conversationId`, appends the instruction to the existing run, and returns `Result<boolean>`.
+Both IDs are required for this composer mode; sending `activeRunId` without `conversationId`
+returns HTTP 400 so stale client state cannot redirect a different conversation.
+The direct `POST /api/v3/runs/{runId}/steer` route remains available and has the same durable
+semantics, but the composer should use the messages route so steering feels like part of the
+conversation.
+
+If a client requests SSE for this steering submission, the response contains one
+`steering_queued` event and closes. Keep the original run stream open; this short response is only
+an acknowledgement. A failed or terminal run returns the normal result failure in JSON, or an
+`error` event over SSE.
+
+Render the submitted text immediately as pending if desired, then reconcile from
+`GET /api/v3/conversations/{conversationId}`. Steering entries are returned in chronological order
+with `role: 'steering'`, attribution,
+`steeringStatus: 'queued' | 'delivered' | 'not_delivered'`, and the exact model
+turn that received them. `delivered` means the primary synthesising agent received the instruction;
+internal summarizers and specialist calls cannot consume it.
 
 ## SSE envelope
 
@@ -86,6 +124,8 @@ export type PromptStateEvent = {
 Handle these event types:
 
 - `run_queued`: persist `runId` and show queued state.
+- `steering_queued`: acknowledge a composer submission that targeted an existing run; do not replace
+  the run ID or open a second stream.
 - `progress`: show `progress.message`. Treat it as status only; it never contains tool names,
   arguments, SQL, credentials, prompts, or model reasoning.
 - `final_response`: atomically replace the assistant response with `structuredResponse`. This is the
@@ -129,6 +169,8 @@ export type AgentResponseV2 = {
       observedAtUtc?: string | null;
       coverage?: number | null;
       lineage?: number | null;
+      method?: string | null;
+      period?: { fromUtc: string; toUtc: string } | null;
     }>;
   }>;
   caveats: Array<{ code: string; message: string }>;
@@ -212,6 +254,12 @@ Resolve action targets through a frontend-owned map. The initial server catalog 
 resource names: `segment`, `campaign`, `datasources`, `channels`, and `room`. Combine a resource with
 its optional `resourceId` through the app router. Ignore unknown resource names and never treat a
 label, parameter, or model-authored text as a URL. Hide actions with `eligibility.eligible === false`.
+
+For `sources.connect`, open the datasource management surface and carry `missingCapability`
+(for example `payment_failure_events`) as context. The current `actionMode` is `connect_or_map`:
+the UI should let the user map an existing warehouse source or connect a new one. Do not treat
+`missingSource` as a connector type; it is a display label. Source resolution will narrow this
+choice in the next backend phase.
 
 ## Evidence traversal
 
@@ -336,6 +384,8 @@ export type AgentRun = {
     effectiveVersion: string;
     boundToolNames: string[];
     methodIds: string[];
+    sourceResolutionEnforced: boolean;
+    responseIntegrityEnforced: boolean;
     sourceResolution?: SourceResolution | null;
     knowledgeRetrieval?: {
       mode: 'undeclared' | 'exact' | 'lexical' | 'hybrid_shadow' | 'shadow_error';
@@ -370,30 +420,86 @@ export type AgentRun = {
       }>;
       synthesis: { stepId: string; agentId: 'flolyt.maestro'; brief: string };
     } | null;
+    modelRouting?: {
+      policyVersion: string;
+      mode: 'off' | 'shadow' | 'active' | 'fallback' | string;
+      cohortKey: string;
+      baselineModelId: string;
+      candidateModelId?: string | null;
+      recommendedModelId: string;
+      selectedModelId: string;
+      reason: string;
+      isHoldout: boolean;
+      baselineSamples: number;
+      candidateSamples: number;
+      consecutivePasses: number;
+    } | null;
   } | null;
   executionRationaleId?: string | null;
   finalResponse?: AgentResponseV2 | null;
   responseContractVersion?: string | null;
-  steering: Array<{ text: string; addedBy: string; addedAtUtc: string; consumed: boolean }>;
+  steering: Array<{ id: string; text: string; addedBy: string; addedAtUtc: string; consumed: boolean }>;
   createdAtUtc: string;
   finishedAtUtc?: string | null;
 };
 ```
 
 The execution object and `executionRationaleId` are useful for support and diagnostics. They should
-not be presented as model reasoning or as user-editable controls. Source resolution is initially a shadow-mode field: display
-it only on diagnostic or data-readiness surfaces and continue using the existing roster readiness
-projection until backend enforcement is announced. Older runs return it as null or omit it.
-`knowledgeRetrieval` follows the same rule. During Phase 5 it is diagnostic provenance only;
-`augmentedPrompt` remains false. Do not render retrieved passages or citations in the conversation
-until the backend announces that the retrieval quality gate has passed. Older runs omit the field.
+not be presented as model reasoning or as user-editable controls. Display source resolution only on
+diagnostic or data-readiness surfaces. The two enforcement booleans record the policy frozen for that
+run; they are support diagnostics rather than frontend feature flags. Older runs can return false or
+omit fields added after they were recorded. `knowledgeRetrieval` remains diagnostic provenance.
+Render knowledge citations only when they appear in the final structured finding; never render raw
+retrieved passages. `augmentedPrompt` says that the reviewed retrieval gate passed for that run.
 `executionPlan` appears on multi-domain turns. It is a read-only audit view of Maestro's bounded
 specialist assignments and synthesis step. Use it for an optional progress/details panel; the
 conversation still renders one final Maestro answer. Older and single-specialist runs omit it.
+`modelRouting` is also a support-only audit view. It records the frozen policy decision and does
+not require a customer-facing model selector or any change to message rendering. An internal
+diagnostics panel may show selected model, reason, mode, sample counts, and holdout status. Older
+runs omit it.
 
 Conversation message reads and synchronous JSON message responses also expose
 `structuredResponse` and `responseContractVersion`. Prefer them when present. During migration,
 `response` and legacy `suggestedActions` remain consistent projections of the v2 payload.
+
+```ts
+export type ConversationMessage = {
+  role: 'user' | 'assistant' | 'steering' | string;
+  content: string;
+  timestamp: string;
+  structuredResponse?: AgentResponseV2 | null;
+  responseContractVersion?: string | null;
+  runId?: string | null;
+  authorUserId?: string | null;
+  authorName?: string | null;
+  steeringId?: string | null;
+  steeringStatus?: 'queued' | 'delivered' | 'not_delivered' | null;
+  deliveredAtUtc?: string | null;
+  appliedAtTurn?: number | null;
+};
+```
+
+## API verification for steering
+
+1. Start a deliberately slow durable run with SSE `POST /api/v3/conversations/messages`; capture
+   `conversationId` and `runId` from `status` and `run_queued`.
+2. While the run is `queued` or `running`, send JSON `POST /api/v3/conversations/messages` with that
+   `conversationId`, `activeRunId: runId`, and a unique sentence the final answer must include.
+   Expect HTTP 200 and `succeeded: true`. Do not expect a new `run_queued` event.
+3. Immediately read `GET /api/v3/conversations/{conversationId}`. Expect one message with
+   `role: 'steering'`, the unique text, the same `runId`, and `steeringStatus: 'queued'` unless the
+   next primary turn already began.
+4. Wait for `final_response`, then read the conversation again. Expect the steering message to be
+   `delivered`, with `deliveredAtUtc` and `appliedAtTurn`, and verify the final answer followed the
+   unique instruction. If the run ended before another primary turn boundary, expect
+   `not_delivered` instead and offer the text as a new message.
+5. Read `GET /api/v3/runs/{runId}`. The matching steering entry must have the same `id`; after normal
+   run finalization its `consumed` value is true.
+6. Negative checks: use a run from another conversation and expect `Run not found`; retry after the
+   run is terminal and expect `Run already finished`; omit `conversationId` while supplying
+   `activeRunId` and expect HTTP 400. None of these requests may create a new run or add a timeline
+   entry.
 
 ## Compatibility mapping
 
