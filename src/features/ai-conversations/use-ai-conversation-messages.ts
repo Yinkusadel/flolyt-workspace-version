@@ -411,6 +411,55 @@ export const useAiConversationMessages = (
     [clearTypewriter, consumeStream, queryClient]
   );
 
+  // Steers the active run through the same composer instead of the standalone `/runs/{id}/steer`
+  // route. Per the v3 handoff, posting `{ conversationId, activeRunId, message }` to the normal
+  // messages endpoint validates the run belongs to this conversation, appends the instruction to
+  // it, and returns a synchronous result — it does not open a new stream or touch the run's own
+  // ongoing SSE connection, so this is a plain JSON request, not `consumeStream`.
+  const steerMessage = useCallback(
+    async (message: string) => {
+      const conversationId = conversationIdRef.current;
+      const runId = activeRunId;
+      if (!conversationId || !runId) return;
+
+      // Rendered as a normal "steering"-role entry, styled identically to a user bubble — no
+      // separate widget, no delivery indicator (see detail-route).
+      setMessages((prev) => [
+        ...prev,
+        { role: "steering", content: message, timestamp: new Date().toISOString() },
+      ]);
+
+      const token = getCookie(COOKIE_KEYS.AUTH_TOKEN);
+
+      try {
+        const res = await fetch(API_ENDPOINTS.AI_CONVERSATIONS.SEND_MESSAGE, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "X-Flolyt-Agent-Contract": "v3",
+          },
+          body: JSON.stringify({ conversationId, activeRunId: runId, message }),
+          credentials: "include",
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!res.ok || data?.succeeded === false) {
+          throw new Error(data?.messages?.[0] || `HTTP ${res.status}`);
+        }
+      } catch (err: unknown) {
+        console.error("❌ Steer failed:", err);
+        const errorMessage = err instanceof Error ? err.message : "Failed to send the steering note";
+        setMessages((prev) => [
+          ...prev,
+          { role: "error", content: errorMessage, timestamp: new Date().toISOString() },
+        ]);
+      }
+    },
+    [activeRunId]
+  );
+
   // Reopens an existing run's own stream — the reconnect half of the v3 handoff's recipe: load
   // the conversation, check `activeRunId`, and if it's still queued/running/awaiting_approval,
   // resume here instead of leaving the page with nothing (e.g. after a refresh mid-run). Doesn't
@@ -489,6 +538,7 @@ export const useAiConversationMessages = (
     activeRunId,
     inputRequest,
     sendMessage,
+    steerMessage,
     reconnectRun,
     abortStream,
   };
