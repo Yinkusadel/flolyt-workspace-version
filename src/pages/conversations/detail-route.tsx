@@ -17,6 +17,7 @@ import { PromptToggles } from "./prompt-toggles";
 import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
 import { AiResponseRenderer } from "./ai-response/response-renderer";
 import { AiMarkdownText } from "./ai-response/markdown-text";
+import { hideIncompleteMarkdownTail } from "./ai-response/hide-incomplete-markdown";
 import { AiResponseCaveats } from "./ai-response/response-caveats";
 import { AiResponseActions } from "./ai-response/response-actions";
 import flolytLogo from "../../../assets/logo.png";
@@ -465,7 +466,7 @@ export default function AiConversationDetailRoute() {
               // instead of showing raw `**`/`##`/`-` characters that only turn into bold/headers/
               // lists once the message is complete and swaps over to AiResponseRenderer.
               <div className="max-w-[85%] min-w-0">
-                <AiMarkdownText content={animatedStreamingText} />
+                <AiMarkdownText content={hideIncompleteMarkdownTail(animatedStreamingText)} />
               </div>
             )}
           </div>
