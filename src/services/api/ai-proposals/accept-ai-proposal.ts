@@ -30,7 +30,8 @@ export const acceptAiProposal = async ({
   try {
     const response = await axiosInstance.post<AcceptAiProposalResponse>(
       ACCEPT.replace("{id}", id),
-      { editedArgumentsJson: editedArgumentsJson ?? null }
+      { editedArgumentsJson: editedArgumentsJson ?? null },
+      { headers: { "X-Flolyt-Agent-Contract": "v3" } }
     );
 
     return response.data;

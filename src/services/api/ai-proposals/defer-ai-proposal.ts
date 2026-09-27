@@ -28,7 +28,8 @@ export const deferAiProposal = async ({
   try {
     const response = await axiosInstance.post<DeferAiProposalResponse>(
       DEFER.replace("{id}", id),
-      { because }
+      { because },
+      { headers: { "X-Flolyt-Agent-Contract": "v3" } }
     );
 
     return response.data;

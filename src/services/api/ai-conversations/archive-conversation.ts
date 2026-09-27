@@ -15,7 +15,10 @@ const {
 
 export const archiveAiConversation = async (id: string): Promise<ArchiveAiConversationResponse> => {
   try {
-    const response = await axiosInstance.delete<ArchiveAiConversationResponse>(ARCHIVE.replace("{id}", id));
+    const response = await axiosInstance.delete<ArchiveAiConversationResponse>(
+      ARCHIVE.replace("{id}", id),
+      { headers: { "X-Flolyt-Agent-Contract": "v3" } }
+    );
 
     return response.data;
   } catch (error: unknown) {

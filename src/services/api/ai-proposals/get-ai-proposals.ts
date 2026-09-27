@@ -42,7 +42,10 @@ export const getAiProposals = async (
   params?: GetAiProposalsParams
 ): Promise<GetAiProposalsResponse> => {
   try {
-    const response = await axiosInstance.get<GetAiProposalsResponse>(LIST, { params });
+    const response = await axiosInstance.get<GetAiProposalsResponse>(LIST, {
+      params,
+      headers: { "X-Flolyt-Agent-Contract": "v3" },
+    });
 
     return response.data;
   } catch (error: unknown) {

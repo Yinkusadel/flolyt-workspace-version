@@ -16,7 +16,11 @@ const {
 
 export const rejectAiProposal = async (id: string): Promise<RejectAiProposalResponse> => {
   try {
-    const response = await axiosInstance.post<RejectAiProposalResponse>(REJECT.replace("{id}", id));
+    const response = await axiosInstance.post<RejectAiProposalResponse>(
+      REJECT.replace("{id}", id),
+      undefined,
+      { headers: { "X-Flolyt-Agent-Contract": "v3" } }
+    );
 
     return response.data;
   } catch (error: unknown) {
