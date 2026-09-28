@@ -3,20 +3,47 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { agentInitialsFromName } from "@/pages/rooms/format";
 import type { WorkspaceAgentDto } from "@/services/api/workspace/get-workspace-agents";
 
-const STATE_META: Record<string, { label: string; dot: string; text: string }> = {
+type DisplayBucket = "ready" | "reading" | "partially_ready" | "unavailable" | "disabled" | "unprovisioned";
+
+const STATE_META: Record<DisplayBucket, { label: string; dot: string; text: string }> = {
   ready: { label: "READY", dot: "bg-teal", text: "text-teal" },
   reading: { label: "READING", dot: "bg-amber", text: "text-amber" },
-  not_ready: { label: "NOT READY", dot: "bg-ink-4", text: "text-ink-4" },
+  partially_ready: { label: "PARTIAL", dot: "bg-amber", text: "text-amber" },
+  unavailable: { label: "NOT READY", dot: "bg-ink-4", text: "text-ink-4" },
+  // Intentional admin toggle — muted like "not ready", never alarming.
+  disabled: { label: "DISABLED", dot: "bg-ink-4", text: "text-ink-4" },
+  // An operator setup gap, not something the user chose — deliberately distinct from `disabled`
+  // (rose, not muted ink-4) so it doesn't read as a toggle someone switched off.
+  unprovisioned: { label: "SETUP NEEDED", dot: "bg-rose", text: "text-rose" },
 };
 
-function formatMeta(agent: WorkspaceAgentDto): string {
-  if (agent.state === "ready") {
+// `detailedState` is the precise signal (it's the only field that can say "disabled" or
+// "unprovisioned" — `state` can't express either). Falls back to the coarser `state` only for a
+// payload recorded before `detailedState` existed.
+function resolveBucket(agent: WorkspaceAgentDto): DisplayBucket {
+  if (agent.detailedState in STATE_META) return agent.detailedState as DisplayBucket;
+  if (agent.state === "reading") return "reading";
+  if (agent.state === "ready") return "ready";
+  return "unavailable";
+}
+
+function formatMeta(agent: WorkspaceAgentDto, bucket: DisplayBucket): string {
+  if (bucket === "ready") {
     // Master Orchestrator reads no entities of its own — it's ready by definition, not by data.
     return agent.reads.length > 0 ? agent.reads.join(" · ") : "always on";
   }
-  if (agent.state === "reading") {
+  if (bucket === "reading") {
     return agent.moreDaysNeeded != null ? `needs ${agent.moreDaysNeeded} days` : "reading";
   }
+  if (bucket === "unprovisioned") {
+    // Never "connect X" here — this isn't a missing data source, it's workspace setup that
+    // hasn't happened yet, so it shouldn't be phrased like something the user can fix by hand.
+    return "workspace setup needed";
+  }
+  if (bucket === "disabled") {
+    return agent.needs ? `connect ${agent.needs}` : "turned off";
+  }
+  // partially_ready, unavailable
   return agent.needs ? `connect ${agent.needs}` : "not ready";
 }
 
@@ -37,7 +64,8 @@ export function AgentCardSkeleton() {
 }
 
 export function AgentCard({ agent }: { agent: WorkspaceAgentDto }) {
-  const stateMeta = STATE_META[agent.state] ?? STATE_META.not_ready;
+  const bucket = resolveBucket(agent);
+  const stateMeta = STATE_META[bucket];
 
   return (
     <div className="flex flex-col rounded-panel border border-dashed border-line bg-paper p-4">
@@ -61,9 +89,9 @@ export function AgentCard({ agent }: { agent: WorkspaceAgentDto }) {
         </span>
         <span
           className="min-w-0 flex-1 truncate text-right font-mono text-[8.5px] text-ink-4"
-          title={formatMeta(agent)}
+          title={formatMeta(agent, bucket)}
         >
-          {formatMeta(agent)}
+          {formatMeta(agent, bucket)}
         </span>
       </div>
     </div>
