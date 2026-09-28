@@ -21,9 +21,52 @@
 | `POST` | `/api/v3/proposals/{id}/defer` | Hold with a required reason |
 | `POST` | `/api/v3/proposals/{id}/reject` | Reject |
 | `GET` | `/api/v3/evidence/{kind}/{referenceId}` | Traverse evidence and outcome provenance |
+| `GET` | `/api/v3/workspace/agents` | Read the authoritative enabled and ready agent roster |
 
 All routes use the application's existing authorization mechanism. Do not send company/workspace IDs
 in agent requests; the server binds tenant scope from the authenticated user.
+
+Use `GET /api/v3/workspace/agents` for agent availability UI. Each agent includes `isEnabled`, the
+compatibility `state` (`ready`, `reading`, or `not_ready`), and the more precise `detailedState`
+(`ready`, `partially_ready`, `unavailable`, `disabled`, or `unprovisioned`). Treat an agent as live
+only when `isEnabled` is true and `state` is `ready`; keep disabled and unavailable registered agents visible
+with their `needs` explanation. Keep `unprovisioned` agents visible as an operator setup problem;
+do not present them as a governance toggle the user deliberately switched off. Chat answers to
+availability questions use this same roster, so the
+screen and Maestro should report the same names and counts.
+
+```ts
+export type AgentRoster = {
+  totalCount: number;
+  readyCount: number;
+  readingCount: number;
+  notReadyCount: number;
+  unprovisionedCount: number;
+  agents: Array<{
+    key: string;
+    initials: string;
+    name: string;
+    description: string;
+    isEnabled: boolean;
+    state: 'ready' | 'reading' | 'not_ready';
+    detailedState: 'ready' | 'partially_ready' | 'unavailable' | 'disabled' | 'unprovisioned';
+    reads: string[];
+    needs?: string | null;
+    wouldUnlock?: string | null;
+    moreDaysNeeded?: number | null;
+    persona: string;
+    sourceDecision?: string | null;
+    sourceStates: string[];
+    selectedSourceIds: string[];
+  }>;
+};
+
+export type AgentRosterResponse = {
+  succeeded: boolean;
+  data: AgentRoster;
+  messages: string[];
+};
+```
 
 ## Start or continue a durable conversation
 
@@ -98,6 +141,35 @@ with `role: 'steering'`, attribution,
 turn that received them. `delivered` means the primary synthesising agent received the instruction;
 internal summarizers and specialist calls cannot consume it.
 
+## Render asynchronous specialist handoffs
+
+An asynchronous handoff is conversation activity, not a message written by the user. The backend
+returns one timeline item with `role: 'handoff'` as soon as the specialist run is queued. Never
+render its `content` or `handoff.brief` in a user bubble.
+
+Render this sequence:
+
+1. A compact lifecycle card: `Maestro handed this to Sentinel` plus
+   `queued | running | awaiting approval | completed | failed | cancelled` (the wire value for
+   completed is `done`).
+2. The short `handoff.reason` on the card. Put `handoff.brief` behind an expandable "View brief"
+   control; it is useful context, but it is not the primary answer.
+3. The subsequent assistant message as a normal answer with `agentLabel` attribution, for example
+   `Sentinel`. That message's `runId` matches the handoff card's `runId`.
+4. Render any catalogued action from the specialist's structured response below that answer.
+
+Treat all handoff fields as display text. The backend strips markup and internal-only wording and
+caps labels at 100 characters, reasons at 240 characters, and briefs at 2,000 characters. Keep raw
+HTML disabled and do not reinterpret these fields as Markdown.
+
+`handoff.sourceRunId` links back to Maestro's originating run. Render that source run's assistant
+message as the card acknowledgement instead of a second full response bubble. The target
+specialist's assistant message uses `handoff.runId` and remains a full answer.
+
+The handoff card is the proof that asynchronous delegation occurred. `producedBy` remains the proof
+for a synchronous consultation whose findings are folded into Maestro's single response. Do not
+wait for a public `hand_off_to_agent` or `consult_agent` tool event.
+
 ## SSE envelope
 
 Each `data:` value is camel-case JSON:
@@ -141,6 +213,9 @@ Handle these event types:
 
 Do not render `reasoningSteps`, `reasoning_step`, or `tool_call` for agent runs. The v3 agent path
 uses `progress`; those legacy fields remain only for compatibility with other application surfaces.
+Do not wait for an event named after a tool such as `consult_agent`; named tool invocation is an
+internal audit detail. Confirm specialist participation from the validated final findings and
+caveats, or from server logs and run diagnostics when investigating a fault.
 
 ## Structured response and actions
 
@@ -213,6 +288,10 @@ export type ResponseProvenanceBundle = {
   contractVersion: '1.0';
   findings: Array<{
     findingId: string;
+    producedBy?: {
+      agentId: string;
+      agentLabel: string;
+    } | null;
     evidenceStatus: EvidenceStatusAssessment;
     evidence: IntelligenceReference[];
     sourceResolution?: {
@@ -249,6 +328,12 @@ export type AgentProgressEvent = {
 Render `markdown` with a safe Markdown renderer whose raw-HTML mode is disabled. Structured fields
 are the source for findings, metrics, evidence, caveats, and action controls; do not parse those
 objects back out of Markdown.
+
+Normal backend answers target at most 100 words of prose: one bold conclusion, up to three short
+supporting bullets when needed, and an emphasized `Next step` line. Longer answers are reserved for
+an explicit request for detail or a caveat needed for accuracy. Do not truncate Markdown in the
+client: the server owns brevity, while the UI may place evidence, provenance, and the handoff brief
+behind disclosure controls.
 
 Resolve action targets through a frontend-owned map. The initial server catalog emits these stable
 resource names: `segment`, `campaign`, `datasources`, `channels`, and `room`. Combine a resource with
@@ -297,6 +382,12 @@ Render the evidence status from the structured field and show its `reason` as th
 not promote statuses on the client. Display impact only from `ImpactStatement`; for
 `basis === 'unavailable'`, show `unavailableReason` and no numeric value. Treat 404 as unavailable or
 inaccessible without revealing which case applied.
+
+When `producedBy` is present, the finding came back from that consulted specialist and passed the
+same response validation as every other finding. The UI may show the agent label as attribution
+such as “Prism”, but should not infer specialist participation from Markdown or generic progress
+events. An execution-plan entry without `producedBy` means the specialist was planned; it does not
+prove that the specialist returned a usable result.
 
 ## Reconnect and refresh
 
@@ -438,6 +529,15 @@ export type AgentRun = {
   executionRationaleId?: string | null;
   finalResponse?: AgentResponseV2 | null;
   responseContractVersion?: string | null;
+  handoff?: {
+    sourceRunId?: string | null;
+    fromAgentKey: string;
+    fromAgentLabel: string;
+    toAgentKey: string;
+    toAgentLabel: string;
+    reason: string;
+    brief: string;
+  } | null;
   steering: Array<{ id: string; text: string; addedBy: string; addedAtUtc: string; consumed: boolean }>;
   createdAtUtc: string;
   finishedAtUtc?: string | null;
@@ -465,7 +565,7 @@ Conversation message reads and synchronous JSON message responses also expose
 
 ```ts
 export type ConversationMessage = {
-  role: 'user' | 'assistant' | 'steering' | string;
+  role: 'user' | 'assistant' | 'steering' | 'handoff' | string;
   content: string;
   timestamp: string;
   structuredResponse?: AgentResponseV2 | null;
@@ -477,8 +577,39 @@ export type ConversationMessage = {
   steeringStatus?: 'queued' | 'delivered' | 'not_delivered' | null;
   deliveredAtUtc?: string | null;
   appliedAtTurn?: number | null;
+  agentKey?: string | null;
+  agentLabel?: string | null;
+  handoff?: {
+    runId: string;
+    sourceRunId?: string | null;
+    fromAgentKey: string;
+    fromAgentLabel: string;
+    toAgentKey: string;
+    toAgentLabel: string;
+    reason: string;
+    brief: string;
+    status: 'queued' | 'running' | 'awaiting_approval' | 'done' | 'failed' | 'cancelled';
+  } | null;
 };
 ```
+
+For messages written before this contract, `runId`, `agentKey`, `agentLabel`, and `handoff` can be
+absent. Use the ordinary assistant treatment in that case; do not infer a handoff from the prose.
+
+## API verification for specialist handoffs
+
+1. Start a conversation with a request that Maestro should hand to a specialist and keep the
+   original SSE stream open.
+2. Read `GET /api/v3/conversations/{conversationId}` after the handoff is queued. Expect a
+   `role: 'handoff'` item with the source and target agents, a non-empty reason and brief, and
+   `handoff.status` of `queued` or `running`. There must be no `role: 'user'` item containing that
+   internal brief.
+3. Poll the conversation or `GET /api/v3/runs/{handoff.runId}`. Expect the card status to advance
+   from queued/running to done, failed, or cancelled.
+4. On completion, expect an assistant message with the same `runId`, the specialist's `agentKey`
+   and `agentLabel`, and its validated `structuredResponse`. Render it immediately after the card.
+5. Expand "View brief" and verify it shows the delegated question while preserving the original
+   human-authored message unchanged.
 
 ## API verification for steering
 
