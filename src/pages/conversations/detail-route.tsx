@@ -331,6 +331,10 @@ export default function AiConversationDetailRoute() {
       <div
         ref={scrollContainerRef}
         onScroll={handleChatScroll}
+        // Reserves the scrollbar's own width permanently, whether or not it's actually showing —
+        // without this, the content area visibly shifts sideways every time the thread crosses the
+        // scroll threshold (no scrollbar → browser reclaims that ~15px → everything shifts right).
+        style={{ scrollbarGutter: "stable" }}
         className="min-w-0 flex-1 space-y-5 overflow-x-hidden overflow-y-auto py-6"
       >
         {/* Only for a cold visit to an existing conversation with nothing on screen yet — not
