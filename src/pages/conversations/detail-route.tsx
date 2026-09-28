@@ -17,6 +17,7 @@ import { PromptToggles } from "./prompt-toggles";
 import { AiResponseRenderer } from "./ai-response/response-renderer";
 import { AiMarkdownText } from "./ai-response/markdown-text";
 import { hideIncompleteMarkdownTail } from "./ai-response/hide-incomplete-markdown";
+import { AiResponseFindings } from "./ai-response/response-findings";
 import { AiResponseCaveats } from "./ai-response/response-caveats";
 import { AiResponseActions } from "./ai-response/response-actions";
 import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
@@ -407,6 +408,12 @@ export default function AiConversationDetailRoute() {
                 </span>
               )}
               <AiResponseRenderer content={message.content} />
+              {message.structuredResponse?.findings?.length ? (
+                <AiResponseFindings
+                  findings={message.structuredResponse.findings}
+                  provenance={message.structuredResponse.provenance}
+                />
+              ) : null}
               {message.structuredResponse?.caveats?.length ? (
                 <AiResponseCaveats caveats={message.structuredResponse.caveats} />
               ) : null}
