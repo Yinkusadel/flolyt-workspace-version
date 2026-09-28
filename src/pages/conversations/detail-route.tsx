@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAiConversationMessages } from "@/features/ai-conversations/use-ai-conversation-messages";
 import { useGetAiConversationById } from "@/features/ai-conversations/use-get-ai-conversation-by-id";
 import type { AiConversationMessage } from "@/features/ai-conversations/ai-conversation-types";
+import type { IntelligenceReference } from "@/features/ai-conversations/agent-intelligence-types";
 import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
 import { useGetAgentRun } from "@/features/agent-runs/use-get-agent-run";
 import { useCancelAgentRun } from "@/features/agent-runs/use-cancel-agent-run";
@@ -21,6 +22,7 @@ import { AiResponseFindings } from "./ai-response/response-findings";
 import { AiResponseCaveats } from "./ai-response/response-caveats";
 import { AiResponseActions } from "./ai-response/response-actions";
 import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
+import { EvidencePanel } from "./evidence-panel";
 import flolytLogo from "../../../assets/logo.png";
 
 // Hysteresis band for the scroll-driven reveal: reopen only within OPEN px of the bottom, close
@@ -115,6 +117,10 @@ export default function AiConversationDetailRoute() {
   const [askBeforeSpending, setAskBeforeSpending] = useState(true);
   const [planMode, setPlanMode] = useState(true);
   const [suggestedActionsOpen, setSuggestedActionsOpen] = useState(true);
+  // Mounted unconditionally with a null target rather than gated behind a truthy conditional —
+  // see preact_radix_dialog_crash memory on why a Sheet/Dialog must start closed, not appear
+  // already-open on its first render.
+  const [evidenceTarget, setEvidenceTarget] = useState<IntelligenceReference | null>(null);
 
   const {
     messages: streamedMessages,
@@ -416,6 +422,7 @@ export default function AiConversationDetailRoute() {
                 <AiResponseFindings
                   findings={message.structuredResponse.findings}
                   provenance={message.structuredResponse.provenance}
+                  onOpenEvidence={setEvidenceTarget}
                 />
               ) : null}
               {message.structuredResponse?.caveats?.length ? (
@@ -573,6 +580,13 @@ export default function AiConversationDetailRoute() {
           )}
         </div>
       </div>
+
+      <EvidencePanel
+        target={evidenceTarget}
+        onOpenChange={(open) => {
+          if (!open) setEvidenceTarget(null);
+        }}
+      />
     </div>
   );
 }

@@ -1,43 +1,40 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Database, ListChecks } from "lucide-react";
 
-import { cn } from "@/lib/utils";
 import { TextTooltip } from "@/components/ui/text-tooltip";
+import { EvidenceStatusBadge } from "./evidence-status-badge";
 import type { AgentResponseV2 } from "@/features/ai-conversations/agent-response-types";
-import type { EvidenceStatus } from "@/features/ai-conversations/agent-intelligence-types";
+import type { IntelligenceReference } from "@/features/ai-conversations/agent-intelligence-types";
 
 type Finding = AgentResponseV2["findings"][number];
 
-// Net-new tier scale for this app (findings/evidence had no prior UI) — deliberately not amber
-// anywhere on it: amber here means "a named person must act" per index.css, which doesn't apply
-// to a data-confidence label. Ramps neutral → neutral → teal → ultra instead.
-const EVIDENCE_STATUS_META: Record<EvidenceStatus, { label: string; className: string }> = {
-  UNVERIFIED: { label: "Unverified", className: "border-line bg-paper-2 text-ink-4" },
-  INDICATIVE: { label: "Indicative", className: "border-line bg-paper-2 text-ink-2" },
-  CORROBORATED: { label: "Corroborated", className: "border-teal-border bg-teal-bg text-teal" },
-  MEASURED: { label: "Measured", className: "border-ultra-border bg-ultra-bg text-ultra" },
-};
-
-// Per the v3 handoff: render the status as the structured field says it, and show its `reason` as
-// the explanation — never promote it on the client. `reason` lives on `provenance`, not on the
-// finding itself, so it's threaded in from there rather than guessed.
-function EvidenceStatusBadge({ status, reason }: { status: EvidenceStatus; reason?: string | null }) {
-  const meta = EVIDENCE_STATUS_META[status] ?? EVIDENCE_STATUS_META.UNVERIFIED;
-  const badge = (
-    <span
-      className={cn(
-        "inline-flex shrink-0 items-center rounded-chip border px-2 py-0.5 text-[9.5px] font-semibold whitespace-nowrap",
-        meta.className
-      )}
-    >
-      {meta.label}
-    </span>
-  );
-  if (!reason) return badge;
-  return <TextTooltip content={reason}>{badge}</TextTooltip>;
+// A finding's own `evidence[]` (referenceType/referenceId/label/...) is display-only citation
+// info — it is NOT the same list the evidence-traversal endpoint accepts. The traversable
+// `IntelligenceReference`s (the ones with a real `kind`) live on `provenance.findings[].evidence`
+// and `.traceRoots`. Cross-reference by id so only a chip with a genuine traversable match becomes
+// clickable; everything else stays a plain descriptive tooltip.
+function findTraversableReference(
+  findingId: string,
+  referenceId: string,
+  provenance?: AgentResponseV2["provenance"] | null
+): IntelligenceReference | null {
+  const pf = provenance?.findings?.find((f) => f.findingId === findingId);
+  if (!pf) return null;
+  const candidates = [...(pf.traceRoots ?? []), ...(pf.evidence ?? [])];
+  return candidates.find((ref) => ref.id === referenceId) ?? null;
 }
 
-function FindingCard({ finding, reason }: { finding: Finding; reason?: string | null }) {
+function FindingCard({
+  finding,
+  reason,
+  provenance,
+  onOpenEvidence,
+}: {
+  finding: Finding;
+  reason?: string | null;
+  provenance?: AgentResponseV2["provenance"] | null;
+  onOpenEvidence: (ref: IntelligenceReference) => void;
+}) {
   return (
     <div className="rounded-card border border-line bg-paper p-3">
       <div className="flex items-start justify-between gap-2">
@@ -62,26 +59,38 @@ function FindingCard({ finding, reason }: { finding: Finding; reason?: string | 
         </div>
       )}
 
-      {/* Descriptive only — no click-through yet. Full evidence traversal (GET
-          /evidence/{kind}/{referenceId}) is a separate, not-yet-built piece. */}
       {finding.evidence.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {finding.evidence.map((e, idx) => (
-            <TextTooltip
-              key={`${e.referenceId}-${idx}`}
-              content={
-                <>
-                  {e.observedAtUtc && <p>Observed {new Date(e.observedAtUtc).toLocaleString()}</p>}
-                  {e.method && <p>Method: {e.method}</p>}
-                  {!e.observedAtUtc && !e.method && <p>{e.referenceType}</p>}
-                </>
-              }
-              className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-chip border border-line bg-paper-2 px-2 py-1 text-[10px] text-ink-3"
-            >
-              <Database className="size-2.5 shrink-0 text-ink-4" />
-              <span className="min-w-0 truncate">{e.label}</span>
-            </TextTooltip>
-          ))}
+          {finding.evidence.map((e, idx) => {
+            const traversable = findTraversableReference(finding.id, e.referenceId, provenance);
+            const tooltipContent = (
+              <>
+                {e.observedAtUtc && <p>Observed {new Date(e.observedAtUtc).toLocaleString()}</p>}
+                {e.method && <p>Method: {e.method}</p>}
+                {!e.observedAtUtc && !e.method && <p>{e.referenceType}</p>}
+              </>
+            );
+            const chipClassName =
+              "inline-flex min-w-0 max-w-full items-center gap-1 rounded-chip border border-line bg-paper-2 px-2 py-1 text-[10px] text-ink-3";
+
+            return traversable ? (
+              <TextTooltip key={`${e.referenceId}-${idx}`} content={tooltipContent} className="inline-flex min-w-0 max-w-full">
+                <button
+                  type="button"
+                  onClick={() => onOpenEvidence(traversable)}
+                  className={`${chipClassName} transition-colors hover:border-ink-4 hover:text-ink`}
+                >
+                  <Database className="size-2.5 shrink-0 text-ink-4" />
+                  <span className="min-w-0 truncate">{e.label}</span>
+                </button>
+              </TextTooltip>
+            ) : (
+              <TextTooltip key={`${e.referenceId}-${idx}`} content={tooltipContent} className={chipClassName}>
+                <Database className="size-2.5 shrink-0 text-ink-4" />
+                <span className="min-w-0 truncate">{e.label}</span>
+              </TextTooltip>
+            );
+          })}
         </div>
       )}
     </div>
@@ -91,7 +100,8 @@ function FindingCard({ finding, reason }: { finding: Finding; reason?: string | 
 // A response's structured findings — the doc's primary structured-content model, previously never
 // rendered anywhere (the backend only ever sent empty `metrics`/`evidence` arrays until a real
 // populated example showed up 2026-09-28). One card per finding: title/summary, an evidence-status
-// badge, a compact metric grid, and descriptive evidence chips.
+// badge, a compact metric grid, and evidence chips — clickable through to the evidence-traversal
+// panel when a real traversable reference backs them, plain descriptive tooltips otherwise.
 //
 // Collapsed by default behind a summary toggle, same disclosure pattern as `HandoffCard`'s "View
 // brief" and `AiDataTable`'s "Show all N" — a multi-finding answer (4+ cards, each with its own
@@ -100,9 +110,11 @@ function FindingCard({ finding, reason }: { finding: Finding; reason?: string | 
 export function AiResponseFindings({
   findings,
   provenance,
+  onOpenEvidence,
 }: {
   findings: AgentResponseV2["findings"];
   provenance?: AgentResponseV2["provenance"] | null;
+  onOpenEvidence: (ref: IntelligenceReference) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -127,7 +139,13 @@ export function AiResponseFindings({
       {expanded && (
         <div className="flex flex-col gap-2">
           {findings.map((finding) => (
-            <FindingCard key={finding.id} finding={finding} reason={reasonByFindingId.get(finding.id)} />
+            <FindingCard
+              key={finding.id}
+              finding={finding}
+              reason={reasonByFindingId.get(finding.id)}
+              provenance={provenance}
+              onOpenEvidence={onOpenEvidence}
+            />
           ))}
         </div>
       )}
