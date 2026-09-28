@@ -38,7 +38,18 @@ export interface AgentResponseV2 {
   }>;
   caveats: Array<{ code: string; message: string }>;
   actions: SuggestedActionV2[];
+  // Real backend-generated follow-ups, replacing the old hardcoded MOCK_SUGGESTED_ACTIONS. Typed
+  // as required in the handoff doc's own TS block, but its prose says older persisted responses
+  // may omit it — optional here so that case doesn't type-lie as an empty array from the wire.
+  suggestedFollowUpPrompts?: AgentFollowUpPromptV2[];
   provenance?: ResponseProvenanceBundle | null;
+}
+
+// Selecting one sends its `prompt` unchanged through the normal message endpoint — a real next
+// message, not a governed action and not steering.
+export interface AgentFollowUpPromptV2 {
+  id: string;
+  prompt: string;
 }
 
 // Resolve `target.resource` through a frontend-owned map (known values so far: "segment",

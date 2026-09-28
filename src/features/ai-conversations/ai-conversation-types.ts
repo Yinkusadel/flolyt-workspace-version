@@ -87,4 +87,20 @@ export interface AgentStreamEvent {
   // input_request's own shape isn't defined in the handoff doc beyond "render the choices/
   // free-text control" — captured loosely until a real payload is seen. No UI consumes this yet.
   inputRequest?: Record<string, unknown> | null;
+  /** Set on `agent_handoff` — fires on the *originating* run's own stream the moment a specialist
+   * run is durably queued, so the handoff card can appear live instead of waiting for the next
+   * history refetch. Note the field is `targetRunId` here, not `runId` like the history/message
+   * shape (`AiConversationMessage.handoff.runId`) — same specialist run, different field name
+   * depending on which contract you're reading it from; normalize at the point of consumption. */
+  handoff?: {
+    targetRunId: string;
+    sourceRunId: string;
+    fromAgentKey: string;
+    fromAgentLabel: string;
+    toAgentKey: string;
+    toAgentLabel: string;
+    reason: string;
+    brief: string;
+    status: "queued";
+  } | null;
 }

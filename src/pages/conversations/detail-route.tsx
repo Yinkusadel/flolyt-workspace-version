@@ -14,28 +14,13 @@ import { useCancelAgentRun } from "@/features/agent-runs/use-cancel-agent-run";
 import { ProposalCard, type ProposalCardData } from "./proposal-card";
 import { HandoffCard } from "./handoff-card";
 import { PromptToggles } from "./prompt-toggles";
-import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
 import { AiResponseRenderer } from "./ai-response/response-renderer";
 import { AiMarkdownText } from "./ai-response/markdown-text";
 import { hideIncompleteMarkdownTail } from "./ai-response/hide-incomplete-markdown";
 import { AiResponseCaveats } from "./ai-response/response-caveats";
 import { AiResponseActions } from "./ai-response/response-actions";
+import { AiFollowUpPrompts } from "./ai-response/follow-up-prompts";
 import flolytLogo from "../../../assets/logo.png";
-
-// ❌ Backend does NOT provide a suggested-next-actions endpoint yet — mocked until one exists.
-const MOCK_SUGGESTED_ACTIONS: SuggestedAction[] = [
-  { id: "1", label: "Summarize the key changes in this conversation so far" },
-  { id: "2", label: "Suggest what I should prioritize next" },
-  { id: "3", label: "Draft a follow-up message based on this" },
-];
-
-// Hysteresis band for the scroll-driven reveal: reopen only within OPEN px of the bottom, close
-// only once scrolled past CLOSE px away. The gap between them must clear the panel's own
-// open/closed height difference (~140px) — collapsing/expanding it resizes the scroll container,
-// which shifts the distance-from-bottom reading; a single shared threshold sits inside that swing
-// and re-crosses itself on every resize, oscillating open/closed in a tight loop.
-const NEAR_BOTTOM_OPEN_THRESHOLD = 40;
-const NEAR_BOTTOM_CLOSE_THRESHOLD = 220;
 
 // Guards the bootstrap prompt (arriving via nav state from /new-conversation) against being
 // re-sent by a StrictMode double-invoke or an accidental remount — same idiom as the reference
@@ -112,15 +97,10 @@ export default function AiConversationDetailRoute() {
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  // Toggling the panel resizes the scroll container, which fires a real (not spurious) native
-  // "scroll" event of its own as the browser re-clamps scrollTop — briefly ignore the scroll
-  // listener right after a manual toggle so that reflow-echo doesn't immediately undo it.
-  const suppressScrollAutoRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [input, setInput] = useState("");
   const [askBeforeSpending, setAskBeforeSpending] = useState(true);
   const [planMode, setPlanMode] = useState(true);
-  const [suggestedActionsOpen, setSuggestedActionsOpen] = useState(true);
 
   const {
     messages: streamedMessages,
@@ -297,35 +277,13 @@ export default function AiConversationDetailRoute() {
     sendMessage(label);
   };
 
-  const handleChatScroll = () => {
-    if (suppressScrollAutoRef.current) return;
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    setSuggestedActionsOpen((prev) => {
-      if (prev && distanceFromBottom > NEAR_BOTTOM_CLOSE_THRESHOLD) return false;
-      if (!prev && distanceFromBottom < NEAR_BOTTOM_OPEN_THRESHOLD) return true;
-      return prev;
-    });
-  };
-
-  const handleToggleSuggestedActions = (open: boolean) => {
-    suppressScrollAutoRef.current = true;
-    setSuggestedActionsOpen(open);
-    window.setTimeout(() => {
-      suppressScrollAutoRef.current = false;
-    }, 400);
-  };
-
   const showSkeleton = isHistoryLoading && messages.length === 0 && !isStreaming;
   const showEmptyState = !isHistoryLoading && messages.length === 0 && !isStreaming;
-  const showSuggestedActions = !showSkeleton && !showEmptyState && !isStreaming;
 
   return (
     <div className="mx-auto flex h-full max-w-3xl flex-col">
       <div
         ref={scrollContainerRef}
-        onScroll={handleChatScroll}
         className="min-w-0 flex-1 space-y-5 overflow-x-hidden overflow-y-auto py-6"
       >
         {/* Only for a cold visit to an existing conversation with nothing on screen yet — not
@@ -412,6 +370,12 @@ export default function AiConversationDetailRoute() {
                   onAskAgent={handleSelectSuggestion}
                 />
               ) : null}
+              {message.structuredResponse?.suggestedFollowUpPrompts?.length ? (
+                <AiFollowUpPrompts
+                  prompts={message.structuredResponse.suggestedFollowUpPrompts}
+                  onSelect={handleSelectSuggestion}
+                />
+              ) : null}
             </div>
           )
         )}
@@ -452,15 +416,6 @@ export default function AiConversationDetailRoute() {
       </div>
 
       <div className="sticky bottom-0 flex flex-col bg-paper">
-        {showSuggestedActions && (
-          <SuggestedActions
-            actions={MOCK_SUGGESTED_ACTIONS}
-            isOpen={suggestedActionsOpen}
-            onOpenChange={handleToggleSuggestedActions}
-            onSelect={handleSelectSuggestion}
-          />
-        )}
-
         <div className="pt-1.5 pb-4">
           {showSkeleton ? (
             // Same footprint as the real composer below (rounded-card box, textarea-height row +
