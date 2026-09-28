@@ -170,6 +170,11 @@ The handoff card is the proof that asynchronous delegation occurred. `producedBy
 for a synchronous consultation whose findings are folded into Maestro's single response. Do not
 wait for a public `hand_off_to_agent` or `consult_agent` tool event.
 
+While the originating run is streaming, the backend emits `agent_handoff` immediately after the
+specialist run is durably queued. Upsert the lifecycle card by `handoff.targetRunId`; do not append
+a second card when the conversation is later refetched. If the live event was missed, the
+`role: 'handoff'` timeline item remains the authoritative recovery path.
+
 ## SSE envelope
 
 Each `data:` value is camel-case JSON:
@@ -190,6 +195,17 @@ export type PromptStateEvent = {
   progress?: AgentProgressEvent | null;
   structuredResponse?: AgentResponseV2 | null;
   responseContractVersion?: string | null;
+  handoff?: {
+    targetRunId: string;
+    sourceRunId: string;
+    fromAgentKey: string;
+    fromAgentLabel: string;
+    toAgentKey: string;
+    toAgentLabel: string;
+    reason: string;
+    brief: string;
+    status: 'queued';
+  } | null;
 };
 ```
 
@@ -198,6 +214,9 @@ Handle these event types:
 - `run_queued`: persist `runId` and show queued state.
 - `steering_queued`: acknowledge a composer submission that targeted an existing run; do not replace
   the run ID or open a second stream.
+- `agent_handoff`: immediately upsert a specialist lifecycle card keyed by
+  `handoff.targetRunId`. The envelope's `runId` is the originating run; the payload identifies the
+  new specialist run.
 - `progress`: show `progress.message`. Treat it as status only; it never contains tool names,
   arguments, SQL, credentials, prompts, or model reasoning.
 - `final_response`: atomically replace the assistant response with `structuredResponse`. This is the
@@ -250,7 +269,13 @@ export type AgentResponseV2 = {
   }>;
   caveats: Array<{ code: string; message: string }>;
   actions: SuggestedActionV2[];
+  suggestedFollowUpPrompts: AgentFollowUpPromptV2[];
   provenance?: ResponseProvenanceBundle | null;
+};
+
+export type AgentFollowUpPromptV2 = {
+  id: string;
+  prompt: string;
 };
 
 export type EvidenceStatus = 'UNVERIFIED' | 'INDICATIVE' | 'CORROBORATED' | 'MEASURED';
@@ -329,11 +354,20 @@ Render `markdown` with a safe Markdown renderer whose raw-HTML mode is disabled.
 are the source for findings, metrics, evidence, caveats, and action controls; do not parse those
 objects back out of Markdown.
 
-Normal backend answers target at most 100 words of prose: one bold conclusion, up to three short
-supporting bullets when needed, and an emphasized `Next step` line. Longer answers are reserved for
-an explicit request for detail or a caveat needed for accuracy. Do not truncate Markdown in the
-client: the server owns brevity, while the UI may place evidence, provenance, and the handoff brief
-behind disclosure controls.
+Render `suggestedFollowUpPrompts` as a short list of clickable prompt chips below the completed
+answer. Newly generated responses contain at least three. When a user selects one, send its
+`prompt` unchanged through the normal conversation message endpoint so it appears in history as a
+user message and starts the next run. Do not execute it as a governed action or send it to the
+steering endpoint. The first prompt continues the emphasized `Next step` when the answer contains
+one; the remaining prompts help the user inspect evidence, resolve a data gap, or choose the next
+investigation. Older persisted responses may omit the field, so treat it as an empty list during
+rollout.
+
+Backend answers target 100 words of prose and never exceed 175 words, including bullets and the
+emphasized `Next step` line. The limit applies even when the user asks for detail. Do not truncate
+Markdown in the client: the server owns brevity, while the UI may place evidence, provenance, and
+the handoff brief behind disclosure controls. Structured actions, evidence and suggested follow-up
+prompts are separate fields and are not part of the Markdown word count.
 
 Resolve action targets through a frontend-owned map. The initial server catalog emits these stable
 resource names: `segment`, `campaign`, `datasources`, `channels`, and `room`. Combine a resource with
@@ -600,15 +634,17 @@ absent. Use the ordinary assistant treatment in that case; do not infer a handof
 
 1. Start a conversation with a request that Maestro should hand to a specialist and keep the
    original SSE stream open.
-2. Read `GET /api/v3/conversations/{conversationId}` after the handoff is queued. Expect a
+2. Expect an `agent_handoff` event on that stream. Its `handoff.targetRunId` must identify the
+   specialist run and its status must be `queued`; render the card immediately.
+3. Read `GET /api/v3/conversations/{conversationId}` after the handoff is queued. Expect a
    `role: 'handoff'` item with the source and target agents, a non-empty reason and brief, and
    `handoff.status` of `queued` or `running`. There must be no `role: 'user'` item containing that
-   internal brief.
-3. Poll the conversation or `GET /api/v3/runs/{handoff.runId}`. Expect the card status to advance
+   internal brief. Reconcile it with the existing card by target run ID.
+4. Poll the conversation or `GET /api/v3/runs/{handoff.runId}`. Expect the card status to advance
    from queued/running to done, failed, or cancelled.
-4. On completion, expect an assistant message with the same `runId`, the specialist's `agentKey`
+5. On completion, expect an assistant message with the same `runId`, the specialist's `agentKey`
    and `agentLabel`, and its validated `structuredResponse`. Render it immediately after the card.
-5. Expand "View brief" and verify it shows the delegated question while preserving the original
+6. Expand "View brief" and verify it shows the delegated question while preserving the original
    human-authored message unchanged.
 
 ## API verification for steering
