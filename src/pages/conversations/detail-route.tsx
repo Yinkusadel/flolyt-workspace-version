@@ -12,6 +12,7 @@ import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals"
 import { useGetAgentRun } from "@/features/agent-runs/use-get-agent-run";
 import { useCancelAgentRun } from "@/features/agent-runs/use-cancel-agent-run";
 import { ProposalCard, type ProposalCardData } from "./proposal-card";
+import { HandoffCard } from "./handoff-card";
 import { PromptToggles } from "./prompt-toggles";
 import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
 import { AiResponseRenderer } from "./ai-response/response-renderer";
@@ -63,7 +64,10 @@ function dedupeMessages(messages: AiConversationMessage[]): ChatMessage[] {
     // different timestamps — a browser-side one from the optimistic/streamed copy, a server-side
     // one once it comes back from GET_BY_ID history — so keying on it let both through as if they
     // were two separate messages. Confirmed live 2026-09-10.
-    const key = `${m.role}-${m.content}`;
+    // A handoff row's own `content` is internal filler, not display text (the real content lives
+    // in `handoff.reason`/`handoff.brief`), so two distinct handoffs could share an identical or
+    // empty `content` — key those on `handoff.runId` instead, which is unique per delegation.
+    const key = m.role === "handoff" && m.handoff ? `handoff-${m.handoff.runId}` : `${m.role}-${m.content}`;
     if (seen.has(key)) return;
     seen.add(key);
     result.push({ ...m, key: `${key}-${idx}` });
@@ -381,12 +385,23 @@ export default function AiConversationDetailRoute() {
                 </p>
               </div>
             </div>
+          ) : message.role === "handoff" && message.handoff ? (
+            <div key={message.key} className="flex min-w-0 justify-start">
+              <HandoffCard handoff={message.handoff} />
+            </div>
           ) : (
             // w-full (not just items-start) matters here: without a definite width on this
             // wrapper, a table/chart segment's own max-w-[85%] has nothing real to resolve
             // against under shrink-to-fit flex sizing, and a wide table's min-w-max content can
             // then overflow straight past the pane's edge instead of being capped at 85%.
             <div key={message.key} className="flex w-full min-w-0 flex-col items-start gap-1.5">
+              {/* Attribution for a specialist's own answer (an async handoff's target message, or
+                  a synchronous in-line consultation) — absent on Maestro's own direct answers. */}
+              {message.agentLabel && (
+                <span className="text-[10px] font-medium tracking-[0.4px] text-ink-4 uppercase">
+                  {message.agentLabel}
+                </span>
+              )}
               <AiResponseRenderer content={message.content} />
               {message.structuredResponse?.caveats?.length ? (
                 <AiResponseCaveats caveats={message.structuredResponse.caveats} />

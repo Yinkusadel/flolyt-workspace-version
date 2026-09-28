@@ -66,6 +66,11 @@ export interface ResponseProvenanceBundle {
   contractVersion: "1.0";
   findings: Array<{
     findingId: string;
+    // Present when this finding came from a synchronous specialist consultation folded into
+    // Maestro's single response (no separate handoff card for this case — `producedBy` is the
+    // proof). An execution-plan entry without it means the specialist was only planned, not that
+    // it returned a usable result.
+    producedBy?: { agentId: string; agentLabel: string } | null;
     evidenceStatus: EvidenceStatusAssessment;
     evidence: IntelligenceReference[];
     sourceResolution?: {

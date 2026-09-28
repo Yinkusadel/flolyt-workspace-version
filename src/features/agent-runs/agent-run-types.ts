@@ -141,6 +141,18 @@ export interface AgentRun {
   executionRationaleId?: string | null;
   finalResponse?: AgentResponseV2 | null;
   responseContractVersion?: string | null;
+  // Present on a run created by an asynchronous specialist delegation — this run IS the target
+  // specialist's own run (`handoff.runId` on the conversation-message shape equals this run's own
+  // `id`). `sourceRunId` links back to Maestro's originating run.
+  handoff?: {
+    sourceRunId?: string | null;
+    fromAgentKey: string;
+    fromAgentLabel: string;
+    toAgentKey: string;
+    toAgentLabel: string;
+    reason: string;
+    brief: string;
+  } | null;
   steering: Array<{ id: string; text: string; addedBy: string; addedAtUtc: string; consumed: boolean }>;
   createdAtUtc: string;
   finishedAtUtc?: string | null;
