@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TextTooltip } from "@/components/ui/text-tooltip";
 import { agentInitialsFromName } from "@/pages/rooms/format";
 import type { WorkspaceAgentDto } from "@/services/api/workspace/get-workspace-agents";
 
@@ -66,6 +67,7 @@ export function AgentCardSkeleton() {
 export function AgentCard({ agent }: { agent: WorkspaceAgentDto }) {
   const bucket = resolveBucket(agent);
   const stateMeta = STATE_META[bucket];
+  const meta = formatMeta(agent, bucket);
 
   return (
     <div className="flex flex-col rounded-panel border border-dashed border-line bg-paper p-4">
@@ -87,12 +89,12 @@ export function AgentCard({ agent }: { agent: WorkspaceAgentDto }) {
             {stateMeta.label}
           </span>
         </span>
-        <span
+        <TextTooltip
+          content={meta}
           className="min-w-0 flex-1 truncate text-right font-mono text-[8.5px] text-ink-4"
-          title={formatMeta(agent, bucket)}
         >
-          {formatMeta(agent, bucket)}
-        </span>
+          {meta}
+        </TextTooltip>
       </div>
     </div>
   );
