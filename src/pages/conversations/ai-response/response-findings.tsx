@@ -1,4 +1,5 @@
-import { Database } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, ChevronUp, Database, ListChecks } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { TextTooltip } from "@/components/ui/text-tooltip";
@@ -91,6 +92,11 @@ function FindingCard({ finding, reason }: { finding: Finding; reason?: string | 
 // rendered anywhere (the backend only ever sent empty `metrics`/`evidence` arrays until a real
 // populated example showed up 2026-09-28). One card per finding: title/summary, an evidence-status
 // badge, a compact metric grid, and descriptive evidence chips.
+//
+// Collapsed by default behind a summary toggle, same disclosure pattern as `HandoffCard`'s "View
+// brief" and `AiDataTable`'s "Show all N" — a multi-finding answer (4+ cards, each with its own
+// metric grid) otherwise pushes the composer and suggested-actions panel well off-screen. Confirmed
+// live 2026-09-28 against a real 4-finding response.
 export function AiResponseFindings({
   findings,
   provenance,
@@ -98,6 +104,8 @@ export function AiResponseFindings({
   findings: AgentResponseV2["findings"];
   provenance?: AgentResponseV2["provenance"] | null;
 }) {
+  const [expanded, setExpanded] = useState(false);
+
   if (!findings.length) return null;
 
   const reasonByFindingId = new Map(
@@ -106,9 +114,23 @@ export function AiResponseFindings({
 
   return (
     <div className="flex w-full max-w-[85%] min-w-0 flex-col gap-2">
-      {findings.map((finding) => (
-        <FindingCard key={finding.id} finding={finding} reason={reasonByFindingId.get(finding.id)} />
-      ))}
+      <button
+        type="button"
+        onClick={() => setExpanded((prev) => !prev)}
+        className="inline-flex items-center gap-1.5 self-start rounded-chip border border-line bg-paper px-3 py-1.5 text-[11px] font-medium text-ink-3 transition-colors hover:border-ink-4"
+      >
+        <ListChecks className="size-3 shrink-0 text-ink-4" />
+        {findings.length} finding{findings.length === 1 ? "" : "s"}
+        {expanded ? <ChevronUp className="size-3 shrink-0" /> : <ChevronDown className="size-3 shrink-0" />}
+      </button>
+
+      {expanded && (
+        <div className="flex flex-col gap-2">
+          {findings.map((finding) => (
+            <FindingCard key={finding.id} finding={finding} reason={reasonByFindingId.get(finding.id)} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
