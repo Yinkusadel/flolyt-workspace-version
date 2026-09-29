@@ -8,16 +8,17 @@ import type { IntelligenceReference } from "@/features/ai-conversations/agent-in
 
 type Finding = AgentResponseV2["findings"][number];
 
-// An "empty shell" finding: no source was needed AND literally no evidence was attached either —
-// the signature of a filler entry the backend emits when there's nothing real to report (e.g. a
-// plain greeting), rather than a genuine self-contained finding. Confirmed against every real
-// example captured so far: legitimate findings that also need no external source (agent-roster
-// readiness, workspace-computed churn figures) still carry `INDICATIVE` status from their internal
-// deterministic evidence — only the filler ones combine `no_source_required` with `UNVERIFIED`.
-function isEmptyShellFinding(finding: Finding, provenance?: AgentResponseV2["provenance"] | null): boolean {
-  if (finding.evidenceStatus !== "UNVERIFIED") return false;
-  const pf = provenance?.findings?.find((f) => f.findingId === finding.id);
-  return pf?.sourceResolution?.decision === "no_source_required";
+// An "empty shell" finding: no metrics, no evidence, and marked UNVERIFIED — the signature of a
+// filler entry the backend emits when there's nothing structured to report (a plain greeting, or
+// a specialist's own answer that echoed itself as its one "finding" instead of extracting real
+// facts), rather than a genuine finding. Originally gated on `sourceResolution.decision ===
+// "no_source_required"` too, but a real example (2026-09-28, Revenue Intelligence's own leakage
+// answer) showed the same empty-shell shape with `decision: "use_single_source"` — the decision
+// isn't the reliable signal, having literally nothing structured attached is. Confirmed safe
+// against every real finding captured so far: all of them carry non-empty metrics or evidence,
+// regardless of their `decision` or status.
+function isEmptyShellFinding(finding: Finding): boolean {
+  return finding.metrics.length === 0 && finding.evidence.length === 0 && finding.evidenceStatus === "UNVERIFIED";
 }
 
 // A finding's own `evidence[]` (referenceType/referenceId/label/...) is display-only citation
@@ -130,7 +131,7 @@ export function AiResponseFindings({
 }) {
   const [expanded, setExpanded] = useState(false);
 
-  const visibleFindings = findings.filter((f) => !isEmptyShellFinding(f, provenance));
+  const visibleFindings = findings.filter((f) => !isEmptyShellFinding(f));
   if (!visibleFindings.length) return null;
 
   const reasonByFindingId = new Map(
