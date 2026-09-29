@@ -418,7 +418,15 @@ export default function AiConversationDetailRoute() {
                 </span>
               )}
               <AiResponseRenderer content={message.content} />
-              {message.structuredResponse?.findings?.length ? (
+              {/* Findings are only meant to render for an `analysis` response — `informational`/
+                  `conversation` kinds (plain greetings, stable product questions) intentionally
+                  carry empty findings per the doc, so this also protects against a stray non-empty
+                  array on one of those (the "wassup my gee" duplicate-disclaimer finding seen
+                  2026-09-28). `responseKind` missing entirely means an older response predating
+                  the field — fall back to the non-empty check alone rather than hiding it. */}
+              {message.structuredResponse?.findings?.length &&
+              (message.structuredResponse.responseKind === undefined ||
+                message.structuredResponse.responseKind === "analysis") ? (
                 <AiResponseFindings
                   findings={message.structuredResponse.findings}
                   provenance={message.structuredResponse.provenance}

@@ -10,11 +10,31 @@ export type SourceCandidateState =
   | "SOURCE_DEGRADED"
   | "NOT_AVAILABLE";
 
+// A capability-level readiness state — coarser than SourceCandidateState (which scores individual
+// source candidates). PROVIDER_CONFIRMATION_REQUIRED means no connected source is required, but an
+// internal business provider hasn't supplied the fact yet — never infer a connector requirement
+// from that state's name.
+export type CapabilitySourceState =
+  | "NO_SOURCE_REQUIRED"
+  | "AVAILABLE"
+  | "PARTIAL"
+  | "MAPPING_REQUIRED"
+  | "STALE"
+  | "LOW_QUALITY"
+  | "PERMISSION_BLOCKED"
+  | "SOURCE_DEGRADED"
+  | "UNAVAILABLE"
+  | "PROVIDER_CONFIRMATION_REQUIRED";
+
 export interface SourceResolution {
   capabilityId: string;
   requiredEntities: string[];
   requiredRoleGroups: string[][];
   unmodelledSource?: string | null;
+  // New fields on an already-established interface — optional for the same reason as the
+  // enforcement booleans below: an older run recorded before these existed won't have them.
+  requireCoherentDataset?: boolean;
+  requiresProviderConfirmation?: boolean;
   decision:
     | "no_source_required"
     | "use_single_source"
@@ -72,7 +92,7 @@ export interface AgentRun {
   modelTier: string;
   execution?: {
     agentId: string;
-    routingKind: "explicit" | "single_match" | "multi_match" | "unmatched" | "unready";
+    routingKind: "explicit" | "single_match" | "multi_match" | "unmatched" | "unready" | "orchestrated";
     candidateAgentIds: string[];
     packVersion: string;
     outputContractVersion: string;
@@ -85,6 +105,17 @@ export interface AgentRun {
     sourceResolutionEnforced?: boolean;
     responseIntegrityEnforced?: boolean;
     sourceResolution?: SourceResolution | null;
+    // A missing field is an empty array per the doc, not an omitted/optional one. Each entry is
+    // independent; only treat `canMeasure` as a rendering gate when that same entry's `enforced`
+    // is true — `false` means the decision was recorded in shadow mode for diagnostics and must
+    // not change the customer UI.
+    capabilitySourceResolutions?: Array<{
+      capabilityId: string;
+      state: CapabilitySourceState;
+      canMeasure: boolean;
+      enforced: boolean;
+      resolution: SourceResolution;
+    }>;
     knowledgeRetrieval?: {
       mode: "undeclared" | "exact" | "lexical" | "hybrid_shadow" | "shadow_error";
       collectionIds: string[];

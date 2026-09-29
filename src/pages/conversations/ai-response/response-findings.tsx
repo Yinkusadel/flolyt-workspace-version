@@ -8,6 +8,18 @@ import type { IntelligenceReference } from "@/features/ai-conversations/agent-in
 
 type Finding = AgentResponseV2["findings"][number];
 
+// An "empty shell" finding: no source was needed AND literally no evidence was attached either —
+// the signature of a filler entry the backend emits when there's nothing real to report (e.g. a
+// plain greeting), rather than a genuine self-contained finding. Confirmed against every real
+// example captured so far: legitimate findings that also need no external source (agent-roster
+// readiness, workspace-computed churn figures) still carry `INDICATIVE` status from their internal
+// deterministic evidence — only the filler ones combine `no_source_required` with `UNVERIFIED`.
+function isEmptyShellFinding(finding: Finding, provenance?: AgentResponseV2["provenance"] | null): boolean {
+  if (finding.evidenceStatus !== "UNVERIFIED") return false;
+  const pf = provenance?.findings?.find((f) => f.findingId === finding.id);
+  return pf?.sourceResolution?.decision === "no_source_required";
+}
+
 // A finding's own `evidence[]` (referenceType/referenceId/label/...) is display-only citation
 // info — it is NOT the same list the evidence-traversal endpoint accepts. The traversable
 // `IntelligenceReference`s (the ones with a real `kind`) live on `provenance.findings[].evidence`
@@ -118,7 +130,8 @@ export function AiResponseFindings({
 }) {
   const [expanded, setExpanded] = useState(false);
 
-  if (!findings.length) return null;
+  const visibleFindings = findings.filter((f) => !isEmptyShellFinding(f, provenance));
+  if (!visibleFindings.length) return null;
 
   const reasonByFindingId = new Map(
     (provenance?.findings ?? []).map((f) => [f.findingId, f.evidenceStatus?.reason ?? null])
@@ -132,13 +145,13 @@ export function AiResponseFindings({
         className="inline-flex items-center gap-1.5 self-start rounded-chip border border-line bg-paper px-3 py-1.5 text-[11px] font-medium text-ink-3 transition-colors hover:border-ink-4"
       >
         <ListChecks className="size-3 shrink-0 text-ink-4" />
-        {findings.length} finding{findings.length === 1 ? "" : "s"}
+        {visibleFindings.length} finding{visibleFindings.length === 1 ? "" : "s"}
         {expanded ? <ChevronUp className="size-3 shrink-0" /> : <ChevronDown className="size-3 shrink-0" />}
       </button>
 
       {expanded && (
         <div className="flex flex-col gap-2">
-          {findings.map((finding) => (
+          {visibleFindings.map((finding) => (
             <FindingCard
               key={finding.id}
               finding={finding}

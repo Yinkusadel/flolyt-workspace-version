@@ -4,12 +4,19 @@ import type {
   ImpactStatement,
   IntelligenceReference,
 } from "./agent-intelligence-types";
+import type { CapabilitySourceState, SourceCandidateState } from "@/features/agent-runs/agent-run-types";
 
 // The v2 structured response, replacing plain-markdown `response_chunk` as the source of truth.
 // Render `markdown` with a safe renderer; findings/metrics/evidence/caveats/actions come from
 // these fields directly — don't parse them back out of the markdown.
 export interface AgentResponseV2 {
   contractVersion: "2.0";
+  // Typed required in the doc's own TS block, but (matching suggestedFollowUpPrompts' documented
+  // caveat) a persisted older response predates this field — optional so that case doesn't
+  // type-lie. `analysis` is the only kind findings are meant to render for; `informational`/
+  // `conversation` (plain greetings, stable product questions) intentionally carry empty
+  // findings — "do not create an empty findings capsule" for those per the doc.
+  responseKind?: "analysis" | "informational" | "conversation";
   markdown: string;
   findings: Array<{
     id: string;
@@ -89,6 +96,17 @@ export interface ResponseProvenanceBundle {
       decision: string;
       evaluatedAtUtc: string;
       selectedSources: IntelligenceReference[];
+      state?: CapabilitySourceState | null;
+      candidates?: Array<{
+        source: IntelligenceReference;
+        state: SourceCandidateState;
+        matchedEntities: string[];
+        matchedRoles: string[];
+        observedAtUtc?: string | null;
+        mappingVersion?: string | null;
+        coverageFromUtc?: string | null;
+        coverageToUtc?: string | null;
+      }> | null;
     } | null;
     traceRoots?: IntelligenceReference[] | null;
   }>;
