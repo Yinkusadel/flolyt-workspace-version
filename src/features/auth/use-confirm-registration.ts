@@ -34,7 +34,7 @@ const useConfirmRegistration = ({ userId, email }: UseConfirmRegistrationOptions
         return;
       }
 
-      toast.success("Email confirmed — sign in to continue");
+      toast.success("Email confirmed. Sign in to continue");
       const query = email ? `?email=${encodeURIComponent(email)}` : "";
       navigate(`/auth/sign-in${query}`, { replace: true });
     },
