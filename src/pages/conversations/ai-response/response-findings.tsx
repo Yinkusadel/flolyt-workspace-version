@@ -21,6 +21,16 @@ function isEmptyShellFinding(finding: Finding): boolean {
   return finding.metrics.length === 0 && finding.evidence.length === 0 && finding.evidenceStatus === "UNVERIFIED";
 }
 
+// `metrics[].value` is a raw, unformatted numeric string on the wire (e.g. "65270.59") — the
+// backend's own authored Markdown happens to add thousands separators because the model wrote
+// that text itself, but the structured field never has been formatted. Single-field display
+// formatting (not deriving a new value from multiple fields) is fine per house rule — falls back
+// to the raw string untouched for anything that isn't actually numeric.
+function formatMetricValue(value: string): string {
+  const num = Number(value);
+  return value.trim() !== "" && !Number.isNaN(num) ? num.toLocaleString() : value;
+}
+
 // A finding's own `evidence[]` (referenceType/referenceId/label/...) is display-only citation
 // info — it is NOT the same list the evidence-traversal endpoint accepts. The traversable
 // `IntelligenceReference`s (the ones with a real `kind`) live on `provenance.findings[].evidence`
@@ -64,7 +74,7 @@ function FindingCard({
             <div key={m.id} className="min-w-0 rounded-md bg-paper-2 px-2 py-1.5">
               <p className="truncate text-[9px] font-medium tracking-[0.3px] text-ink-4 uppercase">{m.label}</p>
               <p className="mt-0.5 truncate text-[12.5px] font-semibold text-ink">
-                {m.value}
+                {formatMetricValue(m.value)}
                 {m.unit ? <span className="ml-0.5 text-[10px] font-medium text-ink-3">{m.unit}</span> : null}
               </p>
             </div>
