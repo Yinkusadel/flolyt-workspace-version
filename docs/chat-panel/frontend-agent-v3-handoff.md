@@ -175,6 +175,51 @@ specialist run is durably queued. Upsert the lifecycle card by `handoff.targetRu
 a second card when the conversation is later refetched. If the live event was missed, the
 `role: 'handoff'` timeline item remains the authoritative recovery path.
 
+### Keep the specialist live in the same conversation
+
+The initiating `POST /api/v3/conversations/messages` SSE connection remains open across a handoff.
+After Maestro's `agent_handoff` and acknowledgement events, that same connection carries the
+specialist's `run_started`, `progress`, `response_chunk`, and `final_response`. The specialist keeps
+a separate `runId` for cancellation, steering, and recovery; terminal state is therefore scoped to
+the event's `runId`, and Maestro's completion must not close the UI's reader while the HTTP stream
+is still open.
+
+For other people watching the conversation, join `/hubs/presence` with
+`Join('conversation', conversationId)` and subscribe once to the `run_activity` client method. The
+backend mirrors the same run events to the conversation group as:
+
+```ts
+type ConversationRunEvent = {
+  kind: 'run_event';
+  runId: string;
+  conversationId: string;
+  actorName?: string | null;
+  agentKey?: string | null;
+  agentLabel?: string | null;
+  sequence?: number | null;
+  streamEvent: PromptStateEvent;
+  atUtc: string;
+};
+```
+
+Pass `streamEvent` through the same reducer used for SSE, but take agent attribution and the
+conversation routing key from the outer event. The initiating client already receives agent
+attribution directly on each SSE envelope. Upsert the in-progress assistant message by
+`runId`: `response_chunk` updates its Markdown and `final_response` atomically replaces it with the
+validated structured response. This produces `Maestro handoff card -> Sentinel live answer` in one
+timeline for the initiator and every participant watching a room conversation.
+
+`run_started` advances the matching handoff card to `running`; `run_ended` advances it to the
+terminal state. The older `run_message` event contains the committed whole response and is a
+compatibility/recovery signal. Upsert it by `runId`; never append a duplicate when `run_event` has
+already built that assistant message.
+
+Within one run, ignore a sequenced `run_event` whose `sequence` is not greater than the last applied
+sequence. The handoff announcement is unsequenced and is deduplicated by `handoff.targetRunId`,
+because the initiating browser can receive it from both SSE and SignalR.
+After reconnect, refetch the conversation and active runs; the SignalR feed is ephemeral and the
+persisted timeline remains authoritative. Polling is recovery, not the normal handoff experience.
+
 ## SSE envelope
 
 Each `data:` value is camel-case JSON:
@@ -206,12 +251,16 @@ export type PromptStateEvent = {
     brief: string;
     status: 'queued';
   } | null;
+  agentKey?: string | null;
+  agentLabel?: string | null;
 };
 ```
 
 Handle these event types:
 
 - `run_queued`: persist `runId` and show queued state.
+- `run_started`: mark that event's `runId` as running and use `agentLabel` for the public working
+  state. After a handoff this is the explicit signal that the specialist has begun.
 - `steering_queued`: acknowledge a composer submission that targeted an existing run; do not replace
   the run ID or open a second stream.
 - `agent_handoff`: immediately upsert a specialist lifecycle card keyed by
@@ -711,19 +760,26 @@ absent. Use the ordinary assistant treatment in that case; do not infer a handof
 
 ## API verification for specialist handoffs
 
-1. Start a conversation with a request that Maestro should hand to a specialist and keep the
-   original SSE stream open.
+1. Start a conversation with a request that Maestro should hand to a specialist. Keep the original
+   SSE reader open until the server closes it; do not stop on Maestro's `final_response`.
 2. Expect an `agent_handoff` event on that stream. Its `handoff.targetRunId` must identify the
    specialist run and its status must be `queued`; render the card immediately.
 3. Read `GET /api/v3/conversations/{conversationId}` after the handoff is queued. Expect a
    `role: 'handoff'` item with the source and target agents, a non-empty reason and brief, and
    `handoff.status` of `queued` or `running`. There must be no `role: 'user'` item containing that
    internal brief. Reconcile it with the existing card by target run ID.
-4. Poll the conversation or `GET /api/v3/runs/{handoff.runId}`. Expect the card status to advance
-   from queued/running to done, failed, or cancelled.
-5. On completion, expect an assistant message with the same `runId`, the specialist's `agentKey`
-   and `agentLabel`, and its validated `structuredResponse`. Render it immediately after the card.
-6. Expand "View brief" and verify it shows the delegated question while preserving the original
+4. On that same SSE connection, expect `run_started` for `handoff.targetRunId`, followed by the
+   specialist's `progress`, `response_chunk`, and `final_response`, all carrying the target run id
+   and specialist attribution. The handoff card must advance to running without polling.
+5. In a second browser joined through conversation SignalR, expect the same specialist events as
+   `run_event.streamEvent`. The specialist answer must appear in the same conversation immediately
+   after the handoff card for both clients.
+6. Expect `run_ended` and advance the card to done, failed, or cancelled. Then refetch the
+   conversation and confirm the persisted assistant message has the same `runId`, `agentKey`,
+   `agentLabel`, and validated `structuredResponse` without creating a duplicate.
+7. Disconnect SignalR during a second handoff, reconnect, and refetch. The same final state must be
+   recovered even though the live events were missed.
+8. Expand "View brief" and verify it shows the delegated question while preserving the original
    human-authored message unchanged.
 
 ## API verification for steering
