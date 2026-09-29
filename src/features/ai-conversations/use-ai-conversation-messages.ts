@@ -89,6 +89,9 @@ export const useAiConversationMessages = (
   // delivery order across a reconnect/replay).
   const lastSequenceRef = useRef<Map<string, number>>(new Map());
   const hubConnectionRef = useRef<signalR.HubConnection | null>(null);
+  // Foreign runIds (someone else's, not ours) this tab has already triggered a `run_ended`
+  // history refetch for — guards against scheduling the retry more than once per run.
+  const foreignRunRefetchedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     optionsRef.current = options;
@@ -112,6 +115,7 @@ export const useAiConversationMessages = (
     pendingCharsRef.current = "";
     ownRunIdsRef.current = new Set();
     lastSequenceRef.current = new Map();
+    foreignRunRefetchedRef.current = new Set();
     if (typewriterTimerRef.current) window.clearTimeout(typewriterTimerRef.current);
     if (typewriterRafRef.current !== null) window.cancelAnimationFrame(typewriterRafRef.current);
     typewriterTimerRef.current = null;
@@ -836,6 +840,31 @@ export const useAiConversationMessages = (
               return { ...m, handoff: { ...m.handoff, status } };
             })
           );
+
+          // `streamDoneRef` (what normally gates flipping isStreaming back to idle) tracks "this
+          // tab's own HTTP connection closed" — a concept that doesn't exist for a run this tab
+          // never opened a connection for. Without this, watching someone else's run leaves
+          // isStreaming stuck true forever afterward, since nothing else would ever reset it.
+          // Confirmed live 2026-09-29: this run's own runId is already known-foreign (see the
+          // ownRunIdsRef check above the switch), so this can never clobber this tab's own
+          // still-in-progress send.
+          setIsStreaming(false);
+          setCurrentPhase(null);
+          setProgress(null);
+
+          // The live mirror only ever carries agent activity, never the human's own typed
+          // message, so without a refetch the reply that just streamed in would appear to come
+          // from nowhere. Confirmed live 2026-09-29: the prompt isn't persisted until right around
+          // `run_ended`, not at send time — an immediate refetch here can still narrowly lose the
+          // race (~450ms observed gap), so one retry shortly after covers that margin without
+          // polling indefinitely.
+          if (!foreignRunRefetchedRef.current.has(event.runId)) {
+            foreignRunRefetchedRef.current.add(event.runId);
+            queryClient.invalidateQueries({ queryKey: AI_CONVERSATION_QUERY_KEY(conversationId) });
+            window.setTimeout(() => {
+              queryClient.invalidateQueries({ queryKey: AI_CONVERSATION_QUERY_KEY(conversationId) });
+            }, 2500);
+          }
           return;
         }
 
