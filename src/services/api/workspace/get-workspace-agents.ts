@@ -5,17 +5,33 @@ import { getServerErrorMessage } from "@/services/get-server-error";
 
 export type WorkspaceAgentState = "not_ready" | "reading" | "ready" | string;
 
+// Per the v3 handoff's agent-roster contract: `state` is the coarse readiness signal, but can't
+// express "administratively disabled" or "not provisioned yet" on its own — `detailedState` adds
+// those. Treat an agent as live only when `isEnabled` is true and `state` is `ready`.
+export type WorkspaceAgentDetailedState =
+  | "ready"
+  | "partially_ready"
+  | "unavailable"
+  | "disabled"
+  | "unprovisioned"
+  | string;
+
 export interface WorkspaceAgentDto {
   key: string;
   initials: string;
   name: string;
   description: string;
+  isEnabled: boolean;
   state: WorkspaceAgentState;
+  detailedState: WorkspaceAgentDetailedState;
   reads: string[];
   needs: string | null;
   wouldUnlock: string | null;
   moreDaysNeeded: number | null;
   persona: string;
+  sourceDecision: string | null;
+  sourceStates: string[];
+  selectedSourceIds: string[];
 }
 
 export interface WorkspaceAgentsDto {
@@ -23,6 +39,7 @@ export interface WorkspaceAgentsDto {
   readyCount: number;
   readingCount: number;
   notReadyCount: number;
+  unprovisionedCount: number;
   agents: WorkspaceAgentDto[];
 }
 

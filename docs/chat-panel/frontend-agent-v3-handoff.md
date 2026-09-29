@@ -21,9 +21,52 @@
 | `POST` | `/api/v3/proposals/{id}/defer` | Hold with a required reason |
 | `POST` | `/api/v3/proposals/{id}/reject` | Reject |
 | `GET` | `/api/v3/evidence/{kind}/{referenceId}` | Traverse evidence and outcome provenance |
+| `GET` | `/api/v3/workspace/agents` | Read the authoritative enabled and ready agent roster |
 
 All routes use the application's existing authorization mechanism. Do not send company/workspace IDs
 in agent requests; the server binds tenant scope from the authenticated user.
+
+Use `GET /api/v3/workspace/agents` for agent availability UI. Each agent includes `isEnabled`, the
+compatibility `state` (`ready`, `reading`, or `not_ready`), and the more precise `detailedState`
+(`ready`, `partially_ready`, `unavailable`, `disabled`, or `unprovisioned`). Treat an agent as live
+only when `isEnabled` is true and `state` is `ready`; keep disabled and unavailable registered agents visible
+with their `needs` explanation. Keep `unprovisioned` agents visible as an operator setup problem;
+do not present them as a governance toggle the user deliberately switched off. Chat answers to
+availability questions use this same roster, so the
+screen and Maestro should report the same names and counts.
+
+```ts
+export type AgentRoster = {
+  totalCount: number;
+  readyCount: number;
+  readingCount: number;
+  notReadyCount: number;
+  unprovisionedCount: number;
+  agents: Array<{
+    key: string;
+    initials: string;
+    name: string;
+    description: string;
+    isEnabled: boolean;
+    state: 'ready' | 'reading' | 'not_ready';
+    detailedState: 'ready' | 'partially_ready' | 'unavailable' | 'disabled' | 'unprovisioned';
+    reads: string[];
+    needs?: string | null;
+    wouldUnlock?: string | null;
+    moreDaysNeeded?: number | null;
+    persona: string;
+    sourceDecision?: string | null;
+    sourceStates: string[];
+    selectedSourceIds: string[];
+  }>;
+};
+
+export type AgentRosterResponse = {
+  succeeded: boolean;
+  data: AgentRoster;
+  messages: string[];
+};
+```
 
 ## Start or continue a durable conversation
 
@@ -98,6 +141,40 @@ with `role: 'steering'`, attribution,
 turn that received them. `delivered` means the primary synthesising agent received the instruction;
 internal summarizers and specialist calls cannot consume it.
 
+## Render asynchronous specialist handoffs
+
+An asynchronous handoff is conversation activity, not a message written by the user. The backend
+returns one timeline item with `role: 'handoff'` as soon as the specialist run is queued. Never
+render its `content` or `handoff.brief` in a user bubble.
+
+Render this sequence:
+
+1. A compact lifecycle card: `Maestro handed this to Sentinel` plus
+   `queued | running | awaiting approval | completed | failed | cancelled` (the wire value for
+   completed is `done`).
+2. The short `handoff.reason` on the card. Put `handoff.brief` behind an expandable "View brief"
+   control; it is useful context, but it is not the primary answer.
+3. The subsequent assistant message as a normal answer with `agentLabel` attribution, for example
+   `Sentinel`. That message's `runId` matches the handoff card's `runId`.
+4. Render any catalogued action from the specialist's structured response below that answer.
+
+Treat all handoff fields as display text. The backend strips markup and internal-only wording and
+caps labels at 100 characters, reasons at 240 characters, and briefs at 2,000 characters. Keep raw
+HTML disabled and do not reinterpret these fields as Markdown.
+
+`handoff.sourceRunId` links back to Maestro's originating run. Render that source run's assistant
+message as the card acknowledgement instead of a second full response bubble. The target
+specialist's assistant message uses `handoff.runId` and remains a full answer.
+
+The handoff card is the proof that asynchronous delegation occurred. `producedBy` remains the proof
+for a synchronous consultation whose findings are folded into Maestro's single response. Do not
+wait for a public `hand_off_to_agent` or `consult_agent` tool event.
+
+While the originating run is streaming, the backend emits `agent_handoff` immediately after the
+specialist run is durably queued. Upsert the lifecycle card by `handoff.targetRunId`; do not append
+a second card when the conversation is later refetched. If the live event was missed, the
+`role: 'handoff'` timeline item remains the authoritative recovery path.
+
 ## SSE envelope
 
 Each `data:` value is camel-case JSON:
@@ -118,6 +195,17 @@ export type PromptStateEvent = {
   progress?: AgentProgressEvent | null;
   structuredResponse?: AgentResponseV2 | null;
   responseContractVersion?: string | null;
+  handoff?: {
+    targetRunId: string;
+    sourceRunId: string;
+    fromAgentKey: string;
+    fromAgentLabel: string;
+    toAgentKey: string;
+    toAgentLabel: string;
+    reason: string;
+    brief: string;
+    status: 'queued';
+  } | null;
 };
 ```
 
@@ -126,6 +214,9 @@ Handle these event types:
 - `run_queued`: persist `runId` and show queued state.
 - `steering_queued`: acknowledge a composer submission that targeted an existing run; do not replace
   the run ID or open a second stream.
+- `agent_handoff`: immediately upsert a specialist lifecycle card keyed by
+  `handoff.targetRunId`. The envelope's `runId` is the originating run; the payload identifies the
+  new specialist run.
 - `progress`: show `progress.message`. Treat it as status only; it never contains tool names,
   arguments, SQL, credentials, prompts, or model reasoning.
 - `final_response`: atomically replace the assistant response with `structuredResponse`. This is the
@@ -141,12 +232,16 @@ Handle these event types:
 
 Do not render `reasoningSteps`, `reasoning_step`, or `tool_call` for agent runs. The v3 agent path
 uses `progress`; those legacy fields remain only for compatibility with other application surfaces.
+Do not wait for an event named after a tool such as `consult_agent`; named tool invocation is an
+internal audit detail. Confirm specialist participation from the validated final findings and
+caveats, or from server logs and run diagnostics when investigating a fault.
 
 ## Structured response and actions
 
 ```ts
 export type AgentResponseV2 = {
   contractVersion: '2.0';
+  responseKind: 'analysis' | 'informational' | 'conversation';
   markdown: string;
   findings: Array<{
     id: string;
@@ -175,7 +270,13 @@ export type AgentResponseV2 = {
   }>;
   caveats: Array<{ code: string; message: string }>;
   actions: SuggestedActionV2[];
+  suggestedFollowUpPrompts: AgentFollowUpPromptV2[];
   provenance?: ResponseProvenanceBundle | null;
+};
+
+export type AgentFollowUpPromptV2 = {
+  id: string;
+  prompt: string;
 };
 
 export type EvidenceStatus = 'UNVERIFIED' | 'INDICATIVE' | 'CORROBORATED' | 'MEASURED';
@@ -213,6 +314,10 @@ export type ResponseProvenanceBundle = {
   contractVersion: '1.0';
   findings: Array<{
     findingId: string;
+    producedBy?: {
+      agentId: string;
+      agentLabel: string;
+    } | null;
     evidenceStatus: EvidenceStatusAssessment;
     evidence: IntelligenceReference[];
     sourceResolution?: {
@@ -220,6 +325,17 @@ export type ResponseProvenanceBundle = {
       decision: string;
       evaluatedAtUtc: string;
       selectedSources: IntelligenceReference[];
+      state?: CapabilitySourceState | null;
+      candidates?: Array<{
+        source: IntelligenceReference;
+        state: SourceCandidateState;
+        matchedEntities: string[];
+        matchedRoles: string[];
+        observedAtUtc?: string | null;
+        mappingVersion?: string | null;
+        coverageFromUtc?: string | null;
+        coverageToUtc?: string | null;
+      }> | null;
     } | null;
     traceRoots?: IntelligenceReference[] | null;
   }>;
@@ -246,20 +362,73 @@ export type AgentProgressEvent = {
 };
 ```
 
+Render `markdown` as the primary answer for every response kind. For `analysis`, render
+`findings` as the expandable supporting-facts cards already used by the conversation UI. For
+`informational` and `conversation`, `findings` and `provenance.findings` are intentionally empty;
+do not create an empty findings capsule. The provenance collection enriches the matching public
+finding and is not a second findings list for display.
+
+Pure greetings and stable product questions such as `What is Flolyt?` use a deterministic fast
+path. They still arrive through the same durable run and `final_response` event, but normally have
+`responseKind: 'conversation'` or `'informational'`, no findings, no actions, and no tenant-data
+progress/tool activity.
+
 Render `markdown` with a safe Markdown renderer whose raw-HTML mode is disabled. Structured fields
 are the source for findings, metrics, evidence, caveats, and action controls; do not parse those
 objects back out of Markdown.
+
+Render `suggestedFollowUpPrompts` as a short list of clickable prompt chips below the completed
+answer. Newly generated responses contain at least three. When a user selects one, send its
+`prompt` unchanged through the normal conversation message endpoint so it appears in history as a
+user message and starts the next run. Do not execute it as a governed action or send it to the
+steering endpoint. Prompts are response-aware: evidence prompts appear only when evidence exists,
+while data-gap and action prompts follow the actual answer. Do not add fixed client-side prompts.
+Older persisted responses may omit the field, so treat it as an empty list during rollout.
+
+Backend answers target 100 prose words with a soft allowance of 175. Markdown table cells are
+excluded so every relevant currency or market can remain visible. Longer answers remain valid when
+needed to preserve an accurate answer. Do not truncate Markdown or flatten tables in the client;
+use horizontal scrolling for wide tables. The UI may place evidence, provenance, and the handoff
+brief behind disclosure controls.
+
+Product identity: Flolyt is a Revenue Lifecycle Intelligence platform. Customer/account health is
+supporting diagnostic evidence, not a business-performance KPI. For broad business answers, preserve
+revenue-first ordering and distinguish leakage, opportunity, verified outcomes and coverage. Do not
+promote a customer-health finding into an overall business-health card. Explicit customer/churn
+questions can still show health and lifecycle diagnostics. A dedicated BusinessOverview contract is
+now produced through `get_business_overview`; it is projected into the existing response-v2 `findings`,
+`caveats`, `provenance`, and Markdown fields, so the frontend needs no new wire shape. Render findings
+in their server order: revenue performance, leakage, opportunity, verified outcomes, material Rooms,
+then capability coverage. Keep unavailable measurements visible as gaps and never render them as zero.
+Do not sum findings across currencies or combine leakage, opportunity, and outcome amounts in the client.
 
 Resolve action targets through a frontend-owned map. The initial server catalog emits these stable
 resource names: `segment`, `campaign`, `datasources`, `channels`, and `room`. Combine a resource with
 its optional `resourceId` through the app router. Ignore unknown resource names and never treat a
 label, parameter, or model-authored text as a URL. Hide actions with `eligibility.eligible === false`.
 
+For `rooms.view`, open the existing Room detail surface using `target.resourceId`. The backend emits
+this read-only action only when a material Room has a valid id and the overview contains one currency;
+it does not pick a winner across currencies. Business-overview actions do not default to campaigns,
+messaging channels, email, SMS, or win-back flows.
+
 For `sources.connect`, open the datasource management surface and carry `missingCapability`
 (for example `payment_failure_events`) as context. The current `actionMode` is `connect_or_map`:
 the UI should let the user map an existing warehouse source or connect a new one. Do not treat
-`missingSource` as a connector type; it is a display label. Source resolution will narrow this
-choice in the next backend phase.
+`missingSource` as a connector type; it is a display label. Capability source resolution now
+distinguishes an unmapped existing source from an unavailable one, so readiness UI should prefer the
+capability state and clarification when they are present.
+For business overviews, `sources.connect` is emitted for a verified mapping requirement and carries the
+exact missing capability in both `parameters.missingCapability` and
+`eligibility.requiredCapabilities`. Stale, permission-blocked, or degraded source states may instead
+emit `sources.review_capability`; route it to the same datasource management surface and retain its
+single `eligibility.requiredCapabilities` value as the issue context. A generic canonical read failure
+remains a caveat because it does not prove that datasource management is the remedy. A capability missing
+from the typed provider does not by itself produce a connector action.
+
+The server ranks typed follow-up prompts against the final public answer before filling any remaining
+slots with generic prompts. Prompts returned by a consulted specialist survive the Maestro handoff.
+Render the supplied order and send the selected prompt through the normal message endpoint unchanged.
 
 ## Evidence traversal
 
@@ -298,6 +467,12 @@ not promote statuses on the client. Display impact only from `ImpactStatement`; 
 `basis === 'unavailable'`, show `unavailableReason` and no numeric value. Treat 404 as unavailable or
 inaccessible without revealing which case applied.
 
+When `producedBy` is present, the finding came back from that consulted specialist and passed the
+same response validation as every other finding. The UI may show the agent label as attribution
+such as `Prism`, but should not infer specialist participation from Markdown or generic progress
+events. An execution-plan entry without `producedBy` means the specialist was planned; it does not
+prove that the specialist returned a usable result.
+
 ## Reconnect and refresh
 
 1. Load `/api/v3/conversations/{id}`.
@@ -327,6 +502,8 @@ export type SourceResolution = {
   requiredEntities: string[];
   requiredRoleGroups: string[][];
   unmodelledSource?: string | null;
+  requireCoherentDataset: boolean;
+  requiresProviderConfirmation: boolean;
   decision:
     | 'no_source_required'
     | 'use_single_source'
@@ -364,6 +541,18 @@ export type SourceResolution = {
   }>;
 };
 
+export type CapabilitySourceState =
+  | 'NO_SOURCE_REQUIRED'
+  | 'AVAILABLE'
+  | 'PARTIAL'
+  | 'MAPPING_REQUIRED'
+  | 'STALE'
+  | 'LOW_QUALITY'
+  | 'PERMISSION_BLOCKED'
+  | 'SOURCE_DEGRADED'
+  | 'UNAVAILABLE'
+  | 'PROVIDER_CONFIRMATION_REQUIRED';
+
 export type AgentRun = {
   id: string;
   sessionId: string;
@@ -377,7 +566,7 @@ export type AgentRun = {
   modelTier: string;
   execution?: {
     agentId: string;
-    routingKind: 'explicit' | 'single_match' | 'multi_match' | 'unmatched' | 'unready';
+    routingKind: 'explicit' | 'single_match' | 'multi_match' | 'unmatched' | 'unready' | 'orchestrated';
     candidateAgentIds: string[];
     packVersion: string;
     outputContractVersion: string;
@@ -387,6 +576,13 @@ export type AgentRun = {
     sourceResolutionEnforced: boolean;
     responseIntegrityEnforced: boolean;
     sourceResolution?: SourceResolution | null;
+    capabilitySourceResolutions: Array<{
+      capabilityId: string;
+      state: CapabilitySourceState;
+      canMeasure: boolean;
+      enforced: boolean;
+      resolution: SourceResolution;
+    }>;
     knowledgeRetrieval?: {
       mode: 'undeclared' | 'exact' | 'lexical' | 'hybrid_shadow' | 'shadow_error';
       collectionIds: string[];
@@ -438,6 +634,15 @@ export type AgentRun = {
   executionRationaleId?: string | null;
   finalResponse?: AgentResponseV2 | null;
   responseContractVersion?: string | null;
+  handoff?: {
+    sourceRunId?: string | null;
+    fromAgentKey: string;
+    fromAgentLabel: string;
+    toAgentKey: string;
+    toAgentLabel: string;
+    reason: string;
+    brief: string;
+  } | null;
   steering: Array<{ id: string; text: string; addedBy: string; addedAtUtc: string; consumed: boolean }>;
   createdAtUtc: string;
   finishedAtUtc?: string | null;
@@ -446,9 +651,17 @@ export type AgentRun = {
 
 The execution object and `executionRationaleId` are useful for support and diagnostics. They should
 not be presented as model reasoning or as user-editable controls. Display source resolution only on
-diagnostic or data-readiness surfaces. The two enforcement booleans record the policy frozen for that
-run; they are support diagnostics rather than frontend feature flags. Older runs can return false or
-omit fields added after they were recorded. `knowledgeRetrieval` remains diagnostic provenance.
+diagnostic or data-readiness surfaces. The two execution-level enforcement booleans record the policy
+frozen for that run. Older runs can return false or omit fields added after they were recorded. Treat a
+missing `capabilitySourceResolutions` field as an empty array. Each entry is independent. Use
+`canMeasure` as a product rendering gate only when that entry's `enforced` value is true; a false value
+means the decision was recorded in shadow mode for diagnostics and must not change the customer UI.
+Keep available revenue when margin or a breakdown is unavailable, and show the specific mapping,
+freshness, permission, or degradation gap beside only the affected capability.
+`PROVIDER_CONFIRMATION_REQUIRED` means no connected source is required, but the internal business
+provider has not yet supplied the platform fact, so it is not measurable yet. Never infer a connector
+requirement from the source name. `knowledgeRetrieval`
+remains diagnostic provenance.
 Render knowledge citations only when they appear in the final structured finding; never render raw
 retrieved passages. `augmentedPrompt` says that the reviewed retrieval gate passed for that run.
 `executionPlan` appears on multi-domain turns. It is a read-only audit view of Maestro's bounded
@@ -465,7 +678,7 @@ Conversation message reads and synchronous JSON message responses also expose
 
 ```ts
 export type ConversationMessage = {
-  role: 'user' | 'assistant' | 'steering' | string;
+  role: 'user' | 'assistant' | 'steering' | 'handoff' | string;
   content: string;
   timestamp: string;
   structuredResponse?: AgentResponseV2 | null;
@@ -477,8 +690,41 @@ export type ConversationMessage = {
   steeringStatus?: 'queued' | 'delivered' | 'not_delivered' | null;
   deliveredAtUtc?: string | null;
   appliedAtTurn?: number | null;
+  agentKey?: string | null;
+  agentLabel?: string | null;
+  handoff?: {
+    runId: string;
+    sourceRunId?: string | null;
+    fromAgentKey: string;
+    fromAgentLabel: string;
+    toAgentKey: string;
+    toAgentLabel: string;
+    reason: string;
+    brief: string;
+    status: 'queued' | 'running' | 'awaiting_approval' | 'done' | 'failed' | 'cancelled';
+  } | null;
 };
 ```
+
+For messages written before this contract, `runId`, `agentKey`, `agentLabel`, and `handoff` can be
+absent. Use the ordinary assistant treatment in that case; do not infer a handoff from the prose.
+
+## API verification for specialist handoffs
+
+1. Start a conversation with a request that Maestro should hand to a specialist and keep the
+   original SSE stream open.
+2. Expect an `agent_handoff` event on that stream. Its `handoff.targetRunId` must identify the
+   specialist run and its status must be `queued`; render the card immediately.
+3. Read `GET /api/v3/conversations/{conversationId}` after the handoff is queued. Expect a
+   `role: 'handoff'` item with the source and target agents, a non-empty reason and brief, and
+   `handoff.status` of `queued` or `running`. There must be no `role: 'user'` item containing that
+   internal brief. Reconcile it with the existing card by target run ID.
+4. Poll the conversation or `GET /api/v3/runs/{handoff.runId}`. Expect the card status to advance
+   from queued/running to done, failed, or cancelled.
+5. On completion, expect an assistant message with the same `runId`, the specialist's `agentKey`
+   and `agentLabel`, and its validated `structuredResponse`. Render it immediately after the card.
+6. Expand "View brief" and verify it shows the delegated question while preserving the original
+   human-authored message unchanged.
 
 ## API verification for steering
 

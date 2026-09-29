@@ -10,7 +10,10 @@ export interface AiConversationMessage {
   // "steering" is a mid-run note sent through the same composer while a run is active — per the
   // v3 handoff it's a first-class timeline entry (chronological, alongside user/assistant turns),
   // rendered identically to a "user" bubble (see detail-route) rather than as its own widget.
-  role: "user" | "assistant" | "context" | "error" | "steering";
+  // "handoff" is conversation activity, not something either party wrote — a compact lifecycle
+  // card ("Maestro handed this to Sentinel"), never a chat bubble. Its `content`/`handoff.brief`
+  // must never render as if a user or Flolyt said them directly.
+  role: "user" | "assistant" | "context" | "error" | "steering" | "handoff";
   content: string;
   timestamp: string;
   // Per the v3 handoff: history reads (and synchronous JSON message responses) also expose the
@@ -18,6 +21,23 @@ export interface AiConversationMessage {
   // stays as the plain-markdown fallback during migration.
   structuredResponse?: AgentResponseV2 | null;
   responseContractVersion?: string | null;
+  runId?: string | null;
+  // Present on a specialist's own assistant answer (an async handoff's target message, or a
+  // synchronous in-line consultation) — render as attribution, e.g. "Sentinel". Absent on
+  // Maestro's own direct answers and on messages written before this contract existed.
+  agentKey?: string | null;
+  agentLabel?: string | null;
+  handoff?: {
+    runId: string;
+    sourceRunId?: string | null;
+    fromAgentKey: string;
+    fromAgentLabel: string;
+    toAgentKey: string;
+    toAgentLabel: string;
+    reason: string;
+    brief: string;
+    status: "queued" | "running" | "awaiting_approval" | "done" | "failed" | "cancelled";
+  } | null;
 }
 
 // A mutating action the agent wants to take, surfaced for human review instead of executed
@@ -67,4 +87,20 @@ export interface AgentStreamEvent {
   // input_request's own shape isn't defined in the handoff doc beyond "render the choices/
   // free-text control" — captured loosely until a real payload is seen. No UI consumes this yet.
   inputRequest?: Record<string, unknown> | null;
+  /** Set on `agent_handoff` — fires on the *originating* run's own stream the moment a specialist
+   * run is durably queued, so the handoff card can appear live instead of waiting for the next
+   * history refetch. Note the field is `targetRunId` here, not `runId` like the history/message
+   * shape (`AiConversationMessage.handoff.runId`) — same specialist run, different field name
+   * depending on which contract you're reading it from; normalize at the point of consumption. */
+  handoff?: {
+    targetRunId: string;
+    sourceRunId: string;
+    fromAgentKey: string;
+    fromAgentLabel: string;
+    toAgentKey: string;
+    toAgentLabel: string;
+    reason: string;
+    brief: string;
+    status: "queued";
+  } | null;
 }

@@ -8,25 +8,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAiConversationMessages } from "@/features/ai-conversations/use-ai-conversation-messages";
 import { useGetAiConversationById } from "@/features/ai-conversations/use-get-ai-conversation-by-id";
 import type { AiConversationMessage } from "@/features/ai-conversations/ai-conversation-types";
+import type { IntelligenceReference } from "@/features/ai-conversations/agent-intelligence-types";
 import { useGetAiProposals } from "@/features/ai-proposals/use-get-ai-proposals";
 import { useGetAgentRun } from "@/features/agent-runs/use-get-agent-run";
 import { useCancelAgentRun } from "@/features/agent-runs/use-cancel-agent-run";
 import { ProposalCard, type ProposalCardData } from "./proposal-card";
+import { HandoffCard } from "./handoff-card";
 import { PromptToggles } from "./prompt-toggles";
-import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
 import { AiResponseRenderer } from "./ai-response/response-renderer";
 import { AiMarkdownText } from "./ai-response/markdown-text";
 import { hideIncompleteMarkdownTail } from "./ai-response/hide-incomplete-markdown";
+import { AiResponseFindings } from "./ai-response/response-findings";
 import { AiResponseCaveats } from "./ai-response/response-caveats";
 import { AiResponseActions } from "./ai-response/response-actions";
+import { SuggestedActions, type SuggestedAction } from "./suggested-actions";
+import { EvidencePanel } from "./evidence-panel";
 import flolytLogo from "../../../assets/logo.png";
-
-// ❌ Backend does NOT provide a suggested-next-actions endpoint yet — mocked until one exists.
-const MOCK_SUGGESTED_ACTIONS: SuggestedAction[] = [
-  { id: "1", label: "Summarize the key changes in this conversation so far" },
-  { id: "2", label: "Suggest what I should prioritize next" },
-  { id: "3", label: "Draft a follow-up message based on this" },
-];
 
 // Hysteresis band for the scroll-driven reveal: reopen only within OPEN px of the bottom, close
 // only once scrolled past CLOSE px away. The gap between them must clear the panel's own
@@ -63,7 +60,10 @@ function dedupeMessages(messages: AiConversationMessage[]): ChatMessage[] {
     // different timestamps — a browser-side one from the optimistic/streamed copy, a server-side
     // one once it comes back from GET_BY_ID history — so keying on it let both through as if they
     // were two separate messages. Confirmed live 2026-09-10.
-    const key = `${m.role}-${m.content}`;
+    // A handoff row's own `content` is internal filler, not display text (the real content lives
+    // in `handoff.reason`/`handoff.brief`), so two distinct handoffs could share an identical or
+    // empty `content` — key those on `handoff.runId` instead, which is unique per delegation.
+    const key = m.role === "handoff" && m.handoff ? `handoff-${m.handoff.runId}` : `${m.role}-${m.content}`;
     if (seen.has(key)) return;
     seen.add(key);
     result.push({ ...m, key: `${key}-${idx}` });
@@ -117,6 +117,10 @@ export default function AiConversationDetailRoute() {
   const [askBeforeSpending, setAskBeforeSpending] = useState(true);
   const [planMode, setPlanMode] = useState(true);
   const [suggestedActionsOpen, setSuggestedActionsOpen] = useState(true);
+  // Mounted unconditionally with a null target rather than gated behind a truthy conditional —
+  // see preact_radix_dialog_crash memory on why a Sheet/Dialog must start closed, not appear
+  // already-open on its first render.
+  const [evidenceTarget, setEvidenceTarget] = useState<IntelligenceReference | null>(null);
 
   const {
     messages: streamedMessages,
@@ -277,6 +281,16 @@ export default function AiConversationDetailRoute() {
     return dedupeMessages([...fromHistory, ...streamedMessages]);
   }, [history, streamedMessages]);
 
+  // Real backend-generated follow-ups (replaces the old MOCK_SUGGESTED_ACTIONS) — only ever from
+  // the single most recent turn, whether that's a message just streamed or the last one read back
+  // from history on a fresh page load. Never accumulated across older turns further up the thread.
+  const latestSuggestedActions = useMemo<SuggestedAction[]>(() => {
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "assistant") return [];
+    const prompts = last.structuredResponse?.suggestedFollowUpPrompts ?? [];
+    return prompts.map((p) => ({ id: p.id, label: p.prompt }));
+  }, [messages]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, animatedStreamingText, pendingProposals.length]);
@@ -315,13 +329,18 @@ export default function AiConversationDetailRoute() {
 
   const showSkeleton = isHistoryLoading && messages.length === 0 && !isStreaming;
   const showEmptyState = !isHistoryLoading && messages.length === 0 && !isStreaming;
-  const showSuggestedActions = !showSkeleton && !showEmptyState && !isStreaming;
+  const showSuggestedActions =
+    !showSkeleton && !showEmptyState && !isStreaming && latestSuggestedActions.length > 0;
 
   return (
     <div className="mx-auto flex h-full max-w-3xl flex-col">
       <div
         ref={scrollContainerRef}
         onScroll={handleChatScroll}
+        // Reserves the scrollbar's own width permanently, whether or not it's actually showing —
+        // without this, the content area visibly shifts sideways every time the thread crosses the
+        // scroll threshold (no scrollbar → browser reclaims that ~15px → everything shifts right).
+        style={{ scrollbarGutter: "stable" }}
         className="min-w-0 flex-1 space-y-5 overflow-x-hidden overflow-y-auto py-6"
       >
         {/* Only for a cold visit to an existing conversation with nothing on screen yet — not
@@ -381,13 +400,39 @@ export default function AiConversationDetailRoute() {
                 </p>
               </div>
             </div>
+          ) : message.role === "handoff" && message.handoff ? (
+            <div key={message.key} className="flex min-w-0 justify-start">
+              <HandoffCard handoff={message.handoff} />
+            </div>
           ) : (
             // w-full (not just items-start) matters here: without a definite width on this
             // wrapper, a table/chart segment's own max-w-[85%] has nothing real to resolve
             // against under shrink-to-fit flex sizing, and a wide table's min-w-max content can
             // then overflow straight past the pane's edge instead of being capped at 85%.
             <div key={message.key} className="flex w-full min-w-0 flex-col items-start gap-1.5">
+              {/* Attribution for a specialist's own answer (an async handoff's target message, or
+                  a synchronous in-line consultation) — absent on Maestro's own direct answers. */}
+              {message.agentLabel && (
+                <span className="text-[10px] font-medium tracking-[0.4px] text-ink-4 uppercase">
+                  {message.agentLabel}
+                </span>
+              )}
               <AiResponseRenderer content={message.content} />
+              {/* Findings are only meant to render for an `analysis` response — `informational`/
+                  `conversation` kinds (plain greetings, stable product questions) intentionally
+                  carry empty findings per the doc, so this also protects against a stray non-empty
+                  array on one of those (the "wassup my gee" duplicate-disclaimer finding seen
+                  2026-09-28). `responseKind` missing entirely means an older response predating
+                  the field — fall back to the non-empty check alone rather than hiding it. */}
+              {message.structuredResponse?.findings?.length &&
+              (message.structuredResponse.responseKind === undefined ||
+                message.structuredResponse.responseKind === "analysis") ? (
+                <AiResponseFindings
+                  findings={message.structuredResponse.findings}
+                  provenance={message.structuredResponse.provenance}
+                  onOpenEvidence={setEvidenceTarget}
+                />
+              ) : null}
               {message.structuredResponse?.caveats?.length ? (
                 <AiResponseCaveats caveats={message.structuredResponse.caveats} />
               ) : null}
@@ -439,7 +484,7 @@ export default function AiConversationDetailRoute() {
       <div className="sticky bottom-0 flex flex-col bg-paper">
         {showSuggestedActions && (
           <SuggestedActions
-            actions={MOCK_SUGGESTED_ACTIONS}
+            actions={latestSuggestedActions}
             isOpen={suggestedActionsOpen}
             onOpenChange={handleToggleSuggestedActions}
             onSelect={handleSelectSuggestion}
@@ -543,6 +588,13 @@ export default function AiConversationDetailRoute() {
           )}
         </div>
       </div>
+
+      <EvidencePanel
+        target={evidenceTarget}
+        onOpenChange={(open) => {
+          if (!open) setEvidenceTarget(null);
+        }}
+      />
     </div>
   );
 }

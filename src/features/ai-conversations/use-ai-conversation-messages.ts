@@ -200,6 +200,39 @@ export const useAiConversationMessages = (
           return false;
         }
 
+        // Fires on the originating run's own stream the moment a specialist run is durably
+        // queued — pushed as a normal `role: "handoff"` timeline entry (same as history would
+        // eventually return) so the card appears live instead of waiting for a refetch. Normalize
+        // the live payload's `targetRunId` into our internal `handoff.runId` here — history uses
+        // `runId` for the same specialist run, and keying both the same way is what lets
+        // `dedupeMessages` (detail-route) treat a later history refetch as an upsert of this same
+        // card instead of a duplicate, by matching on that id.
+        case "agent_handoff": {
+          const h = parsed.handoff;
+          if (h) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "handoff",
+                content: "",
+                timestamp: new Date().toISOString(),
+                handoff: {
+                  runId: h.targetRunId,
+                  sourceRunId: h.sourceRunId,
+                  fromAgentKey: h.fromAgentKey,
+                  fromAgentLabel: h.fromAgentLabel,
+                  toAgentKey: h.toAgentKey,
+                  toAgentLabel: h.toAgentLabel,
+                  reason: h.reason,
+                  brief: h.brief,
+                  status: h.status,
+                },
+              },
+            ]);
+          }
+          return false;
+        }
+
         // Deliberately no `tool_call`/`reasoning_step` cases — v3 says not to render those
         // for agent runs; `progress` below is the sanctioned replacement. If the backend
         // still sends them (compatibility with other surfaces), the switch just ignores them.
