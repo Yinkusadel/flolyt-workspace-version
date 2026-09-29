@@ -241,6 +241,7 @@ caveats, or from server logs and run diagnostics when investigating a fault.
 ```ts
 export type AgentResponseV2 = {
   contractVersion: '2.0';
+  responseKind: 'analysis' | 'informational' | 'conversation';
   markdown: string;
   findings: Array<{
     id: string;
@@ -324,6 +325,17 @@ export type ResponseProvenanceBundle = {
       decision: string;
       evaluatedAtUtc: string;
       selectedSources: IntelligenceReference[];
+      state?: CapabilitySourceState | null;
+      candidates?: Array<{
+        source: IntelligenceReference;
+        state: SourceCandidateState;
+        matchedEntities: string[];
+        matchedRoles: string[];
+        observedAtUtc?: string | null;
+        mappingVersion?: string | null;
+        coverageFromUtc?: string | null;
+        coverageToUtc?: string | null;
+      }> | null;
     } | null;
     traceRoots?: IntelligenceReference[] | null;
   }>;
@@ -350,6 +362,17 @@ export type AgentProgressEvent = {
 };
 ```
 
+Render `markdown` as the primary answer for every response kind. For `analysis`, render
+`findings` as the expandable supporting-facts cards already used by the conversation UI. For
+`informational` and `conversation`, `findings` and `provenance.findings` are intentionally empty;
+do not create an empty findings capsule. The provenance collection enriches the matching public
+finding and is not a second findings list for display.
+
+Pure greetings and stable product questions such as `What is Flolyt?` use a deterministic fast
+path. They still arrive through the same durable run and `final_response` event, but normally have
+`responseKind: 'conversation'` or `'informational'`, no findings, no actions, and no tenant-data
+progress/tool activity.
+
 Render `markdown` with a safe Markdown renderer whose raw-HTML mode is disabled. Structured fields
 are the source for findings, metrics, evidence, caveats, and action controls; do not parse those
 objects back out of Markdown.
@@ -358,27 +381,54 @@ Render `suggestedFollowUpPrompts` as a short list of clickable prompt chips belo
 answer. Newly generated responses contain at least three. When a user selects one, send its
 `prompt` unchanged through the normal conversation message endpoint so it appears in history as a
 user message and starts the next run. Do not execute it as a governed action or send it to the
-steering endpoint. The first prompt continues the emphasized `Next step` when the answer contains
-one; the remaining prompts help the user inspect evidence, resolve a data gap, or choose the next
-investigation. Older persisted responses may omit the field, so treat it as an empty list during
-rollout.
+steering endpoint. Prompts are response-aware: evidence prompts appear only when evidence exists,
+while data-gap and action prompts follow the actual answer. Do not add fixed client-side prompts.
+Older persisted responses may omit the field, so treat it as an empty list during rollout.
 
-Backend answers target 100 words of prose and never exceed 175 words, including bullets and the
-emphasized `Next step` line. The limit applies even when the user asks for detail. Do not truncate
-Markdown in the client: the server owns brevity, while the UI may place evidence, provenance, and
-the handoff brief behind disclosure controls. Structured actions, evidence and suggested follow-up
-prompts are separate fields and are not part of the Markdown word count.
+Backend answers target 100 prose words with a soft allowance of 175. Markdown table cells are
+excluded so every relevant currency or market can remain visible. Longer answers remain valid when
+needed to preserve an accurate answer. Do not truncate Markdown or flatten tables in the client;
+use horizontal scrolling for wide tables. The UI may place evidence, provenance, and the handoff
+brief behind disclosure controls.
+
+Product identity: Flolyt is a Revenue Lifecycle Intelligence platform. Customer/account health is
+supporting diagnostic evidence, not a business-performance KPI. For broad business answers, preserve
+revenue-first ordering and distinguish leakage, opportunity, verified outcomes and coverage. Do not
+promote a customer-health finding into an overall business-health card. Explicit customer/churn
+questions can still show health and lifecycle diagnostics. A dedicated BusinessOverview contract is
+now produced through `get_business_overview`; it is projected into the existing response-v2 `findings`,
+`caveats`, `provenance`, and Markdown fields, so the frontend needs no new wire shape. Render findings
+in their server order: revenue performance, leakage, opportunity, verified outcomes, material Rooms,
+then capability coverage. Keep unavailable measurements visible as gaps and never render them as zero.
+Do not sum findings across currencies or combine leakage, opportunity, and outcome amounts in the client.
 
 Resolve action targets through a frontend-owned map. The initial server catalog emits these stable
 resource names: `segment`, `campaign`, `datasources`, `channels`, and `room`. Combine a resource with
 its optional `resourceId` through the app router. Ignore unknown resource names and never treat a
 label, parameter, or model-authored text as a URL. Hide actions with `eligibility.eligible === false`.
 
+For `rooms.view`, open the existing Room detail surface using `target.resourceId`. The backend emits
+this read-only action only when a material Room has a valid id and the overview contains one currency;
+it does not pick a winner across currencies. Business-overview actions do not default to campaigns,
+messaging channels, email, SMS, or win-back flows.
+
 For `sources.connect`, open the datasource management surface and carry `missingCapability`
 (for example `payment_failure_events`) as context. The current `actionMode` is `connect_or_map`:
 the UI should let the user map an existing warehouse source or connect a new one. Do not treat
-`missingSource` as a connector type; it is a display label. Source resolution will narrow this
-choice in the next backend phase.
+`missingSource` as a connector type; it is a display label. Capability source resolution now
+distinguishes an unmapped existing source from an unavailable one, so readiness UI should prefer the
+capability state and clarification when they are present.
+For business overviews, `sources.connect` is emitted for a verified mapping requirement and carries the
+exact missing capability in both `parameters.missingCapability` and
+`eligibility.requiredCapabilities`. Stale, permission-blocked, or degraded source states may instead
+emit `sources.review_capability`; route it to the same datasource management surface and retain its
+single `eligibility.requiredCapabilities` value as the issue context. A generic canonical read failure
+remains a caveat because it does not prove that datasource management is the remedy. A capability missing
+from the typed provider does not by itself produce a connector action.
+
+The server ranks typed follow-up prompts against the final public answer before filling any remaining
+slots with generic prompts. Prompts returned by a consulted specialist survive the Maestro handoff.
+Render the supplied order and send the selected prompt through the normal message endpoint unchanged.
 
 ## Evidence traversal
 
@@ -419,7 +469,7 @@ inaccessible without revealing which case applied.
 
 When `producedBy` is present, the finding came back from that consulted specialist and passed the
 same response validation as every other finding. The UI may show the agent label as attribution
-such as “Prism”, but should not infer specialist participation from Markdown or generic progress
+such as `Prism`, but should not infer specialist participation from Markdown or generic progress
 events. An execution-plan entry without `producedBy` means the specialist was planned; it does not
 prove that the specialist returned a usable result.
 
@@ -452,6 +502,8 @@ export type SourceResolution = {
   requiredEntities: string[];
   requiredRoleGroups: string[][];
   unmodelledSource?: string | null;
+  requireCoherentDataset: boolean;
+  requiresProviderConfirmation: boolean;
   decision:
     | 'no_source_required'
     | 'use_single_source'
@@ -489,6 +541,18 @@ export type SourceResolution = {
   }>;
 };
 
+export type CapabilitySourceState =
+  | 'NO_SOURCE_REQUIRED'
+  | 'AVAILABLE'
+  | 'PARTIAL'
+  | 'MAPPING_REQUIRED'
+  | 'STALE'
+  | 'LOW_QUALITY'
+  | 'PERMISSION_BLOCKED'
+  | 'SOURCE_DEGRADED'
+  | 'UNAVAILABLE'
+  | 'PROVIDER_CONFIRMATION_REQUIRED';
+
 export type AgentRun = {
   id: string;
   sessionId: string;
@@ -502,7 +566,7 @@ export type AgentRun = {
   modelTier: string;
   execution?: {
     agentId: string;
-    routingKind: 'explicit' | 'single_match' | 'multi_match' | 'unmatched' | 'unready';
+    routingKind: 'explicit' | 'single_match' | 'multi_match' | 'unmatched' | 'unready' | 'orchestrated';
     candidateAgentIds: string[];
     packVersion: string;
     outputContractVersion: string;
@@ -512,6 +576,13 @@ export type AgentRun = {
     sourceResolutionEnforced: boolean;
     responseIntegrityEnforced: boolean;
     sourceResolution?: SourceResolution | null;
+    capabilitySourceResolutions: Array<{
+      capabilityId: string;
+      state: CapabilitySourceState;
+      canMeasure: boolean;
+      enforced: boolean;
+      resolution: SourceResolution;
+    }>;
     knowledgeRetrieval?: {
       mode: 'undeclared' | 'exact' | 'lexical' | 'hybrid_shadow' | 'shadow_error';
       collectionIds: string[];
@@ -580,9 +651,17 @@ export type AgentRun = {
 
 The execution object and `executionRationaleId` are useful for support and diagnostics. They should
 not be presented as model reasoning or as user-editable controls. Display source resolution only on
-diagnostic or data-readiness surfaces. The two enforcement booleans record the policy frozen for that
-run; they are support diagnostics rather than frontend feature flags. Older runs can return false or
-omit fields added after they were recorded. `knowledgeRetrieval` remains diagnostic provenance.
+diagnostic or data-readiness surfaces. The two execution-level enforcement booleans record the policy
+frozen for that run. Older runs can return false or omit fields added after they were recorded. Treat a
+missing `capabilitySourceResolutions` field as an empty array. Each entry is independent. Use
+`canMeasure` as a product rendering gate only when that entry's `enforced` value is true; a false value
+means the decision was recorded in shadow mode for diagnostics and must not change the customer UI.
+Keep available revenue when margin or a breakdown is unavailable, and show the specific mapping,
+freshness, permission, or degradation gap beside only the affected capability.
+`PROVIDER_CONFIRMATION_REQUIRED` means no connected source is required, but the internal business
+provider has not yet supplied the platform fact, so it is not measurable yet. Never infer a connector
+requirement from the source name. `knowledgeRetrieval`
+remains diagnostic provenance.
 Render knowledge citations only when they appear in the final structured finding; never render raw
 retrieved passages. `augmentedPrompt` says that the reviewed retrieval gate passed for that run.
 `executionPlan` appears on multi-domain turns. It is a read-only audit view of Maestro's bounded
