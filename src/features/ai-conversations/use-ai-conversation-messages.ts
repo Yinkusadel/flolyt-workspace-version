@@ -238,7 +238,19 @@ export const useAiConversationMessages = (
                 },
               ];
             });
-            if (displayedRunIdRef.current === key) setStreamingText("");
+            // Clear the live preview once this run's own text has been finalized into a real
+            // message — otherwise it sits on screen unchanged (isStreaming stays true whenever
+            // another linked run is still going, e.g. a second specialist), showing this run's
+            // already-posted answer a second time until some other run's chunks eventually
+            // overwrite it. Confirmed live 2026-09-30 with two simultaneous specialists: Maestro's
+            // own acknowledgement rendered twice — once as the pushed message, once as this
+            // leftover preview — because only `streamingText`, not `animatedStreamingText`, was
+            // being reset here.
+            if (displayedRunIdRef.current === key) {
+              setStreamingText("");
+              setAnimatedStreamingText("");
+              displayedRunIdRef.current = null;
+            }
           }
           acc.finalResponse = null;
           // Reset this run's own accumulation — irrelevant once pushed, and guards against a
