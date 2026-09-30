@@ -87,6 +87,12 @@ export interface AgentStreamEvent {
   // input_request's own shape isn't defined in the handoff doc beyond "render the choices/
   // free-text control" — captured loosely until a real payload is seen. No UI consumes this yet.
   inputRequest?: Record<string, unknown> | null;
+  // Present on every event now (not just final_response) — identifies which agent the event
+  // belongs to. Needed once a handoff keeps the same connection open for the specialist's own
+  // run_started/progress/response_chunk/final_response, since those now arrive interleaved with
+  // whatever the originating run itself sent.
+  agentKey?: string | null;
+  agentLabel?: string | null;
   /** Set on `agent_handoff` — fires on the *originating* run's own stream the moment a specialist
    * run is durably queued, so the handoff card can appear live instead of waiting for the next
    * history refetch. Note the field is `targetRunId` here, not `runId` like the history/message

@@ -68,6 +68,18 @@ function dedupeMessages(messages: AiConversationMessage[]): ChatMessage[] {
     seen.add(key);
     result.push({ ...m, key: `${key}-${idx}` });
   });
+  // `[...fromHistory, ...streamedMessages]` (the caller's concatenation) assumes everything from
+  // history is strictly older than everything currently streaming live — true on a fresh load, but
+  // not once history gets refetched mid-send (e.g. a window-focus refetch while switching tabs) and
+  // happens to already include this turn's handoff card without yet including the user's own
+  // prompt for that same turn — confirmed live 2026-09-30: the prompt isn't persisted server-side
+  // until close to when the run ends, well after a handoff card can already be. When that race
+  // hits, the card's surviving copy comes from the (now-refetched) history array and sorts ahead of
+  // the prompt, which is still only in the streamed tail. Sorting by timestamp after dedup makes
+  // display order reflect when things actually happened, not which array currently holds the
+  // surviving copy. A stable sort (guaranteed since ES2019) keeps true near-simultaneous messages
+  // in their original relative order instead of reshuffling them.
+  result.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   return result;
 }
 
