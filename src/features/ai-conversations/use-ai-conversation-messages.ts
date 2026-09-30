@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import * as signalR from "@microsoft/signalr";
 
-import { API_ENDPOINTS, PRESENCE_HUB_URL } from "@/config/apiConfig";
+import { API_ENDPOINTS } from "@/config/apiConfig";
 import { COOKIE_KEYS, getCookie } from "@/utils/cookies";
-import { AI_CONVERSATION_QUERY_KEY } from "./use-get-ai-conversation-by-id";
 import type {
   AgentProgressEvent,
   AgentStreamEvent,
@@ -12,7 +10,6 @@ import type {
   StreamProposal,
 } from "./ai-conversation-types";
 import type { AgentResponseV2 } from "./agent-response-types";
-import type { ConversationRunEvent } from "./conversation-run-event-types";
 
 interface UseAiConversationMessagesOptions {
   onConversationCreated?: (id: string) => void;
@@ -78,20 +75,6 @@ export const useAiConversationMessages = (
   // "a turn completed" (completePendingRef) and "the whole exchange is over" are no longer the same
   // moment. Only this ref gates flipping isStreaming back to idle.
   const streamDoneRef = useRef(false);
-  // Every runId this tab has directly seen on its own SSE connection (send or reconnect) — both
-  // the originating run and, across a handoff, its specialist's own targetRunId. The `/hubs/
-  // presence` mirror broadcasts to every viewer including the sender, so a run in this set gets
-  // skipped there: this tab already has a live, authoritative first-party delivery for it, and
-  // reprocessing the mirrored copy would double-append messages/re-run the completion pipeline.
-  const ownRunIdsRef = useRef<Set<string>>(new Set());
-  // Per-runId last applied `ConversationRunEvent.sequence` — ignore a SignalR event that isn't
-  // strictly greater than what's already been applied for that run (the hub doesn't guarantee
-  // delivery order across a reconnect/replay).
-  const lastSequenceRef = useRef<Map<string, number>>(new Map());
-  const hubConnectionRef = useRef<signalR.HubConnection | null>(null);
-  // Foreign runIds (someone else's, not ours) this tab has already triggered a `run_ended`
-  // history refetch for — guards against scheduling the retry more than once per run.
-  const foreignRunRefetchedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     optionsRef.current = options;
@@ -113,9 +96,6 @@ export const useAiConversationMessages = (
     finalResponseRef.current = null;
     bufferRef.current = "";
     pendingCharsRef.current = "";
-    ownRunIdsRef.current = new Set();
-    lastSequenceRef.current = new Map();
-    foreignRunRefetchedRef.current = new Set();
     if (typewriterTimerRef.current) window.clearTimeout(typewriterTimerRef.current);
     if (typewriterRafRef.current !== null) window.cancelAnimationFrame(typewriterRafRef.current);
     typewriterTimerRef.current = null;
@@ -173,45 +153,36 @@ export const useAiConversationMessages = (
         const finalText = final?.structuredResponse?.markdown || responseAccRef.current;
         if (finalText) {
           const finishedRunId = final?.runId ?? null;
-          setMessages((prev) => {
-            // A run's `final_response` can arrive twice for the initiating client — once on its
-            // own SSE connection, once mirrored over SignalR (the presence hub broadcasts to
-            // every group member, sender included). Skip the append if this runId's answer is
-            // already on the timeline rather than rendering it a second time.
-            if (finishedRunId && prev.some((m) => m.role === "assistant" && m.runId === finishedRunId)) {
-              return prev;
-            }
-            return [
-              ...prev.map((m) => {
-                // Fallback for a handoff card that's still showing "running" once its specialist's
-                // own final_response has actually landed — `run_ended` is documented to advance it
-                // to a terminal status, but isn't reliably observed on the wire yet, so this treats
-                // arrival of the matching answer as its own completion signal rather than leaving
-                // the card stuck on "running" until the next history refetch.
-                if (
-                  m.role !== "handoff" ||
-                  !m.handoff ||
-                  m.handoff.runId !== finishedRunId ||
-                  m.handoff.status === "done" ||
-                  m.handoff.status === "failed" ||
-                  m.handoff.status === "cancelled"
-                ) {
-                  return m;
-                }
-                return { ...m, handoff: { ...m.handoff, status: "done" as const } };
-              }),
-              {
-                role: "assistant",
-                content: finalText,
-                timestamp: new Date().toISOString(),
-                structuredResponse: final?.structuredResponse ?? null,
-                responseContractVersion: final?.responseContractVersion ?? null,
-                agentKey: final?.agentKey ?? null,
-                agentLabel: final?.agentLabel ?? null,
-                runId: final?.runId ?? null,
-              },
-            ];
-          });
+          setMessages((prev) => [
+            ...prev.map((m) => {
+              // Fallback for a handoff card that's still showing "running" once its specialist's
+              // own final_response has actually landed — `run_ended` is documented to advance it
+              // to a terminal status, but isn't reliably observed on the wire yet, so this treats
+              // arrival of the matching answer as its own completion signal rather than leaving
+              // the card stuck on "running" until the next history refetch.
+              if (
+                m.role !== "handoff" ||
+                !m.handoff ||
+                m.handoff.runId !== finishedRunId ||
+                m.handoff.status === "done" ||
+                m.handoff.status === "failed" ||
+                m.handoff.status === "cancelled"
+              ) {
+                return m;
+              }
+              return { ...m, handoff: { ...m.handoff, status: "done" as const } };
+            }),
+            {
+              role: "assistant",
+              content: finalText,
+              timestamp: new Date().toISOString(),
+              structuredResponse: final?.structuredResponse ?? null,
+              responseContractVersion: final?.responseContractVersion ?? null,
+              agentKey: final?.agentKey ?? null,
+              agentLabel: final?.agentLabel ?? null,
+              runId: final?.runId ?? null,
+            },
+          ]);
           setStreamingText("");
         }
         finalResponseRef.current = null;
@@ -292,34 +263,25 @@ export const useAiConversationMessages = (
         case "agent_handoff": {
           const h = parsed.handoff;
           if (h) {
-            setMessages((prev) => {
-              // Unsequenced — per the v3 handoff this announcement is deduplicated by
-              // `handoff.targetRunId` alone, since the initiating client can receive it from both
-              // its own SSE connection and the SignalR mirror. Skip rather than append if a card
-              // for this specialist run already exists.
-              if (prev.some((m) => m.role === "handoff" && m.handoff?.runId === h.targetRunId)) {
-                return prev;
-              }
-              return [
-                ...prev,
-                {
-                  role: "handoff",
-                  content: "",
-                  timestamp: new Date().toISOString(),
-                  handoff: {
-                    runId: h.targetRunId,
-                    sourceRunId: h.sourceRunId,
-                    fromAgentKey: h.fromAgentKey,
-                    fromAgentLabel: h.fromAgentLabel,
-                    toAgentKey: h.toAgentKey,
-                    toAgentLabel: h.toAgentLabel,
-                    reason: h.reason,
-                    brief: h.brief,
-                    status: h.status,
-                  },
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "handoff",
+                content: "",
+                timestamp: new Date().toISOString(),
+                handoff: {
+                  runId: h.targetRunId,
+                  sourceRunId: h.sourceRunId,
+                  fromAgentKey: h.fromAgentKey,
+                  fromAgentLabel: h.fromAgentLabel,
+                  toAgentKey: h.toAgentKey,
+                  toAgentLabel: h.toAgentLabel,
+                  reason: h.reason,
+                  brief: h.brief,
+                  status: h.status,
                 },
-              ];
-            });
+              },
+            ]);
           }
           return false;
         }
@@ -485,13 +447,6 @@ export const useAiConversationMessages = (
           const eventType = eventLine?.replace("event:", "").trim();
           const parsed: AgentStreamEvent = JSON.parse(dataLine.replace("data:", "").trim());
           const resolvedEventType = eventType ?? parsed.eventType ?? "message";
-
-          // Claim every runId this connection directly carries — the originating run and, once a
-          // handoff fires, its specialist's own targetRunId too — so the SignalR mirror (which
-          // broadcasts to the sender as well as other viewers) knows to skip these and defer to
-          // this connection's own live delivery instead of reprocessing a duplicate.
-          if (parsed.runId) ownRunIdsRef.current.add(parsed.runId);
-          if (parsed.handoff?.targetRunId) ownRunIdsRef.current.add(parsed.handoff.targetRunId);
 
           console.log(
             "🔥 SSE event:",
@@ -723,180 +678,6 @@ export const useAiConversationMessages = (
   }, [clearTypewriter]);
 
   useEffect(() => abortStream, [abortStream]);
-
-  // `/hubs/presence` — mirrors this conversation's run events to everyone else who has it open
-  // (a shared room thread), not just the tab that sent the message. Runs alongside the SSE
-  // connection above, not instead of it: a brand-new/not-yet-sent conversation has no id to join
-  // yet, so this only activates once `conversationId` is real. Best-effort — the persisted
-  // timeline remains authoritative per the v3 handoff ("polling is recovery, not the normal
-  // handoff experience"), so a failed/dropped hub connection is logged, not surfaced as a chat
-  // error; the conversation still works entirely off its own SSE connection and history refetch.
-  useEffect(() => {
-    if (!conversationId) return;
-
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl(PRESENCE_HUB_URL, {
-        accessTokenFactory: () => getCookie(COOKIE_KEYS.AUTH_TOKEN) ?? "",
-      })
-      .withAutomaticReconnect()
-      .configureLogging(signalR.LogLevel.Warning)
-      .build();
-
-    hubConnectionRef.current = connection;
-
-    const applyRunEvent = (event: ConversationRunEvent) => {
-      console.log(
-        "🛰️ run_activity:",
-        JSON.stringify({ kind: event.kind, runId: event.runId, mine: ownRunIdsRef.current.has(event.runId ?? "") })
-      );
-      if (!event?.runId || event.conversationId !== conversationId) return;
-
-      // This tab's own SSE connection already delivers this run live and first-party (see
-      // `ownRunIdsRef`) — the mirror is for everyone else watching, not a second copy for the
-      // sender. Skipping here, rather than merging two live sources for one run, is what keeps
-      // the existing single-active-turn accumulator (`responseAccRef` etc.) valid unchanged.
-      if (ownRunIdsRef.current.has(event.runId)) return;
-
-      switch (event.kind) {
-        // No nested payload — mirrors `dispatchStreamEvent`'s own `run_started` case (advance the
-        // matching handoff card to running) directly against the envelope's own runId, since
-        // there's no streamEvent here to route through the shared reducer for this kind.
-        case "run_started": {
-          setMessages((prev) =>
-            prev.map((m) => {
-              if (m.role !== "handoff" || !m.handoff || m.handoff.runId !== event.runId) return m;
-              return { ...m, handoff: { ...m.handoff, status: "running" as const } };
-            })
-          );
-          return;
-        }
-
-        case "run_event": {
-          if (!event.streamEvent) return;
-
-          // The hub doesn't guarantee delivery order across a reconnect/replay — drop anything
-          // that isn't strictly newer than the last sequence already applied for this runId.
-          if (typeof event.sequence === "number") {
-            const last = lastSequenceRef.current.get(event.runId) ?? -Infinity;
-            if (event.sequence <= last) return;
-            lastSequenceRef.current.set(event.runId, event.sequence);
-          }
-
-          // Agent attribution comes from the outer envelope, not the inner streamEvent — a
-          // single-recipient SSE connection carries it on every event already, but a group
-          // broadcast needs it lifted up a level.
-          const merged: AgentStreamEvent = {
-            ...event.streamEvent,
-            agentKey: event.agentKey ?? event.streamEvent.agentKey ?? null,
-            agentLabel: event.agentLabel ?? event.streamEvent.agentLabel ?? null,
-          };
-          dispatchStreamEvent(merged, merged.eventType || "message");
-          return;
-        }
-
-        // Older compatibility/recovery signal: the whole committed response in one shot, flattened
-        // directly onto `text` (not nested under `streamEvent`, which is null for this kind).
-        // Confirmed live 2026-09-29: the hub sends this right after `run_event`'s own
-        // final_response, but that one's push is deliberately deferred behind the typewriter
-        // reveal animation — so without the `finalResponseRef` check below, this fallback's plain
-        // text (no findings/actions/etc.) would win the race and permanently pre-empt the richer
-        // structured push that's already in flight, since the later one then finds a message for
-        // this runId already there and skips itself. Deferring to a final_response that's already
-        // pending keeps `run_event` authoritative, per the doc, regardless of arrival order.
-        case "run_message": {
-          if (!event.text) return;
-          if (finalResponseRef.current?.runId === event.runId) return;
-          setMessages((prev) => {
-            if (prev.some((m) => m.role === "assistant" && m.runId === event.runId)) return prev;
-            return [
-              ...prev,
-              {
-                role: "assistant",
-                content: event.text as string,
-                timestamp: event.atUtc,
-                structuredResponse: null,
-                responseContractVersion: null,
-                agentKey: event.agentKey ?? null,
-                agentLabel: event.agentLabel ?? null,
-                runId: event.runId,
-              },
-            ];
-          });
-          return;
-        }
-
-        // No nested payload — mirrors `dispatchStreamEvent`'s own `run_ended` case, reading the
-        // terminal state straight off the envelope instead of a streamEvent. Confirmed live this
-        // actually fires over SignalR even though the equivalent never arrives over this tab's own
-        // SSE connection (see the `final_response`-arrival fallback above, built for that gap).
-        case "run_ended": {
-          const normalized = (event.state ?? "").toLowerCase();
-          const status: HandoffStatus = HANDOFF_STATUSES.includes(normalized as HandoffStatus)
-            ? (normalized as HandoffStatus)
-            : "done";
-          setMessages((prev) =>
-            prev.map((m) => {
-              if (m.role !== "handoff" || !m.handoff || m.handoff.runId !== event.runId) return m;
-              return { ...m, handoff: { ...m.handoff, status } };
-            })
-          );
-
-          // `streamDoneRef` (what normally gates flipping isStreaming back to idle) tracks "this
-          // tab's own HTTP connection closed" — a concept that doesn't exist for a run this tab
-          // never opened a connection for. Without this, watching someone else's run leaves
-          // isStreaming stuck true forever afterward, since nothing else would ever reset it.
-          // Confirmed live 2026-09-29: this run's own runId is already known-foreign (see the
-          // ownRunIdsRef check above the switch), so this can never clobber this tab's own
-          // still-in-progress send.
-          setIsStreaming(false);
-          setCurrentPhase(null);
-          setProgress(null);
-
-          // The live mirror only ever carries agent activity, never the human's own typed
-          // message, so without a refetch the reply that just streamed in would appear to come
-          // from nowhere. Confirmed live 2026-09-29: the prompt isn't persisted until right around
-          // `run_ended`, not at send time — an immediate refetch here can still narrowly lose the
-          // race (~450ms observed gap), so one retry shortly after covers that margin without
-          // polling indefinitely.
-          if (!foreignRunRefetchedRef.current.has(event.runId)) {
-            foreignRunRefetchedRef.current.add(event.runId);
-            queryClient.invalidateQueries({ queryKey: AI_CONVERSATION_QUERY_KEY(conversationId) });
-            window.setTimeout(() => {
-              queryClient.invalidateQueries({ queryKey: AI_CONVERSATION_QUERY_KEY(conversationId) });
-            }, 2500);
-          }
-          return;
-        }
-
-        default:
-          return;
-      }
-    };
-
-    connection.on("run_activity", applyRunEvent);
-
-    connection.onreconnected(() => {
-      connection.invoke("Join", "conversation", conversationId).catch((err) => {
-        console.error("❌ SignalR rejoin failed:", err);
-      });
-      // Ephemeral feed — a drop can silently lose events in the gap, so a reconnect refetches the
-      // persisted conversation instead of assuming the socket picked back up exactly where it
-      // left off.
-      queryClient.invalidateQueries({ queryKey: AI_CONVERSATION_QUERY_KEY(conversationId) });
-    });
-
-    connection
-      .start()
-      .then(() => connection.invoke("Join", "conversation", conversationId))
-      .catch((err) => {
-        console.error("❌ SignalR connect/join failed:", err);
-      });
-
-    return () => {
-      hubConnectionRef.current = null;
-      connection.stop();
-    };
-  }, [conversationId, dispatchStreamEvent, queryClient]);
 
   return {
     conversationId,

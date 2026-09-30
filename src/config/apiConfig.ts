@@ -28,9 +28,6 @@ export const COMMAND_CENTER_BASE_URL = `${API_BASE_URL}/api/v3/command-center`;
 export const AGENT_RUNS_BASE_URL = `${API_BASE_URL}/api/v3/runs`;
 export const SKILLS_BASE_URL = `${API_BASE_URL}/api/v3/skills`;
 export const AI_CONVERSATIONS_BASE_URL = `${API_BASE_URL}/api/v3/conversations`;
-// Not under /api/v3 — a SignalR hub endpoint, not a REST resource. Confirmed live 2026-09-29
-// (handshake + WebSocket upgrade succeed with the same bearer token the rest of the app uses).
-export const PRESENCE_HUB_URL = `${API_BASE_URL}/hubs/presence`;
 export const AI_PROPOSALS_BASE_URL = `${API_BASE_URL}/api/v3/proposals`;
 export const AI_EVIDENCE_BASE_URL = `${API_BASE_URL}/api/v3/evidence`;
 export const NOTIFICATIONS_BASE_URL = `${API_BASE_URL}/api/v3/notifications`;
