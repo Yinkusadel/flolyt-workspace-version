@@ -184,6 +184,13 @@ a separate `runId` for cancellation, steering, and recovery; terminal state is t
 the event's `runId`, and Maestro's completion must not close the UI's reader while the HTTP stream
 is still open.
 
+When Maestro hands work to multiple specialists, their run streams are multiplexed on that same SSE
+connection. Events may interleave and must be reduced independently by `runId`; never assume all
+events for one specialist arrive before another specialist starts. The server closes the connection
+only after every linked specialist run has completed. The durable conversation read anchors each
+handoff card immediately after the source user message, even for conversations created before this
+ordering rule was introduced.
+
 For other people watching the conversation, join `/hubs/presence` with
 `Join('conversation', conversationId)` and subscribe once to the `run_activity` client method. The
 backend mirrors the same run events to the conversation group as:
@@ -774,12 +781,15 @@ absent. Use the ordinary assistant treatment in that case; do not infer a handof
 5. In a second browser joined through conversation SignalR, expect the same specialist events as
    `run_event.streamEvent`. The specialist answer must appear in the same conversation immediately
    after the handoff card for both clients.
-6. Expect `run_ended` and advance the card to done, failed, or cancelled. Then refetch the
+6. Repeat with two handoffs. Keep the first specialist open and let the second emit progress; expect
+   the second specialist's event immediately on the same SSE connection. The connection must remain
+   open until both runs are terminal.
+7. Expect `run_ended` and advance the card to done, failed, or cancelled. Then refetch the
    conversation and confirm the persisted assistant message has the same `runId`, `agentKey`,
    `agentLabel`, and validated `structuredResponse` without creating a duplicate.
-7. Disconnect SignalR during a second handoff, reconnect, and refetch. The same final state must be
+8. Disconnect SignalR during a second handoff, reconnect, and refetch. The same final state must be
    recovered even though the live events were missed.
-8. Expand "View brief" and verify it shows the delegated question while preserving the original
+9. Expand "View brief" and verify it shows the delegated question while preserving the original
    human-authored message unchanged.
 
 ## API verification for steering

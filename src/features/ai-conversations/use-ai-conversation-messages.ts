@@ -18,6 +18,10 @@ interface UseAiConversationMessagesOptions {
 const TYPEWRITER_INTERVAL_MS = 8;
 const TYPEWRITER_CHUNK_SIZE = 4;
 
+// Fallback key for the rare/legacy event that arrives with no `runId` at all — keeps it isolated
+// from any real run's own accumulator instead of crashing or silently merging into one.
+const NO_RUN_ID_KEY = "__no_run_id__";
+
 type HandoffStatus = NonNullable<AiConversationMessage["handoff"]>["status"];
 const HANDOFF_STATUSES: HandoffStatus[] = [
   "queued",
@@ -27,6 +31,38 @@ const HANDOFF_STATUSES: HandoffStatus[] = [
   "failed",
   "cancelled",
 ];
+
+// Per-run streaming state. A handoff to multiple specialists multiplexes all of their events onto
+// one SSE connection, interleaved — per the v3 handoff, they "must be reduced independently by
+// runId; never assume all events for one specialist arrive before another specialist starts." A
+// single shared accumulator (the pre-2026-09-30 design) would garble two runs' text together if
+// their response_chunks interleaved, and could silently drop one run's final_response if both
+// completed close together. Keying every run's own text/typewriter/completion state here is what
+// keeps concurrent specialists from corrupting or losing each other's answers.
+interface RunAccumulator {
+  responseAcc: string;
+  pendingChars: string;
+  completePending: boolean;
+  finalResponse: {
+    structuredResponse: AgentResponseV2 | null;
+    responseContractVersion: string | null;
+    agentKey: string | null;
+    agentLabel: string | null;
+  } | null;
+  typewriterTimer: number | null;
+  typewriterRaf: number | null;
+}
+
+function createRunAccumulator(): RunAccumulator {
+  return {
+    responseAcc: "",
+    pendingChars: "",
+    completePending: false,
+    finalResponse: null,
+    typewriterTimer: null,
+    typewriterRaf: null,
+  };
+}
 
 export const useAiConversationMessages = (
   initialConversationId: string | undefined,
@@ -56,25 +92,44 @@ export const useAiConversationMessages = (
 
   const conversationIdRef = useRef<string | null>(initialConversationId ?? null);
   const abortRef = useRef<AbortController | null>(null);
-  const responseAccRef = useRef("");
-  const finalResponseRef = useRef<{
-    structuredResponse: AgentResponseV2 | null;
-    responseContractVersion: string | null;
-    agentKey: string | null;
-    agentLabel: string | null;
-    runId: string | null;
-  } | null>(null);
   const bufferRef = useRef("");
-  const pendingCharsRef = useRef("");
-  const typewriterTimerRef = useRef<number | null>(null);
-  const typewriterRafRef = useRef<number | null>(null);
-  const completePendingRef = useRef(false);
+  // One accumulator per runId currently in flight on this connection — see RunAccumulator's own
+  // comment for why this can't be a single shared set of refs anymore.
+  const runAccumulatorsRef = useRef<Map<string, RunAccumulator>>(new Map());
+  // Whichever run most recently produced a response_chunk — the single `streamingText`/
+  // `animatedStreamingText` preview slot mirrors this one. If a second specialist is also
+  // streaming concurrently, its text keeps accumulating correctly in its own accumulator in the
+  // background (never lost or garbled); it just doesn't get its own separate live preview area —
+  // a deliberate scope line, not a bug, since only one specialist's text can realistically occupy
+  // the single legacy preview slot the UI has today.
+  const displayedRunIdRef = useRef<string | null>(null);
   // True once the HTTP connection itself has actually ended (server closed it, or it errored/was
-  // aborted) — per the v3 handoff, a handoff keeps the *same* connection open for the specialist's
-  // own run_started/progress/response_chunk/final_response after Maestro's own turn finishes, so
-  // "a turn completed" (completePendingRef) and "the whole exchange is over" are no longer the same
-  // moment. Only this ref gates flipping isStreaming back to idle.
+  // aborted) — per the v3 handoff, a handoff keeps the *same* connection open for every linked
+  // specialist's own run_started/progress/response_chunk/final_response after Maestro's own turn
+  // finishes, closing only once every linked run is terminal. "A turn completed" (per-run
+  // completePending) and "the whole exchange is over" are therefore not the same moment. Only this
+  // ref gates flipping isStreaming back to idle.
   const streamDoneRef = useRef(false);
+
+  const getAccumulator = useCallback((runId: string | null | undefined) => {
+    const key = runId ?? NO_RUN_ID_KEY;
+    const map = runAccumulatorsRef.current;
+    let acc = map.get(key);
+    if (!acc) {
+      acc = createRunAccumulator();
+      map.set(key, acc);
+    }
+    return acc;
+  }, []);
+
+  const clearAllAccumulators = useCallback(() => {
+    runAccumulatorsRef.current.forEach((acc) => {
+      if (acc.typewriterTimer) window.clearTimeout(acc.typewriterTimer);
+      if (acc.typewriterRaf !== null) window.cancelAnimationFrame(acc.typewriterRaf);
+    });
+    runAccumulatorsRef.current = new Map();
+    displayedRunIdRef.current = null;
+  }, []);
 
   useEffect(() => {
     optionsRef.current = options;
@@ -90,16 +145,9 @@ export const useAiConversationMessages = (
 
     abortRef.current?.abort();
     abortRef.current = null;
-    completePendingRef.current = false;
     streamDoneRef.current = false;
-    responseAccRef.current = "";
-    finalResponseRef.current = null;
     bufferRef.current = "";
-    pendingCharsRef.current = "";
-    if (typewriterTimerRef.current) window.clearTimeout(typewriterTimerRef.current);
-    if (typewriterRafRef.current !== null) window.cancelAnimationFrame(typewriterRafRef.current);
-    typewriterTimerRef.current = null;
-    typewriterRafRef.current = null;
+    clearAllAccumulators();
 
     conversationIdRef.current = nextConversationId;
     setConversationId(nextConversationId);
@@ -116,111 +164,125 @@ export const useAiConversationMessages = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialConversationId]);
 
+  // Clears just one run's typewriter loop/buffer — used when a whole connection resets (abort,
+  // fresh send) rather than a single run finishing normally (which drains on its own).
   const clearTypewriter = useCallback(() => {
-    if (typewriterTimerRef.current) {
-      window.clearTimeout(typewriterTimerRef.current);
-      typewriterTimerRef.current = null;
-    }
-    if (typewriterRafRef.current !== null) {
-      window.cancelAnimationFrame(typewriterRafRef.current);
-      typewriterRafRef.current = null;
-    }
-    pendingCharsRef.current = "";
+    clearAllAccumulators();
     setAnimatedStreamingText("");
-  }, []);
+  }, [clearAllAccumulators]);
 
-  const kickTypewriter = useCallback(() => {
-    if (typewriterRafRef.current !== null) return;
+  const kickTypewriter = useCallback(
+    (runId: string | null | undefined) => {
+      const key = runId ?? NO_RUN_ID_KEY;
+      const acc = getAccumulator(runId);
+      if (acc.typewriterRaf !== null) return;
 
-    const step = () => {
-      let advanced = false;
+      const step = () => {
+        let advanced = false;
 
-      if (pendingCharsRef.current.length) {
-        const next = pendingCharsRef.current.slice(0, TYPEWRITER_CHUNK_SIZE);
-        pendingCharsRef.current = pendingCharsRef.current.slice(TYPEWRITER_CHUNK_SIZE);
-        setAnimatedStreamingText((prev) => prev + next);
-        advanced = true;
-      }
+        if (acc.pendingChars.length) {
+          const next = acc.pendingChars.slice(0, TYPEWRITER_CHUNK_SIZE);
+          acc.pendingChars = acc.pendingChars.slice(TYPEWRITER_CHUNK_SIZE);
+          if (displayedRunIdRef.current === key) {
+            setAnimatedStreamingText((prev) => prev + next);
+          }
+          advanced = true;
+        }
 
-      if (!pendingCharsRef.current.length && completePendingRef.current) {
-        completePendingRef.current = false;
+        if (!acc.pendingChars.length && acc.completePending) {
+          acc.completePending = false;
 
-        // `final_response` carries the validated structured payload — prefer its markdown (and
-        // attach the structured fields for findings/caveats/actions) over the plain accumulated
-        // response_chunk text once it's arrived. Falls back to the accumulated text if the run
-        // finished without one (e.g. an older/legacy-path response).
-        const final = finalResponseRef.current;
-        const finalText = final?.structuredResponse?.markdown || responseAccRef.current;
-        if (finalText) {
-          const finishedRunId = final?.runId ?? null;
-          setMessages((prev) => [
-            ...prev.map((m) => {
-              // Fallback for a handoff card that's still showing "running" once its specialist's
-              // own final_response has actually landed — `run_ended` is documented to advance it
-              // to a terminal status, but isn't reliably observed on the wire yet, so this treats
-              // arrival of the matching answer as its own completion signal rather than leaving
-              // the card stuck on "running" until the next history refetch.
-              if (
-                m.role !== "handoff" ||
-                !m.handoff ||
-                m.handoff.runId !== finishedRunId ||
-                m.handoff.status === "done" ||
-                m.handoff.status === "failed" ||
-                m.handoff.status === "cancelled"
-              ) {
-                return m;
+          // `final_response` carries the validated structured payload — prefer its markdown (and
+          // attach the structured fields for findings/caveats/actions) over the plain accumulated
+          // response_chunk text once it's arrived. Falls back to the accumulated text if the run
+          // finished without one (e.g. an older/legacy-path response).
+          const final = acc.finalResponse;
+          const finalText = final?.structuredResponse?.markdown || acc.responseAcc;
+          if (finalText) {
+            const finishedRunId = runId ?? null;
+            setMessages((prev) => {
+              // A run's `final_response` shouldn't normally arrive twice, but this stays
+              // idempotent by runId regardless (e.g. a reconnect replaying the tail of a run).
+              if (finishedRunId && prev.some((m) => m.role === "assistant" && m.runId === finishedRunId)) {
+                return prev;
               }
-              return { ...m, handoff: { ...m.handoff, status: "done" as const } };
-            }),
-            {
-              role: "assistant",
-              content: finalText,
-              timestamp: new Date().toISOString(),
-              structuredResponse: final?.structuredResponse ?? null,
-              responseContractVersion: final?.responseContractVersion ?? null,
-              agentKey: final?.agentKey ?? null,
-              agentLabel: final?.agentLabel ?? null,
-              runId: final?.runId ?? null,
-            },
-          ]);
-          setStreamingText("");
+              return [
+                ...prev.map((m) => {
+                  // Fallback for a handoff card that's still showing "running" once its
+                  // specialist's own final_response has actually landed — `run_ended` is
+                  // documented to advance it to a terminal status, but isn't reliably observed on
+                  // the wire yet, so this treats arrival of the matching answer as its own
+                  // completion signal rather than leaving the card stuck on "running" until the
+                  // next history refetch.
+                  if (
+                    m.role !== "handoff" ||
+                    !m.handoff ||
+                    m.handoff.runId !== finishedRunId ||
+                    m.handoff.status === "done" ||
+                    m.handoff.status === "failed" ||
+                    m.handoff.status === "cancelled"
+                  ) {
+                    return m;
+                  }
+                  return { ...m, handoff: { ...m.handoff, status: "done" as const } };
+                }),
+                {
+                  role: "assistant",
+                  content: finalText,
+                  timestamp: new Date().toISOString(),
+                  structuredResponse: final?.structuredResponse ?? null,
+                  responseContractVersion: final?.responseContractVersion ?? null,
+                  agentKey: final?.agentKey ?? null,
+                  agentLabel: final?.agentLabel ?? null,
+                  runId: finishedRunId,
+                },
+              ];
+            });
+            if (displayedRunIdRef.current === key) setStreamingText("");
+          }
+          acc.finalResponse = null;
+          // Reset this run's own accumulation — irrelevant once pushed, and guards against a
+          // stray late duplicate event for the same runId re-appending its text.
+          acc.responseAcc = "";
         }
-        finalResponseRef.current = null;
-        // Reset per-turn accumulation so a following turn on this same connection (the
-        // specialist's own answer, right after a handoff) starts its own text fresh rather than
-        // inheriting whatever this turn accumulated.
-        responseAccRef.current = "";
-      }
 
-      if (!pendingCharsRef.current.length && !completePendingRef.current) {
-        // Only flip the whole exchange back to idle once the connection itself has actually
-        // ended — a handoff means more turns (more final_responses) can still follow on this
-        // same stream, and the "Working" status should stay up through all of them. Checked here
-        // (rather than only right after a completion) so a `kickTypewriter()` call that finds
-        // nothing left to animate — e.g. the one `consumeStream` makes once the connection closes,
-        // after a turn already finished draining on its own — still flips it off.
-        if (streamDoneRef.current) {
-          setIsStreaming(false);
-          setCurrentPhase(null);
-          setProgress(null);
+        if (!acc.pendingChars.length && !acc.completePending) {
+          // Only flip the whole exchange back to idle once the connection itself has actually
+          // ended — a handoff (single or multi-specialist) means more turns can still follow on
+          // this same stream, and the "Working" status should stay up through all of them.
+          // Checked here (rather than only right after a completion) so a `kickTypewriter()` call
+          // that finds nothing left to animate — e.g. the one `consumeStream` makes once the
+          // connection closes, after every run already finished draining on its own — still flips
+          // it off.
+          if (streamDoneRef.current) {
+            const stillPending = Array.from(runAccumulatorsRef.current.values()).some(
+              (a) => a.pendingChars.length || a.completePending
+            );
+            if (!stillPending) {
+              setIsStreaming(false);
+              setCurrentPhase(null);
+              setProgress(null);
+            }
+          }
+          acc.typewriterRaf = null;
+          return;
         }
-        typewriterRafRef.current = null;
-        return;
-      }
 
-      if (!advanced && typewriterTimerRef.current === null) {
-        typewriterTimerRef.current = window.setTimeout(() => {
-          typewriterTimerRef.current = null;
-          typewriterRafRef.current = window.requestAnimationFrame(step);
-        }, TYPEWRITER_INTERVAL_MS);
-        return;
-      }
+        if (!advanced && acc.typewriterTimer === null) {
+          acc.typewriterTimer = window.setTimeout(() => {
+            acc.typewriterTimer = null;
+            acc.typewriterRaf = window.requestAnimationFrame(step);
+          }, TYPEWRITER_INTERVAL_MS);
+          return;
+        }
 
-      typewriterRafRef.current = window.requestAnimationFrame(step);
-    };
+        acc.typewriterRaf = window.requestAnimationFrame(step);
+      };
 
-    typewriterRafRef.current = window.requestAnimationFrame(step);
-  }, []);
+      acc.typewriterRaf = window.requestAnimationFrame(step);
+    },
+    [getAccumulator]
+  );
 
   // Dispatches one parsed SSE event to the right piece of state. Shared between a fresh send
   // (`sendMessage`) and reopening an existing run's stream (`reconnectRun`) — extracted 2026-09-25
@@ -259,29 +321,35 @@ export const useAiConversationMessages = (
         // the live payload's `targetRunId` into our internal `handoff.runId` here — history uses
         // `runId` for the same specialist run, and keying both the same way is what lets
         // `dedupeMessages` (detail-route) treat a later history refetch as an upsert of this same
-        // card instead of a duplicate, by matching on that id.
+        // card instead of a duplicate, by matching on that id. Fires once per specialist, so a
+        // multi-handoff turn produces one card per target — nothing extra needed here for that.
         case "agent_handoff": {
           const h = parsed.handoff;
           if (h) {
-            setMessages((prev) => [
-              ...prev,
-              {
-                role: "handoff",
-                content: "",
-                timestamp: new Date().toISOString(),
-                handoff: {
-                  runId: h.targetRunId,
-                  sourceRunId: h.sourceRunId,
-                  fromAgentKey: h.fromAgentKey,
-                  fromAgentLabel: h.fromAgentLabel,
-                  toAgentKey: h.toAgentKey,
-                  toAgentLabel: h.toAgentLabel,
-                  reason: h.reason,
-                  brief: h.brief,
-                  status: h.status,
+            setMessages((prev) => {
+              if (prev.some((m) => m.role === "handoff" && m.handoff?.runId === h.targetRunId)) {
+                return prev;
+              }
+              return [
+                ...prev,
+                {
+                  role: "handoff",
+                  content: "",
+                  timestamp: new Date().toISOString(),
+                  handoff: {
+                    runId: h.targetRunId,
+                    sourceRunId: h.sourceRunId,
+                    fromAgentKey: h.fromAgentKey,
+                    fromAgentLabel: h.fromAgentLabel,
+                    toAgentKey: h.toAgentKey,
+                    toAgentLabel: h.toAgentLabel,
+                    reason: h.reason,
+                    brief: h.brief,
+                    status: h.status,
+                  },
                 },
-              },
-            ]);
+              ];
+            });
           }
           return false;
         }
@@ -304,32 +372,39 @@ export const useAiConversationMessages = (
         }
 
         case "response_chunk": {
+          const key = parsed.runId ?? NO_RUN_ID_KEY;
+          const acc = getAccumulator(parsed.runId);
           const text = parsed.message ?? "";
-          responseAccRef.current += text;
-          setStreamingText(responseAccRef.current);
-          pendingCharsRef.current += text;
-          kickTypewriter();
+          acc.responseAcc += text;
+          acc.pendingChars += text;
+          // This run becomes (or stays) the one shown in the single live-preview slot — see
+          // `displayedRunIdRef`'s own comment for why concurrent specialists don't each get their
+          // own preview area.
+          displayedRunIdRef.current = key;
+          setStreamingText(acc.responseAcc);
+          kickTypewriter(parsed.runId);
           setCurrentPhase("streaming");
           return false;
         }
 
         case "final_response": {
-          finalResponseRef.current = {
+          const acc = getAccumulator(parsed.runId);
+          acc.finalResponse = {
             structuredResponse: parsed.structuredResponse ?? null,
             responseContractVersion: parsed.responseContractVersion ?? null,
             agentKey: parsed.agentKey ?? null,
             agentLabel: parsed.agentLabel ?? null,
-            runId: parsed.runId ?? null,
           };
-          completePendingRef.current = true;
-          kickTypewriter();
+          acc.completePending = true;
+          kickTypewriter(parsed.runId);
           return false;
         }
 
         // Marks a runId as actually running — fires for the originating run and, once a handoff
-        // keeps the connection open, for the specialist's own run too. Used to advance the
-        // handoff card past "Queued" the moment the specialist's turn actually starts, without
-        // waiting on a history refetch.
+        // keeps the connection open, for each specialist's own run too (one `run_started` per
+        // linked run on a multi-handoff turn). Used to advance the matching handoff card past
+        // "Queued" the moment that specific specialist's turn actually starts, without waiting on
+        // a history refetch.
         case "run_started": {
           if (parsed.runId) {
             const targetRunId = parsed.runId;
@@ -346,7 +421,8 @@ export const useAiConversationMessages = (
         // Marks a runId's terminal state — same idea as `run_started`, for the handoff card's
         // final status. `parsed.state` is expected to already be one of the handoff status
         // values; anything else (or missing) falls back to "done" rather than leaving the card
-        // stuck on a stale status.
+        // stuck on a stale status. Scoped to `parsed.runId` alone, so two linked runs finishing
+        // independently each only ever touch their own card.
         case "run_ended": {
           if (parsed.runId) {
             const targetRunId = parsed.runId;
@@ -403,8 +479,24 @@ export const useAiConversationMessages = (
           return false;
       }
     },
-    [clearTypewriter, kickTypewriter]
+    [clearTypewriter, getAccumulator, kickTypewriter]
   );
+
+  // Flushes every run accumulator that still has work pending — used once the connection itself
+  // closes. In the well-behaved case (server closes only after every linked run is terminal, per
+  // the v3 handoff) this is a no-op; it's a safety net for a connection that ends mid-run anyway.
+  const kickAllPendingTypewriters = useCallback(() => {
+    runAccumulatorsRef.current.forEach((acc, key) => {
+      if (acc.pendingChars.length || acc.completePending) {
+        kickTypewriter(key === NO_RUN_ID_KEY ? null : key);
+      }
+    });
+    // Nothing was mid-stream at all (e.g. a run that only ever sent status/progress) — still need
+    // one call to let the idle-reset check in `kickTypewriter`'s step function run.
+    if (runAccumulatorsRef.current.size === 0) {
+      kickTypewriter(null);
+    }
+  }, [kickTypewriter]);
 
   // Reads one SSE response body to completion (or until a terminal event), dispatching each
   // parsed event. Shared by `sendMessage` (POST) and `reconnectRun` (GET) — both just build a
@@ -465,7 +557,7 @@ export const useAiConversationMessages = (
 
           const isTerminal = dispatchStreamEvent(parsed, resolvedEventType);
 
-          // `final_response` itself now sets completePendingRef/kicks the typewriter (it carries
+          // `final_response` itself now sets completePending/kicks the typewriter (it carries
           // the fields that go with completion), so this just needs the query invalidation.
           if (parsed.state === "complete") {
             queryClient.invalidateQueries({ queryKey: ["ai-conversations"] });
@@ -473,18 +565,18 @@ export const useAiConversationMessages = (
 
           if (isTerminal) {
             streamDoneRef.current = true;
-            kickTypewriter();
+            kickAllPendingTypewriters();
             return;
           }
         }
       }
 
       // The reader loop exited because the server actually closed the connection — the whole
-      // exchange (including any handoff turns multiplexed onto it) is over.
+      // exchange (including every linked handoff run multiplexed onto it) is over.
       streamDoneRef.current = true;
-      kickTypewriter();
+      kickAllPendingTypewriters();
     },
-    [dispatchStreamEvent, kickTypewriter, queryClient]
+    [dispatchStreamEvent, kickAllPendingTypewriters, queryClient]
   );
 
   const sendMessage = useCallback(
@@ -499,8 +591,6 @@ export const useAiConversationMessages = (
       setInputRequest(null);
       setStreamingText("");
       clearTypewriter();
-      responseAccRef.current = "";
-      finalResponseRef.current = null;
       streamDoneRef.current = false;
       // Clear the previous run's id up front rather than leaving it until the new run's own
       // `run_queued` event overwrites it. Without this, `activeRunId` stays pointed at the just-
@@ -547,9 +637,13 @@ export const useAiConversationMessages = (
         ]);
       } finally {
         // Safety net: a connection that ended (streamDoneRef set in the try/catch paths above)
-        // with nothing left to animate or finalize should never leave isStreaming stuck true —
-        // the normal path already handles this via kickTypewriter's own drained/streamDone check.
-        if (!pendingCharsRef.current.length && !completePendingRef.current) {
+        // with nothing left to animate or finalize on ANY run should never leave isStreaming stuck
+        // true — the normal path already handles this via kickTypewriter's own drained/streamDone
+        // check, per-run.
+        const anyPending = Array.from(runAccumulatorsRef.current.values()).some(
+          (acc) => acc.pendingChars.length || acc.completePending
+        );
+        if (!anyPending) {
           setIsStreaming(false);
           clearTypewriter();
         }
@@ -630,8 +724,6 @@ export const useAiConversationMessages = (
       // Stop/steer are available immediately instead of waiting for an event that never comes.
       setActiveRunId(runId);
       clearTypewriter();
-      responseAccRef.current = "";
-      finalResponseRef.current = null;
       streamDoneRef.current = false;
 
       const token = getCookie(COOKIE_KEYS.AUTH_TOKEN);
@@ -660,7 +752,10 @@ export const useAiConversationMessages = (
           { role: "error", content: errorMessage, timestamp: new Date().toISOString() },
         ]);
       } finally {
-        if (!pendingCharsRef.current.length && !completePendingRef.current) {
+        const anyPending = Array.from(runAccumulatorsRef.current.values()).some(
+          (acc) => acc.pendingChars.length || acc.completePending
+        );
+        if (!anyPending) {
           setIsStreaming(false);
           clearTypewriter();
         }
