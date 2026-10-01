@@ -1,0 +1,160 @@
+# Leakage map V2 — wiring build plan
+
+Started 2026-10-01, on branch `update-leakagemap-page`. Contract reference is
+[`leakage-map-v2-frontend-handoff.md`](leakage-map-v2-frontend-handoff.md) (the boss's handoff doc) —
+this file is the working plan for wiring it in, not a copy of its shapes. The V1 wiring this builds
+on top of is fully done — see [`build-plan.md`](build-plan.md) (all 6 steps ✅) and
+[[flolyt_leakage_map_wiring]] for that history.
+
+## Scope for this pass (per the boss, Slack 2026-10-01)
+
+He pointed at exactly two endpoints when asked about this doc:
+
+> "But its the endpoint for thr main leakage map page / Along side the another endpoint for
+> opportunities"
+
+So this pass is scoped to:
+
+1. `GET /api/v3/leakage` — the existing main page endpoint, now dual-contract (same URL already in
+   `apiConfig.ts`, response shape changes once a workspace is flagged in).
+2. `GET /api/v3/opportunities` — new, separate, positive-polarity endpoint.
+
+**Deliberately not in this pass** (the handoff doc covers them, but nobody has asked for them yet —
+do not start on these without a separate go-ahead):
+
+- Cell detail/history/evidence routes (`/cells/{cellId}`, `/cells/{cellId}/history`,
+  `/cells/{cellId}/evidence`) — Phase 6's "Learn Why" rebuild.
+- The whole Case + Room lifecycle (Phase 5: `/cells/{cellId}/case`, `/cases/{caseId}/...`).
+- `/leakage/coverage` and `/leakage/calculation` as standalone routes (the main page's own embedded
+  `coverage` summary covers this pass).
+- `/leakage/cutover-readiness` — operator/rollout diagnostic surface, not end-user facing.
+
+## The flag — confirmed by the boss, not our problem
+
+`RevenueIntelligence:LeakageV2:ReadRollout` is a **backend environment variable**, set per company
+for testing. His own words: *"You need not bother about it frontend wis[e]."* Our only job is to
+read `data.contractVersion` off the response and branch — never assume, never configure, never
+infer who's enabled.
+
+| Flag selects company? | V2 publication complete? | What `GET /api/v3/leakage` returns |
+|---|---|---|
+| No | — | Legacy payload (today's shape, no `contractVersion`) |
+| Yes | Yes | `data.contractVersion: "2.0"`, new shape |
+| Yes | No | Explicit error — never falls back to legacy silently |
+
+**Before Step 1 can be live-verified, ask the boss to flip the rollout percentage to 100 for our
+test workspace** (he already named the env var pattern in the handoff doc, lines 529-536) — without
+that we can only build against the documented shape, not a real response.
+
+## Implementation sequence
+
+### Step 0 — Confirm the real "2.0" shape — ✅ mostly done (2026-10-01)
+- [x] Asked the boss; he enabled the rollout flag for our test workspace.
+- [x] First attempt (flag on, no snapshot) returned the documented explicit-failure case —
+      `400`, `succeeded: false`, `"Revenue Leakage V2 is enabled, but this workspace has no
+      published V2 snapshot yet."` — matches the doc exactly, confirms that error path is real.
+- [x] Once a snapshot was published, pulled one real `contractVersion: "2.0"` response and diffed
+      it against `LeakagePageV2`. Top-level shape (`controls`/`publication`/`cells`/`rollups`/
+      `coverage`/`limitations`) matches exactly. **Two real mismatches found, both worth building
+      around rather than trusting the doc's TS types blind:**
+
+  1. **Casing is inconsistent between option lists and record values.** `controls.modes[].value` /
+     `controls.severities` / `controls.lifecycleClasses` are all lowercase (`"gross"`, `"s4"`,
+     `"in_flight"`) — i.e. what you send back as a query param. But the *populated* fields on cells
+     read back **uppercase**: `amounts[].mode: "GROSS"`, `amounts[].lifecycleClass: "IN_FLIGHT"`,
+     `amounts[].severity: "S4"`. The doc's own `Amount` type declares `severity` as lowercase
+     (`"s1".."s5"`) — live data contradicts the doc there specifically. `confidenceLevel` is the one
+     exception that's consistently uppercase in both the doc's type and live data. **Any code
+     matching a cell/amount's severity or lifecycleClass against the currently-selected filter value
+     must compare case-insensitively** — don't assume `cell.amounts[0].severity === controls.severity`
+     will ever be true as typed.
+  2. **The top-level `limitations[]` array is not the short, human list the doc implies.** A real
+     response had 150+ entries, one per unpriced candidate (e.g. *"Candidate '...' remains unpriced
+     because sector 'financial-services' has no severity thresholds in GBP; no FX conversion was
+     inferred."*), repeated per currency per candidate. The doc's "treat limitations as first-class
+     content" instruction assumed a handful of lines; naively rendering this array as bullet points
+     will produce an unusable wall of text. **Step 2's renderer needs to group/truncate/collapse
+     this, not `.map()` it directly** — e.g. count-and-expand, or dedupe by reason template.
+
+- [x] Confirmed a request's `value` field on `Amount` mirrors whichever `mode` was requested
+      (`gross` request → `value === gross`) — a convenience echo, not a fourth independent figure.
+- [ ] Still need: a response with a non-null `market`/`sector`/`severity`/`confidence`/
+      `lifecycleClass` filter actually applied (everything pulled so far was the unfiltered
+      default), and a legacy (unflagged) response from the same endpoint pulled back-to-back to
+      prove the branch doesn't regress existing behavior.
+
+### Step 1 — Types + response branching — ☐ not started
+- [ ] Add V2 types (`LeakagePageV2`, `Cell`, `Amount`, `Rollup`, `CoverageSummary`, `Publication`)
+      to `src/services/api/leakage/get-leakage.ts` or a new sibling file, alongside the existing V1
+      types — do not replace them, legacy must keep working.
+- [ ] `getLeakage()` / `useGetLeakage` return type becomes a union; narrow on `contractVersion`.
+- [ ] Nothing about the existing V1 render path changes yet — this step is plumbing only.
+
+### Step 2 — V2 page renderer — ☐ not started
+- [ ] When `contractVersion === "2.0"`, render a new grid component built on `cells[]` directly from
+      the main response — **no separate cell-detail fetch in this pass** (that's the out-of-scope
+      `/cells/{cellId}` route). Legacy workspaces keep hitting the existing stage/matrix renderer,
+      untouched.
+- [ ] Render axes from the response's own labels (`coordinate.mechanismLabel`,
+      `stateDimensionLabel`, etc.) — the doc is explicit that the state dimension isn't always
+      "customer stage" (could be invoices, payments, merchants, SKUs...), so nothing about axis
+      labels gets hardcoded.
+- [ ] Implement the 5 display states per the doc's "Rendering rules" section:
+  - `POPULATED` — amount by currency/market/lifecycle class, range only if not `UNAVAILABLE`.
+  - `UNKNOWN` — availability reason + limitations, never rendered as zero, never in totals.
+  - `NO_EXPOSURE` — a real measured-zero state, visually distinct from `UNKNOWN`.
+  - `HIDDEN_BY_FILTER` — removed from the active grid, but the record stays loaded so clearing the
+    filter restores it without re-fetching.
+  - `COMPOUND` — show that several independently-supported candidates contribute.
+- [ ] Every cell needs an accessible name containing mechanism, revenue stage, state value, display
+      state, amount/currency (if present), severity, confidence — text/icon, never color alone.
+- [ ] Filter changes replace query params and request a fresh projection without clearing the old
+      grid while loading (same `placeholderData` pattern already used in V1's Step 2).
+
+### Step 3 — Controls mapping — ☐ not started
+- [ ] V2's `controls` block adds two filter dimensions V1 doesn't have: `sector` and
+      `lifecycleClass` (`realized | in_flight | latent`). Extend `filters.ts`'s V2 branch to cover
+      these — option lists come from the response's own `controls.sectors` / `controls.lifecycleClasses`,
+      never invented client-side (same rule as V1's Step 1).
+- [ ] `mode` replaces V1's `calculate` (`gross | expected | net` — same three values, confirm the
+      query param name matches: `mode` not `calculate`).
+- [ ] `horizon` / `horizonDays` keep the same custom-horizon convention V1 already has.
+
+### Step 4 — Rollups — ☐ not started
+- [ ] Render `rollups[]` grouped by `dimension` (mechanism/stage/state/market/severity/sector/total).
+- [ ] Hard rule from the doc: **never add rollups with different currencies or lifecycle classes
+      together** — same discipline as V1's market-breakdown bar-width bug
+      ([[feedback_no_frontend_business_math]]), do not let this regress in the new surface.
+
+### Step 5 — Opportunities surface — ☐ not started
+- [ ] New page/section wired to `GET /api/v3/opportunities`, its own `RevenueOpportunityPage` type.
+- [ ] **Never placed in the Leakage Map grid, never subtracted from leakage, never summed or netted
+      against it** — the doc calls this out twice (rendering rules + acceptance cases). Keep it a
+      fully separate surface, not a tab bolted onto the leakage page, unless the boss says otherwise.
+- [ ] Render `candidateCount` for a `POPULATED` cell; render money only from `amounts[]` — an empty
+      `amounts` with a nonzero `candidateCount` means "evidence-backed but deliberately unpriced,"
+      not a zero.
+- [ ] Multi-currency priced opportunities stay separate rows, same currency-never-summed rule as
+      leakage.
+
+### Step 6 — Loading/error states — ☐ not started
+Per the doc's "Loading, errors and transport" section — both endpoints here are plain GETs, no SSE:
+- [ ] Initial skeleton while no projection exists yet.
+- [ ] Stale-while-loading overlay on control changes (grid stays visible).
+- [ ] Empty-map state when cells exist but none pass the active filters.
+- [ ] Explicit "V2 publication unavailable/incomplete" error + retry — this is the
+      flag-on-but-publication-missing case from the table above, don't let it look like a generic
+      network error.
+- [ ] Cancel superseded filter requests; ignore a late response whose URL is no longer selected.
+
+### Step 7 — Docs — ☐ not started
+- [ ] Add the two new endpoints to `docs/endpoints/leakage.md` (per [[endpoint_docs_convention]]).
+- [ ] Tick off steps in this file as they land, same convention as `build-plan.md`.
+
+## Verification
+
+Same as V1: run the dev server on `localhost:3000` (CORS-approved origin), load `/leakage-map`
+against the real backend, and check the network tab's actual response against what the code
+assumes — **this time for both a legacy company and a flagged-in one**, since the whole point of the
+dual-contract design is that both must keep working side by side. Kill the dev server when done, per
+[[always_kill_dev_servers]].
