@@ -13,6 +13,7 @@ import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
 import { LeakageV2CellGrid } from "@/pages/leakage-map/v2-cell-grid";
 import { LeakageV2Rollups } from "@/pages/leakage-map/v2-rollups";
 import { V2KpiStrip } from "@/pages/leakage-map/v2-kpi-strip";
+import { V2CoverageCard, V2LimitationsCard } from "@/pages/leakage-map/v2-coverage-limitations";
 import { V2StatusLine } from "@/pages/leakage-map/v2-status-line";
 import { OpportunitiesPanel } from "@/pages/leakage-map/opportunities-panel";
 import { useGetOpportunities } from "@/features/opportunities/use-get-opportunities";
@@ -149,8 +150,12 @@ export default function LeakageMap() {
         </div>
 
         <V2KpiStrip cells={leakageV2.cells} rollups={leakageV2.rollups} coverage={leakageV2.coverage} controls={leakageV2.controls} />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <V2CoverageCard coverage={leakageV2.coverage} />
+          <V2LimitationsCard limitations={leakageV2.limitations} cells={leakageV2.cells} />
+        </div>
         <LeakageV2Rollups rollups={leakageV2.rollups} />
-        <LeakageV2CellGrid cells={leakageV2.cells} limitations={leakageV2.limitations} />
+        <LeakageV2CellGrid cells={leakageV2.cells} />
         {opportunities && <OpportunitiesPanel cells={opportunities.cells} limitations={opportunities.limitations} />}
       </div>
     );

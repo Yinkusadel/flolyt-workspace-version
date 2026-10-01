@@ -1,7 +1,6 @@
 import { Layers } from "lucide-react";
 
 import { InfoTooltip } from "@/components/ui/info-tooltip";
-import { Callout } from "@/components/ui/rail";
 import { formatCompactMoney, formatPercent } from "@/lib/format-measured-value";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
 import type { LeakageV2Amount, LeakageV2Cell, LeakageV2DisplayState } from "@/services/api/leakage/get-leakage";
@@ -168,29 +167,13 @@ function CellRow({ cell }: { cell: LeakageV2Cell }) {
   );
 }
 
-function LimitationsSummary({ limitations }: { limitations: string[] }) {
-  if (limitations.length === 0) return null;
-  const grouped = groupLimitations(limitations);
-  return (
-    <Callout tone="amber" title={`${limitations.length} limitation${limitations.length === 1 ? "" : "s"} on this projection`}>
-      {/* Callout renders its children inside a <p> — a <ul> there is invalid nesting (caught live
-          2026-10-01), so each group is a line of inline text instead. */}
-      {grouped.map(({ template, count }, i) => (
-        <span key={template}>
-          {i > 0 && <br />}
-          {count > 1 ? `${count}× ` : ""}
-          {template}
-        </span>
-      ))}
-    </Callout>
-  );
-}
-
 /**
  * The V2 main page's cell list — see docs/leakage-map/v2-build-plan.md Steps 2–3. Reads straight
- * off `GET /leakage`'s own `cells[]`, no per-cell fetch.
+ * off `GET /leakage`'s own `cells[]`, no per-cell fetch. `limitations[]` moved to its own
+ * `V2LimitationsCard` (see v2-coverage-limitations.tsx), categorized by real sentence template
+ * instead of a flat deduped-by-UUID callout.
  */
-export function LeakageV2CellGrid({ cells, limitations }: { cells: LeakageV2Cell[]; limitations: string[] }) {
+export function LeakageV2CellGrid({ cells }: { cells: LeakageV2Cell[] }) {
   const stageGroups = groupCellsByStage(cells);
 
   if (stageGroups.length === 0) {
@@ -203,7 +186,6 @@ export function LeakageV2CellGrid({ cells, limitations }: { cells: LeakageV2Cell
 
   return (
     <div className="space-y-4">
-      <LimitationsSummary limitations={limitations} />
       {stageGroups.map(({ stageLabel, cells: stageCells }) => (
         <div key={stageLabel} className="rounded-card border border-line bg-paper">
           <p className="border-b border-line px-4 py-2.5 font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">
