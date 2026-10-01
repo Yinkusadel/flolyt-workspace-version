@@ -24,7 +24,7 @@ wired into code yet, so we always have a source of truth to check against and co
 | Wallet | [wallet.md](wallet.md) | 5/5 documented and scaffolded (service+hook), 3/5 wired (`GET /balance`, `GET /transactions`, `POST /topup`, into `plan-and-billing`) |
 | AI proposals | [ai-proposals.md](ai-proposals.md) | 4/4 documented and wired into the chat panel (`conversations/detail-route.tsx` + `proposal-card.tsx`); Inbox side not built yet |
 | Data Platform | [data-platform.md](data-platform.md) | 1/15 documented and wired (`GET /schema-explorer`, into `/schema`); other 14 pasted but not yet scaffolded |
-| Leakage | [leakage.md](leakage.md) | V1: 9/9 documented, scaffolded, wired into `/leakage-map` (see [../leakage-map/build-plan.md](../leakage-map/build-plan.md)); V2 (dual-contract `GET /leakage`): documented, wired, live-verified — see file's V2 section and [../leakage-map/v2-build-plan.md](../leakage-map/v2-build-plan.md) |
+| Leakage | [leakage.md](leakage.md) | V1: 9/9 documented, scaffolded, wired into `/leakage-map`; V2 main page (dual-contract `GET /leakage`): documented, wired, live-verified; V2 cell detail/history/evidence/learn-why, coverage, calculation, case+Room lifecycle (14 routes): documented, scaffolded, 0/14 wired — see file's V2 sections and [../leakage-map/v2-build-plan.md](../leakage-map/v2-build-plan.md) |
 | Opportunities | [opportunities.md](opportunities.md) | 1/1 documented, scaffolded, wired into `/leakage-map`'s new "Missed opportunities" panel, live-verified (thin data only — `POPULATED`-with-`amounts[]` unconfirmed) |
 
 ## Per-endpoint entry format

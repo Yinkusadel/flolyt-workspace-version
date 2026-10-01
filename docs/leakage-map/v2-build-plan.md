@@ -19,6 +19,14 @@ So this pass is scoped to:
    `apiConfig.ts`, response shape changes once a workspace is flagged in).
 2. `GET /api/v3/opportunities` — new, separate, positive-polarity endpoint.
 
+**Update 2026-10-01:** the user asked directly whether cell detail/Learn Why/case-Room were
+excluded by the doc itself (they're not — the doc fully specifies them) or just not yet asked for
+(they weren't). Clarified the scoping above was my own inference from the boss's 2-endpoint Slack
+answer, not an explicit instruction from him or a restriction in the doc. Per the user's direct
+request, all 14 remaining `/leakage/*` V2 routes below are now **documented and scaffolded**
+(service + hook, see [docs/endpoints/leakage.md](../endpoints/leakage.md)'s V2 sections) —
+**still 0/14 wired into any page**, pending further direction on what to build next.
+
 **Deliberately not in this pass** (the handoff doc covers them, but nobody has asked for them yet —
 do not start on these without a separate go-ahead):
 

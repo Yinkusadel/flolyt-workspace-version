@@ -682,6 +682,26 @@ export const API_ENDPOINTS = {
     LEARN_WHY_LEAKAGE_STAGE: `${LEAKAGE_BASE_URL}/stages/{stageKey}/learn-why`,
     LEARN_WHY_LEAKAGE_CELL: `${LEAKAGE_BASE_URL}/cells/{grid}/{row}/{condition}/{currency}/learn-why`,
     GET_LEAKAGE_STAGE: `${LEAKAGE_BASE_URL}/stages/{stageKey}`,
+
+    // Added 2026-10-01 — the rest of the V2 handoff doc's `/leakage/*` routes (cell detail/history/
+    // evidence/learn-why, coverage, calculation, the case+Room lifecycle, cutover-readiness).
+    // Scaffolded per the user's explicit ask; none of these are wired into a page yet. `_V2` suffix
+    // on cell/learn-why keys only to avoid colliding with the V1 4-segment-path keys above — see
+    // docs/endpoints/leakage.md's V2 section and docs/leakage-map/v2-build-plan.md.
+    GET_LEAKAGE_CELL_V2: `${LEAKAGE_BASE_URL}/cells/{cellId}`,
+    GET_LEAKAGE_CELL_HISTORY: `${LEAKAGE_BASE_URL}/cells/{cellId}/history`,
+    GET_LEAKAGE_CELL_EVIDENCE: `${LEAKAGE_BASE_URL}/cells/{cellId}/evidence`,
+    LEARN_WHY_LEAKAGE_CELL_V2: `${LEAKAGE_BASE_URL}/cells/{cellId}/learn-why`,
+    GET_LEAKAGE_COVERAGE: `${LEAKAGE_BASE_URL}/coverage`,
+    GET_LEAKAGE_CALCULATION: `${LEAKAGE_BASE_URL}/calculation`,
+    CREATE_LEAKAGE_CASE: `${LEAKAGE_BASE_URL}/cells/{cellId}/case`,
+    GET_LEAKAGE_CASE: `${LEAKAGE_BASE_URL}/cases/{caseId}`,
+    UPDATE_LEAKAGE_CASE_OWNER: `${LEAKAGE_BASE_URL}/cases/{caseId}/owner`,
+    TRANSITION_LEAKAGE_CASE: `${LEAKAGE_BASE_URL}/cases/{caseId}/transitions`,
+    UPDATE_LEAKAGE_CASE_DUE_DATE: `${LEAKAGE_BASE_URL}/cases/{caseId}/due-date`,
+    ADD_LEAKAGE_CASE_DECISION: `${LEAKAGE_BASE_URL}/cases/{caseId}/decisions`,
+    OPEN_ROOM_ON_LEAKAGE_CASE: `${LEAKAGE_BASE_URL}/cases/{caseId}/room`,
+    GET_LEAKAGE_CUTOVER_READINESS: `${LEAKAGE_BASE_URL}/cutover-readiness`,
   },
 
   // Separate positive-polarity resource from LEAKAGE above, per the V2 handoff doc — never netted

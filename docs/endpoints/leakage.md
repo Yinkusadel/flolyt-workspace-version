@@ -495,3 +495,35 @@ live) rather than silently falling back to V1 data.
   just a documented intent); a `POPULATED` cell's `amounts[]` had exactly one entry in every real
   example seen so far (never 2+, despite the type allowing it); `state.facets` containing
   `"COMPOUND"` was present on both real populated cells pulled.
+
+## V2 — remaining `/leakage/*` routes (scaffolded 2026-10-01, none wired)
+
+The rest of the handoff doc's V2 routes, service+hook scaffolded on explicit request, not wired
+into any page yet. Query/body shapes are typed from the doc's own TS blocks where it gave one;
+where it only gave prose (flagged per-file below), the shape is reconstructed and unconfirmed
+against a real response.
+
+| Route | File | Params/body source |
+|---|---|---|
+| `GET /leakage/cells/{cellId}` | `get-leakage-cell-v2.ts` | doc TS block (`CellDetailV2`) |
+| `GET /leakage/cells/{cellId}/history` | `get-leakage-cell-history.ts` | doc TS block (`CellHistoryV2`) |
+| `GET /leakage/cells/{cellId}/evidence` | `get-leakage-cell-evidence.ts` | ⚠️ prose only, no TS block |
+| `POST /leakage/cells/{cellId}/learn-why` | `learn-why-leakage-cell-v2.ts` | doc prose (result fields named explicitly) |
+| `GET /leakage/coverage` | `get-leakage-coverage.ts` | doc TS block (`CoverageV2`); ⚠️ query params unconfirmed |
+| `GET /leakage/calculation` | `get-leakage-calculation.ts` | doc TS block (`CalculationV2`); ⚠️ query params unconfirmed |
+| `POST /leakage/cells/{cellId}/case` | `create-leakage-case.ts` | doc prose + `RevenueLeakCase` TS block |
+| `GET /leakage/cases/{caseId}` | `get-leakage-case.ts` | `RevenueLeakCase` TS block |
+| `PUT /leakage/cases/{caseId}/owner` | `update-leakage-case-owner.ts` | doc prose |
+| `POST /leakage/cases/{caseId}/transitions` | `transition-leakage-case.ts` | doc prose — `target` type excludes `"VERIFIED"` at compile time, per the doc's explicit rule |
+| `PUT /leakage/cases/{caseId}/due-date` | `update-leakage-case-due-date.ts` | doc prose |
+| `POST /leakage/cases/{caseId}/decisions` | `add-leakage-case-decision.ts` | doc prose |
+| `POST /leakage/cases/{caseId}/room` | `open-room-on-leakage-case.ts` | ⚠️ response shape for the Room itself not given as a TS block |
+| `GET /leakage/cutover-readiness` | `get-leakage-cutover-readiness.ts` | ⚠️ prose only, no TS block; operator diagnostics, unlikely to ever need a UI |
+
+Shared `RevenueLeakCase`/`RevenueLeakCaseStatus`/decision/escalation/audit/value-attribution types
+live in `leakage-case-types.ts`, imported by every case-lifecycle file above (same pattern as
+`get-leakage.ts` being the canonical source for the main page's types).
+
+**Status: documented, scaffolded (service + hook, `npx tsc -b` clean), 0/14 wired, 0/14 live-verified.**
+See [docs/leakage-map/v2-build-plan.md](../leakage-map/v2-build-plan.md) — wiring any of these is a
+new step, not yet started.
