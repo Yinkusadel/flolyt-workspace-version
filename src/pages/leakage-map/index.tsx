@@ -12,15 +12,16 @@ import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
 import { LeakageV2CellGrid } from "@/pages/leakage-map/v2-cell-grid";
 import { LeakageV2Rollups } from "@/pages/leakage-map/v2-rollups";
+import { V2KpiStrip } from "@/pages/leakage-map/v2-kpi-strip";
+import { V2StatusLine } from "@/pages/leakage-map/v2-status-line";
 import { OpportunitiesPanel } from "@/pages/leakage-map/opportunities-panel";
 import { useGetOpportunities } from "@/features/opportunities/use-get-opportunities";
-import { V2ControlsBar } from "@/pages/leakage-map/v2-controls-bar";
+import { V2FiltersMenu } from "@/pages/leakage-map/v2-filters-menu";
 import {
   toGetLeakageV2Params,
   v2FilterStateFromControls,
   type LeakageV2FilterState,
 } from "@/pages/leakage-map/v2-filters";
-import { formatRelativeTime } from "@/lib/format-measured-value";
 import { useGetLeakageReport } from "@/features/leakage/use-get-leakage-report";
 import {
   DEFAULT_FILTERS,
@@ -124,25 +125,30 @@ export default function LeakageMap() {
     );
   }
 
-  // V2 branch — see docs/leakage-map/v2-build-plan.md Steps 2–3. Rollups (Step 4) aren't wired yet.
+  // V2 branch — restyled 2026-10-01 to match V1's visual language (cascading Filters menu, the
+  // shared KpiCards stat-tile component, one legible status line) instead of the first pass's raw
+  // <select> row and chip-per-fact cell layout. See docs/leakage-map/v2-build-plan.md Steps 2–4.
   if (leakageV2) {
     // Covers the one-frame gap between a V2 response first arriving and the seeding effect above
-    // committing — keeps the controls bar always rendering a valid, server-sourced selection
+    // committing — keeps the Filters menu always rendering a valid, server-sourced selection
     // rather than flashing empty.
     const effectiveV2Filters = v2Filters ?? v2FilterStateFromControls(leakageV2.controls);
+    const hiddenCellCount = leakageV2.cells.filter((cell) => cell.state.display === "HIDDEN_BY_FILTER").length;
+
     return (
       <div className="space-y-6">
+        <RecomputingToast visible={!isError && isFetching} horizonLabel="this view" />
+        {isError && <PageStateBanner state="error" errorMessage={error?.message} onRetry={() => refetch()} />}
+
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
-            <p className="mt-1 text-[11.5px] text-ink-3">
-              As of {formatRelativeTime(leakageV2.publication.asOfUtc)}
-              {isFetching && " · recomputing…"}
-            </p>
+            <V2StatusLine controls={leakageV2.controls} publication={leakageV2.publication} hiddenCount={hiddenCellCount} />
           </div>
-          <V2ControlsBar controls={leakageV2.controls} filters={effectiveV2Filters} onFiltersChange={handleV2FiltersChange} />
+          <V2FiltersMenu controls={leakageV2.controls} filters={effectiveV2Filters} onFiltersChange={handleV2FiltersChange} />
         </div>
-        {isError && <PageStateBanner state="error" errorMessage={error?.message} onRetry={() => refetch()} />}
+
+        <V2KpiStrip rollups={leakageV2.rollups} coverage={leakageV2.coverage} />
         <LeakageV2Rollups rollups={leakageV2.rollups} />
         <LeakageV2CellGrid cells={leakageV2.cells} limitations={leakageV2.limitations} />
         {opportunities && <OpportunitiesPanel cells={opportunities.cells} limitations={opportunities.limitations} />}

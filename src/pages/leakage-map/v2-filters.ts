@@ -51,7 +51,35 @@ export function toGetLeakageV2Params(filters: LeakageV2FilterState): GetLeakageV
   };
 }
 
-/** "in_flight" -> "In flight" — the option list's own plain values, not a record's uppercase form. */
-export function lifecycleClassOptionLabel(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, " ");
+/**
+ * Shared cosmetic formatter for every raw internal key/enum this V2 surface renders — cells'
+ * `lifecycleClass`, rollup `value`s, opportunity `opportunityType`/`subjectType`, filter option
+ * labels that have no server-given `label` field. "in_flight" -> "In flight",
+ * "IN_FLIGHT" -> "In flight" (record-level fields come back uppercase per Step 0's casing
+ * finding, filter option values come back lowercase — this normalizes both the same way, not just
+ * the lowercase case), "account_activity:active" -> "Account activity · Active". Purely cosmetic,
+ * never invents a fact the response didn't already state — the same helper used to live
+ * separately in `v2-cell-grid.tsx`/`v2-rollups.tsx`/`opportunities-panel.tsx`, consolidated here
+ * 2026-10-01 so casing stays consistent across the whole V2 surface instead of three
+ * near-duplicate functions.
+ */
+export function humanizeEnum(value: string): string {
+  return value
+    .split(":")
+    .map((segment) =>
+      segment
+        .replace(/[_-]/g, " ")
+        .toLowerCase()
+        .split(" ")
+        .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+        .join(" ")
+    )
+    .join(" · ");
+}
+
+/** Prefers the server's own `label` for mode/horizon (it already gives one per option); falls
+ * back to `humanizeEnum` for filters that are just bare string arrays (market/sector/severity/
+ * confidence/lifecycleClass) with no label field at all. */
+export function v2OptionLabel(value: string, options?: { value: string; label: string }[]): string {
+  return options?.find((o) => o.value === value)?.label ?? humanizeEnum(value);
 }

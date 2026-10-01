@@ -1,8 +1,10 @@
-import { Chip } from "@/components/ui/chip";
+import { Layers } from "lucide-react";
+
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { Callout } from "@/components/ui/rail";
 import { formatCompactMoney, formatPercent } from "@/lib/format-measured-value";
-import type { LeakageV2Amount, LeakageV2Cell } from "@/services/api/leakage/get-leakage";
+import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
+import type { LeakageV2Amount, LeakageV2Cell, LeakageV2DisplayState } from "@/services/api/leakage/get-leakage";
 
 /**
  * V2's main-page response has no grid/row/column structure the way `GET /leakage`'s `grids[]`
@@ -19,8 +21,8 @@ export function groupCellsByStage(cells: LeakageV2Cell[]): { stageLabel: string;
   const byStage = new Map<string, LeakageV2Cell[]>();
   for (const cell of cells) {
     // HIDDEN_BY_FILTER cells stay loaded (per the handoff doc) but drop out of the active view —
-    // clearing the filter that hid them restores them without a re-fetch. Not yet exercised live;
-    // no filter sends a severity/sector/etc. value yet (Step 3).
+    // clearing the filter that hid them restores them without a re-fetch. Counted by
+    // index.tsx's V2StatusLine, not shown as rows here.
     if (cell.state.display === "HIDDEN_BY_FILTER") continue;
     const stageLabel = cell.coordinate.revenueStageLabel;
     if (!byStage.has(stageLabel)) {
@@ -53,16 +55,33 @@ export function groupLimitations(limitations: string[]): { template: string; cou
     .sort((a, b) => b.count - a.count);
 }
 
-function AmountRow({ amount }: { amount: LeakageV2Amount }) {
+const STATUS_DOT_CLASS: Record<LeakageV2DisplayState, string> = {
+  POPULATED: "bg-teal",
+  NO_EXPOSURE: "bg-ink-4",
+  UNKNOWN: "bg-ink-4",
+  HIDDEN_BY_FILTER: "bg-ink-4",
+};
+
+/**
+ * One amount, as a single legible unit: the figure is the dominant element; everything else
+ * (lifecycle class, range) is one small muted line underneath — not a row of equal-weight chips.
+ * Restyled 2026-10-01 after live feedback that the first pass's chip-per-fact layout made it hard
+ * to tell which value was which.
+ */
+function AmountBlock({ amount }: { amount: LeakageV2Amount }) {
+  const hasRange = amount.range.status !== "UNAVAILABLE" && amount.range.lower !== null && amount.range.upper !== null;
   return (
-    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-      <span className="text-[14px] font-semibold text-ink">{formatCompactMoney(amount.value, amount.currency)}</span>
-      <span className="text-[10px] text-ink-4 uppercase">{amount.lifecycleClass}</span>
-      {amount.range.status !== "UNAVAILABLE" && amount.range.lower !== null && amount.range.upper !== null && (
-        <span className="text-[10.5px] text-ink-4">
-          {formatCompactMoney(amount.range.lower, amount.currency)}–{formatCompactMoney(amount.range.upper, amount.currency)}
-        </span>
-      )}
+    <div className="text-right">
+      <p className="text-[16px] font-semibold text-ink tabular-nums">{formatCompactMoney(amount.value, amount.currency)}</p>
+      <p className="text-[10.5px] text-ink-4">
+        {humanizeEnum(amount.lifecycleClass)}
+        {hasRange && (
+          <>
+            {" · "}
+            {formatCompactMoney(amount.range.lower!, amount.currency)}–{formatCompactMoney(amount.range.upper!, amount.currency)}
+          </>
+        )}
+      </p>
     </div>
   );
 }
@@ -71,10 +90,11 @@ function AmountRow({ amount }: { amount: LeakageV2Amount }) {
 function CellRow({ cell }: { cell: LeakageV2Cell }) {
   const { display } = cell.state;
   const { coordinate } = cell;
+  const primaryAmount = cell.amounts[0];
+  const isCompound = cell.state.facets.includes("COMPOUND");
 
   // Accessible name per the handoff doc: mechanism, revenue stage, state value, display state,
   // amount/currency when present, severity, confidence — text/icon carries the meaning, not color.
-  const primaryAmount = cell.amounts[0];
   const accessibleName = [
     coordinate.mechanismLabel,
     coordinate.revenueStageLabel,
@@ -88,22 +108,32 @@ function CellRow({ cell }: { cell: LeakageV2Cell }) {
     .join(", ");
 
   return (
-    <div role="group" aria-label={accessibleName} className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 first:border-t-0">
-      <div className="min-w-0">
-        <p className="text-[12.5px] font-medium text-ink">{coordinate.mechanismLabel}</p>
-        <p className="text-[11px] text-ink-3">
-          {coordinate.stateDimensionLabel}: {coordinate.stateValueLabel} · {coordinate.subject.unit}
-        </p>
+    <div
+      role="group"
+      aria-label={accessibleName}
+      className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 first:border-t-0"
+    >
+      <div className="flex min-w-0 items-start gap-2.5">
+        <span className={`mt-1.5 size-1.5 shrink-0 rounded-full ${STATUS_DOT_CLASS[display]}`} aria-hidden />
+        <div className="min-w-0">
+          <p className="text-[12.5px] font-medium text-ink">{coordinate.mechanismLabel}</p>
+          <p className="text-[11px] text-ink-3">
+            {coordinate.stateDimensionLabel}: {coordinate.stateValueLabel} · {coordinate.subject.unit}
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        {display === "NO_EXPOSURE" && (
-          <div className="text-[12.5px] font-medium text-ink-3">
-            {/* Unconfirmed live whether a NO_EXPOSURE cell still carries a zero-valued amounts[] entry
-                or comes back empty like UNKNOWN — handling both until a real example is seen. */}
-            {cell.amounts.length > 0 ? cell.amounts.map((a, i) => <AmountRow key={i} amount={a} />) : "No exposure"}
-          </div>
-        )}
+      <div className="flex items-start gap-2.5">
+        {display === "NO_EXPOSURE" &&
+          (cell.amounts.length > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              {cell.amounts.map((a, i) => (
+                <AmountBlock key={i} amount={a} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-[12.5px] font-medium text-ink-3">No exposure</p>
+          ))}
 
         {display === "UNKNOWN" && (
           <span className="inline-flex items-center gap-1.5 text-[11.5px] text-ink-4">
@@ -113,21 +143,24 @@ function CellRow({ cell }: { cell: LeakageV2Cell }) {
         )}
 
         {display === "POPULATED" && (
-          <div className="flex flex-col items-end gap-1">
-            {cell.amounts.map((amount, i) => (
-              <AmountRow key={i} amount={amount} />
-            ))}
-          </div>
-        )}
-
-        {primaryAmount && (
           <>
-            <Chip tone="neutral">Severity {primaryAmount.severity}</Chip>
-            <Chip tone="neutral">
-              {primaryAmount.confidenceLevel} confidence ({formatPercent(primaryAmount.confidence)})
-            </Chip>
-            {primaryAmount.candidateCount > 0 && <Chip tone="neutral">{primaryAmount.candidateCount} candidates</Chip>}
-            {cell.state.facets.includes("COMPOUND") && <Chip tone="ultra">Compound</Chip>}
+            <div className="flex flex-col gap-1.5">
+              {cell.amounts.map((amount, i) => (
+                <AmountBlock key={i} amount={amount} />
+              ))}
+              {primaryAmount && (
+                <p className="text-[10.5px] text-ink-4">
+                  Severity {primaryAmount.severity} · {humanizeEnum(primaryAmount.confidenceLevel)} confidence (
+                  {formatPercent(primaryAmount.confidence)})
+                  {primaryAmount.candidateCount > 0 && ` · ${primaryAmount.candidateCount} candidates`}
+                </p>
+              )}
+            </div>
+            {isCompound && (
+              <span title="Several independently-supported candidates contribute to this figure" className="mt-0.5 text-ink-4">
+                <Layers className="size-3.5" aria-hidden />
+              </span>
+            )}
           </>
         )}
       </div>
@@ -154,9 +187,8 @@ function LimitationsSummary({ limitations }: { limitations: string[] }) {
 }
 
 /**
- * The V2 main page's cell list — see docs/leakage-map/v2-build-plan.md Step 2. Reads straight off
- * `GET /leakage`'s own `cells[]`, no per-cell fetch. Filters (Step 3) and rollups (Step 4) aren't
- * wired yet; this is the grid itself.
+ * The V2 main page's cell list — see docs/leakage-map/v2-build-plan.md Steps 2–3. Reads straight
+ * off `GET /leakage`'s own `cells[]`, no per-cell fetch.
  */
 export function LeakageV2CellGrid({ cells, limitations }: { cells: LeakageV2Cell[]; limitations: string[] }) {
   const stageGroups = groupCellsByStage(cells);

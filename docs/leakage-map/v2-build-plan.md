@@ -19,7 +19,35 @@ So this pass is scoped to:
    `apiConfig.ts`, response shape changes once a workspace is flagged in).
 2. `GET /api/v3/opportunities` — new, separate, positive-polarity endpoint.
 
-**Update 2026-10-01:** the user asked directly whether cell detail/Learn Why/case-Room were
+**Update 2026-10-01 (design pass):** the user flagged the V2 page's visual design as "wack" and
+hard to read, and pushed back on waiting for a mockup before fixing it — correctly: the job is to
+apply this app's own existing design language, not wait for a Figma file that was never going to
+exist for a backend-contract handoff doc. Rebuilt using patterns already established on V1:
+- **Filters**: replaced the 7 raw `<select>` elements with the exact same cascading "Filters"
+  dropdown menu V1 uses (`filters-menu.tsx`). Extracted the reusable pieces (`OptionRow`,
+  `SubHeading`, `useCascadeSlot`) into a new shared `cascade-menu.tsx` so both versions use
+  identical code — live-verified V1's menu still opens correctly after the extraction.
+- **KPI strip**: added `v2-kpi-strip.tsx` using the app's shared `KpiCards` component (the same
+  stat-tile row every stage tab opens with) for Total exposure / Coverage / Residual unknown,
+  instead of repeating a "Total" row inside the rollups list.
+- **Status line**: added `v2-status-line.tsx`, one muted sentence with bolded key values — same
+  convention as V1's `status-line.tsx` — instead of scattered chips.
+- **Row hierarchy**: rewrote cell/rollup/opportunity rows so the dollar amount is the dominant
+  element and everything else (lifecycle class, severity, confidence, candidates) reads as one
+  small muted descriptive line underneath, not a row of equal-weight chips — this was the direct
+  fix for "I can't tell what the values I'm seeing are."
+- **Consolidated humanization**: `humanizeEnum()` in `v2-filters.ts` replaces 3 near-duplicate
+  local functions. **Two real bugs this consolidation caught live**: (1) it only capitalized the
+  first letter without lowercasing the rest, so uppercase API values like `"IN_FLIGHT"` rendered as
+  "IN FLIGHT" instead of "In flight" — fixed by lowercasing before capitalizing; (2) it was being
+  applied to currency codes in the rollups "By market" row, turning `"USD"` into `"Usd"` — fixed by
+  never humanizing a market-dimension rollup's value, same as `AmountBlock` never humanizes
+  `amount.currency` elsewhere on the page.
+- **Live-verified 2026-10-01** end to end against the real V2-flagged workspace (both bugs above
+  were caught and fixed from actual rendered screenshots, not guessed) — zero console errors,
+  KPI strip/status line/Filters menu/rollups/cell list all confirmed rendering correctly.
+
+**Update 2026-10-01 (scope):** the user asked directly whether cell detail/Learn Why/case-Room were
 excluded by the doc itself (they're not — the doc fully specifies them) or just not yet asked for
 (they weren't). Clarified the scoping above was my own inference from the boss's 2-endpoint Slack
 answer, not an explicit instruction from him or a restriction in the doc. Per the user's direct

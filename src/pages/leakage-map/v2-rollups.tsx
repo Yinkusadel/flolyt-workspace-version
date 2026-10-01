@@ -1,15 +1,10 @@
 import { formatCompactMoney } from "@/lib/format-measured-value";
+import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
 import type { LeakageV2Rollup } from "@/services/api/leakage/get-leakage";
 
-const DIMENSION_ORDER: LeakageV2Rollup["dimension"][] = [
-  "total",
-  "market",
-  "sector",
-  "stage",
-  "mechanism",
-  "severity",
-  "state",
-];
+// "total" is deliberately excluded — promoted to the page's `V2KpiStrip` headline instead of
+// repeated here, per the 2026-10-01 design pass.
+const DIMENSION_ORDER: LeakageV2Rollup["dimension"][] = ["market", "sector", "stage", "mechanism", "severity", "state"];
 
 const DIMENSION_LABEL: Record<LeakageV2Rollup["dimension"], string> = {
   total: "Total",
@@ -20,16 +15,6 @@ const DIMENSION_LABEL: Record<LeakageV2Rollup["dimension"], string> = {
   severity: "By severity",
   state: "By state",
 };
-
-/** "account_activity:active" -> "Account activity · Active" — cosmetic only, rollups carry no
- * label field the way cells do (`mechanismLabel`, etc.), only the raw internal key. */
-function humanizeRollupValue(value: string): string {
-  return value
-    .split(":")
-    .map((part) => part.replace(/[_-]/g, " "))
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" · ");
-}
 
 /** Preserves `DIMENSION_ORDER`, not response order — rollups arrive as one flat list mixing every
  * dimension together, so grouping is required before anything is renderable. */
@@ -48,15 +33,18 @@ export function groupRollupsByDimension(
 }
 
 function RollupRow({ rollup }: { rollup: LeakageV2Rollup }) {
+  // "market"'s `value` is literally a currency code (e.g. "USD") — a real bug caught live
+  // 2026-10-01: running it through `humanizeEnum` produced "Usd". Currency codes are never
+  // humanized anywhere else on this page either (`AmountBlock` renders them raw), so this matches.
+  const rowLabel = rollup.dimension === "market" ? rollup.value : humanizeEnum(rollup.value);
   return (
     <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-2.5 first:border-t-0">
-      <span className="text-[12px] text-ink-2">{humanizeRollupValue(rollup.value)}</span>
-      <div className="flex items-center gap-2">
-        <span className="font-mono text-[9px] tracking-[0.5px] text-ink-4 uppercase">{rollup.lifecycleClass}</span>
-        <span className="text-[13px] font-semibold text-ink">{formatCompactMoney(rollup.amount, rollup.currency)}</span>
-        <span className="text-[10.5px] text-ink-4">
-          {rollup.cellCount} cell{rollup.cellCount === 1 ? "" : "s"}
-        </span>
+      <span className="text-[12px] text-ink-2">{rowLabel}</span>
+      <div className="text-right">
+        <p className="text-[13px] font-semibold text-ink tabular-nums">{formatCompactMoney(rollup.amount, rollup.currency)}</p>
+        <p className="text-[10.5px] text-ink-4">
+          {humanizeEnum(rollup.lifecycleClass)} · {rollup.cellCount} cell{rollup.cellCount === 1 ? "" : "s"}
+        </p>
       </div>
     </div>
   );
