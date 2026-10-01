@@ -83,12 +83,18 @@ that we can only build against the documented shape, not a real response.
       default), and a legacy (unflagged) response from the same endpoint pulled back-to-back to
       prove the branch doesn't regress existing behavior.
 
-### Step 1 — Types + response branching — ☐ not started
-- [ ] Add V2 types (`LeakagePageV2`, `Cell`, `Amount`, `Rollup`, `CoverageSummary`, `Publication`)
-      to `src/services/api/leakage/get-leakage.ts` or a new sibling file, alongside the existing V1
-      types — do not replace them, legacy must keep working.
-- [ ] `getLeakage()` / `useGetLeakage` return type becomes a union; narrow on `contractVersion`.
-- [ ] Nothing about the existing V1 render path changes yet — this step is plumbing only.
+### Step 1 — Types + response branching — ✅ done (2026-10-01)
+- [x] Added V2 types (`LeakagePageV2`, `LeakageV2Cell`, `LeakageV2Amount`, `LeakageV2Rollup`,
+      `LeakageV2CoverageSummary`, `LeakageV2Publication`, etc.) to
+      `src/services/api/leakage/get-leakage.ts`, alongside the existing V1 types — untouched, legacy
+      still works exactly as before. The casing and oversized-`limitations[]` findings from Step 0
+      are documented inline on `LeakageV2Amount`/`LeakagePageV2` so they can't be silently re-broken.
+- [x] `GetLeakageResponse.data` is now `LeakagePageData | LeakagePageV2`, with an `isLeakagePageV2()`
+      type guard to narrow it.
+- [x] `index.tsx` narrows on the guard before reading any V1 field. A `contractVersion: "2.0"`
+      response now renders a holding placeholder ("a dedicated view for it is being built") instead
+      of crashing or reading `undefined` off missing V1 fields; every legacy workspace is unaffected.
+- [x] `npx tsc -b` clean.
 
 ### Step 2 — V2 page renderer — ☐ not started
 - [ ] When `contractVersion === "2.0"`, render a new grid component built on `cells[]` directly from

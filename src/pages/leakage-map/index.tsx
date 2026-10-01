@@ -9,6 +9,7 @@ import { CoveragePanel } from "@/pages/leakage-map/coverage-panel";
 import { PageStateBanner } from "@/pages/leakage-map/page-state-banner";
 import { RecomputingToast } from "@/pages/leakage-map/recomputing-toast";
 import { useGetLeakage } from "@/features/leakage/use-get-leakage";
+import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
 import { useGetLeakageReport } from "@/features/leakage/use-get-leakage-report";
 import {
   DEFAULT_FILTERS,
@@ -42,7 +43,14 @@ export default function LeakageMap() {
 
   const params = toGetLeakageParams(filters);
   const { data: leakageResponse, isFetching, isError, error, refetch } = useGetLeakage(params);
-  const leakage = leakageResponse?.data;
+  const leakageData = leakageResponse?.data;
+  // `GET /leakage` is dual-contract — a workspace flagged into Revenue Leakage V2 gets a
+  // differently-shaped `contractVersion: "2.0"` response from the same endpoint. This page's
+  // renderer below is still the V1 one; a V2 response gets a holding placeholder until
+  // docs/leakage-map/v2-build-plan.md's Step 2 builds its real grid. Never read V1 fields (stages,
+  // grids, markets, …) without this narrowing — they don't exist on the V2 shape.
+  const isV2Response = !!leakageData && isLeakagePageV2(leakageData);
+  const leakage = leakageData && !isV2Response ? leakageData : undefined;
   // Independent of the page's own severity/confidence/calculate filters — GET /leakage/report only
   // takes window/horizon. Powers the market breakdown only; not on the loading/error critical path.
   const { data: reportResponse } = useGetLeakageReport({ window: params.window, horizon: params.horizon });
@@ -78,6 +86,19 @@ export default function LeakageMap() {
       <div className="space-y-6">
         <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
         <PageStateBanner state="empty" />
+      </div>
+    );
+  }
+
+  // Holding state until Step 2 builds the real V2 grid — see docs/leakage-map/v2-build-plan.md.
+  if (isV2Response) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
+        <PageStateBanner
+          state="error"
+          errorMessage="This workspace is on the new Revenue Leakage V2 data. A dedicated view for it is being built."
+        />
       </div>
     );
   }
