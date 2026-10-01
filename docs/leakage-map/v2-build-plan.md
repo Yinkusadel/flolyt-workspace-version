@@ -96,26 +96,48 @@ that we can only build against the documented shape, not a real response.
       of crashing or reading `undefined` off missing V1 fields; every legacy workspace is unaffected.
 - [x] `npx tsc -b` clean.
 
-### Step 2 — V2 page renderer — ☐ not started
-- [ ] When `contractVersion === "2.0"`, render a new grid component built on `cells[]` directly from
-      the main response — **no separate cell-detail fetch in this pass** (that's the out-of-scope
-      `/cells/{cellId}` route). Legacy workspaces keep hitting the existing stage/matrix renderer,
-      untouched.
-- [ ] Render axes from the response's own labels (`coordinate.mechanismLabel`,
-      `stateDimensionLabel`, etc.) — the doc is explicit that the state dimension isn't always
-      "customer stage" (could be invoices, payments, merchants, SKUs...), so nothing about axis
-      labels gets hardcoded.
-- [ ] Implement the 5 display states per the doc's "Rendering rules" section:
-  - `POPULATED` — amount by currency/market/lifecycle class, range only if not `UNAVAILABLE`.
-  - `UNKNOWN` — availability reason + limitations, never rendered as zero, never in totals.
-  - `NO_EXPOSURE` — a real measured-zero state, visually distinct from `UNKNOWN`.
-  - `HIDDEN_BY_FILTER` — removed from the active grid, but the record stays loaded so clearing the
-    filter restores it without re-fetching.
-  - `COMPOUND` — show that several independently-supported candidates contribute.
-- [ ] Every cell needs an accessible name containing mechanism, revenue stage, state value, display
-      state, amount/currency (if present), severity, confidence — text/icon, never color alone.
-- [ ] Filter changes replace query params and request a fresh projection without clearing the old
-      grid while loading (same `placeholderData` pattern already used in V1's Step 2).
+### Step 2 — V2 page renderer — ✅ mostly done (2026-10-01)
+- [x] New `src/pages/leakage-map/v2-cell-grid.tsx` renders `LeakageV2CellGrid` straight off
+      `leakage.cells[]` from the main response — no separate cell-detail fetch (the `/cells/{cellId}`
+      route stays out of scope). `index.tsx` branches on `leakageV2` (the narrowed response) instead
+      of the Step 1 placeholder; legacy workspaces are completely untouched.
+- [x] **V2 has no grid/row/column structure at all** — unlike V1's `grids[]`, `cells[]` is flat, and
+      each cell is already one fully-resolved mechanism × state-value coordinate, not a pivot (a
+      live response confirmed `dormant_accounts` uses the `account_activity` state dimension while
+      `overdue_invoice` uses `collection_state` — different mechanisms don't even share an axis). So
+      there's no matrix to build; `groupCellsByStage()` groups by `coordinate.revenueStageLabel`
+      (the one axis every cell shares) and renders a list per stage, order following first-seen in
+      the response since the API gives no explicit stage ordering.
+- [x] Axes render from the response's own labels (`mechanismLabel`, `stateDimensionLabel`,
+      `stateValueLabel`) — nothing hardcoded.
+- [x] 3 of the 5 display states implemented and real-data-shaped: `POPULATED` (per-amount row with
+      currency/lifecycle-class/range), `UNKNOWN` (reuses `InfoTooltip`, fed the cell's own
+      `limitations[]` joined — not the V1 `missingSource`/`wouldUnlock` pair, which V2 doesn't have),
+      `NO_EXPOSURE` (handles both an empty `amounts[]` and a populated zero-valued one, since no real
+      `NO_EXPOSURE` example has been pulled live yet — flagged inline). `COMPOUND` renders as a chip
+      when `state.facets` includes it (confirmed live on both populated cells in the sample pull).
+- [ ] `HIDDEN_BY_FILTER` is coded (cells with that display state are excluded from the active
+      groups) but **unexercised** — nothing sends a severity/sector/etc. filter yet, that's Step 3.
+- [x] Accessible name built per cell (mechanism, revenue stage, state value, display state,
+      amount/currency, severity, confidence) via `aria-label` on each row.
+- [x] The oversized `limitations[]` array (Step 0's finding) is handled: `groupLimitations()`
+      collapses near-duplicate entries by stripping UUID-shaped tokens before counting, shown in a
+      collapsed `Callout` instead of a flat list.
+- [ ] Filter-driven refetch-without-clearing behavior not yet applicable — no V2 filters are wired
+      yet (Step 3).
+- [x] `npx tsc -b` clean.
+- [x] **Live-verified 2026-10-01** via Playwright against the real backend, logged into the
+      V2-flagged workspace (`chad@yopmail.com`, sector `financial-services`). Real response: 6
+      cells across 3 stages (Engage/Renew/Retain), 1063 raw `limitations` entries collapsed to 10
+      grouped lines. Caught and fixed 2 real bugs from this one live pass:
+  1. `Callout` wraps its children in a `<p>`; the first version of `LimitationsSummary` passed it a
+     `<ul>`, an invalid-HTML-nesting console error. Fixed to inline `<span>`/`<br />` lines.
+  2. **Shared-utility bug surfaced, not new:** `formatCompactMoney` (`src/lib/format-measured-value.ts`)
+     never rounded a sub-1000 amount — a real cell showed `USD 484.3195` verbatim. Every prior
+     caller (V1 leakage, lifecycle) happened to only ever pass whole numbers, so this was latent
+     until V2's precise decimals hit it. Fixed to `round(value, 2)` on that branch — safe for every
+     existing caller, since rounding an already-whole number is a no-op.
+  Zero console errors after both fixes; screenshot confirmed the rendered page matches the JSON.
 
 ### Step 3 — Controls mapping — ☐ not started
 - [ ] V2's `controls` block adds two filter dimensions V1 doesn't have: `sector` and

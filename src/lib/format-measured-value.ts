@@ -21,7 +21,10 @@ export function formatCompactMoney(value: number, currencyCode: string): string 
   // own 1dp convention for the same M/k breakpoints.
   if (abs >= 1_000_000) return `${prefix}${round(value / 1_000_000, 1)}M`;
   if (abs >= 1_000) return `${prefix}${round(value / 1_000, 1)}k`;
-  return `${prefix}${value}`;
+  // Confirmed live 2026-10-01 against real Leakage V2 data: an unrounded sub-1000 amount
+  // (484.3195) rendered as "USD 484.3195" — every prior caller's figures happened to already be
+  // whole numbers, so this branch's missing rounding was never visible until now.
+  return `${prefix}${round(value, 2)}`;
 }
 
 /**

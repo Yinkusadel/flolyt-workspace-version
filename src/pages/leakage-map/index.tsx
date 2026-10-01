@@ -10,6 +10,8 @@ import { PageStateBanner } from "@/pages/leakage-map/page-state-banner";
 import { RecomputingToast } from "@/pages/leakage-map/recomputing-toast";
 import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
+import { LeakageV2CellGrid } from "@/pages/leakage-map/v2-cell-grid";
+import { formatRelativeTime } from "@/lib/format-measured-value";
 import { useGetLeakageReport } from "@/features/leakage/use-get-leakage-report";
 import {
   DEFAULT_FILTERS,
@@ -51,6 +53,7 @@ export default function LeakageMap() {
   // grids, markets, …) without this narrowing — they don't exist on the V2 shape.
   const isV2Response = !!leakageData && isLeakagePageV2(leakageData);
   const leakage = leakageData && !isV2Response ? leakageData : undefined;
+  const leakageV2 = leakageData && isV2Response ? leakageData : undefined;
   // Independent of the page's own severity/confidence/calculate filters — GET /leakage/report only
   // takes window/horizon. Powers the market breakdown only; not on the loading/error critical path.
   const { data: reportResponse } = useGetLeakageReport({ window: params.window, horizon: params.horizon });
@@ -90,15 +93,19 @@ export default function LeakageMap() {
     );
   }
 
-  // Holding state until Step 2 builds the real V2 grid — see docs/leakage-map/v2-build-plan.md.
-  if (isV2Response) {
+  // V2 branch — see docs/leakage-map/v2-build-plan.md Step 2. Filters (Step 3) and rollups
+  // (Step 4) aren't wired yet; this renders the real cell list against the unfiltered default.
+  if (leakageV2) {
     return (
       <div className="space-y-6">
-        <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
-        <PageStateBanner
-          state="error"
-          errorMessage="This workspace is on the new Revenue Leakage V2 data. A dedicated view for it is being built."
-        />
+        <div>
+          <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
+          <p className="mt-1 text-[11.5px] text-ink-3">
+            As of {formatRelativeTime(leakageV2.publication.asOfUtc)} · {leakageV2.controls.horizonDays}-day horizon
+          </p>
+        </div>
+        {isError && <PageStateBanner state="error" errorMessage={error?.message} onRetry={() => refetch()} />}
+        <LeakageV2CellGrid cells={leakageV2.cells} limitations={leakageV2.limitations} />
       </div>
     );
   }
