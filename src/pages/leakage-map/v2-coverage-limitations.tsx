@@ -1,5 +1,4 @@
-import { useState } from "react";
-
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { formatCount, formatPercent } from "@/lib/format-measured-value";
 import { groupLimitations } from "@/pages/leakage-map/v2-cell-grid";
 import type { LeakageV2Cell, LeakageV2CoverageSummary } from "@/services/api/leakage/get-leakage";
@@ -213,14 +212,14 @@ function LimitationGroupRow({ group }: { group: LimitationGroup }) {
 
 /**
  * "Why the number is partial" — replaces the old flat amber Callout (one deduped-by-UUID bullet
- * list) with the real categories behind the page's `limitations[]`. "View all limitations" expands
- * the same UUID-deduped list the old Callout used, for the rare line that doesn't match one of the
- * four known templates in detail.
+ * list) with the real categories behind the page's `limitations[]`. "View all limitations" opens
+ * the same UUID-deduped list the old Callout used, in a modal (moved out of inline expansion per
+ * user feedback 2026-10-02) — same `Dialog` pattern as this page's own `HowCalculatedDialog`.
  */
 export function V2LimitationsCard({ limitations, cells }: { limitations: string[]; cells: LeakageV2Cell[] }) {
-  const [expanded, setExpanded] = useState(false);
   if (limitations.length === 0) return null;
   const groups = groupLimitationsByCategory(limitations, cells);
+  const fullList = groupLimitations(limitations);
 
   return (
     <div className="rounded-card border border-line bg-paper p-5">
@@ -233,24 +232,31 @@ export function V2LimitationsCard({ limitations, cells }: { limitations: string[
           <LimitationGroupRow key={group.key} group={group} />
         ))}
       </div>
-      <button
-        type="button"
-        onClick={() => setExpanded((e) => !e)}
-        aria-expanded={expanded}
-        className="mt-4 w-full rounded-control border border-line py-2 text-[12px] font-medium text-ink-2 hover:bg-paper-2"
-      >
-        {expanded ? "Hide full list" : "View all limitations"}
-      </button>
-      {expanded && (
-        <div className="mt-3 max-h-64 space-y-1.5 overflow-y-auto border-t border-line pt-3">
-          {groupLimitations(limitations).map(({ template, count }) => (
-            <p key={template} className="text-[11px] text-ink-4">
-              {count > 1 ? `${count}× ` : ""}
-              {template}
-            </p>
-          ))}
-        </div>
-      )}
+      <Dialog>
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            className="mt-4 w-full rounded-control border border-line py-2 text-[12px] font-medium text-ink-2 hover:bg-paper-2"
+          >
+            View all limitations
+          </button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>All limitations ({formatCount(limitations.length)})</DialogTitle>
+          </DialogHeader>
+          <DialogBody className="px-5 py-5 sm:px-7 sm:py-6">
+            <div className="space-y-2">
+              {fullList.map(({ template, count }) => (
+                <p key={template} className="text-[12px] leading-relaxed text-ink-3">
+                  {count > 1 ? `${count}× ` : ""}
+                  {template}
+                </p>
+              ))}
+            </div>
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
