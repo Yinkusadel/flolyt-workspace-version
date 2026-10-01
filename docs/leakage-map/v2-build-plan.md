@@ -47,7 +47,30 @@ exist for a backend-contract handoff doc. Rebuilt using patterns already establi
   were caught and fixed from actual rendered screenshots, not guessed) — zero console errors,
   KPI strip/status line/Filters menu/rollups/cell list all confirmed rendering correctly.
 
-**Update 2026-10-01 (scope):** the user asked directly whether cell detail/Learn Why/case-Room were
+**🔴 Design status: ON HOLD, 2026-10-01 — the redesign pass above was rejected.** After seeing it
+live, the user said the page "still looks wack and complete trash," specifically called out the
+Rollups panel as "taking up unnecessary space," and caught a real completeness gap I'd missed:
+`coverage.capability`/`.scope`/`.freshness`/`.quality` (four real measured sub-dimensions) are
+never surfaced anywhere — only `.effective` made it into the KPI strip. **Do not touch the visual
+design again until both of the following are resolved:**
+
+1. **A reference design exists and hasn't been shared yet.** The user got a design for this same
+   page from a separate claude.ai ("regular Claude") session that they say is "very far much
+   better" than anything built here. They haven't pasted it, a screenshot, or a description yet —
+   asked how they want to share it (screenshot / artifact link / description), they said "hold on."
+   **Ask for this before writing any more layout code** — building a third guess without it would
+   repeat the same mistake twice.
+2. **The `frontend-design` plugin was installed** (`claude plugin install
+   frontend-design@claude-plugins-official`, confirmed successful via terminal, scope: user) to
+   help with exactly this kind of work. It was installed from a separate terminal session, so it is
+   **not loaded in whichever session resumes this work** — that session needs to be freshly started
+   (not just continued) for the plugin's skill(s) to actually be available. Check the available-
+   skills listing at the top of a fresh session for a `frontend-design`-named entry before assuming
+   it's active.
+
+**The coverage-fields gap is real and independent of the design question** — `capability`/`scope`/
+`freshness`/`quality` should get surfaced somewhere once work resumes, regardless of what the final
+visual layout ends up looking like. the user asked directly whether cell detail/Learn Why/case-Room were
 excluded by the doc itself (they're not — the doc fully specifies them) or just not yet asked for
 (they weren't). Clarified the scoping above was my own inference from the boss's 2-endpoint Slack
 answer, not an explicit instruction from him or a restriction in the doc. Per the user's direct
