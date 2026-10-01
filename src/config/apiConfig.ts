@@ -44,6 +44,7 @@ export const PLAYS_BASE_URL = `${API_BASE_URL}/api/v3/plays`;
 export const HOME_BASE_URL = `${API_BASE_URL}/api/v3/home`;
 export const INBOX_BASE_URL = `${API_BASE_URL}/api/v3/inbox`;
 export const SOURCES_BASE_URL = `${API_BASE_URL}/api/v3/sources`;
+export const OPPORTUNITIES_BASE_URL = `${API_BASE_URL}/api/v3/opportunities`;
 
 export const API_ENDPOINTS = {
   USER: {
@@ -681,6 +682,12 @@ export const API_ENDPOINTS = {
     LEARN_WHY_LEAKAGE_STAGE: `${LEAKAGE_BASE_URL}/stages/{stageKey}/learn-why`,
     LEARN_WHY_LEAKAGE_CELL: `${LEAKAGE_BASE_URL}/cells/{grid}/{row}/{condition}/{currency}/learn-why`,
     GET_LEAKAGE_STAGE: `${LEAKAGE_BASE_URL}/stages/{stageKey}`,
+  },
+
+  // Separate positive-polarity resource from LEAKAGE above, per the V2 handoff doc — never netted
+  // against leakage, kept on its own rollout flag (`OpportunityV1:*`). See docs/leakage-map/v2-build-plan.md Step 5.
+  OPPORTUNITIES: {
+    GET_OPPORTUNITIES: `${OPPORTUNITIES_BASE_URL}`,
   },
 
 };

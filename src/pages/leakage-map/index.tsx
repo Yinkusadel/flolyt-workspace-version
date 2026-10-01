@@ -12,6 +12,8 @@ import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
 import { LeakageV2CellGrid } from "@/pages/leakage-map/v2-cell-grid";
 import { LeakageV2Rollups } from "@/pages/leakage-map/v2-rollups";
+import { OpportunitiesPanel } from "@/pages/leakage-map/opportunities-panel";
+import { useGetOpportunities } from "@/features/opportunities/use-get-opportunities";
 import { V2ControlsBar } from "@/pages/leakage-map/v2-controls-bar";
 import {
   toGetLeakageV2Params,
@@ -77,6 +79,12 @@ export default function LeakageMap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leakageV2]);
 
+  // Separate rollout flag from LeakageV2 — only requested once we're already on a confirmed V2
+  // workspace, per docs/leakage-map/v2-build-plan.md Step 5. Errors stay silent (see the hook) so
+  // an unflagged workspace just doesn't show the panel rather than surfacing a scary error.
+  const { data: opportunitiesResponse } = useGetOpportunities(!!leakageV2);
+  const opportunities = opportunitiesResponse?.data;
+
   // Independent of the page's own severity/confidence/calculate filters — GET /leakage/report only
   // takes window/horizon. Powers the market breakdown only; not on the loading/error critical path.
   const { data: reportResponse } = useGetLeakageReport({ window: v1Params.window, horizon: v1Params.horizon });
@@ -137,6 +145,7 @@ export default function LeakageMap() {
         {isError && <PageStateBanner state="error" errorMessage={error?.message} onRetry={() => refetch()} />}
         <LeakageV2Rollups rollups={leakageV2.rollups} />
         <LeakageV2CellGrid cells={leakageV2.cells} limitations={leakageV2.limitations} />
+        {opportunities && <OpportunitiesPanel cells={opportunities.cells} limitations={opportunities.limitations} />}
       </div>
     );
   }

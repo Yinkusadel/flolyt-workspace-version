@@ -185,16 +185,32 @@ that we can only build against the documented shape, not a real response.
       (~1 second), not a stuck loading state — sampled the page every 500ms for 12s and watched it
       flip true→false exactly once, matching the two real network requests seen. Zero console errors.
 
-### Step 5 — Opportunities surface — ☐ not started
-- [ ] New page/section wired to `GET /api/v3/opportunities`, its own `RevenueOpportunityPage` type.
-- [ ] **Never placed in the Leakage Map grid, never subtracted from leakage, never summed or netted
-      against it** — the doc calls this out twice (rendering rules + acceptance cases). Keep it a
-      fully separate surface, not a tab bolted onto the leakage page, unless the boss says otherwise.
-- [ ] Render `candidateCount` for a `POPULATED` cell; render money only from `amounts[]` — an empty
-      `amounts` with a nonzero `candidateCount` means "evidence-backed but deliberately unpriced,"
-      not a zero.
-- [ ] Multi-currency priced opportunities stay separate rows, same currency-never-summed rule as
-      leakage.
+### Step 5 — Opportunities surface — ✅ done (2026-10-01)
+- [x] New domain `src/services/api/opportunities/get-opportunities.ts` +
+      `src/features/opportunities/use-get-opportunities.ts` + `OPPORTUNITIES_BASE_URL`/
+      `API_ENDPOINTS.OPPORTUNITIES` in `apiConfig.ts` — a genuinely new endpoint, not an existing one
+      being retyped. The hook takes an `enabled` flag (only fires once `leakageV2` is confirmed) and
+      uses `retry: false` with no error surfaced to the page's main error banner — a secondary,
+      independently-flagged panel shouldn't block or scare the user if its own rollout flag is off.
+- [x] New `src/pages/leakage-map/opportunities-panel.tsx` — `OpportunitiesPanel` renders as its own
+      bordered section below the rollups/cell grid, titled "Missed opportunities" with an explicit
+      "Separate from leakage above — upside, never netted against it" line. No shared state, no
+      shared totals, no code path that could combine a leakage figure with an opportunity figure.
+- [x] `candidateCount` rendered for a `POPULATED` cell with no `amounts`, labelled "N candidates
+      (unpriced)" rather than a dollar figure — the doc's "evidence-backed but deliberately
+      unpriced" case.
+- [x] Each `amounts[]` entry (currency/calibration) renders as its own row — never summed, same
+      discipline as leakage rollups.
+- [x] **The handoff doc gives no query parameters for this route at all** (unlike `GET /leakage`,
+      which has an explicit params list) — confirmed live, called with none, and it worked.
+- [x] `npx tsc -b` clean.
+- [x] **Live-verified 2026-10-01** — real `200` response, `contractVersion: "1.0"`, one cell
+      (`product_deepening` under the `expand` stage, `UNKNOWN` state, zero candidates — this
+      workspace has no connected source for it). Rendered correctly: separate panel, own
+      limitations callout, stage-grouped like the leakage grid. Zero console errors. **Not yet
+      live-exercised: a `POPULATED` cell with real `amounts[]`** — this workspace's opportunities
+      data is as thin as its leakage data, so the priced-candidate rendering path is built to the
+      documented shape but unconfirmed against a real example.
 
 ### Step 6 — Loading/error states — ☐ not started
 Per the doc's "Loading, errors and transport" section — both endpoints here are plain GETs, no SSE:
