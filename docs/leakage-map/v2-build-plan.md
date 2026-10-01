@@ -139,14 +139,32 @@ that we can only build against the documented shape, not a real response.
      existing caller, since rounding an already-whole number is a no-op.
   Zero console errors after both fixes; screenshot confirmed the rendered page matches the JSON.
 
-### Step 3 — Controls mapping — ☐ not started
-- [ ] V2's `controls` block adds two filter dimensions V1 doesn't have: `sector` and
-      `lifecycleClass` (`realized | in_flight | latent`). Extend `filters.ts`'s V2 branch to cover
-      these — option lists come from the response's own `controls.sectors` / `controls.lifecycleClasses`,
-      never invented client-side (same rule as V1's Step 1).
-- [ ] `mode` replaces V1's `calculate` (`gross | expected | net` — same three values, confirm the
-      query param name matches: `mode` not `calculate`).
-- [ ] `horizon` / `horizonDays` keep the same custom-horizon convention V1 already has.
+### Step 3 — Controls mapping — ✅ done (2026-10-01)
+- [x] New `src/pages/leakage-map/v2-filters.ts` (separate from V1's `filters.ts`, not extending it —
+      the shapes genuinely differ) holds `LeakageV2FilterState`, `toGetLeakageV2Params`, and
+      `v2FilterStateFromControls` (seeds the UI from the server's own active selection rather than a
+      hardcoded default).
+- [x] New `src/pages/leakage-map/v2-controls-bar.tsx` — plain `<select>`s (no design spec exists for
+      this page, consistent with Step 2's plain cell list), every option list sourced from the
+      response's own `controls.modes`/`.horizons`/`.markets`/`.sectors`/`.severities`/
+      `.confidenceLevels`/`.lifecycleClasses` — nothing invented client-side.
+- [x] Resolved the chicken-and-egg problem of not knowing V1-vs-V2 before the first response:
+      `index.tsx` always sends V1-shaped params (`v1Params`) for the initial request; once a V2
+      response arrives, a `useEffect` seeds `v2Filters` from `leakage.controls` exactly once, and
+      every request after that switches to `toGetLeakageV2Params`. V1-only auxiliary calls (report/
+      stage/cell) stay on `v1Params` always, unaffected by which branch is rendering.
+- [x] `mode` confirmed live to replace `calculate` as the actual query param name (not just a type
+      guess) — a real request read back `mode=expected&horizon=90`, no `calculate`/`window` present.
+- [x] Severity/confidence option labels render the API's own raw value, not invented "≥" threshold
+      copy — unconfirmed live whether V2's filter semantics are a floor or an exact match, flagged
+      inline rather than guessed.
+- [x] `npx tsc -b` clean.
+- [x] **Live-verified 2026-10-01** — same V2-flagged session. Confirmed 3 real requests in sequence:
+      the V1-shaped probe (`window=90&horizon=90&calculate=gross`), the auto-reseed once
+      `contractVersion` was learned (`mode=gross&horizon=90` — a known one-time extra refetch, same
+      data, just switching param convention), then the user-driven change (`mode=expected&horizon=90`
+      after selecting "Expected" in the Mode select). Old figures stayed visible with a
+      "recomputing…" line while the new data loaded — no flash to blank. Zero console errors.
 
 ### Step 4 — Rollups — ☐ not started
 - [ ] Render `rollups[]` grouped by `dimension` (mechanism/stage/state/market/severity/sector/total).

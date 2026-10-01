@@ -462,11 +462,32 @@ export interface GetLeakageResponse {
   succeeded: boolean;
 }
 
+/**
+ * V2's query params, per the handoff doc — a different shape from `GetLeakageParams` above (no
+ * `window`, `mode` instead of `calculate`, plain `severity`/`confidence` instead of
+ * `minSeverity`/`minConfidence`, plus `sector`/`lifecycleClass` which V1 doesn't have at all).
+ * `getLeakage` accepts either shape on the same endpoint — which one a given request should use
+ * isn't known until a response reveals `contractVersion`, so the page sends `GetLeakageParams` by
+ * default and switches to this shape only once it has confirmed it's talking to a V2 workspace.
+ */
+export interface GetLeakageV2Params {
+  mode?: string;
+  horizon?: string;
+  horizonDays?: number;
+  market?: string;
+  sector?: string;
+  severity?: string;
+  confidence?: string;
+  lifecycleClass?: string;
+}
+
 const {
   LEAKAGE: { GET_LEAKAGE },
 } = API_ENDPOINTS;
 
-export const getLeakage = async (params?: GetLeakageParams): Promise<GetLeakageResponse> => {
+export const getLeakage = async (
+  params?: GetLeakageParams | GetLeakageV2Params
+): Promise<GetLeakageResponse> => {
   try {
     const response = await axiosInstance.get<GetLeakageResponse>(GET_LEAKAGE, { params });
 

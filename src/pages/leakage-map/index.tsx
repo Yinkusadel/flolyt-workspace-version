@@ -11,6 +11,12 @@ import { RecomputingToast } from "@/pages/leakage-map/recomputing-toast";
 import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
 import { LeakageV2CellGrid } from "@/pages/leakage-map/v2-cell-grid";
+import { V2ControlsBar } from "@/pages/leakage-map/v2-controls-bar";
+import {
+  toGetLeakageV2Params,
+  v2FilterStateFromControls,
+  type LeakageV2FilterState,
+} from "@/pages/leakage-map/v2-filters";
 import { formatRelativeTime } from "@/lib/format-measured-value";
 import { useGetLeakageReport } from "@/features/leakage/use-get-leakage-report";
 import {
@@ -43,25 +49,41 @@ export default function LeakageMap() {
   const handleFiltersChange = (patch: Partial<LeakageFilterState>) =>
     setFilters((prev) => ({ ...prev, ...patch }));
 
-  const params = toGetLeakageParams(filters);
+  // V2's filter state is `null` until a V2 response has been seen once — the very first request on
+  // page load always goes out V1-shaped (`v1Params` below), since there's no way to know yet which
+  // contract a workspace is on. Once a V2 response arrives, it's seeded from the server's own
+  // currently-active `controls` (not a hardcoded default) and takes over building the main query's
+  // params from then on — see docs/leakage-map/v2-build-plan.md Step 3.
+  const [v2Filters, setV2Filters] = React.useState<LeakageV2FilterState | null>(null);
+  const handleV2FiltersChange = (patch: Partial<LeakageV2FilterState>) =>
+    setV2Filters((prev) => (prev ? { ...prev, ...patch } : prev));
+
+  // Always V1-shaped — used for the initial probe request and for the V1-only auxiliary endpoints
+  // (report/stage/cell) regardless of which branch ends up rendering.
+  const v1Params = toGetLeakageParams(filters);
+  const params = v2Filters ? toGetLeakageV2Params(v2Filters) : v1Params;
   const { data: leakageResponse, isFetching, isError, error, refetch } = useGetLeakage(params);
   const leakageData = leakageResponse?.data;
   // `GET /leakage` is dual-contract — a workspace flagged into Revenue Leakage V2 gets a
-  // differently-shaped `contractVersion: "2.0"` response from the same endpoint. This page's
-  // renderer below is still the V1 one; a V2 response gets a holding placeholder until
-  // docs/leakage-map/v2-build-plan.md's Step 2 builds its real grid. Never read V1 fields (stages,
-  // grids, markets, …) without this narrowing — they don't exist on the V2 shape.
+  // differently-shaped `contractVersion: "2.0"` response from the same endpoint. Never read V1
+  // fields (stages, grids, markets, …) without this narrowing — they don't exist on the V2 shape.
   const isV2Response = !!leakageData && isLeakagePageV2(leakageData);
   const leakage = leakageData && !isV2Response ? leakageData : undefined;
   const leakageV2 = leakageData && isV2Response ? leakageData : undefined;
+
+  React.useEffect(() => {
+    if (leakageV2 && !v2Filters) setV2Filters(v2FilterStateFromControls(leakageV2.controls));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leakageV2]);
+
   // Independent of the page's own severity/confidence/calculate filters — GET /leakage/report only
   // takes window/horizon. Powers the market breakdown only; not on the loading/error critical path.
-  const { data: reportResponse } = useGetLeakageReport({ window: params.window, horizon: params.horizon });
+  const { data: reportResponse } = useGetLeakageReport({ window: v1Params.window, horizon: v1Params.horizon });
   const report = reportResponse?.data;
   // GET /leakage/stages/{key} and GET /leakage/cells/{...} only take window/market/horizon — not
-  // `calculate`/severity/confidence, which `params` also carries for the page-level GET /leakage.
-  const stageParams: GetLeakageStageParams = { window: params.window, horizon: params.horizon, market: params.market };
-  const cellParams = { window: params.window, horizon: params.horizon };
+  // `calculate`/severity/confidence, which `v1Params` also carries for the page-level GET /leakage.
+  const stageParams: GetLeakageStageParams = { window: v1Params.window, horizon: v1Params.horizon, market: v1Params.market };
+  const cellParams = { window: v1Params.window, horizon: v1Params.horizon };
 
   // The active market's currency scopes which of a (possibly multi-currency) grid's cells render
   // — unconfirmed live, since every `markets[]` pulled so far was empty. Falls back through the
@@ -93,16 +115,23 @@ export default function LeakageMap() {
     );
   }
 
-  // V2 branch — see docs/leakage-map/v2-build-plan.md Step 2. Filters (Step 3) and rollups
-  // (Step 4) aren't wired yet; this renders the real cell list against the unfiltered default.
+  // V2 branch — see docs/leakage-map/v2-build-plan.md Steps 2–3. Rollups (Step 4) aren't wired yet.
   if (leakageV2) {
+    // Covers the one-frame gap between a V2 response first arriving and the seeding effect above
+    // committing — keeps the controls bar always rendering a valid, server-sourced selection
+    // rather than flashing empty.
+    const effectiveV2Filters = v2Filters ?? v2FilterStateFromControls(leakageV2.controls);
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
-          <p className="mt-1 text-[11.5px] text-ink-3">
-            As of {formatRelativeTime(leakageV2.publication.asOfUtc)} · {leakageV2.controls.horizonDays}-day horizon
-          </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
+            <p className="mt-1 text-[11.5px] text-ink-3">
+              As of {formatRelativeTime(leakageV2.publication.asOfUtc)}
+              {isFetching && " · recomputing…"}
+            </p>
+          </div>
+          <V2ControlsBar controls={leakageV2.controls} filters={effectiveV2Filters} onFiltersChange={handleV2FiltersChange} />
         </div>
         {isError && <PageStateBanner state="error" errorMessage={error?.message} onRetry={() => refetch()} />}
         <LeakageV2CellGrid cells={leakageV2.cells} limitations={leakageV2.limitations} />
