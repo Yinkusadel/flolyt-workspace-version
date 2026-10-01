@@ -148,7 +148,7 @@ export default function LeakageMap() {
           <V2FiltersMenu controls={leakageV2.controls} filters={effectiveV2Filters} onFiltersChange={handleV2FiltersChange} />
         </div>
 
-        <V2KpiStrip rollups={leakageV2.rollups} coverage={leakageV2.coverage} />
+        <V2KpiStrip cells={leakageV2.cells} rollups={leakageV2.rollups} coverage={leakageV2.coverage} controls={leakageV2.controls} />
         <LeakageV2Rollups rollups={leakageV2.rollups} />
         <LeakageV2CellGrid cells={leakageV2.cells} limitations={leakageV2.limitations} />
         {opportunities && <OpportunitiesPanel cells={opportunities.cells} limitations={opportunities.limitations} />}

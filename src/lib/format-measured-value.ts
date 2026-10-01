@@ -27,6 +27,14 @@ export function formatCompactMoney(value: number, currencyCode: string): string 
   return `${prefix}${round(value, 2)}`;
 }
 
+/** Exact, comma-grouped money for a single hero figure where full precision reads better than
+ * compaction (e.g. the V2 leakage map's "Total at risk" card) — every other money display on the
+ * app stays on `formatCompactMoney`, this is deliberately not the default. */
+export function formatMoney(value: number, currencyCode: string): string {
+  const prefix = currencyCode === "NGN" ? "₦" : `${currencyCode} `;
+  return `${prefix}${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 /**
  * atStake's `value` is an array of per-currency amounts, not a bare number — confirmed live
  * 2026-09-10 (`[{ currency: "NGN", amountAtRisk: 0 }]`). Never sums across entries (money is
