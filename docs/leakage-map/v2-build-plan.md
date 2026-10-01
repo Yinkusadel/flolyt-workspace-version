@@ -166,11 +166,24 @@ that we can only build against the documented shape, not a real response.
       after selecting "Expected" in the Mode select). Old figures stayed visible with a
       "recomputing…" line while the new data loaded — no flash to blank. Zero console errors.
 
-### Step 4 — Rollups — ☐ not started
-- [ ] Render `rollups[]` grouped by `dimension` (mechanism/stage/state/market/severity/sector/total).
-- [ ] Hard rule from the doc: **never add rollups with different currencies or lifecycle classes
-      together** — same discipline as V1's market-breakdown bar-width bug
-      ([[feedback_no_frontend_business_math]]), do not let this regress in the new surface.
+### Step 4 — Rollups — ✅ done (2026-10-01)
+- [x] New `src/pages/leakage-map/v2-rollups.tsx` — `LeakageV2Rollups` groups `rollups[]` (one flat
+      list mixing every dimension) by `dimension`, in a fixed display order (Total, Market, Sector,
+      Stage, Mechanism, Severity, State). `humanizeRollupValue` is purely cosmetic formatting of the
+      raw internal key (rollups carry no label field the way cells do) — never invents a fact.
+- [x] Hard rule satisfied structurally, not by discipline alone: each rollup entry is already scoped
+      to one currency + one lifecycle class (confirmed live), and `RollupRow` renders exactly one
+      entry at a time — there's no code path that could sum two rows together, unlike V1's
+      market-breakdown bar-width bug ([[feedback_no_frontend_business_math]]) which this is built to
+      not repeat.
+- [x] `npx tsc -b` clean.
+- [x] **Live-verified 2026-10-01** — same session. Real rollups rendered correctly: Total (USD 3.1k,
+      2 cells), By market (USD), By sector (Financial services), By stage (Engage/Retain), By
+      mechanism (Attrition/Dormant accounts), By severity (S4), By state (Account activity ·
+      Active/Dormant) — all matching the underlying cells exactly. Also used this pass to confirm
+      the brief "recomputing…" seen in a screenshot was the one-time reseed refetch settling
+      (~1 second), not a stuck loading state — sampled the page every 500ms for 12s and watched it
+      flip true→false exactly once, matching the two real network requests seen. Zero console errors.
 
 ### Step 5 — Opportunities surface — ☐ not started
 - [ ] New page/section wired to `GET /api/v3/opportunities`, its own `RevenueOpportunityPage` type.

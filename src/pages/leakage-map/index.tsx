@@ -11,6 +11,7 @@ import { RecomputingToast } from "@/pages/leakage-map/recomputing-toast";
 import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
 import { LeakageV2CellGrid } from "@/pages/leakage-map/v2-cell-grid";
+import { LeakageV2Rollups } from "@/pages/leakage-map/v2-rollups";
 import { V2ControlsBar } from "@/pages/leakage-map/v2-controls-bar";
 import {
   toGetLeakageV2Params,
@@ -134,6 +135,7 @@ export default function LeakageMap() {
           <V2ControlsBar controls={leakageV2.controls} filters={effectiveV2Filters} onFiltersChange={handleV2FiltersChange} />
         </div>
         {isError && <PageStateBanner state="error" errorMessage={error?.message} onRetry={() => refetch()} />}
+        <LeakageV2Rollups rollups={leakageV2.rollups} />
         <LeakageV2CellGrid cells={leakageV2.cells} limitations={leakageV2.limitations} />
       </div>
     );
