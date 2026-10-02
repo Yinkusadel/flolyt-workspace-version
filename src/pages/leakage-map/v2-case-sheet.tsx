@@ -342,8 +342,8 @@ export function V2CaseSheetContent({ caseId, cell }: { caseId: string; cell: Lea
             <ActionCard>
               <SectionLabel>Room</SectionLabel>
               {leakCase.roomId ? (
-                <Button asChild type="button" size="sm" variant="default" className="mt-2.5 w-full">
-                  <Link to={`/rooms/${leakCase.roomId}`}>Open room</Link>
+                <Button asChild type="button" size="sm" variant="outline" className="mt-2.5 w-full">
+                  <Link to={`/rooms/${leakCase.roomId}`}>Go to room</Link>
                 </Button>
               ) : primaryAmount ? (
                 <Button
@@ -363,7 +363,7 @@ export function V2CaseSheetContent({ caseId, cell }: { caseId: string; cell: Lea
                     })
                   }
                 >
-                  {isOpeningRoom ? "Opening…" : "Open a room"}
+                  {isOpeningRoom ? "Starting…" : "Start a room"}
                 </Button>
               ) : (
                 <p className="mt-2.5 text-[11px] text-ink-4">No priced amount to scope a Room to.</p>
