@@ -47,26 +47,14 @@ exist for a backend-contract handoff doc. Rebuilt using patterns already establi
   were caught and fixed from actual rendered screenshots, not guessed) — zero console errors,
   KPI strip/status line/Filters menu/rollups/cell list all confirmed rendering correctly.
 
-**🔴 Design status: ON HOLD, 2026-10-01 — the redesign pass above was rejected.** After seeing it
-live, the user said the page "still looks wack and complete trash," specifically called out the
-Rollups panel as "taking up unnecessary space," and caught a real completeness gap I'd missed:
-`coverage.capability`/`.scope`/`.freshness`/`.quality` (four real measured sub-dimensions) are
-never surfaced anywhere — only `.effective` made it into the KPI strip. **Do not touch the visual
-design again until both of the following are resolved:**
-
-1. **A reference design exists and hasn't been shared yet.** The user got a design for this same
-   page from a separate claude.ai ("regular Claude") session that they say is "very far much
-   better" than anything built here. They haven't pasted it, a screenshot, or a description yet —
-   asked how they want to share it (screenshot / artifact link / description), they said "hold on."
-   **Ask for this before writing any more layout code** — building a third guess without it would
-   repeat the same mistake twice.
-2. **The `frontend-design` plugin was installed** (`claude plugin install
-   frontend-design@claude-plugins-official`, confirmed successful via terminal, scope: user) to
-   help with exactly this kind of work. It was installed from a separate terminal session, so it is
-   **not loaded in whichever session resumes this work** — that session needs to be freshly started
-   (not just continued) for the plugin's skill(s) to actually be available. Check the available-
-   skills listing at the top of a fresh session for a `frontend-design`-named entry before assuming
-   it's active.
+**🟢 Design status: RESOLVED, 2026-10-02.** Was ON HOLD after the user called the first pass "wack
+and complete trash" and flagged the Rollups panel as wasting space. The user had a reference design
+from a separate claude.ai session but, when work resumed, said **"ignore the better reference,
+design what we have, you can check the api response and see"** — explicitly dropped the blocker on
+waiting for that reference and asked for a fresh design pass grounded in the real captured response
+instead. The `frontend-design` plugin's skill was confirmed loaded in the resuming session before
+any layout work started (per the gate below, now satisfied). See "Visual redesign pass
+(2026-10-02)" further down for what was actually built.
 
 **The coverage-fields gap is real and independent of the design question** — `capability`/`scope`/
 `freshness`/`quality` should get surfaced somewhere once work resumes, regardless of what the final
@@ -284,6 +272,228 @@ Per the doc's "Loading, errors and transport" section — both endpoints here ar
 ### Step 7 — Docs — ☐ not started
 - [ ] Add the two new endpoints to `docs/endpoints/leakage.md` (per [[endpoint_docs_convention]]).
 - [ ] Tick off steps in this file as they land, same convention as `build-plan.md`.
+
+## Visual redesign pass (2026-10-02)
+
+Resumed once the design hold (above) was lifted. Built section by section, each piece reviewed
+live against a screenshot before moving to the next — no guess shipped without the user seeing it
+first this time.
+
+- **V2KpiStrip → 4 cards** (`v2-kpi-strip.tsx`), replacing the original 3-tile `KpiCards` strip:
+  - **Total at risk** — `rollups[dimension="total"].amount` at *full* precision (`formatMoney`, a
+    new non-compact formatter), not the usual `formatCompactMoney` — this is the one hero number on
+    the page. Eyebrow folds in `controls.mode`/`.horizon`. Subtext: count of `POPULATED` cells over
+    total cells, plus "all {lifecycleClass}" when every priced amount shares one class.
+  - **Candidates flagged** — sum of `amounts[].candidateCount` across priced cells, broken down by
+    mechanism label. Matched the user's own claude.ai-session reference exactly once real data was
+    used (37 Dormant Accounts + 6 Attrition = 43).
+  - **Effective coverage** — `coverage.effective` as a thin progress bar instead of bare text.
+  - **Lowest confidence** — the *minimum* `confidence` across priced amounts, explicitly labeled
+    "Lowest" (not "Confidence") so it reads as a worst-case flag, not an implied average — averaging
+    across cells of different mechanisms/currencies would be exactly the client-side metric-blending
+    [[feedback_no_frontend_business_math]] bars.
+  - **Color saga**: hero card went black (copying the user's reference literally) → rejected as "not
+    our app's color" → tried `bg-ultra` (blue) → rejected again, user wanted something "close to
+    red" → landed on `bg-rose`, this app's own critical/danger token (same solid-fill pairing as
+    `reject-play-modal.tsx`'s selected state) — a semantic fit for "at risk," not an invented color.
+- **V2CoverageCard + V2LimitationsCard** (`v2-coverage-limitations.tsx`), side by side in a
+  `grid lg:grid-cols-2`, replacing the old flat amber `Callout`:
+  - Coverage: `capability`/`scope`/`freshness`/`quality` as 4 labeled thin bars (the real gap caught
+    in the rejected first pass), plus "Signals measured" and "Unknown units" stats, reusing the
+    nested `bg-paper-2` card pattern from V1's own `CoveragePanel`.
+  - Limitations ("Why the number is partial"): the real 1,063-entry `limitations[]` array turns out
+    to only ever be 4 known sentence templates (regex-matched) plus an "Other" catch-all for
+    anything unrecognized — confirmed against a real captured response (`leakageresponse.json`,
+    user-pasted): Measured/missing-impact 877, Unpriced-in-other-currencies 180 (CAD 32/EUR 55/GBP
+    49/NGN 44, exact match to the reference), No-prior-baseline 97 (parsed out of the sentence
+    itself — that template bundles its own count, it isn't 97 separate lines), Detectors-awaiting-
+    data 4 (resolved to real mechanism labels, not hardcoded). "View all limitations" opens the full
+    UUID-deduped list in a `Dialog`, not inline (moved there on request — was buried at the bottom
+    of a tall inline list).
+  - Currency-breakdown segment colors and the 4 coverage bars both got the "use our actual colors,
+    multiple is fine for these" exception from the user — `ultra`/`teal`/`amber`/`rose` in a fixed
+    (not count-ranked) order, so an entity keeps its color across filter changes.
+- **LeakageV2Rollups redesigned** (`v2-rollups.tsx`) — the specific thing called out as wasting
+  space. Was 6 full-width sections each with its own uppercase header (mostly 1-2 rows each in real
+  data). Now a responsive grid of small nested `bg-paper-2` cards, one per dimension, no
+  collapse/expand needed anymore since the grid itself is compact. `total` stays promoted to the
+  KPI strip; `stage` now lives in each Mechanisms column instead of here.
+- **Cells redesigned as severity-shaded tiles** (`v2-cell-grid.tsx`), confirmed V1's row-by-column
+  grid genuinely cannot apply to V2 (handoff doc's own "do not hard-code 'customer stage'" line,
+  Rendering rules section, plus live confirmation that different mechanisms don't even share a
+  state dimension). Tiles reuse V1's literal `HEAT_SCALE`/`HEAT_TEXT_CLASS` tokens from `data.ts` —
+  shaded by the cell's own `severity` (S1–S5) compressed into the scale's 4 steps (S4/S5 share the
+  darkest step — **known limitation: they're currently visually indistinguishable by color alone**,
+  only the printed "Severity S4"/"S5" text differs). `UNKNOWN` cells keep the dashed/muted
+  "unmeasured" treatment, never heat-shaded. The section's own heading was dropped per request
+  (just a description paragraph now, no "Mechanisms" title) and moved to sit *above* Coverage/
+  Limitations in page order. No em dashes in any of this copy, including a general sweep that also
+  fixed `opportunities-panel.tsx`'s description.
+
+## Step 8 — Cell detail, Evidence, Learn Why (2026-10-02) — ✅ done, not live-verified
+
+- **`GET /leakage/cells/{cellId}`** → `V2CellDetailDialogContent` (`v2-cell-detail-dialog.tsx`), a
+  quick-glance `Dialog` opened by clicking any mechanism tile: components/signals/lineage/case info,
+  footer has "Learn why" + "View full evidence."
+- **`GET /leakage/cells/{cellId}/evidence`** → `V2CellEvidenceSheetContent`
+  (`v2-cell-evidence-sheet.tsx`), a `Sheet` (not a `Dialog` — deliberately, see below) for the wider
+  stuff Evidence adds on top of cell detail: `coverage[]`, `calculationPolicies[]`/
+  `calculationFormulas[]`, `suggestedActions[]`, richer `lineage[]` (adds `explanation`/
+  `missingRequirements`/`candidates[]`).
+  - **Why Sheet, not Dialog**: reasoned from actual content shape, not just precedent — Evidence has
+    ~8 sections vs cell detail's 3, including `calculationPolicies` rows with 16 fields each. A
+    centered modal would cramp that; a slide-over has the room.
+  - **Real schema corrections** (2026-10-02, from Scalar "Test Request" examples the user pasted —
+    see `get-leakage-cell-evidence.ts`): the original doc-prose-only scaffold had 3 real mistakes —
+    `coverage` is `LeakageCoverageSignalEntry[]` (reused from the standalone `/leakage/coverage`
+    route's own `signals[]` shape), not a copy of the page-level summary; "calculation
+    policies/formulas" is **two separate fields** (`calculationPolicies[]` + `calculationFormulas[]`),
+    not one nested `calculation` object; the "permitted actions" field is actually named
+    **`suggestedActions`**, not `actions`.
+  - Same Sheet/Dialog never nest simultaneously as Evidence/Case below — one `view` state on
+    `CellTile` (`"detail" | "evidence" | "case" | null`) drives all three overlays, since Sheet
+    shares the same underlying Radix `Dialog.Root` family as Dialog and two stacked at once is
+    exactly the [[preact_radix_dialog_crash]] scenario.
+- **`POST /leakage/cells/{cellId}/learn-why`** wired into the detail dialog's footer — same
+  fire-and-navigate pattern V1's own `CellDetailCard` already uses
+  (`learnWhy(..., { onSuccess: (res) => navigate(\`/conversations/${res.data.conversationId}\`) } )`).
+  The actual SSE streaming/reconnect/answer-rendering all happen on the existing `/conversations/
+  {id}` route — nothing reimplemented here. Shown only when `hasLeakToExplain` (`POPULATED` + a
+  nonzero primary amount) — mirrors V1's own two-refusal rule ("a gap isn't a question, a real zero
+  is a result not a gap") by analogy; the V2 doc doesn't restate this rule explicitly for this route.
+- **Main page schema cross-checked clean** (2026-10-02, against a real Scalar `GET /leakage` paste):
+  every field in `LeakageV2Controls`/`LeakageV2Cell`/`LeakageV2Rollup`/`LeakageV2CoverageSummary`
+  matched exactly — **no corrections needed**, unlike evidence/room/cutover-readiness below.
+- **`GET /leakage/cutover-readiness`** types corrected too (`get-leakage-cutover-readiness.ts`) —
+  the prose-only scaffold was missing 5 real fields (`contractVersion`, `hasActivePublication`,
+  `publishedSnapshots`, `rollbackAvailable`, `retirementApproved`). Fixed for correctness; still not
+  wired into any page, and the doc itself says this route is unlikely to ever need a UI.
+
+## Step 9 — Case + Room lifecycle (2026-10-02) — ✅ done, mostly not live-verified
+
+All 7 case/room routes now wired, via a new `V2CaseSheetContent` (`v2-case-sheet.tsx`), a `Sheet`
+opened from "View case" on the detail dialog's Case card (same `view`-state architecture as Step 8).
+
+- **`POST /cells/{cellId}/case`** (create) — wired from the detail dialog's footer, gated on
+  `hasLeakToExplain` *and* `workState.state === "READY"`. **Real bug caught live**: `READY` alone
+  isn't sufficient — the server refused a READY-but-unpriced cell with *"A case can only be opened
+  for a populated finding with measured exposure."* Tightened the gate to require both.
+- **`GET /cases/{caseId}`** (read) — drives both the compact Case card in the quick dialog and the
+  full Case Sheet.
+- **`workState.state` type was too narrow** — originally scaffolded as `"UNREADY" | "READY"` only;
+  re-reading the doc ("the current case status after creation") shows it also becomes one of
+  `RevenueLeakCaseStatus` once a case exists. Widened before building case UI on top of it
+  (`get-leakage-cell-v2.ts`).
+- **`PUT /cases/{caseId}/owner`** — "Assign to me" only, no full member picker (the doc says "a
+  non-admin can assign only themselves," and there's no workspace-members endpoint available here
+  anyway).
+- **`POST /cases/{caseId}/transitions`** — every non-`VERIFIED` status offered (`VERIFIED` excluded
+  at the type level, `LeakageCaseTransitionTarget = Exclude<RevenueLeakCaseStatus, "VERIFIED">`, per
+  "the client must never submit VERIFIED"); no transition graph enforced client-side — the server is
+  the source of truth for which moves are actually legal from the current status, same discipline as
+  Learn Why's gating.
+- **`PUT /cases/{caseId}/due-date`** — **real bug caught live**: the server refused a past date
+  ("A revised due date must be in the future") that the (then-native) date input let get submitted
+  with zero warning. Added `min`/`max` (tomorrow through 365 days out, per the doc's own "future
+  date within 365 days" rule) plus a client-side check before the submit button even enables.
+- **`POST /cases/{caseId}/decisions`** — text + reason form, decisions list shown above it.
+- **`POST /cases/{caseId}/room`** — **two real bugs caught from a pasted Scalar schema**, fixed in
+  `open-room-on-leakage-case.ts`: (1) the response `data` is a **bare string** (the room id itself),
+  not `{ roomId: string }` as first scaffolded; (2) `lifecycleClass`/`mode` in the request body use
+  **PascalCase** (`"InFlight"`, `"Gross"`) — a *third* casing convention on top of the lowercase
+  filter options and UPPERCASE record fields already documented above. Added `toRoomLifecycleClass`/
+  `toRoomMode` converters so the page's own lowercase filter values can never be sent here as-is by
+  mistake. Room is scoped from the triggering cell's own primary amount (currency/lifecycleClass/
+  mode), per the doc's "supply enough dimensions to select exactly one amount."
+- **No case-list endpoint exists** — only `GET /cases/{caseId}` by known id, never `GET /cases`
+  (plural). A case is only ever reachable by going back to the mechanism tile it came from; once a
+  Room is opened on it, that Room *is* separately findable via the existing `/rooms` index, but the
+  Case object itself has no browsable list. Flagged to the user as a real backend gap, not a UI
+  choice.
+- **Date-picker detour, tried and reverted**: attempted a styled `Calendar`+`Popover` replacement
+  for the due-date field's native `<input type="date">` (month/year jump via Radix `Select` nested
+  inside the Popover). Broke immediately — Radix `Select` is modal by default and its focus-trap
+  closes a parent `Popover` even with the standard nested-dismissable-layer pointer-down guard (the
+  same class of bug `searchable-select.tsx` already worked around once, see
+  [[preact_radix_dialog_crash]] — that file is built on plain buttons instead of `Select` for
+  exactly this reason, which the next attempt at this should reuse). Also found and fixed, while
+  debugging, that `popover.tsx` itself never had the nested-layer `onPointerDownOutside` guard
+  `dialog.tsx`/`sheet.tsx` already have — not a date-picker-specific fix, a real standing gap in a
+  shared primitive, but it alone wasn't enough to fix the modal-Select issue, so it was reverted
+  along with everything else per the user's explicit "revert everything you did to it." **Current
+  state: back to the plain native `<input type="date">`** with `min`/`max` validation — still
+  functionally correct, just visually unstyled. Revisit with the `searchable-select.tsx`-style
+  plain-button approach (not `Select`) if this needs to look better later.
+- **Case Sheet layout, iterated live**: status/owner/due-date collapsed from 3 separate
+  full-width-divided sections into one compact nested-card summary (per "status taking unnecessary
+  space" feedback); all action buttons (`Update due date`/`Move case`/`Add decision`/`Open a room`)
+  made full-width and switched from `variant="outline"` to `variant="default"` (`bg-ultra`, this
+  app's real primary-action color, same convention as the proposal-approval dialog's "Accept"
+  button) — they'd been rendering pale/grey.
+
+## Current endpoint status (2026-10-02)
+
+10 of the handoff doc's 14 scaffolded `/leakage/*` V2 routes are wired (plus the 2 original-scope
+endpoints, `GET /leakage` and `GET /opportunities`, done since 2026-10-01):
+
+| Wired | Not wired |
+|---|---|
+| `GET /leakage` (dual-contract) | `GET /leakage/cells/{cellId}/history` |
+| `GET /opportunities` | `GET /leakage/coverage` (standalone) |
+| `GET /leakage/cells/{cellId}` | `GET /leakage/calculation` (standalone) |
+| `GET /leakage/cells/{cellId}/evidence` | `GET /leakage/cutover-readiness` (doc itself says unlikely to ever need a UI) |
+| `POST /leakage/cells/{cellId}/learn-why` | |
+| `POST /leakage/cells/{cellId}/case` | |
+| `GET /leakage/cases/{caseId}` | |
+| `PUT /leakage/cases/{caseId}/owner` | |
+| `POST /leakage/cases/{caseId}/transitions` | |
+| `PUT /leakage/cases/{caseId}/due-date` | |
+| `POST /leakage/cases/{caseId}/decisions` | |
+| `POST /leakage/cases/{caseId}/room` | |
+
+**Nothing built 2026-10-02 has been live-verified against a real response yet** — unlike the
+2026-10-01 work (main page, filters, rollups, opportunities), which all were. That's the single
+biggest outstanding risk: the evidence/case/room shapes are now *schema-correct* (several real bugs
+already caught from pasted Scalar examples), but none of the actual interaction flows — opening a
+case, transitioning it, opening a Room from it — have been clicked through against the live backend.
+
+## Q&A log (2026-10-02)
+
+Questions the user asked mid-build, kept here since the answers are load-bearing for how things got
+built, not just incidental chat:
+
+- **"Did the API remove `window` or did it just change pattern?"** → Genuinely gone from the V2
+  contract specifically, not renamed. `GET /leakage` is one shared URL serving both contracts, so
+  its Scalar schema lists the *union* of both — `window`/`calculate`/`minSeverity`/`minConfidence`
+  are V1-only, still sent by legacy callers on the same route. V2's own `controls` object (real
+  response + schema) has no `window` field at all; V2 collapsed V1's `window`+`horizon` pair into
+  `horizon` alone.
+- **"Can the V2 cells still use V1's grid/matrix design?"** → No — confirmed from the doc's own
+  "Rendering rules" section ("do not hard-code 'customer stage'") and live data (different
+  mechanisms use entirely different state dimensions, don't even share a second axis).
+- **"Can the ten stage cards (StageRail) still be populated for V2?"** → No — `LeakagePageV2` has no
+  `stages` field at all (V1's `LeakagePageData.stages: LeakageStageCardDto[]` has no V2 equivalent),
+  structurally absent, same situation as `window`. The closest V2 has is the `rollups[dimension=
+  "stage"]` entries (just 3 possible values: engage/renew/retain), already surfaced as each
+  Mechanisms column's subtotal, not a separate card row.
+- **"What is the shading measured against?"** → The cell's own `severity` field (S1–S5, "the
+  workspace's own per-currency materiality ladder," per the main endpoint's own doc text) — an
+  absolute per-cell scale, never a relative ranking against other cards on screen or against dollar
+  amount.
+- **"Is Case different from Room?"** → Yes — doc is explicit: "the case owns accountability and
+  business lifecycle, the Room is its collaboration surface... do not infer case status from Room
+  status." Case = tracking/accountability record (status, owner, due date, decisions, audit trail).
+  Room = this app's existing, Case-agnostic collaboration feature. A case can exist with no Room;
+  opening one links `case.roomId`.
+- **"Once I create a case, where do I see it before the other actions?"** → Nowhere but back through
+  its own cell — no `GET /cases` list endpoint exists (see Step 9 above).
+- **Evidence vs cell detail vs Learn Why, and whether Evidence inherits the cell detail's query
+  params** → Evidence is a strict superset of cell detail's fields. Learn Why internally snapshots
+  the *same* evidence bundle server-side before queuing the agent run, and the doc requires matching
+  controls between the two or the run fails closed — confirmed both routes take the identical
+  `mode`/`horizon`/`horizonDays`/`lifecycleClass` params as cell detail, reinforcing why they should
+  (and do) share one params object from the page's active filters, not two independently-sourced
+  ones.
 
 ## Verification
 
