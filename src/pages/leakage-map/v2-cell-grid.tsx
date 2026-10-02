@@ -150,7 +150,7 @@ function CellTile({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeaka
           type="button"
           aria-label={accessibleName}
           onClick={() => setView("detail")}
-          className={`rounded-control p-3 text-left ${UNMEASURED_TILE_CLASS}`}
+          className={`relative rounded-control p-3 text-left transition-transform duration-150 ease-out hover:z-10 hover:scale-[1.03] ${UNMEASURED_TILE_CLASS}`}
         >
           <p className="text-[12px] font-medium text-ink-3">{coordinate.mechanismLabel}</p>
           <p className="mt-0.5 text-[10.5px] text-ink-4">
@@ -166,7 +166,7 @@ function CellTile({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeaka
           type="button"
           aria-label={accessibleName}
           onClick={() => setView("detail")}
-          className="rounded-control p-3 text-left"
+          className="relative rounded-control p-3 text-left transition-transform duration-150 ease-out hover:z-10 hover:scale-[1.03]"
           style={{ backgroundColor: HEAT_SCALE[heat] }}
         >
           <div className="flex items-start justify-between gap-2">
