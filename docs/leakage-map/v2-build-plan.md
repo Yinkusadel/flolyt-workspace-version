@@ -384,9 +384,18 @@ opened from "View case" on the detail dialog's Case card (same `view`-state arch
   re-reading the doc ("the current case status after creation") shows it also becomes one of
   `RevenueLeakCaseStatus` once a case exists. Widened before building case UI on top of it
   (`get-leakage-cell-v2.ts`).
-- **`PUT /cases/{caseId}/owner`** — "Assign to me" only, no full member picker (the doc says "a
+- **`PUT /cases/{caseId}/owner`** — ~~"Assign to me" only, no full member picker (the doc says "a
   non-admin can assign only themselves," and there's no workspace-members endpoint available here
-  anyway).
+  anyway)~~ **corrected 2026-10-02**: that "no workspace-members endpoint available" claim was wrong
+  — never actually checked against `apiConfig.ts`, which already has `GET /workspace/members`
+  (`useGetWorkspaceMembers`), already used for this exact pattern elsewhere
+  (`rooms/modals/assign-owner-modal.tsx`). Reworked to a real `SearchableSelect` picker over the
+  active human roster, with a typed reason (previously hardcoded `"Self-assigned"`), plus a quick
+  "Assign to me" shortcut that just pre-fills the picker rather than auto-submitting. The owner stat
+  on both the Sheet's hero card and the cell-detail dialog's compact `CaseInfo` now resolves the raw
+  `ownerUserId` to a real name via a shared `resolveOwnerName` helper instead of showing the bare
+  UUID. Still no role check — "a non-admin can assign only themselves" is left to the server to
+  enforce and surface via the existing error toast, same discipline as the transition graph below.
 - **`POST /cases/{caseId}/transitions`** — every non-`VERIFIED` status offered (`VERIFIED` excluded
   at the type level, `LeakageCaseTransitionTarget = Exclude<RevenueLeakCaseStatus, "VERIFIED">`, per
   "the client must never submit VERIFIED"); no transition graph enforced client-side — the server is

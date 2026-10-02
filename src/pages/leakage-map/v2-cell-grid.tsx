@@ -221,7 +221,11 @@ function CellTile({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeaka
       </Sheet>
 
       <Sheet open={view === "case"} onOpenChange={(open) => setView(open ? "case" : null)}>
-        <SheetContent>{caseId && <V2CaseSheetContent caseId={caseId} cell={cell} />}</SheetContent>
+        {/* `key={caseId}` forces a fresh mount per case — without it, React reuses the same
+            instance across different cases and every local form field (reassign-owner picker,
+            due-date draft, decision text, …) carries over stale values from whichever case was
+            open last instead of resetting. */}
+        <SheetContent>{caseId && <V2CaseSheetContent key={caseId} caseId={caseId} cell={cell} />}</SheetContent>
       </Sheet>
     </>
   );

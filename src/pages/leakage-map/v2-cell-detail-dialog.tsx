@@ -8,8 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatCompactMoney, formatCount, formatPercent, formatRelativeTime, formatShortDateWithYear } from "@/lib/format-measured-value";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
-import { CASE_STATUS_TONE, FieldLabel } from "@/pages/leakage-map/v2-case-sheet";
+import { CASE_STATUS_TONE, FieldLabel, resolveOwnerName } from "@/pages/leakage-map/v2-case-sheet";
 import { useCreateLeakageCase } from "@/features/leakage/use-create-leakage-case";
+import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
 import { useGetLeakageCase } from "@/features/leakage/use-get-leakage-case";
 import { useGetLeakageCellV2 } from "@/features/leakage/use-get-leakage-cell-v2";
 import { useLearnWhyLeakageCellV2 } from "@/features/leakage/use-learn-why-leakage-cell-v2";
@@ -38,15 +39,17 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
  * a real nested-card treatment (same `bg-paper-2` pattern V1's own `CoveragePanel` and the Rollups
  * grid already use) instead of plain stacked text. "Open a case" still lives in the dialog's
  * footer (see `V2CellDetailDialogContent`). Once a case exists, "View case" opens the full
- * `V2CaseSheetContent` — owner/due-date/transitions/decisions/room all live there, not here. Owner
- * shows the raw `ownerUserId` — no user-name lookup is wired, so this is honestly an id, not a
- * display name, until one is.
+ * `V2CaseSheetContent` — owner/due-date/transitions/decisions/room all live there, not here.
  *
  * Redesigned 2026-10-02: now a compact version of the full Case Sheet's own hero card (same
  * `FieldLabel` stat treatment for owner/due, overdue state tints the card) instead of plain stacked
  * grey text, and "View case" is a real outline Button instead of a bare text link — it opens the
  * exact same lifecycle surface (`V2CaseSheetContent`) so it should read as a real affordance, not a
  * footnote. Same fields, same data, restyle only.
+ *
+ * Owner updated 2026-10-02: resolves the raw `ownerUserId` to a real display name via
+ * `resolveOwnerName` (`GET /workspace/members`), same lookup the full Case Sheet uses, so this
+ * preview and the Sheet never show a different owner value.
  */
 function CaseInfo({
   workState,
@@ -59,6 +62,8 @@ function CaseInfo({
   isLoadingCase: boolean;
   onViewCase: (caseId: string) => void;
 }) {
+  const { members } = useGetWorkspaceMembers();
+
   return (
     <div className="border-t border-line pt-4">
       <SectionLabel>Case</SectionLabel>
@@ -83,7 +88,7 @@ function CaseInfo({
             <div className="mt-3 grid grid-cols-2 gap-3 border-t border-line/70 pt-3">
               <div>
                 <FieldLabel>Owner</FieldLabel>
-                <p className="text-[11.5px] font-medium text-ink-2">{leakCase.ownerUserId ?? "Unassigned"}</p>
+                <p className="text-[11.5px] font-medium text-ink-2">{resolveOwnerName(members, leakCase.ownerUserId)}</p>
               </div>
               <div>
                 <FieldLabel>Due</FieldLabel>

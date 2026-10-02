@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Chip, type ChipTone } from "@/components/ui/chip";
 import { Input } from "@/components/ui/input";
+import { SearchableSelect, SearchableSelectSkeleton } from "@/components/ui/searchable-select";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SheetBody, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { formatShortDateWithYear } from "@/lib/format-measured-value";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
 import useGetCurrentUser from "@/features/auth/use-get-current-user";
+import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
 import { useAddLeakageCaseDecision } from "@/features/leakage/use-add-leakage-case-decision";
 import { useGetLeakageCase } from "@/features/leakage/use-get-leakage-case";
 import { useOpenRoomOnLeakageCase } from "@/features/leakage/use-open-room-on-leakage-case";
@@ -18,6 +20,7 @@ import { useTransitionLeakageCase } from "@/features/leakage/use-transition-leak
 import { useUpdateLeakageCaseDueDate } from "@/features/leakage/use-update-leakage-case-due-date";
 import { useUpdateLeakageCaseOwner } from "@/features/leakage/use-update-leakage-case-owner";
 import { toRoomLifecycleClass, toRoomMode } from "@/services/api/leakage/open-room-on-leakage-case";
+import type { WorkspaceMemberDto } from "@/services/api/workspace/get-workspace-members";
 import type { RevenueLeakCaseStatus } from "@/services/api/leakage/leakage-case-types";
 import type { LeakageV2Cell } from "@/services/api/leakage/get-leakage";
 
@@ -49,6 +52,17 @@ export const CASE_STATUS_TONE: Record<RevenueLeakCaseStatus, ChipTone> = {
   CLOSED: "neutral",
   INVALIDATED: "rose",
 };
+
+/** Resolves a case's raw `ownerUserId` against the real workspace roster (`GET /workspace/members`,
+ * already wired and used for this exact pattern elsewhere — see `rooms/modals/assign-owner-modal.tsx`)
+ * so the case panel shows a real name instead of a bare UUID. Falls back to the raw id if the
+ * member isn't found in the list (e.g. a deactivated member not yet loaded) rather than hiding it —
+ * an id is still honest, a silently blank owner is not. Shared by the full Case Sheet and the
+ * cell-detail dialog's compact `CaseInfo` preview so the two surfaces never disagree. */
+export function resolveOwnerName(members: WorkspaceMemberDto[], ownerUserId: string | null): string {
+  if (!ownerUserId) return "Unassigned";
+  return members.find((m) => m.id === ownerUserId)?.displayName ?? ownerUserId;
+}
 
 // Confirmed live 2026-10-02: the server refused `dueAtUtc` set to a date already in the past
 // ("A revised due date must be in the future") — the native date input let that get picked and
@@ -99,23 +113,31 @@ function CaseSheetSkeleton() {
 /**
  * The case's full lifecycle surface — pulled out of the quick cell-detail Dialog into its own
  * Sheet (2026-10-02, same reasoning as Evidence: 5 separate mutations plus a decision log and
- * forms don't fit a centered modal). No member picker for owner assignment — the doc says "a
- * non-admin can assign only themselves," so this only offers "Assign to me," not a full picker;
- * an admin's broader reassignment would need a workspace-members endpoint this page doesn't have.
- * No status-transition graph is enforced client-side either — every non-VERIFIED status is offered
- * and the server is the source of truth for which transitions are actually legal from the current
- * one, same "let the real response surface the rule" discipline as everywhere else in this build.
- * Room-opening reuses the cell's own primary amount to supply currency/lifecycleClass/mode, per
- * the doc's "supply enough dimensions to select exactly one amount." None of this has been
- * live-verified yet.
+ * forms don't fit a centered modal). No status-transition graph is enforced client-side — every
+ * non-VERIFIED status is offered and the server is the source of truth for which transitions are
+ * actually legal from the current one, same "let the real response surface the rule" discipline as
+ * everywhere else in this build. Room-opening reuses the cell's own primary amount to supply
+ * currency/lifecycleClass/mode, per the doc's "supply enough dimensions to select exactly one
+ * amount." None of this has been live-verified yet.
  *
  * Redesigned 2026-10-02: status Chip now carries a real tone per `CASE_STATUS_TONE` instead of a
  * flat neutral; the summary card and each action section got a consistent contained-card treatment
  * and real field labels. Same sections, same order, same mutations as before — restyle only.
+ *
+ * Owner reassignment reworked 2026-10-02: the single "Assign to me" link (and a hardcoded
+ * `"Self-assigned"` reason) is replaced with a real picker over `GET /workspace/members` — that
+ * endpoint was already wired and already used for this exact pattern elsewhere (see
+ * `rooms/modals/assign-owner-modal.tsx`); the earlier doc comment here claiming "no
+ * workspace-members endpoint available" was simply wrong, never actually checked against
+ * `apiConfig.ts`. The owner stat now also resolves to a real display name via `resolveOwnerName`
+ * instead of showing the raw `ownerUserId`. No role check gates this — the doc's "a non-admin can
+ * assign only themselves" rule isn't pre-validated client-side, same discipline as the transition
+ * graph: the server rejects an illegal reassignment and its message surfaces via the existing toast.
  */
 export function V2CaseSheetContent({ caseId, cell }: { caseId: string; cell: LeakageV2Cell }) {
   const { data, isLoading, isError, refetch } = useGetLeakageCase(caseId);
   const { user } = useGetCurrentUser(true);
+  const { members, isPending: isLoadingMembers, isError: isMembersError } = useGetWorkspaceMembers();
   const leakCase = data?.data;
   const primaryAmount = cell.amounts[0];
 
@@ -127,6 +149,8 @@ export function V2CaseSheetContent({ caseId, cell }: { caseId: string; cell: Lea
 
   const [dueDate, setDueDate] = useState("");
   const [dueDateReason, setDueDateReason] = useState("");
+  const [ownerMemberId, setOwnerMemberId] = useState<string | null>(null);
+  const [ownerReason, setOwnerReason] = useState("");
   const [decisionText, setDecisionText] = useState("");
   const [decisionReason, setDecisionReason] = useState("");
   const [transitionTarget, setTransitionTarget] = useState<Exclude<RevenueLeakCaseStatus, "VERIFIED"> | "">("");
@@ -134,6 +158,13 @@ export function V2CaseSheetContent({ caseId, cell }: { caseId: string; cell: Lea
   const [evidenceRefsText, setEvidenceRefsText] = useState("");
 
   const isDueDateValid = dueDate >= MIN_DUE_DATE && dueDate <= MAX_DUE_DATE;
+
+  // Same "active human roster" filter `assign-owner-modal.tsx` uses — agents and deactivated
+  // members aren't valid case owners.
+  const humanOptions = useMemo(
+    () => members.filter((m) => m.kind === "Human" && m.isActive).map((m) => ({ value: m.id, label: m.displayName })),
+    [members]
+  );
 
   return (
     <>
@@ -171,17 +202,7 @@ export function V2CaseSheetContent({ caseId, cell }: { caseId: string; cell: Lea
               <div className="mt-3.5 grid grid-cols-2 gap-3 border-t border-line/70 pt-3.5">
                 <div>
                   <FieldLabel>Owner</FieldLabel>
-                  <p className="text-[12px] font-medium text-ink-2">{leakCase.ownerUserId ?? "Unassigned"}</p>
-                  {leakCase.ownerUserId !== user?.id && (
-                    <button
-                      type="button"
-                      disabled={isUpdatingOwner || !user}
-                      onClick={() => user && updateOwner({ caseId, ownerUserId: user.id, reason: "Self-assigned" })}
-                      className="mt-1 text-[11px] font-medium text-ultra hover:underline disabled:opacity-60"
-                    >
-                      {isUpdatingOwner ? "Assigning…" : "Assign to me"}
-                    </button>
-                  )}
+                  <p className="text-[12px] font-medium text-ink-2">{resolveOwnerName(members, leakCase.ownerUserId)}</p>
                 </div>
                 <div>
                   <FieldLabel>Due</FieldLabel>
@@ -191,6 +212,59 @@ export function V2CaseSheetContent({ caseId, cell }: { caseId: string; cell: Lea
                 </div>
               </div>
             </div>
+
+            <ActionCard>
+              <SectionLabel>Reassign owner</SectionLabel>
+              <div className="mt-2.5 space-y-2.5">
+                <div>
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <FieldLabel className="mb-0">New owner</FieldLabel>
+                    {user && ownerMemberId !== user.id && (
+                      <button
+                        type="button"
+                        onClick={() => setOwnerMemberId(user.id)}
+                        className="text-[10.5px] font-medium text-ultra hover:underline"
+                      >
+                        Assign to me
+                      </button>
+                    )}
+                  </div>
+                  {isLoadingMembers && <SearchableSelectSkeleton />}
+                  {!isLoadingMembers && isMembersError && (
+                    <p className="text-[11px] text-rose">Couldn't load workspace members.</p>
+                  )}
+                  {!isLoadingMembers && !isMembersError && (
+                    <SearchableSelect
+                      options={humanOptions}
+                      value={ownerMemberId}
+                      onChange={setOwnerMemberId}
+                      placeholder="Select a person…"
+                      searchPlaceholder="Search members…"
+                    />
+                  )}
+                </div>
+                <div>
+                  <FieldLabel>Reason</FieldLabel>
+                  <Input placeholder="Why this owner" value={ownerReason} onChange={(e) => setOwnerReason(e.currentTarget.value)} />
+                </div>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="default"
+                className="mt-3 w-full"
+                disabled={!ownerMemberId || ownerMemberId === leakCase.ownerUserId || !ownerReason.trim() || isUpdatingOwner}
+                onClick={() =>
+                  ownerMemberId &&
+                  updateOwner(
+                    { caseId, ownerUserId: ownerMemberId, reason: ownerReason },
+                    { onSuccess: () => { setOwnerMemberId(null); setOwnerReason(""); } }
+                  )
+                }
+              >
+                {isUpdatingOwner ? "Assigning…" : "Update owner"}
+              </Button>
+            </ActionCard>
 
             <ActionCard>
               <SectionLabel>Change due date</SectionLabel>
