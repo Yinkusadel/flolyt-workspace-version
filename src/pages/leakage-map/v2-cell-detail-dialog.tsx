@@ -33,6 +33,24 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">{children}</p>;
 }
 
+/** How many rows this quick-glance dialog shows per list before collapsing the rest behind
+ * "View full evidence" — a real response can carry 900+ detector signals, which this narrow
+ * centered Dialog was never meant to hold in full (that's what the Evidence Sheet is for). No
+ * sort applied beyond whatever order the API already returns — inventing a ranking (e.g. by
+ * confidence) for signals wasn't backed by anything the doc actually promises. */
+const LIST_PREVIEW_LIMIT = 5;
+
+/** Points at the exact same data in full, never a dead end — `onViewEvidence` opens
+ * `V2CellEvidenceSheetContent`, which renders every one of these same components/signals
+ * unbounded. */
+function MoreInEvidenceLink({ count, onViewEvidence }: { count: number; onViewEvidence: () => void }) {
+  return (
+    <button type="button" onClick={onViewEvidence} className="text-[11px] font-medium text-ultra hover:underline">
+      +{count} more — View full evidence
+    </button>
+  );
+}
+
 /**
  * The case's own info, no lifecycle actions — moved up near the top on request (2026-10-02) so it
  * reads alongside the figure itself rather than buried under components/signals/lineage, and given
@@ -197,7 +215,7 @@ export function V2CellDetailDialogContent({
                   Contributing candidates ({detail.components.length})
                 </SectionLabel>
                 <div className="mt-2 space-y-2">
-                  {detail.components.map((component) => (
+                  {detail.components.slice(0, LIST_PREVIEW_LIMIT).map((component) => (
                     <div key={component.candidateId} className="flex items-baseline justify-between gap-3">
                       <span className="text-[11.5px] text-ink-2">
                         {humanizeEnum(component.mechanism)} · {humanizeEnum(component.revenueStage)}
@@ -210,6 +228,9 @@ export function V2CellDetailDialogContent({
                       </span>
                     </div>
                   ))}
+                  {detail.components.length > LIST_PREVIEW_LIMIT && (
+                    <MoreInEvidenceLink count={detail.components.length - LIST_PREVIEW_LIMIT} onViewEvidence={onViewEvidence} />
+                  )}
                 </div>
               </div>
             )}
@@ -218,7 +239,7 @@ export function V2CellDetailDialogContent({
               <div className="border-t border-line pt-4">
                 <SectionLabel>Detector signals ({detail.signals.length})</SectionLabel>
                 <div className="mt-2 space-y-2.5">
-                  {detail.signals.map((signal) => (
+                  {detail.signals.slice(0, LIST_PREVIEW_LIMIT).map((signal) => (
                     <div key={signal.id}>
                       <div className="flex items-baseline justify-between gap-3">
                         <span className="text-[11.5px] text-ink-2">{signal.signalId}</span>
@@ -230,6 +251,9 @@ export function V2CellDetailDialogContent({
                       </p>
                     </div>
                   ))}
+                  {detail.signals.length > LIST_PREVIEW_LIMIT && (
+                    <MoreInEvidenceLink count={detail.signals.length - LIST_PREVIEW_LIMIT} onViewEvidence={onViewEvidence} />
+                  )}
                 </div>
               </div>
             )}
