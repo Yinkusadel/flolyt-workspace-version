@@ -18,19 +18,103 @@ import type { GetLeakageCellV2Params, LeakageV2WorkState } from "@/services/api/
 import type { RevenueLeakCase } from "@/services/api/leakage/leakage-case-types";
 import type { LeakageV2Amount, LeakageV2Cell } from "@/services/api/leakage/get-leakage";
 
+/** One `SectionLabel`-shaped bar plus N two-line divide-y rows — reused across the skeleton's
+ * Candidates/Signals/Lineage blocks, which all share that exact row shape in the real content. */
+function SkeletonRowList({ labelWidth, rows }: { labelWidth: string; rows: number }) {
+  return (
+    <div className="border-t border-line pt-4">
+      <Skeleton className={cn("h-2.5", labelWidth)} />
+      <div className="mt-2 divide-y divide-line/70">
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="flex items-baseline justify-between gap-3 py-2.5 first:pt-0">
+            <Skeleton className="h-3 w-32" />
+            <div className="flex flex-col items-end gap-1">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-2.5 w-12" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Shaped like the real loaded content — hero amount, Case card, and all three list sections
+ * (Candidates/Signals/Lineage) — rather than a handful of generic bars or a partial mock. The first
+ * pass at this only mocked Hero + Case + Candidates and still visibly grew once Signals and Lineage
+ * appeared (those two sections simply weren't represented at all), so this now mirrors every
+ * section the real content can show. Signals/Lineage row counts are a guess (3 each) since the real
+ * count isn't knowable before the response arrives — close enough to avoid the worst of the jump,
+ * not a promise of an exact match for every cell's real row count.
+ */
 function DetailSkeleton() {
   return (
-    <div className="space-y-2.5">
-      <Skeleton className="h-3 w-32" />
-      <Skeleton className="h-6 w-40" />
-      <Skeleton className="h-3 w-full" />
-      <Skeleton className="h-3 w-3/4" />
+    <div className="space-y-5">
+      <div className="space-y-3">
+        <div>
+          <Skeleton className="h-6 w-28" />
+          <Skeleton className="mt-1.5 h-3 w-40" />
+        </div>
+        <Skeleton className="h-2.5 w-24" />
+      </div>
+
+      <div className="border-t border-line pt-4">
+        <Skeleton className="h-2.5 w-10" />
+        <div className="mt-2 rounded-control border border-line bg-paper-2 p-3">
+          <Skeleton className="h-5 w-16 rounded-chip" />
+          <div className="mt-3 grid grid-cols-2 gap-3 border-t border-line/70 pt-3">
+            <div>
+              <Skeleton className="h-2.5 w-12" />
+              <Skeleton className="mt-1.5 h-3 w-20" />
+            </div>
+            <div>
+              <Skeleton className="h-2.5 w-12" />
+              <Skeleton className="mt-1.5 h-3 w-20" />
+            </div>
+          </div>
+          <Skeleton className="mt-3 h-8 w-full rounded-lg" />
+        </div>
+      </div>
+
+      <SkeletonRowList labelWidth="w-40" rows={3} />
+      <SkeletonRowList labelWidth="w-32" rows={3} />
+      <SkeletonRowList labelWidth="w-28" rows={2} />
     </div>
   );
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">{children}</p>;
+}
+
+/** The height a loaded Case card settles at with no decisions logged — the shortest real state.
+ * Pinning the card to this as a `min-h` (rather than relying on the skeleton's shape alone) means
+ * the loading → loaded jump is capped at "a decisions line appears," never "the whole card
+ * doubles in height," which is what a bare `<Skeleton className="h-4 w-24" />` used to produce. */
+const CASE_CARD_MIN_HEIGHT = "min-h-[142px]";
+
+/** Shaped like the loaded card's chip/stat-grid/button structure instead of one short bar, so the
+ * card doesn't visibly shrink-then-expand while `GET /cases/{caseId}` is still in flight (a second,
+ * later loading phase than the cell detail fetch `DetailSkeleton` already covers — this one starts
+ * only once `workState.revenueLeakCaseId` is known and its own dependent case fetch begins). */
+function CaseInfoSkeleton() {
+  return (
+    <div>
+      <Skeleton className="h-5 w-16 rounded-chip" />
+      <div className="mt-3 grid grid-cols-2 gap-3 border-t border-line/70 pt-3">
+        <div>
+          <Skeleton className="h-2.5 w-12" />
+          <Skeleton className="mt-1.5 h-3 w-20" />
+        </div>
+        <div>
+          <Skeleton className="h-2.5 w-12" />
+          <Skeleton className="mt-1.5 h-3 w-20" />
+        </div>
+      </div>
+      <Skeleton className="mt-3 h-8 w-full rounded-lg" />
+    </div>
+  );
 }
 
 /** How many rows this quick-glance dialog shows per list before collapsing the rest behind
@@ -153,10 +237,11 @@ export function CaseInfo({
       <div
         className={cn(
           "mt-2 rounded-control border p-3",
+          CASE_CARD_MIN_HEIGHT,
           leakCase?.isOverdue ? "border-rose-border bg-rose-bg/40" : "border-line bg-paper-2"
         )}
       >
-        {workState.revenueLeakCaseId && isLoadingCase && <Skeleton className="h-4 w-24" />}
+        {workState.revenueLeakCaseId && isLoadingCase && <CaseInfoSkeleton />}
         {workState.revenueLeakCaseId && leakCase ? (
           <div>
             <div className="flex items-center gap-2">
