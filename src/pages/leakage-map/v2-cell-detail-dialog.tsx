@@ -7,6 +7,7 @@ import { DialogBody, DialogFooter, DialogHeader, DialogTitle } from "@/component
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCompactMoney, formatCount, formatPercent, formatRelativeTime, formatShortDateWithYear } from "@/lib/format-measured-value";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
+import { CASE_STATUS_TONE } from "@/pages/leakage-map/v2-case-sheet";
 import { useCreateLeakageCase } from "@/features/leakage/use-create-leakage-case";
 import { useGetLeakageCase } from "@/features/leakage/use-get-leakage-case";
 import { useGetLeakageCellV2 } from "@/features/leakage/use-get-leakage-cell-v2";
@@ -60,7 +61,7 @@ function CaseInfo({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <Chip tone="neutral">{humanizeEnum(leakCase.status)}</Chip>
+                <Chip tone={CASE_STATUS_TONE[leakCase.status]}>{humanizeEnum(leakCase.status)}</Chip>
                 {leakCase.isOverdue && <Chip tone="rose">Overdue</Chip>}
               </div>
               <button

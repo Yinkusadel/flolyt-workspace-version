@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
-import { Chip } from "@/components/ui/chip";
+import { Chip, type ChipTone } from "@/components/ui/chip";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SheetBody, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { formatShortDateWithYear } from "@/lib/format-measured-value";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
 import useGetCurrentUser from "@/features/auth/use-get-current-user";
@@ -34,6 +35,21 @@ const ALL_STATUSES: RevenueLeakCaseStatus[] = [
 // thing that ever sets it (same rule `transition-leakage-case.ts`'s own type enforces).
 const TRANSITIONABLE_STATUSES = ALL_STATUSES.filter((s): s is Exclude<RevenueLeakCaseStatus, "VERIFIED"> => s !== "VERIFIED");
 
+/** Workflow-position tones for `RevenueLeakCaseStatus`, shared with `CaseInfo` in the cell-detail
+ * dialog so the same status always reads the same color wherever it's shown: untouched/no-commitment
+ * states read neutral, active ownership reads ultra, a positive outcome reads teal, a dead-end reads
+ * rose. Previously every status rendered as a flat neutral Chip regardless of value. */
+export const CASE_STATUS_TONE: Record<RevenueLeakCaseStatus, ChipTone> = {
+  DETECTED: "amber",
+  REVIEWED: "neutral",
+  ASSIGNED: "ultra",
+  WORKED: "ultra",
+  RESOLVED: "teal",
+  VERIFIED: "teal",
+  CLOSED: "neutral",
+  INVALIDATED: "rose",
+};
+
 // Confirmed live 2026-10-02: the server refused `dueAtUtc` set to a date already in the past
 // ("A revised due date must be in the future") — the native date input let that get picked and
 // submitted with no warning first. `min`/`max` mirror the doc's own "sets a future date within
@@ -50,10 +66,23 @@ const MIN_DUE_DATE = isoDateDaysFromNow(1);
 const MAX_DUE_DATE = isoDateDaysFromNow(365);
 
 const TEXTAREA_CLASS =
-  "mt-1.5 w-full resize-none rounded-panel border border-line bg-paper px-3.5 py-2.5 text-[11.5px] text-ink outline-none focus:border-ultra-border";
+  "mt-1 w-full resize-none rounded-panel border border-border bg-paper-2 px-2.5 py-2 text-[11.5px] text-ink outline-none placeholder:text-ink-4 hover:border-ink-4 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">{children}</p>;
+}
+
+/** Small sentence-case label over a single field or stat — lighter-weight than `SectionLabel`,
+ * which marks a whole card. */
+function FieldLabel({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <p className={cn("mb-1 text-[10.5px] font-medium text-ink-4", className)}>{children}</p>;
+}
+
+/** The consistent contained-card treatment for every actionable section below the status summary —
+ * replaces the plain `border-t` dividers the individual sections used to sit under, so the forms
+ * read as distinct units in a sheet that's otherwise all stacked text. */
+function ActionCard({ children }: { children: React.ReactNode }) {
+  return <div className="rounded-panel border border-line bg-paper-2 p-3.5">{children}</div>;
 }
 
 function CaseSheetSkeleton() {
@@ -78,6 +107,10 @@ function CaseSheetSkeleton() {
  * Room-opening reuses the cell's own primary amount to supply currency/lifecycleClass/mode, per
  * the doc's "supply enough dimensions to select exactly one amount." None of this has been
  * live-verified yet.
+ *
+ * Redesigned 2026-10-02: status Chip now carries a real tone per `CASE_STATUS_TONE` instead of a
+ * flat neutral; the summary card and each action section got a consistent contained-card treatment
+ * and real field labels. Same sections, same order, same mutations as before — restyle only.
  */
 export function V2CaseSheetContent({ caseId, cell }: { caseId: string; cell: LeakageV2Cell }) {
   const { data, isLoading, isError, refetch } = useGetLeakageCase(caseId);
@@ -123,169 +156,193 @@ export function V2CaseSheetContent({ caseId, cell }: { caseId: string; cell: Lea
         )}
 
         {leakCase && (
-          <div className="space-y-5">
-            <div className="space-y-2 rounded-control border border-line bg-paper-2 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Chip tone="neutral">{humanizeEnum(leakCase.status)}</Chip>
-                  {leakCase.isOverdue && <Chip tone="rose">Overdue</Chip>}
-                </div>
+          <div className="space-y-4">
+            <div
+              className={cn(
+                "rounded-panel border p-4",
+                leakCase.isOverdue ? "border-rose-border bg-rose-bg/40" : "border-line bg-paper-2"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Chip tone={CASE_STATUS_TONE[leakCase.status]}>{humanizeEnum(leakCase.status)}</Chip>
+                {leakCase.isOverdue && <Chip tone="rose">Overdue</Chip>}
               </div>
-              <div className="flex items-center justify-between gap-2 text-[11.5px]">
-                <span className="text-ink-4">Owner</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-ink-2">{leakCase.ownerUserId ?? "Unassigned"}</span>
+              <div className="mt-3.5 grid grid-cols-2 gap-3 border-t border-line/70 pt-3.5">
+                <div>
+                  <FieldLabel>Owner</FieldLabel>
+                  <p className="text-[12px] font-medium text-ink-2">{leakCase.ownerUserId ?? "Unassigned"}</p>
                   {leakCase.ownerUserId !== user?.id && (
                     <button
                       type="button"
                       disabled={isUpdatingOwner || !user}
                       onClick={() => user && updateOwner({ caseId, ownerUserId: user.id, reason: "Self-assigned" })}
-                      className="font-medium text-ultra hover:underline disabled:opacity-60"
+                      className="mt-1 text-[11px] font-medium text-ultra hover:underline disabled:opacity-60"
                     >
                       {isUpdatingOwner ? "Assigning…" : "Assign to me"}
                     </button>
                   )}
                 </div>
-              </div>
-              <div className="flex items-center justify-between gap-2 text-[11.5px]">
-                <span className="text-ink-4">Due</span>
-                <span className="text-ink-2">{formatShortDateWithYear(leakCase.dueAtUtc)}</span>
+                <div>
+                  <FieldLabel>Due</FieldLabel>
+                  <p className={cn("text-[12px] font-medium", leakCase.isOverdue ? "text-rose" : "text-ink-2")}>
+                    {formatShortDateWithYear(leakCase.dueAtUtc)}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="border-t border-line pt-4">
+            <ActionCard>
               <SectionLabel>Change due date</SectionLabel>
-              <div className="mt-2 flex flex-col gap-2">
-                <div className="flex gap-2">
+              <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+                <div>
+                  <FieldLabel>New date</FieldLabel>
                   <Input
                     type="date"
                     value={dueDate}
                     min={MIN_DUE_DATE}
                     max={MAX_DUE_DATE}
                     onChange={(e) => setDueDate(e.currentTarget.value)}
-                    className="w-40"
+                    className="w-full"
                   />
-                  <Input placeholder="Reason" value={dueDateReason} onChange={(e) => setDueDateReason(e.currentTarget.value)} />
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="default"
-                  className="w-full"
-                  disabled={!dueDate || !isDueDateValid || !dueDateReason.trim() || isUpdatingDueDate}
-                  onClick={() =>
-                    updateDueDate(
-                      { caseId, dueAtUtc: new Date(dueDate).toISOString(), reason: dueDateReason },
-                      { onSuccess: () => { setDueDate(""); setDueDateReason(""); } }
-                    )
-                  }
-                >
-                  {isUpdatingDueDate ? "Updating…" : "Update due date"}
-                </Button>
+                <div>
+                  <FieldLabel>Reason</FieldLabel>
+                  <Input placeholder="Why it's moving" value={dueDateReason} onChange={(e) => setDueDateReason(e.currentTarget.value)} />
+                </div>
               </div>
-            </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="default"
+                className="mt-3 w-full"
+                disabled={!dueDate || !isDueDateValid || !dueDateReason.trim() || isUpdatingDueDate}
+                onClick={() =>
+                  updateDueDate(
+                    { caseId, dueAtUtc: new Date(dueDate).toISOString(), reason: dueDateReason },
+                    { onSuccess: () => { setDueDate(""); setDueDateReason(""); } }
+                  )
+                }
+              >
+                {isUpdatingDueDate ? "Updating…" : "Update due date"}
+              </Button>
+            </ActionCard>
 
-            <div className="border-t border-line pt-4">
+            <ActionCard>
               <SectionLabel>Move status</SectionLabel>
-              <div className="mt-2 space-y-2">
-                <Select value={transitionTarget} onValueChange={(v) => setTransitionTarget(v as Exclude<RevenueLeakCaseStatus, "VERIFIED">)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TRANSITIONABLE_STATUSES.filter((s) => s !== leakCase.status).map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {humanizeEnum(s)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <textarea
-                  rows={2}
-                  placeholder="Reason for this move"
-                  value={transitionReason}
-                  onChange={(e) => setTransitionReason(e.currentTarget.value)}
-                  className={TEXTAREA_CLASS}
-                />
-                {transitionTarget === "RESOLVED" && (
-                  <Input
-                    placeholder="Evidence references, comma separated (resolving requires evidence)"
-                    value={evidenceRefsText}
-                    onChange={(e) => setEvidenceRefsText(e.currentTarget.value)}
+              <div className="mt-2.5 space-y-2.5">
+                <div>
+                  <FieldLabel>New status</FieldLabel>
+                  <Select value={transitionTarget} onValueChange={(v) => setTransitionTarget(v as Exclude<RevenueLeakCaseStatus, "VERIFIED">)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TRANSITIONABLE_STATUSES.filter((s) => s !== leakCase.status).map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {humanizeEnum(s)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <FieldLabel>Reason</FieldLabel>
+                  <textarea
+                    rows={2}
+                    placeholder="Reason for this move"
+                    value={transitionReason}
+                    onChange={(e) => setTransitionReason(e.currentTarget.value)}
+                    className={TEXTAREA_CLASS}
                   />
+                </div>
+                {transitionTarget === "RESOLVED" && (
+                  <div>
+                    <FieldLabel>Evidence references</FieldLabel>
+                    <Input
+                      placeholder="Comma separated — resolving requires evidence"
+                      value={evidenceRefsText}
+                      onChange={(e) => setEvidenceRefsText(e.currentTarget.value)}
+                    />
+                  </div>
                 )}
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="default"
-                  className="w-full"
-                  disabled={!transitionTarget || !transitionReason.trim() || isTransitioning}
-                  onClick={() => {
-                    if (!transitionTarget) return;
-                    transition(
-                      {
-                        caseId,
-                        target: transitionTarget,
-                        reason: transitionReason,
-                        evidenceReferences: evidenceRefsText
-                          .split(",")
-                          .map((s) => s.trim())
-                          .filter(Boolean),
-                      },
-                      { onSuccess: () => { setTransitionTarget(""); setTransitionReason(""); setEvidenceRefsText(""); } }
-                    );
-                  }}
-                >
-                  {isTransitioning ? "Moving…" : "Move case"}
-                </Button>
               </div>
-            </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="default"
+                className="mt-3 w-full"
+                disabled={!transitionTarget || !transitionReason.trim() || isTransitioning}
+                onClick={() => {
+                  if (!transitionTarget) return;
+                  transition(
+                    {
+                      caseId,
+                      target: transitionTarget,
+                      reason: transitionReason,
+                      evidenceReferences: evidenceRefsText
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean),
+                    },
+                    { onSuccess: () => { setTransitionTarget(""); setTransitionReason(""); setEvidenceRefsText(""); } }
+                  );
+                }}
+              >
+                {isTransitioning ? "Moving…" : "Move case"}
+              </Button>
+            </ActionCard>
 
-            <div className="border-t border-line pt-4">
+            <ActionCard>
               <SectionLabel>Decisions ({leakCase.decisions.length})</SectionLabel>
               {leakCase.decisions.length > 0 && (
-                <div className="mt-2 space-y-2">
+                <div className="mt-2.5 space-y-2">
                   {leakCase.decisions.map((d) => (
-                    <div key={d.id}>
+                    <div key={d.id} className="rounded-control border border-line bg-paper p-2.5">
                       <p className="text-[11.5px] text-ink-2">{d.decision}</p>
-                      <p className="text-[10px] text-ink-4">
+                      <p className="mt-1 text-[10px] text-ink-4">
                         {d.reason} · {formatShortDateWithYear(d.occurredAtUtc)}
                       </p>
                     </div>
                   ))}
                 </div>
               )}
-              <div className="mt-3 space-y-2">
-                <Input placeholder="Decision" value={decisionText} onChange={(e) => setDecisionText(e.currentTarget.value)} />
-                <textarea
-                  rows={2}
-                  placeholder="Reason"
-                  value={decisionReason}
-                  onChange={(e) => setDecisionReason(e.currentTarget.value)}
-                  className={TEXTAREA_CLASS}
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="default"
-                  className="w-full"
-                  disabled={!decisionText.trim() || !decisionReason.trim() || isAddingDecision}
-                  onClick={() =>
-                    addDecision(
-                      { caseId, decision: decisionText, reason: decisionReason },
-                      { onSuccess: () => { setDecisionText(""); setDecisionReason(""); } }
-                    )
-                  }
-                >
-                  {isAddingDecision ? "Recording…" : "Add decision"}
-                </Button>
+              <div className={cn("space-y-2.5", leakCase.decisions.length > 0 && "mt-3 border-t border-line/70 pt-3")}>
+                <div>
+                  <FieldLabel>Decision</FieldLabel>
+                  <Input placeholder="What was decided" value={decisionText} onChange={(e) => setDecisionText(e.currentTarget.value)} />
+                </div>
+                <div>
+                  <FieldLabel>Reason</FieldLabel>
+                  <textarea
+                    rows={2}
+                    placeholder="Why"
+                    value={decisionReason}
+                    onChange={(e) => setDecisionReason(e.currentTarget.value)}
+                    className={TEXTAREA_CLASS}
+                  />
+                </div>
               </div>
-            </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="default"
+                className="mt-3 w-full"
+                disabled={!decisionText.trim() || !decisionReason.trim() || isAddingDecision}
+                onClick={() =>
+                  addDecision(
+                    { caseId, decision: decisionText, reason: decisionReason },
+                    { onSuccess: () => { setDecisionText(""); setDecisionReason(""); } }
+                  )
+                }
+              >
+                {isAddingDecision ? "Recording…" : "Add decision"}
+              </Button>
+            </ActionCard>
 
-            <div className="border-t border-line pt-4">
+            <ActionCard>
               <SectionLabel>Room</SectionLabel>
               {leakCase.roomId ? (
-                <Button asChild type="button" size="sm" variant="default" className="mt-2 w-full">
+                <Button asChild type="button" size="sm" variant="default" className="mt-2.5 w-full">
                   <Link to={`/rooms/${leakCase.roomId}`}>Open room</Link>
                 </Button>
               ) : primaryAmount ? (
@@ -293,7 +350,7 @@ export function V2CaseSheetContent({ caseId, cell }: { caseId: string; cell: Lea
                   type="button"
                   size="sm"
                   variant="default"
-                  className="mt-2 w-full"
+                  className="mt-2.5 w-full"
                   disabled={isOpeningRoom}
                   onClick={() =>
                     openRoom({
@@ -309,9 +366,9 @@ export function V2CaseSheetContent({ caseId, cell }: { caseId: string; cell: Lea
                   {isOpeningRoom ? "Opening…" : "Open a room"}
                 </Button>
               ) : (
-                <p className="mt-2 text-[11px] text-ink-4">No priced amount to scope a Room to.</p>
+                <p className="mt-2.5 text-[11px] text-ink-4">No priced amount to scope a Room to.</p>
               )}
-            </div>
+            </ActionCard>
           </div>
         )}
       </SheetBody>
