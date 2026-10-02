@@ -392,6 +392,14 @@ opened from "View case" on the detail dialog's Case card (same `view`-state arch
   "the client must never submit VERIFIED"); no transition graph enforced client-side — the server is
   the source of truth for which moves are actually legal from the current status, same discipline as
   Learn Why's gating.
+- **Real transition rejection caught live (2026-10-02)**: `WORKED → REVIEWED` was refused —
+  *"A case in state 'Worked' cannot transition to 'Reviewed'."* Neither `leakage.md` nor the frontend
+  handoff doc states the actual `RevenueLeakCaseStatus` transition graph (handoff doc only says a
+  transition "advances the lifecycle"), and a Scalar schema wouldn't help either — a transition graph
+  is runtime business logic, not something an OpenAPI enum normally encodes. **To ask the backend
+  team**: the full allowed-transitions table for `RevenueLeakCaseStatus` (which target statuses are
+  legal from each current status), so the "Move status" dropdown can eventually filter to only the
+  moves that are actually legal instead of offering all 7 and letting the server reject the bad ones.
 - **`PUT /cases/{caseId}/due-date`** — **real bug caught live**: the server refused a past date
   ("A revised due date must be in the future") that the (then-native) date input let get submitted
   with zero warning. Added `min`/`max` (tomorrow through 365 days out, per the doc's own "future
