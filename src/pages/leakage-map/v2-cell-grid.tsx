@@ -216,7 +216,14 @@ function CellTile({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeaka
 
       <Sheet open={view === "evidence"} onOpenChange={(open) => setView(open ? "evidence" : null)}>
         <SheetContent>
-          <V2CellEvidenceSheetContent cell={cell} params={params} />
+          <V2CellEvidenceSheetContent
+            cell={cell}
+            params={params}
+            onViewCase={(id) => {
+              setCaseId(id);
+              setView("case");
+            }}
+          />
         </SheetContent>
       </Sheet>
 

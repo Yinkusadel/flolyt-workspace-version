@@ -9,6 +9,8 @@ import {
   formatShortDateWithYear,
 } from "@/lib/format-measured-value";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
+import { CaseInfo } from "@/pages/leakage-map/v2-cell-detail-dialog";
+import { useGetLeakageCase } from "@/features/leakage/use-get-leakage-case";
 import { useGetLeakageCellEvidence } from "@/features/leakage/use-get-leakage-cell-evidence";
 import type { GetLeakageCellEvidenceParams } from "@/services/api/leakage/get-leakage-cell-evidence";
 import type { LeakageV2Cell } from "@/services/api/leakage/get-leakage";
@@ -41,10 +43,27 @@ function EvidenceSkeleton() {
  * plain informational text for now rather than a non-functional button, per
  * [[feedback_no_bypass_auth_for_verification]]'s sibling principle of never faking a working
  * control. Also still not live-verified against a real response, unlike the main page.
+ *
+ * Case section redesigned 2026-10-02: moved from a bottom-of-page "Case status" block (plain
+ * `workState.explanation` text) up near the top, right under the question/As-of line, and swapped
+ * for the exact same `CaseInfo` card the cell-detail Dialog already uses (status Chip, owner/due
+ * stat grid, "View case" button) — same cell, same case, so it should look identical in both
+ * places rather than this Sheet having its own flatter one-off treatment.
  */
-export function V2CellEvidenceSheetContent({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeakageCellEvidenceParams, "cellId"> }) {
+export function V2CellEvidenceSheetContent({
+  cell,
+  params,
+  onViewCase,
+}: {
+  cell: LeakageV2Cell;
+  params: Omit<GetLeakageCellEvidenceParams, "cellId">;
+  onViewCase: (caseId: string) => void;
+}) {
   const { data, isLoading, isError, refetch } = useGetLeakageCellEvidence({ cellId: cell.id, ...params });
   const evidence = data?.data;
+
+  const caseId = evidence?.workState.revenueLeakCaseId ?? undefined;
+  const { data: caseData, isLoading: isLoadingCase } = useGetLeakageCase(caseId, !!caseId);
 
   return (
     <>
@@ -71,6 +90,8 @@ export function V2CellEvidenceSheetContent({ cell, params }: { cell: LeakageV2Ce
           <div className="space-y-5">
             {evidence.question && <p className="text-[12.5px] font-medium text-ink">{evidence.question}</p>}
             <p className="text-[10.5px] text-ink-4">As of {formatRelativeTime(evidence.publication.asOfUtc)}</p>
+
+            <CaseInfo workState={evidence.workState} leakCase={caseData?.data} isLoadingCase={isLoadingCase} onViewCase={onViewCase} />
 
             {evidence.components.length > 0 && (
               <div className="border-t border-line pt-4">
@@ -199,13 +220,6 @@ export function V2CellEvidenceSheetContent({ cell, params }: { cell: LeakageV2Ce
                     </p>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {evidence.workState.explanation && (
-              <div className="border-t border-line pt-4">
-                <SectionLabel>Case status</SectionLabel>
-                <p className="mt-2 text-[11.5px] text-ink-3">{evidence.workState.explanation}</p>
               </div>
             )}
 

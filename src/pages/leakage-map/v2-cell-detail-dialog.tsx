@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { HelpCircle } from "lucide-react";
+import { Calendar, ClipboardList, HelpCircle, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Chip } from "@/components/ui/chip";
-import { DialogBody, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Chip, type ChipTone } from "@/components/ui/chip";
+import { DialogBody, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatCompactMoney, formatCount, formatPercent, formatRelativeTime, formatShortDateWithYear } from "@/lib/format-measured-value";
@@ -16,7 +16,7 @@ import { useGetLeakageCellV2 } from "@/features/leakage/use-get-leakage-cell-v2"
 import { useLearnWhyLeakageCellV2 } from "@/features/leakage/use-learn-why-leakage-cell-v2";
 import type { GetLeakageCellV2Params, LeakageV2WorkState } from "@/services/api/leakage/get-leakage-cell-v2";
 import type { RevenueLeakCase } from "@/services/api/leakage/leakage-case-types";
-import type { LeakageV2Cell } from "@/services/api/leakage/get-leakage";
+import type { LeakageV2Amount, LeakageV2Cell } from "@/services/api/leakage/get-leakage";
 
 function DetailSkeleton() {
   return (
@@ -51,6 +51,65 @@ function MoreInEvidenceLink({ count, onViewEvidence }: { count: number; onViewEv
   );
 }
 
+/** S1-S2 reads neutral, S3 amber, S4-S5 rose — same coarse three-step read as the grid tile's own
+ * `HEAT_SCALE` bucketing (`heatBucketForSeverity` in `v2-cell-grid.tsx`), reimplemented locally
+ * rather than imported from there to avoid a circular import (that file already imports this one). */
+function severityTone(severity: string): ChipTone {
+  const level = Number(severity.replace(/\D/g, ""));
+  if (!level || level <= 2) return "neutral";
+  if (level === 3) return "amber";
+  return "rose";
+}
+
+function hasPricedRange(amount: LeakageV2Amount): boolean {
+  return amount.range.status !== "UNAVAILABLE" && amount.range.lower !== null && amount.range.upper !== null;
+}
+
+/**
+ * The dialog's own headline figure(s) — previously this quick-glance view never showed the actual
+ * dollar amount at all, jumping straight from the title into "As of…" and the Case card, even
+ * though the figure is the entire point of a revenue-leak finding. Added 2026-10-02 as part of a
+ * visual pass on this dialog; reuses `cell.amounts` (already in scope for `hasLeakToExplain`/
+ * `canOpenCase` below, just never rendered), one row per amount since a cell can carry more than
+ * one (e.g. multiple currencies) — never collapses to just `amounts[0]` the way the gating logic
+ * does, since that's a convenience shortcut for "is there anything to act on," not a reason to hide
+ * the rest from view here.
+ */
+function HeroAmounts({ amounts, asOfUtc }: { amounts: LeakageV2Amount[]; asOfUtc: string }) {
+  return (
+    <div className="space-y-3">
+      {amounts.length > 0 ? (
+        amounts.map((amount, i) => (
+          <div key={i} className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[22px] font-semibold tabular-nums text-ink">
+                {formatCompactMoney(amount.value, amount.currency)}
+              </p>
+              <p className="mt-0.5 text-[11px] text-ink-4">
+                {humanizeEnum(amount.lifecycleClass)}
+                {hasPricedRange(amount) && (
+                  <>
+                    {" · "}
+                    {formatCompactMoney(amount.range.lower!, amount.currency)}–
+                    {formatCompactMoney(amount.range.upper!, amount.currency)}
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Chip tone={severityTone(amount.severity)}>Severity {amount.severity}</Chip>
+              <Chip tone="neutral">{formatPercent(amount.confidence)} confidence</Chip>
+            </div>
+          </div>
+        ))
+      ) : (
+        <p className="text-[13px] font-medium text-ink-3">No exposure</p>
+      )}
+      <p className="text-[10.5px] text-ink-4">As of {formatRelativeTime(asOfUtc)}</p>
+    </div>
+  );
+}
+
 /**
  * The case's own info, no lifecycle actions — moved up near the top on request (2026-10-02) so it
  * reads alongside the figure itself rather than buried under components/signals/lineage, and given
@@ -68,8 +127,14 @@ function MoreInEvidenceLink({ count, onViewEvidence }: { count: number; onViewEv
  * Owner updated 2026-10-02: resolves the raw `ownerUserId` to a real display name via
  * `resolveOwnerName` (`GET /workspace/members`), same lookup the full Case Sheet uses, so this
  * preview and the Sheet never show a different owner value.
+ *
+ * Exported 2026-10-02 so `V2CellEvidenceSheetContent` can reuse the exact same card — that Sheet
+ * previously had its own bottom-of-page "Case status" section that was just plain text
+ * (`workState.explanation`), inconsistent with this dialog's richer treatment of the same data for
+ * the same cell. One component, two call sites, never two implementations of "what a case preview
+ * looks like."
  */
-function CaseInfo({
+export function CaseInfo({
   workState,
   leakCase,
   isLoadingCase,
@@ -94,32 +159,39 @@ function CaseInfo({
         {workState.revenueLeakCaseId && isLoadingCase && <Skeleton className="h-4 w-24" />}
         {workState.revenueLeakCaseId && leakCase ? (
           <div>
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Chip tone={CASE_STATUS_TONE[leakCase.status]}>{humanizeEnum(leakCase.status)}</Chip>
-                {leakCase.isOverdue && <Chip tone="rose">Overdue</Chip>}
-              </div>
-              <Button type="button" size="xs" variant="outline" onClick={() => onViewCase(leakCase.id)}>
-                View case
-              </Button>
+            <div className="flex items-center gap-2">
+              <Chip tone={CASE_STATUS_TONE[leakCase.status]}>{humanizeEnum(leakCase.status)}</Chip>
+              {leakCase.isOverdue && <Chip tone="rose">Overdue</Chip>}
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3 border-t border-line/70 pt-3">
               <div>
-                <FieldLabel>Owner</FieldLabel>
-                <p className="text-[11.5px] font-medium text-ink-2">{resolveOwnerName(members, leakCase.ownerUserId)}</p>
+                <div className="flex items-center gap-1 text-ink-4">
+                  <User className="size-3" />
+                  <FieldLabel className="mb-0">Owner</FieldLabel>
+                </div>
+                <p className="mt-1 text-[11.5px] font-medium text-ink-2">{resolveOwnerName(members, leakCase.ownerUserId)}</p>
               </div>
               <div>
-                <FieldLabel>Due</FieldLabel>
-                <p className={cn("text-[11.5px] font-medium", leakCase.isOverdue ? "text-rose" : "text-ink-2")}>
+                <div className={cn("flex items-center gap-1", leakCase.isOverdue ? "text-rose" : "text-ink-4")}>
+                  <Calendar className="size-3" />
+                  <FieldLabel className={cn("mb-0", leakCase.isOverdue && "text-rose")}>Due</FieldLabel>
+                </div>
+                <p className={cn("mt-1 text-[11.5px] font-medium", leakCase.isOverdue ? "text-rose" : "text-ink-2")}>
                   {formatShortDateWithYear(leakCase.dueAtUtc)}
                 </p>
               </div>
             </div>
             {leakCase.decisions.length > 0 && (
-              <p className="mt-2.5 text-[10.5px] text-ink-4">
-                {leakCase.decisions.length} decision{leakCase.decisions.length === 1 ? "" : "s"} logged
-              </p>
+              <div className="mt-2.5 flex items-center gap-1.5 border-t border-line/70 pt-2.5 text-[10.5px] text-ink-4">
+                <ClipboardList className="size-3 shrink-0" />
+                <span>
+                  {leakCase.decisions.length} decision{leakCase.decisions.length === 1 ? "" : "s"} logged
+                </span>
+              </div>
             )}
+            <Button type="button" size="sm" variant="outline" className="mt-3 w-full" onClick={() => onViewCase(leakCase.id)}>
+              View case
+            </Button>
           </div>
         ) : (
           !workState.revenueLeakCaseId && <p className="text-[11.5px] text-ink-3">{workState.explanation}</p>
@@ -182,20 +254,15 @@ export function V2CellDetailDialogContent({
     <>
       <DialogHeader>
         <DialogTitle>{cell.coordinate.mechanismLabel}</DialogTitle>
+        <DialogDescription>
+          {cell.coordinate.revenueStageLabel} · {cell.coordinate.stateDimensionLabel}: {cell.coordinate.stateValueLabel}
+        </DialogDescription>
       </DialogHeader>
       <DialogBody className="px-5 py-5 sm:px-7 sm:py-6">
-        <p className="text-[11.5px] text-ink-3">
-          {cell.coordinate.revenueStageLabel} · {cell.coordinate.stateDimensionLabel}: {cell.coordinate.stateValueLabel}
-        </p>
-
-        {isLoading && (
-          <div className="mt-4">
-            <DetailSkeleton />
-          </div>
-        )}
+        {isLoading && <DetailSkeleton />}
 
         {!isLoading && (isError || !detail) && (
-          <div className="mt-4">
+          <div>
             <p className="text-[11.5px] text-rose">Couldn't load this cell's detail.</p>
             <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => refetch()}>
               Retry
@@ -204,8 +271,8 @@ export function V2CellDetailDialogContent({
         )}
 
         {detail && (
-          <div className="mt-4 space-y-5">
-            <p className="text-[10.5px] text-ink-4">As of {formatRelativeTime(detail.publication.asOfUtc)}</p>
+          <div className="space-y-5">
+            <HeroAmounts amounts={cell.amounts} asOfUtc={detail.publication.asOfUtc} />
 
             <CaseInfo workState={detail.workState} leakCase={caseData?.data} isLoadingCase={isLoadingCase} onViewCase={onViewCase} />
 
@@ -214,9 +281,9 @@ export function V2CellDetailDialogContent({
                 <SectionLabel>
                   Contributing candidates ({detail.components.length})
                 </SectionLabel>
-                <div className="mt-2 space-y-2">
+                <div className="mt-2 divide-y divide-line/70">
                   {detail.components.slice(0, LIST_PREVIEW_LIMIT).map((component) => (
-                    <div key={component.candidateId} className="flex items-baseline justify-between gap-3">
+                    <div key={component.candidateId} className="flex items-baseline justify-between gap-3 py-2 first:pt-0">
                       <span className="text-[11.5px] text-ink-2">
                         {humanizeEnum(component.mechanism)} · {humanizeEnum(component.revenueStage)}
                       </span>
@@ -229,7 +296,9 @@ export function V2CellDetailDialogContent({
                     </div>
                   ))}
                   {detail.components.length > LIST_PREVIEW_LIMIT && (
-                    <MoreInEvidenceLink count={detail.components.length - LIST_PREVIEW_LIMIT} onViewEvidence={onViewEvidence} />
+                    <div className="pt-2">
+                      <MoreInEvidenceLink count={detail.components.length - LIST_PREVIEW_LIMIT} onViewEvidence={onViewEvidence} />
+                    </div>
                   )}
                 </div>
               </div>
@@ -238,21 +307,23 @@ export function V2CellDetailDialogContent({
             {detail.signals.length > 0 && (
               <div className="border-t border-line pt-4">
                 <SectionLabel>Detector signals ({detail.signals.length})</SectionLabel>
-                <div className="mt-2 space-y-2.5">
+                <div className="mt-2 divide-y divide-line/70">
                   {detail.signals.slice(0, LIST_PREVIEW_LIMIT).map((signal) => (
-                    <div key={signal.id}>
+                    <div key={signal.id} className="py-2.5 first:pt-0">
                       <div className="flex items-baseline justify-between gap-3">
                         <span className="text-[11.5px] text-ink-2">{signal.signalId}</span>
                         <span className="text-[11.5px] font-medium text-ink tabular-nums">{formatCount(signal.signalValue)}</span>
                       </div>
-                      <p className="text-[10px] text-ink-4">
+                      <p className="mt-0.5 text-[10px] text-ink-4">
                         {formatShortDateWithYear(signal.observationFromUtc)} – {formatShortDateWithYear(signal.observationToUtc)} ·{" "}
                         {formatPercent(signal.confidence)} confidence · {signal.detectorVersion}
                       </p>
                     </div>
                   ))}
                   {detail.signals.length > LIST_PREVIEW_LIMIT && (
-                    <MoreInEvidenceLink count={detail.signals.length - LIST_PREVIEW_LIMIT} onViewEvidence={onViewEvidence} />
+                    <div className="pt-2.5">
+                      <MoreInEvidenceLink count={detail.signals.length - LIST_PREVIEW_LIMIT} onViewEvidence={onViewEvidence} />
+                    </div>
                   )}
                 </div>
               </div>
@@ -261,9 +332,9 @@ export function V2CellDetailDialogContent({
             {detail.lineage.length > 0 && (
               <div className="border-t border-line pt-4">
                 <SectionLabel>Source lineage ({detail.lineage.length})</SectionLabel>
-                <div className="mt-2 space-y-2.5">
+                <div className="mt-2 divide-y divide-line/70">
                   {detail.lineage.map((entry, i) => (
-                    <div key={`${entry.signalId}-${i}`}>
+                    <div key={`${entry.signalId}-${i}`} className="py-2.5 first:pt-0">
                       <div className="flex items-baseline justify-between gap-3">
                         <span className="text-[11.5px] text-ink-2">{entry.signalId}</span>
                         <span className="text-[11px] text-ink-4">{humanizeEnum(entry.sourceAvailability)}</span>
@@ -283,17 +354,18 @@ export function V2CellDetailDialogContent({
         <div className="flex w-full flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             {hasLeakToExplain && (
-              <button
+              <Button
                 type="button"
+                size="sm"
+                variant="outline"
                 disabled={isAskingWhy}
                 onClick={() =>
                   learnWhy({ cellId: cell.id, ...params }, { onSuccess: (res) => navigate(`/conversations/${res.data.conversationId}`) })
                 }
-                className="inline-flex items-center gap-1.5 rounded-control border border-line bg-paper-2 px-2.5 py-1.5 text-[11px] font-medium text-ink-2 hover:bg-paper disabled:opacity-60"
               >
-                <HelpCircle className="size-3.5" />
+                <HelpCircle data-icon="inline-start" />
                 {isAskingWhy ? "Asking…" : "Learn why"}
-              </button>
+              </Button>
             )}
             {canOpenCase && (
               <Button
