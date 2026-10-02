@@ -135,9 +135,9 @@ export default function LeakageMap() {
     // rather than flashing empty.
     const effectiveV2Filters = v2Filters ?? v2FilterStateFromControls(leakageV2.controls);
     const hiddenCellCount = leakageV2.cells.filter((cell) => cell.state.display === "HIDDEN_BY_FILTER").length;
-    // Same selection the page itself is rendering under — a cell's detail dialog should never show
+    // Same selection the page itself is rendering under — a cell's evidence sheet should never show
     // a different mode/horizon than the tile it was opened from.
-    const cellDetailParams = {
+    const cellEvidenceParams = {
       mode: effectiveV2Filters.mode,
       horizon: effectiveV2Filters.horizon,
       horizonDays: effectiveV2Filters.horizon === "custom" ? effectiveV2Filters.horizonDays : undefined,
@@ -158,7 +158,7 @@ export default function LeakageMap() {
         </div>
 
         <V2KpiStrip cells={leakageV2.cells} rollups={leakageV2.rollups} coverage={leakageV2.coverage} controls={leakageV2.controls} />
-        <LeakageV2CellGrid cells={leakageV2.cells} params={cellDetailParams} />
+        <LeakageV2CellGrid cells={leakageV2.cells} params={cellEvidenceParams} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <V2CoverageCard coverage={leakageV2.coverage} />
           <V2LimitationsCard limitations={leakageV2.limitations} cells={leakageV2.cells} />

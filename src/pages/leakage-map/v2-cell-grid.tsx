@@ -1,13 +1,16 @@
+import { useState } from "react";
 import { Layers } from "lucide-react";
 
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { formatCompactMoney, formatPercent } from "@/lib/format-measured-value";
 import { HEAT_SCALE, HEAT_TEXT_CLASS } from "@/pages/leakage-map/data";
 import { V2CellDetailDialogContent } from "@/pages/leakage-map/v2-cell-detail-dialog";
+import { V2CellEvidenceSheetContent } from "@/pages/leakage-map/v2-cell-evidence-sheet";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
 import type { LeakageV2Amount, LeakageV2Cell } from "@/services/api/leakage/get-leakage";
-import type { GetLeakageCellV2Params } from "@/services/api/leakage/get-leakage-cell-v2";
+import type { GetLeakageCellEvidenceParams } from "@/services/api/leakage/get-leakage-cell-evidence";
 
 /**
  * V2's main-page response has no grid/row/column structure the way `GET /leakage`'s `grids[]`
@@ -99,11 +102,18 @@ function AmountLine({ amount, heat }: { amount: LeakageV2Amount; heat: 0 | 1 | 2
 /**
  * One compact tile per cell, shaded by the same sequential rose scale V1's matrix uses (reused
  * from `data.ts`, not a new palette) — `UNKNOWN` cells stay the dashed/muted "unmeasured" treatment
- * V1 gives a gap cell, never heat-shaded, since there's no severity to shade by. Every tile opens
- * `GET /leakage/cells/{cellId}`'s detail dialog on click (see `v2-cell-detail-dialog.tsx`) —
- * including `UNKNOWN` ones, since their own source lineage is useful detail too.
+ * V1 gives a gap cell, never heat-shaded, since there's no severity to shade by.
+ *
+ * Clicking a tile opens the quick-glance `Dialog` (cell detail); that dialog's own "View full
+ * evidence" button switches to the bigger `Sheet`. Both are driven by one `view` state rather than
+ * each managing its own open flag, so they're never simultaneously mounted — Sheet shares the same
+ * underlying Radix `Dialog.Root` primitive as Dialog, and nesting two of those at once is exactly
+ * the kind of stacked-overlay scenario [[preact_radix_dialog_crash]] already warns about. A single
+ * state transition (`"detail"` → `"evidence"`) closes one and opens the other in the same render,
+ * never both at once.
  */
-function CellTile({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeakageCellV2Params, "cellId"> }) {
+function CellTile({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeakageCellEvidenceParams, "cellId"> }) {
+  const [view, setView] = useState<"detail" | "evidence" | null>(null);
   const { display } = cell.state;
   const { coordinate } = cell;
   const primaryAmount = cell.amounts[0];
@@ -128,63 +138,76 @@ function CellTile({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeaka
   const mutedClass = heat >= 2 ? "text-ink-2" : "text-ink-4";
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        {display === "UNKNOWN" ? (
-          <button type="button" aria-label={accessibleName} className={`rounded-control p-3 text-left ${UNMEASURED_TILE_CLASS}`}>
-            <p className="text-[12px] font-medium text-ink-3">{coordinate.mechanismLabel}</p>
-            <p className="mt-0.5 text-[10.5px] text-ink-4">
-              {coordinate.stateDimensionLabel}: {coordinate.stateValueLabel}
-            </p>
-            <span className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] text-ink-4">
-              Unknown
-              {cell.limitations.length > 0 && <InfoTooltip missingSource={cell.limitations.join(" ")} />}
-            </span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            aria-label={accessibleName}
-            className="rounded-control p-3 text-left"
-            style={{ backgroundColor: HEAT_SCALE[heat] }}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className={`text-[12px] font-medium ${HEAT_TEXT_CLASS[heat]}`}>{coordinate.mechanismLabel}</p>
-                <p className={`mt-0.5 text-[10.5px] ${mutedClass}`}>
-                  {coordinate.stateDimensionLabel}: {coordinate.stateValueLabel}
-                </p>
-              </div>
-              {isCompound && (
-                <span
-                  title="Several independently-supported candidates contribute to this figure"
-                  className={`shrink-0 ${HEAT_TEXT_CLASS[heat]}`}
-                >
-                  <Layers className="size-3.5" aria-hidden />
-                </span>
-              )}
+    <>
+      {display === "UNKNOWN" ? (
+        <button
+          type="button"
+          aria-label={accessibleName}
+          onClick={() => setView("detail")}
+          className={`rounded-control p-3 text-left ${UNMEASURED_TILE_CLASS}`}
+        >
+          <p className="text-[12px] font-medium text-ink-3">{coordinate.mechanismLabel}</p>
+          <p className="mt-0.5 text-[10.5px] text-ink-4">
+            {coordinate.stateDimensionLabel}: {coordinate.stateValueLabel}
+          </p>
+          <span className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] text-ink-4">
+            Unknown
+            {cell.limitations.length > 0 && <InfoTooltip missingSource={cell.limitations.join(" ")} />}
+          </span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          aria-label={accessibleName}
+          onClick={() => setView("detail")}
+          className="rounded-control p-3 text-left"
+          style={{ backgroundColor: HEAT_SCALE[heat] }}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className={`text-[12px] font-medium ${HEAT_TEXT_CLASS[heat]}`}>{coordinate.mechanismLabel}</p>
+              <p className={`mt-0.5 text-[10.5px] ${mutedClass}`}>
+                {coordinate.stateDimensionLabel}: {coordinate.stateValueLabel}
+              </p>
             </div>
+            {isCompound && (
+              <span
+                title="Several independently-supported candidates contribute to this figure"
+                className={`shrink-0 ${HEAT_TEXT_CLASS[heat]}`}
+              >
+                <Layers className="size-3.5" aria-hidden />
+              </span>
+            )}
+          </div>
 
-            <div className="mt-2.5 space-y-1.5">
-              {hasAmounts ? (
-                cell.amounts.map((amount, i) => <AmountLine key={i} amount={amount} heat={heat} />)
-              ) : (
-                <p className="text-[12px] font-medium text-ink-3">No exposure</p>
-              )}
-              {display === "POPULATED" && primaryAmount && (
-                <p className={`text-[10px] ${mutedClass}`}>
-                  Severity {primaryAmount.severity} · {formatPercent(primaryAmount.confidence)} confidence
-                  {primaryAmount.candidateCount > 0 && ` · ${primaryAmount.candidateCount} candidates`}
-                </p>
-              )}
-            </div>
-          </button>
-        )}
-      </DialogTrigger>
-      <DialogContent>
-        <V2CellDetailDialogContent cell={cell} params={params} />
-      </DialogContent>
-    </Dialog>
+          <div className="mt-2.5 space-y-1.5">
+            {hasAmounts ? (
+              cell.amounts.map((amount, i) => <AmountLine key={i} amount={amount} heat={heat} />)
+            ) : (
+              <p className="text-[12px] font-medium text-ink-3">No exposure</p>
+            )}
+            {display === "POPULATED" && primaryAmount && (
+              <p className={`text-[10px] ${mutedClass}`}>
+                Severity {primaryAmount.severity} · {formatPercent(primaryAmount.confidence)} confidence
+                {primaryAmount.candidateCount > 0 && ` · ${primaryAmount.candidateCount} candidates`}
+              </p>
+            )}
+          </div>
+        </button>
+      )}
+
+      <Dialog open={view === "detail"} onOpenChange={(open) => setView(open ? "detail" : null)}>
+        <DialogContent>
+          <V2CellDetailDialogContent cell={cell} params={params} onViewEvidence={() => setView("evidence")} />
+        </DialogContent>
+      </Dialog>
+
+      <Sheet open={view === "evidence"} onOpenChange={(open) => setView(open ? "evidence" : null)}>
+        <SheetContent>
+          <V2CellEvidenceSheetContent cell={cell} params={params} />
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
 
@@ -202,8 +225,8 @@ export function LeakageV2CellGrid({
 }: {
   cells: LeakageV2Cell[];
   /** The page's own active mode/horizon/lifecycleClass selection — passed through to each cell's
-   * detail fetch so the dialog shows detail for the same view the tile itself renders. */
-  params: Omit<GetLeakageCellV2Params, "cellId">;
+   * evidence fetch so the sheet shows evidence for the same view the tile itself renders. */
+  params: Omit<GetLeakageCellEvidenceParams, "cellId">;
 }) {
   const stageGroups = groupCellsByStage(cells);
 

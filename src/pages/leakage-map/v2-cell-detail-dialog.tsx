@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { DialogBody, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogBody, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCompactMoney, formatCount, formatPercent, formatRelativeTime, formatShortDateWithYear } from "@/lib/format-measured-value";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
@@ -23,15 +23,23 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * The cell-detail dialog's content — lazy-fetched via `useGetLeakageCellV2` on open (mounts only
- * once `DialogContent` renders, same lazy-fetch-on-open convention as V1's `CellDetailCard`).
- * `GET /leakage/cells/{cellId}` per docs/endpoints/leakage.md's V2 table — built straight off the
- * handoff doc's own `CellDetailV2` TS block, but **not yet live-verified against a real response**
- * (unlike the main page/opportunities/coverage/limitations work, which all were) — real field
- * values, especially `signals[]`/`lineage[]`, may need adjusting once this is actually opened
- * against a live V2 workspace.
+ * The cell-detail dialog's content — a quick-glance view, restored 2026-10-02 alongside the fuller
+ * `V2CellEvidenceSheetContent` (which briefly replaced it outright, since Evidence is a strict
+ * superset). Kept separate on request: this one's a fast, narrow modal for `components`/`signals`/
+ * `lineage`/`workState`; "View full evidence" below switches to the Sheet for the wider stuff
+ * (coverage, calculation, suggested actions). `cell` and `evidence` requests use the same lazy-
+ * fetch-on-open convention as V1's own `CellDetailCard`. Not yet live-verified against a real
+ * response, unlike the main page.
  */
-export function V2CellDetailDialogContent({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeakageCellV2Params, "cellId"> }) {
+export function V2CellDetailDialogContent({
+  cell,
+  params,
+  onViewEvidence,
+}: {
+  cell: LeakageV2Cell;
+  params: Omit<GetLeakageCellV2Params, "cellId">;
+  onViewEvidence: () => void;
+}) {
   const { data, isLoading, isError, refetch } = useGetLeakageCellV2({ cellId: cell.id, ...params });
   const detail = data?.data;
 
@@ -135,6 +143,13 @@ export function V2CellDetailDialogContent({ cell, params }: { cell: LeakageV2Cel
           </div>
         )}
       </DialogBody>
+      <DialogFooter>
+        <div className="flex w-full justify-end">
+          <Button type="button" variant="outline" size="sm" onClick={onViewEvidence} disabled={!detail}>
+            View full evidence
+          </Button>
+        </div>
+      </DialogFooter>
     </>
   );
 }
