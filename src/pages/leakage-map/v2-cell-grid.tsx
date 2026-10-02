@@ -194,7 +194,10 @@ export function LeakageV2CellGrid({ cells }: { cells: LeakageV2Cell[] }) {
 
   return (
     <div className="rounded-card border border-line bg-paper p-5">
-      <h2 className="text-[14.5px] font-semibold text-ink">Cells</h2>
+      <p className="text-[12px] text-ink-3">
+        Every way revenue is leaking right now, grouped by where it happens in the customer journey. Darker cards are
+        more severe. Dashed cards haven't been measured yet; see what's missing in "Why the number is partial" below.
+      </p>
       <div className="mt-4 space-y-5">
         {stageGroups.map(({ stageLabel, cells: stageCells }) => (
           <div key={stageLabel}>

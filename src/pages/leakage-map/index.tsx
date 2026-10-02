@@ -150,12 +150,12 @@ export default function LeakageMap() {
         </div>
 
         <V2KpiStrip cells={leakageV2.cells} rollups={leakageV2.rollups} coverage={leakageV2.coverage} controls={leakageV2.controls} />
+        <LeakageV2CellGrid cells={leakageV2.cells} />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <V2CoverageCard coverage={leakageV2.coverage} />
           <V2LimitationsCard limitations={leakageV2.limitations} cells={leakageV2.cells} />
         </div>
         <LeakageV2Rollups rollups={leakageV2.rollups} />
-        <LeakageV2CellGrid cells={leakageV2.cells} />
         {opportunities && <OpportunitiesPanel cells={opportunities.cells} limitations={opportunities.limitations} />}
       </div>
     );

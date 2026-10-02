@@ -73,9 +73,10 @@ function lowestConfidenceAmount(
  * Headline numbers at the top of the V2 page. Restyled 2026-10-01 off a real captured response
  * (`leakageresponse.json`) and a reference design the user shared — kept the reference's shape
  * (sentence-case labels, mono tabular figures, a bar/pill where the data has one) but not its
- * literal colors. The reference's black hero card read as out of place (flagged live 2026-10-02);
- * `bg-ultra` is this app's own existing solid-fill accent (same pairing as `calendar.tsx`'s
- * selected-day endpoint and every active `step-rail`), not an invented color. Each card reads one
+ * literal colors. The reference's black hero card read as out of place (flagged live 2026-10-02),
+ * then asked for something closer to red once it was blue — `bg-rose` is this app's existing
+ * critical/danger token (same solid-fill pairing as `reject-play-modal.tsx`'s selected state), a
+ * fitting match for "at risk" and not an invented color. Each card reads one
  * real field or a straight sum/min of the same field across rows — see the helpers above for why
  * each one stays clear of [[feedback_no_frontend_business_math]].
  */
@@ -103,7 +104,7 @@ export function V2KpiStrip({
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <div className="rounded-card bg-ultra p-4">
+      <div className="rounded-card bg-rose p-4">
         <p className="text-[11.5px] text-paper/70">
           Total at risk · {modeLabel} · {horizonLabel}
         </p>

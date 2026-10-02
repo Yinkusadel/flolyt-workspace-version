@@ -72,7 +72,7 @@ export function OpportunitiesPanel({ cells, limitations }: { cells: OpportunityC
       <div className="border-b border-line px-4 py-2.5">
         <p className="text-[12.5px] font-semibold text-ink">Missed opportunities</p>
         <p className="text-[10.5px] text-ink-3">
-          Separate from leakage above — upside, never netted against it.
+          Separate from leakage above: upside, never netted against it.
         </p>
       </div>
       {limitations.length > 0 && (
