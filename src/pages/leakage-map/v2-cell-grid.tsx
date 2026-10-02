@@ -9,6 +9,7 @@ import { HEAT_SCALE, HEAT_TEXT_CLASS } from "@/pages/leakage-map/data";
 import { V2CaseSheetContent } from "@/pages/leakage-map/v2-case-sheet";
 import { V2CellDetailDialogContent } from "@/pages/leakage-map/v2-cell-detail-dialog";
 import { V2CellEvidenceSheetContent } from "@/pages/leakage-map/v2-cell-evidence-sheet";
+import { V2CellHistorySheetContent } from "@/pages/leakage-map/v2-cell-history-sheet";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
 import type { LeakageV2Amount, LeakageV2Cell } from "@/services/api/leakage/get-leakage";
 import type { GetLeakageCellEvidenceParams } from "@/services/api/leakage/get-leakage-cell-evidence";
@@ -107,8 +108,9 @@ function AmountLine({ amount, heat }: { amount: LeakageV2Amount; heat: 0 | 1 | 2
  *
  * Clicking a tile opens the quick-glance `Dialog` (cell detail); that dialog's own "View full
  * evidence" button switches to the bigger `Sheet`; its "View case" switches to a third `Sheet` for
- * the case's full lifecycle surface. All three are driven by one `view` state rather than each
- * managing its own open flag, so they're never simultaneously mounted — Sheet shares the same
+ * the case's full lifecycle surface, and its "View history" (2026-10-02) switches to a fourth
+ * `Sheet` for `GET /cells/{cellId}/history`. All four are driven by one `view` state rather than
+ * each managing its own open flag, so they're never simultaneously mounted — Sheet shares the same
  * underlying Radix `Dialog.Root` primitive as Dialog, and nesting two of those at once is exactly
  * the kind of stacked-overlay scenario [[preact_radix_dialog_crash]] already warns about. A single
  * state transition (e.g. `"detail"` → `"case"`) closes one and opens the other in the same render,
@@ -116,7 +118,7 @@ function AmountLine({ amount, heat }: { amount: LeakageV2Amount; heat: 0 | 1 | 2
  * dialog has loaded and the user picks "View case" — the tile itself never fetches it up front.
  */
 function CellTile({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeakageCellEvidenceParams, "cellId"> }) {
-  const [view, setView] = useState<"detail" | "evidence" | "case" | null>(null);
+  const [view, setView] = useState<"detail" | "evidence" | "case" | "history" | null>(null);
   const [caseId, setCaseId] = useState<string | null>(null);
   const { display } = cell.state;
   const { coordinate } = cell;
@@ -223,6 +225,7 @@ function CellTile({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeaka
               setCaseId(id);
               setView("case");
             }}
+            onViewHistory={() => setView("history")}
           />
         </SheetContent>
       </Sheet>
@@ -233,6 +236,15 @@ function CellTile({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeaka
             due-date draft, decision text, …) carries over stale values from whichever case was
             open last instead of resetting. */}
         <SheetContent>{caseId && <V2CaseSheetContent key={caseId} caseId={caseId} cell={cell} />}</SheetContent>
+      </Sheet>
+
+      <Sheet open={view === "history"} onOpenChange={(open) => setView(open ? "history" : null)}>
+        <SheetContent>
+          {/* History only takes `mode`/`lifecycleClass` per the doc ("Cell history accepts mode
+              and lifecycleClass") — not the full evidence params, which also carry
+              `horizon`/`horizonDays` that this route doesn't take. */}
+          <V2CellHistorySheetContent cell={cell} params={{ mode: params.mode, lifecycleClass: params.lifecycleClass }} />
+        </SheetContent>
       </Sheet>
     </>
   );

@@ -49,15 +49,23 @@ function EvidenceSkeleton() {
  * for the exact same `CaseInfo` card the cell-detail Dialog already uses (status Chip, owner/due
  * stat grid, "View case" button) — same cell, same case, so it should look identical in both
  * places rather than this Sheet having its own flatter one-off treatment.
+ *
+ * "View history" added 2026-10-02 next to the As-of line — the one spot where "here's the current
+ * figure's timestamp" and "see how it's changed over time" sit together. Placed here rather than
+ * the quick-glance Dialog's already-three-button footer: the handoff doc groups History alongside
+ * Detail/Coverage/Calculation as this cell's "panels", and Coverage/Calculation both live in
+ * Evidence, not the Dialog, so History follows the same placement logic.
  */
 export function V2CellEvidenceSheetContent({
   cell,
   params,
   onViewCase,
+  onViewHistory,
 }: {
   cell: LeakageV2Cell;
   params: Omit<GetLeakageCellEvidenceParams, "cellId">;
   onViewCase: (caseId: string) => void;
+  onViewHistory: () => void;
 }) {
   const { data, isLoading, isError, refetch } = useGetLeakageCellEvidence({ cellId: cell.id, ...params });
   const evidence = data?.data;
@@ -89,7 +97,12 @@ export function V2CellEvidenceSheetContent({
         {evidence && (
           <div className="space-y-5">
             {evidence.question && <p className="text-[12.5px] font-medium text-ink">{evidence.question}</p>}
-            <p className="text-[10.5px] text-ink-4">As of {formatRelativeTime(evidence.publication.asOfUtc)}</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[10.5px] text-ink-4">As of {formatRelativeTime(evidence.publication.asOfUtc)}</p>
+              <button type="button" onClick={onViewHistory} className="text-[11px] font-medium text-ultra hover:underline">
+                View history
+              </button>
+            </div>
 
             <CaseInfo workState={evidence.workState} leakCase={caseData?.data} isLoadingCase={isLoadingCase} onViewCase={onViewCase} />
 

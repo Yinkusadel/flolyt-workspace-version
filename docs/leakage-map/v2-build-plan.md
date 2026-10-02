@@ -477,15 +477,16 @@ opened from "View case" on the detail dialog's Case card (same `view`-state arch
 
 ## Current endpoint status (2026-10-02)
 
-10 of the handoff doc's 14 scaffolded `/leakage/*` V2 routes are wired (plus the 2 original-scope
+11 of the handoff doc's 14 scaffolded `/leakage/*` V2 routes are wired (plus the 2 original-scope
 endpoints, `GET /leakage` and `GET /opportunities`, done since 2026-10-01):
 
 | Wired | Not wired |
 |---|---|
-| `GET /leakage` (dual-contract) | `GET /leakage/cells/{cellId}/history` |
-| `GET /opportunities` | `GET /leakage/coverage` (standalone) |
-| `GET /leakage/cells/{cellId}` | `GET /leakage/calculation` (standalone) |
-| `GET /leakage/cells/{cellId}/evidence` | `GET /leakage/cutover-readiness` (doc itself says unlikely to ever need a UI) |
+| `GET /leakage` (dual-contract) | `GET /leakage/coverage` (standalone) |
+| `GET /opportunities` | `GET /leakage/calculation` (standalone) |
+| `GET /leakage/cells/{cellId}` | `GET /leakage/cutover-readiness` (doc itself says unlikely to ever need a UI) |
+| `GET /leakage/cells/{cellId}/evidence` | |
+| `GET /leakage/cells/{cellId}/history` | |
 | `POST /leakage/cells/{cellId}/learn-why` | |
 | `POST /leakage/cells/{cellId}/case` | |
 | `GET /leakage/cases/{caseId}` | |
@@ -495,11 +496,28 @@ endpoints, `GET /leakage` and `GET /opportunities`, done since 2026-10-01):
 | `POST /leakage/cases/{caseId}/decisions` | |
 | `POST /leakage/cases/{caseId}/room` | |
 
+`GET /leakage/coverage` and `GET /leakage/calculation` (both standalone) stay unwired because the
+data they'd show is already available scoped more usefully elsewhere — the page-level `coverage`
+object comes inline on `GET /leakage` (`V2CoverageCard`), and per-cell calculation policy/formula
+comes from `GET /cells/{cellId}/evidence`'s own `calculationPolicies`/`calculationFormulas`
+(Evidence Sheet's "Calculation" section) — not a gap, just two routes with no distinct use case yet.
+
+**`GET /cells/{cellId}/history`** — wired 2026-10-02, a new `V2CellHistorySheetContent`
+(`v2-cell-history-sheet.tsx`), opened via a "View history" link next to the Evidence Sheet's own
+"As of" line (not the quick-glance Dialog's footer, which already has three buttons). Renders
+`points[]` newest-first as-given (doc: "Published history, newest first" — not re-sorted), one row
+per point: `publishedAtUtc`, a `state.display` Chip, and each amount's lifecycle class + compact
+money value. `CellTile`'s `view` union grew a 4th member (`"history"`), same one-view-at-a-time
+architecture as detail/evidence/case. **Live-verified 2026-10-02**: a real single-point response
+("Attrition" cell, 1 point, `POPULATED`/`IN_FLIGHT`/`USD 484.3195`) rendered every field correctly
+— date, state Chip, lifecycle class, and compact money all matched the raw response exactly.
+
 **Nothing built 2026-10-02 has been live-verified against a real response yet** — unlike the
 2026-10-01 work (main page, filters, rollups, opportunities), which all were. That's the single
-biggest outstanding risk: the evidence/case/room shapes are now *schema-correct* (several real bugs
-already caught from pasted Scalar examples), but none of the actual interaction flows — opening a
-case, transitioning it, opening a Room from it — have been clicked through against the live backend.
+biggest outstanding risk: the evidence/case/room/history shapes are now *schema-correct* (several
+real bugs already caught from pasted Scalar examples), but none of the actual interaction flows —
+opening a case, transitioning it, opening a Room from it, viewing history — have been clicked
+through against the live backend.
 
 ## Q&A log (2026-10-02)
 
