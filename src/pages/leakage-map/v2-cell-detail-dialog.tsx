@@ -1,9 +1,13 @@
+import { useNavigate } from "react-router-dom";
+import { HelpCircle } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { DialogBody, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCompactMoney, formatCount, formatPercent, formatRelativeTime, formatShortDateWithYear } from "@/lib/format-measured-value";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
 import { useGetLeakageCellV2 } from "@/features/leakage/use-get-leakage-cell-v2";
+import { useLearnWhyLeakageCellV2 } from "@/features/leakage/use-learn-why-leakage-cell-v2";
 import type { GetLeakageCellV2Params } from "@/services/api/leakage/get-leakage-cell-v2";
 import type { LeakageV2Cell } from "@/services/api/leakage/get-leakage";
 
@@ -26,10 +30,13 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
  * The cell-detail dialog's content — a quick-glance view, restored 2026-10-02 alongside the fuller
  * `V2CellEvidenceSheetContent` (which briefly replaced it outright, since Evidence is a strict
  * superset). Kept separate on request: this one's a fast, narrow modal for `components`/`signals`/
- * `lineage`/`workState`; "View full evidence" below switches to the Sheet for the wider stuff
- * (coverage, calculation, suggested actions). `cell` and `evidence` requests use the same lazy-
- * fetch-on-open convention as V1's own `CellDetailCard`. Not yet live-verified against a real
- * response, unlike the main page.
+ * `lineage`/`workState`; "View full evidence" switches to the Sheet for the wider stuff (coverage,
+ * calculation, suggested actions). "Learn why" starts `POST /cells/{cellId}/learn-why`, same
+ * fire-and-navigate pattern V1's own `CellDetailCard` already uses — the mutation's result is just
+ * a `conversationId`/`runId` pointer; the actual SSE streaming, reconnect, and answer rendering all
+ * happen on the existing `/conversations/{id}` route, not rebuilt here. `cell`/`evidence` requests
+ * use the same lazy-fetch-on-open convention as V1's `CellDetailCard` too. Not yet live-verified
+ * against a real response, unlike the main page.
  */
 export function V2CellDetailDialogContent({
   cell,
@@ -40,8 +47,18 @@ export function V2CellDetailDialogContent({
   params: Omit<GetLeakageCellV2Params, "cellId">;
   onViewEvidence: () => void;
 }) {
+  const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useGetLeakageCellV2({ cellId: cell.id, ...params });
+  const { mutate: learnWhy, isPending: isAskingWhy } = useLearnWhyLeakageCellV2();
   const detail = data?.data;
+
+  // Mirrors V1's own two-refusal gate (docs/endpoints/leakage.md's learn-why section): "a gap is
+  // not a question" (nothing measured) and "a real zero is a result, not a gap" (measured but
+  // nothing to explain). V2's handoff doc doesn't restate this rule for the V2 route explicitly,
+  // but the same logic applies to the same kind of figure — inferred by analogy, not copied from
+  // doc text, so revisit if a real response disagrees.
+  const primaryAmount = cell.amounts[0];
+  const hasLeakToExplain = cell.state.display === "POPULATED" && !!primaryAmount && primaryAmount.value > 0;
 
   return (
     <>
@@ -144,7 +161,22 @@ export function V2CellDetailDialogContent({
         )}
       </DialogBody>
       <DialogFooter>
-        <div className="flex w-full justify-end">
+        <div className="flex w-full items-center justify-between gap-2">
+          {hasLeakToExplain ? (
+            <button
+              type="button"
+              disabled={isAskingWhy}
+              onClick={() =>
+                learnWhy({ cellId: cell.id, ...params }, { onSuccess: (res) => navigate(`/conversations/${res.data.conversationId}`) })
+              }
+              className="inline-flex items-center gap-1.5 rounded-control border border-line bg-paper-2 px-2.5 py-1.5 text-[11px] font-medium text-ink-2 hover:bg-paper disabled:opacity-60"
+            >
+              <HelpCircle className="size-3.5" />
+              {isAskingWhy ? "Asking…" : "Learn why"}
+            </button>
+          ) : (
+            <span />
+          )}
           <Button type="button" variant="outline" size="sm" onClick={onViewEvidence} disabled={!detail}>
             View full evidence
           </Button>
