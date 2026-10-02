@@ -2,13 +2,17 @@ import { useNavigate } from "react-router-dom";
 import { HelpCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { DialogBody, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCompactMoney, formatCount, formatPercent, formatRelativeTime, formatShortDateWithYear } from "@/lib/format-measured-value";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
+import { useCreateLeakageCase } from "@/features/leakage/use-create-leakage-case";
+import { useGetLeakageCase } from "@/features/leakage/use-get-leakage-case";
 import { useGetLeakageCellV2 } from "@/features/leakage/use-get-leakage-cell-v2";
 import { useLearnWhyLeakageCellV2 } from "@/features/leakage/use-learn-why-leakage-cell-v2";
-import type { GetLeakageCellV2Params } from "@/services/api/leakage/get-leakage-cell-v2";
+import type { GetLeakageCellV2Params, LeakageV2WorkState } from "@/services/api/leakage/get-leakage-cell-v2";
+import type { RevenueLeakCase } from "@/services/api/leakage/leakage-case-types";
 import type { LeakageV2Cell } from "@/services/api/leakage/get-leakage";
 
 function DetailSkeleton() {
@@ -27,6 +31,43 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 /**
+ * The case's own info, no action — moved up near the top on request (2026-10-02) so it reads
+ * alongside the figure itself rather than buried under components/signals/lineage. The "Open a
+ * case" action lives in the dialog's footer instead (see `V2CellDetailDialogContent`), next to
+ * Learn Why and View full evidence, not inline here. Owner shows the raw `ownerUserId` — no
+ * user-name lookup is wired, so this is honestly an id, not a display name, until one is.
+ */
+function CaseInfo({ workState, leakCase, isLoadingCase }: { workState: LeakageV2WorkState; leakCase?: RevenueLeakCase; isLoadingCase: boolean }) {
+  return (
+    <div className="border-t border-line pt-4">
+      <SectionLabel>Case</SectionLabel>
+      {workState.revenueLeakCaseId && isLoadingCase && (
+        <div className="mt-2">
+          <Skeleton className="h-4 w-24" />
+        </div>
+      )}
+      {workState.revenueLeakCaseId && leakCase ? (
+        <div className="mt-2 space-y-1">
+          <div className="flex items-center gap-2">
+            <Chip tone="neutral">{humanizeEnum(leakCase.status)}</Chip>
+            {leakCase.isOverdue && <Chip tone="rose">Overdue</Chip>}
+          </div>
+          <p className="text-[11px] text-ink-4">{leakCase.ownerUserId ? `Owner: ${leakCase.ownerUserId}` : "Unassigned"}</p>
+          <p className="text-[11px] text-ink-4">Due {formatShortDateWithYear(leakCase.dueAtUtc)}</p>
+          {leakCase.decisions.length > 0 && (
+            <p className="text-[11px] text-ink-4">
+              {leakCase.decisions.length} decision{leakCase.decisions.length === 1 ? "" : "s"} logged
+            </p>
+          )}
+        </div>
+      ) : (
+        !workState.revenueLeakCaseId && <p className="mt-2 text-[11.5px] text-ink-3">{workState.explanation}</p>
+      )}
+    </div>
+  );
+}
+
+/**
  * The cell-detail dialog's content — a quick-glance view, restored 2026-10-02 alongside the fuller
  * `V2CellEvidenceSheetContent` (which briefly replaced it outright, since Evidence is a strict
  * superset). Kept separate on request: this one's a fast, narrow modal for `components`/`signals`/
@@ -34,9 +75,13 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
  * calculation, suggested actions). "Learn why" starts `POST /cells/{cellId}/learn-why`, same
  * fire-and-navigate pattern V1's own `CellDetailCard` already uses — the mutation's result is just
  * a `conversationId`/`runId` pointer; the actual SSE streaming, reconnect, and answer rendering all
- * happen on the existing `/conversations/{id}` route, not rebuilt here. `cell`/`evidence` requests
- * use the same lazy-fetch-on-open convention as V1's `CellDetailCard` too. Not yet live-verified
- * against a real response, unlike the main page.
+ * happen on the existing `/conversations/{id}` route, not rebuilt here. Case handling off
+ * `workState`: `revenueLeakCaseId` present means an existing case's live status is fetched and
+ * shown (`CaseInfo`, near the top); otherwise `state === "READY"` offers "Open a case" in the
+ * footer, `"UNREADY"` shows only the gate's own explanation. `cell`/`evidence` requests use the
+ * same lazy-fetch-on-open convention as V1's `CellDetailCard` too. Not yet live-verified against a
+ * real response, unlike the main page — this is the furthest-scaffolded, least-tested part of V2
+ * so far.
  */
 export function V2CellDetailDialogContent({
   cell,
@@ -52,6 +97,10 @@ export function V2CellDetailDialogContent({
   const { mutate: learnWhy, isPending: isAskingWhy } = useLearnWhyLeakageCellV2();
   const detail = data?.data;
 
+  const caseId = detail?.workState.revenueLeakCaseId ?? undefined;
+  const { data: caseData, isLoading: isLoadingCase } = useGetLeakageCase(caseId, !!caseId);
+  const { mutate: createCase, isPending: isCreatingCase } = useCreateLeakageCase();
+
   // Mirrors V1's own two-refusal gate (docs/endpoints/leakage.md's learn-why section): "a gap is
   // not a question" (nothing measured) and "a real zero is a result, not a gap" (measured but
   // nothing to explain). V2's handoff doc doesn't restate this rule for the V2 route explicitly,
@@ -59,6 +108,11 @@ export function V2CellDetailDialogContent({
   // doc text, so revisit if a real response disagrees.
   const primaryAmount = cell.amounts[0];
   const hasLeakToExplain = cell.state.display === "POPULATED" && !!primaryAmount && primaryAmount.value > 0;
+  // `workState.state === "READY"` alone isn't sufficient — confirmed live 2026-10-02, the server
+  // refused a READY-but-not-populated cell with "A case can only be opened for a populated finding
+  // with measured exposure." Gated on the same `hasLeakToExplain` check Learn Why already uses,
+  // since it's the same underlying requirement (a real, measured figure to act on).
+  const canOpenCase = hasLeakToExplain && !!detail && !detail.workState.revenueLeakCaseId && detail.workState.state === "READY";
 
   return (
     <>
@@ -88,6 +142,8 @@ export function V2CellDetailDialogContent({
         {detail && (
           <div className="mt-4 space-y-5">
             <p className="text-[10.5px] text-ink-4">As of {formatRelativeTime(detail.publication.asOfUtc)}</p>
+
+            <CaseInfo workState={detail.workState} leakCase={caseData?.data} isLoadingCase={isLoadingCase} />
 
             {detail.components.length > 0 && (
               <div className="border-t border-line pt-4">
@@ -150,33 +206,37 @@ export function V2CellDetailDialogContent({
                 </div>
               </div>
             )}
-
-            {detail.workState.explanation && (
-              <div className="border-t border-line pt-4">
-                <SectionLabel>Case status</SectionLabel>
-                <p className="mt-2 text-[11.5px] text-ink-3">{detail.workState.explanation}</p>
-              </div>
-            )}
           </div>
         )}
       </DialogBody>
       <DialogFooter>
-        <div className="flex w-full items-center justify-between gap-2">
-          {hasLeakToExplain ? (
-            <button
-              type="button"
-              disabled={isAskingWhy}
-              onClick={() =>
-                learnWhy({ cellId: cell.id, ...params }, { onSuccess: (res) => navigate(`/conversations/${res.data.conversationId}`) })
-              }
-              className="inline-flex items-center gap-1.5 rounded-control border border-line bg-paper-2 px-2.5 py-1.5 text-[11px] font-medium text-ink-2 hover:bg-paper disabled:opacity-60"
-            >
-              <HelpCircle className="size-3.5" />
-              {isAskingWhy ? "Asking…" : "Learn why"}
-            </button>
-          ) : (
-            <span />
-          )}
+        <div className="flex w-full flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {hasLeakToExplain && (
+              <button
+                type="button"
+                disabled={isAskingWhy}
+                onClick={() =>
+                  learnWhy({ cellId: cell.id, ...params }, { onSuccess: (res) => navigate(`/conversations/${res.data.conversationId}`) })
+                }
+                className="inline-flex items-center gap-1.5 rounded-control border border-line bg-paper-2 px-2.5 py-1.5 text-[11px] font-medium text-ink-2 hover:bg-paper disabled:opacity-60"
+              >
+                <HelpCircle className="size-3.5" />
+                {isAskingWhy ? "Asking…" : "Learn why"}
+              </button>
+            )}
+            {canOpenCase && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={isCreatingCase}
+                onClick={() => createCase({ cellId: cell.id, dueAtUtc: null })}
+              >
+                {isCreatingCase ? "Opening…" : "Open a case"}
+              </Button>
+            )}
+          </div>
           <Button type="button" variant="outline" size="sm" onClick={onViewEvidence} disabled={!detail}>
             View full evidence
           </Button>
