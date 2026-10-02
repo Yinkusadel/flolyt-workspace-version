@@ -18,6 +18,7 @@ import { V2StatusLine } from "@/pages/leakage-map/v2-status-line";
 import { OpportunitiesPanel } from "@/pages/leakage-map/opportunities-panel";
 import { useGetOpportunities } from "@/features/opportunities/use-get-opportunities";
 import { V2FiltersMenu } from "@/pages/leakage-map/v2-filters-menu";
+import { V2PageSkeleton } from "@/pages/leakage-map/v2-page-skeleton";
 import {
   toGetLeakageV2Params,
   v2FilterStateFromControls,
@@ -67,7 +68,7 @@ export default function LeakageMap() {
   // (report/stage/cell) regardless of which branch ends up rendering.
   const v1Params = toGetLeakageParams(filters);
   const params = v2Filters ? toGetLeakageV2Params(v2Filters) : v1Params;
-  const { data: leakageResponse, isFetching, isError, error, refetch } = useGetLeakage(params);
+  const { data: leakageResponse, isLoading, isFetching, isError, error, refetch } = useGetLeakage(params);
   const leakageData = leakageResponse?.data;
   // `GET /leakage` is dual-contract — a workspace flagged into Revenue Leakage V2 gets a
   // differently-shaped `contractVersion: "2.0"` response from the same endpoint. Never read V1
@@ -112,6 +113,15 @@ export default function LeakageMap() {
 
   const fallbackWindowLabel = rangeSelectionLabel(filters.window, "window");
   const fallbackHorizonLabel = rangeSelectionLabel(filters.horizon, "horizon");
+
+  // True first paint only — `isLoading` is `status === "pending"` (no data yet at all), never true
+  // again on a filter-driven refetch since `placeholderData` keeps the previous response around
+  // (see `use-get-leakage.ts`), which is what lets `RecomputingToast` handle those instead. The
+  // page's dual contract (V1 vs V2) isn't knowable yet at this point — see `v2-page-skeleton.tsx`'s
+  // own comment for why it commits to the V2 shape anyway.
+  if (isLoading && !isError) {
+    return <V2PageSkeleton />;
+  }
 
   // Unconfirmed live (every real pull so far had customers) — flagged in
   // docs/leakage-map/build-plan.md Step 2.
