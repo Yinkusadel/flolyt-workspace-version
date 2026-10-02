@@ -396,6 +396,26 @@ opened from "View case" on the detail dialog's Case card (same `view`-state arch
   `ownerUserId` to a real name via a shared `resolveOwnerName` helper instead of showing the bare
   UUID. Still no role check — "a non-admin can assign only themselves" is left to the server to
   enforce and surface via the existing error toast, same discipline as the transition graph below.
+- **Owner assignment is gated by case status — confirmed live 2026-10-02, three real attempts**:
+  - `DETECTED` (first-ever assignment, no prior owner) → **succeeded**. The response's own
+    `auditTrail` shows the server auto-advancing the case `DETECTED → REVIEWED → ASSIGNED` inside
+    that one `PUT /owner` call — `REVIEWED` gets a server-written reason ("Reviewed while assigning
+    an accountable owner"), `ASSIGNED` gets the reason actually typed into the form.
+  - `ASSIGNED` (reassigning to someone else while already in that status) → **succeeded**.
+  - `WORKED` → **rejected**, *"A case must be reviewed before it can be assigned."*
+  
+  All three used the identical request shape (`{ ownerUserId, reason }`), so the status is the only
+  variable. The evidence-backed rule: **the owner can be set at or before `ASSIGNED` (the server
+  auto-advances an earlier case up to it), but once the case has moved past `ASSIGNED` — into
+  `WORKED` or anything further down the lifecycle — the owner is locked**, and the server reuses the
+  same "must be reviewed" message for that case even though it doesn't literally apply anymore. Not
+  confirmed against the doc or a schema, purely inferred from these three live responses — an
+  earlier version of this note wrongly treated `DETECTED` as a rejection too (it isn't; that
+  conclusion was never actually tested, just assumed from context) and wrongly framed the rule as
+  blocking both "too early" and "too late" with the same message (it only blocks "too late"). Not
+  fixed client-side — the "Reassign owner" card still offers the picker regardless of status;
+  folding into the same backend question below rather than building a client-side status gate on an
+  inferred-not-confirmed rule.
 - **`POST /cases/{caseId}/transitions`** — every non-`VERIFIED` status offered (`VERIFIED` excluded
   at the type level, `LeakageCaseTransitionTarget = Exclude<RevenueLeakCaseStatus, "VERIFIED">`, per
   "the client must never submit VERIFIED"); no transition graph enforced client-side — the server is
@@ -409,6 +429,13 @@ opened from "View case" on the detail dialog's Case card (same `view`-state arch
   team**: the full allowed-transitions table for `RevenueLeakCaseStatus` (which target statuses are
   legal from each current status), so the "Move status" dropdown can eventually filter to only the
   moves that are actually legal instead of offering all 7 and letting the server reject the bad ones.
+  **Now also ask**: confirm the owner-assignment rule inferred above — succeeds at or before
+  `ASSIGNED` (auto-advancing an earlier case up to it), rejected once past `ASSIGNED` (e.g.
+  `WORKED`) — and get the exact boundary (is `ASSIGNED` itself always reachable this way, or only up
+  to `REVIEWED` with the final `ASSIGNED` step sometimes blocked too?). If confirmed, the "Reassign
+  owner" card should get its own status gate (disable/explain once the case is past `ASSIGNED`) the
+  same way "Move status" would benefit from the transition table — not built yet, since this is
+  still inferred from three live responses, not doc-confirmed.
 - **`PUT /cases/{caseId}/due-date`** — **real bug caught live**: the server refused a past date
   ("A revised due date must be in the future") that the (then-native) date input let get submitted
   with zero warning. Added `min`/`max` (tomorrow through 365 days out, per the doc's own "future
