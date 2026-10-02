@@ -3,19 +3,14 @@ import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
 import type { LeakageV2Cell, LeakageV2Publication } from "@/services/api/leakage/get-leakage";
-import type { LeakageV2CellComponent, LeakageV2CellSignal, LeakageV2Lineage, LeakageV2WorkState } from "@/services/api/leakage/get-leakage-cell-v2";
+import type { LeakageV2CellComponent, LeakageV2CellSignal, LeakageV2WorkState } from "@/services/api/leakage/get-leakage-cell-v2";
+import type { LeakageCoverageSignalEntry } from "@/services/api/leakage/get-leakage-coverage";
+import type { LeakageCalculationPolicyRow } from "@/services/api/leakage/get-leakage-calculation";
 
-// Scaffolded 2026-10-01, not wired into a page yet — see docs/leakage-map/v2-build-plan.md.
-//
-// ⚠️ Unlike CellDetailV2/CellHistoryV2/CoverageV2/CalculationV2, the handoff doc gives this
-// endpoint's response as PROSE ONLY, no literal TS block:
-// "GET /cells/{cellId}/evidence returns contractVersion: 'flolyt.revenue-leakage-evidence.v1', a
-// content-derived evidenceId, the public question, explicit selection (mode, horizon, horizonDays,
-// and lifecycleClass), selected cell, components, signal observations, extended capability lineage
-// and candidates, relevant coverage, calculation policies/formulas, limitations, case/Room state,
-// permitted actions, and publication." Every field below is reconstructed from that sentence, not
-// copied from a schema — confirm against a real response (Scalar's "Show Schema" toggle, per
-// [[feedback_stop_on_truncated_endpoint_fields]]) before trusting field names/casing.
+// Scaffolded 2026-10-01 from doc prose, corrected 2026-10-02 against the real Scalar schema the
+// user pasted — every field below is now confirmed shape, not reconstructed guesswork. Still not
+// wired into a page, and the real response body itself hasn't been pulled live yet (schema ≠ a
+// real instance) — see docs/leakage-map/v2-build-plan.md.
 
 export interface LeakageEvidenceSelection {
   mode: string;
@@ -24,9 +19,68 @@ export interface LeakageEvidenceSelection {
   lifecycleClass: string | null;
 }
 
-/** "extended capability lineage and candidates" — doc doesn't say what's extended about it
- * relative to `LeakageV2Lineage`, so this just aliases that type until a real response shows more. */
-export type LeakageEvidenceLineage = LeakageV2Lineage;
+export interface LeakageEvidenceLineageCandidate {
+  sourceId: string;
+  sourceName: string;
+  state: string;
+  observedAtUtc: string | null;
+  mappingVersion: string | null;
+  quality: number | null;
+  populationCoverage: number | null;
+  lineageReferences: string[];
+}
+
+export interface LeakageEvidenceLineageAction {
+  kind: string;
+  label: string;
+  sourceId: string | null;
+  missingRequirements: string[];
+}
+
+/** The doc called this "extended capability lineage and candidates" without saying what was
+ * extended — confirmed against the real schema: `explanation`, `missingRequirements`, and
+ * `candidates[]` on top of the base lineage fields `CellDetailV2.lineage[]` already has. */
+export interface LeakageEvidenceLineage {
+  signalId: string;
+  capabilityResolutionId: string;
+  capabilityId: string;
+  sourceAvailability: string;
+  selectedSourceIds: string[];
+  evaluatedAtUtc: string;
+  resolverVersion: string;
+  actions: LeakageEvidenceLineageAction[];
+  explanation: string;
+  missingRequirements: string[];
+  candidates: LeakageEvidenceLineageCandidate[];
+}
+
+export interface LeakageEvidenceActionTarget {
+  resource: string;
+  resourceId: string | null;
+}
+
+export interface LeakageEvidenceActionEligibility {
+  eligible: boolean;
+  reason: string | null;
+  requiredCapabilities: string[];
+}
+
+/**
+ * The permitted-action entries — the doc's "permitted actions" turned out to be named
+ * `suggestedActions` in the real response, not `actions` (corrected 2026-10-02). `kind`'s only
+ * seen value so far is Scalar's own generic example ("OpenRecord") rather than the doc's own named
+ * identities (`revenue_leaks.review`, `revenue_leaks.open_room`, `rooms.view`,
+ * `sources.review_capability`, `sources.connect`) — left as a plain `string`, not a literal union,
+ * until a real response shows which vocabulary actually comes back.
+ */
+export interface LeakageEvidenceSuggestedAction {
+  id: string;
+  kind: string;
+  label: string;
+  target: LeakageEvidenceActionTarget;
+  parameters: Record<string, unknown> | null;
+  eligibility: LeakageEvidenceActionEligibility;
+}
 
 export interface LeakageEvidenceV2 {
   contractVersion: "flolyt.revenue-leakage-evidence.v1";
@@ -37,17 +91,16 @@ export interface LeakageEvidenceV2 {
   components: LeakageV2CellComponent[];
   signals: LeakageV2CellSignal[];
   lineage: LeakageEvidenceLineage[];
-  /** "relevant coverage" — no shape given; likely overlaps `LeakageV2CoverageSummary` but unconfirmed. */
-  coverage: unknown;
-  /** "calculation policies/formulas" — likely overlaps `CalculationV2` but unconfirmed. */
-  calculation: unknown;
+  /** Confirmed 2026-10-02: an array of per-signal entries, the same shape as the standalone
+   * `GET /leakage/coverage` route's own `signals[]` — not the page-level `LeakageV2CoverageSummary`. */
+  coverage: LeakageCoverageSignalEntry[];
+  /** Confirmed 2026-10-02: two separate top-level fields, not one nested `calculation` object as
+   * first scaffolded — `calculationPolicies` reuses `GET /leakage/calculation`'s own row shape. */
+  calculationPolicies: LeakageCalculationPolicyRow[];
+  calculationFormulas: string[];
   limitations: string[];
-  /** "case/Room state" — likely `LeakageV2WorkState` but doc doesn't confirm the field is named this. */
   workState: LeakageV2WorkState;
-  /** "permitted actions" — server actions by typed identity (revenue_leaks.review,
-   * revenue_leaks.open_room, rooms.view, sources.review_capability, sources.connect), per the
-   * doc's "Render server actions by their typed identity" section. Shape of each entry unconfirmed. */
-  actions: Array<Record<string, unknown>>;
+  suggestedActions: LeakageEvidenceSuggestedAction[];
   publication: LeakageV2Publication;
 }
 

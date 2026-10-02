@@ -3,20 +3,26 @@ import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
 
-// Scaffolded 2026-10-01, not wired into a page yet — see docs/leakage-map/v2-build-plan.md.
-// Doc: "rollout/operator diagnostics" — not an end-user surface. "The frontend must not infer that
-// legacy can be removed from v2ReadSelected; readyToRetireLegacy is the final gate and remains
-// false until dependency, SLO, rollback, Room, and explicit approval evidence exists." No literal
-// TS block given in the doc — fields below are named directly from its prose, not a schema; confirm
-// live before building any UI on top of this (and this route is unlikely to need one at all, per
-// its own "operator diagnostics" framing).
+// Scaffolded 2026-10-01 from doc prose, corrected 2026-10-02 against the real Scalar schema the
+// user pasted — the prose-only version was missing `contractVersion`, `hasActivePublication`,
+// `publishedSnapshots`, `rollbackAvailable`, and `retirementApproved` entirely. "Rollout/operator
+// diagnostics" per the doc — not an end-user surface. "The frontend must not infer that legacy can
+// be removed from v2ReadSelected; readyToRetireLegacy is the final gate and remains false until
+// dependency, SLO, rollback, Room, and explicit approval evidence exists." Still unlikely to ever
+// need a UI, per the doc's own framing — fixed for correctness, not because it's planned.
 
 export interface LeakageCutoverReadiness {
+  contractVersion: string;
   v2ReadSelected: boolean;
+  hasActivePublication: boolean;
+  publishedSnapshots: number;
+  activeRoomsWithoutV2Alias: number;
+  rollbackAvailable: boolean;
+  retirementApproved: boolean;
+  readyForDefaultV2Read: boolean;
   readyToRetireLegacy: boolean;
   readBlockers: string[];
   retirementBlockers: string[];
-  activeRoomsWithoutV2Alias: number;
 }
 
 export interface GetLeakageCutoverReadinessResponse {
