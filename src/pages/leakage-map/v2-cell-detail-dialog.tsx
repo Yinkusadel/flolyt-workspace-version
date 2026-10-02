@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { DialogBody, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { formatCompactMoney, formatCount, formatPercent, formatRelativeTime, formatShortDateWithYear } from "@/lib/format-measured-value";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
-import { CASE_STATUS_TONE } from "@/pages/leakage-map/v2-case-sheet";
+import { CASE_STATUS_TONE, FieldLabel } from "@/pages/leakage-map/v2-case-sheet";
 import { useCreateLeakageCase } from "@/features/leakage/use-create-leakage-case";
 import { useGetLeakageCase } from "@/features/leakage/use-get-leakage-case";
 import { useGetLeakageCellV2 } from "@/features/leakage/use-get-leakage-cell-v2";
@@ -40,6 +41,12 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
  * `V2CaseSheetContent` — owner/due-date/transitions/decisions/room all live there, not here. Owner
  * shows the raw `ownerUserId` — no user-name lookup is wired, so this is honestly an id, not a
  * display name, until one is.
+ *
+ * Redesigned 2026-10-02: now a compact version of the full Case Sheet's own hero card (same
+ * `FieldLabel` stat treatment for owner/due, overdue state tints the card) instead of plain stacked
+ * grey text, and "View case" is a real outline Button instead of a bare text link — it opens the
+ * exact same lifecycle surface (`V2CaseSheetContent`) so it should read as a real affordance, not a
+ * footnote. Same fields, same data, restyle only.
  */
 function CaseInfo({
   workState,
@@ -55,27 +62,38 @@ function CaseInfo({
   return (
     <div className="border-t border-line pt-4">
       <SectionLabel>Case</SectionLabel>
-      <div className="mt-2 rounded-control border border-line bg-paper-2 p-3">
+      <div
+        className={cn(
+          "mt-2 rounded-control border p-3",
+          leakCase?.isOverdue ? "border-rose-border bg-rose-bg/40" : "border-line bg-paper-2"
+        )}
+      >
         {workState.revenueLeakCaseId && isLoadingCase && <Skeleton className="h-4 w-24" />}
         {workState.revenueLeakCaseId && leakCase ? (
-          <div className="space-y-1.5">
+          <div>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Chip tone={CASE_STATUS_TONE[leakCase.status]}>{humanizeEnum(leakCase.status)}</Chip>
                 {leakCase.isOverdue && <Chip tone="rose">Overdue</Chip>}
               </div>
-              <button
-                type="button"
-                onClick={() => onViewCase(leakCase.id)}
-                className="text-[11px] font-medium text-ultra hover:underline"
-              >
+              <Button type="button" size="xs" variant="outline" onClick={() => onViewCase(leakCase.id)}>
                 View case
-              </button>
+              </Button>
             </div>
-            <p className="text-[11px] text-ink-4">{leakCase.ownerUserId ? `Owner: ${leakCase.ownerUserId}` : "Unassigned"}</p>
-            <p className="text-[11px] text-ink-4">Due {formatShortDateWithYear(leakCase.dueAtUtc)}</p>
+            <div className="mt-3 grid grid-cols-2 gap-3 border-t border-line/70 pt-3">
+              <div>
+                <FieldLabel>Owner</FieldLabel>
+                <p className="text-[11.5px] font-medium text-ink-2">{leakCase.ownerUserId ?? "Unassigned"}</p>
+              </div>
+              <div>
+                <FieldLabel>Due</FieldLabel>
+                <p className={cn("text-[11.5px] font-medium", leakCase.isOverdue ? "text-rose" : "text-ink-2")}>
+                  {formatShortDateWithYear(leakCase.dueAtUtc)}
+                </p>
+              </div>
+            </div>
             {leakCase.decisions.length > 0 && (
-              <p className="text-[11px] text-ink-4">
+              <p className="mt-2.5 text-[10.5px] text-ink-4">
                 {leakCase.decisions.length} decision{leakCase.decisions.length === 1 ? "" : "s"} logged
               </p>
             )}

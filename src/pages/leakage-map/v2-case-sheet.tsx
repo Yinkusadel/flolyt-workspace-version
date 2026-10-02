@@ -73,8 +73,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 /** Small sentence-case label over a single field or stat — lighter-weight than `SectionLabel`,
- * which marks a whole card. */
-function FieldLabel({ children, className }: { children: React.ReactNode; className?: string }) {
+ * which marks a whole card. Exported so the cell-detail dialog's compact `CaseInfo` preview can
+ * use the same stat-label treatment as this Sheet's own hero summary. */
+export function FieldLabel({ children, className }: { children: React.ReactNode; className?: string }) {
   return <p className={cn("mb-1 text-[10.5px] font-medium text-ink-4", className)}>{children}</p>;
 }
 
