@@ -214,6 +214,37 @@ export function V2CaseSheetContent({ caseId, cell }: { caseId: string; cell: Lea
             </div>
 
             <ActionCard>
+              <SectionLabel>Room</SectionLabel>
+              {leakCase.roomId ? (
+                <Button asChild type="button" size="sm" variant="outline" className="mt-2.5 w-full">
+                  <Link to={`/rooms/${leakCase.roomId}`}>Go to room</Link>
+                </Button>
+              ) : primaryAmount ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="default"
+                  className="mt-2.5 w-full"
+                  disabled={isOpeningRoom}
+                  onClick={() =>
+                    openRoom({
+                      caseId,
+                      currency: primaryAmount.currency,
+                      market: primaryAmount.market,
+                      lifecycleClass: toRoomLifecycleClass(primaryAmount.lifecycleClass),
+                      mode: toRoomMode(primaryAmount.mode),
+                      title: cell.coordinate.mechanismLabel,
+                    })
+                  }
+                >
+                  {isOpeningRoom ? "Starting…" : "Start a room"}
+                </Button>
+              ) : (
+                <p className="mt-2.5 text-[11px] text-ink-4">No priced amount to scope a Room to.</p>
+              )}
+            </ActionCard>
+
+            <ActionCard>
               <SectionLabel>Reassign owner</SectionLabel>
               <div className="mt-2.5 space-y-2.5">
                 <div>
@@ -412,37 +443,6 @@ export function V2CaseSheetContent({ caseId, cell }: { caseId: string; cell: Lea
               >
                 {isAddingDecision ? "Recording…" : "Add decision"}
               </Button>
-            </ActionCard>
-
-            <ActionCard>
-              <SectionLabel>Room</SectionLabel>
-              {leakCase.roomId ? (
-                <Button asChild type="button" size="sm" variant="outline" className="mt-2.5 w-full">
-                  <Link to={`/rooms/${leakCase.roomId}`}>Go to room</Link>
-                </Button>
-              ) : primaryAmount ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="default"
-                  className="mt-2.5 w-full"
-                  disabled={isOpeningRoom}
-                  onClick={() =>
-                    openRoom({
-                      caseId,
-                      currency: primaryAmount.currency,
-                      market: primaryAmount.market,
-                      lifecycleClass: toRoomLifecycleClass(primaryAmount.lifecycleClass),
-                      mode: toRoomMode(primaryAmount.mode),
-                      title: cell.coordinate.mechanismLabel,
-                    })
-                  }
-                >
-                  {isOpeningRoom ? "Starting…" : "Start a room"}
-                </Button>
-              ) : (
-                <p className="mt-2.5 text-[11px] text-ink-4">No priced amount to scope a Room to.</p>
-              )}
             </ActionCard>
           </div>
         )}
