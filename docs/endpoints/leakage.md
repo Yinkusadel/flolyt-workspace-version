@@ -407,3 +407,123 @@ the whole picture even when `minSeverity`/`minConfidence` hide cells from the gr
   every gapped field's `missingSource`/`wouldUnlock` sentence reads exactly as described in the
   endpoint's prose. `atStake` was `available` (`[{ currency: "NGN", amountAtRisk: 0 }]`); every
   other measured-value field was `unavailable`.
+
+## V2 — GET /api/v3/leakage (dual-contract)
+
+Introduced in [`docs/leakage-map/leakage-map-v2-frontend-handoff.md`](../leakage-map/leakage-map-v2-frontend-handoff.md),
+2026-10-01. **Same route, same URL as `GET /api/v3/leakage` above** — not a new endpoint. The
+server decides which shape to return per-company: the existing V1 payload documented above, unless
+the authenticated company is selected by `RevenueIntelligence:LeakageV2:ReadRollout`, in which case
+it returns `data.contractVersion: "2.0"` and the shape below. If a company is flagged in but has no
+published V2 snapshot yet, the request fails explicitly (`400`, `succeeded: false`, message
+`"Revenue Leakage V2 is enabled, but this workspace has no published V2 snapshot yet."` — confirmed
+live) rather than silently falling back to V1 data.
+
+- **Purpose:** Same page, new model — generic mechanism × state-dimension "cells" instead of V1's
+  fixed stage cards + grid, so the state axis isn't hardcoded to "customer stage" (confirmed live:
+  one real response used `account_activity`/`collection_state`/`transaction_outcome`/
+  `payment_outcome` as different cells' state dimensions, not one shared axis).
+- **Request:** query `mode?` (`"gross" | "expected" | "net"`), `horizon?`
+  (`"30" | "60" | "90" | "quarter" | "365" | "custom"`), `horizonDays?` (only when `horizon=custom`),
+  `market?`, `sector?`, `severity?` (`s1`–`s5`), `confidence?` (`"low" | "medium" | "high"` or a
+  `0..1` number), `lifecycleClass?` (`"realized" | "in_flight" | "latent"`). **No `window` param —
+  confirmed live this doesn't exist in V2 at all**, unlike V1. The frontend can't know in advance
+  whether a workspace is V1 or V2, so the very first request on page load is always sent V1-shaped
+  (`window`/`calculate`); once a V2 response is seen, every later request switches to this shape,
+  seeded from the server's own `controls` block rather than a hardcoded default.
+- **Response:**
+  ```ts
+  interface LeakagePageV2 {
+    contractVersion: "2.0";
+    controls: {
+      mode: string; horizonDays: number; horizon: string;
+      market: string | null; sector: string | null; severity: string | null;
+      confidence: string | null; lifecycleClass: string | null;
+      modes: { value: string; label: string }[];
+      horizons: { value: string; label: string }[];
+      markets: string[]; sectors: string[]; severities: string[];
+      confidenceLevels: string[]; lifecycleClasses: string[];
+    };
+    publication: { runId, snapshotId, asOfUtc, builtAtUtc, publishedAtUtc, registryVersion, sectorProfileVersions };
+    cells: Array<{
+      id: string; sector: string; sectorLabel: string;
+      coordinate: {
+        mechanism, mechanismLabel, revenueStage, revenueStageLabel,
+        stateDimension, stateDimensionLabel, stateValue, stateValueLabel,
+        subject: { type, grain, unit }, businessUnitScope: string | null,
+      };
+      state: {
+        display: "POPULATED" | "UNKNOWN" | "NO_EXPOSURE" | "HIDDEN_BY_FILTER";
+        sourceAvailability: string; facets: ("COMPOUND")[]; hiddenBy: string[];
+      };
+      amounts: Array<{
+        value, gross, expected, net: number; currency: string; market: string | null;
+        mode: string; horizonDays: number; lifecycleClass: string;
+        range: { status, lower, upper, basis, version, probabilityMass };
+        confidence: number; confidenceLevel: string; severity: string;
+        candidateCount: number; asOfUtc: string; calculationReference: string;
+      }>;
+      signalIds: string[]; limitations: string[];
+    }>;
+    rollups: Array<{
+      dimension: "mechanism" | "stage" | "state" | "market" | "severity" | "sector" | "total";
+      value: string; currency: string; market: string | null; lifecycleClass: string;
+      amount: number; mode: string; cellCount: number;
+    }>;
+    coverage: { effective, capability, scope, freshness, quality, applicableSignals, measuredSignals, declaredOnlySignals, residualUnknownUnits };
+    limitations: string[]; // confirmed live to be very large — 1063 entries on one real pull, see Notes
+  }
+  ```
+- **Used by:** `services/api/leakage/get-leakage.ts` (same file as V1 — `isLeakagePageV2()` type
+  guard narrows the union), `src/pages/leakage-map/v2-cell-grid.tsx`,
+  `src/pages/leakage-map/v2-rollups.tsx`, `src/pages/leakage-map/v2-controls-bar.tsx`,
+  `src/pages/leakage-map/v2-filters.ts`. Wired into `src/pages/leakage-map/index.tsx`'s `leakageV2`
+  branch — legacy workspaces are completely unaffected. See
+  [docs/leakage-map/v2-build-plan.md](../leakage-map/v2-build-plan.md) Steps 1–4.
+- **Status:** documented, wired, live-verified (Steps 1–4 of 8 in the V2 build plan)
+- **Notes — two real mismatches found live, not guessable from the doc's own TS types:**
+  1. **Casing is inconsistent between option lists and record values.** `controls.severities`/
+     `.lifecycleClasses`/`.modes[].value` (what you send as a query param) are lowercase (`"s4"`,
+     `"in_flight"`, `"gross"`); the populated fields on a cell's `amounts[]` come back **uppercase**
+     (`"S4"`, `"IN_FLIGHT"`, `"GROSS"`). The handoff doc's own `Amount.severity` type declares
+     lowercase — live data contradicts the doc there specifically. Compare case-insensitively.
+  2. **The top-level `limitations[]` array is large, not a short caveats list** — a real pull had
+     1063 entries, almost all near-duplicates (one per unpriced candidate, differing only by a UUID
+     and a currency). `v2-cell-grid.tsx`'s `groupLimitations()` collapses these by stripping
+     UUID-shaped tokens before counting; never render this array as a flat list.
+  Also confirmed live: `mode` really does replace `calculate` as the actual query param name (not
+  just a documented intent); a `POPULATED` cell's `amounts[]` had exactly one entry in every real
+  example seen so far (never 2+, despite the type allowing it); `state.facets` containing
+  `"COMPOUND"` was present on both real populated cells pulled.
+
+## V2 — remaining `/leakage/*` routes (scaffolded 2026-10-01, none wired)
+
+The rest of the handoff doc's V2 routes, service+hook scaffolded on explicit request, not wired
+into any page yet. Query/body shapes are typed from the doc's own TS blocks where it gave one;
+where it only gave prose (flagged per-file below), the shape is reconstructed and unconfirmed
+against a real response.
+
+| Route | File | Params/body source |
+|---|---|---|
+| `GET /leakage/cells/{cellId}` | `get-leakage-cell-v2.ts` | doc TS block (`CellDetailV2`) |
+| `GET /leakage/cells/{cellId}/history` | `get-leakage-cell-history.ts` | doc TS block (`CellHistoryV2`) |
+| `GET /leakage/cells/{cellId}/evidence` | `get-leakage-cell-evidence.ts` | ⚠️ prose only, no TS block |
+| `POST /leakage/cells/{cellId}/learn-why` | `learn-why-leakage-cell-v2.ts` | doc prose (result fields named explicitly) |
+| `GET /leakage/coverage` | `get-leakage-coverage.ts` | doc TS block (`CoverageV2`); ⚠️ query params unconfirmed |
+| `GET /leakage/calculation` | `get-leakage-calculation.ts` | doc TS block (`CalculationV2`); ⚠️ query params unconfirmed |
+| `POST /leakage/cells/{cellId}/case` | `create-leakage-case.ts` | doc prose + `RevenueLeakCase` TS block |
+| `GET /leakage/cases/{caseId}` | `get-leakage-case.ts` | `RevenueLeakCase` TS block |
+| `PUT /leakage/cases/{caseId}/owner` | `update-leakage-case-owner.ts` | doc prose |
+| `POST /leakage/cases/{caseId}/transitions` | `transition-leakage-case.ts` | doc prose — `target` type excludes `"VERIFIED"` at compile time, per the doc's explicit rule |
+| `PUT /leakage/cases/{caseId}/due-date` | `update-leakage-case-due-date.ts` | doc prose |
+| `POST /leakage/cases/{caseId}/decisions` | `add-leakage-case-decision.ts` | doc prose |
+| `POST /leakage/cases/{caseId}/room` | `open-room-on-leakage-case.ts` | ⚠️ response shape for the Room itself not given as a TS block |
+| `GET /leakage/cutover-readiness` | `get-leakage-cutover-readiness.ts` | ⚠️ prose only, no TS block; operator diagnostics, unlikely to ever need a UI |
+
+Shared `RevenueLeakCase`/`RevenueLeakCaseStatus`/decision/escalation/audit/value-attribution types
+live in `leakage-case-types.ts`, imported by every case-lifecycle file above (same pattern as
+`get-leakage.ts` being the canonical source for the main page's types).
+
+**Status: documented, scaffolded (service + hook, `npx tsc -b` clean), 0/14 wired, 0/14 live-verified.**
+See [docs/leakage-map/v2-build-plan.md](../leakage-map/v2-build-plan.md) — wiring any of these is a
+new step, not yet started.

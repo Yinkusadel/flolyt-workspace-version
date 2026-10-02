@@ -285,17 +285,209 @@ export interface GetLeakageParams {
   minConfidence?: string;
 }
 
+// ===== V2 (dual-contract) types — confirmed live 2026-10-01 against a real published snapshot,
+// see docs/leakage-map/v2-build-plan.md's Step 0 for the full diff against the handoff doc. These
+// are additive: `GET /leakage` returns one or the other depending on the backend's own
+// `RevenueIntelligence:LeakageV2:ReadRollout` flag + whether a V2 snapshot has been published for
+// the company, never both. The V1 types above are untouched and still drive every legacy response.
+
+export interface LeakageV2ControlOption {
+  value: string;
+  label: string;
+}
+
+export interface LeakageV2Controls {
+  mode: string;
+  horizonDays: number;
+  horizon: string;
+  market: string | null;
+  sector: string | null;
+  severity: string | null;
+  confidence: string | null;
+  lifecycleClass: string | null;
+  modes: LeakageV2ControlOption[];
+  horizons: LeakageV2ControlOption[];
+  markets: string[];
+  sectors: string[];
+  severities: string[];
+  confidenceLevels: string[];
+  lifecycleClasses: string[];
+}
+
+export interface LeakageV2Publication {
+  runId: string;
+  snapshotId: string;
+  asOfUtc: string;
+  builtAtUtc: string;
+  publishedAtUtc: string;
+  registryVersion: string;
+  sectorProfileVersions: string[];
+}
+
+export type LeakageV2DisplayState = "POPULATED" | "UNKNOWN" | "NO_EXPOSURE" | "HIDDEN_BY_FILTER";
+export type LeakageV2DisplayFacet = "COMPOUND";
+export type LeakageV2Availability =
+  | "AVAILABLE"
+  | "PARTIALLY_AVAILABLE"
+  | "AVAILABLE_BUT_STALE"
+  | "AVAILABLE_BUT_UNMAPPED"
+  | "AVAILABLE_BUT_LOW_QUALITY"
+  | "PERMISSION_BLOCKED"
+  | "SOURCE_DEGRADED"
+  | "NOT_AVAILABLE";
+
+export interface LeakageV2Range {
+  status: "UNAVAILABLE" | "EMPIRICAL" | "CALIBRATED" | "ASSUMPTION";
+  lower: number | null;
+  upper: number | null;
+  basis: string | null;
+  version: string | null;
+  probabilityMass: number | null;
+}
+
+/**
+ * Confirmed live 2026-10-01 — `mode`/`lifecycleClass`/`severity` all come back UPPERCASE
+ * ("GROSS", "IN_FLIGHT", "S4"), even though `LeakageV2Controls.severities`/`.lifecycleClasses`/
+ * `.modes[].value` are lowercase (what you send back as a query param). The handoff doc's own
+ * type declares `severity` as lowercase ("s1".."s5") — live data contradicts the doc there
+ * specifically. Compare these fields against the option lists case-insensitively; never assume
+ * an exact string match. Left as plain `string` rather than a literal union because of that
+ * mismatch.
+ */
+export interface LeakageV2Amount {
+  value: number;
+  gross: number;
+  expected: number;
+  net: number;
+  currency: string;
+  market: string | null;
+  mode: string;
+  horizonDays: number;
+  lifecycleClass: string;
+  range: LeakageV2Range;
+  confidence: number;
+  confidenceLevel: string;
+  severity: string;
+  candidateCount: number;
+  asOfUtc: string;
+  calculationReference: string;
+}
+
+export interface LeakageV2Subject {
+  type: string;
+  grain: string;
+  unit: string;
+}
+
+export interface LeakageV2Coordinate {
+  mechanism: string;
+  mechanismLabel: string;
+  revenueStage: string;
+  revenueStageLabel: string;
+  stateDimension: string;
+  stateDimensionLabel: string;
+  stateValue: string;
+  stateValueLabel: string;
+  subject: LeakageV2Subject;
+  businessUnitScope: string | null;
+}
+
+export interface LeakageV2CellState {
+  display: LeakageV2DisplayState;
+  sourceAvailability: LeakageV2Availability;
+  facets: LeakageV2DisplayFacet[];
+  hiddenBy: string[];
+}
+
+export interface LeakageV2Cell {
+  id: string;
+  sector: string;
+  sectorLabel: string;
+  coordinate: LeakageV2Coordinate;
+  state: LeakageV2CellState;
+  amounts: LeakageV2Amount[];
+  signalIds: string[];
+  limitations: string[];
+}
+
+export interface LeakageV2Rollup {
+  dimension: "mechanism" | "stage" | "state" | "market" | "severity" | "sector" | "total";
+  value: string;
+  currency: string;
+  market: string | null;
+  lifecycleClass: string;
+  amount: number;
+  mode: string;
+  cellCount: number;
+}
+
+export interface LeakageV2CoverageSummary {
+  effective: number | null;
+  capability: number | null;
+  scope: number | null;
+  freshness: number | null;
+  quality: number | null;
+  applicableSignals: number;
+  measuredSignals: number;
+  declaredOnlySignals: number;
+  residualUnknownUnits: number;
+}
+
+/**
+ * Confirmed live 2026-10-01 to be very large on a thin test workspace (150+ entries, one per
+ * unpriced candidate, e.g. "Candidate '...' remains unpriced because sector '...' has no severity
+ * thresholds in GBP; no FX conversion was inferred.") — never render this as a flat bullet list.
+ * See Step 2 in docs/leakage-map/v2-build-plan.md.
+ */
+export interface LeakagePageV2 {
+  contractVersion: "2.0";
+  controls: LeakageV2Controls;
+  publication: LeakageV2Publication;
+  cells: LeakageV2Cell[];
+  rollups: LeakageV2Rollup[];
+  coverage: LeakageV2CoverageSummary;
+  limitations: string[];
+}
+
+export type LeakagePageResponseData = LeakagePageData | LeakagePageV2;
+
+/** Narrows a `GetLeakageResponse.data` to V2 — check this before reading any V2-only field. */
+export const isLeakagePageV2 = (
+  data: LeakagePageResponseData
+): data is LeakagePageV2 => (data as LeakagePageV2).contractVersion === "2.0";
+
 export interface GetLeakageResponse {
-  data: LeakagePageData;
+  data: LeakagePageResponseData;
   messages: string[];
   succeeded: boolean;
+}
+
+/**
+ * V2's query params, per the handoff doc — a different shape from `GetLeakageParams` above (no
+ * `window`, `mode` instead of `calculate`, plain `severity`/`confidence` instead of
+ * `minSeverity`/`minConfidence`, plus `sector`/`lifecycleClass` which V1 doesn't have at all).
+ * `getLeakage` accepts either shape on the same endpoint — which one a given request should use
+ * isn't known until a response reveals `contractVersion`, so the page sends `GetLeakageParams` by
+ * default and switches to this shape only once it has confirmed it's talking to a V2 workspace.
+ */
+export interface GetLeakageV2Params {
+  mode?: string;
+  horizon?: string;
+  horizonDays?: number;
+  market?: string;
+  sector?: string;
+  severity?: string;
+  confidence?: string;
+  lifecycleClass?: string;
 }
 
 const {
   LEAKAGE: { GET_LEAKAGE },
 } = API_ENDPOINTS;
 
-export const getLeakage = async (params?: GetLeakageParams): Promise<GetLeakageResponse> => {
+export const getLeakage = async (
+  params?: GetLeakageParams | GetLeakageV2Params
+): Promise<GetLeakageResponse> => {
   try {
     const response = await axiosInstance.get<GetLeakageResponse>(GET_LEAKAGE, { params });
 

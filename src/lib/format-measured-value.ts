@@ -21,7 +21,18 @@ export function formatCompactMoney(value: number, currencyCode: string): string 
   // own 1dp convention for the same M/k breakpoints.
   if (abs >= 1_000_000) return `${prefix}${round(value / 1_000_000, 1)}M`;
   if (abs >= 1_000) return `${prefix}${round(value / 1_000, 1)}k`;
-  return `${prefix}${value}`;
+  // Confirmed live 2026-10-01 against real Leakage V2 data: an unrounded sub-1000 amount
+  // (484.3195) rendered as "USD 484.3195" — every prior caller's figures happened to already be
+  // whole numbers, so this branch's missing rounding was never visible until now.
+  return `${prefix}${round(value, 2)}`;
+}
+
+/** Exact, comma-grouped money for a single hero figure where full precision reads better than
+ * compaction (e.g. the V2 leakage map's "Total at risk" card) — every other money display on the
+ * app stays on `formatCompactMoney`, this is deliberately not the default. */
+export function formatMoney(value: number, currencyCode: string): string {
+  const prefix = currencyCode === "NGN" ? "₦" : `${currencyCode} `;
+  return `${prefix}${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 /**

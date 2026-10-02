@@ -1,9 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { getLeakage, type GetLeakageParams, type GetLeakageResponse } from "@/services/api/leakage/get-leakage";
+import {
+  getLeakage,
+  type GetLeakageParams,
+  type GetLeakageV2Params,
+  type GetLeakageResponse,
+} from "@/services/api/leakage/get-leakage";
 
-export const LEAKAGE_QUERY_KEY = (params?: GetLeakageParams) => ["leakage", params];
+export const LEAKAGE_QUERY_KEY = (params?: GetLeakageParams | GetLeakageV2Params) => ["leakage", params];
 
-export const useGetLeakage = (params?: GetLeakageParams) =>
+export const useGetLeakage = (params?: GetLeakageParams | GetLeakageV2Params) =>
   useQuery<GetLeakageResponse, Error>({
     queryKey: LEAKAGE_QUERY_KEY(params),
     queryFn: () => getLeakage(params),
