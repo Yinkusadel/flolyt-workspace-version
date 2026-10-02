@@ -2,8 +2,9 @@ import { Layers } from "lucide-react";
 
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { formatCompactMoney, formatPercent } from "@/lib/format-measured-value";
+import { HEAT_SCALE, HEAT_TEXT_CLASS } from "@/pages/leakage-map/data";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
-import type { LeakageV2Amount, LeakageV2Cell, LeakageV2DisplayState } from "@/services/api/leakage/get-leakage";
+import type { LeakageV2Amount, LeakageV2Cell } from "@/services/api/leakage/get-leakage";
 
 /**
  * V2's main-page response has no grid/row/column structure the way `GET /leakage`'s `grids[]`
@@ -36,12 +37,11 @@ export function groupCellsByStage(cells: LeakageV2Cell[]): { stageLabel: string;
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 
 /**
- * A real response had 150+ `limitations` entries, one per unpriced candidate, differing only by
- * an id and a currency code (confirmed live 2026-10-01 — see docs/leakage-map/v2-build-plan.md
- * Step 0). Flat-rendering that is unusable; this collapses near-duplicates by stripping any
- * UUID-shaped token so "Candidate 'abc-123...' ... in GBP" and "Candidate 'def-456...' ... in GBP"
- * count as the same template, while genuinely different sentences (e.g. a per-cell baseline note)
- * stay distinct.
+ * A real response had 150+ `limitations` entries, one per unpriced candidate (confirmed live
+ * 2026-10-01 — see docs/leakage-map/v2-build-plan.md Step 0). Flat-rendering that is unusable;
+ * this collapses near-duplicates by stripping any UUID-shaped token so "Candidate 'abc-123...' ...
+ * in GBP" and "Candidate 'def-456...' ... in GBP" count as the same template, while genuinely
+ * different sentences (e.g. a per-cell baseline note) stay distinct.
  */
 export function groupLimitations(limitations: string[]): { template: string; count: number }[] {
   const counts = new Map<string, number>();
@@ -54,25 +54,33 @@ export function groupLimitations(limitations: string[]): { template: string; cou
     .sort((a, b) => b.count - a.count);
 }
 
-const STATUS_DOT_CLASS: Record<LeakageV2DisplayState, string> = {
-  POPULATED: "bg-teal",
-  NO_EXPOSURE: "bg-ink-4",
-  UNKNOWN: "bg-ink-4",
-  HIDDEN_BY_FILTER: "bg-ink-4",
-};
-
 /**
- * One amount, as a single legible unit: the figure is the dominant element; everything else
- * (lifecycle class, range) is one small muted line underneath — not a row of equal-weight chips.
- * Restyled 2026-10-01 after live feedback that the first pass's chip-per-fact layout made it hard
- * to tell which value was which.
+ * V2 has no composite "intensity" field the way V1's grid cells do (that's a backend-blended
+ * score V2's contract never sends) — inventing one client-side by blending amount+severity+
+ * confidence would be exactly the kind of client-side metric-math [[feedback_no_frontend_business_math]]
+ * bars. `severity` (a real, directly-provided "S1".."S5" field) is the closest honest substitute,
+ * used alone rather than blended with anything else. 5 severity levels compress into
+ * `HEAT_SCALE`'s 4 steps by capping S4 and S5 into the same top bucket — bucket 0 (the scale's own
+ * "unused LOW swatch", per `data.ts`) renders as a near-neutral off-white, not a tinted color.
  */
-function AmountBlock({ amount }: { amount: LeakageV2Amount }) {
+export function heatBucketForSeverity(severity: string): 0 | 1 | 2 | 3 {
+  const level = Number(severity.replace(/\D/g, ""));
+  if (!level) return 0;
+  return Math.min(3, level - 1) as 0 | 1 | 2 | 3;
+}
+
+const UNMEASURED_TILE_CLASS = "border border-dashed border-ink-4/40 bg-paper-2/60";
+
+/** One amount within a shaded tile — text color follows `HEAT_TEXT_CLASS` so it stays legible as
+ * the tile's own tint darkens, same contrast rule V1's matrix cells use. */
+function AmountLine({ amount, heat }: { amount: LeakageV2Amount; heat: 0 | 1 | 2 | 3 }) {
   const hasRange = amount.range.status !== "UNAVAILABLE" && amount.range.lower !== null && amount.range.upper !== null;
   return (
-    <div className="text-right">
-      <p className="text-[16px] font-semibold text-ink tabular-nums">{formatCompactMoney(amount.value, amount.currency)}</p>
-      <p className="text-[10.5px] text-ink-4">
+    <div>
+      <p className={`text-[15px] font-semibold tabular-nums ${HEAT_TEXT_CLASS[heat]}`}>
+        {formatCompactMoney(amount.value, amount.currency)}
+      </p>
+      <p className={`text-[10px] ${heat >= 2 ? "text-ink-2" : "text-ink-4"}`}>
         {humanizeEnum(amount.lifecycleClass)}
         {hasRange && (
           <>
@@ -85,12 +93,17 @@ function AmountBlock({ amount }: { amount: LeakageV2Amount }) {
   );
 }
 
-/** One row per cell — mechanism/state identity on the left, display-state-driven readout on the right. */
-function CellRow({ cell }: { cell: LeakageV2Cell }) {
+/**
+ * One compact tile per cell, shaded by the same sequential rose scale V1's matrix uses (reused
+ * from `data.ts`, not a new palette) — `UNKNOWN` cells stay the dashed/muted "unmeasured" treatment
+ * V1 gives a gap cell, never heat-shaded, since there's no severity to shade by.
+ */
+function CellTile({ cell }: { cell: LeakageV2Cell }) {
   const { display } = cell.state;
   const { coordinate } = cell;
   const primaryAmount = cell.amounts[0];
   const isCompound = cell.state.facets.includes("COMPOUND");
+  const hasAmounts = cell.amounts.length > 0;
 
   // Accessible name per the handoff doc: mechanism, revenue stage, state value, display state,
   // amount/currency when present, severity, confidence — text/icon carries the meaning, not color.
@@ -106,61 +119,54 @@ function CellRow({ cell }: { cell: LeakageV2Cell }) {
     .filter(Boolean)
     .join(", ");
 
+  if (display === "UNKNOWN") {
+    return (
+      <div role="group" aria-label={accessibleName} className={`rounded-control p-3 ${UNMEASURED_TILE_CLASS}`}>
+        <p className="text-[12px] font-medium text-ink-3">{coordinate.mechanismLabel}</p>
+        <p className="mt-0.5 text-[10.5px] text-ink-4">
+          {coordinate.stateDimensionLabel}: {coordinate.stateValueLabel}
+        </p>
+        <span className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] text-ink-4">
+          Unknown
+          {cell.limitations.length > 0 && <InfoTooltip missingSource={cell.limitations.join(" ")} />}
+        </span>
+      </div>
+    );
+  }
+
+  const heat = display === "POPULATED" && primaryAmount ? heatBucketForSeverity(primaryAmount.severity) : 0;
+  const mutedClass = heat >= 2 ? "text-ink-2" : "text-ink-4";
+
   return (
-    <div
-      role="group"
-      aria-label={accessibleName}
-      className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 first:border-t-0"
-    >
-      <div className="flex min-w-0 items-start gap-2.5">
-        <span className={`mt-1.5 size-1.5 shrink-0 rounded-full ${STATUS_DOT_CLASS[display]}`} aria-hidden />
+    <div role="group" aria-label={accessibleName} className="rounded-control p-3" style={{ backgroundColor: HEAT_SCALE[heat] }}>
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[12.5px] font-medium text-ink">{coordinate.mechanismLabel}</p>
-          <p className="text-[11px] text-ink-3">
-            {coordinate.stateDimensionLabel}: {coordinate.stateValueLabel} · {coordinate.subject.unit}
+          <p className={`text-[12px] font-medium ${HEAT_TEXT_CLASS[heat]}`}>{coordinate.mechanismLabel}</p>
+          <p className={`mt-0.5 text-[10.5px] ${mutedClass}`}>
+            {coordinate.stateDimensionLabel}: {coordinate.stateValueLabel}
           </p>
         </div>
-      </div>
-
-      <div className="flex items-start gap-2.5">
-        {display === "NO_EXPOSURE" &&
-          (cell.amounts.length > 0 ? (
-            <div className="flex flex-col gap-1.5">
-              {cell.amounts.map((a, i) => (
-                <AmountBlock key={i} amount={a} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-[12.5px] font-medium text-ink-3">No exposure</p>
-          ))}
-
-        {display === "UNKNOWN" && (
-          <span className="inline-flex items-center gap-1.5 text-[11.5px] text-ink-4">
-            Unknown
-            {cell.limitations.length > 0 && <InfoTooltip missingSource={cell.limitations.join(" ")} />}
+        {isCompound && (
+          <span
+            title="Several independently-supported candidates contribute to this figure"
+            className={`shrink-0 ${HEAT_TEXT_CLASS[heat]}`}
+          >
+            <Layers className="size-3.5" aria-hidden />
           </span>
         )}
+      </div>
 
-        {display === "POPULATED" && (
-          <>
-            <div className="flex flex-col gap-1.5">
-              {cell.amounts.map((amount, i) => (
-                <AmountBlock key={i} amount={amount} />
-              ))}
-              {primaryAmount && (
-                <p className="text-[10.5px] text-ink-4">
-                  Severity {primaryAmount.severity} · {humanizeEnum(primaryAmount.confidenceLevel)} confidence (
-                  {formatPercent(primaryAmount.confidence)})
-                  {primaryAmount.candidateCount > 0 && ` · ${primaryAmount.candidateCount} candidates`}
-                </p>
-              )}
-            </div>
-            {isCompound && (
-              <span title="Several independently-supported candidates contribute to this figure" className="mt-0.5 text-ink-4">
-                <Layers className="size-3.5" aria-hidden />
-              </span>
-            )}
-          </>
+      <div className="mt-2.5 space-y-1.5">
+        {hasAmounts ? (
+          cell.amounts.map((amount, i) => <AmountLine key={i} amount={amount} heat={heat} />)
+        ) : (
+          <p className="text-[12px] font-medium text-ink-3">No exposure</p>
+        )}
+        {display === "POPULATED" && primaryAmount && (
+          <p className={`text-[10px] ${mutedClass}`}>
+            Severity {primaryAmount.severity} · {formatPercent(primaryAmount.confidence)} confidence
+            {primaryAmount.candidateCount > 0 && ` · ${primaryAmount.candidateCount} candidates`}
+          </p>
         )}
       </div>
     </div>
@@ -168,10 +174,12 @@ function CellRow({ cell }: { cell: LeakageV2Cell }) {
 }
 
 /**
- * The V2 main page's cell list — see docs/leakage-map/v2-build-plan.md Steps 2–3. Reads straight
- * off `GET /leakage`'s own `cells[]`, no per-cell fetch. `limitations[]` moved to its own
- * `V2LimitationsCard` (see v2-coverage-limitations.tsx), categorized by real sentence template
- * instead of a flat deduped-by-UUID callout.
+ * The V2 main page's cell list — see docs/leakage-map/v2-build-plan.md Steps 2–3. Redesigned
+ * 2026-10-02 to borrow V1's real visual language (the sequential heat scale + legend, the
+ * dashed/muted unmeasured treatment) without the grid it can't support (see the conversation on
+ * why — different mechanisms don't share a second axis). Reads straight off `GET /leakage`'s own
+ * `cells[]`, no per-cell fetch. `limitations[]` lives in its own `V2LimitationsCard` (see
+ * v2-coverage-limitations.tsx), categorized by real sentence template instead of a flat callout.
  */
 export function LeakageV2CellGrid({ cells }: { cells: LeakageV2Cell[] }) {
   const stageGroups = groupCellsByStage(cells);
@@ -185,17 +193,31 @@ export function LeakageV2CellGrid({ cells }: { cells: LeakageV2Cell[] }) {
   }
 
   return (
-    <div className="space-y-4">
-      {stageGroups.map(({ stageLabel, cells: stageCells }) => (
-        <div key={stageLabel} className="rounded-card border border-line bg-paper">
-          <p className="border-b border-line px-4 py-2.5 font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">
-            {stageLabel}
-          </p>
-          {stageCells.map((cell) => (
-            <CellRow key={cell.id} cell={cell} />
+    <div className="rounded-card border border-line bg-paper p-5">
+      <h2 className="text-[14.5px] font-semibold text-ink">Cells</h2>
+      <div className="mt-4 space-y-5">
+        {stageGroups.map(({ stageLabel, cells: stageCells }) => (
+          <div key={stageLabel}>
+            <p className="font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">{stageLabel}</p>
+            <div className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+              {stageCells.map((cell) => (
+                <CellTile key={cell.id} cell={cell} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-line pt-3.5 text-[10.5px]">
+        <span className="font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">Low</span>
+        <div className="flex gap-1">
+          {HEAT_SCALE.map((color) => (
+            <span key={color} className="size-4 rounded-xs border border-line" style={{ backgroundColor: color }} />
           ))}
         </div>
-      ))}
+        <span className="font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">High</span>
+        <span className="text-ink-3">Shading is severity (S1–S5). Dashed cells are unmeasured.</span>
+      </div>
     </div>
   );
 }
