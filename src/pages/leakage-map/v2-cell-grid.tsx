@@ -6,6 +6,7 @@ import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { formatCompactMoney, formatPercent } from "@/lib/format-measured-value";
 import { HEAT_SCALE, HEAT_TEXT_CLASS } from "@/pages/leakage-map/data";
+import { V2CaseSheetContent } from "@/pages/leakage-map/v2-case-sheet";
 import { V2CellDetailDialogContent } from "@/pages/leakage-map/v2-cell-detail-dialog";
 import { V2CellEvidenceSheetContent } from "@/pages/leakage-map/v2-cell-evidence-sheet";
 import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
@@ -105,15 +106,18 @@ function AmountLine({ amount, heat }: { amount: LeakageV2Amount; heat: 0 | 1 | 2
  * V1 gives a gap cell, never heat-shaded, since there's no severity to shade by.
  *
  * Clicking a tile opens the quick-glance `Dialog` (cell detail); that dialog's own "View full
- * evidence" button switches to the bigger `Sheet`. Both are driven by one `view` state rather than
- * each managing its own open flag, so they're never simultaneously mounted — Sheet shares the same
+ * evidence" button switches to the bigger `Sheet`; its "View case" switches to a third `Sheet` for
+ * the case's full lifecycle surface. All three are driven by one `view` state rather than each
+ * managing its own open flag, so they're never simultaneously mounted — Sheet shares the same
  * underlying Radix `Dialog.Root` primitive as Dialog, and nesting two of those at once is exactly
  * the kind of stacked-overlay scenario [[preact_radix_dialog_crash]] already warns about. A single
- * state transition (`"detail"` → `"evidence"`) closes one and opens the other in the same render,
- * never both at once.
+ * state transition (e.g. `"detail"` → `"case"`) closes one and opens the other in the same render,
+ * never both at once. `caseId` is carried alongside `view` since it's only known once the detail
+ * dialog has loaded and the user picks "View case" — the tile itself never fetches it up front.
  */
 function CellTile({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeakageCellEvidenceParams, "cellId"> }) {
-  const [view, setView] = useState<"detail" | "evidence" | null>(null);
+  const [view, setView] = useState<"detail" | "evidence" | "case" | null>(null);
+  const [caseId, setCaseId] = useState<string | null>(null);
   const { display } = cell.state;
   const { coordinate } = cell;
   const primaryAmount = cell.amounts[0];
@@ -198,7 +202,15 @@ function CellTile({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeaka
 
       <Dialog open={view === "detail"} onOpenChange={(open) => setView(open ? "detail" : null)}>
         <DialogContent>
-          <V2CellDetailDialogContent cell={cell} params={params} onViewEvidence={() => setView("evidence")} />
+          <V2CellDetailDialogContent
+            cell={cell}
+            params={params}
+            onViewEvidence={() => setView("evidence")}
+            onViewCase={(id) => {
+              setCaseId(id);
+              setView("case");
+            }}
+          />
         </DialogContent>
       </Dialog>
 
@@ -206,6 +218,10 @@ function CellTile({ cell, params }: { cell: LeakageV2Cell; params: Omit<GetLeaka
         <SheetContent>
           <V2CellEvidenceSheetContent cell={cell} params={params} />
         </SheetContent>
+      </Sheet>
+
+      <Sheet open={view === "case"} onOpenChange={(open) => setView(open ? "case" : null)}>
+        <SheetContent>{caseId && <V2CaseSheetContent caseId={caseId} cell={cell} />}</SheetContent>
       </Sheet>
     </>
   );

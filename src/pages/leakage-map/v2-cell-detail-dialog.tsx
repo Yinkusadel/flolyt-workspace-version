@@ -31,38 +31,58 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * The case's own info, no action — moved up near the top on request (2026-10-02) so it reads
- * alongside the figure itself rather than buried under components/signals/lineage. The "Open a
- * case" action lives in the dialog's footer instead (see `V2CellDetailDialogContent`), next to
- * Learn Why and View full evidence, not inline here. Owner shows the raw `ownerUserId` — no
- * user-name lookup is wired, so this is honestly an id, not a display name, until one is.
+ * The case's own info, no lifecycle actions — moved up near the top on request (2026-10-02) so it
+ * reads alongside the figure itself rather than buried under components/signals/lineage, and given
+ * a real nested-card treatment (same `bg-paper-2` pattern V1's own `CoveragePanel` and the Rollups
+ * grid already use) instead of plain stacked text. "Open a case" still lives in the dialog's
+ * footer (see `V2CellDetailDialogContent`). Once a case exists, "View case" opens the full
+ * `V2CaseSheetContent` — owner/due-date/transitions/decisions/room all live there, not here. Owner
+ * shows the raw `ownerUserId` — no user-name lookup is wired, so this is honestly an id, not a
+ * display name, until one is.
  */
-function CaseInfo({ workState, leakCase, isLoadingCase }: { workState: LeakageV2WorkState; leakCase?: RevenueLeakCase; isLoadingCase: boolean }) {
+function CaseInfo({
+  workState,
+  leakCase,
+  isLoadingCase,
+  onViewCase,
+}: {
+  workState: LeakageV2WorkState;
+  leakCase?: RevenueLeakCase;
+  isLoadingCase: boolean;
+  onViewCase: (caseId: string) => void;
+}) {
   return (
     <div className="border-t border-line pt-4">
       <SectionLabel>Case</SectionLabel>
-      {workState.revenueLeakCaseId && isLoadingCase && (
-        <div className="mt-2">
-          <Skeleton className="h-4 w-24" />
-        </div>
-      )}
-      {workState.revenueLeakCaseId && leakCase ? (
-        <div className="mt-2 space-y-1">
-          <div className="flex items-center gap-2">
-            <Chip tone="neutral">{humanizeEnum(leakCase.status)}</Chip>
-            {leakCase.isOverdue && <Chip tone="rose">Overdue</Chip>}
+      <div className="mt-2 rounded-control border border-line bg-paper-2 p-3">
+        {workState.revenueLeakCaseId && isLoadingCase && <Skeleton className="h-4 w-24" />}
+        {workState.revenueLeakCaseId && leakCase ? (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Chip tone="neutral">{humanizeEnum(leakCase.status)}</Chip>
+                {leakCase.isOverdue && <Chip tone="rose">Overdue</Chip>}
+              </div>
+              <button
+                type="button"
+                onClick={() => onViewCase(leakCase.id)}
+                className="text-[11px] font-medium text-ultra hover:underline"
+              >
+                View case
+              </button>
+            </div>
+            <p className="text-[11px] text-ink-4">{leakCase.ownerUserId ? `Owner: ${leakCase.ownerUserId}` : "Unassigned"}</p>
+            <p className="text-[11px] text-ink-4">Due {formatShortDateWithYear(leakCase.dueAtUtc)}</p>
+            {leakCase.decisions.length > 0 && (
+              <p className="text-[11px] text-ink-4">
+                {leakCase.decisions.length} decision{leakCase.decisions.length === 1 ? "" : "s"} logged
+              </p>
+            )}
           </div>
-          <p className="text-[11px] text-ink-4">{leakCase.ownerUserId ? `Owner: ${leakCase.ownerUserId}` : "Unassigned"}</p>
-          <p className="text-[11px] text-ink-4">Due {formatShortDateWithYear(leakCase.dueAtUtc)}</p>
-          {leakCase.decisions.length > 0 && (
-            <p className="text-[11px] text-ink-4">
-              {leakCase.decisions.length} decision{leakCase.decisions.length === 1 ? "" : "s"} logged
-            </p>
-          )}
-        </div>
-      ) : (
-        !workState.revenueLeakCaseId && <p className="mt-2 text-[11.5px] text-ink-3">{workState.explanation}</p>
-      )}
+        ) : (
+          !workState.revenueLeakCaseId && <p className="text-[11.5px] text-ink-3">{workState.explanation}</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -87,10 +107,12 @@ export function V2CellDetailDialogContent({
   cell,
   params,
   onViewEvidence,
+  onViewCase,
 }: {
   cell: LeakageV2Cell;
   params: Omit<GetLeakageCellV2Params, "cellId">;
   onViewEvidence: () => void;
+  onViewCase: (caseId: string) => void;
 }) {
   const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useGetLeakageCellV2({ cellId: cell.id, ...params });
@@ -143,7 +165,7 @@ export function V2CellDetailDialogContent({
           <div className="mt-4 space-y-5">
             <p className="text-[10.5px] text-ink-4">As of {formatRelativeTime(detail.publication.asOfUtc)}</p>
 
-            <CaseInfo workState={detail.workState} leakCase={caseData?.data} isLoadingCase={isLoadingCase} />
+            <CaseInfo workState={detail.workState} leakCase={caseData?.data} isLoadingCase={isLoadingCase} onViewCase={onViewCase} />
 
             {detail.components.length > 0 && (
               <div className="border-t border-line pt-4">
