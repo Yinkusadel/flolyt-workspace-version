@@ -61,6 +61,8 @@ export interface LimitationGroup {
   description: string;
   /** Only the currency-unpriced group has a real per-entity split; every other group is one undifferentiated count. */
   breakdown?: { label: string; count: number }[];
+  /** "Other" only: the same notes `description` joins, kept separate so they can be listed on their own. */
+  lines?: string[];
 }
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
@@ -155,12 +157,8 @@ export function groupLimitationsByCategory(limitations: string[], cells: Leakage
     const counts = new Map<string, number>();
     for (const raw of otherLines) counts.set(raw.replace(UUID_RE, "…"), (counts.get(raw.replace(UUID_RE, "…")) ?? 0) + 1);
     const deduped = [...counts.entries()].sort((a, b) => b[1] - a[1]);
-    groups.push({
-      key: "other",
-      title: "Other",
-      count: otherLines.length,
-      description: deduped.map(([template, count]) => (count > 1 ? `${count}× ${template}` : template)).join(" "),
-    });
+    const lines = deduped.map(([template, count]) => (count > 1 ? `${count}× ${template}` : template));
+    groups.push({ key: "other", title: "Other", count: otherLines.length, description: lines.join(" "), lines });
   }
 
   return groups.sort((a, b) => b.count - a.count);
@@ -220,6 +218,7 @@ export function V2LimitationsCard({ limitations, cells }: { limitations: string[
   if (limitations.length === 0) return null;
   const groups = groupLimitationsByCategory(limitations, cells);
   const fullList = groupLimitations(limitations);
+  const onlyOther = groups.length === 1 && groups[0].key === "other";
 
   return (
     <div className="rounded-card border border-line bg-paper p-5">
@@ -227,11 +226,24 @@ export function V2LimitationsCard({ limitations, cells }: { limitations: string[
         <h2 className="text-[14.5px] font-semibold text-ink">Why the number is partial</h2>
         <p className="font-mono text-[11px] text-ink-4">{formatCount(limitations.length)} notes</p>
       </div>
-      <div>
-        {groups.map((group) => (
-          <LimitationGroupRow key={group.key} group={group} />
-        ))}
-      </div>
+      {onlyOther ? (
+        // Nothing categorized to anchor a row to, so the uncategorized notes are just listed, one per
+        // line, instead of a lone "Other" row with them all run together.
+        <ul className="mt-3 space-y-2">
+          {groups[0].lines?.map((line) => (
+            <li key={line} className="flex gap-2 text-[12px] leading-relaxed text-ink-3">
+              <span className="mt-1.75 size-1 shrink-0 rounded-full bg-ink-4" aria-hidden />
+              {line}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div>
+          {groups.map((group) => (
+            <LimitationGroupRow key={group.key} group={group} />
+          ))}
+        </div>
+      )}
       <Dialog>
         <DialogTrigger asChild>
           <button

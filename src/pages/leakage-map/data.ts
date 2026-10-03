@@ -40,10 +40,18 @@ export const PAGE_STATES = {
     footnote: "One source is enough to start; coverage is shown from the first cell.",
     cta: "Connect a source",
   },
+  // Two error shapes: `initial` = the very first load failed (nothing to show), `refresh` = a
+  // refetch failed after a good load (previous figures stay on screen beneath the banner).
   error: {
-    title: "Unable to refresh the leakage map",
-    body: "Last successful refresh 41 minutes ago. Nothing below has been re-estimated.",
-    footnote: "The stale figures stay on screen with their timestamp rather than being blanked.",
-    cta: "Retry",
+    initial: {
+      title: "We couldn't load the leakage map",
+      body: "Nothing has been calculated for this view yet. Try again in a moment.",
+    },
+    refresh: {
+      title: "Unable to refresh the leakage map",
+      body: "The figures below are from your last successful refresh and haven't been re-estimated.",
+    },
+    cta: "Try again",
+    ctaBusy: "Retrying",
   },
 };

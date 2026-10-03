@@ -17,6 +17,7 @@ import { V2CoverageCard, V2LimitationsCard } from "@/pages/leakage-map/v2-covera
 import { V2StatusLine } from "@/pages/leakage-map/v2-status-line";
 import { OpportunitiesPanel } from "@/pages/leakage-map/opportunities-panel";
 import { useGetOpportunities } from "@/features/opportunities/use-get-opportunities";
+import { V2ActiveFilters } from "@/pages/leakage-map/v2-active-filters";
 import { V2FiltersMenu } from "@/pages/leakage-map/v2-filters-menu";
 import { V2PageSkeleton } from "@/pages/leakage-map/v2-page-skeleton";
 import {
@@ -63,6 +64,8 @@ export default function LeakageMap() {
   const [v2Filters, setV2Filters] = React.useState<LeakageV2FilterState | null>(null);
   const handleV2FiltersChange = (patch: Partial<LeakageV2FilterState>) =>
     setV2Filters((prev) => (prev ? { ...prev, ...patch } : prev));
+  // The server's own first-load selection, kept as the "default" the active-filter chips reset to.
+  const [v2Defaults, setV2Defaults] = React.useState<LeakageV2FilterState | null>(null);
 
   // Always V1-shaped — used for the initial probe request and for the V1-only auxiliary endpoints
   // (report/stage/cell) regardless of which branch ends up rendering.
@@ -78,7 +81,11 @@ export default function LeakageMap() {
   const leakageV2 = leakageData && isV2Response ? leakageData : undefined;
 
   React.useEffect(() => {
-    if (leakageV2 && !v2Filters) setV2Filters(v2FilterStateFromControls(leakageV2.controls));
+    if (leakageV2 && !v2Filters) {
+      const seeded = v2FilterStateFromControls(leakageV2.controls);
+      setV2Filters(seeded);
+      setV2Defaults(seeded);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leakageV2]);
 
@@ -136,6 +143,18 @@ export default function LeakageMap() {
     );
   }
 
+  // The very first load failed, so there's no response to lay out. Rendering the normal page here
+  // would just leave its skeleton placeholders on screen forever next to an error that has already
+  // finished failing, so show only the title and the banner instead.
+  if (isError && !leakageData) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
+        <PageStateBanner state="error" errorMessage={error?.message} retrying={isFetching} onRetry={() => refetch()} />
+      </div>
+    );
+  }
+
   // V2 branch — restyled 2026-10-01 to match V1's visual language (cascading Filters menu, the
   // shared KpiCards stat-tile component, one legible status line) instead of the first pass's raw
   // <select> row and chip-per-fact cell layout. See docs/leakage-map/v2-build-plan.md Steps 2–4.
@@ -157,14 +176,25 @@ export default function LeakageMap() {
     return (
       <div className="space-y-6">
         <RecomputingToast visible={!isError && isFetching} horizonLabel="this view" />
-        {isError && <PageStateBanner state="error" errorMessage={error?.message} onRetry={() => refetch()} />}
+        {isError && (
+          <PageStateBanner state="error" hasData errorMessage={error?.message} retrying={isFetching} onRetry={() => refetch()} />
+        )}
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
-            <V2StatusLine controls={leakageV2.controls} publication={leakageV2.publication} hiddenCount={hiddenCellCount} />
+        <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
+              <V2StatusLine controls={leakageV2.controls} publication={leakageV2.publication} hiddenCount={hiddenCellCount} />
+            </div>
+            <V2FiltersMenu controls={leakageV2.controls} filters={effectiveV2Filters} onFiltersChange={handleV2FiltersChange} />
           </div>
-          <V2FiltersMenu controls={leakageV2.controls} filters={effectiveV2Filters} onFiltersChange={handleV2FiltersChange} />
+          {/* Its own row under the header, so any number of chips never squeezes the title block. */}
+          <V2ActiveFilters
+            controls={leakageV2.controls}
+            filters={effectiveV2Filters}
+            defaults={v2Defaults}
+            onFiltersChange={handleV2FiltersChange}
+          />
         </div>
 
         <V2KpiStrip cells={leakageV2.cells} rollups={leakageV2.rollups} coverage={leakageV2.coverage} controls={leakageV2.controls} />
@@ -185,7 +215,9 @@ export default function LeakageMap() {
         visible={!isError && isFetching}
         horizonLabel={leakage?.horizon.label ?? fallbackHorizonLabel}
       />
-      {isError && <PageStateBanner state="error" errorMessage={error?.message} onRetry={() => refetch()} />}
+      {isError && (
+        <PageStateBanner state="error" hasData errorMessage={error?.message} retrying={isFetching} onRetry={() => refetch()} />
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
