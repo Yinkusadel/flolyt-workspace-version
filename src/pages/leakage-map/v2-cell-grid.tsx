@@ -279,11 +279,11 @@ export function LeakageV2CellGrid({
 
   return (
     <div className="rounded-card border border-line bg-paper p-5">
-      <p className="text-[12px] text-ink-3">
-        Every way revenue is leaking right now, grouped by where it happens in the customer journey. Darker cards are
-        more severe. Dashed cards haven't been measured yet; see what's missing in "Why the number is partial" below.
-      </p>
-      <div className="mt-4 space-y-5">
+      <div>
+        <h2 className="text-[13px] font-semibold text-ink">Where revenue is leaking</h2>
+        <p className="mt-0.5 text-[12px] text-ink-3">Every leak found so far, grouped by where it happens in the customer journey.</p>
+      </div>
+      <div className="mt-5 space-y-5">
         {stageGroups.map(({ stageLabel, cells: stageCells }) => (
           <div key={stageLabel}>
             <p className="font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">{stageLabel}</p>
@@ -304,7 +304,10 @@ export function LeakageV2CellGrid({
           ))}
         </div>
         <span className="font-mono text-[9.5px] font-medium tracking-[0.6px] text-ink-4 uppercase">High</span>
-        <span className="text-ink-3">Shading is severity (S1–S5). Dashed cells are unmeasured.</span>
+        <span className="text-ink-3">
+          Darker cards are more severe (S1–S5). Dashed cards haven't been measured yet; see "Why the number is partial"
+          below.
+        </span>
       </div>
     </div>
   );
