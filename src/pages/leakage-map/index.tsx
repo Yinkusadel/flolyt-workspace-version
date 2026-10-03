@@ -136,6 +136,18 @@ export default function LeakageMap() {
     );
   }
 
+  // The very first load failed, so there's no response to lay out. Rendering the normal page here
+  // would just leave its skeleton placeholders on screen forever next to an error that has already
+  // finished failing, so show only the title and the banner instead.
+  if (isError && !leakageData) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
+        <PageStateBanner state="error" errorMessage={error?.message} retrying={isFetching} onRetry={() => refetch()} />
+      </div>
+    );
+  }
+
   // V2 branch — restyled 2026-10-01 to match V1's visual language (cascading Filters menu, the
   // shared KpiCards stat-tile component, one legible status line) instead of the first pass's raw
   // <select> row and chip-per-fact cell layout. See docs/leakage-map/v2-build-plan.md Steps 2–4.
@@ -157,7 +169,9 @@ export default function LeakageMap() {
     return (
       <div className="space-y-6">
         <RecomputingToast visible={!isError && isFetching} horizonLabel="this view" />
-        {isError && <PageStateBanner state="error" errorMessage={error?.message} onRetry={() => refetch()} />}
+        {isError && (
+          <PageStateBanner state="error" hasData errorMessage={error?.message} retrying={isFetching} onRetry={() => refetch()} />
+        )}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -185,7 +199,9 @@ export default function LeakageMap() {
         visible={!isError && isFetching}
         horizonLabel={leakage?.horizon.label ?? fallbackHorizonLabel}
       />
-      {isError && <PageStateBanner state="error" errorMessage={error?.message} onRetry={() => refetch()} />}
+      {isError && (
+        <PageStateBanner state="error" hasData errorMessage={error?.message} retrying={isFetching} onRetry={() => refetch()} />
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>

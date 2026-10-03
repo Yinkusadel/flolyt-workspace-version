@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, PlugZap } from "lucide-react";
+import { AlertTriangle, PlugZap, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PAGE_STATES } from "@/pages/leakage-map/data";
@@ -15,25 +15,74 @@ import { PAGE_STATES } from "@/pages/leakage-map/data";
 export function PageStateBanner({
   state,
   errorMessage,
+  hasData = false,
+  retrying = false,
   onRetry,
 }: {
   state: "empty" | "error";
+  /** The request's own failure message, shown as a quiet detail line under the explanation. */
   errorMessage?: string;
+  /** True when a previous good response is still on screen beneath the banner (a failed refetch). */
+  hasData?: boolean;
+  /** True while the retry is in flight. */
+  retrying?: boolean;
   onRetry?: () => void;
 }) {
   const navigate = useNavigate();
 
   if (state === "error") {
     const copy = PAGE_STATES.error;
-    return (
-      <div className="flex flex-wrap items-center gap-3 rounded-card border border-amber-border bg-amber-bg px-4 py-3">
-        <AlertTriangle className="size-4 shrink-0 text-amber" aria-hidden />
-        <div className="min-w-0 flex-1">
-          <p className="text-[12.5px] font-medium text-ink">{copy.title}</p>
-          <p className="mt-0.5 text-[11px] text-ink-2">{errorMessage ?? copy.body}</p>
+    const { title, body } = hasData ? copy.refresh : copy.initial;
+    const retryLabel = retrying ? copy.ctaBusy : copy.cta;
+
+    // Nothing else on the page to anchor to, so the card sits centered in the content area.
+    if (!hasData) {
+      return (
+        <div className="flex min-h-[55vh] items-center justify-center">
+          <div
+            role="alert"
+            className="flex w-full max-w-md flex-col items-center gap-4 px-6 py-10 text-center"
+          >
+            <span className="flex size-12 items-center justify-center rounded-full bg-rose-bg text-rose">
+              <AlertTriangle className="size-5" aria-hidden />
+            </span>
+            <div>
+              <p className="text-[14px] font-semibold text-ink">{title}</p>
+              <p className="mt-1 text-[12px] leading-relaxed text-ink-3">{body}</p>
+              {errorMessage && <p className="mt-2 text-[11px] text-ink-4">Details: {errorMessage}</p>}
+            </div>
+            <Button type="button" variant="outline" size="sm" disabled={retrying} onClick={onRetry}>
+              <RefreshCw className={retrying ? "animate-spin" : undefined} aria-hidden />
+              {retryLabel}
+            </Button>
+          </div>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-          {copy.cta}
+      );
+    }
+
+    return (
+      <div
+        role="alert"
+        className="flex flex-col gap-3 rounded-card border border-line bg-paper p-4 sm:flex-row sm:items-center sm:gap-4"
+      >
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-rose-bg text-rose">
+          <AlertTriangle className="size-4" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-semibold text-ink">{title}</p>
+          <p className="mt-0.5 text-[12px] leading-relaxed text-ink-3">{body}</p>
+          {errorMessage && <p className="mt-1.5 text-[11px] text-ink-4">Details: {errorMessage}</p>}
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0 self-start sm:self-center"
+          disabled={retrying}
+          onClick={onRetry}
+        >
+          <RefreshCw className={retrying ? "animate-spin" : undefined} aria-hidden />
+          {retryLabel}
         </Button>
       </div>
     );
