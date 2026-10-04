@@ -12,7 +12,7 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 |---|---|---|---|
 | 0 | Shell: header, URL state, skeleton, full-page error, stale-while-loading, legacy notice | `publication`, `controls` | DONE, live-verified |
 | 1 | Filter bar: market, currency, mode, horizon (+custom days), more filters | `controls`, `executive.recommendedMode` | DONE, live-verified (see notes) |
-| 2 | Expected loss over the next N days (one card per currency, "no combined total", partial banner) | `executive.totals`, `executive.confidence`, `summary.measurementState`, `executive.fxState` | BUILT, `tsc -b` clean, NOT yet seen rendered (saved test session expired, see notes) |
+| 2 | Expected loss over the next N days (one card per currency, "no combined total", partial banner) | `executive.totals`, `executive.confidence`, `summary.measurementState`, `executive.fxState` | DONE, live-verified on the real financial-services workspace |
 | 3 | By market (market row, Unassigned card) | `executive.markets`, `executive.marketInventory` | TODO |
 | 4 | Key findings | `executive.keyFindings` | TODO |
 | 5 | Where revenue leaks (currency tabs, cells, case/Room/detail entry points) | `cells`, `summary.materialLeaks` | TODO |
@@ -62,6 +62,10 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
   `formatCompactMoney` / `formatMoney`, so every page that uses them now shows ₦, US$, €, £, CA$ ... and falls
   back to the ISO code for currencies with no symbol (KES, GHS, ZAR, UGX ...). Affected: rooms list and
   subscriptions, inbox approval view and row text, chat data charts.
-- **Not yet verified:** a Playwright run against the saved `ichigo` session was redirected to sign-in (the first
-  filter-bar run rotated the refresh token without saving the state back, the exact gotcha the login recipe
-  warns about). Needs a fresh login (one OTP) or a look in the user's own browser on their financial-services workspace.
+- **Live-verified 2026-10-04** with `chad@yopmail.com` (the user's financial-services workspace, saved to its own
+  `flolyt-session-storage-state-chad.json`): the real response renders 5 currency cards (NGN first with the Reporting
+  tag, then CAD, EUR, GBP, USD), the KES "No amount published" card, the partial banner and the no-combined-total
+  notice, with correct symbols. Filter bar also confirmed on this workspace: the market control shows All / NG / KE /
+  dashed Unassigned, Currency shows "All 6". At 390px width: no horizontal overflow, the filter bar wraps, cards stack.
+  No page errors. Not exercised: the skeleton-to-content jump (fixed by reserving banner and 5-card space), the
+  searchable (6+ markets) market form, the custom-days input.
