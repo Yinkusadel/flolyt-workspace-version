@@ -13,7 +13,7 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 | 0 | Shell: header, URL state, skeleton, full-page error, stale-while-loading, legacy notice | `publication`, `controls` | DONE, live-verified |
 | 1 | Filter bar: market, currency, mode, horizon (+custom days), more filters | `controls`, `executive.recommendedMode` | DONE, live-verified (see notes) |
 | 2 | Expected loss over the next N days (one card per currency, "no combined total", partial banner) | `executive.totals`, `executive.confidence`, `summary.measurementState`, `executive.fxState` | DONE, live-verified on the real financial-services workspace |
-| 3 | By market (market row, Unassigned card) | `executive.markets`, `executive.marketInventory` | TODO |
+| 3 | By market (market row, Unassigned card) | `executive.markets`, `executive.marketInventory`, `controls.marketOptions` | DONE, live-verified |
 | 4 | Key findings | `executive.keyFindings` | TODO |
 | 5 | Where revenue leaks (currency tabs, cells, case/Room/detail entry points) | `cells`, `summary.materialLeaks` | TODO |
 | 6 | Readiness | `readiness` | TODO |
@@ -70,3 +70,20 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
   No page errors. Not exercised: the skeleton-to-content jump (fixed by reserving banner and 5-card space), the
   searchable (6+ markets) market form, the custom-days input.
 - **Notices row (2026-10-04):** the measurement and no-combined-total notices are two slim toggles that slide open/closed (`Collapse`, a measured-height inline-style animation, same in every browser and in reduced-motion mode; the first CSS grid-row version was dropped because it did not animate for the user).
+
+## Section 3 notes (2026-10-04)
+
+- One box per `executive.markets[]` row, primary market first, rest in API order, Unassigned last and dashed.
+  First 4 real markets show, the rest sit behind "Show N more markets"; the Unassigned box always shows.
+- Summary line is the four `marketInventory` counts/flag; "Unassigned exposure present" only when
+  `hasUnassignedExposure` is true. Box text ("No attributed exposure yet", "Configured, no market-scoped
+  measurement") is chosen from `hasMeasurementEvidence` / `isConfigured`, never shown as a zero.
+- Amounts are the server's `selectedAmount` per currency, compact, with symbol; affected entities come from
+  `affectedEntities[]` ("128 accounts affected"), each unit kept separate.
+- Clicking a box sets `market` in the URL (same as the filter bar): verified live for `UNASSIGNED` and `NG`
+  (request carries `market=UNASSIGNED` / `market=NG`, H1 and breadcrumb switch). The section is hidden once a
+  market is selected, since the single-market view replaces it.
+- "Open market matrix" link from the design is not rendered: the matrix page does not exist yet (tracker "later").
+- Live on the financial-services workspace: KE and NG show "No attributed exposure yet", Unassigned holds
+  CA$1.5k, €1.5k, £1.1k, ₦2.4M, US$2k and 128 accounts. 390px width: boxes stack, no overflow, no page errors.
+- Not exercised live: more than 4 markets (the "Show more" collapse), a market with attributed amounts.

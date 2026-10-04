@@ -5,6 +5,7 @@ import { usePageBreadcrumb, type Crumb } from "@/components/breadcrumb-context";
 import { Callout } from "@/components/ui/rail";
 import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
+import { ByMarketSection } from "@/pages/leakage-map/by-market-section";
 import { ExpectedLossSection } from "@/pages/leakage-map/expected-loss-section";
 import { FilterBar } from "@/pages/leakage-map/filter-bar";
 import { useLeakageFilters } from "@/pages/leakage-map/filters";
@@ -14,7 +15,7 @@ import { LeakageMapSkeleton } from "@/pages/leakage-map/page-skeleton";
 /**
  * Rebuild in progress, one section at a time against the Phase 1-4 contract (see
  * docs/leakage-map/v3-rebuild-plan.md and docs/leakage-map/v3-build-tracker.md). Done so far: the
- * shell, the filter bar and the expected-loss cards. The sections below the bar are added next, in the order the tracker lists.
+ * shell, the filter bar, the expected-loss cards and the by-market strip. The sections below the bar are added next, in the order the tracker lists.
  */
 export default function LeakageMap() {
   const { filters, params, setMarket, setCurrency, setLocalFilters, clearMoreFilters } = useLeakageFilters();
@@ -109,6 +110,15 @@ export default function LeakageMap() {
           filters={filters}
           coverageExplanation={page.coverageExplanation}
         />
+        {/* The all-markets view only: a single market's own view replaces this overview strip. */}
+        {!filters.market && (
+          <ByMarketSection
+            executive={page.executive}
+            controls={page.controls}
+            selectedMarket={filters.market}
+            onSelectMarket={setMarket}
+          />
+        )}
         {/* Remaining sections land here, one at a time. */}
       </div>
     </div>

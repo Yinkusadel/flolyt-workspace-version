@@ -26,6 +26,7 @@ export function LeakageMapSkeleton() {
           <Skeleton key={i} className="h-40" />
         ))}
       </div>
+      <Skeleton className="h-48" />
     </div>
   );
 }
