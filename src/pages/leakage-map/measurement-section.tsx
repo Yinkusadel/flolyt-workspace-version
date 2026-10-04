@@ -108,7 +108,7 @@ function Ring({ value }: { value: number | null }) {
           fill="none"
           strokeWidth="6"
           strokeLinecap="round"
-          className="stroke-ink"
+          className="stroke-ultra"
           strokeDasharray={`${fraction * circumference} ${circumference}`}
         />
       </svg>
