@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type {
@@ -8,22 +6,7 @@ import type {
   LeakageV2LimitationSummary,
   LeakageV2Summary,
 } from "@/services/api/leakage/get-leakage";
-import type {
-  LeakageCoverageExplanation,
-  LeakageCoverageIssue,
-  LeakageCoverageIssueCategory,
-} from "@/services/api/leakage/leakage-executive-types";
-import { Collapse } from "@/pages/leakage-map/collapse";
-import { sentenceCase } from "@/pages/leakage-map/format";
-import { PRIMARY_ACTION_CLASS } from "@/pages/leakage-map/drawer/shared";
-
-const ISSUE_GROUPS: { category: LeakageCoverageIssueCategory; title: string; description: string }[] = [
-  { category: "WORKSPACE_ACTION", title: "Workspace action", description: "Mapping, source connection or business-scope work" },
-  { category: "WAITING_FOR_DATA", title: "Waiting for data", description: "Refresh or accumulate comparable history" },
-  { category: "QUALITY", title: "Quality", description: "Repair incomplete or invalid mapped fields" },
-  { category: "PERMISSION", title: "Permission", description: "Restore access to the required data" },
-  { category: "PLATFORM_LIMITATION", title: "Platform limitation", description: "Reader or currency-policy support from the platform" },
-];
+import type { LeakageCoverageExplanation } from "@/services/api/leakage/leakage-executive-types";
 
 interface MeasurementSectionProps {
   summary: LeakageV2Summary;
@@ -31,13 +14,14 @@ interface MeasurementSectionProps {
   coverageExplanation: LeakageCoverageExplanation | undefined;
   limitationSummary: LeakageV2LimitationSummary;
   onOpenDiagnostics: () => void;
+  onOpenIssues: () => void;
 }
 
 /**
  * How much of the leakage surface is measured. The ring is the publication-wide effective coverage (filters
  * never change it) and its headline is the server's own sentence. The counts are the response's separately
- * named measurement counts, never added together. "What's holding coverage back" is the server's issue list,
- * grouped by its own categories; an issue's button appears only when its action is eligible.
+ * named measurement counts, never added together. "What's holding coverage back" opens the server's issue list
+ * in a sheet.
  */
 export function MeasurementSection({
   summary,
@@ -45,8 +29,8 @@ export function MeasurementSection({
   coverageExplanation,
   limitationSummary,
   onOpenDiagnostics,
+  onOpenIssues,
 }: MeasurementSectionProps) {
-  const [showIssues, setShowIssues] = useState(false);
   const effective = coverageExplanation?.effectiveCoverage ?? coverage.effective;
   const headline =
     coverageExplanation?.headline ?? `${coverage.measuredSignals} of ${coverage.applicableSignals} applicable signals measured`;
@@ -98,82 +82,13 @@ export function MeasurementSection({
           All {limitationSummary.detailCount.toLocaleString("en-US")} diagnostics
         </button>
         {issues.length > 0 && (
-          <button
-            type="button"
-            aria-expanded={showIssues}
-            aria-controls="coverage-issues"
-            onClick={() => setShowIssues((prev) => !prev)}
-            className="flex items-center gap-1 text-[11.5px] font-medium text-ultra hover:underline"
-          >
+          <button type="button" onClick={onOpenIssues} className="flex items-center gap-1 text-[11.5px] font-medium text-ultra hover:underline">
             What's holding coverage back ({issues.length})
-            <ChevronDown className={cn("size-3.5 transition-transform", showIssues && "rotate-180")} />
+            <ChevronRight className="size-3.5" />
           </button>
         )}
       </div>
-
-      <Collapse open={showIssues} id="coverage-issues">
-        <div className="space-y-4 pt-4">
-          {ISSUE_GROUPS.map((group) => {
-            const groupIssues = issues.filter((issue) => issue.category === group.category);
-            if (groupIssues.length === 0) return null;
-            return (
-              <div key={group.category}>
-                <p className="text-[12px] font-semibold text-ink">
-                  {group.title} <span className="font-mono text-[10.5px] font-normal text-ink-4">{groupIssues.length}</span>
-                </p>
-                <p className="text-[10.5px] text-ink-3">{group.description}</p>
-                <ul className="mt-2 divide-y divide-line rounded-panel border border-line">
-                  {groupIssues.map((issue, i) => (
-                    <IssueRow key={`${issue.code}-${issue.capabilityId ?? i}`} issue={issue} />
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
-      </Collapse>
     </section>
-  );
-}
-
-function IssueRow({ issue }: { issue: LeakageCoverageIssue }) {
-  const { action } = issue;
-  return (
-    <li className="space-y-1.5 p-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <p className="text-[12px] font-medium text-ink">{issue.capabilityId ?? sentenceCase(issue.code)}</p>
-        {issue.subjectType && (
-          <p className="font-mono text-[10px] text-ink-4">
-            {issue.subjectType}
-            {issue.grain ? ` · ${issue.grain} grain` : ""}
-          </p>
-        )}
-      </div>
-      <p className="text-[11px] leading-relaxed text-ink-3">{issue.message}</p>
-      {issue.missingRequirements.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {issue.missingRequirements.map((requirement) => (
-            <span key={requirement} className="rounded-chip bg-paper-2 px-1.5 py-0.5 font-mono text-[10px] text-ink-2">
-              {requirement}
-            </span>
-          ))}
-        </div>
-      )}
-      {action &&
-        (action.eligible && action.target === "datasources" ? (
-          <Link
-            to="/data-sources"
-            className={cn(
-              "inline-flex h-7 items-center rounded-control border px-2.5 text-[11.5px] font-medium transition-colors",
-              PRIMARY_ACTION_CLASS
-            )}
-          >
-            {action.label}
-          </Link>
-        ) : (
-          action.unavailableReason && <p className="text-[10.5px] text-ink-4">{action.unavailableReason}</p>
-        ))}
-    </li>
   );
 }
 

@@ -6,6 +6,8 @@ import { Callout } from "@/components/ui/rail";
 import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
 import { CellDrawer } from "@/pages/leakage-map/drawer/cell-drawer";
+import { CoverageIssuesDrawer } from "@/pages/leakage-map/drawer/coverage-issues-drawer";
+import { useCoverageIssuesParam } from "@/pages/leakage-map/drawer/use-coverage-issues-param";
 import { DiagnosticsDrawer } from "@/pages/leakage-map/drawer/diagnostics-drawer";
 import { DIAGNOSTICS_ALL, useDiagnosticsParam } from "@/pages/leakage-map/drawer/use-diagnostics-param";
 import { useCellDrawerParam } from "@/pages/leakage-map/drawer/use-cell-drawer-param";
@@ -15,6 +17,7 @@ import { LeakCardsSection } from "@/pages/leakage-map/leak-cards-section";
 import { MeasurementSection } from "@/pages/leakage-map/measurement-section";
 import { ReadinessSection } from "@/pages/leakage-map/readiness-section";
 import { KeyFindingsSection } from "@/pages/leakage-map/key-findings-section";
+import { BusyRegion } from "@/pages/leakage-map/busy-region";
 import { FilterBar } from "@/pages/leakage-map/filter-bar";
 import { useLeakageFilters } from "@/pages/leakage-map/filters";
 import { formatAsOf, marketName } from "@/pages/leakage-map/format";
@@ -27,9 +30,13 @@ import { LeakageMapSkeleton } from "@/pages/leakage-map/page-skeleton";
  */
 export default function LeakageMap() {
   const { filters, params, setMarket, setCurrency, setLocalFilters, clearMoreFilters } = useLeakageFilters();
-  const { data, error, isLoading, isFetching, refetch } = useGetLeakage(params);
+  const { data, error, isLoading, isFetching, isPlaceholderData, refetch } = useGetLeakage(params);
+  // A changed filter shows the previous figures while the new ones load; until they land, nothing is clickable.
+  // A quiet background refresh of the same figures (the tab regaining focus) does not lock the page.
+  const isSwitching = isFetching && isPlaceholderData;
   const drawer = useCellDrawerParam();
   const diagnostics = useDiagnosticsParam();
+  const issues = useCoverageIssuesParam();
 
   const crumbs: Crumb[] = filters.market
     ? [
@@ -101,6 +108,7 @@ export default function LeakageMap() {
         </div>
       )}
 
+      <BusyRegion busy={isSwitching} className="space-y-5">
       <FilterBar
         controls={page.controls}
         filters={filters}
@@ -112,7 +120,7 @@ export default function LeakageMap() {
         onClearMore={clearMoreFilters}
       />
 
-      <div className={cn("space-y-5 transition-opacity", isFetching && "opacity-60")} aria-busy={isFetching}>
+      <div className={cn("space-y-5 transition-opacity", isSwitching && "opacity-60")}>
         <ExpectedLossSection
           executive={page.executive}
           summary={page.summary}
@@ -153,10 +161,14 @@ export default function LeakageMap() {
             coverageExplanation={page.coverageExplanation}
             limitationSummary={page.limitationSummary}
             onOpenDiagnostics={() => diagnostics.openDiagnostics(DIAGNOSTICS_ALL)}
+            onOpenIssues={issues.openIssues}
           />
         </div>
         {/* Remaining sections land here, one at a time. */}
       </div>
+      </BusyRegion>
+
+      <CoverageIssuesDrawer open={issues.isOpen} coverageExplanation={page.coverageExplanation} onClose={issues.closeIssues} />
 
       <DiagnosticsDrawer
         summary={page.limitationSummary}

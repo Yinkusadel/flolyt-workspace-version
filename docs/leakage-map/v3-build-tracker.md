@@ -238,3 +238,8 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 - **Not shown on purpose:** the design's "Signals by subject" table (that is the coverage endpoint's data and a separate
   page in the design) and the four-ratios disclosure; both are later work.
 - **Readiness row links fixed (2026-10-04):** a row now opens diagnostics only when the server reported a group of that kind (`limitationSummary.items[].code`). Live, Source capability, History, Pricing and Platform capability open their group; Sector confirmation (no diagnostics of its kind exist) is a plain row with no arrow. Found when the Sector row opened an empty drawer with no chip selected.
+
+## Coverage issues sheet and page lock while loading (2026-10-04)
+
+- **"What's holding coverage back (N)"** no longer expands inside the Measurement card; it opens in a sheet (`drawer/coverage-issues-drawer.tsx`, URL `?issues=1`) with the server's issues grouped by its five categories, each with its capability, missing fields and (when eligible) a button to Data sources. Opening it closes the cell and diagnostics sheets, and opening either of those closes it. Verified: 8 issues, 4 buttons to /data-sources, Esc clears the URL, 390px no overflow.
+- **Page lock:** when a filter change is loading (new figures requested while the previous ones stay on screen), the filter bar and every section are `inert` (no click, no tab, no screen-reader interaction) and the sections dim; it unlocks when the figures land. A quiet background refresh of the same figures (tab regaining focus) does not lock the page. Verified with a 3 s delayed response: forced clicks on Details and Gross during the load did nothing, and the lock cleared after.
