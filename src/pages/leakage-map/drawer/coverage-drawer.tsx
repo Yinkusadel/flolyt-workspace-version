@@ -246,11 +246,15 @@ function SignalsTab() {
 
 function SignalsContent({ coverage }: { coverage: CoverageV2 }) {
   // Signals are grouped by what they count (`subject.unit`), in the order the server lists them.
-  const groups: { unit: string; grain: string; signals: LeakageCoverageSignalEntry[] }[] = [];
+  // A subject is identified by its type, grain and unit together, so two subjects that happen to share a unit word
+  // stay separate groups, and a subject this page has never seen simply becomes a new group.
+  const subjectKey = (subject: { type: string; grain: string; unit: string }) => `${subject.type}|${subject.grain}|${subject.unit}`;
+  const groups: { key: string; unit: string; grain: string; signals: LeakageCoverageSignalEntry[] }[] = [];
   for (const signal of coverage.signals) {
-    let group = groups.find((g) => g.unit === signal.subject.unit);
+    const key = subjectKey(signal.subject);
+    let group = groups.find((g) => g.key === key);
     if (!group) {
-      group = { unit: signal.subject.unit, grain: signal.subject.grain, signals: [] };
+      group = { key, unit: signal.subject.unit, grain: signal.subject.grain, signals: [] };
       groups.push(group);
     }
     group.signals.push(signal);
@@ -273,8 +277,8 @@ function SignalsContent({ coverage }: { coverage: CoverageV2 }) {
           </thead>
           <tbody>
             {groups.map((group) => {
-              const subject = coverage.subjects.find((s) => s.subject.unit === group.unit);
-              return <GroupRows key={group.unit} group={group} measurable={subject} />;
+              const subject = coverage.subjects.find((s) => subjectKey(s.subject) === group.key);
+              return <GroupRows key={group.key} group={group} measurable={subject} />;
             })}
           </tbody>
         </table>
@@ -295,7 +299,7 @@ function GroupRows({
   group,
   measurable,
 }: {
-  group: { unit: string; grain: string; signals: LeakageCoverageSignalEntry[] };
+  group: { key: string; unit: string; grain: string; signals: LeakageCoverageSignalEntry[] };
   measurable: CoverageV2["subjects"][number] | undefined;
 }) {
   return (
@@ -334,12 +338,12 @@ function GroupRows({
             <td className="px-2 py-2.5 sm:px-3">
               <p className="font-medium text-ink">{sentenceCase(s.signalId)}</p>
               <p className="font-mono text-[9.5px] text-ink-4">{s.maturity}</p>
-              <p className={cn("mt-0.5 text-[10.5px] sm:hidden", ran ? "text-teal" : "text-ink-3")}>
+              <p className={cn("mt-0.5 text-[10.5px] sm:hidden", s.runOutcome === "SUCCEEDED" ? "text-teal" : ran ? "text-amber" : "text-ink-3")}>
                 {sentenceCase(s.runOutcome)} · {availabilityPhrase(s.sourceAvailability)}
               </p>
             </td>
             <td className="hidden px-3 py-2.5 sm:table-cell">
-              <p className={cn("font-medium", ran ? "text-teal" : "text-ink-3")}>{sentenceCase(s.runOutcome)}</p>
+              <p className={cn("font-medium", s.runOutcome === "SUCCEEDED" ? "text-teal" : ran ? "text-amber" : "text-ink-3")}>{sentenceCase(s.runOutcome)}</p>
               <p className="text-[10.5px] text-ink-3">{availabilityPhrase(s.sourceAvailability)}</p>
             </td>
             <td className="px-1.5 py-2.5 text-right font-mono text-ink sm:px-3">{cell(s.eligibleUnits)}</td>
