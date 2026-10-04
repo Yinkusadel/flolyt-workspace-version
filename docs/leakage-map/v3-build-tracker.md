@@ -18,8 +18,8 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 | 5a | Where revenue leaks: cards (currency tabs, stage groups) | `cells`, `executive.showSectorBreakdown` | DONE, live-verified |
 | 5b | Cell drawer: header, case strip, per-currency table, Summary/Components/Signals/Sources/History tabs, case view, Learn Why button | `/cells/{id}`, `/history`, `workState`, case routes | DONE (reads live-verified; mutations NOT yet submitted live, see notes) |
 | 5c | Evidence view / "Why this number" tab, "How calculated" exact-calculation drawer | `/cells/{id}/evidence`, `/calculation/detail` | TODO |
-| 6 | Readiness | `readiness` | TODO |
-| 7 | Measurement (+ link to diagnostics drawer) | `summary.measurement`, `coverageExplanation`, `limitationSummary` | TODO |
+| 6 | Readiness | `readiness` | DONE, live-verified |
+| 7 | Measurement (+ diagnostics drawer, + what's holding coverage back) | `summary.measurement`, `coverage`, `coverageExplanation`, `limitationSummary`, `/limitations` | DONE, live-verified |
 | 8 | Footer line (snapshot, run, registry, contract) | `publication` | TODO |
 | later | Single-market view polish, market matrix, limitations drawer, exact calculation drawer, missed opportunities (no entry point yet since the old tab was archived) | | TODO |
 
@@ -207,3 +207,33 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 - It is deliberately unfiltered because the backend does not publish which moves are allowed; the server accepts or refuses and its message shows. **When you learn the allowed moves forward and back, tell me and the forward step and Move status can be made dynamic from that table** (also listed in v3-reminders.md).
 - Verified live (reads): action row shows the three buttons; the Move status form lists the six statuses; Move case is disabled until one is picked; Resolved shows the evidence field and Invalidated hides it; Cancel returns; no write request sent.
 - **Stepper detail line (2026-10-04):** the text under each step is now one short, non-wrapping line (e.g. "2 Oct 11:22", "since 2 Oct 11:22", "needs evidence", "by verification") so the seven columns stay level; the full wording shows on hover (the app TextTooltip, 0.7 s delay). Verified: all seven steps are the same height at desktop and 390px, and the three tooltips read correctly.
+
+## Sections 6 and 7, and the diagnostics drawer (2026-10-04)
+
+- **Readiness** (`readiness-section.tsx`): one row per API category (icon, name, state tag Action / Waiting /
+  Unavailable, the server's message and affected count). Rows that are `READY` stay quiet as a tick line. The action
+  button shows only when `action.eligible` is true (goes to /data-sources, with its missing fields); a not-eligible
+  action shows the server's `unavailableReason` as plain text. On the live workspace the only button is "Review
+  source mappings or add the required data" (chargeback.exposure).
+- **Measurement** (`measurement-section.tsx`): ring = `coverageExplanation.effectiveCoverage` (publication-wide),
+  headline = the server's sentence, "N units remain unknown" from `coverage.residualUnknownUnits`, then the response's
+  separate counts (priced findings, observations that can't be priced, leak types with exposure, measured zero,
+  not measurable yet; "Unpriced candidates" only when above zero), never added together.
+- **What's holding coverage back (8)**: an expandable list of `coverageExplanation.issues[]` grouped by the server's
+  five categories, each with its capability, missing fields and an eligible action. This is where the real
+  per-capability "Review source mappings" buttons live (four capabilities on the live workspace).
+- **Diagnostics drawer** (`drawer/diagnostics-drawer.tsx`, URL `?diagnostics=all` or `?diagnostics=<code>`): chips are
+  the summary's own groups with the counts it reported; the list comes from `/leakage/limitations` 50 at a time with
+  Previous / Next and "51-100 of 915". Opened from "All N diagnostics" or by clicking a readiness row. Opening it closes
+  the cell drawer.
+- **Inferred, not an API field:** which diagnostics group a readiness row opens (Sector confirmation ->
+  SECTOR_ASSIGNMENT_MISSING, Source capability -> CAPABILITY_GAP, History -> BASELINE_HISTORY_MISSING, Pricing ->
+  PRICING_INPUT_MISSING, Platform capability -> NORMALIZED_FACTS_UNAVAILABLE, Policy configuration ->
+  CURRENCY_POLICY_MISSING). The handoff says "filtered by the corresponding limitation code when one exists".
+- `Collapse` (the measured-height slide) moved to `collapse.tsx` and is shared by the notices row and the issue list.
+- **Live-verified (chad@yopmail.com):** all six readiness rows, the one eligible button linking to /data-sources, the
+  measurement figures (24.9%, 240, 915, 2, 0, 4, 190 unknown), 8 issues expanded, the drawer from a Pricing row
+  (filtered to code, 1-50 then 51-100 of 915), All (1-50 of 1,108), Esc closes and clears the URL, 390px no overflow, no
+  page errors.
+- **Not shown on purpose:** the design's "Signals by subject" table (that is the coverage endpoint's data and a separate
+  page in the design) and the four-ratios disclosure; both are later work.

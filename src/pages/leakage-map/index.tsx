@@ -6,10 +6,14 @@ import { Callout } from "@/components/ui/rail";
 import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
 import { CellDrawer } from "@/pages/leakage-map/drawer/cell-drawer";
+import { DiagnosticsDrawer } from "@/pages/leakage-map/drawer/diagnostics-drawer";
+import { DIAGNOSTICS_ALL, useDiagnosticsParam } from "@/pages/leakage-map/drawer/use-diagnostics-param";
 import { useCellDrawerParam } from "@/pages/leakage-map/drawer/use-cell-drawer-param";
 import { ByMarketSection } from "@/pages/leakage-map/by-market-section";
 import { ExpectedLossSection } from "@/pages/leakage-map/expected-loss-section";
 import { LeakCardsSection } from "@/pages/leakage-map/leak-cards-section";
+import { MeasurementSection } from "@/pages/leakage-map/measurement-section";
+import { ReadinessSection } from "@/pages/leakage-map/readiness-section";
 import { KeyFindingsSection } from "@/pages/leakage-map/key-findings-section";
 import { FilterBar } from "@/pages/leakage-map/filter-bar";
 import { useLeakageFilters } from "@/pages/leakage-map/filters";
@@ -19,12 +23,13 @@ import { LeakageMapSkeleton } from "@/pages/leakage-map/page-skeleton";
 /**
  * Rebuild in progress, one section at a time against the Phase 1-4 contract (see
  * docs/leakage-map/v3-rebuild-plan.md and docs/leakage-map/v3-build-tracker.md). Done so far: the
- * shell, the filter bar, the expected-loss cards, the by-market strip, key findings and the leak cards. The sections below the bar are added next, in the order the tracker lists.
+ * shell, the filter bar, the expected-loss cards, the by-market strip, key findings, the leak cards, readiness and measurement. The sections below the bar are added next, in the order the tracker lists.
  */
 export default function LeakageMap() {
   const { filters, params, setMarket, setCurrency, setLocalFilters, clearMoreFilters } = useLeakageFilters();
   const { data, error, isLoading, isFetching, refetch } = useGetLeakage(params);
   const drawer = useCellDrawerParam();
+  const diagnostics = useDiagnosticsParam();
 
   const crumbs: Crumb[] = filters.market
     ? [
@@ -136,8 +141,25 @@ export default function LeakageMap() {
           controls={page.controls}
           onOpenDetails={drawer.openCell}
         />
+        <div className="grid items-start gap-5 lg:grid-cols-2">
+          <ReadinessSection readiness={page.readiness} onOpenDiagnostics={diagnostics.openDiagnostics} />
+          <MeasurementSection
+            summary={page.summary}
+            coverage={page.coverage}
+            coverageExplanation={page.coverageExplanation}
+            limitationSummary={page.limitationSummary}
+            onOpenDiagnostics={() => diagnostics.openDiagnostics(DIAGNOSTICS_ALL)}
+          />
+        </div>
         {/* Remaining sections land here, one at a time. */}
       </div>
+
+      <DiagnosticsDrawer
+        summary={page.limitationSummary}
+        filter={diagnostics.diagnostics}
+        onFilterChange={diagnostics.setDiagnosticsFilter}
+        onClose={diagnostics.closeDiagnostics}
+      />
 
       <CellDrawer
         cells={page.cells}

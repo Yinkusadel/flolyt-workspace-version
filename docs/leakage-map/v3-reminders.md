@@ -40,6 +40,8 @@ mark an item DONE or DROPPED with the date instead.
   extra request per card.
 - **A list of all cases**: only "get one case by id" exists, so a case is reached from its cell.
 
+- **Readiness row -> diagnostics group pairing** is read from the names, not an API field (see the tracker).
+
 ## Questions to put to the backend
 
 1. The allowed case-status moves (which target statuses are legal from each status). Only one refusal has been
@@ -71,3 +73,11 @@ mark an item DONE or DROPPED with the date instead.
 ## Update 2026-10-04: Invalidate button replaced by an unfiltered Move status
 
 - Waiting on the owner to find out which case-status moves (forward and backward) the backend allows. When that arrives, make the forward button and Move status dynamic from the table (offer only legal targets). Until then Move status lists every status except the current one and Verified, and the server refuses illegal moves.
+
+## Update 2026-10-04: readiness, measurement and diagnostics built
+
+- Not built (design has them): the "Signals by subject" coverage table, the "four ratios behind it" disclosure, and
+  clickable currency rows / "How calculated" (exact calculation drawer). All three read endpoints that already exist
+  (`/leakage/coverage`, `/leakage/calculation/detail`).
+- Ask the backend whether the readiness category -> limitation code pairing used for the diagnostics link is the
+  intended one, and whether `recommendedAction` ("MAP_MONETARY_IMPACT") is meant to become a real action.
