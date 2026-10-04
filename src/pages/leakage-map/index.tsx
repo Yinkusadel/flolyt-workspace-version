@@ -7,6 +7,7 @@ import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
 import { ByMarketSection } from "@/pages/leakage-map/by-market-section";
 import { ExpectedLossSection } from "@/pages/leakage-map/expected-loss-section";
+import { LeakCardsSection } from "@/pages/leakage-map/leak-cards-section";
 import { KeyFindingsSection } from "@/pages/leakage-map/key-findings-section";
 import { FilterBar } from "@/pages/leakage-map/filter-bar";
 import { useLeakageFilters } from "@/pages/leakage-map/filters";
@@ -16,7 +17,7 @@ import { LeakageMapSkeleton } from "@/pages/leakage-map/page-skeleton";
 /**
  * Rebuild in progress, one section at a time against the Phase 1-4 contract (see
  * docs/leakage-map/v3-rebuild-plan.md and docs/leakage-map/v3-build-tracker.md). Done so far: the
- * shell, the filter bar, the expected-loss cards, the by-market strip and key findings. The sections below the bar are added next, in the order the tracker lists.
+ * shell, the filter bar, the expected-loss cards, the by-market strip, key findings and the leak cards. The sections below the bar are added next, in the order the tracker lists.
  */
 export default function LeakageMap() {
   const { filters, params, setMarket, setCurrency, setLocalFilters, clearMoreFilters } = useLeakageFilters();
@@ -126,6 +127,7 @@ export default function LeakageMap() {
           controls={page.controls}
           selectedMarket={filters.market}
         />
+        <LeakCardsSection cells={page.cells} executive={page.executive} controls={page.controls} />
         {/* Remaining sections land here, one at a time. */}
       </div>
     </div>

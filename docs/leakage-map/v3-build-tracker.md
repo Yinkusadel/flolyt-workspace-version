@@ -15,7 +15,8 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 | 2 | Expected loss over the next N days (one card per currency, "no combined total", partial banner) | `executive.totals`, `executive.confidence`, `summary.measurementState`, `executive.fxState` | DONE, live-verified on the real financial-services workspace |
 | 3 | By market (market row, Unassigned card) | `executive.markets`, `executive.marketInventory`, `controls.marketOptions` | DONE, live-verified |
 | 4 | Key findings | `executive.keyFindings`, `cells` (stage chip) | DONE, live-verified |
-| 5 | Where revenue leaks (currency tabs, cells, case/Room/detail entry points) | `cells`, `summary.materialLeaks` | TODO |
+| 5a | Where revenue leaks: cards (currency tabs, stage groups) | `cells`, `executive.showSectorBreakdown` | DONE, live-verified |
+| 5b | Detail drawer (cell detail, history, evidence, Learn Why), case start/open (all behind the drawer), "How calculated" drawer | `/cells/{id}`, `workState`, `/calculation/detail` | TODO |
 | 6 | Readiness | `readiness` | TODO |
 | 7 | Measurement (+ link to diagnostics drawer) | `summary.measurement`, `coverageExplanation`, `limitationSummary` | TODO |
 | 8 | Footer line (snapshot, run, registry, contract) | `publication` | TODO |
@@ -109,3 +110,28 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
   section 5. Wire them to it then.
 - Live on the financial-services workspace: 5 rows (NGN, CAD, EUR, GBP, USD) under "Unassigned market · In flight",
   all Dormant Accounts / ENGAGE / Low. 390px: no overflow, no page errors.
+
+## Section 5a notes (2026-10-04)
+
+- **Stages are whatever the data has**: one block per distinct `revenueStage`, titled with `revenueStageLabel`, in
+  the order the API sends them (user decision: no ordering of our own; live order is Engage, Renew, Retain). With
+  `executive.showSectorBreakdown` true and 2+ sectors, stages group under their sector first. No fixed 3 columns:
+  each stage is a wrapping grid.
+- **Currency tabs** (underline style, ordered reporting-currency first) come from the currencies found in the cells'
+  amounts; hidden with a single currency. A cell with no amount in the picked currency says "No amount in X"
+  (not zero); `UNKNOWN` cells show "Not measured · <availability phrase>" + the cell's first limitation; `NO_EXPOSURE`
+  shows "Measured: no exposure found"; `HIDDEN_BY_FILTER` cells are not drawn.
+- **Amount** is the response's `value` (follows the mode toggle; verified live Expected/Net/Gross).
+  Meta line = lifecycle + `candidateCount` ("28 candidates", the response's own count, not accounts). Range shown
+  only when `range.status` is not UNAVAILABLE. Chips: severity ("not rated" when NOT_AVAILABLE), confidence level,
+  Compound facet. "Unassigned" chip when the lead amount's market is UNASSIGNED.
+- **Left out on purpose:** the design's "74% of NGN exposure" share (needs client math); the "Review source mappings"
+  button on unmeasured cards (the action only exists in cell detail `lineage` / `readiness`, user chose to keep the
+  page simple: it lives in Readiness and the drawer); "Start a case" / CASE badge on cards (needs `workState` from
+  cell detail, so it moves into the drawer).
+- **Footer buttons are wired but not rendered yet**: the card has a "How calculated" link (blue text) and a "Details"
+  button (the app's `ultra` blue instead of the design's black), aligned in one row. They only render when
+  `onOpenCalculation` / `onOpenDetails` are passed, which happens in step 5b, so no dead buttons ship.
+- Live on the financial-services workspace: ENGAGE (Dormant Accounts), RENEW (Overdue Invoice, hatched), RETAIN
+  (Attrition + Chargebacks / Failed Payment / Refunds hatched), tabs NGN/CAD/EUR/GBP/USD, 390px no overflow,
+  no page errors.
