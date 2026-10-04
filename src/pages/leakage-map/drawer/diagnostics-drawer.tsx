@@ -110,7 +110,9 @@ export function DiagnosticsDrawer({ summary, filter, onFilterChange, onClose }: 
             </div>
           )}
 
-          {page && page.items.length === 0 && <p className="text-[11.5px] text-ink-3">No diagnostics of this kind.</p>}
+          {page && page.items.length === 0 && (
+            <p className="text-[11.5px] text-ink-3">The server recorded no diagnostics of this kind for this publication.</p>
+          )}
 
           {page && page.items.length > 0 && (
             <div className={cn("overflow-x-auto transition-opacity", isFetching && "opacity-60")}>

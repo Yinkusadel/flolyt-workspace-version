@@ -142,7 +142,11 @@ export default function LeakageMap() {
           onOpenDetails={drawer.openCell}
         />
         <div className="grid items-start gap-5 lg:grid-cols-2">
-          <ReadinessSection readiness={page.readiness} onOpenDiagnostics={diagnostics.openDiagnostics} />
+          <ReadinessSection
+            readiness={page.readiness}
+            diagnosticCodes={page.limitationSummary.items.map((item) => item.code)}
+            onOpenDiagnostics={diagnostics.openDiagnostics}
+          />
           <MeasurementSection
             summary={page.summary}
             coverage={page.coverage}

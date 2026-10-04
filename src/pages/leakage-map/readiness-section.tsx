@@ -41,6 +41,8 @@ const STATE_TAG: Record<LeakageV2ReadinessState, { label: string; tone: ChipTone
 
 interface ReadinessSectionProps {
   readiness: LeakageV2Readiness;
+  /** The diagnostics groups the server actually reported (`limitationSummary.items[].code`). */
+  diagnosticCodes: LeakageV2LimitationCode[];
   onOpenDiagnostics: (code: LeakageV2LimitationCode) => void;
 }
 
@@ -48,9 +50,10 @@ interface ReadinessSectionProps {
  * What stands between this workspace and a fuller map. One row per category the API sends; rows that are
  * `READY` stay quiet (a single tick line at the bottom). An action button appears only when the API marks the
  * action `eligible`, and goes to Data sources; an action that is not eligible shows the server's own reason as
- * text and never as a button. A row's text opens the diagnostics behind it.
+ * text and never as a button. A row's text opens the diagnostics behind it, but only when the server reported
+ * diagnostics of that kind (a row with none is plain, with no arrow).
  */
-export function ReadinessSection({ readiness, onOpenDiagnostics }: ReadinessSectionProps) {
+export function ReadinessSection({ readiness, diagnosticCodes, onOpenDiagnostics }: ReadinessSectionProps) {
   const open = readiness.items.filter((item) => item.state !== "READY");
   const ready = readiness.items.filter((item) => item.state === "READY");
 
@@ -70,7 +73,7 @@ export function ReadinessSection({ readiness, onOpenDiagnostics }: ReadinessSect
       {open.length > 0 && (
         <ul className="mt-3 divide-y divide-line">
           {open.map((item) => (
-            <ReadinessRow key={item.category} item={item} onOpenDiagnostics={onOpenDiagnostics} />
+            <ReadinessRow key={item.category} item={item} diagnosticCodes={diagnosticCodes} onOpenDiagnostics={onOpenDiagnostics} />
           ))}
         </ul>
       )}
@@ -91,12 +94,16 @@ export function ReadinessSection({ readiness, onOpenDiagnostics }: ReadinessSect
 
 function ReadinessRow({
   item,
+  diagnosticCodes,
   onOpenDiagnostics,
 }: {
   item: LeakageV2ReadinessItem;
+  diagnosticCodes: LeakageV2LimitationCode[];
   onOpenDiagnostics: (code: LeakageV2LimitationCode) => void;
 }) {
   const meta = CATEGORY[item.category];
+  // A row opens diagnostics only when the server reported a group of that kind; otherwise there is nothing to show.
+  const code = meta.code && diagnosticCodes.includes(meta.code) ? meta.code : null;
   const tag = STATE_TAG[item.state];
   const { action } = item;
   const body = (
@@ -114,16 +121,16 @@ function ReadinessRow({
           {item.affectedCount > 0 && ` (${item.affectedCount.toLocaleString("en-US")})`}
         </span>
       </span>
-      {meta.code && <ChevronRight className="mt-1.5 size-3.5 shrink-0 text-ink-4" aria-hidden />}
+      {code && <ChevronRight className="mt-1.5 size-3.5 shrink-0 text-ink-4" aria-hidden />}
     </>
   );
 
   return (
     <li className="py-3">
-      {meta.code ? (
+      {code ? (
         <button
           type="button"
-          onClick={() => onOpenDiagnostics(meta.code as LeakageV2LimitationCode)}
+          onClick={() => onOpenDiagnostics(code)}
           className="flex w-full gap-3 text-left"
           aria-label={`${meta.label}: open the diagnostics behind it`}
         >

@@ -237,3 +237,4 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
   page errors.
 - **Not shown on purpose:** the design's "Signals by subject" table (that is the coverage endpoint's data and a separate
   page in the design) and the four-ratios disclosure; both are later work.
+- **Readiness row links fixed (2026-10-04):** a row now opens diagnostics only when the server reported a group of that kind (`limitationSummary.items[].code`). Live, Source capability, History, Pricing and Platform capability open their group; Sector confirmation (no diagnostics of its kind exist) is a plain row with no arrow. Found when the Sector row opened an empty drawer with no chip selected.
