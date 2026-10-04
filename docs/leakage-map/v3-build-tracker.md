@@ -21,7 +21,7 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 | 5d | Evidence view / "Why this number" tab | `/cells/{id}/evidence` | TODO (waiting on what the backend will send) |
 | 6 | Readiness | `readiness` | DONE, live-verified |
 | 7 | Measurement (+ diagnostics drawer, + what's holding coverage back) | `summary.measurement`, `coverage`, `coverageExplanation`, `limitationSummary`, `/limitations` | DONE, live-verified |
-| 8 | Footer line (snapshot, run, registry, contract) | `publication` | TODO |
+| 8 | Footer line (snapshot, run, registry, contract) | `publication` | DONE 2026-10-04 |
 | later | Single-market view polish; 30-market matrix; Missed opportunities (no entry point yet since the old tab was archived) | | TODO |
 
 ## Section 0 and 1 notes (2026-10-04)
@@ -320,3 +320,11 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 ## Missed opportunities built (2026-10-04)
 
 `/missed-opportunities`, entered from a link in the Leakage Map header (not shown inside a single-market header; use the breadcrumb back to All markets). Live-verified for the legacy UNKNOWN cell only; priced amounts and the signal preview are contract-only until a workspace with a 1.2.0 publication is available. See docs/endpoints/opportunities.md.
+
+## Footer line built (2026-10-04)
+
+`publication-footer.tsx`, as the design's last line (snapshot, run, registry, sector profile, contract, published in UTC), ids cut to 8 characters with the full id in the hover title. Shown on every view, including a single market, since it describes the whole publication. Live-verified; no overflow at 390px.
+
+## Still to build (2026-10-04, after the footer line)
+
+1. **30-market matrix page** (market x leak-type table from `executive.matrix`; design: "30 markets + Unassigned - matrix" in the new-set folder). Deferred by the user until a workspace with many attributed markets exists. When built: link from the Leakage Map header next to Missed opportunities, each cell in its own currency, layout checked with a local-only 30-market intercept (never shipped). Real attributed-market amounts stay unverified until a workspace has them; then open the page once and compare against the Leakage Map.

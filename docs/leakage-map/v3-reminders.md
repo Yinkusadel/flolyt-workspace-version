@@ -93,3 +93,8 @@ mark an item DONE or DROPPED with the date instead.
 - **Test the case form submits yourself** (Record decision, Move status, Mark resolved, Start work, Assign / Reassign, Change due date, Open a Room, Start a case). Built, never submitted live. Look especially at: whether a refused move shows the server's message, whether Open a Room's amount picker and title work, and whether Start a case moves the drawer on to the new case.
 - **Measurement labels** left as they are by choice. Revisit if "Priced findings" (candidates) confuses anyone next to the "2 findings" on the currency cards.
 - **Still to build:** evidence tab (needs the backend), single-market view polish, 30-market matrix, footer line, Missed opportunities.
+
+## Update 2026-10-04: what is left
+
+- **Still to build:** the 30-market matrix only (deferred, see the tracker). Evidence tab, footer line and Missed opportunities are built.
+- **Unverified live:** real attributed-market amounts, priced opportunity amounts and signal preview, and the case form submits.

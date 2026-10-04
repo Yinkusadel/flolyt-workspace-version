@@ -17,6 +17,7 @@ import { useCellDrawerParam } from "@/pages/leakage-map/drawer/use-cell-drawer-p
 import { ByMarketSection } from "@/pages/leakage-map/by-market-section";
 import { ExpectedLossSection } from "@/pages/leakage-map/expected-loss-section";
 import { LeakCardsSection } from "@/pages/leakage-map/leak-cards-section";
+import { PublicationFooter } from "@/pages/leakage-map/publication-footer";
 import { MeasurementSection } from "@/pages/leakage-map/measurement-section";
 import { ReadinessSection } from "@/pages/leakage-map/readiness-section";
 import { KeyFindingsSection } from "@/pages/leakage-map/key-findings-section";
@@ -186,7 +187,7 @@ export default function LeakageMap() {
             onOpenCoverage={() => coverageSheet.openCoverage()}
           />
         </div>
-        {/* Remaining sections land here, one at a time. */}
+        <PublicationFooter publication={page.publication} contractVersion={page.contractVersion} />
       </div>
       </BusyRegion>
 
