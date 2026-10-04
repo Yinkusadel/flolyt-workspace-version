@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
-import { type ConfidenceLevel, CONFIDENCE_LABEL } from "@/pages/leakage-map/data";
+import { type ConfidenceLevel, CONFIDENCE_LABEL } from "@/oldpages/revenue/leakage-map-v2-first-build/data";
 import { useGetLeakageStage } from "@/features/leakage/use-get-leakage-stage";
 import { useLearnWhyLeakageStage } from "@/features/leakage/use-learn-why-leakage-stage";
 import { useGetLeakageCell } from "@/features/leakage/use-get-leakage-cell";

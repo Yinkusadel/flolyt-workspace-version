@@ -26,7 +26,7 @@ export function resolveSuggestedActionRoute(action: SuggestedActionV2): string |
 // from a leak" as `target.resource: "room"` with no `resourceId`, carrying `grid`/`rowKey`/
 // `conditionKey`/`currency` in `parameters` instead — the same coordinate the leakage map's own
 // "Start a room" button (`CellDetailCard.handleStartRoom`,
-// src/pages/leakage-map/detail-panel.tsx) already knows how to resolve via `GET
+// src/oldpages/revenue/leakage-map-v2-first-build/detail-panel.tsx) already knows how to resolve via `GET
 // /leakage/cells/{grid}/{row}/{condition}/{currency}` + `POST .../room`. `useOpenRoomFromLeak`
 // wraps that same flow for this action. Returns null for every other resourceless `room` shape —
 // still hidden, not guessed at, per the policy above.

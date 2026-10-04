@@ -1,6 +1,6 @@
 import { Chip, type ChipTone } from "@/components/ui/chip";
 import { formatMoney, formatPercent } from "@/lib/format-measured-value";
-import { humanizeEnum, v2OptionLabel } from "@/pages/leakage-map/v2-filters";
+import { humanizeEnum, v2OptionLabel } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-filters";
 import type { LeakageV2Cell, LeakageV2Controls, LeakageV2CoverageSummary, LeakageV2Rollup } from "@/services/api/leakage/get-leakage";
 
 function activeCells(cells: LeakageV2Cell[]): LeakageV2Cell[] {

@@ -8,8 +8,8 @@ import {
   formatRelativeTime,
   formatShortDateWithYear,
 } from "@/lib/format-measured-value";
-import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
-import { CaseInfo } from "@/pages/leakage-map/v2-cell-detail-dialog";
+import { humanizeEnum } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-filters";
+import { CaseInfo } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-cell-detail-dialog";
 import { useGetLeakageCase } from "@/features/leakage/use-get-leakage-case";
 import { useGetLeakageCellEvidence } from "@/features/leakage/use-get-leakage-cell-evidence";
 import type { GetLeakageCellEvidenceParams } from "@/services/api/leakage/get-leakage-cell-evidence";

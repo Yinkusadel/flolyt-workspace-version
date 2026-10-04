@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 
-import { v2OptionLabel, type LeakageV2FilterState } from "@/pages/leakage-map/v2-filters";
+import { v2OptionLabel, type LeakageV2FilterState } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-filters";
 import type { LeakageV2Controls } from "@/services/api/leakage/get-leakage";
 
 interface ActiveChip {

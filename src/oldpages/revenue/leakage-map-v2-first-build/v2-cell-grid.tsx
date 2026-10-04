@@ -5,12 +5,12 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { formatCompactMoney, formatPercent } from "@/lib/format-measured-value";
-import { HEAT_SCALE, HEAT_TEXT_CLASS } from "@/pages/leakage-map/data";
-import { V2CaseSheetContent } from "@/pages/leakage-map/v2-case-sheet";
-import { V2CellDetailDialogContent } from "@/pages/leakage-map/v2-cell-detail-dialog";
-import { V2CellEvidenceSheetContent } from "@/pages/leakage-map/v2-cell-evidence-sheet";
-import { V2CellHistorySheetContent } from "@/pages/leakage-map/v2-cell-history-sheet";
-import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
+import { HEAT_SCALE, HEAT_TEXT_CLASS } from "@/oldpages/revenue/leakage-map-v2-first-build/data";
+import { V2CaseSheetContent } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-case-sheet";
+import { V2CellDetailDialogContent } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-cell-detail-dialog";
+import { V2CellEvidenceSheetContent } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-cell-evidence-sheet";
+import { V2CellHistorySheetContent } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-cell-history-sheet";
+import { humanizeEnum } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-filters";
 import type { LeakageV2Amount, LeakageV2Cell } from "@/services/api/leakage/get-leakage";
 import type { GetLeakageCellEvidenceParams } from "@/services/api/leakage/get-leakage-cell-evidence";
 

@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertTriangle, PlugZap, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { PAGE_STATES } from "@/pages/leakage-map/data";
+import { PAGE_STATES } from "@/oldpages/revenue/leakage-map-v2-first-build/data";
 
 /**
  * Empty/error (12-states.svg), driven by `useGetLeakage`'s real query state — see index.tsx.

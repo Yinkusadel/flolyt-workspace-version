@@ -7,8 +7,8 @@ import { DialogBody, DialogDescription, DialogFooter, DialogHeader, DialogTitle 
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatCompactMoney, formatCount, formatPercent, formatRelativeTime, formatShortDateWithYear } from "@/lib/format-measured-value";
-import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
-import { CASE_STATUS_TONE, FieldLabel, resolveOwnerName } from "@/pages/leakage-map/v2-case-sheet";
+import { humanizeEnum } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-filters";
+import { CASE_STATUS_TONE, FieldLabel, resolveOwnerName } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-case-sheet";
 import { useCreateLeakageCase } from "@/features/leakage/use-create-leakage-case";
 import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
 import { useGetLeakageCase } from "@/features/leakage/use-get-leakage-case";

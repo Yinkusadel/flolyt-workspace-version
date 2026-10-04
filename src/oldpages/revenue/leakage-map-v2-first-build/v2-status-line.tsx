@@ -1,5 +1,5 @@
 import { formatRelativeTime } from "@/lib/format-measured-value";
-import { v2OptionLabel } from "@/pages/leakage-map/v2-filters";
+import { v2OptionLabel } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-filters";
 import type { LeakageV2Controls, LeakageV2Publication } from "@/services/api/leakage/get-leakage";
 
 /**

@@ -10,7 +10,7 @@ import { SheetBody, SheetDescription, SheetHeader, SheetTitle } from "@/componen
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatShortDateWithYear } from "@/lib/format-measured-value";
-import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
+import { humanizeEnum } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-filters";
 import useGetCurrentUser from "@/features/auth/use-get-current-user";
 import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
 import { useAddLeakageCaseDecision } from "@/features/leakage/use-add-leakage-case-decision";

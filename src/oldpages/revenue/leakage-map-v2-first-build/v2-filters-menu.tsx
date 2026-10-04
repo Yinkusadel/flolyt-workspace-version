@@ -10,8 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { OptionRow, SubHeading, useCascadeSlot } from "@/pages/leakage-map/cascade-menu";
-import { v2OptionLabel, type LeakageV2FilterState } from "@/pages/leakage-map/v2-filters";
+import { OptionRow, SubHeading, useCascadeSlot } from "@/oldpages/revenue/leakage-map-v2-first-build/cascade-menu";
+import { v2OptionLabel, type LeakageV2FilterState } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-filters";
 import type { LeakageV2Controls } from "@/services/api/leakage/get-leakage";
 
 type TopKey = "mode" | "horizon" | "market" | "sector" | "severity" | "confidence" | "lifecycleClass";

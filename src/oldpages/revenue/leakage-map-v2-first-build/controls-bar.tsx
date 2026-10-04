@@ -1,7 +1,7 @@
-import { FiltersMenu } from "@/pages/leakage-map/filters-menu";
-import { HowCalculatedDialog } from "@/pages/leakage-map/how-calculated-dialog";
+import { FiltersMenu } from "@/oldpages/revenue/leakage-map-v2-first-build/filters-menu";
+import { HowCalculatedDialog } from "@/oldpages/revenue/leakage-map-v2-first-build/how-calculated-dialog";
 import type { LeakageCalculationDto, LeakageMarketRailEntryDto } from "@/services/api/leakage/get-leakage";
-import type { LeakageFilterState } from "@/pages/leakage-map/filters";
+import type { LeakageFilterState } from "@/oldpages/revenue/leakage-map-v2-first-build/filters";
 
 export function ControlsBar({
   filters,

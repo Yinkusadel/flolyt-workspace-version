@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { Callout } from "@/components/ui/rail";
-import { FloatingCard } from "@/pages/leakage-map/floating-card";
-import { StageDetailCard } from "@/pages/leakage-map/detail-panel";
+import { FloatingCard } from "@/oldpages/revenue/leakage-map-v2-first-build/floating-card";
+import { StageDetailCard } from "@/oldpages/revenue/leakage-map-v2-first-build/detail-panel";
 import { formatCompactMoney, formatHeadlineValue } from "@/lib/format-measured-value";
 import type {
   LeakageAtStakeAmountDto,

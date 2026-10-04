@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { SheetBody, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCompactMoney, formatShortDateWithYear } from "@/lib/format-measured-value";
-import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
+import { humanizeEnum } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-filters";
 import { useGetLeakageCellHistory } from "@/features/leakage/use-get-leakage-cell-history";
 import type { GetLeakageCellHistoryParams } from "@/services/api/leakage/get-leakage-cell-history";
 import type { LeakageV2Cell } from "@/services/api/leakage/get-leakage";

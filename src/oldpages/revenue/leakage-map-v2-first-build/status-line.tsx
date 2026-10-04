@@ -1,4 +1,4 @@
-import { calculateLabel, confidenceLabel, severityLabel } from "@/pages/leakage-map/filters";
+import { calculateLabel, confidenceLabel, severityLabel } from "@/oldpages/revenue/leakage-map-v2-first-build/filters";
 import { formatCompactCount, formatRelativeTime } from "@/lib/format-measured-value";
 import type { LeakageCalculateMode } from "@/services/api/leakage/get-leakage";
 

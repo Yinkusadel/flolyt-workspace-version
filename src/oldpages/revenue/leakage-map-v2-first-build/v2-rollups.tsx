@@ -1,5 +1,5 @@
 import { formatCompactMoney } from "@/lib/format-measured-value";
-import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
+import { humanizeEnum } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-filters";
 import type { LeakageV2Rollup } from "@/services/api/leakage/get-leakage";
 
 // "total" is deliberately excluded — promoted to the page's `V2KpiStrip` headline instead of

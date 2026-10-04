@@ -3,10 +3,10 @@ import { Fragment, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
-import { FloatingCard } from "@/pages/leakage-map/floating-card";
-import { CellDetailCard } from "@/pages/leakage-map/detail-panel";
+import { FloatingCard } from "@/oldpages/revenue/leakage-map-v2-first-build/floating-card";
+import { CellDetailCard } from "@/oldpages/revenue/leakage-map-v2-first-build/detail-panel";
 import { formatCompactMoney } from "@/lib/format-measured-value";
-import { HEAT_SCALE, HEAT_TEXT_CLASS } from "@/pages/leakage-map/data";
+import { HEAT_SCALE, HEAT_TEXT_CLASS } from "@/oldpages/revenue/leakage-map-v2-first-build/data";
 import type { LeakageGridDto } from "@/services/api/leakage/get-leakage";
 import type { GetLeakageCellParams } from "@/services/api/leakage/get-leakage-cell";
 

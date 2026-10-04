@@ -1,6 +1,6 @@
 import { Callout } from "@/components/ui/rail";
 import { formatCompactMoney } from "@/lib/format-measured-value";
-import { humanizeEnum } from "@/pages/leakage-map/v2-filters";
+import { humanizeEnum } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-filters";
 import type { OpportunityCell } from "@/services/api/opportunities/get-opportunities";
 
 function groupOpportunitiesByStage(cells: OpportunityCell[]): { stage: string; cells: OpportunityCell[] }[] {

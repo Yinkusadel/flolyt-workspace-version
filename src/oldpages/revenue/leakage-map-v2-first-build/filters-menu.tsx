@@ -13,7 +13,7 @@ import {
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { OptionRow, SubHeading, useCascadeSlot } from "@/pages/leakage-map/cascade-menu";
+import { OptionRow, SubHeading, useCascadeSlot } from "@/oldpages/revenue/leakage-map-v2-first-build/cascade-menu";
 import type { LeakageMarketRailEntryDto } from "@/services/api/leakage/get-leakage";
 import {
   CALCULATE_OPTIONS,
@@ -27,7 +27,7 @@ import {
   windowOptionLabel,
   type LeakageFilterState,
   type LeakageRangeSelection,
-} from "@/pages/leakage-map/filters";
+} from "@/oldpages/revenue/leakage-map-v2-first-build/filters";
 
 type TopKey = "calc" | "window" | "horizon" | "market" | "severity" | "confidence";
 type RangeKind = "window" | "horizon";

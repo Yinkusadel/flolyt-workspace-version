@@ -1,6 +1,6 @@
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { formatCount, formatPercent } from "@/lib/format-measured-value";
-import { groupLimitations } from "@/pages/leakage-map/v2-cell-grid";
+import { groupLimitations } from "@/oldpages/revenue/leakage-map-v2-first-build/v2-cell-grid";
 import type { LeakageV2Cell, LeakageV2CoverageSummary } from "@/services/api/leakage/get-leakage";
 
 const COVERAGE_DIMENSIONS: { label: string; key: "capability" | "scope" | "freshness" | "quality"; barClass: string }[] = [
