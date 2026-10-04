@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetLeakageCoverage } from "@/features/leakage/use-get-leakage-coverage";
@@ -245,54 +246,43 @@ function SignalsTab() {
 }
 
 function SignalsContent({ coverage }: { coverage: CoverageV2 }) {
-  const groups: { unit: string; signals: LeakageCoverageSignalEntry[] }[] = [];
+  // Signals are grouped by what they count (`subject.unit`), in the order the server lists them.
+  const groups: { unit: string; grain: string; signals: LeakageCoverageSignalEntry[] }[] = [];
   for (const signal of coverage.signals) {
     let group = groups.find((g) => g.unit === signal.subject.unit);
     if (!group) {
-      group = { unit: signal.subject.unit, signals: [] };
+      group = { unit: signal.subject.unit, grain: signal.subject.grain, signals: [] };
       groups.push(group);
     }
     group.signals.push(signal);
   }
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2.5">
-        {coverage.subjects.map((subject) => (
-          <div key={`${subject.subject.type}:${subject.subject.grain}`} className="rounded-card border border-line p-3">
-            <p className="text-[12px] font-semibold text-ink capitalize">{subject.subject.unit}</p>
-            <p className="font-mono text-[10px] text-ink-4">{subject.subject.grain} grain</p>
-            <p className="mt-2 font-mono text-[13px] font-semibold text-ink">
-              {subject.measurableSignalPopulationPairs} <span className="text-[11px] font-normal text-ink-3">of {subject.signalPopulationPairs} measurable</span>
-            </p>
-            <div className="mt-1.5 flex gap-0.5" aria-hidden>
-              {Array.from({ length: subject.signalPopulationPairs }, (_, i) => (
-                <span key={i} className={cn("h-1 flex-1 rounded-full", i < subject.measurableSignalPopulationPairs ? "bg-ultra" : "bg-line")} />
-              ))}
+    <div className="space-y-6">
+      {groups.map((group) => {
+        const subject = coverage.subjects.find((s) => s.subject.unit === group.unit);
+        return (
+          <section key={group.unit} aria-label={`Signals counting ${group.unit}`}>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-[13px] font-semibold text-ink capitalize">{group.unit}</h3>
+                <span className="font-mono text-[10px] text-ink-4">{group.grain} grain</span>
+              </div>
+              {subject && (
+                <p className="text-[11px] text-ink-3">
+                  <span className="font-mono font-semibold text-ink">{subject.measurableSignalPopulationPairs}</span> of{" "}
+                  <span className="font-mono">{subject.signalPopulationPairs}</span> measurable
+                </p>
+              )}
             </div>
-            <p className="mt-1 text-[10px] text-ink-4">signal-population pairs</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="overflow-x-auto rounded-card border border-line">
-        <table className="w-full min-w-[44rem] text-left text-[11.5px]">
-          <thead>
-            <tr className="border-b border-line bg-paper-2 text-[10px] text-ink-4">
-              {["Signal", "Maturity", "Source", "Run", "Eligible", "Usable", "Unknown", "No join", "No value"].map((h, i) => (
-                <th key={h} className={cn("px-3 py-2 font-medium whitespace-nowrap", i >= 4 && "text-right")}>
-                  {h}
-                </th>
+            <ul className="mt-2 space-y-2">
+              {group.signals.map((signal) => (
+                <SignalCard key={signal.signalId} signal={signal} />
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {groups.map((group) => (
-              <GroupRows key={group.unit} unit={group.unit} signals={group.signals} />
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </ul>
+          </section>
+        );
+      })}
       <p className="text-[10.5px] text-ink-4">
         Counts are per subject and never added across subjects. Policy {coverage.policyVersion}.
       </p>
@@ -300,36 +290,47 @@ function SignalsContent({ coverage }: { coverage: CoverageV2 }) {
   );
 }
 
-function GroupRows({ unit, signals }: { unit: string; signals: LeakageCoverageSignalEntry[] }) {
+/** One signal: its name and status, then the five unit counts in a grid that wraps (no sideways scrolling). A signal that did not run has no counts to show. */
+function SignalCard({ signal }: { signal: LeakageCoverageSignalEntry }) {
+  const ran = signal.runOutcome !== "NOT_RUN";
+  const stats: { label: string; value: number; warn?: boolean }[] = [
+    { label: "Eligible", value: signal.eligibleUnits },
+    { label: "Usable", value: signal.usableUnits },
+    { label: "Unknown", value: signal.residualUnknownUnits, warn: signal.residualUnknownUnits > 0 },
+    { label: "No join", value: signal.missingJoinUnits },
+    { label: "No value", value: signal.missingValueUnits },
+  ];
+
   return (
-    <>
-      <tr className="border-t border-line bg-paper-2/60">
-        <td colSpan={9} className="px-3 py-1.5 font-mono text-[9.5px] font-medium tracking-[0.8px] text-ink-3 uppercase">
-          {unit}
-        </td>
-      </tr>
-      {signals.map((s) => {
-        const ran = s.runOutcome !== "NOT_RUN";
-        const cell = (n: number) => (ran ? n.toLocaleString("en-US") : "–");
-        return (
-          <tr
-            key={s.signalId}
-            className={cn("border-t border-line", !ran && "bg-[repeating-linear-gradient(135deg,var(--color-paper-2)_0_6px,transparent_6px_12px)]")}
-          >
-            <td className="px-3 py-2.5 font-medium whitespace-nowrap text-ink">{sentenceCase(s.signalId)}</td>
-            <td className="px-3 py-2.5 font-mono text-[10px] text-ink-3">{s.maturity}</td>
-            <td className="px-3 py-2.5 whitespace-nowrap text-ink-2">{availabilityPhrase(s.sourceAvailability)}</td>
-            <td className="px-3 py-2.5 whitespace-nowrap text-ink-2">{sentenceCase(s.runOutcome)}</td>
-            <td className="px-3 py-2.5 text-right font-mono text-ink">{cell(s.eligibleUnits)}</td>
-            <td className="px-3 py-2.5 text-right font-mono text-ink">{cell(s.usableUnits)}</td>
-            <td className={cn("px-3 py-2.5 text-right font-mono", ran && s.residualUnknownUnits > 0 ? "text-amber" : "text-ink")}>
-              {cell(s.residualUnknownUnits)}
-            </td>
-            <td className="px-3 py-2.5 text-right font-mono text-ink">{cell(s.missingJoinUnits)}</td>
-            <td className="px-3 py-2.5 text-right font-mono text-ink">{cell(s.missingValueUnits)}</td>
-          </tr>
-        );
-      })}
-    </>
+    <li
+      className={cn(
+        "rounded-card border border-line p-3.5",
+        ran ? "bg-paper" : "bg-[repeating-linear-gradient(135deg,var(--color-paper-2)_0_6px,transparent_6px_12px)]"
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <p className="text-[12.5px] font-medium text-ink">{sentenceCase(signal.signalId)}</p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Chip tone={ran ? "teal" : "neutral"}>{sentenceCase(signal.runOutcome)}</Chip>
+          <Chip>{availabilityPhrase(signal.sourceAvailability)}</Chip>
+          <Chip>{sentenceCase(signal.maturity)}</Chip>
+        </div>
+      </div>
+
+      {ran ? (
+        <dl className="mt-3 grid grid-cols-3 gap-x-3 gap-y-2.5 sm:grid-cols-5">
+          {stats.map((stat) => (
+            <div key={stat.label}>
+              <dt className="text-[10px] text-ink-4">{stat.label}</dt>
+              <dd className={cn("mt-0.5 font-mono text-[14px] font-semibold", stat.warn ? "text-amber" : "text-ink")}>
+                {stat.value.toLocaleString("en-US")}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <p className="mt-2 text-[11px] text-ink-3">Did not run, so there are no unit counts yet.</p>
+      )}
+    </li>
   );
 }
