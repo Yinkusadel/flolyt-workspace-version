@@ -23,7 +23,7 @@ export function useDiagnosticsParam() {
             next.set("diagnostics", value);
             next.delete("cell");
             next.delete("panel");
-            next.delete("issues");
+            next.delete("coverage");
           } else {
             next.delete("diagnostics");
           }

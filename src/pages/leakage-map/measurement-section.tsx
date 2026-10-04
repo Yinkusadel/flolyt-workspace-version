@@ -14,14 +14,14 @@ interface MeasurementSectionProps {
   coverageExplanation: LeakageCoverageExplanation | undefined;
   limitationSummary: LeakageV2LimitationSummary;
   onOpenDiagnostics: () => void;
-  onOpenIssues: () => void;
+  onOpenCoverage: () => void;
 }
 
 /**
  * How much of the leakage surface is measured. The ring is the publication-wide effective coverage (filters
  * never change it) and its headline is the server's own sentence. The counts are the response's separately
- * named measurement counts, never added together. "What's holding coverage back" opens the server's issue list
- * in a sheet.
+ * named measurement counts, never added together. "Coverage detail" opens the Coverage sheet (issues,
+ * signals, ratios).
  */
 export function MeasurementSection({
   summary,
@@ -29,7 +29,7 @@ export function MeasurementSection({
   coverageExplanation,
   limitationSummary,
   onOpenDiagnostics,
-  onOpenIssues,
+  onOpenCoverage,
 }: MeasurementSectionProps) {
   const effective = coverageExplanation?.effectiveCoverage ?? coverage.effective;
   const headline =
@@ -81,12 +81,10 @@ export function MeasurementSection({
         <button type="button" onClick={onOpenDiagnostics} className="text-[11.5px] font-medium text-ultra hover:underline">
           All {limitationSummary.detailCount.toLocaleString("en-US")} diagnostics
         </button>
-        {issues.length > 0 && (
-          <button type="button" onClick={onOpenIssues} className="flex items-center gap-1 text-[11.5px] font-medium text-ultra hover:underline">
-            What's holding coverage back ({issues.length})
-            <ChevronRight className="size-3.5" />
-          </button>
-        )}
+        <button type="button" onClick={onOpenCoverage} className="flex items-center gap-1 text-[11.5px] font-medium text-ultra hover:underline">
+          Coverage detail{issues.length > 0 ? ` (${issues.length} ${issues.length === 1 ? "issue" : "issues"})` : ""}
+          <ChevronRight className="size-3.5" />
+        </button>
       </div>
     </section>
   );

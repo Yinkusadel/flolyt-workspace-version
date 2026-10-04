@@ -6,8 +6,8 @@ import { Callout } from "@/components/ui/rail";
 import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
 import { CellDrawer } from "@/pages/leakage-map/drawer/cell-drawer";
-import { CoverageIssuesDrawer } from "@/pages/leakage-map/drawer/coverage-issues-drawer";
-import { useCoverageIssuesParam } from "@/pages/leakage-map/drawer/use-coverage-issues-param";
+import { CoverageDrawer } from "@/pages/leakage-map/drawer/coverage-drawer";
+import { useCoverageParam } from "@/pages/leakage-map/drawer/use-coverage-param";
 import { DiagnosticsDrawer } from "@/pages/leakage-map/drawer/diagnostics-drawer";
 import { DIAGNOSTICS_ALL, useDiagnosticsParam } from "@/pages/leakage-map/drawer/use-diagnostics-param";
 import { useCellDrawerParam } from "@/pages/leakage-map/drawer/use-cell-drawer-param";
@@ -36,7 +36,7 @@ export default function LeakageMap() {
   const isSwitching = isFetching && isPlaceholderData;
   const drawer = useCellDrawerParam();
   const diagnostics = useDiagnosticsParam();
-  const issues = useCoverageIssuesParam();
+  const coverageSheet = useCoverageParam();
 
   const crumbs: Crumb[] = filters.market
     ? [
@@ -161,14 +161,20 @@ export default function LeakageMap() {
             coverageExplanation={page.coverageExplanation}
             limitationSummary={page.limitationSummary}
             onOpenDiagnostics={() => diagnostics.openDiagnostics(DIAGNOSTICS_ALL)}
-            onOpenIssues={issues.openIssues}
+            onOpenCoverage={() => coverageSheet.openCoverage()}
           />
         </div>
         {/* Remaining sections land here, one at a time. */}
       </div>
       </BusyRegion>
 
-      <CoverageIssuesDrawer open={issues.isOpen} coverageExplanation={page.coverageExplanation} onClose={issues.closeIssues} />
+      <CoverageDrawer
+        tab={coverageSheet.tab}
+        onTabChange={coverageSheet.setCoverageTab}
+        onClose={coverageSheet.closeCoverage}
+        coverage={page.coverage}
+        coverageExplanation={page.coverageExplanation}
+      />
 
       <DiagnosticsDrawer
         summary={page.limitationSummary}
