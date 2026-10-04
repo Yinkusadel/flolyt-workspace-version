@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { SheetBody, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TextTooltip } from "@/components/ui/text-tooltip";
 import { formatCompactMoney, formatShortDateWithYear } from "@/lib/format-measured-value";
 import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
 import { useGetLeakageCase } from "@/features/leakage/use-get-leakage-case";
@@ -26,9 +27,13 @@ import {
 import { CASE_STATUS_TONE, PRIMARY_ACTION_CLASS, SectionLabel } from "@/pages/leakage-map/drawer/shared";
 
 const STEPS: RevenueLeakCaseStatus[] = ["DETECTED", "REVIEWED", "ASSIGNED", "WORKED", "RESOLVED", "VERIFIED", "CLOSED"];
-const STEP_HINT: Partial<Record<RevenueLeakCaseStatus, string>> = {
-  RESOLVED: "needs evidence",
-  VERIFIED: "set by verification",
+/** Short text under a step not reached yet (one line), and the fuller explanation shown on hover. */
+const STEP_HINT: Partial<Record<RevenueLeakCaseStatus, { short: string; full: string }>> = {
+  RESOLVED: { short: "needs evidence", full: "Needs evidence: resolving this case requires at least one evidence reference." },
+  VERIFIED: {
+    short: "by verification",
+    full: "Set by verification: only the outcome-verification job moves a case here, never by hand.",
+  },
 };
 
 const FINISHED: RevenueLeakCaseStatus[] = ["CLOSED", "INVALIDATED"];
@@ -470,9 +475,11 @@ function Stepper({ leakCase }: { leakCase: RevenueLeakCase }) {
                 {current && <span className="size-1.5 shrink-0 rounded-full bg-ultra" />}
                 <span className="truncate">{humanizeEnum(step)}</span>
               </p>
-              <p className="font-mono text-[9px] leading-tight text-ink-4">
-                {at && (done || current || invalidated) ? (current ? `since ${formatStamp(at)}` : formatStamp(at)) : (STEP_HINT[step] ?? "")}
-              </p>
+              <StepDetail
+                step={step}
+                at={at && (done || current || invalidated) ? at : undefined}
+                current={current}
+              />
             </li>
           );
         })}
@@ -568,5 +575,25 @@ function AuditTab({ leakCase, members }: { leakCase: RevenueLeakCase; members: W
         ))}
       </ol>
     </Card>
+  );
+}
+
+/**
+ * The line under a step: one short line that never wraps (so the seven columns stay level), with the full
+ * wording on hover. A reached step shows when it happened; a step not reached yet shows its hint, if it has one.
+ */
+function StepDetail({ step, at, current }: { step: RevenueLeakCaseStatus; at: string | undefined; current: boolean }) {
+  const hint = STEP_HINT[step];
+  const stamp = at ? formatStamp(at).replace(",", "") : null;
+  const short = stamp ? (current ? `since ${stamp}` : stamp) : (hint?.short ?? "");
+  const full = at
+    ? `${humanizeEnum(step)} ${current ? "since" : "reached"} ${formatStamp(at)}`
+    : (hint?.full ?? "");
+
+  if (!short) return <p className="font-mono text-[9px] leading-tight">&nbsp;</p>;
+  return (
+    <TextTooltip content={full} className="block min-w-0">
+      <p className="truncate font-mono text-[9px] leading-tight text-ink-4">{short}</p>
+    </TextTooltip>
   );
 }
