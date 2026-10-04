@@ -1,3 +1,5 @@
+import { currencyPrefix } from "@/lib/format-measured-value";
+
 /**
  * Cosmetic helpers for the Leakage Map. Nothing here derives a business value: they only turn raw
  * codes the API already sent into display text.
@@ -39,16 +41,18 @@ export function marketName(code: string): string {
   }
 }
 
-/** "NGN" -> "₦", "USD" -> "US$". Falls back to the code. */
-export function currencySymbol(currency: string): string {
-  try {
-    const part = new Intl.NumberFormat("en", { style: "currency", currency, currencyDisplay: "narrowSymbol" })
-      .formatToParts(0)
-      .find((p) => p.type === "currency");
-    return part?.value ?? currency;
-  } catch {
-    return currency;
-  }
+export { currencySymbol } from "@/lib/format-measured-value";
+
+/**
+ * Exact figure for a card's headline: symbol, thousands separators, and cents only while the amount is
+ * small enough for them to matter ("US$2,017.72" but "₦2,445,766"). Display rounding only.
+ */
+export function formatHeadlineMoney(value: number, currency: string): string {
+  const whole = Math.abs(value) >= 100_000;
+  return `${currencyPrefix(currency)}${value.toLocaleString("en-US", {
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  })}`;
 }
 
 /** "3 Oct 2026, 21:29 WAT". */

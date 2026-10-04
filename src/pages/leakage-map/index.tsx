@@ -5,6 +5,7 @@ import { usePageBreadcrumb, type Crumb } from "@/components/breadcrumb-context";
 import { Callout } from "@/components/ui/rail";
 import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
+import { ExpectedLossSection } from "@/pages/leakage-map/expected-loss-section";
 import { FilterBar } from "@/pages/leakage-map/filter-bar";
 import { useLeakageFilters } from "@/pages/leakage-map/filters";
 import { formatAsOf, marketName } from "@/pages/leakage-map/format";
@@ -13,7 +14,7 @@ import { LeakageMapSkeleton } from "@/pages/leakage-map/page-skeleton";
 /**
  * Rebuild in progress, one section at a time against the Phase 1-4 contract (see
  * docs/leakage-map/v3-rebuild-plan.md and docs/leakage-map/v3-build-tracker.md). Done so far: the
- * shell and the filter bar. The sections below the bar are added next, in the order the tracker lists.
+ * shell, the filter bar and the expected-loss cards. The sections below the bar are added next, in the order the tracker lists.
  */
 export default function LeakageMap() {
   const { filters, params, setMarket, setCurrency, setLocalFilters, clearMoreFilters } = useLeakageFilters();
@@ -101,7 +102,13 @@ export default function LeakageMap() {
       />
 
       <div className={cn("space-y-5 transition-opacity", isFetching && "opacity-60")} aria-busy={isFetching}>
-        {/* Sections land here, one at a time. */}
+        <ExpectedLossSection
+          executive={page.executive}
+          summary={page.summary}
+          controls={page.controls}
+          filters={filters}
+        />
+        {/* Remaining sections land here, one at a time. */}
       </div>
     </div>
   );

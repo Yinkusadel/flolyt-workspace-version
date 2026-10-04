@@ -12,7 +12,7 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 |---|---|---|---|
 | 0 | Shell: header, URL state, skeleton, full-page error, stale-while-loading, legacy notice | `publication`, `controls` | DONE, live-verified |
 | 1 | Filter bar: market, currency, mode, horizon (+custom days), more filters | `controls`, `executive.recommendedMode` | DONE, live-verified (see notes) |
-| 2 | Expected loss over the next N days (one card per currency, "no combined total", partial banner) | `executive.totals`, `executive.confidence`, `summary.measurementState`, `executive.fxState` | TODO |
+| 2 | Expected loss over the next N days (one card per currency, "no combined total", partial banner) | `executive.totals`, `executive.confidence`, `summary.measurementState`, `executive.fxState` | BUILT, `tsc -b` clean, NOT yet seen rendered (saved test session expired, see notes) |
 | 3 | By market (market row, Unassigned card) | `executive.markets`, `executive.marketInventory` | TODO |
 | 4 | Key findings | `executive.keyFindings` | TODO |
 | 5 | Where revenue leaks (currency tabs, cells, case/Room/detail entry points) | `cells`, `summary.materialLeaks` | TODO |
@@ -40,3 +40,27 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
   "Nigeria", the previous figures stay mounted while refetching. **Not yet seen live:** multiple currencies,
   the Unassigned option, the searchable (6+ markets) form, the custom-days input.
 - A single 401 console line appeared on load (an unrelated resource, not the leakage calls); not investigated.
+
+## Section 2 notes (2026-10-04)
+
+- **Cards:** one per currency + lifecycle class from `executive.totals`, in code order (never reordered by
+  amount or to put the reporting currency first). Big number = the server's `selectedAmount`; gross, expected
+  and net come from the same bucket with the selected mode emphasised. Low-confidence line = the server's
+  `lowConfidenceExpectedLossShare` for that bucket. "Reporting" tag goes on whichever currency equals
+  `executive.reportingCurrency` (falls back to `controls.reportingCurrency`); it is display context only.
+- **Title** follows the server's selected mode and `controls.horizonDays` ("Expected loss over the next 90 days").
+- **Banner** (`PARTIALLY_MEASURED` / `UNAVAILABLE`) uses the server's `executive.coverageMessage`; the design's
+  "What's missing" link is not added until the readiness section exists to scroll to.
+- **"No combined total" notice** shows only when `executive.fxState` is `NOT_CONSOLIDATED_NO_APPROVED_FX`.
+- **"No amount published" cards** (design's KES card) are derived from `controls.currencies` minus the currencies
+  in `totals`, and only when NO market or currency filter is active (under a filter a missing currency was
+  filtered out, not unpublished).
+- **More than 6 cards** collapse behind "Show N more currencies".
+- **Missing `executive`** (old publication) shows a plain "not available for this publication" card, no fallback figures.
+- **Currency symbols:** `currencySymbol` / `currencyPrefix` added to `src/lib/format-measured-value.ts` and used by
+  `formatCompactMoney` / `formatMoney`, so every page that uses them now shows ₦, US$, €, £, CA$ ... and falls
+  back to the ISO code for currencies with no symbol (KES, GHS, ZAR, UGX ...). Affected: rooms list and
+  subscriptions, inbox approval view and row text, chat data charts.
+- **Not yet verified:** a Playwright run against the saved `ichigo` session was redirected to sign-in (the first
+  filter-bar run rotated the refresh token without saving the state back, the exact gotcha the login recipe
+  warns about). Needs a fresh login (one OTP) or a look in the user's own browser on their financial-services workspace.
