@@ -14,7 +14,7 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 | 1 | Filter bar: market, currency, mode, horizon (+custom days), more filters | `controls`, `executive.recommendedMode` | DONE, live-verified (see notes) |
 | 2 | Expected loss over the next N days (one card per currency, "no combined total", partial banner) | `executive.totals`, `executive.confidence`, `summary.measurementState`, `executive.fxState` | DONE, live-verified on the real financial-services workspace |
 | 3 | By market (market row, Unassigned card) | `executive.markets`, `executive.marketInventory`, `controls.marketOptions` | DONE, live-verified |
-| 4 | Key findings | `executive.keyFindings` | TODO |
+| 4 | Key findings | `executive.keyFindings`, `cells` (stage chip) | DONE, live-verified |
 | 5 | Where revenue leaks (currency tabs, cells, case/Room/detail entry points) | `cells`, `summary.materialLeaks` | TODO |
 | 6 | Readiness | `readiness` | TODO |
 | 7 | Measurement (+ link to diagnostics drawer) | `summary.measurement`, `coverageExplanation`, `limitationSummary` | TODO |
@@ -87,3 +87,25 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 - Live on the financial-services workspace: KE and NG show "No attributed exposure yet", Unassigned holds
   CA$1.5k, €1.5k, £1.1k, ₦2.4M, US$2k and 128 accounts. 390px width: boxes stack, no overflow, no page errors.
 - Not exercised live: more than 4 markets (the "Show more" collapse), a market with attributed amounts.
+
+## Section 4 notes (2026-10-04)
+
+- Rows come straight from `executive.keyFindings[]`, grouped by market + lifecycle (primary market first,
+  Unassigned last, dashed header), ordered inside a group by currency code with the reporting currency first.
+  Never ordered by amount or ranked across currencies.
+- Amount = the server's `selectedAmount`, so it follows the mode toggle. Live: switching Expected -> Net changed
+  the same findings' figures (CA$845.32 -> CA$507.19). The API also re-picks the largest mechanism per mode
+  (Gross had Attrition leading CAD, Expected has Dormant Accounts), so nothing here is fixed text.
+- **Deliberately left out:** the design's "57% of CAD exposure" bar. The API sends no share, and computing one
+  would mean combining two fields client-side (the no-frontend-math rule).
+- Stage chip (ENGAGE) is looked up from the finding's `cellIds[0]` in `cells[]`; omitted when not found.
+- Mechanism dot colour is a stable hash of the mechanism key (`mechanismDotClass`), purely visual, reusable by
+  the leak cards in section 5.
+- Confidence shows three bars + the server's `confidenceLevel` word ("Not rated" when absent).
+- Footnote "Kenya and Nigeria have no findings: no amount is attributed to them yet" is built from
+  `executive.markets[]` rows that have no amounts. In a single-market view with no findings the section shows an
+  explicit "No findings yet ... unknown, not zero" card instead of vanishing.
+- **Rows are not clickable yet** (the design's chevron is omitted): there is no cell detail drawer to open until
+  section 5. Wire them to it then.
+- Live on the financial-services workspace: 5 rows (NGN, CAD, EUR, GBP, USD) under "Unassigned market · In flight",
+  all Dormant Accounts / ENGAGE / Low. 390px: no overflow, no page errors.

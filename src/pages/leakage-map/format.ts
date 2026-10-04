@@ -55,6 +55,31 @@ export function formatHeadlineMoney(value: number, currency: string): string {
   })}`;
 }
 
+/** Heading for the amount a mode selects: GROSS -> "Gross exposure", EXPECTED -> "Expected loss", NET -> "Net expected loss". */
+export const MODE_TITLE: Record<string, string> = {
+  GROSS: "Gross exposure",
+  EXPECTED: "Expected loss",
+  NET: "Net expected loss",
+};
+
+/**
+ * Orders currencies for display: the reporting currency first when there is one, the rest by ISO code.
+ * Position only: never by amount, and nothing is totalled.
+ */
+export function compareCurrencies(reportingCurrency: string | null | undefined) {
+  return (a: string, b: string) =>
+    Number(b === reportingCurrency) - Number(a === reportingCurrency) || a.localeCompare(b);
+}
+
+const MECHANISM_DOT_CLASSES = ["bg-team-1", "bg-team-4", "bg-teal", "bg-amber", "bg-rose", "bg-team-3"];
+
+/** A stable dot colour per mechanism key, so the same leak type looks the same wherever it appears. Purely visual. */
+export function mechanismDotClass(mechanism: string): string {
+  let hash = 0;
+  for (const char of mechanism) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return MECHANISM_DOT_CLASSES[hash % MECHANISM_DOT_CLASSES.length];
+}
+
 /** "3 Oct 2026, 21:29 WAT". */
 export function formatAsOf(iso: string): string {
   const date = new Date(iso);

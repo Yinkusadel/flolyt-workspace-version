@@ -11,19 +11,13 @@ import type {
   LeakageExecutiveConfidence,
 } from "@/services/api/leakage/leakage-executive-types";
 import type { LeakageFilters } from "@/pages/leakage-map/filters";
-import { formatHeadlineMoney, humanizeEnum } from "@/pages/leakage-map/format";
+import { compareCurrencies, formatHeadlineMoney, humanizeEnum, MODE_TITLE } from "@/pages/leakage-map/format";
 
 /** Past this many cards the rest sit behind a "show more" control, so many currencies never flood the page. */
 const VISIBLE_CARDS = 6;
 
 /** `executive.fxState` value that means "no approved FX rates: nothing may be converted or combined". */
 const NO_FX_STATE = "NOT_CONSOLIDATED_NO_APPROVED_FX";
-
-const MODE_TITLE: Record<string, string> = {
-  GROSS: "Gross exposure",
-  EXPECTED: "Expected loss",
-  NET: "Net expected loss",
-};
 
 const MEASUREMENT_BANNER_LABEL: Record<string, string> = {
   PARTIALLY_MEASURED: "Partially measured.",
@@ -68,11 +62,9 @@ export function ExpectedLossSection({ executive, summary, controls, filters, cov
 
   // The reporting currency leads (it is the one the workspace reads in); the rest follow in code order.
   // Position only: nothing is totalled or ranked by amount.
+  const byCurrency = compareCurrencies(reportingCurrency);
   const totals = [...executive.totals].sort(
-    (a, b) =>
-      Number(b.currency === reportingCurrency) - Number(a.currency === reportingCurrency) ||
-      a.currency.localeCompare(b.currency) ||
-      a.lifecycleClass.localeCompare(b.lifecycleClass)
+    (a, b) => byCurrency(a.currency, b.currency) || a.lifecycleClass.localeCompare(b.lifecycleClass)
   );
   const confidenceFor = (bucket: LeakageExecutiveAmount): LeakageExecutiveConfidence | undefined =>
     executive.confidence.find((c) => c.currency === bucket.currency && c.lifecycleClass === bucket.lifecycleClass);
