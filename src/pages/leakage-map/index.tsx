@@ -107,6 +107,7 @@ export default function LeakageMap() {
           summary={page.summary}
           controls={page.controls}
           filters={filters}
+          coverageExplanation={page.coverageExplanation}
         />
         {/* Remaining sections land here, one at a time. */}
       </div>

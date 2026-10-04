@@ -15,9 +15,11 @@ export function LeakageMapSkeleton() {
         <Skeleton className="h-9 w-36" />
         <Skeleton className="h-9 w-32" />
       </div>
-      {/* Same two notices the section shows once loaded (measurement banner, no-combined-total), so the cards don't jump down when they arrive. */}
-      <Skeleton className="h-11" />
-      <Skeleton className="h-11" />
+      {/* The notice row the section shows once loaded, so the cards don't jump down when it arrives. */}
+      <div className="flex gap-2">
+        <Skeleton className="h-8 w-72 max-w-full" />
+        <Skeleton className="h-8 w-40" />
+      </div>
       <Skeleton className="h-4 w-72" />
       <div className="grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-3">
         {Array.from({ length: 5 }, (_, i) => (
