@@ -23,6 +23,7 @@ import { BusyRegion } from "@/pages/leakage-map/busy-region";
 import { FilterBar } from "@/pages/leakage-map/filter-bar";
 import { useLeakageFilters } from "@/pages/leakage-map/filters";
 import { formatAsOf, marketName } from "@/pages/leakage-map/format";
+import { MarketHeader, marketHasData, NothingMeasured } from "@/pages/leakage-map/market-view";
 import { LeakageMapSkeleton } from "@/pages/leakage-map/page-skeleton";
 
 /**
@@ -84,18 +85,28 @@ export default function LeakageMap() {
   }
 
   const recommendedMode = page.executive?.recommendedMode ?? null;
+  // A selected market nothing is attributed to: show why, not empty sections.
+  const showNothingMeasured = !!filters.market && !!page.executive && !marketHasData(page.executive, filters.market);
 
   return (
     <div className="space-y-5">
-      <Header
-        title={filters.market ? marketName(filters.market) : "Revenue leakage map"}
-        description={
-          filters.market
-            ? "Leakage attributed to this market only."
-            : "Where revenue is leaking across the customer journey, each currency on its own."
-        }
-        asOf={page.publication.asOfUtc}
-      />
+      {filters.market ? (
+        <MarketHeader
+          market={filters.market}
+          executive={page.executive}
+          controls={page.controls}
+          coverage={page.coverage}
+          asOf={page.publication.asOfUtc}
+          onClear={() => setMarket(null)}
+          onOpenCoverage={() => coverageSheet.openCoverage()}
+        />
+      ) : (
+        <Header
+          title="Revenue leakage map"
+          description="Where revenue is leaking across the customer journey, each currency on its own."
+          asOf={page.publication.asOfUtc}
+        />
+      )}
 
       {/* A failed refetch keeps the last good projection on screen and offers a retry, per the contract. */}
       {error && (
@@ -124,6 +135,10 @@ export default function LeakageMap() {
       />
 
       <div className={cn("space-y-5 transition-opacity", isSwitching && "opacity-60")}>
+        {showNothingMeasured && filters.market && page.executive ? (
+          <NothingMeasured market={filters.market} executive={page.executive} onSelectMarket={setMarket} />
+        ) : (
+          <>
         <ExpectedLossSection
           executive={page.executive}
           summary={page.summary}
@@ -153,6 +168,8 @@ export default function LeakageMap() {
           onOpenDetails={drawer.openCell}
           onOpenCalculation={(reference) => calculation.openCalculation(reference)}
         />
+          </>
+        )}
         <div className="grid items-start gap-5 lg:grid-cols-2">
           <ReadinessSection
             readiness={page.readiness}

@@ -298,3 +298,13 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 3. The 30-market matrix page.
 4. Footer line (snapshot, run, registry and contract versions).
 5. Missed opportunities (separate read, `GET /opportunities`: explanation and signal preview types exist; no page and no entry point since the old tab was archived).
+
+## Single-market view (2026-10-04)
+
+- **Header card** (`market-view.tsx`, `MarketHeader`): replaces the plain heading when a market is selected. Code badge (a pin for Unassigned), name, one line of facts from the market's executive row ("Primary market · Configured · nothing attributed yet", or "Not attributed to a market · currency proven, market not"), an "All markets" button, "Affected accounts 128" from `affectedEntities` (de-duplicated, units never mixed), and a note that coverage is workspace-wide with a link to the Coverage sheet (there is no per-market coverage ratio).
+- **A market nothing is attributed to** (Kenya and Nigeria on the live workspace) gets `NothingMeasured` in place of the empty expected-loss, findings and leak-card sections: "Nothing is measured for Kenya yet ... unknown, not zero", a facts box (Configured, Measurement evidence, Attributed amounts, Coverage "Not available per market"), a **See unassigned exposure** button (only when the workspace has Unassigned exposure), the "Leak types in Kenya" comparison table and an Unassigned callout with a link to Data sources.
+- **The comparison table** reads `executive.matrix`: each leak type's workspace-wide state (`publicationDisplay`) beside this market's own cell. A leak type the whole workspace cannot measure reads "Not measurable anywhere yet" (hatched); one the workspace measures but this market has no data for reads "No market-scoped measurement" (dotted). Never a zero.
+- **A market with data** (Unassigned on the live workspace) keeps the existing sections (expected loss, key findings, leak cards) under the new header.
+- **Readiness and Measurement** stay on every market view (they are workspace-wide).
+- **Left out of the design:** the "Cases in Nigeria" card (case state is only in each cell's detail, so listing cases would need one request per leak type) and the previous/next market arrows (the market switcher already moves between markets). "How to measure Kenya" button is not built (no API action behind it).
+- Verified live (chad@yopmail.com): `?market=KE` (nothing-measured view, table, callout, the See unassigned button), `?market=UNASSIGNED` (header plus the existing sections), All markets back, `?market=NG` header, 390px no overflow, no page errors. A market with attributed amounts has not been seen (none exist on this workspace); its view is the same sections under the new header.
