@@ -5,6 +5,7 @@ import { formatCompactMoney } from "@/lib/format-measured-value";
 import type { LeakageV2Amount, LeakageV2Cell, LeakageV2Controls } from "@/services/api/leakage/get-leakage";
 import type { LeakageExecutive } from "@/services/api/leakage/leakage-executive-types";
 import {
+  availabilityPhrase,
   compareCurrencies,
   formatHeadlineMoney,
   humanizeEnum,
@@ -291,16 +292,6 @@ function AmountBlock({ amount, labelled, lead }: { amount: LeakageV2Amount; labe
   );
 }
 
-const AVAILABILITY_PHRASE: Record<string, string> = {
-  NOT_AVAILABLE: "source not available",
-  PARTIALLY_AVAILABLE: "source partly available",
-  AVAILABLE_BUT_STALE: "source data is stale",
-  AVAILABLE_BUT_UNMAPPED: "source available but not mapped",
-  AVAILABLE_BUT_LOW_QUALITY: "source data is low quality",
-  PERMISSION_BLOCKED: "access to the source is blocked",
-  SOURCE_DEGRADED: "source is degraded",
-};
-
 /**
  * Why a cell has no figure: the server's availability and its first limitation sentence. A cell can carry
  * several limitations (the later ones are usually technical detector notes), so the rest stay out of the
@@ -312,7 +303,7 @@ function Unmeasured({ cell, onOpenDetails }: { cell: LeakageV2Cell; onOpenDetail
   return (
     <div>
       <p className="text-[12px] font-medium text-ink-2">
-        Not measured · {AVAILABILITY_PHRASE[availability] ?? humanizeEnum(availability).toLowerCase()}
+        Not measured · {availabilityPhrase(availability)}
       </p>
       {cell.limitations[0] && <p className="mt-1 text-[10.5px] leading-relaxed text-ink-3">{cell.limitations[0]}</p>}
       {extra > 0 && onOpenDetails && (

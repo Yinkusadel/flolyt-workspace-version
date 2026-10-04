@@ -16,7 +16,8 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 | 3 | By market (market row, Unassigned card) | `executive.markets`, `executive.marketInventory`, `controls.marketOptions` | DONE, live-verified |
 | 4 | Key findings | `executive.keyFindings`, `cells` (stage chip) | DONE, live-verified |
 | 5a | Where revenue leaks: cards (currency tabs, stage groups) | `cells`, `executive.showSectorBreakdown` | DONE, live-verified |
-| 5b | Detail drawer (cell detail, history, evidence, Learn Why), case start/open (all behind the drawer), "How calculated" drawer | `/cells/{id}`, `workState`, `/calculation/detail` | TODO |
+| 5b | Cell drawer: header, case strip, per-currency table, Summary/Components/Signals/Sources/History tabs, case view, Learn Why button | `/cells/{id}`, `/history`, `workState`, case routes | DONE (reads live-verified; mutations NOT yet submitted live, see notes) |
+| 5c | Evidence view / "Why this number" tab, "How calculated" exact-calculation drawer | `/cells/{id}/evidence`, `/calculation/detail` | TODO |
 | 6 | Readiness | `readiness` | TODO |
 | 7 | Measurement (+ link to diagnostics drawer) | `summary.measurement`, `coverageExplanation`, `limitationSummary` | TODO |
 | 8 | Footer line (snapshot, run, registry, contract) | `publication` | TODO |
@@ -135,3 +136,33 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 - Live on the financial-services workspace: ENGAGE (Dormant Accounts), RENEW (Overdue Invoice, hatched), RETAIN
   (Attrition + Chargebacks / Failed Payment / Refunds hatched), tabs NGN/CAD/EUR/GBP/USD, 390px no overflow,
   no page errors.
+
+## Section 5b notes (2026-10-04)
+
+- **Drawer** (`src/pages/leakage-map/drawer/`): a right-hand Sheet. Open state is in the URL (`?cell=<id>`, and
+  `&panel=case` for the case view), so refresh/share reopens it and Back closes it. Opening pushes history;
+  switching panel and closing replace. "Details" and the unmeasured card's "+N more" both open it.
+- **Detail, history and Learn Why use only the calculation controls** (mode, horizon, horizonDays, lifecycleClass),
+  never the market/currency filters, so the drawer shows the same cell whatever the page is narrowed to.
+- **Header and per-currency table render from the card's own data** (no waiting); the case strip and tabs wait for
+  `GET /cells/{id}` with their own placeholders. Table = one row per currency with the server's gross, expected,
+  net, range, confidence, severity and candidate count; nothing is summed.
+- **Case strip** reads `workState`: existing case shows status chip, owner (resolved to a name), due date, "Room
+  linked", "Open Room" and "Open case"; READY + populated shows "Start a case"; otherwise the server's explanation
+  with the button disabled. Start a case / Open case / Start a room buttons use the app blue (`ultra`).
+- **Case view** is the first build's lifecycle panel carried over (owner reassign, due date, status move, decisions,
+  Room), restyled, with two changes: the Room is opened against an amount the person picks when the cell has
+  several (a Room covers exactly one), and the status picker is plain buttons instead of a Radix Select (stay clear
+  of the Select + Popover aria-hidden bug). No transition graph is enforced client-side; the server's message shows.
+- **Tabs:** Summary (every limitation in full), Components, Signals (both reveal 20 at a time), Sources (lineage with
+  the server's actions; only `sources.*` actions get a button, linking to /data-sources since there is no
+  per-capability deep link), History (published snapshots, newest first).
+- **Live-verified (reads, chad@yopmail.com):** drawer content for Dormant Accounts (5 currencies; 128 components,
+  1043 signals, 1 lineage entry, 3 history points) and for an unmeasured card (2 limitations); existing WORKED case
+  (owner Chad Sado, due 9 Oct, Room linked) in the strip and the case view; URL reopen after reload; Back/Esc; 390px
+  no overflow; no page errors.
+- **NOT submitted live:** Start a case, Start a room, Update owner, Update due date, Move case, Add decision,
+  Learn why. Per the mutation rule these are unverified until a real submit; the logic is the first build's, which
+  was live-tested for create case / due date / room.
+- Left for 5c: the design's "Why this number" evidence tab, "Review/Open full evidence", the "How calculated" link and
+  clickable currency rows (exact calculation drawer), previous/next arrows between cells.

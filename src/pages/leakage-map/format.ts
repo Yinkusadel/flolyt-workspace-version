@@ -80,6 +80,22 @@ export function mechanismDotClass(mechanism: string): string {
   return MECHANISM_DOT_CLASSES[hash % MECHANISM_DOT_CLASSES.length];
 }
 
+const AVAILABILITY_PHRASE: Record<string, string> = {
+  AVAILABLE: "source available",
+  NOT_AVAILABLE: "source not available",
+  PARTIALLY_AVAILABLE: "source partly available",
+  AVAILABLE_BUT_STALE: "source data is stale",
+  AVAILABLE_BUT_UNMAPPED: "source available but not mapped",
+  AVAILABLE_BUT_LOW_QUALITY: "source data is low quality",
+  PERMISSION_BLOCKED: "access to the source is blocked",
+  SOURCE_DEGRADED: "source is degraded",
+};
+
+/** The API's `sourceAvailability` enum as a short phrase; unknown values fall back to the humanized enum. */
+export function availabilityPhrase(availability: string): string {
+  return AVAILABILITY_PHRASE[availability] ?? humanizeEnum(availability).toLowerCase();
+}
+
 /** "3 Oct 2026, 21:29 WAT". */
 export function formatAsOf(iso: string): string {
   const date = new Date(iso);

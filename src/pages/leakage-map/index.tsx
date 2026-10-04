@@ -5,6 +5,8 @@ import { usePageBreadcrumb, type Crumb } from "@/components/breadcrumb-context";
 import { Callout } from "@/components/ui/rail";
 import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
+import { CellDrawer } from "@/pages/leakage-map/drawer/cell-drawer";
+import { useCellDrawerParam } from "@/pages/leakage-map/drawer/use-cell-drawer-param";
 import { ByMarketSection } from "@/pages/leakage-map/by-market-section";
 import { ExpectedLossSection } from "@/pages/leakage-map/expected-loss-section";
 import { LeakCardsSection } from "@/pages/leakage-map/leak-cards-section";
@@ -22,6 +24,7 @@ import { LeakageMapSkeleton } from "@/pages/leakage-map/page-skeleton";
 export default function LeakageMap() {
   const { filters, params, setMarket, setCurrency, setLocalFilters, clearMoreFilters } = useLeakageFilters();
   const { data, error, isLoading, isFetching, refetch } = useGetLeakage(params);
+  const drawer = useCellDrawerParam();
 
   const crumbs: Crumb[] = filters.market
     ? [
@@ -127,9 +130,25 @@ export default function LeakageMap() {
           controls={page.controls}
           selectedMarket={filters.market}
         />
-        <LeakCardsSection cells={page.cells} executive={page.executive} controls={page.controls} />
+        <LeakCardsSection
+          cells={page.cells}
+          executive={page.executive}
+          controls={page.controls}
+          onOpenDetails={drawer.openCell}
+        />
         {/* Remaining sections land here, one at a time. */}
       </div>
+
+      <CellDrawer
+        cells={page.cells}
+        controls={page.controls}
+        filters={filters}
+        cellId={drawer.cellId}
+        panel={drawer.panel}
+        onClose={drawer.close}
+        onShowCase={drawer.showCase}
+        onShowCell={drawer.showCell}
+      />
     </div>
   );
 }
