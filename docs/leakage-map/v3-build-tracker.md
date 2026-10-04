@@ -16,13 +16,13 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 | 3 | By market (market row, Unassigned card) | `executive.markets`, `executive.marketInventory`, `controls.marketOptions` | DONE, live-verified |
 | 4 | Key findings | `executive.keyFindings`, `cells` (stage chip) | DONE, live-verified |
 | 5a | Where revenue leaks: cards (currency tabs, stage groups) | `cells`, `executive.showSectorBreakdown` | DONE, live-verified |
-| 5b | Cell drawer: header, case strip, per-currency table, Summary/Components/Signals/Sources/History tabs, case view, Learn Why button | `/cells/{id}`, `/history`, `workState`, case routes | DONE (reads live-verified; mutations NOT yet submitted live, see notes) |
+| 5b | Cell drawer: header, case strip, per-currency table, Amounts/Summary/Components/Signals/Sources/History tabs, case view (Learn Why was removed) | `/cells/{id}`, `/history`, `workState`, case routes | DONE (reads live-verified; mutations NOT yet submitted live, see notes) |
 | 5c | Exact calculation drawer ("How calculated") | `/calculation/detail` | DONE, live-verified |
 | 5d | Evidence view / "Why this number" tab | `/cells/{id}/evidence` | TODO (waiting on what the backend will send) |
 | 6 | Readiness | `readiness` | DONE, live-verified |
 | 7 | Measurement (+ diagnostics drawer, + what's holding coverage back) | `summary.measurement`, `coverage`, `coverageExplanation`, `limitationSummary`, `/limitations` | DONE, live-verified |
 | 8 | Footer line (snapshot, run, registry, contract) | `publication` | TODO |
-| later | Single-market view polish, market matrix, limitations drawer, exact calculation drawer, missed opportunities (no entry point yet since the old tab was archived) | | TODO |
+| later | Single-market view polish; 30-market matrix; Missed opportunities (no entry point yet since the old tab was archived) | | TODO |
 
 ## Section 0 and 1 notes (2026-10-04)
 
@@ -281,3 +281,20 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 - **Not seen live:** an excluded candidate (its `inclusionReason` is shown humanized, struck through, contribution 0; no wording is invented for it), a history-amount reference, a candidate-level reference.
 - **Limits:** the card link covers only the first amount of the selected currency; a cell with several amounts in one currency (different market or lifecycle) would need a picker. On a 390px phone the candidate table scrolls sideways (nine columns); at 768px and up it does not.
 - **Verified live:** both entry points, the Back link, Esc, the reload reopens it (the page then waits on two requests, so it takes a moment), the 28-row expansion, no write requests, no page errors.
+
+## Where things stand (2026-10-04, end of the first build pass)
+
+**Built and live-verified for reads:** shell and filter bar, expected loss cards, by market, key findings, leak cards, cell drawer (with Amounts, case view, history), exact calculation drawer, readiness, measurement, diagnostics drawer, coverage sheet (holding back, signals, ratios), date picker.
+
+**Decisions made:**
+- The Measurement labels ("Priced findings", "Leak types with exposure" and the rest) stay as they are (user decision). Known caveat: "Priced findings" counts candidates, while "findings" elsewhere on the page counts amounts per currency.
+- Testing the case form submits is left to the user to do later.
+
+**Built but NOT submitted live (the user will test):** Record decision, Move status, Mark resolved, Start work, Assign / Reassign, Change due date, Open a Room, Start a case. Their wiring is the first build's logic (create case, due date and Room were live-tested then); the forms, validation and the new Room/amount picker are new. Remember the mutation rule: a mocked-response pass cannot catch a real backend validation rule, so treat these as unverified until a real submit.
+
+**Not built yet:**
+1. Evidence view ("Why this number"): waiting on what the backend will send; the cell response has no explanation text and Learn Why is moving into it.
+2. Single-market view polish (the market page in the design: breadcrumb with market switcher arrows, "Leak types in <market>" list, cases card, "Unlock more" card).
+3. The 30-market matrix page.
+4. Footer line (snapshot, run, registry and contract versions).
+5. Missed opportunities (separate read, `GET /opportunities`: explanation and signal preview types exist; no page and no entry point since the old tab was archived).

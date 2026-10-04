@@ -87,3 +87,9 @@ mark an item DONE or DROPPED with the date instead.
 - Built and live-verified for an all-included case. An excluded candidate has never been seen live: when one appears, check how its `inclusionReason` reads and whether the struck-through row is clear enough.
 - The "How calculated" card link uses only the first amount of the selected currency. If a workspace ever has two amounts in one currency (different market or lifecycle) on one cell, the card needs a picker.
 - Ask the backend: the possible `inclusionReason` values, and the possible `reconciliationState` values besides RECONCILED.
+
+## Update 2026-10-04: open items
+
+- **Test the case form submits yourself** (Record decision, Move status, Mark resolved, Start work, Assign / Reassign, Change due date, Open a Room, Start a case). Built, never submitted live. Look especially at: whether a refused move shows the server's message, whether Open a Room's amount picker and title work, and whether Start a case moves the drawer on to the new case.
+- **Measurement labels** left as they are by choice. Revisit if "Priced findings" (candidates) confuses anyone next to the "2 findings" on the currency cards.
+- **Still to build:** evidence tab (needs the backend), single-market view polish, 30-market matrix, footer line, Missed opportunities.
