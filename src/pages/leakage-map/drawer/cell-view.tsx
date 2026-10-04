@@ -23,14 +23,16 @@ import {
   isUnassignedMarket,
   MODE_TITLE,
 } from "@/pages/leakage-map/format";
+import { EvidenceTab } from "@/pages/leakage-map/drawer/evidence-tab";
 import { CASE_STATUS_TONE, FieldLabel, PRIMARY_ACTION_CLASS, resolveOwnerName, SectionLabel } from "@/pages/leakage-map/drawer/shared";
 
 /** The calculation controls the detail, history and Learn Why calls share: never the market or currency filters. */
 export type CellQuery = Omit<GetLeakageCellV2Params, "cellId">;
 
-type TabKey = "amounts" | "summary" | "components" | "signals" | "sources" | "history";
+type TabKey = "amounts" | "why" | "summary" | "components" | "signals" | "sources" | "history";
 const TABS: { key: TabKey; label: string }[] = [
   { key: "amounts", label: "Amounts" },
+  { key: "why", label: "Why this number" },
   { key: "summary", label: "Summary" },
   { key: "components", label: "Components" },
   { key: "signals", label: "Signals" },
@@ -128,6 +130,15 @@ export function CellView({ cell, query, controls, onOpenCase, onOpenCalculation 
           <div className="pt-4">
             {tab === "amounts" && (
               <AmountsTable amounts={live.amounts} reportingCurrency={controls.reportingCurrency} onOpenCalculation={onOpenCalculation} />
+            )}
+            {tab === "why" && (
+              <EvidenceTab
+                cellId={cell.id}
+                mode={query.mode}
+                horizon={query.horizon}
+                horizonDays={query.horizonDays}
+                lifecycleClass={query.lifecycleClass}
+              />
             )}
             {tab === "summary" && <SummaryTab cell={live} />}
             {tab === "history" && <HistoryTab cell={live} query={query} />}
