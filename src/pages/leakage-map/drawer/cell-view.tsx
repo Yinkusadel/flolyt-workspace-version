@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Calendar, HelpCircle, MessageSquare, User } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Calendar, MessageSquare, User } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ import { useCreateLeakageCase } from "@/features/leakage/use-create-leakage-case
 import { useGetLeakageCase } from "@/features/leakage/use-get-leakage-case";
 import { useGetLeakageCellHistory } from "@/features/leakage/use-get-leakage-cell-history";
 import { useGetLeakageCellV2 } from "@/features/leakage/use-get-leakage-cell-v2";
-import { useLearnWhyLeakageCellV2 } from "@/features/leakage/use-learn-why-leakage-cell-v2";
 import type { CellDetailV2, GetLeakageCellV2Params } from "@/services/api/leakage/get-leakage-cell-v2";
 import type { LeakageV2Amount, LeakageV2Cell, LeakageV2Controls } from "@/services/api/leakage/get-leakage";
 import {
@@ -56,9 +55,7 @@ interface CellViewProps {
  * `workState` is only in the detail response.
  */
 export function CellView({ cell, query, controls, onOpenCase }: CellViewProps) {
-  const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useGetLeakageCellV2({ cellId: cell.id, ...query });
-  const { mutate: learnWhy, isPending: isAskingWhy } = useLearnWhyLeakageCellV2();
   // The per-currency table lives in its own tab so a cell with many currencies never pushes the other tabs down.
   // A cell with no amounts (unmeasured) has no Amounts tab and opens on Summary.
   const [pickedTab, setPickedTab] = useState<TabKey | null>(null);
@@ -68,7 +65,6 @@ export function CellView({ cell, query, controls, onOpenCase }: CellViewProps) {
   const lead = live.amounts[0];
   const tabs = live.amounts.length > 0 ? TABS : TABS.filter((t) => t.key !== "amounts");
   const tab: TabKey = pickedTab && tabs.some((t) => t.key === pickedTab) ? pickedTab : tabs[0].key;
-  const hasLeakToExplain = live.state.display === "POPULATED" && !!lead && lead.value > 0;
   const unassigned = live.amounts.some((a) => isUnassignedMarket(a.market));
   const modeTitle = MODE_TITLE[query.mode?.toUpperCase() ?? ""] ?? humanizeEnum(query.mode ?? "");
 
@@ -149,26 +145,6 @@ export function CellView({ cell, query, controls, onOpenCase }: CellViewProps) {
             )}
           </div>
         </div>
-
-        {hasLeakToExplain && (
-          <div className="border-t border-line pt-4">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={isAskingWhy}
-              onClick={() =>
-                learnWhy(
-                  { cellId: cell.id, ...query },
-                  { onSuccess: (res) => navigate(`/conversations/${res.data.conversationId}`) }
-                )
-              }
-            >
-              <HelpCircle data-icon="inline-start" />
-              {isAskingWhy ? "Asking…" : "Learn why"}
-            </Button>
-          </div>
-        )}
       </SheetBody>
     </>
   );
