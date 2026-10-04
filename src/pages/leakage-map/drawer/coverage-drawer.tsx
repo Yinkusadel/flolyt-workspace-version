@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Chip } from "@/components/ui/chip";
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetLeakageCoverage } from "@/features/leakage/use-get-leakage-coverage";
@@ -258,31 +257,28 @@ function SignalsContent({ coverage }: { coverage: CoverageV2 }) {
   }
 
   return (
-    <div className="space-y-6">
-      {groups.map((group) => {
-        const subject = coverage.subjects.find((s) => s.subject.unit === group.unit);
-        return (
-          <section key={group.unit} aria-label={`Signals counting ${group.unit}`}>
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-[13px] font-semibold text-ink capitalize">{group.unit}</h3>
-                <span className="font-mono text-[10px] text-ink-4">{group.grain} grain</span>
-              </div>
-              {subject && (
-                <p className="text-[11px] text-ink-3">
-                  <span className="font-mono font-semibold text-ink">{subject.measurableSignalPopulationPairs}</span> of{" "}
-                  <span className="font-mono">{subject.signalPopulationPairs}</span> measurable
-                </p>
-              )}
-            </div>
-            <ul className="mt-2 space-y-2">
-              {group.signals.map((signal) => (
-                <SignalCard key={signal.signalId} signal={signal} />
+    <div className="space-y-3">
+      <div className="overflow-x-auto rounded-card border border-line">
+        <table className="w-full text-left text-[11.5px]">
+          <thead>
+            <tr className="border-b border-line bg-paper-2 text-[10px] text-ink-4">
+              <th className="px-2 py-2 font-medium sm:px-3">Signal</th>
+              <th className="hidden px-3 py-2 font-medium sm:table-cell">Status</th>
+              {["Eligible", "Usable", "Unknown", "No join", "No value"].map((h) => (
+                <th key={h} className="px-1.5 py-2 text-right font-medium sm:px-3">
+                  {h}
+                </th>
               ))}
-            </ul>
-          </section>
-        );
-      })}
+            </tr>
+          </thead>
+          <tbody>
+            {groups.map((group) => {
+              const subject = coverage.subjects.find((s) => s.subject.unit === group.unit);
+              return <GroupRows key={group.unit} group={group} measurable={subject} />;
+            })}
+          </tbody>
+        </table>
+      </div>
       <p className="text-[10.5px] text-ink-4">
         Counts are per subject and never added across subjects. Policy {coverage.policyVersion}.
       </p>
@@ -290,47 +286,72 @@ function SignalsContent({ coverage }: { coverage: CoverageV2 }) {
   );
 }
 
-/** One signal: its name and status, then the five unit counts in a grid that wraps (no sideways scrolling). A signal that did not run has no counts to show. */
-function SignalCard({ signal }: { signal: LeakageCoverageSignalEntry }) {
-  const ran = signal.runOutcome !== "NOT_RUN";
-  const stats: { label: string; value: number; warn?: boolean }[] = [
-    { label: "Eligible", value: signal.eligibleUnits },
-    { label: "Usable", value: signal.usableUnits },
-    { label: "Unknown", value: signal.residualUnknownUnits, warn: signal.residualUnknownUnits > 0 },
-    { label: "No join", value: signal.missingJoinUnits },
-    { label: "No value", value: signal.missingValueUnits },
-  ];
-
+/**
+ * A group band (what the signals below count, its grain, and how many are measurable) followed by one row
+ * per signal. Source and run outcome share one Status cell, and maturity moves under the name, so five
+ * count columns fit without sideways scrolling.
+ */
+function GroupRows({
+  group,
+  measurable,
+}: {
+  group: { unit: string; grain: string; signals: LeakageCoverageSignalEntry[] };
+  measurable: CoverageV2["subjects"][number] | undefined;
+}) {
   return (
-    <li
-      className={cn(
-        "rounded-card border border-line p-3.5",
-        ran ? "bg-paper" : "bg-[repeating-linear-gradient(135deg,var(--color-paper-2)_0_6px,transparent_6px_12px)]"
-      )}
-    >
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-        <p className="text-[12.5px] font-medium text-ink">{sentenceCase(signal.signalId)}</p>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Chip tone={ran ? "teal" : "neutral"}>{sentenceCase(signal.runOutcome)}</Chip>
-          <Chip>{availabilityPhrase(signal.sourceAvailability)}</Chip>
-          <Chip>{sentenceCase(signal.maturity)}</Chip>
-        </div>
-      </div>
-
-      {ran ? (
-        <dl className="mt-3 grid grid-cols-3 gap-x-3 gap-y-2.5 sm:grid-cols-5">
-          {stats.map((stat) => (
-            <div key={stat.label}>
-              <dt className="text-[10px] text-ink-4">{stat.label}</dt>
-              <dd className={cn("mt-0.5 font-mono text-[14px] font-semibold", stat.warn ? "text-amber" : "text-ink")}>
-                {stat.value.toLocaleString("en-US")}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      ) : (
-        <p className="mt-2 text-[11px] text-ink-3">Did not run, so there are no unit counts yet.</p>
-      )}
-    </li>
+    <>
+      {/* A small gap above each group, so the first group does not sit flush against the column headings. */}
+      <tr aria-hidden>
+        <td colSpan={7} className="h-3 border-t border-line p-0" />
+      </tr>
+      <tr className="border-y border-line bg-paper-2">
+        <th colSpan={7} scope="colgroup" className="px-3 py-2.5 text-left">
+          <span className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+            <span className="flex items-baseline gap-2">
+              <span className="flex items-center gap-2 text-[12.5px] font-semibold text-ink capitalize">
+                <span className="size-1.5 rounded-full bg-ultra" aria-hidden />
+                {group.unit}
+              </span>
+              <span className="font-mono text-[10px] font-normal text-ink-4">{group.grain} grain</span>
+            </span>
+            {measurable && (
+              <span className="text-[10.5px] font-normal text-ink-3">
+                <span className="font-mono font-semibold text-ink">{measurable.measurableSignalPopulationPairs}</span> of{" "}
+                <span className="font-mono">{measurable.signalPopulationPairs}</span> measurable
+              </span>
+            )}
+          </span>
+        </th>
+      </tr>
+      {group.signals.map((s) => {
+        const ran = s.runOutcome !== "NOT_RUN";
+        const cell = (n: number) => (ran ? n.toLocaleString("en-US") : "–");
+        return (
+          <tr
+            key={s.signalId}
+            className={cn("border-t border-line", !ran && "bg-[repeating-linear-gradient(135deg,var(--color-paper-2)_0_6px,transparent_6px_12px)]")}
+          >
+            <td className="px-2 py-2.5 sm:px-3">
+              <p className="font-medium text-ink">{sentenceCase(s.signalId)}</p>
+              <p className="font-mono text-[9.5px] text-ink-4">{s.maturity}</p>
+              <p className={cn("mt-0.5 text-[10.5px] sm:hidden", ran ? "text-teal" : "text-ink-3")}>
+                {sentenceCase(s.runOutcome)} · {availabilityPhrase(s.sourceAvailability)}
+              </p>
+            </td>
+            <td className="hidden px-3 py-2.5 sm:table-cell">
+              <p className={cn("font-medium", ran ? "text-teal" : "text-ink-3")}>{sentenceCase(s.runOutcome)}</p>
+              <p className="text-[10.5px] text-ink-3">{availabilityPhrase(s.sourceAvailability)}</p>
+            </td>
+            <td className="px-1.5 py-2.5 text-right font-mono text-ink sm:px-3">{cell(s.eligibleUnits)}</td>
+            <td className="px-1.5 py-2.5 text-right font-mono text-ink sm:px-3">{cell(s.usableUnits)}</td>
+            <td className={cn("px-1.5 py-2.5 text-right font-mono sm:px-3", ran && s.residualUnknownUnits > 0 ? "text-amber" : "text-ink")}>
+              {cell(s.residualUnknownUnits)}
+            </td>
+            <td className="px-1.5 py-2.5 text-right font-mono text-ink sm:px-3">{cell(s.missingJoinUnits)}</td>
+            <td className="px-1.5 py-2.5 text-right font-mono text-ink sm:px-3">{cell(s.missingValueUnits)}</td>
+          </tr>
+        );
+      })}
+    </>
   );
 }
