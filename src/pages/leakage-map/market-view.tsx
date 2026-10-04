@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { ArrowLeft, Check, HelpCircle, MapPin } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -179,25 +178,19 @@ export function NothingMeasured({ market, executive, onSelectMarket }: NothingMe
       <LeakTypesTable market={market} executive={executive} />
 
       {hasUnassigned && (
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-paper p-4 sm:p-5">
-          <div className="flex min-w-0 flex-1 items-start gap-3">
+        <section className="rounded-card border border-line bg-paper p-4 sm:p-5">
+          <div className="flex items-start gap-3">
             <span className="flex size-8 shrink-0 items-center justify-center rounded-control bg-ultra-bg text-ultra">
               <MapPin className="size-4" />
             </span>
             <div>
               <h3 className="text-[13px] font-semibold text-ink">Some of {name}'s exposure may be sitting in Unassigned</h3>
               <p className="mt-0.5 text-[11.5px] leading-relaxed text-ink-3">
-                Unassigned holds amounts whose market wasn't proven. We never move them into {name} based on currency or settings.
-                Mapping a market field on your sources lets the next run attribute them.
+                Unassigned holds amounts whose market wasn't proven. We never move them into {name} based on currency or
+                settings. They stay there until a new calculation reads market evidence for them.
               </p>
             </div>
           </div>
-          <Link
-            to="/data-sources"
-            className="inline-flex h-8 items-center rounded-control border border-line bg-paper px-3 text-[11.5px] font-medium text-ink hover:border-ink-4"
-          >
-            Review source mappings
-          </Link>
         </section>
       )}
     </div>
