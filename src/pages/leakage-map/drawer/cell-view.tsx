@@ -244,42 +244,56 @@ function AmountsTable({ amounts, reportingCurrency }: { amounts: LeakageV2Amount
   const byCurrency = compareCurrencies(reportingCurrency);
   const rows = [...amounts].sort((a, b) => byCurrency(a.currency, b.currency));
   return (
+    // Sized to fit the drawer at any width, so it never scrolls sideways: the range wraps onto two lines (and
+    // moves under Expected on a phone), and severity sits under confidence instead of taking a column.
     <div className="overflow-x-auto rounded-card border border-line">
-      <table className="w-full min-w-[40rem] text-left text-[11.5px] whitespace-nowrap">
+      <table className="w-full text-left text-[11.5px]">
         <thead>
           <tr className="border-b border-line bg-paper-2 text-[10px] text-ink-4">
-            {["Currency", "Gross", "Expected", "Net", "Range", "Confidence", "Severity", "Candidates"].map((h, i) => (
-              <th key={h} className={cn("px-3 py-2 font-medium", i > 0 && i < 4 && "text-right", i === 7 && "text-right")}>
-                {h}
-              </th>
-            ))}
+            <th className="px-2 py-2 font-medium sm:px-3">Currency</th>
+            <th className="px-1.5 py-2 text-right font-medium sm:px-3">Gross</th>
+            <th className="px-1.5 py-2 text-right font-medium sm:px-3">Expected</th>
+            <th className="px-1.5 py-2 text-right font-medium sm:px-3">Net</th>
+            <th className="hidden px-3 py-2 font-medium sm:table-cell">Range</th>
+            <th className="px-1.5 py-2 font-medium sm:px-3">Confidence</th>
+            <th className="px-1.5 py-2 text-right font-medium sm:px-3">Cand.</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
           {rows.map((a) => {
-            const range = a.range.status !== "UNAVAILABLE" && a.range.lower != null && a.range.upper != null;
+            const hasRange = a.range.status !== "UNAVAILABLE" && a.range.lower != null && a.range.upper != null;
+            const lower = hasRange ? formatCompactMoney(a.range.lower as number, a.currency) : null;
+            const upper = hasRange ? formatCompactMoney(a.range.upper as number, a.currency) : null;
+            const notRated = a.confidenceLevel.toUpperCase() === "NOT_AVAILABLE";
+            const severity = a.severity.toUpperCase() === "NOT_AVAILABLE" ? "not rated" : a.severity.toUpperCase();
             return (
-              <tr key={`${a.currency}|${a.market}|${a.lifecycleClass}`}>
-                <td className="px-3 py-2 font-mono font-semibold text-ink">{a.currency}</td>
-                <td className="px-3 py-2 text-right font-mono text-ink">{formatCompactMoney(a.gross, a.currency)}</td>
-                <td className="px-3 py-2 text-right font-mono text-ink-2">{formatCompactMoney(a.expected, a.currency)}</td>
-                <td className="px-3 py-2 text-right font-mono text-ink-2">{formatCompactMoney(a.net, a.currency)}</td>
-                <td className="px-3 py-2 font-mono text-[10.5px] text-ink-3">
-                  {range ? (
+              <tr key={`${a.currency}|${a.market}|${a.lifecycleClass}`} className="align-top">
+                <td className="px-2 py-2.5 font-mono font-semibold text-ink sm:px-3">{a.currency}</td>
+                <td className="px-1.5 py-2.5 text-right font-mono text-ink sm:px-3">{formatCompactMoney(a.gross, a.currency)}</td>
+                <td className="px-1.5 py-2.5 text-right font-mono text-ink-2 sm:px-3">
+                  {formatCompactMoney(a.expected, a.currency)}
+                  {hasRange && (
+                    <span className="mt-0.5 block text-[9.5px] text-ink-4 sm:hidden">
+                      {lower} – {upper}
+                    </span>
+                  )}
+                </td>
+                <td className="px-1.5 py-2.5 text-right font-mono text-ink-2 sm:px-3">{formatCompactMoney(a.net, a.currency)}</td>
+                <td className="hidden px-3 py-2.5 font-mono text-[10.5px] text-ink-3 sm:table-cell">
+                  {hasRange ? (
                     <>
-                      {formatCompactMoney(a.range.lower as number, a.currency)} – {formatCompactMoney(a.range.upper as number, a.currency)}
+                      {lower} –<br />
+                      {upper}
                     </>
                   ) : (
                     "Not available"
                   )}
                 </td>
-                <td className="px-3 py-2 text-ink-2">
-                  {a.confidenceLevel.toUpperCase() === "NOT_AVAILABLE"
-                    ? "Not rated"
-                    : `${humanizeEnum(a.confidenceLevel)} ${a.confidence.toFixed(2)}`}
+                <td className="px-1.5 py-2.5 sm:px-3">
+                  <p className="text-ink-2">{notRated ? "Not rated" : `${humanizeEnum(a.confidenceLevel)} ${a.confidence.toFixed(2)}`}</p>
+                  <p className="text-[10px] text-ink-4">Severity {severity}</p>
                 </td>
-                <td className="px-3 py-2 text-ink-2">{a.severity.toUpperCase() === "NOT_AVAILABLE" ? "Not rated" : a.severity.toUpperCase()}</td>
-                <td className="px-3 py-2 text-right font-mono text-ink-2">{a.candidateCount}</td>
+                <td className="px-1.5 py-2.5 text-right font-mono text-ink-2 sm:px-3">{a.candidateCount}</td>
               </tr>
             );
           })}
