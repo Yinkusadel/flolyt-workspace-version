@@ -87,7 +87,35 @@ export function CaseView({ caseId, cell, defaultMode, currentSnapshotId, onBack 
           Revenue leak case · {cell.coordinate.revenueStageLabel} · {cell.coordinate.stateDimensionLabel} →{" "}
           {cell.coordinate.stateValueLabel} · {cell.sectorLabel}
         </SheetDescription>
-        {leakCase && !form && <ActionBar leakCase={leakCase} onAction={setForm} />}
+        {leakCase && !form && (
+          // Tabs on the left and the actions on the right share one row, so the tabs cost no extra height.
+          // From sm up the tab underline sits on the header's own bottom border.
+          <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 pt-1 sm:-mb-4">
+            <div role="tablist" aria-label="Case" className="flex items-center gap-1">
+              {(
+                [
+                  { key: "case", label: "Case" },
+                  { key: "audit", label: `Audit trail (${leakCase.auditTrail.length})` },
+                ] as const
+              ).map((t) => (
+                <button
+                  key={t.key}
+                  role="tab"
+                  type="button"
+                  aria-selected={tab === t.key}
+                  onClick={() => setTab(t.key)}
+                  className={cn(
+                    "border-b-2 px-3 pt-2 pb-3 text-[11.5px] whitespace-nowrap",
+                    tab === t.key ? "border-ultra font-semibold text-ink" : "border-transparent text-ink-3 hover:text-ink-2"
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <ActionBar leakCase={leakCase} onAction={setForm} />
+          </div>
+        )}
       </SheetHeader>
 
       <SheetBody className="px-5 py-5">
@@ -124,29 +152,6 @@ export function CaseView({ caseId, cell, defaultMode, currentSnapshotId, onBack 
 
         {leakCase && !form && (
           <div className="space-y-5">
-            <div role="tablist" aria-label="Case" className="flex items-center gap-1 border-b border-line">
-              {(
-                [
-                  { key: "case", label: "Case" },
-                  { key: "audit", label: `Audit trail (${leakCase.auditTrail.length})` },
-                ] as const
-              ).map((t) => (
-                <button
-                  key={t.key}
-                  role="tab"
-                  type="button"
-                  aria-selected={tab === t.key}
-                  onClick={() => setTab(t.key)}
-                  className={cn(
-                    "border-b-2 px-3 py-2.5 text-[11.5px] whitespace-nowrap",
-                    tab === t.key ? "border-ultra font-semibold text-ink" : "border-transparent text-ink-3 hover:text-ink-2"
-                  )}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-
             {tab === "case" ? (
               <CaseTab
                 leakCase={leakCase}
@@ -180,7 +185,7 @@ function ActionBar({ leakCase, onAction }: { leakCase: RevenueLeakCase; onAction
   if (FINISHED.includes(status)) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 pt-1">
+    <div className="flex flex-wrap items-center gap-2 pb-2.5">
       <Button type="button" variant="outline" onClick={() => onAction("decision")}>
         Record decision
       </Button>

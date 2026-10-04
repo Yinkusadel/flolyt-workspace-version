@@ -199,3 +199,4 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 - **Live-verified (reads, chad@yopmail.com):** the existing WORKED case renders fully, the Audit tab lists all 6
   entries, all five forms open and cancel, 390px no overflow, no page errors, and no write request was sent.
   **Not submitted live:** every action above.
+- **Tabs moved into the header row (2026-10-04):** the Case / Audit trail tabs now sit on the same line as Record decision / Invalidate / the forward step (tabs left, actions right) to save vertical space; the tab underline sits on the header border from sm up. Verified desktop and 390px.
