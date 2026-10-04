@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AlertTriangle, ArrowLeftRight, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -294,33 +294,57 @@ function NoticeStrip({ notices }: { notices: Notice[] }) {
           );
         })}
       </div>
-      {notices.map((notice) => {
-        const isOpen = !!open[notice.key];
-        return (
-          // Height animates 0fr -> 1fr (no measuring needed), so the content below slides down smoothly
-          // instead of jumping. Always mounted so it can animate closed as well as open.
-          <div
-            key={notice.key}
-            id={`notice-${notice.key}`}
-            aria-hidden={!isOpen}
-            className={cn(
-              "grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none",
-              isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-            )}
-          >
-            <div className="overflow-hidden">
-              <p
-                className={cn(
-                  "mt-2 rounded-panel border px-3 py-2.5 text-[11.5px] text-ink-2",
-                  notice.tone === "amber" ? "border-amber-border bg-amber-bg" : "border-line bg-paper"
-                )}
-              >
-                {notice.detail}
-              </p>
-            </div>
+      {notices.map((notice) => (
+        <Collapse key={notice.key} id={`notice-${notice.key}`} open={!!open[notice.key]}>
+          {/* Padding, not margin: a margin would collapse out of the measured box and get clipped. */}
+          <div className="pt-2">
+            <p
+              className={cn(
+                "rounded-panel border px-3 py-2.5 text-[11.5px] text-ink-2",
+                notice.tone === "amber" ? "border-amber-border bg-amber-bg" : "border-line bg-paper"
+              )}
+            >
+              {notice.detail}
+            </p>
           </div>
-        );
-      })}
+        </Collapse>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Slides its children open and closed. The height is measured and animated with an inline style, so it
+ * does not depend on CSS grid-row interpolation or on any utility class being generated, and it works the
+ * same in every browser. A ResizeObserver keeps the open height right when the text rewraps. Always
+ * mounted, so it animates closed as well as open.
+ */
+function Collapse({ open, id, children }: { open: boolean; id?: string; children: ReactNode }) {
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  useEffect(() => {
+    const el = innerRef.current;
+    if (!el) return;
+    const measure = () => setContentHeight(el.getBoundingClientRect().height);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      id={id}
+      aria-hidden={!open}
+      style={{
+        height: open ? contentHeight : 0,
+        opacity: open ? 1 : 0,
+        overflow: "hidden",
+        transition: "height 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease-out",
+      }}
+    >
+      <div ref={innerRef}>{children}</div>
     </div>
   );
 }

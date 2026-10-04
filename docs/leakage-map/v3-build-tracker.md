@@ -69,3 +69,4 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
   dashed Unassigned, Currency shows "All 6". At 390px width: no horizontal overflow, the filter bar wraps, cards stack.
   No page errors. Not exercised: the skeleton-to-content jump (fixed by reserving banner and 5-card space), the
   searchable (6+ markets) market form, the custom-days input.
+- **Notices row (2026-10-04):** the measurement and no-combined-total notices are two slim toggles that slide open/closed (`Collapse`, a measured-height inline-style animation, same in every browser and in reduced-motion mode; the first CSS grid-row version was dropped because it did not animate for the user).
