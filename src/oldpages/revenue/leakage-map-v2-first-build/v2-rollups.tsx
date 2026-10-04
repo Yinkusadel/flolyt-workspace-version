@@ -11,6 +11,7 @@ const DIMENSION_ORDER: LeakageV2Rollup["dimension"][] = ["market", "sector", "st
 const DIMENSION_LABEL: Record<LeakageV2Rollup["dimension"], string> = {
   total: "Total",
   market: "By market",
+  currency: "By currency",
   sector: "By sector",
   stage: "By stage",
   mechanism: "By mechanism",

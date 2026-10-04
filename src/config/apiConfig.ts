@@ -694,6 +694,10 @@ export const API_ENDPOINTS = {
     LEARN_WHY_LEAKAGE_CELL_V2: `${LEAKAGE_BASE_URL}/cells/{cellId}/learn-why`,
     GET_LEAKAGE_COVERAGE: `${LEAKAGE_BASE_URL}/coverage`,
     GET_LEAKAGE_CALCULATION: `${LEAKAGE_BASE_URL}/calculation`,
+    // Added 2026-10-04 (Phase 1-4 handoff): paginated diagnostics behind `limitationSummary`, and the
+    // exact per-amount calculation drawer. `/calculation` above stays the policy overview.
+    GET_LEAKAGE_LIMITATIONS: `${LEAKAGE_BASE_URL}/limitations`,
+    GET_LEAKAGE_CALCULATION_DETAIL: `${LEAKAGE_BASE_URL}/calculation/detail`,
     CREATE_LEAKAGE_CASE: `${LEAKAGE_BASE_URL}/cells/{cellId}/case`,
     GET_LEAKAGE_CASE: `${LEAKAGE_BASE_URL}/cases/{caseId}`,
     UPDATE_LEAKAGE_CASE_OWNER: `${LEAKAGE_BASE_URL}/cases/{caseId}/owner`,
