@@ -3,6 +3,7 @@ import { Plus, Search, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DatePicker, toDayString } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatShortDateWithYear } from "@/lib/format-measured-value";
@@ -27,7 +28,7 @@ const TEXTAREA_CLASS =
 function isoDateDaysFromNow(days: number): string {
   const d = new Date();
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return toDayString(d);
 }
 
 /** Shared frame: a title, a one-line explanation, the fields, then Cancel and the confirming action. */
@@ -409,7 +410,7 @@ export function DueDateForm({ leakCase, onDone, onCancel }: FormProps) {
     >
       <div>
         <FieldLabel>New due date</FieldLabel>
-        <Input type="date" value={date} min={min} max={max} onChange={(e) => setDate(e.currentTarget.value)} className="w-full" />
+        <DatePicker value={date} min={min} max={max} onChange={setDate} placeholder="Pick a date" aria-label="New due date" />
         <div className="mt-2 flex flex-wrap gap-1.5">
           {DUE_DATE_CHIPS.map((chip) => {
             const value = isoDateDaysFromNow(chip.days);
