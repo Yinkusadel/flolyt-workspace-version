@@ -38,6 +38,7 @@ import PlanAndBillingRoute from "@/pages/plan-and-billing";
 import NotificationsRoute from "@/pages/notifications";
 import AuditLogRoute from "@/pages/audit-log";
 import LeakageMap from "@/pages/leakage-map";
+import MissedOpportunities from "@/pages/missed-opportunities";
 import Inbox from "@/pages/inbox";
 import Playbooks from "@/pages/playbooks";
 import PlaybooksProposeRoute from "@/pages/playbooks/propose-route";
@@ -166,6 +167,7 @@ export const routes = createBrowserRouter([
               },
               // Leakage Map, Inbox, Playbooks and Business Memory are rebuilt.
               { path: "leakage-map", Component: LeakageMap },
+              { path: "missed-opportunities", Component: MissedOpportunities },
               { path: "inbox", Component: Inbox },
               { path: "playbooks", Component: Playbooks },
               { path: "playbooks/propose", Component: PlaybooksProposeRoute },

@@ -316,3 +316,7 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 ## Evidence tab built (2026-10-04)
 
 "Why this number" tab in the cell drawer (`drawer/evidence-tab.tsx`), live-verified for reads against a real `GET /cells/{id}/evidence` (about 857 KB, so fetched only when the tab opens). Shows the server's `question`, `calculationFormulas`, policy values (probability, recovery rate, ramp factor at the selected horizon, the two basis texts), lineage with source candidates, usable vs eligible units from `coverage`, every limitation (1,108 in the sample, revealed 25 at a time) and the eligible Room link from `suggestedActions`. Components and signals stay on their own tabs; the `revenue_leaks.review` action is not shown because the person is already there. The types needed no changes.
+
+## Missed opportunities built (2026-10-04)
+
+`/missed-opportunities`, entered from a link in the Leakage Map header (not shown inside a single-market header; use the breadcrumb back to All markets). Live-verified for the legacy UNKNOWN cell only; priced amounts and the signal preview are contract-only until a workspace with a 1.2.0 publication is available. See docs/endpoints/opportunities.md.

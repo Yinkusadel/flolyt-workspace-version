@@ -1,4 +1,5 @@
-import { AlertTriangle } from "lucide-react";
+import { Link } from "react-router-dom";
+import { AlertTriangle, ArrowRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { usePageBreadcrumb, type Crumb } from "@/components/breadcrumb-context";
@@ -230,17 +231,27 @@ export default function LeakageMap() {
 
 function Header({ title, description, asOf }: { title: string; description: string; asOf?: string }) {
   return (
-    <div>
-      <h1 className="text-[17px] font-semibold text-ink">{title}</h1>
-      <p className="mt-1 text-[11.5px] text-ink-3">
-        {description}
-        {asOf && (
-          <>
-            {" "}
-            <span className="font-mono text-[10.5px] text-ink-4">As of {formatAsOf(asOf)}</span>
-          </>
-        )}
-      </p>
+    <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+      <div>
+        <h1 className="text-[17px] font-semibold text-ink">{title}</h1>
+        <p className="mt-1 text-[11.5px] text-ink-3">
+          {description}
+          {asOf && (
+            <>
+              {" "}
+              <span className="font-mono text-[10.5px] text-ink-4">As of {formatAsOf(asOf)}</span>
+            </>
+          )}
+        </p>
+      </div>
+      {/* The only in-app way into /missed-opportunities: a separate, positive-polarity read kept out of the map. */}
+      <Link
+        to="/missed-opportunities"
+        className="flex shrink-0 items-center gap-1 text-[11.5px] font-medium text-ultra hover:underline"
+      >
+        Missed opportunities
+        <ArrowRight className="size-3" />
+      </Link>
     </div>
   );
 }

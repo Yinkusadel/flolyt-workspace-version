@@ -52,10 +52,8 @@ export type OpportunityMeasurementState =
 export type OpportunityValuationState = "UNPRICED_READINESS" | "NOT_ASSESSED" | "PRICED";
 
 /**
- * ⚠️ The doc lists `label`, `measurementState`, `valuationState`, `summary`, `reasons[]`,
- * `missingRequirements`, `eligibleUnits`, `usableUnits` but gives no TS block, so `reasons[]`
- * elements and `missingRequirements`' exact type are unconfirmed. Reason action labels are guidance,
- * not executable API actions.
+ * `reasons[]` elements confirmed live 2026-10-04 (see OpportunityExplanationReason);
+ * `missingRequirements` was empty in that capture, so its string element type is still unseen.
  */
 export interface OpportunityExplanation {
   /** Render "Transaction growth readiness" for the current rule; `opportunityType` stays the stable id. */
@@ -63,10 +61,19 @@ export interface OpportunityExplanation {
   measurementState: OpportunityMeasurementState;
   valuationState: OpportunityValuationState;
   summary: string;
-  reasons: Array<Record<string, unknown>>;
+  reasons: OpportunityExplanationReason[];
   missingRequirements: string[];
-  eligibleUnits: number;
-  usableUnits: number;
+  /** Null when the publication recorded no structured readiness evidence (seen live 2026-10-04). */
+  eligibleUnits: number | null;
+  usableUnits: number | null;
+}
+
+/** Shape confirmed live 2026-10-04 on a legacy publication; `actionLabel` is guidance text, never an API action. */
+export interface OpportunityExplanationReason {
+  code: string;
+  category: string;
+  message: string;
+  actionLabel?: string | null;
 }
 
 export type OpportunitySignalStage =

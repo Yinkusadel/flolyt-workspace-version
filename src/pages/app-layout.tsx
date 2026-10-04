@@ -43,6 +43,7 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   if (pathname === "/plan-and-billing") return "Plan and Billing";
 
   if (pathname === "/leakage-map") return "Leakage Map";
+  if (pathname === "/missed-opportunities") return "Missed opportunities";
   if (pathname === "/inbox") return "Inbox";
   if (pathname === "/playbooks") return "Playbooks";
   if (pathname === "/business-memory") return "Business Memory";

@@ -91,3 +91,7 @@ additions are optional on a cell: older publications omit them until a refresh a
   preview; no FX ranking and no subtraction from Leakage. This release produces only DETECTED/UNPRICED
   transaction-growth signals, with no assignment/pursuit/outcome mutation endpoints. Signal IDs are not
   stable workflow IDs across refreshes.
+
+## Update 2026-10-04 (V3 page built)
+
+Wired into `src/pages/missed-opportunities/` at `/missed-opportunities` (flat route; breadcrumb Leakage Map / Missed opportunities). Entry point: a "Missed opportunities" link in the Leakage Map header (all-markets view). The old `oldpages/.../opportunities-panel.tsx` is not used. Live capture (read-only) against the chad workspace: definition version 1.0.0 (legacy publication), one `product_deepening` cell, `UNKNOWN`, no `amounts`, no `signalPreview`, `explanation.measurementState: NOT_RECORDED`, `eligibleUnits`/`usableUnits` null, one reason `{code, category, message, actionLabel}`. Types corrected to match. **Not seen live:** `POPULATED` cells, priced `amounts[]`, `signalPreview`, `missingRequirements` contents; those views follow the contract only. Page-level limitations repeat a cell's sentence when there is one cell, so each sentence is shown once.
