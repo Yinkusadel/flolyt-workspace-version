@@ -57,3 +57,12 @@ depend on `oldpages/everyday/handoff`.
 4. If it references any of the shared files in the table above, point it at
    the new `@/components/ui/...` / `@/lib/...` path, not the old
    `@/oldpages/...` one.
+
+## Leakage Map V2 first build (archived 2026-10-04)
+
+`revenue/leakage-map-v2-first-build/` is the first V2-wired Leakage Map page
+(the one that stacked one amount per currency per market and fell apart with
+multiple markets). Archived for the from-scratch rebuild at
+`src/pages/leakage-map`; `src/features/leakage/*` hooks stayed live. Its
+imports were repointed to `@/oldpages/revenue/leakage-map-v2-first-build/...`.
+See `docs/leakage-map/v3-rebuild-plan.md`.

@@ -68,3 +68,30 @@ only the combination has been tested live so far.
   `POPULATED`-with-real-`amounts[]` path is unconfirmed live** — this workspace's data is as thin
   for opportunities as it is for leakage, so the priced-candidate rendering (currency, calibration,
   `expectedGain`) is built to the documented shape only, not yet seen against a real priced example.
+
+## Update 2026-10-04 (Phase 4 + canonical signals, definition version 1.2.0)
+
+Types added to `get-opportunities.ts`; **documented, scaffolded, not wired, not live-verified.** Both
+additions are optional on a cell: older publications omit them until a refresh and must still read.
+
+- **`cells[].explanation`**: `label` (render "Transaction growth readiness" for the current financial-services
+  rule; `opportunityType: product_deepening` stays the stable id, not the title), `measurementState`
+  (`MEASURED | PARTIAL_SCOPE | PARTIAL_HISTORY | WAITING_FOR_DATA | BLOCKED | NOT_RECORDED`),
+  `valuationState` (`UNPRICED_READINESS | NOT_ASSESSED | PRICED`), `summary`, `reasons[]`,
+  `missingRequirements`, `eligibleUnits`, `usableUnits`. ⚠️ No TS block in the doc: `reasons[]` elements
+  are typed loosely. Reason action labels are guidance, not executable actions.
+- **`cells[].signalCount` / `signalPreview[]`**: `signalCount` is the full count of detector signals (not
+  unique businesses, not money). `signalPreview` is at most 20 in deterministic ID order (not a revenue
+  ranking); label it a preview when shorter than `signalCount`. No paging endpoint exists. Signal shape is
+  from a real TS block (`OpportunitySignal`): stage, `pricingState`, `valuation`, `confidence` (signal
+  confidence, never probability of capture), `availableWindow`, `evidence`, `owner`, `outcome`.
+- **Rules:** never render unpriced readiness as zero missed revenue, guaranteed expansion, or a full
+  inventory; unknown probability/cost/window/owner/outcome must not show as zero, expired, assigned or
+  captured; money only from `valuation`/`outcome` per signal and `amounts[]` in aggregate, never sum the
+  preview; no FX ranking and no subtraction from Leakage. This release produces only DETECTED/UNPRICED
+  transaction-growth signals, with no assignment/pursuit/outcome mutation endpoints. Signal IDs are not
+  stable workflow IDs across refreshes.
+
+## Update 2026-10-04 (V3 page built)
+
+Wired into `src/pages/missed-opportunities/` at `/missed-opportunities` (flat route; breadcrumb Leakage Map / Missed opportunities). Entry point: a "Missed opportunities" link in the Leakage Map header (all-markets view). The old `oldpages/.../opportunities-panel.tsx` is not used. Live capture (read-only) against the chad workspace: definition version 1.0.0 (legacy publication), one `product_deepening` cell, `UNKNOWN`, no `amounts`, no `signalPreview`, `explanation.measurementState: NOT_RECORDED`, `eligibleUnits`/`usableUnits` null, one reason `{code, category, message, actionLabel}`. Types corrected to match. **Not seen live:** `POPULATED` cells, priced `amounts[]`, `signalPreview`, `missingRequirements` contents; those views follow the contract only. Page-level limitations repeat a cell's sentence when there is one cell, so each sentence is shown once.

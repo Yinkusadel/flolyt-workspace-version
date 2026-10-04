@@ -1,121 +1,104 @@
-import type {
-  GetLeakageParams,
-  LeakageCalculateMode,
-  LeakageMarketRailEntryDto,
-} from "@/services/api/leakage/get-leakage";
+import { useCallback, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+
+import type { GetLeakageV2Params } from "@/services/api/leakage/get-leakage";
 
 /**
- * Filter state for /leakage-map, replacing data.ts's old mock option lists per
- * [[feedback_retire_mock_options_not_extend]]. Window and Horizon are independent controls (the
- * API always takes both — window looks back, horizon looks forward), each either one of the
- * workspace's own live option values (`GET /leakage`'s `window.options` / `horizon.options`) or a
- * custom day count converted from a single picked date (the API has no from/to range, only a
- * day-count — see docs/leakage-map/build-plan.md mismatch #11).
+ * Market and currency live in the URL: together they decide WHICH view you are on (all markets vs.
+ * one market), so they must survive a refresh and be shareable. The remaining controls are plain
+ * state, per the app's convention that page-level flow position is URL state and ordinary filters
+ * are not.
+ *
+ * `market` is the explicit attribution filter (`NG`, or `UNASSIGNED` for unattributed exposure);
+ * `currency` is the denomination filter. They are separate query params and neither substitutes for
+ * the other, even when both are set (`market=NG&currency=NGN`).
  */
-export type LeakageRangeSelection = { kind: "preset"; value: string } | { kind: "custom"; days: number };
-
-export interface LeakageFilterState {
-  window: LeakageRangeSelection;
-  horizon: LeakageRangeSelection;
-  /** Country code, or null for the blended "All markets" default. */
+export interface LeakageFilters {
   market: string | null;
-  calculate: LeakageCalculateMode;
-  /** "s1"–"s5", or null for no severity filter. */
-  minSeverity: string | null;
-  /** "low" | "medium" | "high", or null for no confidence filter. */
-  minConfidence: string | null;
+  currency: string | null;
+  mode: string;
+  horizon: string;
+  /** Only sent when `horizon === "custom"`. */
+  horizonDays: number;
+  sector: string | null;
+  severity: string | null;
+  confidence: string | null;
+  lifecycleClass: string | null;
 }
 
-export const DEFAULT_FILTERS: LeakageFilterState = {
-  window: { kind: "preset", value: "90" },
-  horizon: { kind: "preset", value: "90" },
-  market: null,
-  calculate: "gross",
-  minSeverity: null,
-  minConfidence: null,
+/**
+ * The handoff names EXPECTED as the recommended mode (`executive.recommendedMode`, always EXPECTED),
+ * so that is what the first request asks for. The mode toggle still shows the server's own option list.
+ */
+export const DEFAULT_MODE = "expected";
+export const DEFAULT_HORIZON = "90";
+export const DEFAULT_CUSTOM_HORIZON_DAYS = 120;
+
+type LocalFilters = Omit<LeakageFilters, "market" | "currency">;
+
+const INITIAL_LOCAL_FILTERS: LocalFilters = {
+  mode: DEFAULT_MODE,
+  horizon: DEFAULT_HORIZON,
+  horizonDays: DEFAULT_CUSTOM_HORIZON_DAYS,
+  sector: null,
+  severity: null,
+  confidence: null,
+  lifecycleClass: null,
 };
 
-// Shown only until the first response supplies the workspace's real `window.options` /
-// `horizon.options` — these are exactly the values the endpoint doc itself names as always valid,
-// not invented copy.
-export const FALLBACK_WINDOW_OPTIONS = ["30", "90", "180", "365", "qtd"];
-export const FALLBACK_HORIZON_OPTIONS = ["30", "60", "90", "quarter", "365"];
+export function useLeakageFilters() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [local, setLocal] = useState<LocalFilters>(INITIAL_LOCAL_FILTERS);
 
-export function windowOptionLabel(value: string): string {
-  if (value === "qtd") return "Quarter to date";
-  const days = Number(value);
-  return Number.isFinite(days) ? `Last ${days} days` : value;
+  const market = searchParams.get("market");
+  const currency = searchParams.get("currency");
+
+  const filters = useMemo<LeakageFilters>(() => ({ ...local, market, currency }), [local, market, currency]);
+
+  const setUrlParam = useCallback(
+    (key: "market" | "currency", value: string | null) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (value) next.set(key, value);
+          else next.delete(key);
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
+
+  const setMarket = useCallback((value: string | null) => setUrlParam("market", value), [setUrlParam]);
+  const setCurrency = useCallback((value: string | null) => setUrlParam("currency", value), [setUrlParam]);
+  const setLocalFilters = useCallback((patch: Partial<LocalFilters>) => setLocal((prev) => ({ ...prev, ...patch })), []);
+
+  const clearMoreFilters = useCallback(
+    () => setLocal((prev) => ({ ...prev, sector: null, severity: null, confidence: null, lifecycleClass: null })),
+    []
+  );
+
+  const params = useMemo(() => toGetLeakageV2Params(filters), [filters]);
+
+  return { filters, params, setMarket, setCurrency, setLocalFilters, clearMoreFilters };
 }
 
-export function horizonOptionLabel(value: string): string {
-  if (value === "quarter") return "Rest of quarter";
-  const days = Number(value);
-  return Number.isFinite(days) ? `Next ${days} days` : value;
-}
-
-export function rangeSelectionLabel(selection: LeakageRangeSelection, direction: "window" | "horizon"): string {
-  if (selection.kind === "custom") {
-    return direction === "window" ? `Last ${selection.days} days` : `Next ${selection.days} days`;
-  }
-  return direction === "window" ? windowOptionLabel(selection.value) : horizonOptionLabel(selection.value);
-}
-
-export function marketOptionLabel(entry: Pick<LeakageMarketRailEntryDto, "countryCode" | "isPrimary">): string {
-  if (!entry.countryCode) return entry.isPrimary ? "Primary market" : "Unlabeled market";
-  return entry.isPrimary ? `${entry.countryCode} · primary` : entry.countryCode;
-}
-
-export const CALCULATE_OPTIONS: { value: LeakageCalculateMode; label: string }[] = [
-  { value: "gross", label: "Gross exposure" },
-  { value: "expected", label: "Expected loss" },
-  { value: "net", label: "Net expected loss" },
-];
-
-export function calculateLabel(value: LeakageCalculateMode): string {
-  return CALCULATE_OPTIONS.find((option) => option.value === value)?.label ?? value;
-}
-
-// s1–s5 is the API's own fixed severity scale (see docs/endpoints/leakage.md) — no per-level
-// editorial label has ever been observed live for a filter threshold, so these stay plain.
-export const SEVERITY_OPTIONS: { value: string; label: string }[] = [
-  { value: "s1", label: "≥ S1" },
-  { value: "s2", label: "≥ S2" },
-  { value: "s3", label: "≥ S3" },
-  { value: "s4", label: "≥ S4" },
-  { value: "s5", label: "≥ S5" },
-];
-
-export function severityLabel(value: string | null): string {
-  if (!value) return "All severities";
-  return SEVERITY_OPTIONS.find((option) => option.value === value)?.label ?? value;
-}
-
-export const CONFIDENCE_OPTIONS: { value: "low" | "medium" | "high"; label: string }[] = [
-  { value: "low", label: "≥ Low" },
-  { value: "medium", label: "≥ Medium" },
-  { value: "high", label: "≥ High" },
-];
-
-export function confidenceLabel(value: string | null): string {
-  if (!value) return "All confidence levels";
-  return CONFIDENCE_OPTIONS.find((option) => option.value === value)?.label ?? value;
-}
-
-export function toGetLeakageParams(filters: LeakageFilterState): GetLeakageParams {
+export function toGetLeakageV2Params(filters: LeakageFilters): GetLeakageV2Params {
   return {
-    window: filters.window.kind === "preset" ? filters.window.value : filters.window.days,
-    horizon: filters.horizon.kind === "preset" ? filters.horizon.value : filters.horizon.days,
+    mode: filters.mode,
+    horizon: filters.horizon,
+    horizonDays: filters.horizon === "custom" ? filters.horizonDays : undefined,
     market: filters.market ?? undefined,
-    calculate: filters.calculate,
-    minSeverity: filters.minSeverity ?? undefined,
-    minConfidence: filters.minConfidence ?? undefined,
+    currency: filters.currency ?? undefined,
+    sector: filters.sector ?? undefined,
+    severity: filters.severity ?? undefined,
+    confidence: filters.confidence ?? undefined,
+    lifecycleClass: filters.lifecycleClass ?? undefined,
   };
 }
 
-export function startOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-export function daysBetween(from: Date, to: Date): number {
-  return Math.round((startOfDay(to).getTime() - startOfDay(from).getTime()) / 86_400_000);
+/** How many of the "More filters" controls are active, for the trigger's count badge. */
+export function countMoreFilters(filters: LeakageFilters): number {
+  return [filters.sector, filters.severity, filters.confidence, filters.lifecycleClass].filter(Boolean).length;
 }

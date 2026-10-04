@@ -2,6 +2,10 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
+import type {
+  LeakageCoverageExplanation,
+  LeakageExecutive,
+} from "@/services/api/leakage/leakage-executive-types";
 
 // Shared across every leakage endpoint — this file is the canonical source, the way
 // get-lifecycle-map.ts is for the old lifecycle domain.
@@ -296,11 +300,19 @@ export interface LeakageV2ControlOption {
   label: string;
 }
 
+export interface LeakageV2MarketOption {
+  market: string;
+  currency: string;
+  isPrimary: boolean;
+}
+
 export interface LeakageV2Controls {
   mode: string;
   horizonDays: number;
   horizon: string;
   market: string | null;
+  /** Added 2026-10-04. Filters denomination; `market` filters attribution, neither substitutes. */
+  currency: string | null;
   sector: string | null;
   severity: string | null;
   confidence: string | null;
@@ -308,6 +320,11 @@ export interface LeakageV2Controls {
   modes: LeakageV2ControlOption[];
   horizons: LeakageV2ControlOption[];
   markets: string[];
+  currencies: string[];
+  /** Render the market control from this, keeping the market/currency pair. */
+  marketOptions: LeakageV2MarketOption[];
+  /** Display context only: never permission to convert or merge local-currency values. */
+  reportingCurrency: string | null;
   sectors: string[];
   severities: string[];
   confidenceLevels: string[];
@@ -411,7 +428,7 @@ export interface LeakageV2Cell {
 }
 
 export interface LeakageV2Rollup {
-  dimension: "mechanism" | "stage" | "state" | "market" | "severity" | "sector" | "total";
+  dimension: "mechanism" | "stage" | "state" | "market" | "currency" | "severity" | "sector" | "total";
   value: string;
   currency: string;
   market: string | null;
@@ -433,6 +450,135 @@ export interface LeakageV2CoverageSummary {
   residualUnknownUnits: number;
 }
 
+// ===== Added 2026-10-04 (Phase 1-4 handoff) — page-level summary, readiness and limitation blocks.
+
+export type LeakageV2MeasurementState = "MEASURED" | "PARTIALLY_MEASURED" | "UNAVAILABLE";
+
+/**
+ * One exact currency + optional attributed market + lifecycle class.
+ * Confirmed live 2026-10-04: unattributed exposure comes back as the literal string `"UNASSIGNED"`,
+ * not `null` (the handoff prose still says null). Treat both as "Unassigned market".
+ */
+export interface LeakageV2ActionableExposure {
+  currency: string;
+  market: string | null;
+  lifecycleClass: string;
+  value: number;
+  gross: number;
+  expected: number;
+  net: number;
+  mode: string;
+  cellCount: number;
+}
+
+export interface LeakageV2MaterialLeakItem {
+  /** Meaningful only inside its own material-leak group. */
+  rankWithinScope: number;
+  cellId: string;
+  mechanism: string;
+  mechanismLabel: string;
+  revenueStage: string;
+  revenueStageLabel: string;
+  amount: LeakageV2Amount;
+}
+
+export interface LeakageV2MaterialLeakGroup {
+  currency: string;
+  market: string | null;
+  lifecycleClass: string;
+  items: LeakageV2MaterialLeakItem[];
+}
+
+/** Separately named counts — never add candidate, observation and cell counts together. */
+export interface LeakageV2MeasurementCounts {
+  pricedCandidateCount: number;
+  unpricedCandidateCount: number;
+  unpriceableObservationCount: number;
+  populatedCellCount: number;
+  measuredZeroCellCount: number;
+  unavailableCellCount: number;
+}
+
+export interface LeakageV2Summary {
+  measurementState: LeakageV2MeasurementState;
+  actionableExposure: LeakageV2ActionableExposure[];
+  materialLeaks: LeakageV2MaterialLeakGroup[];
+  measurement: LeakageV2MeasurementCounts;
+}
+
+export type LeakageV2ReadinessState = "READY" | "ACTION_REQUIRED" | "WAITING_FOR_DATA" | "UNAVAILABLE";
+
+export type LeakageV2ReadinessCategory =
+  | "SECTOR_CONFIRMATION"
+  | "SOURCE_CAPABILITY"
+  | "HISTORY"
+  | "PRICING"
+  | "POLICY_CONFIGURATION"
+  | "PLATFORM_CAPABILITY";
+
+export type LeakageV2LimitationOrigin =
+  | "WORKSPACE_DATA"
+  | "WORKSPACE_HISTORY"
+  | "WORKSPACE_CONFIGURATION"
+  | "SECTOR_POLICY"
+  | "PLATFORM_CAPABILITY"
+  | "OTHER";
+
+/** `sources.connect` / `sources.review_capability` run against the datasources surface; enable only when `eligible`. */
+export interface LeakageV2ReadinessAction {
+  kind: string;
+  label: string;
+  eligible: boolean;
+  target: "datasources" | null;
+  capabilityId: string | null;
+  sourceId: string | null;
+  missingRequirements: string[];
+  unavailableReason: string | null;
+}
+
+export interface LeakageV2ReadinessItem {
+  category: LeakageV2ReadinessCategory;
+  state: LeakageV2ReadinessState;
+  origin: Exclude<LeakageV2LimitationOrigin, "OTHER">;
+  message: string;
+  affectedCount: number;
+  currencies: string[];
+  action: LeakageV2ReadinessAction | null;
+}
+
+export interface LeakageV2Readiness {
+  state: "READY" | "ACTION_REQUIRED" | "LIMITED";
+  actionRequiredCount: number;
+  waitingCount: number;
+  unavailableCount: number;
+  items: LeakageV2ReadinessItem[];
+}
+
+export type LeakageV2LimitationCode =
+  | "CAPABILITY_GAP"
+  | "SECTOR_ASSIGNMENT_MISSING"
+  | "PRICING_INPUT_MISSING"
+  | "BASELINE_HISTORY_MISSING"
+  | "CURRENCY_POLICY_MISSING"
+  | "NORMALIZED_FACTS_UNAVAILABLE"
+  | "OTHER";
+
+export interface LeakageV2LimitationSummaryItem {
+  code: LeakageV2LimitationCode;
+  origin: LeakageV2LimitationOrigin;
+  message: string;
+  affectedCount: number;
+  recommendedAction: string;
+  currencies: string[];
+}
+
+export interface LeakageV2LimitationSummary {
+  /** Total diagnostics behind this bounded summary; page through them via `/leakage/limitations`. */
+  detailCount: number;
+  items: LeakageV2LimitationSummaryItem[];
+  detailsPath: "/api/v3/leakage/limitations";
+}
+
 /**
  * Confirmed live 2026-10-01 to be very large on a thin test workspace (150+ entries, one per
  * unpriced candidate, e.g. "Candidate '...' remains unpriced because sector '...' has no severity
@@ -443,9 +589,20 @@ export interface LeakagePageV2 {
   contractVersion: "2.0";
   controls: LeakageV2Controls;
   publication: LeakageV2Publication;
+  /** Added 2026-10-04: headline money cards (actionableExposure) + material-leak cards. */
+  summary: LeakageV2Summary;
+  /** Added 2026-10-04: compact status strip beside the summary. */
+  readiness: LeakageV2Readiness;
   cells: LeakageV2Cell[];
   rollups: LeakageV2Rollup[];
   coverage: LeakageV2CoverageSummary;
+  /** Added 2026-10-04: replaces `limitations` for display. Never render both. */
+  limitationSummary: LeakageV2LimitationSummary;
+  /** Added 2026-10-04 (Executive Phase 2). Old saved payloads omit it — keep the page working without. */
+  executive?: LeakageExecutive;
+  /** Added 2026-10-04 (Phase 4). */
+  coverageExplanation?: LeakageCoverageExplanation;
+  /** Compatibility field only — same bounded category messages as `limitationSummary`, never every diagnostic. */
   limitations: string[];
 }
 
@@ -474,7 +631,10 @@ export interface GetLeakageV2Params {
   mode?: string;
   horizon?: string;
   horizonDays?: number;
+  /** Explicit market attribution. `UNASSIGNED` filters unattributed exposure. */
   market?: string;
+  /** Denomination, sent as its own param even when `market` is also set (e.g. `market=NG&currency=NGN`). */
+  currency?: string;
   sector?: string;
   severity?: string;
   confidence?: string;

@@ -1,6 +1,6 @@
 # Leakage Map V2 frontend handoff
 
-Status: Phase 7 backend contract. The React/Vite repository is separate, so this document is the implementation and acceptance handoff.
+Status: Phase 7 backend contract plus response-quality Phases 1â€“3. The React/Vite repository is separate, so this document is the implementation and acceptance handoff.
 
 ## Contract selection and rollout
 
@@ -20,9 +20,10 @@ The V2-only detail routes fail when the workspace is not enabled. Keep the curre
 | GET | `/api/v3/leakage/cells/{cellId}/evidence` | Immutable public evidence used by Learn Why and its specialist response |
 | POST | `/api/v3/leakage/cells/{cellId}/learn-why` | Start a Revenue Intelligence conversation run for this exact evidence bundle |
 | GET | `/api/v3/leakage/coverage` | Signal and subject coverage detail |
+| GET | `/api/v3/leakage/limitations?offset=0&limit=50&code={code}` | Paginated diagnostics behind the bounded page summary; limit 1–100 |
 | GET | `/api/v3/leakage/calculation` | Versioned formula, ramp, baseline, recovery and severity policy |
 
-The main and cell routes accept `mode=gross|expected|net`, `horizon=30|60|90|quarter|365|custom`, and `horizonDays=1..365` when the horizon is `custom`. The page also accepts `market`, `sector`, `severity=s1..s5`, `confidence=low|medium|high|0..1`, and `lifecycleClass=realized|in_flight|latent`. Cell history accepts `mode` and `lifecycleClass`.
+The main and cell routes accept `mode=gross|expected|net`, `horizon=30|60|90|quarter|365|custom`, and `horizonDays=1..365` when the horizon is `custom`. The page also accepts distinct `market` and `currency` filters, plus `sector`, `severity=s1..s5`, `confidence=low|medium|high|0..1`, and `lifecycleClass=realized|in_flight|latent`. Cell history accepts `mode` and `lifecycleClass`.
 
 Values are recalculated by the server when mode or horizon changes. Do not scale figures in the browser.
 
@@ -113,7 +114,7 @@ type Publication = {
 };
 
 type Rollup = {
-  dimension: "mechanism" | "stage" | "state" | "market" | "severity" | "sector" | "total";
+  dimension: "mechanism" | "stage" | "state" | "market" | "currency" | "severity" | "sector" | "total";
   value: string;
   currency: string;
   market: string | null;
@@ -135,6 +136,87 @@ type CoverageSummary = {
   residualUnknownUnits: number;
 };
 
+type LimitationSummaryItem = {
+  code:
+    | "CAPABILITY_GAP"
+    | "SECTOR_ASSIGNMENT_MISSING"
+    | "PRICING_INPUT_MISSING"
+    | "BASELINE_HISTORY_MISSING"
+    | "CURRENCY_POLICY_MISSING"
+    | "NORMALIZED_FACTS_UNAVAILABLE"
+    | "OTHER";
+  origin: "WORKSPACE_DATA" | "WORKSPACE_HISTORY" | "WORKSPACE_CONFIGURATION" | "SECTOR_POLICY" | "PLATFORM_CAPABILITY" | "OTHER";
+  message: string;
+  affectedCount: number;
+  recommendedAction: string;
+  currencies: string[];
+};
+
+type LimitationSummary = {
+  detailCount: number;
+  items: LimitationSummaryItem[];
+  detailsPath: "/api/v3/leakage/limitations";
+};
+
+type ReadinessState = "READY" | "ACTION_REQUIRED" | "WAITING_FOR_DATA" | "UNAVAILABLE";
+
+type ReadinessAction = {
+  // sources.connect and sources.review_capability are executable against the existing
+  // datasources surface. Other values describe an unavailable future action.
+  kind: string;
+  label: string;
+  eligible: boolean;
+  target: "datasources" | null;
+  capabilityId: string | null;
+  sourceId: string | null;
+  missingRequirements: string[];
+  unavailableReason: string | null;
+};
+
+type Readiness = {
+  state: "READY" | "ACTION_REQUIRED" | "LIMITED";
+  actionRequiredCount: number;
+  waitingCount: number;
+  unavailableCount: number;
+  items: Array<{
+    category:
+      | "SECTOR_CONFIRMATION"
+      | "SOURCE_CAPABILITY"
+      | "HISTORY"
+      | "PRICING"
+      | "POLICY_CONFIGURATION"
+      | "PLATFORM_CAPABILITY";
+    state: ReadinessState;
+    origin:
+      | "WORKSPACE_DATA"
+      | "WORKSPACE_HISTORY"
+      | "WORKSPACE_CONFIGURATION"
+      | "SECTOR_POLICY"
+      | "PLATFORM_CAPABILITY";
+    message: string;
+    affectedCount: number;
+    currencies: string[];
+    action: ReadinessAction | null;
+  }>;
+};
+
+type LimitationDetailPage = {
+  contractVersion: "2.0";
+  total: number;
+  offset: number;
+  limit: number;
+  code: LimitationSummaryItem["code"] | null;
+  items: Array<{
+    code: LimitationSummaryItem["code"];
+    origin: LimitationSummaryItem["origin"];
+    message: string;
+    referenceType: string | null;
+    referenceId: string | null;
+    currency: string | null;
+  }>;
+  publication: Publication;
+};
+
 type LeakagePageV2 = {
   contractVersion: "2.0";
   controls: {
@@ -142,6 +224,7 @@ type LeakagePageV2 = {
     horizonDays: number;
     horizon: string;
     market: string | null;
+    currency: string | null;
     sector: string | null;
     severity: string | null;
     confidence: string | null;
@@ -149,15 +232,57 @@ type LeakagePageV2 = {
     modes: { value: string; label: string }[];
     horizons: { value: string; label: string }[];
     markets: string[];
+    currencies: string[];
+    marketOptions: Array<{ market: string; currency: string; isPrimary: boolean }>;
+    reportingCurrency: string | null;
     sectors: string[];
     severities: string[];
     confidenceLevels: string[];
     lifecycleClasses: string[];
   };
   publication: Publication;
+  summary: {
+    measurementState: "MEASURED" | "PARTIALLY_MEASURED" | "UNAVAILABLE";
+    actionableExposure: Array<{
+      currency: string;
+      market: string | null;
+      lifecycleClass: string;
+      value: number;
+      gross: number;
+      expected: number;
+      net: number;
+      mode: string;
+      cellCount: number;
+    }>;
+    materialLeaks: Array<{
+      currency: string;
+      market: string | null;
+      lifecycleClass: string;
+      items: Array<{
+        rankWithinScope: number;
+        cellId: string;
+        mechanism: string;
+        mechanismLabel: string;
+        revenueStage: string;
+        revenueStageLabel: string;
+        amount: Amount;
+      }>;
+    }>;
+    measurement: {
+      pricedCandidateCount: number;
+      unpricedCandidateCount: number;
+      unpriceableObservationCount: number;
+      populatedCellCount: number;
+      measuredZeroCellCount: number;
+      unavailableCellCount: number;
+    };
+  };
+  readiness: Readiness;
   cells: Cell[];
   rollups: Rollup[];
   coverage: CoverageSummary;
+  limitationSummary: LimitationSummary;
+  // Compatibility field. It contains the same bounded category messages, never every diagnostic.
   limitations: string[];
 };
 
@@ -289,11 +414,24 @@ type CalculationV2 = {
 };
 ```
 
-`Publication` contains `runId`, `snapshotId`, `asOfUtc`, `builtAtUtc`, `publishedAtUtc`, `registryVersion`, and `sectorProfileVersions`. A `Rollup` contains `dimension`, `value`, `currency`, `market`, `lifecycleClass`, `amount`, `mode`, and `cellCount`. Never add rollups with different currencies or lifecycle classes in the client.
+`Publication` contains `runId`, `snapshotId`, `asOfUtc`, `builtAtUtc`, `publishedAtUtc`, `registryVersion`, and `sectorProfileVersions`. A `Rollup` contains `dimension`, `value`, `currency`, `market`, `lifecycleClass`, `amount`, `mode`, and `cellCount`. Never add rollups with different currencies, markets, or lifecycle classes in the client.
 
 ## Rendering rules
 
 Render axes from the supplied labels. The state dimension can describe invoices, payments, subscriptions, merchants, contracts, SKUs, branches, or customers; do not hard-code “customer stage.”
+
+Use `summary.actionableExposure` for the headline money cards and
+`summary.materialLeaks` for the material-leak cards. Each item is already bounded to one exact
+currency, optional explicitly attributed market, and lifecycle class. A null market means the
+source proved the currency but did not prove market attribution; label it “Market un-attributed”
+instead of assigning it to the primary market. Rank is meaningful only inside its material-leak
+group. Use `summary.measurementState` and the separately named measurement counts to explain
+partial coverage; never add candidate, observation, and cell counts together.
+
+Render market controls from `marketOptions`, retaining the market/currency pair. The `markets` and
+`currencies` arrays are independent filter vocabularies. `reportingCurrency` is display context,
+not permission to convert or merge local-currency values. Send `market=NG` and `currency=NGN` as
+separate query parameters when both are selected.
 
 - `POPULATED`: show each amount by currency, market, and lifecycle class. Show a range only when its status is not `UNAVAILABLE`.
 - `UNKNOWN`: show the availability reason and limitations. Do not render zero or include it in monetary totals.
@@ -306,6 +444,8 @@ Render axes from the supplied labels. The state dimension can describe invoices,
 Use text and icons as well as color for every state. Each cell must expose an accessible name containing mechanism, revenue stage, state value, display state, amount/currency when present, severity, and confidence.
 
 Filter changes should replace query parameters, request a fresh server projection, and announce loading without clearing the old grid. The server returns stable cells and marks excluded cells `HIDDEN_BY_FILTER`; rollups already contain only admitted amounts.
+
+Render page-level limitations from `limitationSummary.items`, including `affectedCount`, currencies, and the recommended action. Use `detailsPath` only when the user opens diagnostics, then request `/limitations` in pages and optionally filter by `code`. Do not render both `limitationSummary` and the compatibility `limitations` array. The main page response remains bounded even when a calculation produces thousands of subject-level diagnostics.
 
 ## Detail, history, coverage and calculation panels
 
@@ -415,6 +555,32 @@ The agent may explain an estimate but cannot change its value, currency, market,
 or evidence grade. It cannot claim a verified outcome. Keep limitations visible beside the answer,
 and treat the structured findings/actions as authoritative when prose and structure differ.
 
+## Readiness and remediation sequence
+
+Render `readiness` as a compact status strip beside the page summary. The five standard rows are
+sector confirmation, source capability, history, pricing, and policy configuration. A sixth
+platform-capability row appears only when a published detector cannot run because its normalized
+reader has not been implemented. Do not turn that platform gap into a datasource request.
+
+Use this sequence:
+
+1. The overview shows the measurement state, scoped exposure, material leaks, and the readiness
+   strip. Keep `READY` rows quiet; emphasize `ACTION_REQUIRED`, `WAITING_FOR_DATA`, and
+   `UNAVAILABLE`.
+2. Selecting a cell opens its existing detail drawer with observations and capability lineage.
+   This is where the user can inspect which source and capability produced the map state.
+3. Selecting a readiness gap opens the limitation drawer filtered by the corresponding limitation
+   code when one exists. The drawer fetches `/api/v3/leakage/limitations` and never parses the
+   compatibility `limitations` strings.
+4. Enable an action only when `action.eligible` is true. `sources.connect` and
+   `sources.review_capability` target the existing datasource surface and carry the exact
+   `capabilityId` and optional `sourceId`. For an ineligible action, display
+   `unavailableReason`; do not create a route or substitute a generic connector recommendation.
+
+`WAITING_FOR_DATA` means normal synchronization must accumulate enough history. `UNAVAILABLE`
+means the missing work belongs to sector policy or platform implementation. Neither state should
+look like a failed source connection.
+
 ## Loading, errors and transport
 
 The projection GET endpoints are deterministic reads and do not use SSE. Cache them by the full URL,
@@ -443,6 +609,8 @@ Use these states:
 - Changing 90 to 30 days fetches different server-calculated figures and updates `calculationReference`.
 - Unknown, measured zero, and a monetary zero are visually and semantically distinct.
 - Market, sector, severity, confidence, and lifecycle filters cannot leak excluded amounts into totals.
+- Declared markets remain visible even when no amount is attributable to them; currencies never appear as market codes.
+- `market` filters explicit market attribution and `currency` filters denomination; neither substitutes for the other.
 - Currency and lifecycle classes remain separate in every rollup.
 - A non-customer subject renders its own state dimension and unit.
 - Keyboard users can reach cells, open detail, inspect lineage/history, and return focus to the originating cell.
@@ -454,13 +622,21 @@ Use these states:
 - Learn Why starts Revenue Intelligence, returns a run immediately, and streams its concise answer through the normal run SSE/reconnect path.
 - The final finding cites the same `evidenceId` returned by the evidence route and contains no monetary figure absent from that bundle.
 - An existing but unmapped source offers `sources.review_capability`; `sources.connect` appears only after all current sources are exhausted and the capability state is `NOT_AVAILABLE`.
+- The overview names each readiness category without exposing raw diagnostics, and its overall state
+  becomes `ACTION_REQUIRED` when at least one workspace action is required.
+- History gaps render as `WAITING_FOR_DATA`; sector-policy and normalized-reader gaps render as
+  unavailable actions with their backend reason.
+- The limitation drawer opens from a readiness row, keeps workspace-data and platform-capability
+  origins distinct, and preserves the current overview and selected cell while loading.
+- No button is enabled for an action whose `eligible` value is false.
 
 ## Phase 7 opportunity and cutover surfaces
 
 `GET /api/v3/opportunities` is a separate positive-polarity read. Do not place its values in the
 Leakage Map grid, subtract them from leakage, or present candidate revenue as missed opportunity.
 Render `candidateCount` when a cell is `POPULATED`. Render money only from `amounts`; an empty
-`amounts` list with candidates means the opportunity is evidence-backed but deliberately unpriced.
+`amounts` list with candidates means preliminary opportunity signals exist but monetary upside is
+not measurable. A signal is not necessarily a qualified opportunity or proven missed revenue.
 
 ```ts
 type RevenueOpportunityPage = {
@@ -538,9 +714,289 @@ RevenueIntelligence__LeakageV2__CaseRollout__Percentage=100
 `CompareRollout` is optional during functional testing. Enable it at `100` only when validating
 legacy-versus-V2 comparison diagnostics.
 
+Rollout selection does not fabricate a read model. After first enabling shadow and read rollout,
+wait for the leakage refresh (every 15 minutes at `:02`, also triggered by the normal datasource
+lifecycle refresh), or in Development/Staging start `POST /api/flolyt/lifecycle/recompute?only=leakage-map`.
+The refresh idempotently provisions an unconfirmed derived sector assignment for an unambiguous
+SaaS & Cloud or Financial Services workspace and publishes the first snapshot. An ambiguous or
+unsupported sector remains unready and requires explicit sector confirmation.
+
 Acceptance additions:
 
 - a growing account can appear as an unpriced opportunity candidate without any money badge;
 - leakage and opportunity are never combined into one number or netted against each other;
 - multi-currency priced opportunities remain separate;
 - cutover readiness displays read and retirement blockers separately and cannot trigger retirement.
+
+## Executive presentation update: market attribution
+
+See [the phased presentation plan](specs-leakage-v2/executive-presentation-plan.md).
+Phase 1 publishes `UNASSIGNED` for amounts without supported market attribution, including historical
+amounts. Render it as **Unassigned market**. `controls.market: null` still means no market filter;
+it does not describe an amount. Use `market=UNASSIGNED` to filter unattributed exposure.
+The existing `rollups` entries with `dimension: market` now retain that bucket. Keep currency as a
+separate dimension, including when several markets use USD. Never assign a market from currency or
+workspace market settings. Old publications remain unassigned until a new compute reads mapped
+market evidence. Posted orders without market and ambiguous account-level aggregates stay unassigned.
+Do not display the first currency bucket as a workspace total. The executive summary/matrix and
+exact calculation contract are subsequent phases; current coverage remains publication-wide.
+
+## Executive presentation Phase 2
+
+`GET /api/v3/leakage` now adds `executive`; existing fields remain compatible. Old saved payloads
+can omit this object. Prefer it for the executive page. `recommendedMode` is `EXPECTED`; an explicit
+mode selection is reflected by `selectedMode` and `selectedAmount`. Gross, expected and net remain
+available side by side. No new frontend repository or components were created here.
+
+| Field | Rendering and scope |
+|---|---|
+| `marketInventory.configuredMarkets` / `configuredMarketCount` | Markets configured by the workspace; not proof of usable data |
+| `marketInventory.measurableMarkets` / `measurableMarketCount` | Markets supported by published observations; a lower bound, not exhaustive coverage |
+| `marketInventory.marketsWithExposure` / `marketsWithExposureCount` | Known markets with positive published gross exposure |
+| `marketInventory.hasUnassignedExposure` | Exposure exists without supported market attribution; exclude this bucket from known-market counts |
+| `totals[]` | Filtered gross exposure, expected loss, net expected loss and selected amount, separated by currency and lifecycle; show every bucket |
+| `markets[]` | One row per configured or evidenced market, plus Unassigned where needed; filtered amounts and affected entities, with publication-level measurement flags |
+| `keyFindings[]` | Largest mechanism within each market/currency/lifecycle scope; never a global cross-currency ranking |
+| `confidence[]` | Filtered finding counts and expected-loss share associated with low-confidence findings, separately by currency/lifecycle |
+| `matrix[]` | Rows carry sector and stage/mechanism/state coordinates; columns carry market, display, reason, facets and currency-separated amounts |
+| `publicationCoverage` / `coverageMessage` | Publication-wide measurement coverage, independent of current filters |
+| `recommendedBreakdown` | Market when more than one market/bucket is relevant, otherwise mechanism |
+| `showSectorBreakdown` | True only when multiple sectors occur in the map |
+
+The inventory's scope is `PUBLICATION`: market/currency/severity/confidence filters do not rewrite
+workspace configuration or claim that excluded markets became unmeasurable. Monetary arrays and
+affected-entity counts honor the selection. An empty amount list is not a monetary zero.
+
+`markets[].attribution` contains `code`, `state` and `basis`. This uses shared `MarketAttribution`
+semantics. Mapped evidence can be assigned; combining conflicting or partly missing evidence is
+ambiguous and has code `UNASSIGNED`. Legacy persisted nulls cannot distinguish absent from ambiguous
+evidence: their public state remains `UNASSIGNED`, basis `NO_SUPPORTED_ATTRIBUTION`. Do not reconstruct
+that distinction from currencies or workspace settings. Typed attribution does not retrofit lost
+provenance into old snapshots.
+
+New detector observations persist attribution state and basis; cell-detail observations expose
+the same `attribution` object. The executive unassigned bucket retains ambiguous observation
+evidence even when it cannot be priced. `hasUnassignedExposure` still means positive monetary
+exposure, not merely an unassigned observation.
+
+Matrix entry facets describe only admitted contributors in that market. Unknown and filtered
+entries do not inherit the publication's `COMPOUND` badge; publication facets remain on the
+existing cell contract. Executive finding messages use “estimated exposure” to avoid presenting
+assumption-based loss estimates as measured losses.
+
+`measurabilityBasis: PUBLISHED_OBSERVATIONS_LOWER_BOUND` means measurement evidence exists for those
+markets, not that all mechanisms can be measured there. Runs emitting zero observations do not prove
+market coverage. Market rows therefore have `coverage: null` and
+`coverageState: MARKET_DENOMINATOR_UNAVAILABLE`. Use the publication-wide coverage panel instead.
+
+Confidence belongs to the selected findings, not to the whole company. Low means below 0.50,
+medium is 0.50 to below 0.75, and high is 0.75 or above. A finding here is a cell/market/currency/
+lifecycle amount; confidence is conservatively the lowest contributing estimate confidence.
+The low-confidence expected-loss share measures exposure associated with those findings, not the
+probability the entire map is wrong. Render, for example, "30% of USD expected loss is associated
+with low-confidence findings". Do not render the global minimum as a workspace confidence score.
+
+Affected-entity counts deduplicate subjects contributing under the published correlation policy
+within each market and subject/grain. Counts exclude suppressed correlated alternatives and filtered
+currency amounts. Keep units separate; do not sum accounts and invoices or add counts across markets
+as a global unique-entity total. Key findings carry their own confidence and cell references.
+
+`fxState: NOT_CONSOLIDATED_NO_APPROVED_FX` means reporting currency is metadata only. There is no
+converted or globally ranked total. Order key-finding groups by market/currency/lifecycle, not by
+numeric amount across currencies. Show expected, gross and net with labels that preserve whether
+the exposure is realized, in flight or latent.
+
+Matrix `publicationDisplay` retains the overall row state. A publication-wide `NO_EXPOSURE` does
+not establish measured zero separately for each configured market. Market entries without scoped
+evidence show `UNKNOWN / NO_MARKET_SCOPED_MEASUREMENT`. `HIDDEN_BY_FILTER` entries carry no amounts;
+populated entries preserve confidence and the LOW_CONFIDENCE facet. Use labels/icons, not color alone.
+Staleness is not inferred from wall-clock time in this deterministic projection; no unsupported
+STALE or WINDOW_CLOSING facet is manufactured.
+
+Frontend acceptance cases: two markets sharing USD; configured market with no observations; exposure
+in an unconfigured source market; Unassigned exposure; currency filtering; a global measured-zero row
+without market evidence; one low-confidence finding beside high-confidence findings; same entity
+under multiple mechanisms; multiple subject units; absent FX; old payload without `executive`.
+## Phase 3: exact calculation drawer
+
+Use the selected amount's `calculationReference` as an opaque value:
+
+`GET /api/v3/leakage/calculation/detail?calculationReference={urlEncodedReference}`
+
+The existing `/calculation` route remains the policy overview. The detail route accepts no
+company ID: authentication determines the workspace. References identify publication, cell,
+market, currency, lifecycle, mode and horizon, and optionally an individual candidate or history
+amount. A later compute does not redirect an old reference to the new active publication.
+References are identifiers, not authorization credentials.
+
+The result contains:
+
+- `amount`: the referenced displayed amount and selected scope.
+- `components`: impact, probability, ramp, recovery, gross/expected/net, selected amount,
+  confidence, selected range and methodology, baseline, assumptions, caveats, source lineage
+  and calculation/detector/mapping/policy versions.
+- `included`, `inclusionReason`, `contribution`, correlation policy and deduplication key:
+  excluded correlated candidates have zero contribution, even when their own estimate is positive.
+- `includedGross/Expected/Net/SelectedAmount`: sums of included components.
+- `reconciliationState`, `selectedAmountDelta`, `reconciliationTolerance`: reconciliation
+  checks all four totals within 0.0001 currency units. Tiny decimal scaling differences in
+  historical amounts are exposed, not silently rounded away.
+
+Show the selected total first, then an expandable input table. Do not invent an aggregate
+probability or confidence for heterogeneous components. Candidate references explain a candidate
+before portfolio correlation; their inclusion reason says so. Correlation membership follows
+the publication even if the requested mode/horizon changes. New publications persist combination
+mode; old ones report `correlationModeBasis: INFERRED_FROM_LEGACY_TOTALS`.
+
+Invalid references, foreign/unpublished publications, missing policy versions, incomplete
+component evidence or totals that cannot reconcile return a failed result. Show unavailable
+detail rather than substituting the newest calculation. Legacy pre-Phase-3 reference strings
+are not resolvable; obtain a new reference by reading the page/history again.
+
+Postman acceptance:
+
+1. GET leakage with a market/currency and mode/horizon selection. Copy the exact reference
+   from its populated cell amount; request calculation/detail with the same authentication.
+2. Confirm included contributions equal the selected figure within the disclosed tolerance.
+   Check the component formulas and inspect excluded candidates where correlation applies.
+3. Repeat for gross, expected, net, and a custom horizon. Each reference preserves its scope.
+4. Compute a new publication, then resolve the saved reference: publication/run and totals stay
+   tied to the old publication. Try a history amount reference as well.
+5. Use another workspace's authentication with the saved reference: no calculation is returned.
+
+## Phase 4: coverage and opportunity explanations
+
+The leakage page now exposes `coverageExplanation`. Lead with `headline` (measured/applicable
+signals), then `effectiveCoverage` and `explanation`. The ratio is publication-wide and describes
+the detectable leakage surface, not revenue coverage. Keep existing capability/scope/freshness/
+quality ratios in an expandable detail area.
+
+`issues[]` includes a stable code, category, business explanation, optional capability/subject/grain,
+missing requirements and an optional action. Group categories as follows:
+
+| Category | UI meaning |
+| --- | --- |
+| WORKSPACE_ACTION | Mapping, source connection or business-scope work |
+| WAITING_FOR_DATA | Refresh or accumulate comparable history |
+| QUALITY | Repair incomplete or invalid mapped fields |
+| PERMISSION | Restore access to the required data |
+| PLATFORM_LIMITATION | Reader or currency-policy support must be supplied by the platform |
+
+Use action labels from the response. Only offer executable actions when `action.eligible` is true;
+otherwise show the unavailable reason. Missing action metadata is not permission to invent a route.
+
+Opportunity cells now expose `explanation`:
+
+- `label`: render **Transaction growth readiness** for the current financial-services rule.
+  Keep `opportunityType: product_deepening` as the stable identifier, not the presentation title.
+- `measurementState`: MEASURED, PARTIAL_SCOPE, PARTIAL_HISTORY, WAITING_FOR_DATA, BLOCKED or
+  NOT_RECORDED for older publications without structured evidence.
+- `valuationState`: UNPRICED_READINESS when readiness candidates exist without monetary upside;
+  NOT_ASSESSED when there is no valuation; PRICED only when actual amounts exist.
+- `summary`, `reasons[]`, `missingRequirements`, `eligibleUnits`, `usableUnits`: explain what
+  was assessed and what blocks it. Reason action labels are guidance, not executable API actions.
+
+Never render unpriced readiness as zero missed revenue, guaranteed expansion, or a full opportunity
+inventory. A negative result means only that this transaction-growth rule found no qualifying subjects
+in its measured scope. Other opportunity detectors remain outside this phase.
+
+The capability requirement now reads transaction-grain evidence using mapped timestamp and account
+identity roles, then aggregates into account readiness. New opportunity publications use definition
+version 1.1.0. Facts must belong to the selected source; an unavailable/mismatched normalized feed is
+a platform limitation, not proof that source data is absent. Resolution messages describe available
+source profiles rather than claiming an exhaustive audit of raw connected data.
+
+Deployment/test checklist:
+
+1. Read existing leakage/opportunity pages: new presentation fields appear; old opportunity snapshots
+   identify structured details as NOT_RECORDED. Old generic absence messages use cautious wording.
+2. Run a fresh compute to reassess the corrected capability requirement and persist structured
+   readiness. Verify mapped TransactionDate (or EventTimestamp/CreatedAt) and account identity.
+3. Verify missing identity mapping, denied permissions, low quality, stale data and absent history
+   produce their own categories, rather than a blanket “connect another source” message.
+4. Growing accounts may yield readiness candidates while amounts remain empty. No upside money
+   should be shown until monetary evidence and calibration are available.
+
+## Canonical Opportunity signals (definition version 1.2.0)
+
+The Opportunity section represents evidence-backed paths to additional uncaptured revenue. Growth
+readiness is one detector; labels, summaries and cards must not assume expansion, engagement or a
+sales-platform source for every opportunity. Lead follow-up, quote progression, pricing, capacity,
+cross-sell and other detectors will use this same shape. Do not require a dedicated CRM when another
+connected source supplies equivalent capabilities.
+
+Each cell has two additive optional fields. They are omitted for older publications until refresh:
+
+```ts
+type OpportunitySignalFields = {
+  signalCount?: number; // Full count of detector signals, NOT unique businesses or monetary values.
+  signalPreview?: OpportunitySignal[]; // At most 20; deterministic ID order, not a revenue ranking.
+};
+type OpportunitySignal = {
+  id: string;
+  detectorId: string;
+  detectorVersion: string;
+  opportunityType: string;
+  label: string;
+  revenuePath: string;
+  subjectType: string;
+  grain: string;
+  unit: string;
+  subjectReference: string;
+  market: string | null;
+  stage: "DETECTED" | "QUALIFIED" | "ACTIVELY_PURSUED" | "CAPTURED"
+    | "MISSED_WINDOW_EXPIRED" | "INVALIDATED";
+  pricingState: "UNPRICED" | "PRICED";
+  valuation: {
+    state: "UNPRICED" | "PRICED";
+    currency: string | null;
+    grossOpportunity: number | null;
+    probabilityOfCapture: number | null;
+    expectedGain: number | null;
+    captureCost: number | null;
+    captureFriction: string | null;
+    netExpectedGain: number | null;
+    pricingEvidence: string[];
+    probabilityEvidence: string[];
+    costEvidence: string[];
+  };
+  confidence: number; // Confidence in the signal, never probability of capture.
+  availableWindow: { opensAtUtc: string | null; closesAtUtc: string | null; evidence: string[] } | null;
+  evidence: string[];
+  owner: { kind: string; reference: string } | null;
+  outcome: {
+    kind: "CAPTURED" | "MISSED_WINDOW_EXPIRED" | "INVALIDATED";
+    reason: string;
+    recordedAtUtc: string;
+    capturedRevenue: number | null;
+    currency: string | null;
+    evidence: string[];
+  } | null;
+  asOfUtc: string;
+};
+```
+
+Use `explanation.summary`, for example **3 opportunity signals detected; monetary upside is not yet
+measurable.** Keep label and revenue path with each preview entry; show qualification and pricing
+separately. `candidateCount` retains its older per-cell distinct-subject meaning; a subject with
+several currency-specific signals can produce several signals. Do not sum signals into unique
+opportunity or account counts across detectors. When preview length is below signal count, label
+it as a preview. No full-signal paging endpoint is introduced in this change.
+
+`UNPRICED_READINESS` remains the legacy cell explanation value for compatibility. New signal-level
+pricing uses `UNPRICED` independent of detector or stage. Unknown probability, cost, window, owner
+and outcome must not be rendered as zero, expired, assigned or captured. Actual captured revenue
+belongs to outcome, not gross or expected upside. Render per-signal monetary values only from
+valuation/outcome; use published `amounts` for aggregate money, never sum the preview. No FX-based
+ranking, cross-detector overlap assumptions, or subtraction from Leakage is authorized.
+
+This release produces only DETECTED/UNPRICED transaction-growth signals. It supplies neither new
+detectors nor assignment/pursuit/outcome mutation endpoints. The window is an opportunity deadline,
+not the historical measurement period. Signal IDs identify publication observations and must not
+be treated as stable workflow IDs across refreshes.
+
+API checks: recompute using the existing authenticated Leakage compute flow, then read
+`GET /api/v3/opportunities`. For supported growth evidence, expect `signalCount > 0`, an unpriced
+preview with evidence, and empty `amounts`. Compare an unavailable capability: it must explain the
+blocker without claiming zero opportunities or demanding a particular vendor. Older publications
+must still read successfully without the optional signal fields.

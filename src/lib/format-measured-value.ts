@@ -3,14 +3,44 @@ export function round(value: number, decimals: number): number {
   return Math.round(value * factor) / factor;
 }
 
+const symbolCache = new Map<string, string>();
+
+/**
+ * The currency's symbol from the browser's own locale data, or its ISO code when it has none:
+ * NGN -> "₦", USD -> "US$", EUR -> "€", CAD -> "CA$", KES -> "KES". Uses `en-NG` because it gives
+ * the unambiguous US$/CA$ forms (plain `en-US` would print a bare "$" for USD and no ₦ for NGN).
+ * A code the runtime does not know falls back to itself instead of throwing.
+ */
+export function currencySymbol(currencyCode: string): string {
+  const cached = symbolCache.get(currencyCode);
+  if (cached) return cached;
+  let symbol = currencyCode;
+  try {
+    symbol =
+      new Intl.NumberFormat("en-NG", { style: "currency", currency: currencyCode })
+        .formatToParts(0)
+        .find((part) => part.type === "currency")?.value ?? currencyCode;
+  } catch {
+    // Not a valid ISO 4217 code: keep the code as given.
+  }
+  symbolCache.set(currencyCode, symbol);
+  return symbol;
+}
+
+/** The text placed before a figure: a symbol sits flush ("₦1.2k"), a code or letter-ending abbreviation takes a space ("KES 1.2k"). */
+export function currencyPrefix(currencyCode: string): string {
+  const symbol = currencySymbol(currencyCode);
+  return /[A-Za-z]$/.test(symbol) ? `${symbol} ` : symbol;
+}
+
 /** ₦ compact formatting for a currency-valued measured figure (e.g. atStake). */
 export function formatCompactCurrency(value: number): string {
   return formatCompactMoney(value, "NGN");
 }
 
-/** Same compact scaling as `formatCompactCurrency`, for a figure in a currency other than the workspace's own — money is never blended across currencies, so the code travels with the number. */
+/** Same compact scaling as `formatCompactCurrency`, for any currency. Money is never blended across currencies, so the symbol (or code, when the currency has no symbol) travels with the number. */
 export function formatCompactMoney(value: number, currencyCode: string): string {
-  const prefix = currencyCode === "NGN" ? "₦" : `${currencyCode} `;
+  const prefix = currencyPrefix(currencyCode);
   const abs = Math.abs(value);
   // Billion breakpoint added 2026-09-05 after a live cohort response returned a lifetime-revenue
   // figure north of ₦2B — without it this rendered as "₦2178M" instead of "₦2.18B".
@@ -31,7 +61,7 @@ export function formatCompactMoney(value: number, currencyCode: string): string 
  * compaction (e.g. the V2 leakage map's "Total at risk" card) — every other money display on the
  * app stays on `formatCompactMoney`, this is deliberately not the default. */
 export function formatMoney(value: number, currencyCode: string): string {
-  const prefix = currencyCode === "NGN" ? "₦" : `${currencyCode} `;
+  const prefix = currencyPrefix(currencyCode);
   return `${prefix}${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 

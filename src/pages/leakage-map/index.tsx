@@ -1,265 +1,277 @@
-import * as React from "react";
+import { Link } from "react-router-dom";
+import { AlertTriangle, ArrowRight } from "lucide-react";
 
-import { StageRail } from "@/pages/leakage-map/stage-rail";
-import { LeakageMatrix } from "@/pages/leakage-map/matrix";
-import { MarketBreakdown } from "@/pages/leakage-map/market-breakdown";
-import { StatusLine } from "@/pages/leakage-map/status-line";
-import { ControlsBar } from "@/pages/leakage-map/controls-bar";
-import { CoveragePanel } from "@/pages/leakage-map/coverage-panel";
-import { PageStateBanner } from "@/pages/leakage-map/page-state-banner";
-import { RecomputingToast } from "@/pages/leakage-map/recomputing-toast";
+import { cn } from "@/lib/utils";
+import { usePageBreadcrumb, type Crumb } from "@/components/breadcrumb-context";
+import { Callout } from "@/components/ui/rail";
 import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
-import { LeakageV2CellGrid } from "@/pages/leakage-map/v2-cell-grid";
-import { LeakageV2Rollups } from "@/pages/leakage-map/v2-rollups";
-import { V2KpiStrip } from "@/pages/leakage-map/v2-kpi-strip";
-import { V2CoverageCard, V2LimitationsCard } from "@/pages/leakage-map/v2-coverage-limitations";
-import { V2StatusLine } from "@/pages/leakage-map/v2-status-line";
-import { OpportunitiesPanel } from "@/pages/leakage-map/opportunities-panel";
-import { useGetOpportunities } from "@/features/opportunities/use-get-opportunities";
-import { V2ActiveFilters } from "@/pages/leakage-map/v2-active-filters";
-import { V2FiltersMenu } from "@/pages/leakage-map/v2-filters-menu";
-import { V2PageSkeleton } from "@/pages/leakage-map/v2-page-skeleton";
-import {
-  toGetLeakageV2Params,
-  v2FilterStateFromControls,
-  type LeakageV2FilterState,
-} from "@/pages/leakage-map/v2-filters";
-import { useGetLeakageReport } from "@/features/leakage/use-get-leakage-report";
-import {
-  DEFAULT_FILTERS,
-  FALLBACK_HORIZON_OPTIONS,
-  FALLBACK_WINDOW_OPTIONS,
-  rangeSelectionLabel,
-  toGetLeakageParams,
-  type LeakageFilterState,
-} from "@/pages/leakage-map/filters";
-import type { GetLeakageStageParams } from "@/services/api/leakage/get-leakage-stage";
+import { CellDrawer } from "@/pages/leakage-map/drawer/cell-drawer";
+import { CalculationDrawer } from "@/pages/leakage-map/drawer/calculation-drawer";
+import { useCalculationParam } from "@/pages/leakage-map/drawer/use-calculation-param";
+import { CoverageDrawer } from "@/pages/leakage-map/drawer/coverage-drawer";
+import { useCoverageParam } from "@/pages/leakage-map/drawer/use-coverage-param";
+import { DiagnosticsDrawer } from "@/pages/leakage-map/drawer/diagnostics-drawer";
+import { DIAGNOSTICS_ALL, useDiagnosticsParam } from "@/pages/leakage-map/drawer/use-diagnostics-param";
+import { useCellDrawerParam } from "@/pages/leakage-map/drawer/use-cell-drawer-param";
+import { ByMarketSection } from "@/pages/leakage-map/by-market-section";
+import { ExpectedLossSection } from "@/pages/leakage-map/expected-loss-section";
+import { LeakCardsSection } from "@/pages/leakage-map/leak-cards-section";
+import { PublicationFooter } from "@/pages/leakage-map/publication-footer";
+import { MeasurementSection } from "@/pages/leakage-map/measurement-section";
+import { ReadinessSection } from "@/pages/leakage-map/readiness-section";
+import { KeyFindingsSection } from "@/pages/leakage-map/key-findings-section";
+import { BusyRegion } from "@/pages/leakage-map/busy-region";
+import { FilterBar } from "@/pages/leakage-map/filter-bar";
+import { useLeakageFilters } from "@/pages/leakage-map/filters";
+import { formatAsOf, marketName } from "@/pages/leakage-map/format";
+import { MarketHeader, marketHasData, NothingMeasured } from "@/pages/leakage-map/market-view";
+import { LeakageMapSkeleton } from "@/pages/leakage-map/page-skeleton";
 
 /**
- * Rebuilt from flolyt-figma-designs/New-pages-pattern/leakage-new/svg/01–12 — adds a live status
- * line, real filters, a fully dynamic matrix, and the coverage panel and market breakdown that
- * carry the page's honesty.
- *
- * Filters, the page shell (loading via the floating `RecomputingToast`, error/empty via
- * `PageStateBanner`, status line), the stage rail, and the matrix (grids/cells, dynamic
- * rows/columns, cell detail, "start a room") are all wired to the real `GET /leakage` — see
- * docs/leakage-map/build-plan.md Steps 1–4. Step 5 wires the coverage panel and "how is this
- * calculated" dialog to `GET /leakage`'s own `coverage`/`calculation`, and the market breakdown to
- * `GET /leakage/report`'s per-market `gross` (a second, independent fetch — that endpoint's own
- * window/horizon, not the page's severity/confidence/calculate filters, which it doesn't take).
- * The old mock's "actions triggered" panel and shared page footer are dropped entirely — no
- * leakage endpoint carries SLA/ownership-queue data, so there was nothing to wire them to.
+ * Rebuild in progress, one section at a time against the Phase 1-4 contract (see
+ * docs/leakage-map/v3-rebuild-plan.md and docs/leakage-map/v3-build-tracker.md). Done so far: the
+ * shell, the filter bar, the expected-loss cards, the by-market strip, key findings, the leak cards, readiness and measurement. The sections below the bar are added next, in the order the tracker lists.
  */
 export default function LeakageMap() {
-  const [filters, setFilters] = React.useState<LeakageFilterState>(DEFAULT_FILTERS);
-  const handleFiltersChange = (patch: Partial<LeakageFilterState>) =>
-    setFilters((prev) => ({ ...prev, ...patch }));
+  const { filters, params, setMarket, setCurrency, setLocalFilters, clearMoreFilters } = useLeakageFilters();
+  const { data, error, isLoading, isFetching, isPlaceholderData, refetch } = useGetLeakage(params);
+  // A changed filter shows the previous figures while the new ones load; until they land, nothing is clickable.
+  // A quiet background refresh of the same figures (the tab regaining focus) does not lock the page.
+  const isSwitching = isFetching && isPlaceholderData;
+  const drawer = useCellDrawerParam();
+  const diagnostics = useDiagnosticsParam();
+  const coverageSheet = useCoverageParam();
+  const calculation = useCalculationParam();
 
-  // V2's filter state is `null` until a V2 response has been seen once — the very first request on
-  // page load always goes out V1-shaped (`v1Params` below), since there's no way to know yet which
-  // contract a workspace is on. Once a V2 response arrives, it's seeded from the server's own
-  // currently-active `controls` (not a hardcoded default) and takes over building the main query's
-  // params from then on — see docs/leakage-map/v2-build-plan.md Step 3.
-  const [v2Filters, setV2Filters] = React.useState<LeakageV2FilterState | null>(null);
-  const handleV2FiltersChange = (patch: Partial<LeakageV2FilterState>) =>
-    setV2Filters((prev) => (prev ? { ...prev, ...patch } : prev));
-  // The server's own first-load selection, kept as the "default" the active-filter chips reset to.
-  const [v2Defaults, setV2Defaults] = React.useState<LeakageV2FilterState | null>(null);
+  const crumbs: Crumb[] = filters.market
+    ? [
+        { label: "Leakage Map", to: "/leakage-map" },
+        { label: "All markets", to: "/leakage-map" },
+        { label: marketName(filters.market) },
+      ]
+    : [{ label: "Leakage Map" }];
+  usePageBreadcrumb(crumbs);
 
-  // Always V1-shaped — used for the initial probe request and for the V1-only auxiliary endpoints
-  // (report/stage/cell) regardless of which branch ends up rendering.
-  const v1Params = toGetLeakageParams(filters);
-  const params = v2Filters ? toGetLeakageV2Params(v2Filters) : v1Params;
-  const { data: leakageResponse, isLoading, isFetching, isError, error, refetch } = useGetLeakage(params);
-  const leakageData = leakageResponse?.data;
-  // `GET /leakage` is dual-contract — a workspace flagged into Revenue Leakage V2 gets a
-  // differently-shaped `contractVersion: "2.0"` response from the same endpoint. Never read V1
-  // fields (stages, grids, markets, …) without this narrowing — they don't exist on the V2 shape.
-  const isV2Response = !!leakageData && isLeakagePageV2(leakageData);
-  const leakage = leakageData && !isV2Response ? leakageData : undefined;
-  const leakageV2 = leakageData && isV2Response ? leakageData : undefined;
+  if (isLoading && !data) return <LeakageMapSkeleton />;
 
-  React.useEffect(() => {
-    if (leakageV2 && !v2Filters) {
-      const seeded = v2FilterStateFromControls(leakageV2.controls);
-      setV2Filters(seeded);
-      setV2Defaults(seeded);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [leakageV2]);
-
-  // Separate rollout flag from LeakageV2 — only requested once we're already on a confirmed V2
-  // workspace, per docs/leakage-map/v2-build-plan.md Step 5. Errors stay silent (see the hook) so
-  // an unflagged workspace just doesn't show the panel rather than surfacing a scary error.
-  const { data: opportunitiesResponse } = useGetOpportunities(!!leakageV2);
-  const opportunities = opportunitiesResponse?.data;
-
-  // Independent of the page's own severity/confidence/calculate filters — GET /leakage/report only
-  // takes window/horizon. Powers the market breakdown only; not on the loading/error critical path.
-  const { data: reportResponse } = useGetLeakageReport({ window: v1Params.window, horizon: v1Params.horizon });
-  const report = reportResponse?.data;
-  // GET /leakage/stages/{key} and GET /leakage/cells/{...} only take window/market/horizon — not
-  // `calculate`/severity/confidence, which `v1Params` also carries for the page-level GET /leakage.
-  const stageParams: GetLeakageStageParams = { window: v1Params.window, horizon: v1Params.horizon, market: v1Params.market };
-  const cellParams = { window: v1Params.window, horizon: v1Params.horizon };
-
-  // The active market's currency scopes which of a (possibly multi-currency) grid's cells render
-  // — unconfirmed live, since every `markets[]` pulled so far was empty. Falls back through the
-  // primary market, then any market, then any other top-level field that carries a real currency
-  // (`bySeverity`/`ladders` are workspace-wide, not grid/cell-dependent, so they can be populated
-  // even when `markets`/`cells` are both empty, as seen live). `undefined` here is a genuine "we
-  // don't know yet" — matrix.tsx must not fall back to an invented currency for the cell-detail
-  // fetch, since a wrong path segment there is worse than a disabled cell.
-  const activeCurrency =
-    (filters.market ? leakage?.markets.find((m) => m.countryCode === filters.market)?.currency : undefined) ??
-    leakage?.markets.find((m) => m.isPrimary)?.currency ??
-    leakage?.markets[0]?.currency ??
-    leakage?.bySeverity[0]?.currency ??
-    leakage?.ladders[0]?.currency;
-
-  const fallbackWindowLabel = rangeSelectionLabel(filters.window, "window");
-  const fallbackHorizonLabel = rangeSelectionLabel(filters.horizon, "horizon");
-
-  // True first paint only — `isLoading` is `status === "pending"` (no data yet at all), never true
-  // again on a filter-driven refetch since `placeholderData` keeps the previous response around
-  // (see `use-get-leakage.ts`), which is what lets `RecomputingToast` handle those instead. The
-  // page's dual contract (V1 vs V2) isn't knowable yet at this point — see `v2-page-skeleton.tsx`'s
-  // own comment for why it commits to the V2 shape anyway.
-  if (isLoading && !isError) {
-    return <V2PageSkeleton />;
+  if (!data) {
+    return (
+      <FullPageError
+        message={error?.message ?? "Something went wrong loading the leakage map."}
+        onRetry={() => void refetch()}
+      />
+    );
   }
 
-  // Unconfirmed live (every real pull so far had customers) — flagged in
-  // docs/leakage-map/build-plan.md Step 2.
-  const isEmpty = !isFetching && !isError && !!leakage && leakage.customerCount === 0;
-
-  if (isEmpty) {
+  if (!data.succeeded) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
-        <PageStateBanner state="empty" />
+      <FullPageError
+        message={data.messages[0] ?? "The leakage map could not be loaded for this workspace."}
+        onRetry={() => void refetch()}
+      />
+    );
+  }
+
+  const page = data.data;
+
+  if (!isLeakagePageV2(page)) {
+    return (
+      <div className="space-y-4">
+        <Header title="Revenue leakage map" description="Where revenue is leaking, and what to do about it." />
+        <Callout tone="amber" title="This workspace is on the legacy leakage map">
+          The redesigned map reads the V2 leakage publication, which has not been enabled for this workspace yet.
+        </Callout>
       </div>
     );
   }
 
-  // The very first load failed, so there's no response to lay out. Rendering the normal page here
-  // would just leave its skeleton placeholders on screen forever next to an error that has already
-  // finished failing, so show only the title and the banner instead.
-  if (isError && !leakageData) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
-        <PageStateBanner state="error" errorMessage={error?.message} retrying={isFetching} onRetry={() => refetch()} />
-      </div>
-    );
-  }
-
-  // V2 branch — restyled 2026-10-01 to match V1's visual language (cascading Filters menu, the
-  // shared KpiCards stat-tile component, one legible status line) instead of the first pass's raw
-  // <select> row and chip-per-fact cell layout. See docs/leakage-map/v2-build-plan.md Steps 2–4.
-  if (leakageV2) {
-    // Covers the one-frame gap between a V2 response first arriving and the seeding effect above
-    // committing — keeps the Filters menu always rendering a valid, server-sourced selection
-    // rather than flashing empty.
-    const effectiveV2Filters = v2Filters ?? v2FilterStateFromControls(leakageV2.controls);
-    const hiddenCellCount = leakageV2.cells.filter((cell) => cell.state.display === "HIDDEN_BY_FILTER").length;
-    // Same selection the page itself is rendering under — a cell's evidence sheet should never show
-    // a different mode/horizon than the tile it was opened from.
-    const cellEvidenceParams = {
-      mode: effectiveV2Filters.mode,
-      horizon: effectiveV2Filters.horizon,
-      horizonDays: effectiveV2Filters.horizon === "custom" ? effectiveV2Filters.horizonDays : undefined,
-      lifecycleClass: effectiveV2Filters.lifecycleClass ?? undefined,
-    };
-
-    return (
-      <div className="space-y-6">
-        <RecomputingToast visible={!isError && isFetching} horizonLabel="this view" />
-        {isError && (
-          <PageStateBanner state="error" hasData errorMessage={error?.message} retrying={isFetching} onRetry={() => refetch()} />
-        )}
-
-        <div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
-              <V2StatusLine controls={leakageV2.controls} publication={leakageV2.publication} hiddenCount={hiddenCellCount} />
-            </div>
-            <V2FiltersMenu controls={leakageV2.controls} filters={effectiveV2Filters} onFiltersChange={handleV2FiltersChange} />
-          </div>
-          {/* Its own row under the header, so any number of chips never squeezes the title block. */}
-          <V2ActiveFilters
-            controls={leakageV2.controls}
-            filters={effectiveV2Filters}
-            defaults={v2Defaults}
-            onFiltersChange={handleV2FiltersChange}
-          />
-        </div>
-
-        <V2KpiStrip cells={leakageV2.cells} rollups={leakageV2.rollups} coverage={leakageV2.coverage} controls={leakageV2.controls} />
-        <LeakageV2CellGrid cells={leakageV2.cells} params={cellEvidenceParams} />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <V2CoverageCard coverage={leakageV2.coverage} />
-          <V2LimitationsCard limitations={leakageV2.limitations} cells={leakageV2.cells} />
-        </div>
-        <LeakageV2Rollups rollups={leakageV2.rollups} />
-        {opportunities && <OpportunitiesPanel cells={opportunities.cells} limitations={opportunities.limitations} />}
-      </div>
-    );
-  }
+  const recommendedMode = page.executive?.recommendedMode ?? null;
+  // A selected market nothing is attributed to: show why, not empty sections.
+  const showNothingMeasured = !!filters.market && !!page.executive && !marketHasData(page.executive, filters.market);
 
   return (
-    <div className="space-y-6">
-      <RecomputingToast
-        visible={!isError && isFetching}
-        horizonLabel={leakage?.horizon.label ?? fallbackHorizonLabel}
-      />
-      {isError && (
-        <PageStateBanner state="error" hasData errorMessage={error?.message} retrying={isFetching} onRetry={() => refetch()} />
+    <div className="space-y-5">
+      {filters.market ? (
+        <MarketHeader
+          market={filters.market}
+          executive={page.executive}
+          controls={page.controls}
+          coverage={page.coverage}
+          asOf={page.publication.asOfUtc}
+          onClear={() => setMarket(null)}
+          onOpenCoverage={() => coverageSheet.openCoverage()}
+        />
+      ) : (
+        <Header
+          title="Revenue leakage map"
+          description="Where revenue is leaking across the customer journey, each currency on its own."
+          asOf={page.publication.asOfUtc}
+        />
       )}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-[17px] font-semibold text-ink">Revenue leakage map</h1>
-          <StatusLine
-            calcMode={filters.calculate}
-            windowLabel={leakage?.window.label ?? fallbackWindowLabel}
-            horizonLabel={leakage?.horizon.label ?? fallbackHorizonLabel}
-            customerCount={leakage?.customerCount}
-            refreshedAtUtc={leakage?.refreshedAtUtc}
-            coveragePercent={leakage?.coverage.percent}
-            cellsHidden={leakage?.filter.cellsHidden ?? 0}
-            minSeverity={filters.minSeverity}
-            minConfidence={filters.minConfidence}
-          />
+      {/* A failed refetch keeps the last good projection on screen and offers a retry, per the contract. */}
+      {error && (
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-panel border border-rose-border bg-rose-bg px-3 py-2 text-[11.5px] text-ink-2"
+        >
+          <AlertTriangle className="size-3.5 shrink-0 text-rose" />
+          <span className="flex-1">{error.message} Showing the last loaded figures.</span>
+          <button type="button" onClick={() => void refetch()} className="font-medium text-ink hover:underline">
+            Retry
+          </button>
         </div>
+      )}
 
-        <ControlsBar
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          windowOptions={leakage?.window.options ?? FALLBACK_WINDOW_OPTIONS}
-          horizonOptions={leakage?.horizon.options ?? FALLBACK_HORIZON_OPTIONS}
-          markets={leakage?.markets ?? []}
-          currentWindowLabel={leakage?.window.label}
-          currentHorizonLabel={leakage?.horizon.label}
-          calculation={leakage?.calculation}
-        />
-      </div>
-
-      <StageRail stages={leakage?.stages} callouts={leakage?.callouts} stageParams={stageParams} />
-
-      <LeakageMatrix
-        grids={leakage?.grids}
-        currency={activeCurrency}
-        cellParams={cellParams}
-        shadingCaptionLabel={`${(leakage?.horizon.label ?? fallbackHorizonLabel).toLowerCase()} exposure`}
-        cellsHidden={leakage?.filter.cellsHidden ?? 0}
+      <BusyRegion busy={isSwitching} className="space-y-5">
+      <FilterBar
+        controls={page.controls}
+        filters={filters}
+        recommendedMode={recommendedMode}
+        isRefreshing={isFetching}
+        onMarketChange={setMarket}
+        onCurrencyChange={setCurrency}
+        onChange={setLocalFilters}
+        onClearMore={clearMoreFilters}
       />
 
-      <CoveragePanel coverage={leakage?.coverage} />
+      <div className={cn("space-y-5 transition-opacity", isSwitching && "opacity-60")}>
+        {showNothingMeasured && filters.market && page.executive ? (
+          <NothingMeasured market={filters.market} executive={page.executive} onSelectMarket={setMarket} />
+        ) : (
+          <>
+        <ExpectedLossSection
+          executive={page.executive}
+          summary={page.summary}
+          controls={page.controls}
+          filters={filters}
+          coverageExplanation={page.coverageExplanation}
+        />
+        {/* The all-markets view only: a single market's own view replaces this overview strip. */}
+        {!filters.market && (
+          <ByMarketSection
+            executive={page.executive}
+            controls={page.controls}
+            selectedMarket={filters.market}
+            onSelectMarket={setMarket}
+          />
+        )}
+        <KeyFindingsSection
+          executive={page.executive}
+          cells={page.cells}
+          controls={page.controls}
+          selectedMarket={filters.market}
+        />
+        <LeakCardsSection
+          cells={page.cells}
+          executive={page.executive}
+          controls={page.controls}
+          onOpenDetails={drawer.openCell}
+          onOpenCalculation={(reference) => calculation.openCalculation(reference)}
+        />
+          </>
+        )}
+        <div className="grid items-start gap-5 lg:grid-cols-2">
+          <ReadinessSection
+            readiness={page.readiness}
+            diagnosticCodes={page.limitationSummary.items.map((item) => item.code)}
+            onOpenDiagnostics={diagnostics.openDiagnostics}
+          />
+          <MeasurementSection
+            summary={page.summary}
+            coverage={page.coverage}
+            coverageExplanation={page.coverageExplanation}
+            limitationSummary={page.limitationSummary}
+            onOpenDiagnostics={() => diagnostics.openDiagnostics(DIAGNOSTICS_ALL)}
+            onOpenCoverage={() => coverageSheet.openCoverage()}
+          />
+        </div>
+        <PublicationFooter publication={page.publication} contractVersion={page.contractVersion} />
+      </div>
+      </BusyRegion>
 
-      <MarketBreakdown markets={report?.markets} />
+      <CalculationDrawer
+        reference={calculation.reference}
+        cells={page.cells}
+        fromCell={calculation.fromCellId ? page.cells.find((c) => c.id === calculation.fromCellId) : undefined}
+        onBack={() => calculation.fromCellId && drawer.showCell(calculation.fromCellId)}
+        onClose={calculation.closeCalculation}
+      />
+
+      <CoverageDrawer
+        tab={coverageSheet.tab}
+        onTabChange={coverageSheet.setCoverageTab}
+        onClose={coverageSheet.closeCoverage}
+        coverage={page.coverage}
+        coverageExplanation={page.coverageExplanation}
+      />
+
+      <DiagnosticsDrawer
+        summary={page.limitationSummary}
+        filter={diagnostics.diagnostics}
+        onFilterChange={diagnostics.setDiagnosticsFilter}
+        onClose={diagnostics.closeDiagnostics}
+      />
+
+      <CellDrawer
+        cells={page.cells}
+        controls={page.controls}
+        filters={filters}
+        currentSnapshotId={page.publication.snapshotId}
+        cellId={drawer.cellId}
+        panel={drawer.panel}
+        onClose={drawer.close}
+        onShowCase={drawer.showCase}
+        onShowCell={drawer.showCell}
+        onOpenCalculation={calculation.openCalculation}
+      />
+    </div>
+  );
+}
+
+function Header({ title, description, asOf }: { title: string; description: string; asOf?: string }) {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+      <div>
+        <h1 className="text-[17px] font-semibold text-ink">{title}</h1>
+        <p className="mt-1 text-[11.5px] text-ink-3">
+          {description}
+          {asOf && (
+            <>
+              {" "}
+              <span className="font-mono text-[10.5px] text-ink-4">As of {formatAsOf(asOf)}</span>
+            </>
+          )}
+        </p>
+      </div>
+      {/* The only in-app way into /missed-opportunities: a separate, positive-polarity read kept out of the map. */}
+      <Link
+        to="/missed-opportunities"
+        className="flex shrink-0 items-center gap-1 text-[11.5px] font-medium text-ultra hover:underline"
+      >
+        Missed opportunities
+        <ArrowRight className="size-3" />
+      </Link>
+    </div>
+  );
+}
+
+function FullPageError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-card border border-line bg-paper px-6 py-12 text-center">
+      <AlertTriangle className="size-5 text-rose" />
+      <div>
+        <h2 className="text-[13px] font-semibold text-ink">The leakage map could not be loaded</h2>
+        <p className="mt-1 text-[11.5px] text-ink-3">{message}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="rounded-control border border-line bg-paper px-3 py-1.5 text-[12px] font-medium text-ink hover:border-ink-4"
+      >
+        Try again
+      </button>
     </div>
   );
 }

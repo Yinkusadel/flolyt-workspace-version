@@ -37,6 +37,104 @@ export interface OpportunityAmount {
   candidateCount: number;
 }
 
+// ===== Added 2026-10-04 (Phase 4 + canonical signals, definition version 1.2.0). Both additions are
+// optional: older publications omit them until a refresh, and must still read successfully.
+
+export type OpportunityMeasurementState =
+  | "MEASURED"
+  | "PARTIAL_SCOPE"
+  | "PARTIAL_HISTORY"
+  | "WAITING_FOR_DATA"
+  | "BLOCKED"
+  | "NOT_RECORDED";
+
+/** `UNPRICED_READINESS` is the legacy cell-level value; signal-level pricing uses `UNPRICED`/`PRICED`. */
+export type OpportunityValuationState = "UNPRICED_READINESS" | "NOT_ASSESSED" | "PRICED";
+
+/**
+ * `reasons[]` elements confirmed live 2026-10-04 (see OpportunityExplanationReason);
+ * `missingRequirements` was empty in that capture, so its string element type is still unseen.
+ */
+export interface OpportunityExplanation {
+  /** Render "Transaction growth readiness" for the current rule; `opportunityType` stays the stable id. */
+  label: string;
+  measurementState: OpportunityMeasurementState;
+  valuationState: OpportunityValuationState;
+  summary: string;
+  reasons: OpportunityExplanationReason[];
+  missingRequirements: string[];
+  /** Null when the publication recorded no structured readiness evidence (seen live 2026-10-04). */
+  eligibleUnits: number | null;
+  usableUnits: number | null;
+}
+
+/** Shape confirmed live 2026-10-04 on a legacy publication; `actionLabel` is guidance text, never an API action. */
+export interface OpportunityExplanationReason {
+  code: string;
+  category: string;
+  message: string;
+  actionLabel?: string | null;
+}
+
+export type OpportunitySignalStage =
+  | "DETECTED"
+  | "QUALIFIED"
+  | "ACTIVELY_PURSUED"
+  | "CAPTURED"
+  | "MISSED_WINDOW_EXPIRED"
+  | "INVALIDATED";
+
+export interface OpportunitySignalValuation {
+  state: "UNPRICED" | "PRICED";
+  currency: string | null;
+  grossOpportunity: number | null;
+  probabilityOfCapture: number | null;
+  expectedGain: number | null;
+  captureCost: number | null;
+  captureFriction: string | null;
+  netExpectedGain: number | null;
+  pricingEvidence: string[];
+  probabilityEvidence: string[];
+  costEvidence: string[];
+}
+
+export interface OpportunitySignalOutcome {
+  kind: "CAPTURED" | "MISSED_WINDOW_EXPIRED" | "INVALIDATED";
+  reason: string;
+  recordedAtUtc: string;
+  capturedRevenue: number | null;
+  currency: string | null;
+  evidence: string[];
+}
+
+/**
+ * Signal IDs identify publication observations, never stable workflow IDs across refreshes. Unknown
+ * probability/cost/window/owner/outcome must not be rendered as zero, expired, assigned or captured.
+ * `confidence` is confidence in the signal, never probability of capture.
+ */
+export interface OpportunitySignal {
+  id: string;
+  detectorId: string;
+  detectorVersion: string;
+  opportunityType: string;
+  label: string;
+  revenuePath: string;
+  subjectType: string;
+  grain: string;
+  unit: string;
+  subjectReference: string;
+  market: string | null;
+  stage: OpportunitySignalStage;
+  pricingState: "UNPRICED" | "PRICED";
+  valuation: OpportunitySignalValuation;
+  confidence: number;
+  availableWindow: { opensAtUtc: string | null; closesAtUtc: string | null; evidence: string[] } | null;
+  evidence: string[];
+  owner: { kind: string; reference: string } | null;
+  outcome: OpportunitySignalOutcome | null;
+  asOfUtc: string;
+}
+
 export interface OpportunityCell {
   id: string;
   polarity: OpportunityPolarity;
@@ -50,6 +148,12 @@ export interface OpportunityCell {
   candidateCount: number;
   amounts: OpportunityAmount[];
   limitations: string[];
+  /** Added 2026-10-04. Omitted/`NOT_RECORDED` structured detail on older publications. */
+  explanation?: OpportunityExplanation;
+  /** Full count of detector signals, NOT unique businesses or money. Never sum across detectors. */
+  signalCount?: number;
+  /** At most 20, deterministic ID order (not a revenue ranking). Label it a preview when shorter than `signalCount`. */
+  signalPreview?: OpportunitySignal[];
 }
 
 export interface RevenueOpportunityPage {

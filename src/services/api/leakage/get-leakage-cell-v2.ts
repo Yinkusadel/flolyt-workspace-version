@@ -3,6 +3,7 @@ import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
 import type { LeakageV2Amount, LeakageV2Availability, LeakageV2Cell, LeakageV2Publication } from "@/services/api/leakage/get-leakage";
+import type { LeakageMarketAttribution } from "@/services/api/leakage/leakage-executive-types";
 import type { RevenueLeakCaseStatus } from "@/services/api/leakage/leakage-case-types";
 
 // Scaffolded 2026-10-01, not wired into a page yet — see docs/leakage-map/v2-build-plan.md.
@@ -30,6 +31,12 @@ export interface LeakageV2CellSignal {
   lineageReferences: string[];
   detectorVersion: string;
   baselineReference: string;
+  /**
+   * Added 2026-10-04: the doc says cell-detail observations expose the same `attribution` object as
+   * `executive.markets[]`, but its own TS block for this signal omits it, so it stays optional until a
+   * live cell-detail response confirms it. Observations from before the Phase 1 recompute may lack it.
+   */
+  attribution?: LeakageMarketAttribution;
 }
 
 export interface LeakageV2LineageAction {

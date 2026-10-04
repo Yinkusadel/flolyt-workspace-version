@@ -527,3 +527,114 @@ live in `leakage-case-types.ts`, imported by every case-lifecycle file above (sa
 **Status: documented, scaffolded (service + hook, `npx tsc -b` clean), 0/14 wired, 0/14 live-verified.**
 See [docs/leakage-map/v2-build-plan.md](../leakage-map/v2-build-plan.md) — wiring any of these is a
 new step, not yet started.
+
+## V2 update 2026-10-04 (Phase 1-4 handoff)
+
+Source: the replaced [`leakage-map-v2-frontend-handoff.md`](../leakage-map/leakage-map-v2-frontend-handoff.md).
+Context and decisions: [`docs/leakage-map/v3-rebuild-plan.md`](../leakage-map/v3-rebuild-plan.md).
+**Status for everything in this section: documented, service + hook scaffolded (`npx tsc -b` clean),
+not wired, not live-verified.** The old page that consumed the V2 types is archived; the live
+`/leakage-map` is a stub pending the rebuild.
+
+### GET /api/v3/leakage: what changed
+
+- **Request:** new `currency?` query param (denomination), separate from `market?` (explicit
+  attribution). Send both when both are selected (`market=NG&currency=NGN`). `market=UNASSIGNED`
+  filters unattributed exposure. Type: `GetLeakageV2Params.currency`.
+- **`controls`:** adds `currency`, `currencies[]` (independent vocabulary), `marketOptions[]`
+  (`{ market, currency, isPrimary }`, render the market control from this and keep the pair), and
+  `reportingCurrency` (display context only, never permission to convert or merge).
+- **`rollups`:** `dimension` gains `"currency"`; the `market` rollup now retains the `UNASSIGNED` bucket
+  ("Unassigned market"). Never add rollups across currency, market or lifecycle class.
+- **New blocks on `LeakagePageV2`:**
+  - `summary`: `measurementState`, `actionableExposure[]` (headline money cards, one exact
+    currency+market+lifecycle each), `materialLeaks[]` (groups of `items[]` with `rankWithinScope`,
+    meaningful only within its group), `measurement` (six separately named counts, never add them).
+    A null `market` here means the currency was proven but not the market: label it
+    "Market un-attributed", never assign it to the primary market.
+  - `readiness`: `state`, three counts, `items[]` (category, state, origin, message, affectedCount,
+    currencies, `action`). Enable an action only when `action.eligible`; otherwise show
+    `unavailableReason`; never invent a route.
+  - `limitationSummary`: `detailCount`, `items[]`, `detailsPath`. **Replaces** the old `limitations`
+    strings for display; never render both. The page stays bounded however many diagnostics exist.
+  - `executive?` (Executive Phase 2): `marketInventory`, `totals[]`, `markets[]`, `keyFindings[]`,
+    `confidence[]`, `matrix[]`, `publicationCoverage`, `coverageMessage`, `recommendedBreakdown`,
+    `showSectorBreakdown`, `fxState`. Omitted on old saved payloads. Rules: no cross-currency
+    total/ranking (`fxState: NOT_CONSOLIDATED_NO_APPROVED_FX`); an empty amount list is not a monetary
+    zero; never show a global confidence score (use the low-confidence share per currency/lifecycle);
+    market rows carry `coverage: null` / `coverageState: MARKET_DENOMINATOR_UNAVAILABLE`.
+  - `coverageExplanation?` (Phase 4): `headline`, `effectiveCoverage`, `explanation`, `issues[]`
+    (category: `WORKSPACE_ACTION | WAITING_FOR_DATA | QUALITY | PERMISSION | PLATFORM_LIMITATION`).
+- **Confirmed live 2026-10-04** against a real V2 payload (thin test workspace, `financial-services`,
+  `PARTIALLY_MEASURED`): `controls`, `summary`, `readiness`, `rollups`, `limitationSummary`, `executive`
+  and `coverageExplanation` all matched the types except where noted below, so `executive` and
+  `coverageExplanation` (which the doc gives no TS block for) are now typed from the real response.
+  **Only one workspace shape has been seen**; re-check on one with market-attributed data.
+  Differences from the doc, found live:
+  1. **Unattributed exposure is the string `"UNASSIGNED"`, not `null`**, in `summary.actionableExposure[].market`,
+     `amounts[].market`, rollups and matrix. The doc's prose says null. Treat both as "Unassigned market".
+  2. **`executive` money fields are `grossExposure` / `expectedLoss` / `netExpectedLoss` / `selectedAmount`**
+     (per currency + lifecycle bucket), not gross/expected/net. There is no top-level `executive.selectedAmount`.
+  3. **`executive.markets[]`** rows are `{ attribution{code,state,basis}, isConfigured, hasMeasurementEvidence,
+     amounts[], affectedEntities[{subjectType,grain,unit,count}], coverage: null, coverageState, largestMechanisms[] }`.
+     `keyFindings[]` and `largestMechanisms[]` share one shape (market, currency, lifecycleClass, mechanism,
+     label, selectedAmount, mode, confidence, confidenceLevel, cellIds, message).
+  4. **`executive.confidence[]`** carries `lowConfidenceExpectedLossShare` as 0..1 plus counts and `basis`.
+  5. **`executive.matrix[]`** rows: `cellId`, `sector`, `coordinate`, `publicationDisplay`,
+     `markets[{ market, display, reason, facets, amounts }]`. Facets include `LOW_CONFIDENCE` as well as
+     `COMPOUND`. Every non-attributed market (KE, NG here) showed `UNKNOWN / NO_MARKET_SCOPED_MEASUREMENT`.
+  6. **`controls.markets` includes `"UNASSIGNED"`**; `marketOptions` lists only real configured pairs (KE/KES, NG/NGN primary).
+  7. **`coverageExplanation`** is `{ measuredSignals, applicableSignals, effectiveCoverage, headline, explanation,
+     scope: "PUBLICATION", issues[] }`; each issue is `{ code, category, message, capabilityId, subjectType, grain,
+     missingRequirements, action }` (field is `message`; codes seen: `PLATFORM_CAPABILITY`, `HISTORY`, `PRICING`,
+     `SECTOR_CONFIRMATION`, `CAPABILITY_NOT_CONFIRMED`). `action` has the `readiness` action shape.
+  8. `executive.publicationCoverage` has the same shape as the top-level `coverage`; `coverageMessage` is a sentence.
+  9. `severity` is `"NOT_AVAILABLE"` on most amounts (only USD had `"S4"`), uppercase as before.
+  10. Totals are bounded and consistent: `limitationSummary.detailCount` was 1108 while `limitations[]` was 5 strings.
+- **Files:** `services/api/leakage/get-leakage.ts`, `leakage-executive-types.ts`.
+
+### GET /api/v3/leakage/limitations (new)
+
+- **Purpose:** Paginated diagnostics behind `limitationSummary`. Open from a readiness row (filtered by
+  its limitation `code` when one exists) or an "all details" link. Never parse the compatibility
+  `limitations` strings instead.
+- **Request:** query `offset?` (default 0), `limit?` (1-100, default 50), `code?`
+  (`CAPABILITY_GAP | SECTOR_ASSIGNMENT_MISSING | PRICING_INPUT_MISSING | BASELINE_HISTORY_MISSING |
+  CURRENCY_POLICY_MISSING | NORMALIZED_FACTS_UNAVAILABLE | OTHER`). V2-only (fails on a non-enabled workspace).
+- **Response:** `LimitationDetailPage { contractVersion: "2.0", total, offset, limit, code | null,
+  items[{ code, origin, message, referenceType | null, referenceId | null, currency | null }], publication }`.
+- **Files:** `services/api/leakage/get-leakage-limitations.ts`, `features/leakage/use-get-leakage-limitations.ts`
+  (keeps previous rows while paging).
+
+### GET /api/v3/leakage/calculation/detail (new)
+
+- **Purpose:** The exact calculation drawer for one displayed amount. `/leakage/calculation` stays the
+  policy overview.
+- **Request:** query `calculationReference` (required, **opaque**, taken from an `amounts[]` entry,
+  history point or candidate; never parse it). No company id; auth decides the workspace. References
+  identify publication, cell, market, currency, lifecycle, mode and horizon (optionally a candidate or
+  history amount), and are identifiers, not credentials. A later compute does not redirect an old
+  reference; legacy pre-Phase-3 reference strings do not resolve (re-read the page/history).
+- **Response (named fields only, no TS block in the doc):** `amount`, `components[]` (impact,
+  probability, ramp, recovery, gross/expected/net, selected amount, confidence, range, methodology,
+  baseline, assumptions, caveats, lineage, versions; plus `included`, `inclusionReason`,
+  `contribution`, deduplication key; excluded correlated candidates contribute 0), correlation policy,
+  `correlationModeBasis` (`INFERRED_FROM_LEGACY_TOTALS` on old publications), `includedGross/Expected/
+  Net/SelectedAmount`, `reconciliationState`, `selectedAmountDelta`, `reconciliationTolerance` (0.0001).
+- **Failure is meaningful:** invalid/foreign/unpublished reference, missing policy versions, incomplete
+  evidence or non-reconciling totals return a failed result. Show "unavailable"; never substitute the
+  newest calculation (hook uses `retry: false`). Show the selected total first, then an expandable
+  input table; don't invent an aggregate probability or confidence across heterogeneous components.
+- **Files:** `services/api/leakage/get-leakage-calculation-detail.ts`,
+  `features/leakage/use-get-leakage-calculation-detail.ts`.
+
+### GET /api/v3/leakage/cells/{cellId}: small change
+
+Observations (`signals[]`) now carry an `attribution` object (same shape as `executive.markets[].attribution`:
+`code`, `state`, `basis`). Typed optional on `LeakageV2CellSignal`. **Open mismatch:** the doc's
+`workState` type says `revenueLeakCaseId` but its prose says `workState.caseId`; the code keeps
+`revenueLeakCaseId` (what the existing case flow was built and live-tested against). Confirm on a live response.
+
+### Unchanged by this handoff
+
+History, evidence, learn-why, `/coverage`, `/calculation`, the case and Room routes, cutover-readiness.
