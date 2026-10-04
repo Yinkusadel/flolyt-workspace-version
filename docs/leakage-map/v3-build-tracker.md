@@ -43,11 +43,12 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 
 ## Section 2 notes (2026-10-04)
 
-- **Cards:** one per currency + lifecycle class from `executive.totals`, in code order (never reordered by
-  amount or to put the reporting currency first). Big number = the server's `selectedAmount`; gross, expected
+- **Cards:** one per currency + lifecycle class from `executive.totals`, with the reporting currency first and the rest in code order
+  (decided with the user 2026-10-04; position only, never ordered by amount). Big number = the server's `selectedAmount`; gross, expected
   and net come from the same bucket with the selected mode emphasised. Low-confidence line = the server's
   `lowConfidenceExpectedLossShare` for that bucket. "Reporting" tag goes on whichever currency equals
   `executive.reportingCurrency` (falls back to `controls.reportingCurrency`); it is display context only.
+- **Skeleton** reserves the two notice banners and 5 card placeholders so nothing jumps when data arrives.
 - **Title** follows the server's selected mode and `controls.horizonDays` ("Expected loss over the next 90 days").
 - **Banner** (`PARTIALLY_MEASURED` / `UNAVAILABLE`) uses the server's `executive.coverageMessage`; the design's
   "What's missing" link is not added until the readiness section exists to scroll to.

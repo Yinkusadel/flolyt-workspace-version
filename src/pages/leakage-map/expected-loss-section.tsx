@@ -41,8 +41,8 @@ interface ExpectedLossSectionProps {
  * label and tag is read from `executive` / `summary` / `controls`:
  * - the big number is the server's `selectedAmount` for the selected mode, with gross, expected and net
  *   shown side by side from the same bucket;
- * - the "Reporting" tag marks whichever currency the API names as `reportingCurrency` for display, and
- *   the cards stay in code order so nothing implies a main currency;
+ * - the "Reporting" tag marks whichever currency the API names as `reportingCurrency`, and that card
+ *   leads the row, the rest follow in code order (position only, never ranked or totalled by amount);
  * - the low-confidence line is the server's own `lowConfidenceExpectedLossShare` for that bucket.
  * Market and currency filters already narrow `executive.totals`, so the cards follow them untouched.
  */
@@ -64,8 +64,13 @@ export function ExpectedLossSection({ executive, summary, controls, filters }: E
   const reportingCurrency = executive.reportingCurrency ?? controls.reportingCurrency;
   const title = `${MODE_TITLE[selectedMode] ?? humanizeEnum(selectedMode)} over the next ${controls.horizonDays} days`;
 
+  // The reporting currency leads (it is the one the workspace reads in); the rest follow in code order.
+  // Position only: nothing is totalled or ranked by amount.
   const totals = [...executive.totals].sort(
-    (a, b) => a.currency.localeCompare(b.currency) || a.lifecycleClass.localeCompare(b.lifecycleClass)
+    (a, b) =>
+      Number(b.currency === reportingCurrency) - Number(a.currency === reportingCurrency) ||
+      a.currency.localeCompare(b.currency) ||
+      a.lifecycleClass.localeCompare(b.lifecycleClass)
   );
   const confidenceFor = (bucket: LeakageExecutiveAmount): LeakageExecutiveConfidence | undefined =>
     executive.confidence.find((c) => c.currency === bucket.currency && c.lifecycleClass === bucket.lifecycleClass);
@@ -112,7 +117,7 @@ export function ExpectedLossSection({ executive, summary, controls, filters }: E
 
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-[13px] font-semibold text-ink">{title}</h2>
-        <p className="text-[10.5px] text-ink-3">One card per currency and lifecycle class, ordered by code</p>
+        <p className="text-[10.5px] text-ink-3">One card per currency and lifecycle class, reporting currency first</p>
       </div>
 
       {cards.length === 0 ? (
