@@ -214,7 +214,7 @@ function LeakCard({
 
       <div className="mt-3 flex-1">
         {unmeasured ? (
-          <Unmeasured cell={cell} />
+          <Unmeasured cell={cell} onOpenDetails={onOpenDetails} />
         ) : noExposure ? (
           <p className="text-[12px] font-medium text-ink-2">Measured: no exposure found</p>
         ) : amounts.length === 0 ? (
@@ -301,15 +301,29 @@ const AVAILABILITY_PHRASE: Record<string, string> = {
   SOURCE_DEGRADED: "source is degraded",
 };
 
-/** Why a cell has no figure: the server's availability and its own first limitation sentence. */
-function Unmeasured({ cell }: { cell: LeakageV2Cell }) {
+/**
+ * Why a cell has no figure: the server's availability and its first limitation sentence. A cell can carry
+ * several limitations (the later ones are usually technical detector notes), so the rest stay out of the
+ * card and open in the detail drawer through "+N more". That link only renders once the drawer is wired.
+ */
+function Unmeasured({ cell, onOpenDetails }: { cell: LeakageV2Cell; onOpenDetails?: (cellId: string) => void }) {
   const availability = cell.state.sourceAvailability;
+  const extra = cell.limitations.length - 1;
   return (
     <div>
       <p className="text-[12px] font-medium text-ink-2">
         Not measured · {AVAILABILITY_PHRASE[availability] ?? humanizeEnum(availability).toLowerCase()}
       </p>
       {cell.limitations[0] && <p className="mt-1 text-[10.5px] leading-relaxed text-ink-3">{cell.limitations[0]}</p>}
+      {extra > 0 && onOpenDetails && (
+        <button
+          type="button"
+          onClick={() => onOpenDetails(cell.id)}
+          className="mt-1 text-[10.5px] font-medium text-ultra hover:underline"
+        >
+          +{extra} more
+        </button>
+      )}
     </div>
   );
 }
