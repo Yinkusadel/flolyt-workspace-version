@@ -96,6 +96,25 @@ export function availabilityPhrase(availability: string): string {
   return AVAILABILITY_PHRASE[availability] ?? humanizeEnum(availability).toLowerCase();
 }
 
+/** "work_started" -> "Work started" (first word capitalised only, unlike `humanizeEnum`). */
+export function sentenceCase(value: string): string {
+  const text = value.replace(/[_-]/g, " ").trim().toLowerCase();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** Two-letter initials for an avatar: "Chad Sado" -> "CS". */
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : (parts[0]?.[1] ?? ""))).toUpperCase();
+}
+
+/** "2 Oct, 03:33" in the viewer's own timezone. */
+export function formatStamp(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
 /** "3 Oct 2026, 21:29 WAT". */
 export function formatAsOf(iso: string): string {
   const date = new Date(iso);

@@ -178,3 +178,24 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
   backend adds it back to the response or the pattern returns. Also dropped from 5c scope: the "Why this number"
   evidence tab stays TODO until it is clear what the backend will send.
 - **Resolved:** the live cell detail confirms `workState.revenueLeakCaseId` (not `caseId`); the handoff prose is wrong.
+
+## Case sheet rebuild (2026-10-04)
+
+- Replaced the first-build case panel with one built from the "Revenue leak case" and "Case dialogs" designs,
+  inside the existing drawer (`panel=case`). Tabs: **Case** and **Audit trail (N)**.
+- **Case tab:** seven-step bar with the time each step was reached (from the audit trail), action bar (Record
+  decision, Invalidate, and one forward step per status), Collaboration Room card (linked time, short id, Open
+  Room, or "Open a Room"), Owner card (name, email, Admin, Reassign), Due date card (days left, "Due soon" /
+  "Overdue", filling bar, escalation level, Change due date), Decisions, Evidence (list only), Verified value,
+  Escalations, Finding (snapshot, stale-snapshot note, last updated).
+- **Forms** (`drawer/case-forms.tsx`) replace the tab area instead of opening over the sheet: Mark resolved
+  (reason + required evidence references), Start work, Invalidate, Assign/Reassign (searchable list of active
+  human members + reason), Change due date (date + quick chips + reason, bounded to the next 365 days), Record
+  decision, Open a Room (pick amount, read-only market and lifecycle, mode, title).
+- **Endpoints behind the buttons:** decisions -> POST /decisions; Resolve, Start work, Invalidate -> POST
+  /transitions; Assign/Reassign -> PUT /owner (this is also what moves a case through Reviewed and Assigned);
+  Due date -> PUT /due-date; Room -> POST /room.
+- **Dropped from the design:** Exposure behind this case, Attach evidence, "on track", "workspace owner".
+- **Live-verified (reads, chad@yopmail.com):** the existing WORKED case renders fully, the Audit tab lists all 6
+  entries, all five forms open and cancel, 390px no overflow, no page errors, and no write request was sent.
+  **Not submitted live:** every action above.

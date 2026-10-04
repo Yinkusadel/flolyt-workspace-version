@@ -14,6 +14,8 @@ interface CellDrawerProps {
   cells: LeakageV2Cell[];
   controls: LeakageV2Controls;
   filters: LeakageFilters;
+  /** The snapshot the map is showing now. */
+  currentSnapshotId: string;
   cellId: string | null;
   panel: DrawerPanel;
   onClose: () => void;
@@ -27,7 +29,7 @@ interface CellDrawerProps {
  * calculation controls (mode, horizon, lifecycle) but never its market or currency filters, so the drawer
  * shows the same cell whatever the filters narrowed the page to.
  */
-export function CellDrawer({ cells, controls, filters, cellId, panel, onClose, onShowCase, onShowCell }: CellDrawerProps) {
+export function CellDrawer({ cells, controls, filters, currentSnapshotId, cellId, panel, onClose, onShowCase, onShowCell }: CellDrawerProps) {
   const cell = cellId ? cells.find((c) => c.id === cellId) : undefined;
 
   const query = useMemo<CellQuery>(
@@ -44,7 +46,12 @@ export function CellDrawer({ cells, controls, filters, cellId, panel, onClose, o
     <Sheet open={!!cell} onOpenChange={(open) => !open && onClose()}>
       <SheetContent className="sm:max-w-[46rem]">
         {cell && panel === "case" ? (
-          <CaseLoader cell={cell} query={query} onBack={() => onShowCell(cell.id)} />
+          <CaseLoader
+            cell={cell}
+            query={query}
+            currentSnapshotId={currentSnapshotId}
+            onBack={() => onShowCell(cell.id)}
+          />
         ) : cell ? (
           <CellView cell={cell} query={query} controls={controls} onOpenCase={() => onShowCase(cell.id)} />
         ) : null}
@@ -54,11 +61,31 @@ export function CellDrawer({ cells, controls, filters, cellId, panel, onClose, o
 }
 
 /** The case view needs the case id, which only the cell's detail call carries (the detail request is shared with the cell view's, so this is normally already cached). */
-function CaseLoader({ cell, query, onBack }: { cell: LeakageV2Cell; query: CellQuery; onBack: () => void }) {
+function CaseLoader({
+  cell,
+  query,
+  currentSnapshotId,
+  onBack,
+}: {
+  cell: LeakageV2Cell;
+  query: CellQuery;
+  currentSnapshotId: string;
+  onBack: () => void;
+}) {
   const { data, isLoading } = useGetLeakageCellV2({ cellId: cell.id, ...query });
   const caseId = data?.data.workState.revenueLeakCaseId;
 
-  if (caseId) return <CaseView caseId={caseId} cell={cell} onBack={onBack} />;
+  if (caseId) {
+    return (
+      <CaseView
+        caseId={caseId}
+        cell={cell}
+        defaultMode={query.mode ?? "expected"}
+        currentSnapshotId={currentSnapshotId}
+        onBack={onBack}
+      />
+    );
+  }
 
   return (
     <>

@@ -143,6 +143,7 @@ export default function LeakageMap() {
         cells={page.cells}
         controls={page.controls}
         filters={filters}
+        currentSnapshotId={page.publication.snapshotId}
         cellId={drawer.cellId}
         panel={drawer.panel}
         onClose={drawer.close}

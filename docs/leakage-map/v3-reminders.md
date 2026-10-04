@@ -6,11 +6,15 @@ mark an item DONE or DROPPED with the date instead.
 
 ## Computed on the frontend (could be moved to, or removed in favour of, the backend)
 
-- **Case due-date "days left", progress bar and status label** (case page, not built yet). Not in the API. Plan:
-  days left = `dueAtUtc` minus now; the bar grows with the share of the window from `detectedAtUtc` to
-  `dueAtUtc` that has elapsed; at most 3 labels: **Overdue** (the server's own `isOverdue`), **Due soon** (two
-  days or fewer left), **On track** (otherwise). The "Due soon" threshold is my choice. Ask the backend for a
-  status field, or drop the bar and label, if the numbers ever disagree with the server's escalation.
+- **Case due-date "days left", "Due soon" and the progress bar** (built, case sheet). Not in the API. Days left =
+  `dueAtUtc` minus now; the bar fills with the share of the window from `detectedAtUtc` to `dueAtUtc` that has
+  passed. Labels: **Overdue** (the server's own `isOverdue`), **Due soon** (two days or fewer left, my threshold,
+  `DUE_SOON_DAYS` in `case-view.tsx`), otherwise just "N days left". "On track" was dropped (user decision).
+  Ask the backend for a status field, or drop the bar and label, if the numbers ever disagree with escalation.
+- **Which case buttons show per status** (built): Detected/Reviewed -> Assign owner; Assigned -> Start work;
+  Worked -> Mark resolved; Invalidate for Detected..Resolved; Record decision unless Closed/Invalidated. This is a
+  reading of the live audit trail, not a published rule (see the backend question on allowed moves).
+- **Step timestamps** on the case stepper come from the audit trail (first entry whose `to` is that step).
 - **Quick due-date chips** (+3 days, +1 week, +2 weeks, +30 days): plain date arithmetic on the client; the
   server still enforces "future, within 365 days".
 - **Market names** ("NG" -> "Nigeria") come from the browser's `Intl.DisplayNames`, not from the API.
@@ -26,8 +30,11 @@ mark an item DONE or DROPPED with the date instead.
 - **Region grouping / sort by region** on the market page and selector: no region field.
 - **Multi-select markets**: the contract takes one `market`.
 - **A converted or combined total across currencies**: no approved FX; `fxState: NOT_CONSOLIDATED_NO_APPROVED_FX`.
-- **Attach evidence on its own** (case page): no endpoint. Evidence is plain text strings sent only with the
-  move to Resolved. No upload and no list of existing evidence to pick from.
+- **Attach evidence on its own** (case sheet): no endpoint. Evidence is plain text strings sent only with the
+  move to Resolved. No upload and no list of existing evidence to pick from. The Evidence card only lists
+  what is already on the case.
+- **"Exposure behind this case" card and the "workspace owner" role label**: dropped (the case response has no
+  amounts; the members list has only an email and a can-administer flag, so the owner card shows email + "Admin").
 - **"Review source mappings" and "Start a case" buttons on the leak cards**: their data is only in the cell's
   detail response, so they live in the drawer (and, for source mappings, the Readiness section) to avoid one
   extra request per card.
@@ -52,10 +59,11 @@ mark an item DONE or DROPPED with the date instead.
 - Notice row (measurement and no-combined-total) is collapsed by default and expands in place.
 - The case panel is being rebuilt from the Case dialogs and Revenue leak case designs; see the section below.
 
-## Case panel rebuild (in discussion 2026-10-04)
+## Case panel rebuild (DONE 2026-10-04)
 
-- The first-build case panel (reused inside the drawer) is limited: its Room card hardcodes the title and has no
-  market, lifecycle or mode controls, although `POST /cases/{id}/room` accepts `currency`, `market`,
-  `lifecycleClass`, `mode` and `title`.
-- Open decisions: drawer vs full page route, how to verify the five form submits (they change real data), and
-  the status-button rule above.
+- Rebuilt in the sheet (user chose the sheet over a full page): two tabs, Case and Audit trail. Actions open as a
+  form that replaces the tab area (no popup stacked on the sheet). Room form: pick an amount (currency, market,
+  lifecycle follow it, read-only), choose mode, edit the title (default "<leak type> — <currency>"; whether the
+  backend requires unique titles is unconfirmed).
+- Not yet submitted live: Record decision, Invalidate, Mark resolved, Start work, Assign/Reassign, Change due
+  date, Open a Room (they change real data).
