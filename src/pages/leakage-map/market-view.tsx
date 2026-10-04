@@ -149,7 +149,9 @@ export function NothingMeasured({ market, executive, onSelectMarket }: NothingMe
         <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
           <div>
             <h2 className="text-[18px] font-semibold text-ink">Nothing is measured for {name} yet</h2>
-            <p className="mt-2 text-[12.5px] leading-relaxed text-ink-2">
+            {/* Two lines of height are always reserved: a longer market name wraps onto a second line and a shorter one does
+                not, and without this the card (and the button under it) changed height from one market to the next. */}
+            <p className="mt-2 min-h-[41px] text-[12.5px] leading-relaxed text-ink-2">
               {name} is {row?.isConfigured ? "configured" : "not configured"}, but no published observation is attributed to it.
               That is <span className="font-semibold text-ink">unknown, not zero</span>: {name} may still be leaking.
             </p>
