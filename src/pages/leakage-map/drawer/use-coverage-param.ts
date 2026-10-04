@@ -24,6 +24,8 @@ export function useCoverageParam() {
             params.delete("cell");
             params.delete("panel");
             params.delete("diagnostics");
+            params.delete("calc");
+            params.delete("calcFrom");
           } else {
             params.delete("coverage");
           }

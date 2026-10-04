@@ -115,6 +115,16 @@ export function formatStamp(iso: string): string {
   return date.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
+/** A grouped number with a fixed number of decimals and no currency: 893643.2 -> "893,643.20". */
+export function formatPlainNumber(value: number, digits = 2): string {
+  return value.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+
+/** An exact figure with the currency's symbol: 3001307.335, "NGN", 4 -> "₦3,001,307.3350". */
+export function formatExactMoney(value: number, currency: string, digits = 2): string {
+  return `${currencyPrefix(currency)}${formatPlainNumber(value, digits)}`;
+}
+
 /** "3 Oct 2026, 21:29 WAT". */
 export function formatAsOf(iso: string): string {
   const date = new Date(iso);

@@ -6,6 +6,8 @@ import { Callout } from "@/components/ui/rail";
 import { useGetLeakage } from "@/features/leakage/use-get-leakage";
 import { isLeakagePageV2 } from "@/services/api/leakage/get-leakage";
 import { CellDrawer } from "@/pages/leakage-map/drawer/cell-drawer";
+import { CalculationDrawer } from "@/pages/leakage-map/drawer/calculation-drawer";
+import { useCalculationParam } from "@/pages/leakage-map/drawer/use-calculation-param";
 import { CoverageDrawer } from "@/pages/leakage-map/drawer/coverage-drawer";
 import { useCoverageParam } from "@/pages/leakage-map/drawer/use-coverage-param";
 import { DiagnosticsDrawer } from "@/pages/leakage-map/drawer/diagnostics-drawer";
@@ -37,6 +39,7 @@ export default function LeakageMap() {
   const drawer = useCellDrawerParam();
   const diagnostics = useDiagnosticsParam();
   const coverageSheet = useCoverageParam();
+  const calculation = useCalculationParam();
 
   const crumbs: Crumb[] = filters.market
     ? [
@@ -148,6 +151,7 @@ export default function LeakageMap() {
           executive={page.executive}
           controls={page.controls}
           onOpenDetails={drawer.openCell}
+          onOpenCalculation={(reference) => calculation.openCalculation(reference)}
         />
         <div className="grid items-start gap-5 lg:grid-cols-2">
           <ReadinessSection
@@ -167,6 +171,14 @@ export default function LeakageMap() {
         {/* Remaining sections land here, one at a time. */}
       </div>
       </BusyRegion>
+
+      <CalculationDrawer
+        reference={calculation.reference}
+        cells={page.cells}
+        fromCell={calculation.fromCellId ? page.cells.find((c) => c.id === calculation.fromCellId) : undefined}
+        onBack={() => calculation.fromCellId && drawer.showCell(calculation.fromCellId)}
+        onClose={calculation.closeCalculation}
+      />
 
       <CoverageDrawer
         tab={coverageSheet.tab}
@@ -193,6 +205,7 @@ export default function LeakageMap() {
         onClose={drawer.close}
         onShowCase={drawer.showCase}
         onShowCell={drawer.showCell}
+        onOpenCalculation={calculation.openCalculation}
       />
     </div>
   );

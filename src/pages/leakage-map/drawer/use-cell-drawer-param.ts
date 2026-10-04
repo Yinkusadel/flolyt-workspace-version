@@ -18,8 +18,11 @@ export function useCellDrawerParam() {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
-          if (cell) next.set("cell", cell);
-          else next.delete("cell");
+          if (cell) {
+            next.set("cell", cell);
+            next.delete("calc");
+            next.delete("calcFrom");
+          } else next.delete("cell");
           if (cell && nextPanel === "case") next.set("panel", "case");
           else next.delete("panel");
           return next;

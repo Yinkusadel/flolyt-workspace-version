@@ -81,3 +81,9 @@ mark an item DONE or DROPPED with the date instead.
   (`/leakage/coverage`, `/leakage/calculation/detail`).
 - Ask the backend whether the readiness category -> limitation code pairing used for the diagnostics link is the
   intended one, and whether `recommendedAction` ("MAP_MONETARY_IMPACT") is meant to become a real action.
+
+## Update 2026-10-04: exact calculation drawer built
+
+- Built and live-verified for an all-included case. An excluded candidate has never been seen live: when one appears, check how its `inclusionReason` reads and whether the struck-through row is clear enough.
+- The "How calculated" card link uses only the first amount of the selected currency. If a workspace ever has two amounts in one currency (different market or lifecycle) on one cell, the card needs a picker.
+- Ask the backend: the possible `inclusionReason` values, and the possible `reconciliationState` values besides RECONCILED.

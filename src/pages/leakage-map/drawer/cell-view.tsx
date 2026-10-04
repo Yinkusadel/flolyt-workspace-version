@@ -46,6 +46,8 @@ interface CellViewProps {
   query: CellQuery;
   controls: LeakageV2Controls;
   onOpenCase: (caseId: string) => void;
+  /** Opens the exact calculation for one amount (its opaque `calculationReference`). */
+  onOpenCalculation: (calculationReference: string) => void;
 }
 
 /**
@@ -54,7 +56,7 @@ interface CellViewProps {
  * a placeholder of its own until `GET /cells/{id}` returns. Case actions live here, not on the card, because
  * `workState` is only in the detail response.
  */
-export function CellView({ cell, query, controls, onOpenCase }: CellViewProps) {
+export function CellView({ cell, query, controls, onOpenCase, onOpenCalculation }: CellViewProps) {
   const { data, isLoading, isError, refetch } = useGetLeakageCellV2({ cellId: cell.id, ...query });
   // The per-currency table lives in its own tab so a cell with many currencies never pushes the other tabs down.
   // A cell with no amounts (unmeasured) has no Amounts tab and opens on Summary.
@@ -124,7 +126,9 @@ export function CellView({ cell, query, controls, onOpenCase }: CellViewProps) {
           </div>
 
           <div className="pt-4">
-            {tab === "amounts" && <AmountsTable amounts={live.amounts} reportingCurrency={controls.reportingCurrency} />}
+            {tab === "amounts" && (
+              <AmountsTable amounts={live.amounts} reportingCurrency={controls.reportingCurrency} onOpenCalculation={onOpenCalculation} />
+            )}
             {tab === "summary" && <SummaryTab cell={live} />}
             {tab === "history" && <HistoryTab cell={live} query={query} />}
             {(tab === "components" || tab === "signals" || tab === "sources") && (
@@ -240,12 +244,22 @@ function CaseStrip({
 }
 
 /** One row per currency, each money column the server's own figure; nothing is added across currencies. */
-function AmountsTable({ amounts, reportingCurrency }: { amounts: LeakageV2Amount[]; reportingCurrency: string | null }) {
+function AmountsTable({
+  amounts,
+  reportingCurrency,
+  onOpenCalculation,
+}: {
+  amounts: LeakageV2Amount[];
+  reportingCurrency: string | null;
+  onOpenCalculation: (calculationReference: string) => void;
+}) {
   const byCurrency = compareCurrencies(reportingCurrency);
   const rows = [...amounts].sort((a, b) => byCurrency(a.currency, b.currency));
   return (
     // Sized to fit the drawer at any width, so it never scrolls sideways: the range wraps onto two lines (and
     // moves under Expected on a phone), and severity sits under confidence instead of taking a column.
+    <div>
+    <p className="mb-2 text-[11px] text-ink-3">Tap a currency for its exact calculation.</p>
     <div className="overflow-x-auto rounded-card border border-line">
       <table className="w-full text-left text-[11.5px]">
         <thead>
@@ -268,7 +282,16 @@ function AmountsTable({ amounts, reportingCurrency }: { amounts: LeakageV2Amount
             const severity = a.severity.toUpperCase() === "NOT_AVAILABLE" ? "not rated" : a.severity.toUpperCase();
             return (
               <tr key={`${a.currency}|${a.market}|${a.lifecycleClass}`} className="align-top">
-                <td className="px-2 py-2.5 font-mono font-semibold text-ink sm:px-3">{a.currency}</td>
+                <td className="px-2 py-2.5 sm:px-3">
+                  <button
+                    type="button"
+                    onClick={() => onOpenCalculation(a.calculationReference)}
+                    title="See how this amount is calculated"
+                    className="font-mono font-semibold text-ultra underline decoration-ultra/40 underline-offset-2 hover:decoration-ultra"
+                  >
+                    {a.currency}
+                  </button>
+                </td>
                 <td className="px-1.5 py-2.5 text-right font-mono text-ink sm:px-3">{formatCompactMoney(a.gross, a.currency)}</td>
                 <td className="px-1.5 py-2.5 text-right font-mono text-ink-2 sm:px-3">
                   {formatCompactMoney(a.expected, a.currency)}
@@ -299,6 +322,7 @@ function AmountsTable({ amounts, reportingCurrency }: { amounts: LeakageV2Amount
           })}
         </tbody>
       </table>
+    </div>
     </div>
   );
 }

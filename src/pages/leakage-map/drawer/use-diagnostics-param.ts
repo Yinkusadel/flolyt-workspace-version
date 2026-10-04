@@ -24,6 +24,8 @@ export function useDiagnosticsParam() {
             next.delete("cell");
             next.delete("panel");
             next.delete("coverage");
+            next.delete("calc");
+            next.delete("calcFrom");
           } else {
             next.delete("diagnostics");
           }

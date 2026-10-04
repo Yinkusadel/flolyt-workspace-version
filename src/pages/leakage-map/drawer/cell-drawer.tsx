@@ -21,6 +21,8 @@ interface CellDrawerProps {
   onClose: () => void;
   onShowCase: (cellId: string) => void;
   onShowCell: (cellId: string) => void;
+  /** Opens an amount's exact calculation, remembering which cell it came from. */
+  onOpenCalculation: (calculationReference: string, cellId: string) => void;
 }
 
 /**
@@ -29,7 +31,7 @@ interface CellDrawerProps {
  * calculation controls (mode, horizon, lifecycle) but never its market or currency filters, so the drawer
  * shows the same cell whatever the filters narrowed the page to.
  */
-export function CellDrawer({ cells, controls, filters, currentSnapshotId, cellId, panel, onClose, onShowCase, onShowCell }: CellDrawerProps) {
+export function CellDrawer({ cells, controls, filters, currentSnapshotId, cellId, panel, onClose, onShowCase, onShowCell, onOpenCalculation }: CellDrawerProps) {
   const cell = cellId ? cells.find((c) => c.id === cellId) : undefined;
 
   const query = useMemo<CellQuery>(
@@ -53,7 +55,13 @@ export function CellDrawer({ cells, controls, filters, currentSnapshotId, cellId
             onBack={() => onShowCell(cell.id)}
           />
         ) : cell ? (
-          <CellView cell={cell} query={query} controls={controls} onOpenCase={() => onShowCase(cell.id)} />
+          <CellView
+            cell={cell}
+            query={query}
+            controls={controls}
+            onOpenCase={() => onShowCase(cell.id)}
+            onOpenCalculation={(reference) => onOpenCalculation(reference, cell.id)}
+          />
         ) : null}
       </SheetContent>
     </Sheet>
