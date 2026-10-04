@@ -207,8 +207,8 @@ function CalculationContent({ detail }: { detail: LeakageCalculationDetail }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <InfoCard title="Correlation">
           <p>
-            A subject that is flagged more than once is counted once. Excluded candidates contribute nothing even though
-            their own estimate is positive.
+            Candidates are de-duplicated under the policy below. An excluded candidate contributes nothing even though
+            its own estimate is positive.
           </p>
           <ul className="mt-2 space-y-1 font-mono text-[10px] text-ink-3">
             {policies.map((policy) => (
