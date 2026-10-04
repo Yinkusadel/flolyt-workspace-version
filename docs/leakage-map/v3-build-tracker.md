@@ -200,3 +200,9 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
   entries, all five forms open and cancel, 390px no overflow, no page errors, and no write request was sent.
   **Not submitted live:** every action above.
 - **Tabs moved into the header row (2026-10-04):** the Case / Audit trail tabs now sit on the same line as Record decision / Invalidate / the forward step (tabs left, actions right) to save vertical space; the tab underline sits on the header border from sm up. Verified desktop and 390px.
+
+## Invalidate replaced by Move status (2026-10-04)
+
+- The separate **Invalidate** button is removed. The case header row is now: tabs, **Record decision**, **Move status**, and the one forward step per status. **Move status** opens a form listing every status except the current one and Verified (Detected, Reviewed, Assigned, Worked, Resolved, Closed, Invalidated), with a reason; picking Resolved asks for evidence references. Invalidating a case is done through it.
+- It is deliberately unfiltered because the backend does not publish which moves are allowed; the server accepts or refuses and its message shows. **When you learn the allowed moves forward and back, tell me and the forward step and Move status can be made dynamic from that table** (also listed in v3-reminders.md).
+- Verified live (reads): action row shows the three buttons; the Move status form lists the six statuses; Move case is disabled until one is picked; Resolved shows the evidence field and Invalidated hides it; Cancel returns; no write request sent.

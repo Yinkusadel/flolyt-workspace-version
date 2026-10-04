@@ -67,3 +67,7 @@ mark an item DONE or DROPPED with the date instead.
   backend requires unique titles is unconfirmed).
 - Not yet submitted live: Record decision, Invalidate, Mark resolved, Start work, Assign/Reassign, Change due
   date, Open a Room (they change real data).
+
+## Update 2026-10-04: Invalidate button replaced by an unfiltered Move status
+
+- Waiting on the owner to find out which case-status moves (forward and backward) the backend allows. When that arrives, make the forward button and Move status dynamic from the table (offer only legal targets). Until then Move status lists every status except the current one and Verified, and the server refuses illegal moves.

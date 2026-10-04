@@ -14,11 +14,11 @@ import { useUpdateLeakageCaseDueDate } from "@/features/leakage/use-update-leaka
 import { useUpdateLeakageCaseOwner } from "@/features/leakage/use-update-leakage-case-owner";
 import { toRoomLifecycleClass, toRoomMode } from "@/services/api/leakage/open-room-on-leakage-case";
 import type { LeakageV2Amount, LeakageV2Cell } from "@/services/api/leakage/get-leakage";
-import type { RevenueLeakCase } from "@/services/api/leakage/leakage-case-types";
+import type { RevenueLeakCase, RevenueLeakCaseStatus } from "@/services/api/leakage/leakage-case-types";
 import { formatHeadlineMoney, humanizeEnum, initials, marketName } from "@/pages/leakage-map/format";
 import { FieldLabel, PRIMARY_ACTION_CLASS } from "@/pages/leakage-map/drawer/shared";
 
-export type CaseForm = "resolve" | "start-work" | "invalidate" | "assign" | "due-date" | "decision" | "room";
+export type CaseForm = "resolve" | "start-work" | "move-status" | "assign" | "due-date" | "decision" | "room";
 
 const TEXTAREA_CLASS =
   "w-full resize-none rounded-panel border border-border bg-paper-2 px-2.5 py-2 text-[12px] text-ink outline-none placeholder:text-ink-4 hover:border-ink-4 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
@@ -89,21 +89,63 @@ interface FormProps {
   onCancel: () => void;
 }
 
+/** Plain-text evidence references (no upload exists), added one at a time and removable. */
+function EvidenceRefs({ refs, onChange }: { refs: string[]; onChange: (refs: string[]) => void }) {
+  const [draft, setDraft] = useState("");
+  const add = () => {
+    const value = draft.trim();
+    if (!value || refs.includes(value)) return;
+    onChange([...refs, value]);
+    setDraft("");
+  };
+  return (
+    <div>
+      <FieldLabel>
+        Evidence <span className="text-rose">· required</span>
+      </FieldLabel>
+      {refs.length > 0 && (
+        <ul className="mb-2 space-y-1.5">
+          {refs.map((ref) => (
+            <li key={ref} className="flex items-center justify-between gap-3 rounded-panel border border-line bg-paper-2 px-3 py-2">
+              <span className="min-w-0 truncate text-[12px] text-ink">{ref}</span>
+              <button
+                type="button"
+                onClick={() => onChange(refs.filter((r) => r !== ref))}
+                className="flex shrink-0 items-center gap-1 text-[11px] text-ink-3 hover:text-ink"
+              >
+                <X className="size-3" />
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex gap-2">
+        <Input
+          value={draft}
+          onChange={(e) => setDraft(e.currentTarget.value)}
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), add())}
+          placeholder="A report name, link or note"
+        />
+        <Button type="button" variant="outline" onClick={add} disabled={!draft.trim()}>
+          <Plus data-icon="inline-start" />
+          Add
+        </Button>
+      </div>
+      <p className="mt-1.5 text-[10.5px] text-ink-4">References are plain text. Files cannot be uploaded here.</p>
+    </div>
+  );
+}
+
 /**
  * Moves the case forward by one step with a reason (Reviewed and Assigned happen through owner assignment, so
- * the buttons here are Start work, Mark resolved and Invalidate). Resolving needs at least one evidence
- * reference: plain text, sent with the move, since the API has no separate attach-evidence call.
+ * the forward buttons here are Start work and Mark resolved). Resolving needs at least one evidence reference:
+ * plain text, sent with the move, since the API has no separate attach-evidence call.
  */
-export function TransitionForm({
-  kind,
-  leakCase,
-  onDone,
-  onCancel,
-}: FormProps & { kind: "resolve" | "start-work" | "invalidate" }) {
+export function TransitionForm({ kind, leakCase, onDone, onCancel }: FormProps & { kind: "resolve" | "start-work" }) {
   const { mutate, isPending } = useTransitionLeakageCase();
   const [reason, setReason] = useState("");
   const [refs, setRefs] = useState<string[]>([]);
-  const [draft, setDraft] = useState("");
 
   const copy = {
     resolve: {
@@ -124,23 +166,7 @@ export function TransitionForm({
       pending: "Starting…",
       target: "WORKED" as const,
     },
-    invalidate: {
-      title: "Invalidate this case",
-      description: "The finding was not real or no longer applies. This ends the case.",
-      label: "Why it is invalid",
-      placeholder: "e.g. These accounts were closed on purpose",
-      confirm: "Invalidate",
-      pending: "Invalidating…",
-      target: "INVALIDATED" as const,
-    },
   }[kind];
-
-  const addRef = () => {
-    const value = draft.trim();
-    if (!value || refs.includes(value)) return;
-    setRefs((prev) => [...prev, value]);
-    setDraft("");
-  };
 
   return (
     <FormFrame
@@ -150,7 +176,6 @@ export function TransitionForm({
       confirmLabel={copy.confirm}
       pendingLabel={copy.pending}
       isPending={isPending}
-      tone={kind === "invalidate" ? "danger" : "primary"}
       disabled={!reason.trim() || (kind === "resolve" && refs.length === 0)}
       onConfirm={() =>
         mutate(
@@ -170,43 +195,87 @@ export function TransitionForm({
         />
       </div>
 
-      {kind === "resolve" && (
-        <div>
-          <FieldLabel>
-            Evidence <span className="text-rose">· required</span>
-          </FieldLabel>
-          {refs.length > 0 && (
-            <ul className="mb-2 space-y-1.5">
-              {refs.map((ref) => (
-                <li key={ref} className="flex items-center justify-between gap-3 rounded-panel border border-line bg-paper-2 px-3 py-2">
-                  <span className="min-w-0 truncate text-[12px] text-ink">{ref}</span>
-                  <button
-                    type="button"
-                    onClick={() => setRefs((prev) => prev.filter((r) => r !== ref))}
-                    className="flex shrink-0 items-center gap-1 text-[11px] text-ink-3 hover:text-ink"
-                  >
-                    <X className="size-3" />
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="flex gap-2">
-            <Input
-              value={draft}
-              onChange={(e) => setDraft(e.currentTarget.value)}
-              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addRef())}
-              placeholder="A report name, link or note"
-            />
-            <Button type="button" variant="outline" onClick={addRef} disabled={!draft.trim()}>
-              <Plus data-icon="inline-start" />
-              Add
-            </Button>
-          </div>
-          <p className="mt-1.5 text-[10.5px] text-ink-4">References are plain text. Files cannot be uploaded here.</p>
+      {kind === "resolve" && <EvidenceRefs refs={refs} onChange={setRefs} />}
+    </FormFrame>
+  );
+}
+
+const MOVE_TARGETS: Exclude<RevenueLeakCaseStatus, "VERIFIED">[] = [
+  "DETECTED",
+  "REVIEWED",
+  "ASSIGNED",
+  "WORKED",
+  "RESOLVED",
+  "CLOSED",
+  "INVALIDATED",
+];
+
+/**
+ * Moves the case to any status the person picks, with a reason. The API does not publish which moves are
+ * allowed, so none is filtered out here except the current status and Verified (only the verification job may
+ * set that): the server accepts or refuses, and its message is shown. Resolving still needs evidence.
+ * Invalidating a case is done from here too.
+ */
+export function MoveStatusForm({ leakCase, onDone, onCancel }: FormProps) {
+  const { mutate, isPending } = useTransitionLeakageCase();
+  const [target, setTarget] = useState<Exclude<RevenueLeakCaseStatus, "VERIFIED"> | null>(null);
+  const [reason, setReason] = useState("");
+  const [refs, setRefs] = useState<string[]>([]);
+
+  return (
+    <FormFrame
+      title="Move status"
+      description={`Currently ${humanizeEnum(leakCase.status)}. Pick the status to move to. The server decides whether the move is allowed.`}
+      onCancel={onCancel}
+      confirmLabel="Move case"
+      pendingLabel="Moving…"
+      isPending={isPending}
+      tone={target === "INVALIDATED" ? "danger" : "primary"}
+      disabled={!target || !reason.trim() || (target === "RESOLVED" && refs.length === 0)}
+      note="Verified is never set by hand: the outcome-verification job moves a supported resolution there."
+      onConfirm={() =>
+        target &&
+        mutate(
+          { caseId: leakCase.id, target, reason: reason.trim(), evidenceReferences: target === "RESOLVED" ? refs : [] },
+          { onSuccess: (res) => res.succeeded && onDone() }
+        )
+      }
+    >
+      <div>
+        <FieldLabel>Move to</FieldLabel>
+        <div role="radiogroup" aria-label="New status" className="flex flex-wrap gap-1.5">
+          {MOVE_TARGETS.filter((status) => status !== leakCase.status).map((status) => (
+            <button
+              key={status}
+              type="button"
+              role="radio"
+              aria-checked={target === status}
+              onClick={() => setTarget(status)}
+              className={cn(
+                "rounded-control border px-3 py-1.5 text-[12px] transition-colors",
+                target === status
+                  ? status === "INVALIDATED"
+                    ? "border-rose bg-rose text-paper"
+                    : "border-ink bg-ink text-paper"
+                  : "border-line bg-paper text-ink-2 hover:border-ink-4"
+              )}
+            >
+              {humanizeEnum(status)}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
+      <div>
+        <FieldLabel>Reason</FieldLabel>
+        <textarea
+          rows={3}
+          value={reason}
+          onChange={(e) => setReason(e.currentTarget.value)}
+          placeholder="Why the case is moving"
+          className={TEXTAREA_CLASS}
+        />
+      </div>
+      {target === "RESOLVED" && <EvidenceRefs refs={refs} onChange={setRefs} />}
     </FormFrame>
   );
 }

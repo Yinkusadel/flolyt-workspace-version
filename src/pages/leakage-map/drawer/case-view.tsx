@@ -18,6 +18,7 @@ import {
   AssignForm,
   DecisionForm,
   DueDateForm,
+  MoveStatusForm,
   RoomForm,
   TransitionForm,
   type CaseForm,
@@ -30,8 +31,6 @@ const STEP_HINT: Partial<Record<RevenueLeakCaseStatus, string>> = {
   VERIFIED: "set by verification",
 };
 
-/** Steps from which the case counts as still open, so Invalidate is offered. An assumption: the API does not publish the allowed moves. */
-const INVALIDATABLE: RevenueLeakCaseStatus[] = ["DETECTED", "REVIEWED", "ASSIGNED", "WORKED", "RESOLVED"];
 const FINISHED: RevenueLeakCaseStatus[] = ["CLOSED", "INVALIDATED"];
 
 const DAY_MS = 86_400_000;
@@ -52,7 +51,7 @@ interface CaseViewProps {
  * date, escalations, the finding) and Audit trail. Every action opens as a form that replaces the tab area
  * (not a popup on top of the sheet, so no stacked overlays) and returns here when done or cancelled.
  *
- * What each button calls: Record decision -> POST /decisions; Mark resolved, Start work and Invalidate ->
+ * What each button calls: Record decision -> POST /decisions; Mark resolved, Start work and Move status ->
  * POST /transitions with the target status; Assign / Reassign -> PUT /owner (assigning an owner is also what
  * moves a case through Reviewed and Assigned); Change due date -> PUT /due-date; Open a Room -> POST /room.
  * The API does not publish the allowed status moves, so the buttons offered per status are a best reading
@@ -138,9 +137,10 @@ export function CaseView({ caseId, cell, defaultMode, currentSnapshotId, onBack 
 
         {leakCase && form && (
           <>
-            {(form === "resolve" || form === "start-work" || form === "invalidate") && (
+            {(form === "resolve" || form === "start-work") && (
               <TransitionForm kind={form} leakCase={leakCase} onDone={closeForm} onCancel={closeForm} />
             )}
+            {form === "move-status" && <MoveStatusForm leakCase={leakCase} onDone={closeForm} onCancel={closeForm} />}
             {form === "assign" && <AssignForm leakCase={leakCase} onDone={closeForm} onCancel={closeForm} />}
             {form === "due-date" && <DueDateForm leakCase={leakCase} onDone={closeForm} onCancel={closeForm} />}
             {form === "decision" && <DecisionForm leakCase={leakCase} onDone={closeForm} onCancel={closeForm} />}
@@ -170,7 +170,11 @@ export function CaseView({ caseId, cell, defaultMode, currentSnapshotId, onBack 
   );
 }
 
-/** Record decision, Invalidate and the one forward step that makes sense for the current status. */
+/**
+ * Record decision, Move status and the one forward step that fits the current status. Move status is always
+ * offered (the server decides what is allowed, and invalidating is done from it); Record decision is hidden
+ * once a case is Closed or Invalidated.
+ */
 function ActionBar({ leakCase, onAction }: { leakCase: RevenueLeakCase; onAction: (form: CaseForm) => void }) {
   const status = leakCase.status;
   const primary: { label: string; form: CaseForm } | null =
@@ -182,18 +186,16 @@ function ActionBar({ leakCase, onAction }: { leakCase: RevenueLeakCase; onAction
           ? { label: "Mark resolved", form: "resolve" }
           : null;
 
-  if (FINISHED.includes(status)) return null;
-
   return (
     <div className="flex flex-wrap items-center gap-2 pb-2.5">
-      <Button type="button" variant="outline" onClick={() => onAction("decision")}>
-        Record decision
-      </Button>
-      {INVALIDATABLE.includes(status) && (
-        <Button type="button" variant="outline" className="text-rose hover:text-rose" onClick={() => onAction("invalidate")}>
-          Invalidate
+      {!FINISHED.includes(status) && (
+        <Button type="button" variant="outline" onClick={() => onAction("decision")}>
+          Record decision
         </Button>
       )}
+      <Button type="button" variant="outline" onClick={() => onAction("move-status")}>
+        Move status
+      </Button>
       {primary && (
         <Button type="button" className={PRIMARY_ACTION_CLASS} onClick={() => onAction(primary.form)}>
           {primary.label}
