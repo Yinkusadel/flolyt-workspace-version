@@ -166,3 +166,4 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
   was live-tested for create case / due date / room.
 - Left for 5c: the design's "Why this number" evidence tab, "Review/Open full evidence", the "How calculated" link and
   clickable currency rows (exact calculation drawer), previous/next arrows between cells.
+- **Amounts tab (2026-10-04):** the per-currency table moved out of the top of the drawer into its own first tab ("Amounts", the default for measured cells) so many currencies never push the other tabs down. Unmeasured cells have no amounts, so they have no Amounts tab and open on Summary. Table cells no longer wrap (the table scrolls sideways instead).

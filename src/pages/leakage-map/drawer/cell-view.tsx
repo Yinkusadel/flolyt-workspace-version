@@ -29,8 +29,9 @@ import { CASE_STATUS_TONE, FieldLabel, PRIMARY_ACTION_CLASS, resolveOwnerName, S
 /** The calculation controls the detail, history and Learn Why calls share: never the market or currency filters. */
 export type CellQuery = Omit<GetLeakageCellV2Params, "cellId">;
 
-type TabKey = "summary" | "components" | "signals" | "sources" | "history";
+type TabKey = "amounts" | "summary" | "components" | "signals" | "sources" | "history";
 const TABS: { key: TabKey; label: string }[] = [
+  { key: "amounts", label: "Amounts" },
   { key: "summary", label: "Summary" },
   { key: "components", label: "Components" },
   { key: "signals", label: "Signals" },
@@ -58,11 +59,15 @@ export function CellView({ cell, query, controls, onOpenCase }: CellViewProps) {
   const navigate = useNavigate();
   const { data, isLoading, isError, refetch } = useGetLeakageCellV2({ cellId: cell.id, ...query });
   const { mutate: learnWhy, isPending: isAskingWhy } = useLearnWhyLeakageCellV2();
-  const [tab, setTab] = useState<TabKey>("summary");
+  // The per-currency table lives in its own tab so a cell with many currencies never pushes the other tabs down.
+  // A cell with no amounts (unmeasured) has no Amounts tab and opens on Summary.
+  const [pickedTab, setPickedTab] = useState<TabKey | null>(null);
   const detail = data?.data;
   const live = detail?.cell ?? cell;
 
   const lead = live.amounts[0];
+  const tabs = live.amounts.length > 0 ? TABS : TABS.filter((t) => t.key !== "amounts");
+  const tab: TabKey = pickedTab && tabs.some((t) => t.key === pickedTab) ? pickedTab : tabs[0].key;
   const hasLeakToExplain = live.state.display === "POPULATED" && !!lead && lead.value > 0;
   const unassigned = live.amounts.some((a) => isUnassignedMarket(a.market));
   const modeTitle = MODE_TITLE[query.mode?.toUpperCase() ?? ""] ?? humanizeEnum(query.mode ?? "");
@@ -101,17 +106,15 @@ export function CellView({ cell, query, controls, onOpenCase }: CellViewProps) {
       <SheetBody className="space-y-5 px-5 py-5">
         {live.state.display === "POPULATED" && <CaseStrip cell={live} detail={detail} isLoading={isLoading} onOpenCase={onOpenCase} />}
 
-        {live.amounts.length > 0 && <AmountsTable amounts={live.amounts} reportingCurrency={controls.reportingCurrency} />}
-
         <div>
           <div role="tablist" aria-label="Cell detail" className="flex items-center gap-1 overflow-x-auto border-b border-line">
-            {TABS.map((t) => (
+            {tabs.map((t) => (
               <button
                 key={t.key}
                 role="tab"
                 type="button"
                 aria-selected={tab === t.key}
-                onClick={() => setTab(t.key)}
+                onClick={() => setPickedTab(t.key)}
                 className={cn(
                   "shrink-0 border-b-2 px-3 py-2.5 text-[11.5px] whitespace-nowrap",
                   tab === t.key
@@ -125,6 +128,7 @@ export function CellView({ cell, query, controls, onOpenCase }: CellViewProps) {
           </div>
 
           <div className="pt-4">
+            {tab === "amounts" && <AmountsTable amounts={live.amounts} reportingCurrency={controls.reportingCurrency} />}
             {tab === "summary" && <SummaryTab cell={live} />}
             {tab === "history" && <HistoryTab cell={live} query={query} />}
             {(tab === "components" || tab === "signals" || tab === "sources") && (
@@ -265,7 +269,7 @@ function AmountsTable({ amounts, reportingCurrency }: { amounts: LeakageV2Amount
   const rows = [...amounts].sort((a, b) => byCurrency(a.currency, b.currency));
   return (
     <div className="overflow-x-auto rounded-card border border-line">
-      <table className="w-full min-w-[34rem] text-left text-[11.5px]">
+      <table className="w-full min-w-[40rem] text-left text-[11.5px] whitespace-nowrap">
         <thead>
           <tr className="border-b border-line bg-paper-2 text-[10px] text-ink-4">
             {["Currency", "Gross", "Expected", "Net", "Range", "Confidence", "Severity", "Candidates"].map((h, i) => (
