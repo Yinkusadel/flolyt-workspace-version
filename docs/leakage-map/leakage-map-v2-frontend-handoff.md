@@ -233,7 +233,17 @@ type LeakagePageV2 = {
     horizons: { value: string; label: string }[];
     markets: string[];
     currencies: string[];
-    marketOptions: Array<{ market: string; currency: string; isPrimary: boolean }>;
+    marketOptions: Array<{
+      market: string;
+      currency: string | null; // deprecated preference alias; NOT a currency restriction
+      preferredCurrency: string | null;
+      currencies: string[];
+      isPrimary: boolean;
+      isConfigured: boolean;
+      isObserved: boolean;
+      hasExposure: boolean;
+      state: "CONFIGURED_AND_OBSERVED" | "CONFIGURED_NOT_OBSERVED" | "OBSERVED_NOT_CONFIGURED" | "UNASSIGNED";
+    }>;
     reportingCurrency: string | null;
     sectors: string[];
     severities: string[];
@@ -428,8 +438,12 @@ instead of assigning it to the primary market. Rank is meaningful only inside it
 group. Use `summary.measurementState` and the separately named measurement counts to explain
 partial coverage; never add candidate, observation, and cell counts together.
 
-Render market controls from `marketOptions`, retaining the market/currency pair. The `markets` and
-`currencies` arrays are independent filter vocabularies. `reportingCurrency` is display context,
+Render market controls from `marketOptions`, keyed by `market`. They cover the same inventory as the
+matrix, including observed markets absent from workspace configuration. Show the configured/observed
+state. `preferredCurrency` (legacy alias `currency`) is nullable and is only a preference;
+`currencies` lists known currencies for that market, not a claim that other currencies are invalid.
+Do not automatically apply the preference as a currency filter. The top-level `markets` and
+`currencies` arrays remain independent filter vocabularies. `reportingCurrency` is display context,
 not permission to convert or merge local-currency values. Send `market=NG` and `currency=NGN` as
 separate query parameters when both are selected.
 
@@ -756,7 +770,9 @@ available side by side. No new frontend repository or components were created he
 | `marketInventory.hasUnassignedExposure` | Exposure exists without supported market attribution; exclude this bucket from known-market counts |
 | `totals[]` | Filtered gross exposure, expected loss, net expected loss and selected amount, separated by currency and lifecycle; show every bucket |
 | `markets[]` | One row per configured or evidenced market, plus Unassigned where needed; filtered amounts and affected entities, with publication-level measurement flags |
-| `keyFindings[]` | Largest mechanism within each market/currency/lifecycle scope; never a global cross-currency ranking |
+| `headlineFindings[]` | Deterministic patterns across comparable scope winners; never monetary rankings across currencies |
+| `keyFindings[]` | Deprecated, now empty. Use headlines at executive level and `markets[].largestMechanisms` for detail |
+| `marketReconciliation` | Configured-and-observed, configured-not-observed, observed-not-configured, unassigned exposure and review flag; publication scope |
 | `confidence[]` | Filtered finding counts and expected-loss share associated with low-confidence findings, separately by currency/lifecycle |
 | `matrix[]` | Rows carry sector and stage/mechanism/state coordinates; columns carry market, display, reason, facets and currency-separated amounts |
 | `publicationCoverage` / `coverageMessage` | Publication-wide measurement coverage, independent of current filters |
@@ -1000,3 +1016,86 @@ API checks: recompute using the existing authenticated Leakage compute flow, the
 preview with evidence, and empty `amounts`. Compare an unavailable capability: it must explain the
 blocker without claiming zero opportunities or demanding a particular vendor. Older publications
 must still read successfully without the optional signal fields.
+
+## Relationship-based market attribution
+
+The warehouse reader now resolves market evidence through a shared semantic-layer resolver used by
+purchase history and the Marketplace, Manufacturing, Telecom, Retail/FMCG, Logistics and Restaurant
+fact queries. Existing market/currency response fields and the frontend rendering model are unchanged.
+
+- A single confidently mapped `Market` field on the fact takes precedence. Null rows remain unassigned;
+  they are not silently filled from a different geographical definition.
+- Otherwise, one declared source-local foreign key can reach an explicitly mapped `Market` on a
+  related account, branch, plant, merchant or other entity. The target must be readable and its full
+  referenced key must be declared primary/unique. Composite keys are preserved.
+- Account purchase history additionally supports `AccountCountry` on the fact or linked identity.
+  Exact `country` on an Identity table has this meaning, including previously inferred Unknown
+  columns. Country on arbitrary tables, destination/billing country, and currency are not substitutes.
+- For Lemfi, this resolves `transactions.customer_id -> customers.customer_id -> customers.country`.
+  It describes the sender/account market, not `transactions.destination_country` (the receiving corridor).
+- Ambiguous fields/relationships, absent relationship evidence, denied access and missing target rows
+  remain unassigned. A grouped left join preserves fact counts and money. Duplicate target records
+  remain unassigned even if their market values happen to agree.
+
+This implements a single declared relationship in the same source. It does not invent cross-source
+or multi-hop joins, reinterpret historical country changes, or bypass capability/freshness gates.
+Providers without relationship metadata need an explicitly mapped market on their fact view, or a
+profile with the required relationship/key evidence. Source views can expose a transaction-time market
+when account country changes over time. Workspace configured markets are not rewritten from data.
+
+Deployment and Postman checks:
+
+1. Deploy the backend. If the source profile predates physical FK/key discovery, call
+   `POST /api/v3/datasources/{id}/analyze` and wait for analysis to finish. Inspect the source schema
+   and capabilities through the existing datasource endpoints. Reanalysis also removes old heuristic
+   mappings that treated names such as `destination_market` as generic Market; explicit overrides
+   remain the workspace's responsibility.
+2. In Development/Staging, trigger `POST /api/flolyt/lifecycle/recompute?only=leakage-map`, or wait for
+   the scheduled lifecycle refresh. Wait for the new publication before reading `GET /api/v3/leakage`.
+3. For the Lemfi fixture, eligible measured observations should now carry sender markets GB, US, CA,
+   IE or NG. Which have exposure depends on the observations, window and detector. Missing/ambiguous
+   evidence may still produce an UNASSIGNED bucket; do not demand zero unknowns.
+4. Check configured markets separately: the example workspace declared GB/GH/KE/NG, while the demo
+   has sender markets GB/US/CA/IE/NG. Correct the workspace configuration if the business intends a
+   sender-market lens. Configuration alone cannot assign the observed amounts.
+5. Amounts, purchase counts and currencies must reconcile before/after attribution. Two sender
+   countries using USD must remain distinct; a destination of NG must not relabel a GB sender as NG.
+
+## Executive contract corrections (October 2026)
+
+See the [audit](specs-leakage-v2/executive-contract-audit.md) and
+[illustrative response excerpt](specs-leakage-v2/fixtures/executive-market-contract.example.json).
+These fields ship on existing publications after deployment; recomputation is not required.
+
+- **Market controls:** one option per matrix market. `state`, `isConfigured`, `isObserved` and
+  `hasExposure` describe publication evidence. Render observed-but-unconfigured markets normally,
+  with a setup-review indicator. Configured-but-unobserved is not zero exposure. `preferredCurrency`
+  can be null; legacy `currency` is the same preference. Do not treat either as a market identity
+  or automatically constrain the query to it. Options remain available after applying filters.
+- **Reconciliation:** use `executive.marketReconciliation.configuredAndObserved`,
+  `configuredNotObserved`, `observedNotConfigured`, `hasUnassignedExposure` and `requiresReview`.
+  Discovery never updates workspace settings. This contract introduces no update route or action.
+- **Entities:** render `affectedEntities[]` by subject type and grain, with its unit. `count` is a
+  distinct entity union for included priced findings, not summed mechanism counts. `state: EXACT`
+  accompanies a number; `UNAVAILABLE` accompanies null. Market `affectedEntitiesState` is also
+  UNAVAILABLE when an admitted cluster member lacks identity. Do not replace null with zero.
+  Legacy `candidateCount` remains analytical contributor count and must not be labelled customers,
+  accounts or affected entities. Never combine accounts with invoices into a single number.
+- **Evidence:** `hasObservationEvidence` and `hasCandidateEvidence` describe publication evidence.
+  `hasMeasuredExposure` means positive gross exposure in the current selection; it does not upgrade
+  estimate confidence. `hasAffectedEntities` means a known positive distinct count in that selection.
+  Use `affectedEntitiesState` to distinguish unknown from zero. Deprecated `hasMeasurementEvidence`
+  retains exactly its old observation-exists meaning. Show `evidenceExplanation` for an unpriced or
+  filtered-out market. An unassigned observation alone does not mean unassigned money.
+- **Headlines:** use `executive.headlineFindings[]` for the page summary. Fields are `kind`,
+  `mechanism`, `label`, `marketCount`, `markets`, `confidenceLevel`, `message`. The kind currently
+  emitted is `DOMINANT_MECHANISM_ACROSS_MARKETS`. Confidence is conservative, not a global score.
+  Keep `markets[].largestMechanisms[]` in market detail; `isTied` identifies equal scope leaders.
+  `keyFindings[]` is deprecated and empty on new responses. When supporting older servers, use it
+  only as market detail if `headlineFindings` is absent, not as repeated executive headlines.
+
+Headlines respect current filters and never compare monetary amounts across currencies. They
+require a strict winner in every currency/lifecycle scope represented in a market. Ties or conflicting
+winners may legitimately produce no headline; do not fabricate one. Unassigned is excluded from
+geographic market counts. Gross, Expected and Net remain distinct, and UNKNOWN still differs from
+NO_EXPOSURE.

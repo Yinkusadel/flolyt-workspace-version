@@ -328,3 +328,13 @@ shown per currency, never combined (no FX). Unassigned market is a bucket, not a
 ## Still to build (2026-10-04, after the footer line)
 
 1. **30-market matrix page** (market x leak-type table from `executive.matrix`; design: "30 markets + Unassigned - matrix" in the new-set folder). Deferred by the user until a workspace with many attributed markets exists. When built: link from the Leakage Map header next to Missed opportunities, each cell in its own currency, layout checked with a local-only 30-market intercept (never shipped). Real attributed-market amounts stay unverified until a workspace has them; then open the page once and compare against the Leakage Map.
+
+## Registry 1.6.0 update (2026-10-05, branch update-leakagemap-page-4)
+
+The new handoff replaced the old one (same filename). Live capture confirmed every new field is already served (registry 1.6.0, published 4 Oct 22:00).
+
+- **Types:** `marketOptions` (state, isConfigured, isObserved, hasExposure, preferredCurrency, currencies; `currency` now nullable and a preference only), `marketReconciliation`, `headlineFindings`, per-market evidence flags and `evidenceExplanation`, entity `state`/nullable `count`, `isTied`.
+- **Key findings rebuilt:** all-markets view leads with the server's `headlineFindings` sentence (confidence + markets), then the per-market rows from `markets[].largestMechanisms`. `keyFindings` (now empty) is read only from a server without `headlineFindings`. A single market's empty state uses the server's `evidenceExplanation`. The "no findings" footnote is all-markets only.
+- **Market filter:** Unassigned is no longer duplicated from `marketOptions`; currency preference no longer shown; markets not in settings / with no data yet are tagged. By market boxes: "Not in settings" chip, a setup-review line from `marketReconciliation` (wording is frontend copy over the server's two lists), server explanation for empty boxes. Unassigned view reworded: it now has observations but no priced exposure.
+- **Now verifiable live:** real attributed markets exist on the test workspace (NG, CA, GB, IE, US). The attributed-amount gap is closed for reads; the matrix can be tried with 6 real markets.
+- **Not changed:** the market filter still shows no currency choice per market (the preference is not applied); `currencies[]` is typed but unused.
