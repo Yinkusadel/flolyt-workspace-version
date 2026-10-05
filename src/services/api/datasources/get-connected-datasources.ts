@@ -1,0 +1,52 @@
+import axios from "axios";
+import { axiosInstance } from "@/services/index.service";
+import { API_ENDPOINTS } from "@/config/apiConfig";
+import { getServerErrorMessage } from "@/services/get-server-error";
+
+export interface ConnectedDatasourceDto {
+  id: string;
+  datasourceId: number;
+  datasourceName: string;
+  datasourceDisplayName: string;
+  category: string;
+  connectionName: string;
+  isActive: boolean;
+  connectionStatus: string;
+  connectedOn: string;
+  disconnectedOn: string | null;
+  lastSyncedOn: string | null;
+  lastSyncRecordCount: number | null;
+  lastSyncError: string | null;
+  metadata: Record<string, unknown>;
+  architecture: string;
+  targetSchemaName: string | null;
+}
+
+export interface GetConnectedDatasourcesResponse {
+  data: ConnectedDatasourceDto[];
+  messages: string[];
+  succeeded: boolean;
+}
+
+const {
+  DATASOURCES: { GET_CONNECTED_DATASOURCES },
+} = API_ENDPOINTS;
+
+// Verified live 2026-08-27: this does return the standard {data, messages, succeeded}
+// envelope, not the raw array docs/endpoints/datasources.md originally documented. That
+// doc's note has been corrected to match — see it before touching this again.
+export const getConnectedDatasources = async (): Promise<ConnectedDatasourceDto[]> => {
+  try {
+    const response = await axiosInstance.get<GetConnectedDatasourcesResponse>(GET_CONNECTED_DATASOURCES);
+
+    return response.data.data;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      const serverMessage = error.response ? getServerErrorMessage(error.response.data) : null;
+      throw new Error(serverMessage || "Failed to fetch connected datasources");
+    }
+    throw new Error(
+      "No response from server. Please check your internet connection and try again."
+    );
+  }
+};
