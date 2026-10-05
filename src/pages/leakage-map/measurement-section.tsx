@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -17,6 +16,9 @@ interface MeasurementSectionProps {
   limitationSummary: LeakageV2LimitationSummary;
   onOpenDiagnostics: () => void;
   onOpenCoverage: () => void;
+  /** Open/closed state is owned by the page so Readiness and Measurement, side by side, open and close together. */
+  expanded: boolean;
+  onToggle: () => void;
 }
 
 /**
@@ -32,8 +34,9 @@ export function MeasurementSection({
   limitationSummary,
   onOpenDiagnostics,
   onOpenCoverage,
+  expanded,
+  onToggle,
 }: MeasurementSectionProps) {
-  const [expanded, setExpanded] = useState(true);
   const effective = coverageExplanation?.effectiveCoverage ?? coverage.effective;
   const headline =
     coverageExplanation?.headline ?? `${coverage.measuredSignals} of ${coverage.applicableSignals} applicable signals measured`;
@@ -53,7 +56,7 @@ export function MeasurementSection({
 
   return (
     <section aria-label="Measurement" className="rounded-card border border-line bg-paper p-4 sm:p-5">
-      <ToggleHeader open={expanded} onToggle={() => setExpanded((prev) => !prev)} bodyId="measurement-body" title="Measurement" />
+      <ToggleHeader open={expanded} onToggle={onToggle} bodyId="measurement-body" title="Measurement" />
 
       <Collapse id="measurement-body" open={expanded}>
       <div className="mt-4 flex items-center gap-4">

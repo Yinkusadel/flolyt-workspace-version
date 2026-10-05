@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, ArrowRight } from "lucide-react";
 
@@ -43,6 +44,8 @@ export default function LeakageMap() {
   const diagnostics = useDiagnosticsParam();
   const coverageSheet = useCoverageParam();
   const calculation = useCalculationParam();
+  // Readiness and Measurement sit side by side and open and close together.
+  const [statusOpen, setStatusOpen] = useState(true);
 
   const crumbs: Crumb[] = filters.market
     ? [
@@ -177,6 +180,8 @@ export default function LeakageMap() {
             readiness={page.readiness}
             diagnosticCodes={page.limitationSummary.items.map((item) => item.code)}
             onOpenDiagnostics={diagnostics.openDiagnostics}
+            expanded={statusOpen}
+            onToggle={() => setStatusOpen((prev) => !prev)}
           />
           <MeasurementSection
             summary={page.summary}
@@ -185,6 +190,8 @@ export default function LeakageMap() {
             limitationSummary={page.limitationSummary}
             onOpenDiagnostics={() => diagnostics.openDiagnostics(DIAGNOSTICS_ALL)}
             onOpenCoverage={() => coverageSheet.openCoverage()}
+            expanded={statusOpen}
+            onToggle={() => setStatusOpen((prev) => !prev)}
           />
         </div>
         <PublicationFooter publication={page.publication} contractVersion={page.contractVersion} />

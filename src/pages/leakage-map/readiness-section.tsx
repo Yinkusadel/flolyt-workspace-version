@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Ban, Building2, Check, ChevronRight, CircleDollarSign, Clock, Plug, ShieldCheck, type LucideIcon } from "lucide-react";
 
@@ -46,6 +45,9 @@ interface ReadinessSectionProps {
   /** The diagnostics groups the server actually reported (`limitationSummary.items[].code`). */
   diagnosticCodes: LeakageV2LimitationCode[];
   onOpenDiagnostics: (code: LeakageV2LimitationCode) => void;
+  /** Open/closed state is owned by the page so Readiness and Measurement, side by side, open and close together. */
+  expanded: boolean;
+  onToggle: () => void;
 }
 
 /**
@@ -55,8 +57,7 @@ interface ReadinessSectionProps {
  * text and never as a button. A row's text opens the diagnostics behind it, but only when the server reported
  * diagnostics of that kind (a row with none is plain, with no arrow).
  */
-export function ReadinessSection({ readiness, diagnosticCodes, onOpenDiagnostics }: ReadinessSectionProps) {
-  const [expanded, setExpanded] = useState(true);
+export function ReadinessSection({ readiness, diagnosticCodes, onOpenDiagnostics, expanded, onToggle }: ReadinessSectionProps) {
   const open = readiness.items.filter((item) => item.state !== "READY");
   const ready = readiness.items.filter((item) => item.state === "READY");
 
@@ -64,7 +65,7 @@ export function ReadinessSection({ readiness, diagnosticCodes, onOpenDiagnostics
     <section aria-label="Readiness" className="rounded-card border border-line bg-paper p-4 sm:p-5">
       <ToggleHeader
         open={expanded}
-        onToggle={() => setExpanded((prev) => !prev)}
+        onToggle={onToggle}
         bodyId="readiness-body"
         title="Readiness"
         aside={
