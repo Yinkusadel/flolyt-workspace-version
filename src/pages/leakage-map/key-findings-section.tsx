@@ -1,4 +1,8 @@
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+
 import { cn } from "@/lib/utils";
+import { Collapse } from "@/pages/leakage-map/collapse";
 import type { LeakageV2Cell, LeakageV2Controls } from "@/services/api/leakage/get-leakage";
 import type { LeakageExecutive, LeakageExecutiveFinding } from "@/services/api/leakage/leakage-executive-types";
 import {
@@ -34,6 +38,8 @@ interface FindingGroup {
  * two fields client-side. The revenue-stage chip is looked up from the finding's own cell.
  */
 export function KeyFindingsSection({ executive, cells, controls, selectedMarket }: KeyFindingsSectionProps) {
+  // Open by default; the header toggles the body so the page can be shortened without losing the title.
+  const [open, setOpen] = useState(true);
   if (!executive) return null;
 
   // `keyFindings` is empty on new responses; an older server without `headlineFindings` still sends it.
@@ -94,9 +100,20 @@ export function KeyFindingsSection({ executive, cells, controls, selectedMarket 
 
   return (
     <section aria-label="Key findings" className="rounded-card border border-line bg-paper p-4 sm:p-5">
+      {/* Anywhere on the header toggles the body. The title button is the keyboard and screen-reader control; its
+          click bubbles to this wrapper, so it toggles exactly once. */}
+      <div onClick={() => setOpen((prev) => !prev)} className="cursor-pointer select-none">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-[13px] font-semibold text-ink">
-          {selectedMarket ? `Key findings in ${marketName(selectedMarket)}` : "Key findings"}
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls="key-findings-body"
+            className="flex items-center gap-1.5 text-left hover:text-ink-2"
+          >
+            {selectedMarket ? `Key findings in ${marketName(selectedMarket)}` : "Key findings"}
+            <ChevronDown className={cn("size-3.5 shrink-0 text-ink-3 transition-transform", !open && "-rotate-90")} />
+          </button>
         </h2>
         <p className="text-[10.5px] text-ink-3">
           Estimated exposure · {MODE_TITLE[selectedMode] ?? humanizeEnum(selectedMode)}
@@ -105,7 +122,9 @@ export function KeyFindingsSection({ executive, cells, controls, selectedMarket 
       <p className="mt-0.5 text-[11.5px] text-ink-3">
         The largest leak in each market, currency and lifecycle. Not ranked across currencies.
       </p>
+      </div>
 
+      <Collapse id="key-findings-body" open={open}>
       {headlines.length > 0 && (
         <ul className="mt-3 space-y-2">
           {headlines.map((headline) => (
@@ -160,6 +179,7 @@ export function KeyFindingsSection({ executive, cells, controls, selectedMarket 
           attributed {withoutFindings.length === 1 ? "to it" : "to them"} yet.
         </p>
       )}
+      </Collapse>
     </section>
   );
 }
