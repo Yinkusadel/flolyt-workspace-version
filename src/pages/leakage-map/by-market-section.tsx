@@ -5,11 +5,12 @@ import { cn } from "@/lib/utils";
 import { formatCompactMoney } from "@/lib/format-measured-value";
 import type { LeakageV2Controls } from "@/services/api/leakage/get-leakage";
 import type {
+  LeakageExecutiveMarketReconciliation,
   LeakageExecutive,
   LeakageExecutiveAmount,
   LeakageExecutiveMarket,
 } from "@/services/api/leakage/leakage-executive-types";
-import { currencySymbol, humanizeEnum, isUnassignedMarket, marketName } from "@/pages/leakage-map/format";
+import { humanizeEnum, isUnassignedMarket, marketName } from "@/pages/leakage-map/format";
 
 /** Real markets shown before the rest collapse behind "Show more"; the Unassigned bucket is always shown. */
 const VISIBLE_MARKETS = 4;
@@ -65,6 +66,10 @@ export function ByMarketSection({ executive, controls, selectedMarket, onSelectM
           </span>
         ))}
       </p>
+
+      {executive.marketReconciliation?.requiresReview && (
+        <p className="mt-2 text-[11px] text-ink-3">{reconciliationNote(executive.marketReconciliation)}</p>
+      )}
 
       <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-3">
         {[...visibleReal, ...unassigned].map((market) => (
@@ -135,9 +140,12 @@ function MarketBox({
             Primary
           </span>
         )}
-        {option?.currency && (
-          <span className="font-mono text-[10px] text-ink-4" title={option.currency}>
-            {currencySymbol(option.currency)}
+        {!unassigned && !market.isConfigured && (
+          <span
+            title="Seen in your data, but not in your market settings"
+            className="rounded-chip bg-amber-bg px-1.5 py-px font-mono text-[8.5px] font-semibold text-amber uppercase"
+          >
+            Not in settings
           </span>
         )}
         <ChevronRight className="ml-auto size-3.5 text-ink-4 group-hover:text-ink-2" />
@@ -168,11 +176,12 @@ function MarketBox({
           <span className="mt-3 text-[12px] font-medium text-ink-2">No attributed exposure yet</span>
           <span className="mt-1 flex items-start gap-1 text-[10.5px] text-ink-3">
             <HelpCircle className="mt-px size-3 shrink-0" />
-            {market.hasMeasurementEvidence
-              ? "Measured, but no amount published for this market"
-              : market.isConfigured
-                ? "Configured, no market-scoped measurement"
-                : "No measurement evidence"}
+            {market.evidenceExplanation ??
+              (market.hasMeasurementEvidence
+                ? "Measured, but no amount published for this market"
+                : market.isConfigured
+                  ? "Configured, no market-scoped measurement"
+                  : "No measurement evidence")}
           </span>
         </>
       )}
@@ -189,4 +198,18 @@ function AmountChip({ amount }: { amount: LeakageExecutiveAmount }) {
       {formatCompactMoney(amount.selectedAmount, amount.currency)}
     </span>
   );
+}
+
+/** Only the two lists the server flags for review; settings are never changed from here. */
+function reconciliationNote(r: LeakageExecutiveMarketReconciliation): string {
+  const names = (codes: string[]) => {
+    const list = codes.map((c) => marketName(c));
+    return list.length <= 1 ? list.join("") : `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}`;
+  };
+  const parts: string[] = [];
+  if (r.observedNotConfigured.length > 0)
+    parts.push(`${names(r.observedNotConfigured)} ${r.observedNotConfigured.length === 1 ? "appears" : "appear"} in your data but not in your market settings`);
+  if (r.configuredNotObserved.length > 0)
+    parts.push(`${names(r.configuredNotObserved)} ${r.configuredNotObserved.length === 1 ? "is" : "are"} in your settings but not seen in the data yet`);
+  return `${parts.join(". ")}. Settings are not changed automatically.`;
 }

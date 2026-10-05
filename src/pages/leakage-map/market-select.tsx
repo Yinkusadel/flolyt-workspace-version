@@ -2,8 +2,8 @@ import { MapPin } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import type { LeakageV2Controls } from "@/services/api/leakage/get-leakage";
-import { currencySymbol, marketName, UNASSIGNED_MARKET } from "@/pages/leakage-map/format";
+import type { LeakageV2Controls, LeakageV2MarketOptionState } from "@/services/api/leakage/get-leakage";
+import { marketName, UNASSIGNED_MARKET } from "@/pages/leakage-map/format";
 
 /** Up to this many real markets, every market is its own button. Above it, a searchable list. */
 const SEGMENTED_MAX = 5;
@@ -11,15 +11,26 @@ const ALL_VALUE = "__all__";
 
 interface MarketItem {
   code: string;
-  /** The market's own currency when the workspace configured one; unconfigured source markets have none. */
-  currency: string | null;
+  /** Whether the market is in the workspace's settings and/or seen in the data; null for a market only listed in `controls.markets`. */
+  state: LeakageV2MarketOptionState | null;
 }
+
+/** Short wording for a state a person should notice; the two settled states say nothing. */
+const STATE_NOTE: Partial<Record<LeakageV2MarketOptionState, string>> = {
+  OBSERVED_NOT_CONFIGURED: "not in settings",
+  CONFIGURED_NOT_OBSERVED: "no data yet",
+};
+const STATE_TITLE: Partial<Record<LeakageV2MarketOptionState, string>> = {
+  OBSERVED_NOT_CONFIGURED: "Seen in your data, but not in your market settings",
+  CONFIGURED_NOT_OBSERVED: "In your market settings, but nothing has been observed for it yet",
+};
 
 /**
  * The market control. One selection at a time: the contract takes a single `market`, so there is no
- * multi-select. Options come from `controls.marketOptions` (market and currency pairs, primary first);
- * markets that only appear in `controls.markets` (exposure in an unconfigured source market) are added
- * after them. "Unassigned market" is a bucket, not a country, so it always comes last and looks different.
+ * multi-select. Options come from `controls.marketOptions` (primary first), which now also lists markets seen
+ * in the data but absent from workspace settings, each tagged with its state. The option's currency is only
+ * a preference, so it is neither shown nor applied as a filter. "Unassigned market" is a bucket, not a
+ * country, so it always comes last and looks different.
  */
 export function MarketSelect({
   controls,
@@ -31,11 +42,12 @@ export function MarketSelect({
   onChange: (market: string | null) => void;
 }) {
   const configured: MarketItem[] = [...controls.marketOptions]
+    .filter((o) => o.market !== UNASSIGNED_MARKET)
     .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
-    .map((o) => ({ code: o.market, currency: o.currency }));
+    .map((o) => ({ code: o.market, state: o.state }));
   const extras: MarketItem[] = controls.markets
     .filter((m) => m !== UNASSIGNED_MARKET && !configured.some((c) => c.code === m))
-    .map((code) => ({ code, currency: null }));
+    .map((code) => ({ code, state: null }));
   const markets = [...configured, ...extras];
   const hasUnassigned = controls.markets.includes(UNASSIGNED_MARKET);
 
@@ -50,9 +62,14 @@ export function MarketSelect({
           All
         </SegmentButton>
         {markets.map((m) => (
-          <SegmentButton key={m.code} active={value === m.code} onClick={() => onChange(m.code)} title={marketName(m.code)}>
+          <SegmentButton
+            key={m.code}
+            active={value === m.code}
+            onClick={() => onChange(m.code)}
+            title={[marketName(m.code), m.state && STATE_TITLE[m.state]].filter(Boolean).join(": ")}
+          >
             <span className="font-mono font-semibold">{m.code}</span>
-            {m.currency && <span className="ml-1 text-ink-4">{currencySymbol(m.currency)}</span>}
+            {m.state && STATE_NOTE[m.state] && <span className="ml-1.5 size-1.5 rounded-full bg-amber" aria-hidden />}
           </SegmentButton>
         ))}
         {hasUnassigned && (
@@ -82,7 +99,7 @@ export function MarketSelect({
           { value: ALL_VALUE, label: "All markets" },
           ...markets.map((m) => ({
             value: m.code,
-            label: `${marketName(m.code)} (${m.code}${m.currency ? ` · ${m.currency}` : ""})`,
+            label: `${marketName(m.code)} (${m.code})${m.state && STATE_NOTE[m.state] ? ` · ${STATE_NOTE[m.state]}` : ""}`,
           })),
           ...(hasUnassigned ? [{ value: UNASSIGNED_MARKET, label: "Unassigned market" }] : []),
         ]}
