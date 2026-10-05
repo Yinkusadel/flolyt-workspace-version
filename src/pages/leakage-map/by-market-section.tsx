@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronRight, HelpCircle, MapPin } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { TextTooltip } from "@/components/ui/text-tooltip";
 import { formatCompactMoney } from "@/lib/format-measured-value";
 import type { LeakageV2Controls } from "@/services/api/leakage/get-leakage";
 import type {
@@ -137,12 +138,11 @@ function MarketBox({
           </span>
         )}
         {!unassigned && !market.isConfigured && (
-          <span
-            title="Seen in your data, but not in your workspace's market list"
-            className="rounded-chip bg-amber-bg px-1.5 py-px font-mono text-[8.5px] font-semibold whitespace-nowrap text-amber uppercase"
-          >
-            Found in data
-          </span>
+          <TextTooltip content="Seen in your data, but not in your workspace's market list.">
+            <span className="rounded-chip bg-amber-bg px-1.5 py-px font-mono text-[8.5px] font-semibold whitespace-nowrap text-amber uppercase">
+              Found in data
+            </span>
+          </TextTooltip>
         )}
       </span>
       <span className="mt-1.5 flex items-center gap-2">
