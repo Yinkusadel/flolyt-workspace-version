@@ -92,7 +92,7 @@ export function MarketHeader({ market, executive, controls, coverage, asOf, onCl
           {row.affectedEntities.map((entity) => (
             <div key={`${entity.subjectType}:${entity.grain}`}>
               <dt className="text-[10.5px] text-ink-4 capitalize">Affected {entity.unit}</dt>
-              <dd className="font-mono text-[15px] font-semibold text-ink">{entity.count.toLocaleString("en-US")}</dd>
+              <dd className="font-mono text-[15px] font-semibold text-ink">{entity.count == null ? "Not available" : entity.count.toLocaleString("en-US")}</dd>
             </div>
           ))}
           <p className="self-end text-[10.5px] text-ink-4">De-duplicated across leak types. Units are never mixed.</p>

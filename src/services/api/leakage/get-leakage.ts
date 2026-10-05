@@ -300,10 +300,31 @@ export interface LeakageV2ControlOption {
   label: string;
 }
 
+/** How a market option relates to the workspace's own market settings (confirmed live 2026-10-05). */
+export type LeakageV2MarketOptionState =
+  | "CONFIGURED_AND_OBSERVED"
+  | "CONFIGURED_NOT_OBSERVED"
+  | "OBSERVED_NOT_CONFIGURED"
+  | "UNASSIGNED";
+
+/**
+ * One option per matrix market, including markets seen in the data but absent from workspace settings.
+ * `currency` is a deprecated alias of `preferredCurrency`: a preference only, never a currency
+ * restriction and never to be applied as a filter automatically. `currencies` lists the currencies
+ * known for the market, not a claim that others are invalid. A configured market that is not observed
+ * is not a zero exposure. Added 2026-10-05 (registry 1.6.0).
+ */
 export interface LeakageV2MarketOption {
   market: string;
-  currency: string;
+  /** Deprecated alias of `preferredCurrency`; null for the Unassigned bucket. */
+  currency: string | null;
+  preferredCurrency: string | null;
+  currencies: string[];
   isPrimary: boolean;
+  isConfigured: boolean;
+  isObserved: boolean;
+  hasExposure: boolean;
+  state: LeakageV2MarketOptionState;
 }
 
 export interface LeakageV2Controls {

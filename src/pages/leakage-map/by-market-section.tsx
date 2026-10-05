@@ -135,7 +135,7 @@ function MarketBox({
             Primary
           </span>
         )}
-        {option && (
+        {option?.currency && (
           <span className="font-mono text-[10px] text-ink-4" title={option.currency}>
             {currencySymbol(option.currency)}
           </span>
@@ -152,7 +152,9 @@ function MarketBox({
           </span>
           {market.affectedEntities.length > 0 && (
             <span className="mt-2 text-[10.5px] text-ink-3">
-              {market.affectedEntities.map((e) => `${e.count.toLocaleString("en-US")} ${e.unit}`).join(" · ")} affected
+              {market.affectedEntities
+                .map((e) => (e.count == null ? `${e.unit} not available` : `${e.count.toLocaleString("en-US")} ${e.unit} affected`))
+                .join(" · ")}
             </span>
           )}
           {unassigned && (
