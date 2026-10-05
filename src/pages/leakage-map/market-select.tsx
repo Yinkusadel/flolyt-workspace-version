@@ -88,7 +88,7 @@ export function MarketSelect({
   }
 
   return (
-    <div className="w-60 shrink-0">
+    <div className="w-72 shrink-0">
       <SearchableSelect
         value={value ?? ALL_VALUE}
         onChange={(next) => onChange(next === ALL_VALUE ? null : next)}
