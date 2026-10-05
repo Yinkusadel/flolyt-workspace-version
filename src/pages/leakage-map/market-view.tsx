@@ -1,3 +1,4 @@
+import { AddMarketDialog, useAddMarketDialog } from "@/pages/leakage-map/add-market-dialog";
 import { ArrowLeft, Check, HelpCircle, MapPin } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -51,6 +52,7 @@ export function MarketHeader({ market, executive, controls, coverage, asOf, onCl
   const unassigned = isUnassignedMarket(market);
   const option = controls.marketOptions.find((o) => o.market === market);
   const hasEvidence = !!row?.hasMeasurementEvidence;
+  const addMarket = useAddMarketDialog();
 
   const facts = unassigned
     ? ["Not attributed to a market", ...(row && row.amounts.length > 0 ? ["currency proven, market not"] : [])]
@@ -77,15 +79,27 @@ export function MarketHeader({ market, executive, controls, coverage, asOf, onCl
             <p className="mt-0.5 text-[11.5px] text-ink-3">{facts.join(" · ")}</p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClear}
-          className="flex h-8 items-center gap-1.5 rounded-control border border-line bg-paper px-3 text-[11.5px] font-medium text-ink hover:border-ink-4"
-        >
-          <ArrowLeft className="size-3.5" />
-          All markets
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {!unassigned && row && !row.isConfigured && (
+            <button
+              type="button"
+              onClick={() => addMarket.openFor(market, option?.preferredCurrency ?? null)}
+              className="flex h-8 items-center rounded-control border border-amber-border bg-amber-bg px-3 text-[11.5px] font-medium text-amber hover:border-amber"
+            >
+              Add to my markets
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClear}
+            className="flex h-8 items-center gap-1.5 rounded-control border border-line bg-paper px-3 text-[11.5px] font-medium text-ink hover:border-ink-4"
+          >
+            <ArrowLeft className="size-3.5" />
+            All markets
+          </button>
+        </div>
       </div>
+      <AddMarketDialog state={addMarket.state} onOpenChange={addMarket.setOpen} />
 
       {row && row.affectedEntities.length > 0 && (
         <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2">

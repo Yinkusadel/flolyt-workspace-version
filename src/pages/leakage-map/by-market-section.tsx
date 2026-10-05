@@ -2,7 +2,8 @@ import { useState } from "react";
 import { ChevronRight, HelpCircle, MapPin } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { TextTooltip } from "@/components/ui/text-tooltip";
+import { CHIP_INTERACTIVE_CLASS } from "@/components/ui/chip";
+import { AddMarketDialog, useAddMarketDialog } from "@/pages/leakage-map/add-market-dialog";
 import { formatCompactMoney } from "@/lib/format-measured-value";
 import type { LeakageV2Controls } from "@/services/api/leakage/get-leakage";
 import type {
@@ -32,6 +33,7 @@ interface ByMarketSectionProps {
  */
 export function ByMarketSection({ executive, controls, selectedMarket, onSelectMarket }: ByMarketSectionProps) {
   const [showAll, setShowAll] = useState(false);
+  const addMarket = useAddMarketDialog();
   if (!executive || executive.markets.length === 0) return null;
 
   const { marketInventory: inventory } = executive;
@@ -80,6 +82,12 @@ export function ByMarketSection({ executive, controls, selectedMarket, onSelectM
             controls={controls}
             selected={selectedMarket === market.attribution.code}
             onSelect={() => onSelectMarket(market.attribution.code)}
+            onFoundInData={() =>
+              addMarket.openFor(
+                market.attribution.code,
+                controls.marketOptions.find((o) => o.market === market.attribution.code)?.preferredCurrency ?? null
+              )
+            }
           />
         ))}
       </div>
@@ -93,6 +101,7 @@ export function ByMarketSection({ executive, controls, selectedMarket, onSelectM
           {showAll ? "Show fewer markets" : `Show ${hiddenCount} more ${hiddenCount === 1 ? "market" : "markets"}`}
         </button>
       )}
+      <AddMarketDialog state={addMarket.state} onOpenChange={addMarket.setOpen} />
     </section>
   );
 }
@@ -102,11 +111,13 @@ function MarketBox({
   controls,
   selected,
   onSelect,
+  onFoundInData,
 }: {
   market: LeakageExecutiveMarket;
   controls: LeakageV2Controls;
   selected: boolean;
   onSelect: () => void;
+  onFoundInData: () => void;
 }) {
   const code = market.attribution.code;
   const unassigned = isUnassignedMarket(code);
@@ -116,13 +127,16 @@ function MarketBox({
     (a, b) => a.currency.localeCompare(b.currency) || a.lifecycleClass.localeCompare(b.lifecycleClass)
   );
 
+  const foundInData = !unassigned && !market.isConfigured;
+
   return (
+    <div className="relative flex">
     <button
       type="button"
       onClick={onSelect}
       aria-label={`${marketName(code)}${hasAmounts ? "" : ", no attributed exposure yet"}. Open this market`}
       className={cn(
-        "group flex flex-col rounded-card border p-4 text-left transition-colors",
+        "group flex w-full flex-col rounded-card border p-4 text-left transition-colors",
         unassigned
           ? "border-dashed border-ultra-border bg-ultra-bg/40 hover:border-ultra"
           : "border-line bg-paper hover:border-ink-4",
@@ -136,13 +150,6 @@ function MarketBox({
           <span className="rounded-chip bg-paper-2 px-1.5 py-px font-mono text-[8.5px] font-semibold whitespace-nowrap text-ink-3 uppercase">
             Primary
           </span>
-        )}
-        {!unassigned && !market.isConfigured && (
-          <TextTooltip content="Seen in your data, but not in your workspace's market list.">
-            <span className="rounded-chip bg-amber-bg px-1.5 py-px font-mono text-[8.5px] font-semibold whitespace-nowrap text-amber uppercase">
-              Found in data
-            </span>
-          </TextTooltip>
         )}
       </span>
       <span className="mt-1.5 flex items-center gap-2">
@@ -192,6 +199,21 @@ function MarketBox({
         </>
       )}
     </button>
+    {/* A button cannot sit inside the card's button, so the chip is its own control laid over the badge row. */}
+    {foundInData && (
+      <button
+        type="button"
+        onClick={onFoundInData}
+        aria-label={`${marketName(code)} is found in your data but not in your market list. Learn more`}
+        className={cn(
+          "absolute top-4 left-4 rounded-chip border border-amber-border bg-amber-bg px-1.5 py-px font-mono text-[8.5px] font-semibold whitespace-nowrap text-amber uppercase",
+          CHIP_INTERACTIVE_CLASS
+        )}
+      >
+        Found in data
+      </button>
+    )}
+    </div>
   );
 }
 
