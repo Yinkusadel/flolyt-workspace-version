@@ -138,10 +138,10 @@ function MarketBox({
         )}
         {!unassigned && !market.isConfigured && (
           <span
-            title="Seen in your data, but not in your market settings"
+            title="Seen in your data, but not in your workspace's market list"
             className="rounded-chip bg-amber-bg px-1.5 py-px font-mono text-[8.5px] font-semibold whitespace-nowrap text-amber uppercase"
           >
-            Not in settings
+            Found in data
           </span>
         )}
       </span>
@@ -206,7 +206,7 @@ function AmountChip({ amount }: { amount: LeakageExecutiveAmount }) {
   );
 }
 
-/** Only the two lists the server flags for review; settings are never changed from here. */
+/** Only the two lists the server flags for review; the market list is never changed from here. */
 function reconciliationNote(r: LeakageExecutiveMarketReconciliation): string {
   const names = (codes: string[]) => {
     const list = codes.map((c) => marketName(c));
@@ -214,8 +214,8 @@ function reconciliationNote(r: LeakageExecutiveMarketReconciliation): string {
   };
   const parts: string[] = [];
   if (r.observedNotConfigured.length > 0)
-    parts.push(`${names(r.observedNotConfigured)} ${r.observedNotConfigured.length === 1 ? "appears" : "appear"} in your data but not in your market settings`);
+    parts.push(`${names(r.observedNotConfigured)} ${r.observedNotConfigured.length === 1 ? "appears" : "appear"} in your data but not in your market list`);
   if (r.configuredNotObserved.length > 0)
-    parts.push(`${names(r.configuredNotObserved)} ${r.configuredNotObserved.length === 1 ? "is" : "are"} in your settings but not seen in the data yet`);
-  return `${parts.join(". ")}. Settings are not changed automatically.`;
+    parts.push(`${names(r.configuredNotObserved)} ${r.configuredNotObserved.length === 1 ? "is" : "are"} in your market list but not seen in the data yet`);
+  return `${parts.join(". ")}. Your market list is not changed automatically.`;
 }

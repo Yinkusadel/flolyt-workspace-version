@@ -17,12 +17,12 @@ interface MarketItem {
 
 /** Short wording for a state a person should notice; the two settled states say nothing. */
 const STATE_NOTE: Partial<Record<LeakageV2MarketOptionState, string>> = {
-  OBSERVED_NOT_CONFIGURED: "not in settings",
+  OBSERVED_NOT_CONFIGURED: "found in data",
   CONFIGURED_NOT_OBSERVED: "no data yet",
 };
 const STATE_TITLE: Partial<Record<LeakageV2MarketOptionState, string>> = {
-  OBSERVED_NOT_CONFIGURED: "Seen in your data, but not in your market settings",
-  CONFIGURED_NOT_OBSERVED: "In your market settings, but nothing has been observed for it yet",
+  OBSERVED_NOT_CONFIGURED: "Seen in your data, but not in your workspace's market list",
+  CONFIGURED_NOT_OBSERVED: "In your workspace's market list, but nothing has been observed for it yet",
 };
 
 /**
