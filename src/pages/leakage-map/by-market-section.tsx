@@ -128,27 +128,33 @@ function MarketBox({
         selected && "ring-2 ring-ink/70"
       )}
     >
-      <span className="flex items-center gap-2">
-        {unassigned ? (
-          <MapPin className="size-3.5 text-ultra" />
-        ) : (
-          <span className="rounded-chip bg-paper-2 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-ink">{code}</span>
-        )}
-        <span className="text-[12.5px] font-semibold text-ink">{marketName(code)}</span>
+      {/* Badges get their own row at the top, reserved on every box, so a long name never wraps beside them and
+          the figures underneath line up from one box to the next. */}
+      <span className="flex min-h-4 items-center gap-1.5">
         {option?.isPrimary && (
-          <span className="rounded-chip bg-paper-2 px-1.5 py-px font-mono text-[8.5px] font-semibold text-ink-3 uppercase">
+          <span className="rounded-chip bg-paper-2 px-1.5 py-px font-mono text-[8.5px] font-semibold whitespace-nowrap text-ink-3 uppercase">
             Primary
           </span>
         )}
         {!unassigned && !market.isConfigured && (
           <span
             title="Seen in your data, but not in your market settings"
-            className="rounded-chip bg-amber-bg px-1.5 py-px font-mono text-[8.5px] font-semibold text-amber uppercase"
+            className="rounded-chip bg-amber-bg px-1.5 py-px font-mono text-[8.5px] font-semibold whitespace-nowrap text-amber uppercase"
           >
             Not in settings
           </span>
         )}
-        <ChevronRight className="ml-auto size-3.5 text-ink-4 group-hover:text-ink-2" />
+      </span>
+      <span className="mt-1.5 flex items-center gap-2">
+        {unassigned ? (
+          <MapPin className="size-3.5 shrink-0 text-ultra" />
+        ) : (
+          <span className="shrink-0 rounded-chip bg-paper-2 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-ink">{code}</span>
+        )}
+        <span className="min-w-0 truncate text-[12.5px] font-semibold text-ink" title={marketName(code)}>
+          {marketName(code)}
+        </span>
+        <ChevronRight className="ml-auto size-3.5 shrink-0 text-ink-4 group-hover:text-ink-2" />
       </span>
 
       {hasAmounts ? (
