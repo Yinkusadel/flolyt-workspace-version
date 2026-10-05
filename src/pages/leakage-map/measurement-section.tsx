@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Collapse, ToggleHeader } from "@/pages/leakage-map/collapse";
 import type {
   LeakageV2CoverageSummary,
   LeakageV2LimitationSummary,
@@ -31,6 +33,7 @@ export function MeasurementSection({
   onOpenDiagnostics,
   onOpenCoverage,
 }: MeasurementSectionProps) {
+  const [expanded, setExpanded] = useState(true);
   const effective = coverageExplanation?.effectiveCoverage ?? coverage.effective;
   const headline =
     coverageExplanation?.headline ?? `${coverage.measuredSignals} of ${coverage.applicableSignals} applicable signals measured`;
@@ -50,8 +53,9 @@ export function MeasurementSection({
 
   return (
     <section aria-label="Measurement" className="rounded-card border border-line bg-paper p-4 sm:p-5">
-      <h2 className="text-[13px] font-semibold text-ink">Measurement</h2>
+      <ToggleHeader open={expanded} onToggle={() => setExpanded((prev) => !prev)} bodyId="measurement-body" title="Measurement" />
 
+      <Collapse id="measurement-body" open={expanded}>
       <div className="mt-4 flex items-center gap-4">
         <Ring value={effective} />
         <div className="min-w-0">
@@ -86,6 +90,7 @@ export function MeasurementSection({
           <ChevronRight className="size-3.5" />
         </button>
       </div>
+      </Collapse>
     </section>
   );
 }
