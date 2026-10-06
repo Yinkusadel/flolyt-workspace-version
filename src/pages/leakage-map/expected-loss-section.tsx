@@ -1,36 +1,23 @@
 import { useState } from "react";
-import { AlertTriangle, ArrowLeftRight, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatCompactMoney } from "@/lib/format-measured-value";
-import type { LeakageV2Controls, LeakageV2Summary } from "@/services/api/leakage/get-leakage";
-import type { LeakageCoverageExplanation } from "@/services/api/leakage/leakage-executive-types";
+import type { LeakageV2Controls } from "@/services/api/leakage/get-leakage";
 import type {
   LeakageExecutive,
   LeakageExecutiveAmount,
   LeakageExecutiveConfidence,
 } from "@/services/api/leakage/leakage-executive-types";
 import type { LeakageFilters } from "@/pages/leakage-map/filters";
-import { Collapse } from "@/pages/leakage-map/collapse";
 import { compareCurrencies, formatHeadlineMoney, humanizeEnum, MODE_TITLE } from "@/pages/leakage-map/format";
 
 /** Past this many cards the rest sit behind a "show more" control, so many currencies never flood the page. */
 const VISIBLE_CARDS = 6;
 
-/** `executive.fxState` value that means "no approved FX rates: nothing may be converted or combined". */
-const NO_FX_STATE = "NOT_CONSOLIDATED_NO_APPROVED_FX";
-
-const MEASUREMENT_BANNER_LABEL: Record<string, string> = {
-  PARTIALLY_MEASURED: "Partially measured.",
-  UNAVAILABLE: "Not measured yet.",
-};
-
 interface ExpectedLossSectionProps {
   executive: LeakageExecutive | undefined;
-  summary: LeakageV2Summary;
   controls: LeakageV2Controls;
   filters: LeakageFilters;
-  coverageExplanation: LeakageCoverageExplanation | undefined;
 }
 
 /**
@@ -43,7 +30,7 @@ interface ExpectedLossSectionProps {
  * - the low-confidence line is the server's own `lowConfidenceExpectedLossShare` for that bucket.
  * Market and currency filters already narrow `executive.totals`, so the cards follow them untouched.
  */
-export function ExpectedLossSection({ executive, summary, controls, filters, coverageExplanation }: ExpectedLossSectionProps) {
+export function ExpectedLossSection({ executive, controls, filters }: ExpectedLossSectionProps) {
   const [showAll, setShowAll] = useState(false);
 
   if (!executive) {
@@ -83,41 +70,8 @@ export function ExpectedLossSection({ executive, summary, controls, filters, cov
   const visibleCards = showAll ? cards : cards.slice(0, VISIBLE_CARDS);
   const hiddenCount = cards.length - visibleCards.length;
 
-  const bannerLabel = MEASUREMENT_BANNER_LABEL[summary.measurementState];
-
   return (
     <section aria-label="Expected loss" className="space-y-3">
-      <NoticeStrip
-        notices={[
-          ...(bannerLabel
-            ? [
-                {
-                  key: "measurement",
-                  tone: "amber" as const,
-                  icon: AlertTriangle,
-                  label: bannerLabel.replace(/\.$/, ""),
-                  summary: coverageExplanation?.headline,
-                  detail: executive.coverageMessage,
-                },
-              ]
-            : []),
-          ...(executive.fxState === NO_FX_STATE
-            ? [
-                {
-                  key: "fx",
-                  tone: "neutral" as const,
-                  icon: ArrowLeftRight,
-                  label: "No combined total",
-                  summary: undefined,
-                  detail: `There are no approved FX rates, so each currency stands alone.${
-                    reportingCurrency ? ` ${reportingCurrency} is the reporting currency, used for display only.` : ""
-                  }`,
-                },
-              ]
-            : []),
-        ]}
-      />
-
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-[13px] font-semibold text-ink">{title}</h2>
         <p className="text-[10.5px] text-ink-3">One card per currency and lifecycle class, reporting currency first</p>
@@ -236,72 +190,5 @@ function UnpublishedCurrencyCard({ currency }: { currency: string }) {
       <p className="mt-3 text-[12px] font-medium text-ink">No amount published</p>
       <p className="mt-1 text-[10.5px] text-ink-3">Not the same as zero: nothing in {currency} was priced.</p>
     </article>
-  );
-}
-
-interface Notice {
-  key: string;
-  tone: "amber" | "neutral";
-  icon: typeof AlertTriangle;
-  label: string;
-  /** Short text beside the label while collapsed. */
-  summary: string | undefined;
-  /** The full sentence, shown when the notice is opened. */
-  detail: string;
-}
-
-/**
- * The page-level caveats as one slim row of toggles. Each opens in place to its full sentence and closes
- * again, so the notices stay on the page (they carry real caveats about the numbers below) without taking
- * two full-width banners of space.
- */
-function NoticeStrip({ notices }: { notices: Notice[] }) {
-  const [open, setOpen] = useState<Record<string, boolean>>({});
-  if (notices.length === 0) return null;
-
-  return (
-    <div>
-      <div className="flex flex-wrap items-center gap-2">
-        {notices.map((notice) => {
-          const Icon = notice.icon;
-          const isOpen = !!open[notice.key];
-          return (
-            <button
-              key={notice.key}
-              type="button"
-              aria-expanded={isOpen}
-              aria-controls={`notice-${notice.key}`}
-              onClick={() => setOpen((prev) => ({ ...prev, [notice.key]: !prev[notice.key] }))}
-              className={cn(
-                "flex max-w-full items-center gap-1.5 rounded-panel border px-2.5 py-1.5 text-left text-[11.5px] text-ink-2 transition-colors",
-                notice.tone === "amber"
-                  ? "border-amber-border bg-amber-bg hover:border-amber"
-                  : "border-line bg-paper hover:border-ink-4"
-              )}
-            >
-              <Icon className={cn("size-3.5 shrink-0", notice.tone === "amber" ? "text-amber" : "text-ink-3")} />
-              <span className="font-semibold text-ink">{notice.label}</span>
-              {notice.summary && <span className="hidden truncate sm:inline">· {notice.summary}</span>}
-              <ChevronDown className={cn("size-3.5 shrink-0 text-ink-3 transition-transform", isOpen && "rotate-180")} />
-            </button>
-          );
-        })}
-      </div>
-      {notices.map((notice) => (
-        <Collapse key={notice.key} id={`notice-${notice.key}`} open={!!open[notice.key]}>
-          {/* Padding, not margin: a margin would collapse out of the measured box and get clipped. */}
-          <div className="pt-2">
-            <p
-              className={cn(
-                "rounded-panel border px-3 py-2.5 text-[11.5px] text-ink-2",
-                notice.tone === "amber" ? "border-amber-border bg-amber-bg" : "border-line bg-paper"
-              )}
-            >
-              {notice.detail}
-            </p>
-          </div>
-        </Collapse>
-      ))}
-    </div>
   );
 }

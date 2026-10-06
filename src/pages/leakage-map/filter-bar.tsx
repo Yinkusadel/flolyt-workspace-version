@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Info, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { LeakageV2Controls } from "@/services/api/leakage/get-leakage";
@@ -20,6 +20,10 @@ interface FilterBarProps {
   onCurrencyChange: (currency: string | null) => void;
   onChange: (patch: Partial<Omit<LeakageFilters, "market" | "currency">>) => void;
   onClearMore: () => void;
+  /** The page-level notes about the numbers; the icon shows only when there are some. */
+  notices: { key: string; tone: "amber" | "neutral" }[];
+  noticesOpen: boolean;
+  onToggleNotices: () => void;
 }
 
 /**
@@ -36,6 +40,9 @@ export function FilterBar({
   onCurrencyChange,
   onChange,
   onClearMore,
+  notices,
+  noticesOpen,
+  onToggleNotices,
 }: FilterBarProps) {
   const currencyOptions = [
     { value: ALL_CURRENCIES, label: `All ${controls.currencies.length}` },
@@ -97,19 +104,24 @@ export function FilterBar({
 
       <MoreFilters controls={controls} filters={filters} onChange={onChange} onClear={onClearMore} />
 
-      <p className="ml-auto flex items-center gap-1.5 text-[11px] text-ink-3" role="status" aria-live="polite">
-        {isRefreshing ? (
-          <>
-            <Loader2 className="size-3 animate-spin" />
-            Updating
-          </>
-        ) : (
-          <>
-            <span className="size-1.5 rounded-full bg-teal" />
-            Up to date
-          </>
+      <div className="ml-auto flex items-center gap-3">
+        {notices.length > 0 && (
+          <NotesToggle notices={notices} open={noticesOpen} onToggle={onToggleNotices} />
         )}
-      </p>
+        <p className="flex items-center gap-1.5 text-[11px] text-ink-3" role="status" aria-live="polite">
+          {isRefreshing ? (
+            <>
+              <Loader2 className="size-3 animate-spin" />
+              Updating
+            </>
+          ) : (
+            <>
+              <span className="size-1.5 rounded-full bg-teal" />
+              Up to date
+            </>
+          )}
+        </p>
+      </div>
     </div>
   );
 }
@@ -142,5 +154,48 @@ function CustomDays({ days, onCommit }: { days: number; onCommit: (days: number)
       />
       <span className="text-ink-3">days</span>
     </label>
+  );
+}
+
+/**
+ * Shows or hides the notes about the numbers (how much was measured, no combined total) in the strip under the
+ * bar. The icon turns amber, with the count, while a warning among them is waiting to be read.
+ */
+function NotesToggle({
+  notices,
+  open,
+  onToggle,
+}: {
+  notices: { key: string; tone: "amber" | "neutral" }[];
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const warning = notices.some((n) => n.tone === "amber");
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      aria-controls="page-notices"
+      aria-label={open ? "Hide notes about these numbers" : `Show notes about these numbers (${notices.length})`}
+      title={open ? "Hide notes about these numbers" : "Show notes about these numbers"}
+      onClick={onToggle}
+      className={cn(
+        "relative flex size-8 items-center justify-center rounded-control border transition-colors",
+        open ? "border-ink-4 bg-paper-2" : "border-line bg-paper hover:border-ink-4",
+        warning ? "text-amber" : "text-ink-3"
+      )}
+    >
+      <Info className="size-4" />
+      {!open && (
+        <span
+          className={cn(
+            "absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full font-mono text-[9px] font-semibold text-paper",
+            warning ? "bg-amber" : "bg-ink-3"
+          )}
+        >
+          {notices.length}
+        </span>
+      )}
+    </button>
   );
 }
