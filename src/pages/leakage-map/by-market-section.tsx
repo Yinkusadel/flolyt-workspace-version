@@ -57,10 +57,12 @@ export function ByMarketSection({ executive, controls, selectedMarket, onSelectM
 
   return (
     <section aria-label="By market" className="rounded-card border border-line bg-paper p-4 sm:p-5">
-      <h2 className="text-[13px] font-semibold text-ink">By market</h2>
-      <p className="mt-0.5 text-[11.5px] text-ink-3">
-        Amounts sit under a market only when a source proves it. Nothing is assigned from currency or settings.
-      </p>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="text-[13px] font-semibold text-ink">By market</h2>
+        <p className="text-[10.5px] text-ink-3">
+          Amounts sit under a market only when a source proves it. Nothing is assigned from currency or settings.
+        </p>
+      </div>
       <p className="mt-3 rounded-control bg-paper-2 px-3 py-2 font-mono text-[10.5px] text-ink-2">
         {summary.map((part, i) => (
           <span key={part}>
