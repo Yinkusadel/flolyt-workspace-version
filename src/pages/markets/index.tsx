@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Country } from "country-state-city";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SearchableSelect, SearchableSelectSkeleton } from "@/components/ui/searchable-select";
@@ -80,6 +80,18 @@ export default function MarketsRoute() {
   // unsaved draft once the current set and the currency list have both arrived. The currency is only a
   // suggestion: it is used only if it is a supported code, and it stays editable. Nothing is saved from here.
   const [searchParams, setSearchParams] = useSearchParams();
+  // Arriving through the leakage map's "Add to my markets" link: remembered from the first render, because the
+  // link's parameters are cleared once applied. Shows a way back, which the topbar breadcrumb does not give here.
+  const [cameFromLeakage] = useState(() => searchParams.get("add") !== null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  // The key at arrival, not now: clearing the link's parameters replaces the entry and gives it a new key. `default`
+  // marks the first entry of a session (a reload or a pasted link), where there is nothing to go back to.
+  const [arrivalKey] = useState(() => location.key);
+  const backToLeakage = () => {
+    if (arrivalKey === "default") navigate("/leakage-map");
+    else navigate(-1);
+  };
   const prefillCountry = searchParams.get("add")?.toUpperCase() ?? null;
   const prefillCurrency = searchParams.get("currency")?.toUpperCase() ?? null;
   const hasAppliedPrefill = useRef(false);
@@ -368,7 +380,13 @@ export default function MarketsRoute() {
         </p>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-3">
+        {cameFromLeakage && (
+          <Button type="button" variant="outline" onClick={backToLeakage} className="h-10.5 rounded-card px-5 text-[13px] font-medium">
+            <ArrowLeft className="size-4" />
+            Back to leakage map
+          </Button>
+        )}
         <Button
           type="button"
           onClick={handleSave}
