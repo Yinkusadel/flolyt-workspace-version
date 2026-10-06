@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -118,6 +118,25 @@ function groupCells(cells: LeakageV2Cell[]): SectorGroup[] {
   return [...sectors.values()];
 }
 
+/** Narrowest and widest a card may be when a stage is laid out on one line with its currencies split into cards. */
+const UNIT_MIN = 215;
+const UNIT_MAX = 300;
+const GRID_GAP = 12;
+
+/** The amounts a card shows: the page's currency filter applied, reporting currency first then by code (position only). */
+function selectAmounts(cell: LeakageV2Cell, currencyFilter: string | null, reportingCurrency: string | null): LeakageV2Amount[] {
+  const byCurrency = compareCurrencies(reportingCurrency);
+  return (currencyFilter ? cell.amounts.filter((a) => a.currency === currencyFilter) : [...cell.amounts]).sort(
+    (a, b) => byCurrency(a.currency, b.currency) || a.lifecycleClass.localeCompare(b.lifecycleClass)
+  );
+}
+
+/**
+ * One revenue stage. A leak with two or more currencies is split into one card per currency (sharing one Details
+ * button) when every card in the stage, currency cards and the unmeasured or single-currency cards beside them,
+ * fits on a single line at the current width. Otherwise the stage wraps as before and a multi-currency leak keeps
+ * its compact card with the "+N more currencies" list. A leak with one currency is never split.
+ */
 function StageBlock({
   stage,
   currencyFilter,
@@ -132,32 +151,148 @@ function StageBlock({
   onOpenCalculation?: (calculationReference: string) => void;
 }) {
   const measured = stage.cells.filter((c) => c.state.display === "POPULATED" || c.state.display === "NO_EXPOSURE").length;
+
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const measure = () => setWidth(el.getBoundingClientRect().width);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Cards a cell takes on one line: one per currency when it can be split, otherwise one (single currency, no
+  // amount, unmeasured, no exposure).
+  const plans = stage.cells.map((cell) => {
+    const amounts = selectAmounts(cell, currencyFilter, reportingCurrency);
+    const splittable = cell.state.display === "POPULATED" && amounts.length >= 2;
+    return { cell, amounts, units: splittable ? amounts.length : 1, splittable };
+  });
+  const totalUnits = plans.reduce((sum, plan) => sum + plan.units, 0);
+  const anySplittable = plans.some((plan) => plan.splittable);
+  const fitsOneLine = width > 0 && totalUnits * UNIT_MIN + (totalUnits - 1) * GRID_GAP <= width;
+  const split = anySplittable && fitsOneLine;
+
   return (
-    <div>
+    <div ref={wrapRef}>
       <div className="mb-2 flex items-baseline justify-between gap-3">
         <h3 className="font-mono text-[10px] font-medium tracking-[0.8px] text-ink-3 uppercase">{stage.label}</h3>
         <p className="text-[10.5px] text-ink-4">
           {measured} of {stage.cells.length} measured
         </p>
       </div>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-3">
-        {stage.cells.map((cell) => (
-          <LeakCard
-            key={cell.id}
-            cell={cell}
-            currencyFilter={currencyFilter}
-            reportingCurrency={reportingCurrency}
-            onOpenDetails={onOpenDetails}
-            onOpenCalculation={onOpenCalculation}
-          />
-        ))}
+      <div
+        className={split ? "grid gap-3" : "grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-3"}
+        style={split ? { gridTemplateColumns: `repeat(${totalUnits}, minmax(${UNIT_MIN}px, ${UNIT_MAX}px))` } : undefined}
+      >
+        {plans.map((plan) =>
+          split && plan.splittable ? (
+            <CurrencyGroupCard
+              key={plan.cell.id}
+              cell={plan.cell}
+              amounts={plan.amounts}
+              onOpenDetails={onOpenDetails}
+              onOpenCalculation={onOpenCalculation}
+            />
+          ) : (
+            <LeakCard
+              key={plan.cell.id}
+              cell={plan.cell}
+              currencyFilter={currencyFilter}
+              reportingCurrency={reportingCurrency}
+              onOpenDetails={onOpenDetails}
+              onOpenCalculation={onOpenCalculation}
+            />
+          )
+        )}
       </div>
     </div>
   );
 }
 
+/**
+ * A multi-currency leak split into one tile per currency inside a single card, with one Details button. Each tile
+ * is a separate measurement in its own currency (figure, lifecycle, candidates, range, severity, confidence) and
+ * keeps its own "How calculated" link. Nothing here is added across currencies.
+ */
+function CurrencyGroupCard({
+  cell,
+  amounts,
+  onOpenDetails,
+  onOpenCalculation,
+}: {
+  cell: LeakageV2Cell;
+  amounts: LeakageV2Amount[];
+  onOpenDetails?: (cellId: string) => void;
+  onOpenCalculation?: (calculationReference: string) => void;
+}) {
+  const { coordinate, state } = cell;
+  return (
+    <article
+      aria-label={`${coordinate.mechanismLabel}, ${coordinate.revenueStageLabel}`}
+      style={{ gridColumn: `span ${amounts.length}` }}
+      className="flex flex-col rounded-card border border-line bg-paper p-4"
+    >
+      <header className="flex items-start gap-2">
+        <span className={cn("mt-1 size-2 shrink-0 rounded-[2px]", mechanismDotClass(coordinate.mechanism))} aria-hidden />
+        <div className="min-w-0 flex-1">
+          <h4 className="text-[12.5px] font-semibold text-ink">{coordinate.mechanismLabel}</h4>
+          <p className="mt-0.5 text-[10.5px] text-ink-3">
+            {coordinate.stateDimensionLabel} → {coordinate.stateValueLabel} · {coordinate.subject.unit}
+          </p>
+        </div>
+        {state.facets.includes("COMPOUND") && <Tag>Compound</Tag>}
+        {amounts.some((a) => isUnassignedMarket(a.market)) && (
+          <span className="shrink-0 rounded-chip border border-dashed border-ultra-border bg-ultra-bg/50 px-1.5 py-px text-[9.5px] font-medium text-ultra">
+            Unassigned
+          </span>
+        )}
+      </header>
+
+      <div className="mt-3 grid flex-1 gap-3" style={{ gridTemplateColumns: `repeat(${amounts.length}, minmax(0, 1fr))` }}>
+        {amounts.map((amount) => (
+          <div key={`${amount.currency}:${amount.market}:${amount.lifecycleClass}`} className="flex flex-col rounded-panel bg-paper-2/60 p-3">
+            <p className="font-mono text-[11px] font-semibold text-ink-2">{amount.currency}</p>
+            <div className="mt-1 flex-1">
+              <AmountBlock amount={amount} labelled={false} lead />
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <SeverityChip severity={amount.severity} />
+                <ConfidenceChip level={amount.confidenceLevel} />
+              </div>
+            </div>
+            {onOpenCalculation && (
+              <button
+                type="button"
+                onClick={() => onOpenCalculation(amount.calculationReference)}
+                className="mt-3 self-start text-[11.5px] font-medium text-ultra hover:underline"
+              >
+                How calculated
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {onOpenDetails && (
+        <footer className="mt-4 flex items-center justify-end gap-3 border-t border-line pt-3">
+          <button
+            type="button"
+            onClick={() => onOpenDetails(cell.id)}
+            className="rounded-control border border-ultra bg-ultra px-3 py-1.5 text-[11.5px] font-medium text-paper hover:bg-ultra/90"
+          >
+            Details
+          </button>
+        </footer>
+      )}
+    </article>
+  );
+}
+
 /** Currencies listed on a card before the rest sit behind "+N more", so a leak with many currencies stays compact. */
-const VISIBLE_CURRENCY_ROWS = 3;
+const VISIBLE_CURRENCY_ROWS = 2;
 
 function LeakCard({
   cell,
@@ -176,10 +311,7 @@ function LeakCard({
   const [morePopoverOpen, setMorePopoverOpen] = useState(false);
   // Every currency the leak has, reporting currency first then by code (position only, never by amount); the
   // page's currency filter narrows it to one. Nothing is added or converted.
-  const byCurrency = compareCurrencies(reportingCurrency);
-  const amounts = (currencyFilter ? cell.amounts.filter((a) => a.currency === currencyFilter) : [...cell.amounts]).sort(
-    (a, b) => byCurrency(a.currency, b.currency) || a.lifecycleClass.localeCompare(b.lifecycleClass)
-  );
+  const amounts = selectAmounts(cell, currencyFilter, reportingCurrency);
   const multi = amounts.length > 1;
   const unmeasured = state.display === "UNKNOWN";
   const noExposure = state.display === "NO_EXPOSURE";
@@ -356,8 +488,12 @@ function CurrencyRow({
         <span className={cn("min-w-0 flex-1 font-mono font-semibold tracking-tight text-ink", detailed ? "text-[15px]" : "text-[14px]")}>
           {formatHeadlineMoney(amount.value, amount.currency)}
         </span>
-        <span className="shrink-0 text-[10px] text-ink-3" title={notRated ? "Confidence not rated" : `${humanizeEnum(amount.confidenceLevel)} confidence`}>
-          {notRated ? "Not rated" : detailed ? `${humanizeEnum(amount.confidenceLevel)} confidence` : humanizeEnum(amount.confidenceLevel)}
+        <span
+          className="shrink-0 text-[10px] text-ink-3"
+          title={`${amount.candidateCount} ${amount.candidateCount === 1 ? "candidate" : "candidates"} · ${notRated ? "confidence not rated" : `${humanizeEnum(amount.confidenceLevel)} confidence`}`}
+        >
+          {/* The one-line form keeps the candidate count beside the confidence word; the "more" list spells both out. */}
+          {detailed ? (notRated ? "Not rated" : `${humanizeEnum(amount.confidenceLevel)} confidence`) : `${amount.candidateCount} cand. · ${notRated ? "Not rated" : humanizeEnum(amount.confidenceLevel)}`}
         </span>
       </div>
       {detailed && (
