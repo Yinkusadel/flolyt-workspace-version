@@ -18,6 +18,8 @@ interface LeakCardsSectionProps {
   cells: LeakageV2Cell[];
   executive: LeakageExecutive | undefined;
   controls: LeakageV2Controls;
+  /** The page's currency filter. The server leaves a cell's other currencies in place, so the cards narrow to it here. */
+  currencyFilter: string | null;
   /** Wired in a later step (the detail drawer / exact calculation drawer). A button only renders when its handler exists. */
   onOpenDetails?: (cellId: string) => void;
   onOpenCalculation?: (calculationReference: string) => void;
@@ -39,19 +41,13 @@ interface SectorGroup {
  * Where revenue leaks: one card per cell, grouped by revenue stage. The stages are whatever the data has,
  * titled with the API's own `revenueStageLabel` and kept in the order the API sends them (the contract
  * sends no stage order, and none is imposed here). With more than one sector (`showSectorBreakdown`) the
- * stages are grouped under their sector first. Money is shown for one currency at a time through the
- * currency tabs and is never combined across currencies. Cells hidden by a filter are not drawn.
+ * stages are grouped under their sector first. Every currency a leak has is listed on its card, each on its
+ * own and never combined; the page's currency filter narrows the cards to that one currency. Cells hidden by
+ * a filter are not drawn.
  */
-export function LeakCardsSection({ cells, executive, controls, onOpenDetails, onOpenCalculation }: LeakCardsSectionProps) {
+export function LeakCardsSection({ cells, executive, controls, currencyFilter, onOpenDetails, onOpenCalculation }: LeakCardsSectionProps) {
   const reportingCurrency = executive?.reportingCurrency ?? controls.reportingCurrency;
   const visible = useMemo(() => cells.filter((c) => c.state.display !== "HIDDEN_BY_FILTER"), [cells]);
-
-  const currencies = useMemo(
-    () => [...new Set(visible.flatMap((c) => c.amounts.map((a) => a.currency)))].sort(compareCurrencies(reportingCurrency)),
-    [visible, reportingCurrency]
-  );
-  const [pickedCurrency, setPickedCurrency] = useState<string | null>(null);
-  const currency = pickedCurrency && currencies.includes(pickedCurrency) ? pickedCurrency : (currencies[0] ?? null);
 
   const sectors = useMemo(() => groupCells(visible), [visible]);
   const showSectors = (executive?.showSectorBreakdown ?? false) && sectors.length > 1;
@@ -69,34 +65,16 @@ export function LeakCardsSection({ cells, executive, controls, onOpenDetails, on
 
   return (
     <section aria-label="Where revenue leaks" className="rounded-card border border-line bg-paper p-4 sm:p-5">
-      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <div>
           <h2 className="text-[13px] font-semibold text-ink">Where revenue leaks</h2>
           <p className="mt-0.5 text-[11.5px] text-ink-3">
             Each leak type, grouped by where it happens. Hatched cards cannot be measured yet.
           </p>
         </div>
-        {currencies.length > 1 && (
-          <div role="tablist" aria-label="Currency" className="flex max-w-full items-center gap-1 overflow-x-auto border-b border-line">
-            {currencies.map((c) => (
-              <button
-                key={c}
-                role="tab"
-                type="button"
-                aria-selected={c === currency}
-                onClick={() => setPickedCurrency(c)}
-                className={cn(
-                  "shrink-0 border-b-2 px-3 py-2 font-mono text-[11.5px] whitespace-nowrap",
-                  c === currency
-                    ? "border-ultra font-semibold text-ink"
-                    : "border-transparent font-normal text-ink-3 hover:text-ink-2"
-                )}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        )}
+        <p className="text-[10.5px] text-ink-3">
+          {currencyFilter ? `Showing ${currencyFilter} only (currency filter)` : "Each currency on its own, never added together"}
+        </p>
       </div>
 
       <div className="mt-4 space-y-6">
@@ -109,7 +87,8 @@ export function LeakCardsSection({ cells, executive, controls, onOpenDetails, on
               <StageBlock
                 key={stage.stage}
                 stage={stage}
-                currency={currency}
+                currencyFilter={currencyFilter}
+                reportingCurrency={reportingCurrency}
                 onOpenDetails={onOpenDetails}
                 onOpenCalculation={onOpenCalculation}
               />
@@ -139,12 +118,14 @@ function groupCells(cells: LeakageV2Cell[]): SectorGroup[] {
 
 function StageBlock({
   stage,
-  currency,
+  currencyFilter,
+  reportingCurrency,
   onOpenDetails,
   onOpenCalculation,
 }: {
   stage: StageGroup;
-  currency: string | null;
+  currencyFilter: string | null;
+  reportingCurrency: string | null;
   onOpenDetails?: (cellId: string) => void;
   onOpenCalculation?: (calculationReference: string) => void;
 }) {
@@ -162,7 +143,8 @@ function StageBlock({
           <LeakCard
             key={cell.id}
             cell={cell}
-            currency={currency}
+            currencyFilter={currencyFilter}
+            reportingCurrency={reportingCurrency}
             onOpenDetails={onOpenDetails}
             onOpenCalculation={onOpenCalculation}
           />
@@ -172,22 +154,37 @@ function StageBlock({
   );
 }
 
+/** Currencies listed on a card before the rest sit behind "+N more", so a leak with many currencies stays compact. */
+const VISIBLE_CURRENCY_ROWS = 4;
+
 function LeakCard({
   cell,
-  currency,
+  currencyFilter,
+  reportingCurrency,
   onOpenDetails,
   onOpenCalculation,
 }: {
   cell: LeakageV2Cell;
-  currency: string | null;
+  currencyFilter: string | null;
+  reportingCurrency: string | null;
   onOpenDetails?: (cellId: string) => void;
   onOpenCalculation?: (calculationReference: string) => void;
 }) {
   const { coordinate, state } = cell;
-  const amounts = currency ? cell.amounts.filter((a) => a.currency === currency) : [];
+  const [showAllRows, setShowAllRows] = useState(false);
+  // Every currency the leak has, reporting currency first then by code (position only, never by amount); the
+  // page's currency filter narrows it to one. Nothing is added or converted.
+  const byCurrency = compareCurrencies(reportingCurrency);
+  const amounts = (currencyFilter ? cell.amounts.filter((a) => a.currency === currencyFilter) : [...cell.amounts]).sort(
+    (a, b) => byCurrency(a.currency, b.currency) || a.lifecycleClass.localeCompare(b.lifecycleClass)
+  );
+  const multi = amounts.length > 1;
   const unmeasured = state.display === "UNKNOWN";
   const noExposure = state.display === "NO_EXPOSURE";
   const lead = amounts[0];
+  const shownRows = showAllRows ? amounts : amounts.slice(0, VISIBLE_CURRENCY_ROWS);
+  // With one amount the card keeps its single-figure look, with its own "How calculated" link; with several, each
+  // currency row opens its own calculation and the footer link is replaced by a hint.
   const hasFooter = !unmeasured && ((onOpenCalculation && lead) || onOpenDetails);
 
   return (
@@ -206,7 +203,7 @@ function LeakCard({
             {coordinate.stateDimensionLabel} → {coordinate.stateValueLabel} · {coordinate.subject.unit}
           </p>
         </div>
-        {lead && isUnassignedMarket(lead.market) && (
+        {amounts.some((a) => isUnassignedMarket(a.market)) && (
           <span className="shrink-0 rounded-chip border border-dashed border-ultra-border bg-ultra-bg/50 px-1.5 py-px text-[9.5px] font-medium text-ultra">
             Unassigned
           </span>
@@ -219,20 +216,39 @@ function LeakCard({
         ) : noExposure ? (
           <p className="text-[12px] font-medium text-ink-2">Measured: no exposure found</p>
         ) : amounts.length === 0 ? (
-          <p className="text-[11.5px] text-ink-3">No amount in {currency ?? "this currency"}</p>
+          <p className="text-[11.5px] text-ink-3">No amount in {currencyFilter ?? "any currency"}</p>
+        ) : multi ? (
+          <div className="space-y-3">
+            <ul className="divide-y divide-line/70">
+              {shownRows.map((amount) => (
+                <CurrencyRow
+                  key={`${amount.currency}:${amount.market}:${amount.lifecycleClass}`}
+                  amount={amount}
+                  onOpenCalculation={onOpenCalculation}
+                />
+              ))}
+            </ul>
+            {amounts.length > VISIBLE_CURRENCY_ROWS && (
+              <button
+                type="button"
+                onClick={() => setShowAllRows((prev) => !prev)}
+                className="text-[10.5px] font-medium text-ultra hover:underline"
+              >
+                {showAllRows ? "Show fewer currencies" : `+${amounts.length - VISIBLE_CURRENCY_ROWS} more ${amounts.length - VISIBLE_CURRENCY_ROWS === 1 ? "currency" : "currencies"}`}
+              </button>
+            )}
+            {state.facets.includes("COMPOUND") && (
+              <div className="flex flex-wrap gap-1.5">
+                <Tag>Compound</Tag>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="space-y-3">
-            {amounts.map((amount, i) => (
-              <AmountBlock
-                key={`${amount.market}:${amount.lifecycleClass}`}
-                amount={amount}
-                labelled={amounts.length > 1}
-                lead={i === 0}
-              />
-            ))}
+            <AmountBlock amount={lead} labelled={false} lead />
             <div className="flex flex-wrap gap-1.5">
-              {lead && <SeverityChip severity={lead.severity} />}
-              {lead && <ConfidenceChip level={lead.confidenceLevel} />}
+              <SeverityChip severity={lead.severity} />
+              <ConfidenceChip level={lead.confidenceLevel} />
               {state.facets.includes("COMPOUND") && <Tag>Compound</Tag>}
             </div>
           </div>
@@ -241,7 +257,7 @@ function LeakCard({
 
       {hasFooter && (
         <footer className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-3">
-          {onOpenCalculation && lead ? (
+          {onOpenCalculation && lead && !multi ? (
             <button
               type="button"
               onClick={() => onOpenCalculation(lead.calculationReference)}
@@ -249,6 +265,8 @@ function LeakCard({
             >
               How calculated
             </button>
+          ) : multi ? (
+            <span className="text-[10.5px] text-ink-4">Tap a currency to see how it is calculated</span>
           ) : (
             <span />
           )}
@@ -264,6 +282,54 @@ function LeakCard({
         </footer>
       )}
     </article>
+  );
+}
+
+/**
+ * One currency of a multi-currency leak: the currency code (a link to that amount's exact calculation), its own
+ * figure and confidence, and a muted line with the lifecycle, candidate count and range. Each row is a separate
+ * measurement in its own currency, never a share of a total.
+ */
+function CurrencyRow({
+  amount,
+  onOpenCalculation,
+}: {
+  amount: LeakageV2Amount;
+  onOpenCalculation?: (calculationReference: string) => void;
+}) {
+  const showRange = amount.range.status !== "UNAVAILABLE" && amount.range.lower != null && amount.range.upper != null;
+  const notRated = amount.confidenceLevel.toUpperCase() === "NOT_AVAILABLE";
+  const detail = [
+    humanizeEnum(amount.lifecycleClass),
+    `${amount.candidateCount} ${amount.candidateCount === 1 ? "candidate" : "candidates"}`,
+    ...(showRange
+      ? [`Range ${formatCompactMoney(amount.range.lower as number, amount.currency)} to ${formatCompactMoney(amount.range.upper as number, amount.currency)}`]
+      : []),
+  ].join(" · ");
+  return (
+    <li className="py-2 first:pt-0 last:pb-0">
+      <div className="flex items-baseline gap-2">
+        {onOpenCalculation ? (
+          <button
+            type="button"
+            onClick={() => onOpenCalculation(amount.calculationReference)}
+            title="See how this amount is calculated"
+            className="w-9 shrink-0 text-left font-mono text-[11px] font-semibold text-ultra underline decoration-ultra/40 underline-offset-2 hover:decoration-ultra"
+          >
+            {amount.currency}
+          </button>
+        ) : (
+          <span className="w-9 shrink-0 font-mono text-[11px] font-semibold text-ink">{amount.currency}</span>
+        )}
+        <span className="min-w-0 flex-1 font-mono text-[15px] font-semibold tracking-tight text-ink">
+          {formatHeadlineMoney(amount.value, amount.currency)}
+        </span>
+        <span className="shrink-0 text-[10px] text-ink-3">{notRated ? "Not rated" : `${humanizeEnum(amount.confidenceLevel)} confidence`}</span>
+      </div>
+      <p className="mt-0.5 pl-11 text-[10px] leading-snug text-ink-4">
+        {detail}
+      </p>
+    </li>
   );
 }
 

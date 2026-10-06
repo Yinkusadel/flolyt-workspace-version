@@ -185,6 +185,7 @@ export default function LeakageMap() {
           selectedMarket={filters.market}
         />
         <LeakCardsSection
+          currencyFilter={filters.currency}
           cells={page.cells}
           executive={page.executive}
           controls={page.controls}
