@@ -11,6 +11,7 @@ import type {
   LeakageV2ReadinessState,
 } from "@/services/api/leakage/get-leakage";
 import { PRIMARY_ACTION_CLASS } from "@/pages/leakage-map/drawer/shared";
+import { Collapse, ToggleHeader } from "@/pages/leakage-map/collapse";
 
 interface CategoryMeta {
   label: string;
@@ -44,6 +45,9 @@ interface ReadinessSectionProps {
   /** The diagnostics groups the server actually reported (`limitationSummary.items[].code`). */
   diagnosticCodes: LeakageV2LimitationCode[];
   onOpenDiagnostics: (code: LeakageV2LimitationCode) => void;
+  /** Open/closed state is owned by the page so Readiness and Measurement, side by side, open and close together. */
+  expanded: boolean;
+  onToggle: () => void;
 }
 
 /**
@@ -53,22 +57,29 @@ interface ReadinessSectionProps {
  * text and never as a button. A row's text opens the diagnostics behind it, but only when the server reported
  * diagnostics of that kind (a row with none is plain, with no arrow).
  */
-export function ReadinessSection({ readiness, diagnosticCodes, onOpenDiagnostics }: ReadinessSectionProps) {
+export function ReadinessSection({ readiness, diagnosticCodes, onOpenDiagnostics, expanded, onToggle }: ReadinessSectionProps) {
   const open = readiness.items.filter((item) => item.state !== "READY");
   const ready = readiness.items.filter((item) => item.state === "READY");
 
   return (
     <section aria-label="Readiness" className="rounded-card border border-line bg-paper p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[13px] font-semibold text-ink">Readiness</h2>
-        {readiness.state === "ACTION_REQUIRED" ? (
-          <Chip tone="amber">Action required · {readiness.actionRequiredCount}</Chip>
-        ) : readiness.state === "LIMITED" ? (
-          <Chip>Limited</Chip>
-        ) : (
-          <Chip tone="teal">Ready</Chip>
-        )}
-      </div>
+      <ToggleHeader
+        open={expanded}
+        onToggle={onToggle}
+        bodyId="readiness-body"
+        title="Readiness"
+        aside={
+          readiness.state === "ACTION_REQUIRED" ? (
+            <Chip tone="amber">Action required · {readiness.actionRequiredCount}</Chip>
+          ) : readiness.state === "LIMITED" ? (
+            <Chip>Limited</Chip>
+          ) : (
+            <Chip tone="teal">Ready</Chip>
+          )
+        }
+      />
+
+      <Collapse id="readiness-body" open={expanded}>
 
       {open.length > 0 && (
         <ul className="mt-3 divide-y divide-line">
@@ -88,6 +99,7 @@ export function ReadinessSection({ readiness, diagnosticCodes, onOpenDiagnostics
           ))}
         </ul>
       )}
+      </Collapse>
     </section>
   );
 }

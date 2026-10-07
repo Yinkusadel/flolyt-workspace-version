@@ -64,7 +64,12 @@ export interface LeakageExecutiveAffectedEntities {
   subjectType: string;
   grain: string;
   unit: string;
-  count: number;
+  /** Null when `state` is `UNAVAILABLE`: unknown, never zero. A distinct-entity union, not a sum of mechanism counts. */
+  count: number | null;
+  /** `EXACT` accompanies a number, `UNAVAILABLE` a null. Added 2026-10-05. */
+  state: "EXACT" | "UNAVAILABLE" | (string & {});
+  /** `DISTINCT_SUBJECT_REFERENCE_WITHIN_SUBJECT_TYPE_AND_GRAIN` seen live. */
+  basis: string;
 }
 
 /** Largest mechanism inside one market + currency + lifecycle scope. Never a cross-currency ranking. */
@@ -82,12 +87,53 @@ export interface LeakageExecutiveFinding {
   cellIds: string[];
   /** Server-written sentence ("estimated gross exposure ..."). Render as given. */
   message: string;
+  /** True when equal scope leaders share the top spot. Added 2026-10-05; absent on older servers. */
+  isTied?: boolean;
+}
+
+/**
+ * A deterministic pattern across comparable scope winners, never a monetary ranking across currencies.
+ * `DOMINANT_MECHANISM_ACROSS_MARKETS` is the only kind emitted so far. Confidence is conservative, not a
+ * global score. May legitimately be empty (ties or conflicting winners): never fabricate one.
+ * Confirmed live 2026-10-05.
+ */
+export interface LeakageExecutiveHeadlineFinding {
+  kind: "DOMINANT_MECHANISM_ACROSS_MARKETS" | (string & {});
+  mechanism: string;
+  label: string;
+  marketCount: number;
+  markets: string[];
+  confidenceLevel: string;
+  /** Server-written sentence. Render as given. */
+  message: string;
+}
+
+/** Configured vs observed markets for the whole publication; discovery never updates workspace settings. */
+export interface LeakageExecutiveMarketReconciliation {
+  configuredAndObserved: string[];
+  configuredNotObserved: string[];
+  observedNotConfigured: string[];
+  hasUnassignedExposure: boolean;
+  /** True when the observed markets differ from the configured ones and the setup should be reviewed. */
+  requiresReview: boolean;
 }
 
 export interface LeakageExecutiveMarket {
   attribution: LeakageMarketAttribution;
   isConfigured: boolean;
+  /** Deprecated: keeps exactly its old "an observation exists" meaning. */
   hasMeasurementEvidence: boolean;
+  /** Publication evidence (added 2026-10-05, registry 1.6.0); optional so older servers still read. */
+  hasObservationEvidence?: boolean;
+  hasCandidateEvidence?: boolean;
+  /** Positive gross exposure in the current selection; does not upgrade estimate confidence. */
+  hasMeasuredExposure?: boolean;
+  /** A known positive distinct count in this selection; use `affectedEntitiesState` to tell unknown from zero. */
+  hasAffectedEntities?: boolean;
+  /** `EXACT` | `UNAVAILABLE` (an admitted cluster member lacks identity). */
+  affectedEntitiesState?: "EXACT" | "UNAVAILABLE" | (string & {});
+  /** Server-written reason for an unpriced or filtered-out market. Render as given. */
+  evidenceExplanation?: string;
   /** Empty for a configured market with no scoped evidence. An empty list is NOT a monetary zero. */
   amounts: LeakageExecutiveAmount[];
   affectedEntities: LeakageExecutiveAffectedEntities[];
@@ -154,7 +200,11 @@ export interface LeakageExecutive {
   marketInventory: LeakageExecutiveMarketInventory;
   totals: LeakageExecutiveAmount[];
   markets: LeakageExecutiveMarket[];
+  /** Deprecated and empty on new responses (registry 1.6.0); use `headlineFindings` and `markets[].largestMechanisms`. */
   keyFindings: LeakageExecutiveFinding[];
+  /** Page-summary headlines. Optional: absent on older servers. */
+  headlineFindings?: LeakageExecutiveHeadlineFinding[];
+  marketReconciliation?: LeakageExecutiveMarketReconciliation;
   confidence: LeakageExecutiveConfidence[];
   matrix: LeakageExecutiveMatrixRow[];
   /** Publication-wide, independent of current filters. Same shape as the page's top-level `coverage`. */

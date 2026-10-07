@@ -1,4 +1,8 @@
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
+
 import { cn } from "@/lib/utils";
+import { Collapse } from "@/pages/leakage-map/collapse";
 import type { LeakageV2Cell, LeakageV2Controls } from "@/services/api/leakage/get-leakage";
 import type { LeakageExecutive, LeakageExecutiveFinding } from "@/services/api/leakage/leakage-executive-types";
 import {
@@ -26,23 +30,33 @@ interface FindingGroup {
 }
 
 /**
- * The largest leak in each market + currency + lifecycle scope, straight from `executive.keyFindings`.
- * Grouped by market and lifecycle, never ranked across currencies: inside a group the rows are ordered by
+ * The page summary (`executive.headlineFindings`, all-markets view only, the server's own sentence) over the
+ * largest leak in each market + currency + lifecycle scope (`executive.markets[].largestMechanisms`; the
+ * deprecated `keyFindings` is read only when a server predates `headlineFindings`). Grouped by market and lifecycle, never ranked across currencies: inside a group the rows are ordered by
  * currency code (reporting currency first), not by amount. Deliberately not shown: the design's
  * "57% of CAD exposure" bar, because the API sends no share and working one out here would mean combining
  * two fields client-side. The revenue-stage chip is looked up from the finding's own cell.
  */
 export function KeyFindingsSection({ executive, cells, controls, selectedMarket }: KeyFindingsSectionProps) {
+  // Open by default; the header toggles the body so the page can be shortened without losing the title.
+  const [open, setOpen] = useState(true);
   if (!executive) return null;
 
-  // A market with nothing attributed to it gets an explicit empty state, not a section that silently vanishes.
-  if (executive.keyFindings.length === 0) {
+  // `keyFindings` is empty on new responses; an older server without `headlineFindings` still sends it.
+  const detail =
+    executive.headlineFindings !== undefined ? executive.markets.flatMap((m) => m.largestMechanisms) : executive.keyFindings;
+  const findings = selectedMarket ? detail.filter((f) => f.market === selectedMarket) : detail;
+  const headlines = selectedMarket ? [] : (executive.headlineFindings ?? []);
+
+  // A market with nothing to show gets an explicit empty state, worded by the server, not a section that silently vanishes.
+  if (findings.length === 0 && headlines.length === 0) {
     if (!selectedMarket) return null;
+    const row = executive.markets.find((m) => m.attribution.code === selectedMarket);
     return (
       <section aria-label="Key findings" className="rounded-card border border-dashed border-line bg-paper p-5">
         <h2 className="text-[13px] font-semibold text-ink">Key findings in {marketName(selectedMarket)}</h2>
         <p className="mt-1 text-[11.5px] text-ink-3">
-          No findings yet: no amount is attributed to {marketName(selectedMarket)}. That is unknown, not zero.
+          {row?.evidenceExplanation ?? `No findings were published for ${marketName(selectedMarket)}.`}
         </p>
       </section>
     );
@@ -58,7 +72,7 @@ export function KeyFindingsSection({ executive, cells, controls, selectedMarket 
   const rank = (code: string) => (isUnassignedMarket(code) ? 2 : isPrimary(code) ? 0 : 1);
 
   const groups = new Map<string, FindingGroup>();
-  for (const finding of executive.keyFindings) {
+  for (const finding of findings) {
     const key = `${finding.market}:${finding.lifecycleClass}`;
     const group = groups.get(key) ?? { market: finding.market, lifecycleClass: finding.lifecycleClass, findings: [] };
     group.findings.push(finding);
@@ -79,15 +93,27 @@ export function KeyFindingsSection({ executive, cells, controls, selectedMarket 
   };
 
   // Configured/evidenced markets that hold no amount have no finding; say so instead of leaving them out silently.
-  const withoutFindings = executive.markets
+  // Only on the all-markets view: a single market's own view is not the place to list the others.
+  const withoutFindings = (selectedMarket ? [] : executive.markets)
     .filter((m) => !isUnassignedMarket(m.attribution.code) && m.amounts.length === 0)
     .map((m) => marketName(m.attribution.code));
 
   return (
     <section aria-label="Key findings" className="rounded-card border border-line bg-paper p-4 sm:p-5">
+      {/* Anywhere on the header toggles the body. The title button is the keyboard and screen-reader control; its
+          click bubbles to this wrapper, so it toggles exactly once. */}
+      <div onClick={() => setOpen((prev) => !prev)} className="cursor-pointer select-none">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="text-[13px] font-semibold text-ink">
-          {selectedMarket ? `Key findings in ${marketName(selectedMarket)}` : "Key findings"}
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls="key-findings-body"
+            className="flex items-center gap-1.5 text-left hover:text-ink-2"
+          >
+            {selectedMarket ? `Key findings in ${marketName(selectedMarket)}` : "Key findings"}
+            <ChevronDown className={cn("size-3.5 shrink-0 text-ink-3 transition-transform", !open && "-rotate-90")} />
+          </button>
         </h2>
         <p className="text-[10.5px] text-ink-3">
           Estimated exposure · {MODE_TITLE[selectedMode] ?? humanizeEnum(selectedMode)}
@@ -96,6 +122,30 @@ export function KeyFindingsSection({ executive, cells, controls, selectedMarket 
       <p className="mt-0.5 text-[11.5px] text-ink-3">
         The largest leak in each market, currency and lifecycle. Not ranked across currencies.
       </p>
+      </div>
+
+      <Collapse id="key-findings-body" open={open}>
+      {headlines.length > 0 && (
+        <ul className="mt-3 space-y-2">
+          {headlines.map((headline) => (
+            <li
+              key={`${headline.kind}:${headline.mechanism}`}
+              className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-panel border border-line bg-paper-2 px-3 py-2.5"
+            >
+              <span className="flex min-w-[12rem] flex-1 items-start gap-2">
+                <span className={cn("mt-1 size-2 shrink-0 rounded-[2px]", mechanismDotClass(headline.mechanism))} aria-hidden />
+                <span>
+                  <span className="block text-[12px] leading-relaxed text-ink-2">{headline.message}</span>
+                  <span className="mt-0.5 block text-[10.5px] text-ink-4">
+                    {formatList(headline.markets.map((code) => marketName(code)))}
+                  </span>
+                </span>
+              </span>
+              <ConfidenceLevel level={headline.confidenceLevel} />
+            </li>
+          ))}
+        </ul>
+      )}
 
       <div className="mt-3 space-y-3">
         {ordered.map((group) => (
@@ -129,6 +179,7 @@ export function KeyFindingsSection({ executive, cells, controls, selectedMarket 
           attributed {withoutFindings.length === 1 ? "to it" : "to them"} yet.
         </p>
       )}
+      </Collapse>
     </section>
   );
 }
@@ -142,6 +193,14 @@ function FindingRow({ finding, stage }: { finding: LeakageExecutiveFinding; stag
         <span className="text-[12.5px] font-medium text-ink">{finding.label}</span>
         {stage && (
           <span className="font-mono text-[9px] font-medium tracking-wide text-ink-4 uppercase">{stage}</span>
+        )}
+        {finding.isTied && (
+          <span
+            title="Equal leaders share the top spot in this scope"
+            className="rounded-chip bg-paper-2 px-1.5 py-px font-mono text-[8.5px] font-semibold text-ink-3 uppercase"
+          >
+            Tied
+          </span>
         )}
       </span>
       <span className="ml-auto flex items-center gap-4">

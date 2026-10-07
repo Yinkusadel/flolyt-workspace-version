@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Country } from "country-state-city";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { SearchableSelect, SearchableSelectSkeleton } from "@/components/ui/searchable-select";
@@ -74,6 +75,42 @@ export default function MarketsRoute() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [proposedMarkets]);
+
+  // `?add=GB&currency=GBP` (from the leakage map's "Add to my markets") adds that market to the form as an
+  // unsaved draft once the current set and the currency list have both arrived. The currency is only a
+  // suggestion: it is used only if it is a supported code, and it stays editable. Nothing is saved from here.
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Arriving through the leakage map's "Add to my markets" link: remembered from the first render, because the
+  // link's parameters are cleared once applied. Shows a way back, which the topbar breadcrumb does not give here.
+  const [cameFromLeakage] = useState(() => searchParams.get("add") !== null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  // The key at arrival, not now: clearing the link's parameters replaces the entry and gives it a new key. `default`
+  // marks the first entry of a session (a reload or a pasted link), where there is nothing to go back to.
+  const [arrivalKey] = useState(() => location.key);
+  const backToLeakage = () => {
+    if (arrivalKey === "default") navigate("/leakage-map");
+    else navigate(-1);
+  };
+  const prefillCountry = searchParams.get("add")?.toUpperCase() ?? null;
+  const prefillCurrency = searchParams.get("currency")?.toUpperCase() ?? null;
+  const hasAppliedPrefill = useRef(false);
+  const [prefilled, setPrefilled] = useState<{ name: string; currencyCode: string | null } | null>(null);
+  useEffect(() => {
+    if (hasAppliedPrefill.current || !prefillCountry) return;
+    if (!proposedMarkets || isLoadingProposed || isLoadingCurrencies) return;
+    hasAppliedPrefill.current = true;
+    const country = Country.getCountryByCode(prefillCountry);
+    const current = markets.form.getValues("markets");
+    if (country && !current.some((m) => m.countryCode === prefillCountry)) {
+      const currencyCode =
+        prefillCurrency && supportedCurrencies?.currencies.includes(prefillCurrency) ? prefillCurrency : null;
+      markets.form.setValue("markets", [...current, { countryCode: prefillCountry, currencyCode }], { shouldValidate: true });
+      setPrefilled({ name: country.name, currencyCode });
+    }
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [proposedMarkets, isLoadingProposed, isLoadingCurrencies]);
 
   const marketProposals = useMemo(
     () =>
@@ -165,6 +202,16 @@ export default function MarketsRoute() {
           for reports and for anything that has no market of its own.
         </p>
       </div>
+
+      {prefilled && (
+        <div className="rounded-panel border border-ultra-border bg-ultra-bg px-4 py-3 text-[11.5px] leading-relaxed text-ink-2">
+          <span className="font-semibold text-ink">{prefilled.name} was added from your leakage data.</span>{" "}
+          {prefilled.currencyCode
+            ? `We filled in ${prefilled.currencyCode} as its currency; change it if it is wrong. `
+            : "Choose its currency below. "}
+          It is not saved yet: press Save changes and confirm with the code we email you.
+        </div>
+      )}
 
       <div>
         <p className={EYEBROW_CLASS}>Markets you sell in</p>
@@ -333,7 +380,13 @@ export default function MarketsRoute() {
         </p>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-3">
+        {cameFromLeakage && (
+          <Button type="button" variant="outline" onClick={backToLeakage} className="h-10.5 rounded-card px-5 text-[13px] font-medium">
+            <ArrowLeft className="size-4" />
+            Back to leakage map
+          </Button>
+        )}
         <Button
           type="button"
           onClick={handleSave}

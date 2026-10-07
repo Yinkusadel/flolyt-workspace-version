@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, ArrowRight } from "lucide-react";
 
@@ -16,6 +17,8 @@ import { DIAGNOSTICS_ALL, useDiagnosticsParam } from "@/pages/leakage-map/drawer
 import { useCellDrawerParam } from "@/pages/leakage-map/drawer/use-cell-drawer-param";
 import { ByMarketSection } from "@/pages/leakage-map/by-market-section";
 import { ExpectedLossSection } from "@/pages/leakage-map/expected-loss-section";
+import { buildNotices, NoticeStrip } from "@/pages/leakage-map/notices";
+import { Collapse } from "@/pages/leakage-map/collapse";
 import { LeakCardsSection } from "@/pages/leakage-map/leak-cards-section";
 import { PublicationFooter } from "@/pages/leakage-map/publication-footer";
 import { MeasurementSection } from "@/pages/leakage-map/measurement-section";
@@ -43,6 +46,10 @@ export default function LeakageMap() {
   const diagnostics = useDiagnosticsParam();
   const coverageSheet = useCoverageParam();
   const calculation = useCalculationParam();
+  // Readiness and Measurement sit side by side and open and close together.
+  const [statusOpen, setStatusOpen] = useState(true);
+  // The notes about the numbers stay tucked behind the icon beside "Up to date" until asked for.
+  const [noticesOpen, setNoticesOpen] = useState(false);
 
   const crumbs: Crumb[] = filters.market
     ? [
@@ -90,6 +97,9 @@ export default function LeakageMap() {
   // A selected market nothing is attributed to: show why, not empty sections.
   const showNothingMeasured = !!filters.market && !!page.executive && !marketHasData(page.executive, filters.market);
 
+  // Nothing to caveat on the "nothing measured" view, which shows no figures.
+  const notices = page.executive && !showNothingMeasured ? buildNotices(page.executive, page.summary, page.coverageExplanation, page.controls) : [];
+
   return (
     <div className="space-y-5">
       {filters.market ? (
@@ -125,7 +135,11 @@ export default function LeakageMap() {
       )}
 
       <BusyRegion busy={isSwitching} className="space-y-5">
+      <div>
       <FilterBar
+        notices={notices}
+        noticesOpen={noticesOpen}
+        onToggleNotices={() => setNoticesOpen((prev) => !prev)}
         controls={page.controls}
         filters={filters}
         recommendedMode={recommendedMode}
@@ -135,6 +149,15 @@ export default function LeakageMap() {
         onChange={setLocalFilters}
         onClearMore={clearMoreFilters}
       />
+      {notices.length > 0 && (
+        <Collapse id="page-notices" open={noticesOpen}>
+          {/* Padding, not margin: a margin would collapse out of the measured box and get clipped. */}
+          <div className="pt-3">
+            <NoticeStrip notices={notices} />
+          </div>
+        </Collapse>
+      )}
+      </div>
 
       <div className={cn("space-y-5 transition-opacity", isSwitching && "opacity-60")}>
         {showNothingMeasured && filters.market && page.executive ? (
@@ -143,10 +166,8 @@ export default function LeakageMap() {
           <>
         <ExpectedLossSection
           executive={page.executive}
-          summary={page.summary}
           controls={page.controls}
           filters={filters}
-          coverageExplanation={page.coverageExplanation}
         />
         {/* The all-markets view only: a single market's own view replaces this overview strip. */}
         {!filters.market && (
@@ -164,6 +185,7 @@ export default function LeakageMap() {
           selectedMarket={filters.market}
         />
         <LeakCardsSection
+          currencyFilter={filters.currency}
           cells={page.cells}
           executive={page.executive}
           controls={page.controls}
@@ -177,6 +199,8 @@ export default function LeakageMap() {
             readiness={page.readiness}
             diagnosticCodes={page.limitationSummary.items.map((item) => item.code)}
             onOpenDiagnostics={diagnostics.openDiagnostics}
+            expanded={statusOpen}
+            onToggle={() => setStatusOpen((prev) => !prev)}
           />
           <MeasurementSection
             summary={page.summary}
@@ -185,6 +209,8 @@ export default function LeakageMap() {
             limitationSummary={page.limitationSummary}
             onOpenDiagnostics={() => diagnostics.openDiagnostics(DIAGNOSTICS_ALL)}
             onOpenCoverage={() => coverageSheet.openCoverage()}
+            expanded={statusOpen}
+            onToggle={() => setStatusOpen((prev) => !prev)}
           />
         </div>
         <PublicationFooter publication={page.publication} contractVersion={page.contractVersion} />

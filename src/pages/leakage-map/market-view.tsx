@@ -1,3 +1,4 @@
+import { AddMarketDialog, useAddMarketDialog } from "@/pages/leakage-map/add-market-dialog";
 import { ArrowLeft, Check, HelpCircle, MapPin } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -51,9 +52,10 @@ export function MarketHeader({ market, executive, controls, coverage, asOf, onCl
   const unassigned = isUnassignedMarket(market);
   const option = controls.marketOptions.find((o) => o.market === market);
   const hasEvidence = !!row?.hasMeasurementEvidence;
+  const addMarket = useAddMarketDialog();
 
   const facts = unassigned
-    ? ["Not attributed to a market", "currency proven, market not"]
+    ? ["Not attributed to a market", ...(row && row.amounts.length > 0 ? ["currency proven, market not"] : [])]
     : [
         ...(option?.isPrimary ? ["Primary market"] : []),
         ...(row ? [row.isConfigured ? "Configured" : "Not configured"] : []),
@@ -77,22 +79,34 @@ export function MarketHeader({ market, executive, controls, coverage, asOf, onCl
             <p className="mt-0.5 text-[11.5px] text-ink-3">{facts.join(" · ")}</p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClear}
-          className="flex h-8 items-center gap-1.5 rounded-control border border-line bg-paper px-3 text-[11.5px] font-medium text-ink hover:border-ink-4"
-        >
-          <ArrowLeft className="size-3.5" />
-          All markets
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {!unassigned && row && !row.isConfigured && (
+            <button
+              type="button"
+              onClick={() => addMarket.openFor(market, option?.preferredCurrency ?? null)}
+              className="flex h-8 items-center rounded-control border border-amber-border bg-amber-bg px-3 text-[11.5px] font-medium text-amber hover:border-amber"
+            >
+              Add to my markets
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClear}
+            className="flex h-8 items-center gap-1.5 rounded-control border border-line bg-paper px-3 text-[11.5px] font-medium text-ink hover:border-ink-4"
+          >
+            <ArrowLeft className="size-3.5" />
+            All markets
+          </button>
+        </div>
       </div>
+      <AddMarketDialog state={addMarket.state} onOpenChange={addMarket.setOpen} />
 
       {row && row.affectedEntities.length > 0 && (
         <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2">
           {row.affectedEntities.map((entity) => (
             <div key={`${entity.subjectType}:${entity.grain}`}>
               <dt className="text-[10.5px] text-ink-4 capitalize">Affected {entity.unit}</dt>
-              <dd className="font-mono text-[15px] font-semibold text-ink">{entity.count.toLocaleString("en-US")}</dd>
+              <dd className="font-mono text-[15px] font-semibold text-ink">{entity.count == null ? "Not available" : entity.count.toLocaleString("en-US")}</dd>
             </div>
           ))}
           <p className="self-end text-[10.5px] text-ink-4">De-duplicated across leak types. Units are never mixed.</p>
@@ -133,11 +147,13 @@ const REASON_PHRASE: Record<string, string> = {
 export function NothingMeasured({ market, executive, onSelectMarket }: NothingMeasuredProps) {
   const name = marketName(market);
   const row = findMarketRow(executive, market);
-  const hasUnassigned = executive.marketInventory.hasUnassignedExposure && market !== UNASSIGNED_MARKET;
+  const isUnassigned = market === UNASSIGNED_MARKET;
+  const hasUnassigned = executive.marketInventory.hasUnassignedExposure && !isUnassigned;
 
   const facts: { label: string; value: string }[] = [
-    { label: "Configured", value: row ? (row.isConfigured ? "Yes" : "No") : "Not listed" },
-    { label: "Measurement evidence", value: row ? (row.hasMeasurementEvidence ? "Some" : "None") : "None" },
+    // The Unassigned bucket is not a market a workspace can configure, so the row would only mislead.
+    ...(isUnassigned ? [] : [{ label: "Configured", value: row ? (row.isConfigured ? "Yes" : "No") : "Not listed" }]),
+    { label: "Measurement evidence", value: row ? ((row.hasObservationEvidence ?? row.hasMeasurementEvidence) ? "Some" : "None") : "None" },
     { label: "Attributed amounts", value: row && row.amounts.length > 0 ? `${row.amounts.length} ${row.amounts.length === 1 ? "currency" : "currencies"}` : "None" },
     { label: `Coverage for ${name}`, value: "Not available per market" },
   ];
@@ -147,12 +163,24 @@ export function NothingMeasured({ market, executive, onSelectMarket }: NothingMe
       <section aria-label={`Nothing measured for ${name}`} className="rounded-card border border-line bg-paper p-4 sm:p-5">
         <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
           <div>
-            <h2 className="text-[18px] font-semibold text-ink">Nothing is measured for {name} yet</h2>
+            <h2 className="text-[18px] font-semibold text-ink">
+              {isUnassigned ? "No priced exposure in Unassigned" : `Nothing is measured for ${name} yet`}
+            </h2>
             {/* Two lines of height are always reserved: a longer market name wraps onto a second line and a shorter one does
                 not, and without this the card (and the button under it) changed height from one market to the next. */}
-            <p className="mt-2 min-h-[41px] text-[12.5px] leading-relaxed text-ink-2">
-              {name} is {row?.isConfigured ? "configured" : "not configured"}, but no published observation is attributed to it.
-              That is <span className="font-semibold text-ink">unknown, not zero</span>: {name} may still be leaking.
+            <p className="mt-2 min-h-[62px] text-[12.5px] leading-relaxed text-ink-2">
+              {isUnassigned ? (
+                <>
+                  {row?.evidenceExplanation ?? "No priced exposure is published for the Unassigned bucket."} It holds observations
+                  whose market was not proven; nothing is moved into a market from currency or settings.
+                </>
+              ) : (
+                <>
+                  {name} is {row?.isConfigured ? "configured" : "not configured"}.{" "}
+                  {row?.evidenceExplanation ?? "No published observation is attributed to it."} That is{" "}
+                  <span className="font-semibold text-ink">unknown, not zero</span>: {name} may still be leaking.
+                </>
+              )}
             </p>
             {hasUnassigned && (
               <button
