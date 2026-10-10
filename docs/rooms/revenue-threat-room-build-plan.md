@@ -37,7 +37,7 @@ this doc is the umbrella plan, not a build log. Nothing below is built unless ma
       get flagged, not invented. Known thin ones: room-opening `baseline`/`plan`, threat-monitoring
       `updates[]`, verification `evidence`/`qualifications`, lessons list items, operator-metrics.
 
-## Step 1: endpoint scaffolding (the "update or add" question)
+## Step 1: endpoint scaffolding (the "update or add" question): DONE 2026-10-10, `npx tsc -b` clean
 
 Add only; update two existing. Service + hook per [[api_endpoint_style]], one file each under
 `src/services/api/rooms/` and `src/features/rooms/`.

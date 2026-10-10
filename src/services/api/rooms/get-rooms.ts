@@ -62,6 +62,11 @@ export interface RoomListRowDto {
   pendingDecisions: number;
   /** True when one of the plays waits on the caller specifically. False on a restricted room. */
   needsYou: boolean;
+  /** Non-null marks an automatic (system) opening and is also its investigation ID for
+   * `GET /threats/{investigationId}/room-opening`. Absent on restricted rows. */
+  threatConfirmationId?: string | null;
+  /** Who opened it automatically. Absent on restricted rows. */
+  systemOpenedBy?: string | null;
 }
 
 export interface RoomListAmountBehindStaleDto {
