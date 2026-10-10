@@ -1,5 +1,8 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
+import { SlidersHorizontal } from "lucide-react";
+
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,7 +13,12 @@ import { FilterCard, type FilterOption, type FilterOptions } from "@/pages/rooms
 import { SaveViewDialog, SavedViews } from "@/pages/rooms/saved-views";
 import { StatTiles } from "@/pages/rooms/stat-tiles";
 import { RoomsEmpty, RoomsTable } from "@/pages/rooms/rooms-table";
-import { isDefaultFilters, toRoomsParams, useRoomsFilters } from "@/pages/rooms/use-rooms-filters";
+import {
+  countActiveFilters,
+  isDefaultFilters,
+  toRoomsParams,
+  useRoomsFilters,
+} from "@/pages/rooms/use-rooms-filters";
 
 /** Distinct options for a filter, read from the workspace's own rooms (the API has no option lists). */
 function distinct(
@@ -38,15 +46,49 @@ function buildOptions(rooms: RoomListRowDto[]): FilterOptions {
   };
 }
 
-function Header() {
+function Header({ action }: { action?: React.ReactNode }) {
   return (
-    <div>
-      <h1 className="text-[17px] font-semibold text-ink">Rooms</h1>
-      <p className="mt-1 text-[11.5px] text-ink-3">
-        Every leak somebody is working on, newest first. Every filter is in the link, so a filtered view can be
-        shared.
-      </p>
+    <div className="flex items-start justify-between gap-3">
+      <div>
+        <h1 className="text-[17px] font-semibold text-ink">Rooms</h1>
+        <p className="mt-1 text-[11.5px] text-ink-3">
+          Every leak somebody is working on, newest first. Every filter is in the link, so a filtered view can be
+          shared.
+        </p>
+      </div>
+      {action}
     </div>
+  );
+}
+
+/** Shows or hides the filter card. While hidden, a badge says how many filters are still applied. */
+function FiltersToggle({
+  open,
+  activeCount,
+  onToggle,
+}: {
+  open: boolean;
+  activeCount: number;
+  onToggle: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="shrink-0"
+      aria-expanded={open}
+      aria-controls="rooms-filters"
+      onClick={onToggle}
+    >
+      <SlidersHorizontal size={14} />
+      {open ? "Hide filters" : "Show filters"}
+      {!open && activeCount > 0 && (
+        <span className="rounded-full bg-primary px-1.5 font-mono text-[10px] font-semibold text-primary-foreground">
+          {activeCount}
+        </span>
+      )}
+    </Button>
   );
 }
 
@@ -56,10 +98,10 @@ function RoomsSkeleton() {
       <Header />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-[104px] rounded-card" />
+          <Skeleton key={i} className="h-26 rounded-card" />
         ))}
       </div>
-      <Skeleton className="h-[170px] rounded-card" />
+      <Skeleton className="h-42.5 rounded-card" />
       <div className="rounded-card border border-line bg-paper">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="flex items-center gap-4 border-b border-line px-4 py-4 last:border-0">
@@ -91,6 +133,7 @@ function ErrorCard({ message, onRetry }: { message?: string; onRetry: () => void
 /** `/rooms`: the Rooms list. Rebuilt from the new design (Rooms · index.png). */
 const Rooms = () => {
   const { filters, update, replaceAll, clear } = useRoomsFilters();
+  const [filtersOpen, setFiltersOpen] = React.useState(true);
   const [saveOpen, setSaveOpen] = React.useState(false);
   const [assignTarget, setAssignTarget] = React.useState<RoomListRowDto | null>(null);
 
@@ -136,7 +179,15 @@ const Rooms = () => {
 
   return (
     <div className="space-y-6">
-      <Header />
+      <Header
+        action={
+          <FiltersToggle
+            open={filtersOpen}
+            activeCount={countActiveFilters(filters)}
+            onToggle={() => setFiltersOpen((open) => !open)}
+          />
+        }
+      />
 
       <StatTiles
         counts={counts}
@@ -145,19 +196,35 @@ const Rooms = () => {
         onSelect={(state) => update({ state })}
       />
 
-      <FilterCard
-        filters={filters}
-        options={options}
-        optionsLoading={false}
-        onChange={update}
-        onClear={clear}
-        onSaveView={() => setSaveOpen(true)}
-      />
+      {/* Slides open and shut by animating the grid row between 0fr and 1fr (no fixed height
+          needed). `invisible` while shut keeps the hidden controls out of the tab order; the top
+          padding lives inside so a shut card leaves no extra gap. */}
+      <div
+        id="rooms-filters"
+        aria-hidden={!filtersOpen}
+        className={cn(
+          "mt-0! grid transition-[grid-template-rows,opacity,visibility] duration-300 ease-out",
+          filtersOpen ? "visible grid-rows-[1fr] opacity-100" : "invisible grid-rows-[0fr] opacity-0"
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="pt-6">
+            <FilterCard
+              filters={filters}
+              options={options}
+              optionsLoading={false}
+              onChange={update}
+              onClear={clear}
+              onSaveView={() => setSaveOpen(true)}
+            />
+          </div>
+        </div>
+      </div>
 
       <SavedViews filters={filters} onApply={replaceAll} />
 
       {list.isPending ? (
-        <Skeleton className="h-[320px] rounded-card" aria-busy="true" aria-label="Loading rooms" />
+        <Skeleton className="h-80 rounded-card" aria-busy="true" aria-label="Loading rooms" />
       ) : list.isError ? (
         <ErrorCard message={list.error?.message} onRetry={() => list.refetch()} />
       ) : rooms.length === 0 ? (

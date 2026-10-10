@@ -92,7 +92,20 @@ export const viewToFilters = (filter: RoomViewFilterDto): RoomsFilters => ({
 export const filtersEqual = (a: RoomsFilters, b: RoomsFilters) =>
   serialize(a).toString() === serialize(b).toString();
 
-export const isDefaultFilters = (filters: RoomsFilters) => filtersEqual(filters, DEFAULT_FILTERS);
+/** How many filters differ from the defaults (the count on the "Show filters" button). */
+export const countActiveFilters = (filters: RoomsFilters) =>
+  [
+    filters.q,
+    filters.state !== "open",
+    filters.currency,
+    filters.stage,
+    filters.condition,
+    filters.owner,
+    filters.currency && filters.min,
+    filters.archived,
+  ].filter(Boolean).length;
+
+export const isDefaultFilters =(filters: RoomsFilters) => filtersEqual(filters, DEFAULT_FILTERS);
 
 export function useRoomsFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
