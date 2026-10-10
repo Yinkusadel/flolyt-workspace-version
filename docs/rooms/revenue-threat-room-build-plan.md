@@ -364,7 +364,12 @@ now land in the rebuilt Room, after Step C.2.
   `map-suggested-action-target.ts`. Business-memory's "Open a room on the recurrence" link points at
   the removed `/rooms/new` and also lands on the stub.
 
-**Next: Step C1, the new Rooms list page** from `Rooms · index.png`. Awaiting user go-ahead.
+**Step C1 BUILT 2026-10-10** (`npx tsc -b` and `npm run build` pass; NOT yet checked in a browser or against the real API because the saved login expired; not committed): new Rooms list at `/rooms` from `Rooms · index.png`, files in `src/pages/rooms/`: `index.tsx` (page, skeleton, empty/error states), `use-rooms-filters.ts` (all filters in the URL: q, state, currency, stage, condition, owner, min, archived), `stat-tiles.tsx` (4 state tiles that double as the state filter + "Behind stale rooms" per currency), `filter-card.tsx` (native selects; options derived from the workspace's own rooms; Min. at risk locked until a currency is chosen), `saved-views.tsx` (`GET/POST /rooms/views`, apply on click), `rooms-table.tsx` (restricted, merged, stale, unowned, recovering, "Opened by Flolyt" rows), `modals/assign-owner-modal.tsx` (copied back from the archive, `PUT /owner`), `room-stub.tsx`, `labels.ts`. Two queries: the whole workspace (counts, option lists, merge-target names) and the filtered list. `formatWholeMoney` added to `src/lib/format-measured-value.ts`.
+- **Deliberately left out of the design:** the "Convening queue · N waiting" button (that page does not exist yet, add it with step C2); the "live · 09:14 UTC" caption under live amounts (no timestamp on the row); the creator name on shared saved views (`createdBy` format unknown); saved view edit/delete (PUT/DELETE, no affordance in the design); the red colour on a live figure above its opening figure (would compare two API fields).
+- **Judgement calls:** row titles use the app's link style (ultra + hover underline) not the design's black; `restrictedBy` is only shown if it reads as a name, not an id; restricted reason keys are mapped to the four labels.
+- **To verify live:** counts vs filters (do `total/open/...` describe the workspace?), `Opened by Flolyt` chips on real auto-opened rooms, restricted rows, merged rows, `Min. at risk` with a currency, saved view apply and save.
+
+**Next: C2 Convening (then C3 Dissent, C4 My load, C5 Admin), as tabs inside the Rooms page.** Awaiting user go-ahead and a browser check of C1.
 
 ## Open questions for the user
 
