@@ -135,7 +135,8 @@ function ErrorCard({ message, onRetry }: { message?: string; onRetry: () => void
 /** `/rooms`: the Rooms list. Rebuilt from the new design (Rooms · index.png). */
 const Rooms = () => {
   const { filters, update, replaceAll, clear } = useRoomsFilters();
-  const [filtersOpen, setFiltersOpen] = React.useState(true);
+  // Starts shut; the button's badge still says how many filters are applied.
+  const [filtersOpen, setFiltersOpen] = React.useState(false);
   const [saveOpen, setSaveOpen] = React.useState(false);
   const [assignTarget, setAssignTarget] = React.useState<RoomListRowDto | null>(null);
 
