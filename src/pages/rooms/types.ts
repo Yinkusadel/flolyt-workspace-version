@@ -1,5 +1,4 @@
-import type { Department } from "@/lib/lifecycle-data";
-import type { ChipTone } from "@/components/ui/chip";
+import type { Actor, AgentRef, PersonRef, Tone } from "@/lib/actor-types";
 
 /**
  * Shared primitives for the /rooms rebuild — sourced from
@@ -7,11 +6,9 @@ import type { ChipTone } from "@/components/ui/chip";
  * See docs/build-tracker.md section 4 for the per-screen route map.
  */
 
-export type Tone = ChipTone;
-
-export type PersonRef = { initials: string; name: string; department: Department; roleLabel?: string };
-export type AgentRef = { initials: string; name: string };
-export type Actor = { kind: "human"; person: PersonRef } | { kind: "agent"; agent: AgentRef };
+// These four live in lib/actor-types.ts (shared by inbox, playbooks, business-memory). Re-exported
+// so the rest of the Rooms section keeps its own import path until it is archived.
+export type { Actor, AgentRef, PersonRef, Tone };
 
 /**
  * A bare owner reference from an endpoint that only carries an id + name (`GET /rooms`'s

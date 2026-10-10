@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCompactMoney, formatCount } from "@/lib/format-measured-value";
-import { formatRoomActivity } from "@/pages/rooms/format";
+import { formatRoomActivity } from "@/lib/format-activity";
 import { useGetInboxApproval } from "@/features/inbox/use-get-inbox-approval";
 import { useDecideAiProposal } from "@/features/ai-proposals/use-decide-ai-proposal";
 import useSnoozeInboxItem from "@/features/inbox/use-snooze-inbox-item";

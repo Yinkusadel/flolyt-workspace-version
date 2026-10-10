@@ -5,7 +5,6 @@ import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { BreadcrumbContext, type Crumb } from "@/components/breadcrumb-context";
 import { cn } from "@/lib/utils";
-import { getRoom } from "@/pages/rooms/room/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -28,14 +27,15 @@ function getBreadcrumb(pathname: string): React.ReactNode {
 
   const roomMatch = /^\/rooms\/([^/]+)/.exec(pathname);
   if (roomMatch) {
-    const room = getRoom(roomMatch[1]);
     return (
       <span className="flex items-center gap-1.5">
         <Link to="/rooms" className="hover:text-ink">
           Rooms
         </Link>
         <span className="text-ink-4">/</span>
-        <span className="text-ink">{room?.title ?? roomMatch[1]}</span>
+        {/* The Room page supplies its real title through usePageBreadcrumb once it is rebuilt
+            (it needs a single-Room endpoint); until then this stays generic. */}
+        <span className="text-ink">Room</span>
       </span>
     );
   }

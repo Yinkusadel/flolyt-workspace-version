@@ -1,6 +1,7 @@
 import type { RoomListRowDto } from "@/services/api/rooms/get-rooms";
 import { formatCompactMoney, formatCount } from "@/lib/format-measured-value";
-import { agentInitialsFromName, formatRoomActivity, initialsFromName } from "@/pages/rooms/format";
+import { agentInitialsFromName, initialsFromName } from "@/lib/initials";
+import { formatRoomActivity } from "@/lib/format-activity";
 import type { RoomListRow, RoomListState, Tone } from "@/pages/rooms/types";
 
 /**

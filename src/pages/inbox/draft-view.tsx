@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { SearchableSelect, SearchableSelectSkeleton } from "@/components/ui/searchable-select";
-import { initialsFromName } from "@/pages/rooms/format";
+import { initialsFromName } from "@/lib/initials";
 import { useGetRooms } from "@/features/rooms/use-get-rooms";
 import useUpdateInboxDraft from "@/features/inbox/use-update-inbox-draft";
 import useSendInboxDraft from "@/features/inbox/use-send-inbox-draft";

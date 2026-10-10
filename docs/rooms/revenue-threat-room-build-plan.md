@@ -207,6 +207,101 @@ three panes: **Live thread** (left), **Decision / Evidence / Log** tabs (centre)
   opening estimate. Label the strip "at opening". For auto-opened Rooms the header subtitle must not
   say "customers/accounts" (handoff rule); the mock subtitle currently does.
 
+## New design adopted (2026-10-10): `flolyt-figma-designs/New-pages-pattern/Flolyt Rooms-png/`
+
+The user had all Room endpoints sent out for design (17 screens, reviewed in full). **Decision: use
+this as the source of truth and build section by section, end to end, instead of the old mock.**
+It supersedes the earlier "slim strip" placement above (the threat Room has its own tab now).
+
+Why it is better than the old mock: it covers screens the old design never had (threat Room tabs,
+Convening, Dissent ledger, My load, Admin) and the earlier gaps (link/merge, owner reassignment);
+it drops the unbacked Live thread for an "Open thread" button; and it already carries the data
+rules ("Stated, not checked", "Unavailable" not zero, per-currency money, "Response shape not yet
+confirmed" badges on the same shapes we flagged with a red cross in code). The header's
+"at risk at open / now" strip plus a separate Opening baseline tab removes the earlier at-risk
+chip vs baseline conflict. Sample names in the PNGs (Kemi, Tolu) are placeholder data.
+
+### Screen to endpoint map (inferred from the screens; verify each when its section is built)
+
+| Screen (PNG) | Intended endpoints |
+|---|---|
+| Rooms index | `GET /rooms` (+ "Opened by Flolyt" chip from `threatConfirmationId`), `/rooms/views` (+POST/PUT/DELETE), `GET /rooms/convening` (queue badge), `PUT /{id}/owner` (Assign owner) |
+| Convening queue | `GET /rooms/convening`, accept, decline |
+| Dissent ledger | `GET /rooms/dissent`, judge, withdraw |
+| My load, subscriptions | `GET /rooms/subscriptions`, `watch`, `notify-level`, `unwatch`, `opened` (person picker "Showing: Kemi": check the param) |
+| Admin | `GET /value/verified-threats`, `GET/POST /threats/lessons` (+review, retire), `GET /threats/operator-metrics`, investigation turn budget (`/rooms/settings/investigations`, UNSPECIFIED) |
+| Room header (all tabs) | list row fields; Watching dropdown (`watch`/`notify-level`/`unwatch`), `restrict`, Close, "Open thread" to `/conversations/:conversationId` |
+| Room: Briefing | NO endpoint named; looks composed from conflicts, decision, plays, evidence, runs, close-preview. Confirm before building |
+| Room: Decision & dissent | `GET/POST /decision`, `decide`, `decision/dissent`, `DELETE dissent`, falsifiers (create, `met`), `cited-dissent` |
+| Room: Conflicts | `GET/POST /conflicts`, `choose`, `third-reading`, `escalate` |
+| Room: Plays & collisions | `GET /{id}/plays`, `GET /plays/{id}`, `collision-check`, `cited-dissent`, obligations (`returnedObligations` in plays) |
+| Room: Evidence | `GET /evidence`, falsifiers; "Connect source" links to datasources |
+| Room: Agents & runs | `GET /runs`, `POST/DELETE /agents`, investigation controls (`/{id}/investigation`, UNSPECIFIED) |
+| Room: People & guardrails | `GET/POST/PUT/DELETE /people`, `owner`, `GET/POST/DELETE /guardrails`, `restrict`/`unrestrict` |
+| Room: Cohort & overlaps | `GET /cohort`, `merge-candidates`, `merge`, `unmerge`, `link`, `unlink` |
+| Room: Log | `GET /log`, `log/export` |
+| Room: Close | `GET /close-preview`, `POST /close`; `POST /reopen` |
+| Threat room: Opening & monitoring | `GET /threats/{investigationId}/room-opening`, `GET /{id}/threat-monitoring` |
+| Threat room: Plan & verification | `GET/PUT /resolution-plan`, `POST /verification-plans`, `GET/POST /verifications`, `reverse`, `verified-case/close` |
+
+Threat tabs (Opening & monitoring, Plan & verification) appear first in the tab bar only for
+auto-opened Rooms (`threatConfirmationId` non-null). Ordinary Rooms show Briefing first.
+
+### User answers to the watch-outs (2026-10-10)
+
+- **Unspecified `/investigation` and `/settings/investigations` routes:** user will send a Room id
+  later, or we add a UI test that triggers the call and inspect the real response.
+- **No single-Room endpoint: BLOCKER for the Room page.** The header fields (title, owner, stage,
+  condition, currency, people, at risk open/now, status, opening number, `threatConfirmationId`,
+  `conversationId`, restricted info) all exist on a `GET /rooms` row, so picking the Room from the
+  list would technically work. **User decided NOT to build on that workaround**: they will ask the
+  backend for a proper `GET /api/v3/rooms/{roomId}`. Until it exists, do not build the Room shell or
+  any Room tab. Suggested ask: same fields as a list row (`RoomListRowDto`), plus the same 404 for
+  missing/foreign/restricted, and the restricted-room shape. When the spec arrives, add it to
+  `docs/endpoints/rooms.md` and scaffold it.
+- **Briefing tab:** understood as the Room's front page that repeats items from other tabs
+  (Decision, Conflicts, Plays, Evidence); built last. Only its Investigation box and Arbiter's
+  conclusion have an unclear source (likely the unspecified investigation route).
+- **Navigation:** Convening, Dissent, My load and Admin become tabs inside the Rooms page itself
+  (not sidebar entries, not a top bar). Routes still flat, kebab-case, under the existing
+  convention; confirm exact paths when built.
+- **After archiving the old Rooms section:** start with the new Rooms list page (design:
+  `Rooms · index.png`), a fresh build from the new design, not a copy of the old list. The archive
+  step B needs no stub question any more: `/rooms` is rebuilt first.
+
+### Rebuild order, updated for the blocker
+
+1. Step A (decouple shared code), step B (archive `pages/rooms`).
+2. **Rooms list** from the new design (unblocked: `GET /rooms` is wired and typed).
+3. Convening, Dissent, My load and Admin as tabs inside the Rooms page (each unblocked by its own
+   endpoints, except Admin's turn budget which needs the unspecified route).
+4. **BLOCKED until the get-one-Room endpoint exists:** Room shell, threat tabs and every Room tab.
+
+### Watch-outs raised on review
+
+1. **Shell mismatch:** the PNGs show a dark top bar (Rooms, Convening, Dissent, My load, Admin);
+   our app is a sidebar layout. Decide how Convening/Dissent/My load/Admin appear (flat top-level
+   kebab-case routes per the URL convention).
+2. **No single-Room GET.** The header (owner, people, at risk open/now) matches the list row, so
+   the shell would read it from `GET /rooms`. Needs a decision or a backend answer.
+3. **Briefing has no named endpoint** (see map).
+4. **Two unspecified routes** appear in the design: Admin's "Investigation turn budget" and the
+   "Investigation" cards on Briefing and Agents & runs.
+5. **"Customers" wording** on Convening and Cohort vs the handoff rule that threat findings are
+   not customers/accounts (the threat tab already respects it). Check each field's meaning when wired.
+6. Several sections carry the design's own "Response shape not yet confirmed" badge (monitoring,
+   resolution plan, verification, admin value/diagnostics): these need live manual testing, not
+   just types.
+
+### Rebuild order with this design (replaces Step C above)
+
+1. Step A (decouple shared code), then B (archive `pages/rooms`).
+2. Rooms index, then the Room shell (header + tab bar).
+3. Threat tabs: Opening & monitoring, then Plan & verification.
+4. Remaining tabs one at a time (Decision, Conflicts, Plays, Evidence, Agents & runs, People &
+   guardrails, Cohort & overlaps, Log, Close, Briefing last since its source is unclear).
+5. Top-level pages: Convening, Dissent ledger, My load, Admin.
+
 ### New working method: archive and rebuild section by section (user's call)
 
 Same pattern as the Leakage V3 rebuild. Design follows the endpoints, not the old mock. Archived
@@ -238,7 +333,24 @@ list straight away (it is the one piece already live against the real API).
 Steps 3 to 6 above (plan/monitoring, messages, verification, lessons) are unchanged in content but
 now land in the rebuilt Room, after Step C.2.
 
-**Awaiting user go-ahead for Step A.** Nothing in A to C has been started.
+**Step A DONE 2026-10-10** (`npx tsc -b` and `npm run build` pass, not yet committed):
+- `pages/rooms/format.ts` removed; its helpers now live in `src/lib/initials.ts`
+  (`initialsFromName`, `agentInitialsFromName`) and `src/lib/format-activity.ts`
+  (`formatRoomActivity`). Inbox (6 files), onboarding agent-card, playbooks, business-memory and
+  the Rooms files import from there.
+- `Actor`, `AgentRef`, `PersonRef`, `Tone` now live in `src/lib/actor-types.ts`;
+  `pages/rooms/types.ts` re-exports them for the rest of the Rooms section until it is archived.
+  Playbooks and business-memory import `AgentRef` from the lib.
+- business-memory no longer imports the Rooms mock roster: `REPEAT_DECAY` is defined locally.
+- `app-layout.tsx` no longer imports `getRoom`; the `/rooms/:id` breadcrumb shows a generic "Room"
+  until the rebuilt Room page supplies its real title via `usePageBreadcrumb` (needs the
+  single-Room endpoint).
+- **Found for Step B:** files under `src/oldpages` (ai-teammates, campaigns, customer-health,
+  experiments, replies, and others) still import from `@/pages/rooms/...`. When `pages/rooms` moves to
+  `src/oldpages/rooms`, those imports must be repointed to `@/oldpages/rooms/...` (or the new lib
+  files) so the project still compiles.
+
+**Awaiting user go-ahead for Step B (archive).** Steps B and C not started.
 
 ## Open questions for the user
 

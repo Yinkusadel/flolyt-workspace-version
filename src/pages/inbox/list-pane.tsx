@@ -12,7 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TextTooltip } from "@/components/ui/text-tooltip";
-import { agentInitialsFromName, formatRoomActivity, initialsFromName } from "@/pages/rooms/format";
+import { agentInitialsFromName, initialsFromName } from "@/lib/initials";
+import { formatRoomActivity } from "@/lib/format-activity";
 import { formatShortDate } from "@/lib/format-measured-value";
 import { ConfirmModal } from "@/pages/onboarding/team/confirm-modal";
 import useClearInboxThread from "@/features/inbox/use-clear-inbox-thread";

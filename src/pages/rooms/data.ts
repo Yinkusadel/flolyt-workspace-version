@@ -1,4 +1,4 @@
-import { agentInitialsFromName } from "@/pages/rooms/format";
+import { agentInitialsFromName } from "@/lib/initials";
 import type { AgentRef, PersonRef } from "@/pages/rooms/types";
 
 /**

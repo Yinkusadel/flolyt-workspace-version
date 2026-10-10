@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { KpiCards, type Kpi } from "@/components/ui/kpi-cards";
 import { Chip } from "@/components/ui/chip";
 import { formatCompactMoney } from "@/lib/format-measured-value";
-import { formatRoomActivity } from "@/pages/rooms/format";
+import { formatRoomActivity } from "@/lib/format-activity";
 import { useGetRoomSubscriptions } from "@/features/rooms/use-get-room-subscriptions";
 import useSetRoomNotifyLevel from "@/features/rooms/use-set-room-notify-level";
 import useUnwatchRoom from "@/features/rooms/use-unwatch-room";
