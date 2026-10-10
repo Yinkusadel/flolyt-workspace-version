@@ -350,3 +350,9 @@ The new handoff replaced the old one (same filename). Live capture confirmed eve
 **Compact multi-currency cards (2026-10-06):** a card now shows at most 3 one-line currency rows (code link, figure, confidence level), then "+N more currencies" and the Compound tag on one line. In the Retain row every card is 260px tall (the multi-currency card used to push the row to about 580px). "+N more" opens a popover listing every currency with the full detail (lifecycle, candidates, range, "Low confidence"); picking a currency there closes it and opens that calculation. The per-row candidates/range moved from the card into that popover.
 
 **Per-currency cards when they fit (2026-10-06):** in a stage, a leak with 2+ currencies is split into one tile per currency inside one card with a single Details button (each tile keeps its own "How calculated") whenever every card in the stage (currency tiles plus unmeasured, no-exposure and single-currency cards) fits on one line at the current width (each unit 215-300px, measured with a ResizeObserver per stage). Otherwise the stage wraps as before and the leak keeps its compact card: 2 one-line currency rows (code link, figure, "N cand. · Low"), then "+N more currencies" opening the full list. A single-currency leak is never split. Live-checked at 1440px only (Dormant Accounts: 5 tiles, one Details, calculation opens from a tile); 1100px, 820px and the currency filter are NOT yet checked live because the saved test session expired (needs a fresh sign-in code).
+
+## Handover (2026-10-10)
+
+A full consolidated record of this build (what exists, user decisions, contract findings, unverified items,
+what is left, practical notes) is in [session-handover-2026-10.md](session-handover-2026-10.md). Read that first
+in a new chat. Both PRs (#41, #42) are merged; last leakage commit `45ce441`.

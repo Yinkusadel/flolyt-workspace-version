@@ -98,3 +98,16 @@ mark an item DONE or DROPPED with the date instead.
 
 - **Still to build:** the 30-market matrix only (deferred, see the tracker). Evidence tab, footer line and Missed opportunities are built.
 - **Unverified live:** real attributed-market amounts, priced opportunity amounts and signal preview, and the case form submits.
+
+## Update 2026-10-10: open items after the registry 1.6.0 work
+
+- **Still to build:** the 30-market matrix only. See session-handover-2026-10.md section 7 for the optional extras.
+- **Unverified live:** case form submits (the user tests), a real Markets save, priced opportunity amounts and the
+  signal preview, the null affected-entity count, and the split per-currency cards at 1100/820px and with the
+  currency filter (test session expired 6 Oct; needs a fresh emailed code).
+- **Backend questions:** should the top currency filter narrow `cells[].amounts` server-side; a Member/Lead/Administrator
+  signal for the client (so Add to my markets can be hidden for non-admins); plus the older list above.
+- **Frontend-computed or frontend-worded (flag if the backend later supplies them):** the setup-review line under
+  By market, "Found in data" / "no data yet", the Unassigned wording, the dialog text, the Missed opportunities
+  subtitle and callout, the "Not the same as zero" unpublished-currency card, the multi-currency row layout, and
+  the per-stage one-line fit rule for splitting currencies into cards.
