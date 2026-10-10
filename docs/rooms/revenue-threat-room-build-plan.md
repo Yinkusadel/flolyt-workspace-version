@@ -25,12 +25,12 @@ this doc is the umbrella plan, not a build log. Nothing below is built unless ma
 
 ## Step 0: docs only (no code)
 
-- [ ] Fix `/api/flolyt/...` to `/api/v3/...` in `docs/endpoints/rooms.md` (header + plays note).
-- [ ] Add a "Revenue threat Room (phases 5 to 9)" section to `rooms.md` for the 19 specified routes
+- [x] Fix `/api/flolyt/...` to `/api/v3/...` in `docs/endpoints/rooms.md` (header + plays note).
+- [x] Add a "Revenue threat Room (phases 5 to 9)" section to `rooms.md` for the 17 specified entries
       in the standard entry format. Mark all as `documented`.
-- [ ] Update `GET /rooms` entry: new nullable `threatConfirmationId`, `systemOpenedBy`; restricted
+- [x] Update `GET /rooms` entry: new nullable `threatConfirmationId`, `systemOpenedBy`; restricted
       rows omit them.
-- [ ] Update `docs/endpoints/README.md` Rooms row counts.
+- [x] Update `docs/endpoints/README.md` Rooms row counts.
 - [ ] Ask the user to confirm: any Scalar "Show Schema" captures for the new response shapes. The
       handoff gives field *names* for most responses but no full JSON examples. Per
       [[feedback_stop_on_truncated_endpoint_fields]], request/response bodies we can't see in full
