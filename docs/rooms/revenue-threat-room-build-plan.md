@@ -148,7 +148,7 @@ refusals plainly.
 - **Branch:** `revenue-threat-room` (off `add-onboarding`). Pushed through step 1 plus the full `room-opening` types.
 - **Step 0 DONE** (docs), **step 1 DONE** (16 services+hooks, `replyMode` and authorship types, `GET /rooms` fields; `npx tsc -b` clean).
 - **`room-opening` response fully typed** from the Scalar schema, see the entry in `docs/endpoints/rooms.md`.
-- **Stopped at:** user has not yet approved step 2. Nothing in the UI is built.
+- **Stopped at:** step 2 as first written is SUPERSEDED, see "Revised approach" below. Awaiting go-ahead for Step A (decouple shared code), then B (archive), then C (rebuild). Nothing in the UI is built.
 - **Corrected counts:** 16 new `/rooms` routes (76 operations total in code). Docs claimed 62 original but code has 60; the 2-operation gap is unexplained (compare against the live Scalar index to resolve).
 
 ### Step 2 decisions already agreed in discussion
@@ -164,6 +164,81 @@ refusals plainly.
 ### Everything needed to start step 2
 
 Nothing else is required. Remaining open items do not block it: the unspecified `/investigation` and `/settings/investigations` routes, the Scalar schemas for the other 15 routes (needed before steps 3 to 6, not step 2), and the 60 vs 62 count.
+
+## Revised approach (2026-10-10, supersedes step 2 as first written)
+
+Found while reading the existing pages, which the plan above had not done:
+
+1. **The Room detail page is entirely mock.** `src/pages/rooms/room/room-layout.tsx` resolves
+   `:roomId` with `getRoom()` from the hardcoded table in `room/data.ts` (ids like
+   `second-order-never-happened`). A real Room UUID from `GET /rooms` is not in that table, so every
+   live Room opens to "Room not found". Only the list (`/rooms`), subscriptions, the opened stamp,
+   owner reassignment and wizard steps 1 to 2 are wired (see `wiring-roadmap.md` Phase 1). Phase 2
+   (Decision/Evidence/Log) and the thread/steering panels are unwired.
+2. **The opening "card" therefore had nowhere to render.** It cannot be shown until the detail page
+   loads a real Room. Note: there is no single-Room GET; the list row (`GET /rooms`) carries title,
+   owner, status and amounts.
+3. **Shared utilities live inside the Rooms feature**, which blocks archiving it:
+   - `pages/rooms/format.ts` (`initialsFromName`, `agentInitialsFromName`, `formatRoomActivity`) is
+     imported by 6 inbox files, `onboarding/agents/agent-card.tsx` and `playbooks/data.ts`.
+   - `pages/rooms/types.ts` (`Actor`, `PersonRef`, `AgentRef`, `Tone` are shared; `RoomListRow`,
+     `RoomStatus` are Rooms-only) is imported by `business-memory/data.ts` and `playbooks/data.ts`.
+   - `pages/rooms/data.ts` (`REPEAT_DECAY`) is imported by `business-memory/data.ts`.
+   - `pages/app-layout.tsx` calls `getRoom()` from `rooms/room/data.ts` to title the topbar
+     breadcrumb for `/rooms/:id`. That reads mock data too, so a real Room has no breadcrumb title.
+   Root cause: helpers began inside Rooms and were borrowed later; the earlier lifecycle archive
+   moved files into Rooms instead of into a shared place.
+
+### Design placement (agreed discussion, from the room detail screenshot)
+
+Layout today: header (title, subtitle, "N agents" chip, avatars, "at risk" chip, Close room), then
+three panes: **Live thread** (left), **Decision / Evidence / Log** tabs (centre), **Plays** (right).
+
+- The backend's system synthesis message lives in the Room's conversation, so it appears as the
+  first entry of Live thread once the thread is wired to the real `conversationId`. Not our card.
+- The attribution + baseline goes in a **slim strip between the header and the three panes**, shown
+  only for auto-opened Rooms (`threatConfirmationId` non-null): "Opened automatically by Flolyt",
+  state, headline `baseline.openingState.exposure` per currency/market/lifecycle, labelled
+  "at opening", plus a "View baseline" side panel (full baseline, per-candidate calculations with
+  ranges/assumptions/caveats, draft plan).
+- Not inside a pane: left is narrow conversation, centre Decision is the decision doc (empty on a
+  fresh auto-opened Room), right Plays are proposals not the opening's draft plan.
+- Conflict to avoid: the header's "at risk" chip is the live list figure; the baseline is the frozen
+  opening estimate. Label the strip "at opening". For auto-opened Rooms the header subtitle must not
+  say "customers/accounts" (handoff rule); the mock subtitle currently does.
+
+### New working method: archive and rebuild section by section (user's call)
+
+Same pattern as the Leakage V3 rebuild. Design follows the endpoints, not the old mock. Archived
+copy is a reference to copy sections back from where they fit.
+
+**Step A: decouple shared code (before any move).**
+1. Move shared helpers to `src/lib/` (format helpers next to `format-measured-value.ts`) and shared
+   types (`Actor`, `PersonRef`, `AgentRef`, `Tone`) to a shared types file; repoint inbox,
+   onboarding, playbooks and business-memory imports.
+2. Stop business-memory depending on the Rooms mock `data.ts` (`REPEAT_DECAY`).
+3. Give the breadcrumb a real Room title source (small shared hook over the Rooms list/Room data),
+   so `app-layout.tsx` no longer imports `getRoom`.
+4. Verify with `npx tsc -b` / `npm run build`.
+
+**Step B: archive.** Move `src/pages/rooms` to `src/oldpages/rooms`, update `src/oldpages/README.md`
+(the earlier archive note says Rooms stayed live, update it), repoint `route.tsx`, `/rooms` shows a
+stub meanwhile. Open decision: stub only, or restore the list immediately. Recommended: restore the
+list straight away (it is the one piece already live against the real API).
+
+**Step C: rebuild order.**
+1. Rooms list (copy back from archive, already wired).
+2. Room detail shell: resolve a real Room from the list data, header only, real breadcrumb title.
+3. Opening strip + "View baseline" panel (original step 2, using `room-opening`, fully typed).
+4. Then, flow by flow and endpoint by endpoint: Live thread on the real conversation (incl. step 4
+   `replyMode`), plan + monitoring tabs (step 3), Decision/Evidence/Log, Plays, verification panel
+   (step 5), admin lessons/metrics routes (step 6), and the older Room endpoints (people, guardrails,
+   runs, close/reopen, merge, etc.) as each is reached.
+
+Steps 3 to 6 above (plan/monitoring, messages, verification, lessons) are unchanged in content but
+now land in the rebuilt Room, after Step C.2.
+
+**Awaiting user go-ahead for Step A.** Nothing in A to C has been started.
 
 ## Open questions for the user
 
