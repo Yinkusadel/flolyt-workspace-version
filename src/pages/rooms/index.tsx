@@ -76,7 +76,9 @@ function FiltersToggle({
       type="button"
       variant="outline"
       size="sm"
-      className="shrink-0"
+      // Fixed width, with the count badge overlaid on the corner: the label and the badge both
+      // change with state, and a button that resizes would re-wrap the header's description.
+      className="relative w-36 shrink-0"
       aria-expanded={open}
       aria-controls="rooms-filters"
       onClick={onToggle}
@@ -84,7 +86,7 @@ function FiltersToggle({
       <SlidersHorizontal size={14} />
       {open ? "Hide filters" : "Show filters"}
       {!open && activeCount > 0 && (
-        <span className="rounded-full bg-primary px-1.5 font-mono text-[10px] font-semibold text-primary-foreground">
+        <span className="absolute -top-1.5 -right-1.5 flex min-w-4.5 items-center justify-center rounded-full bg-primary px-1 font-mono text-[10px] leading-4.5 font-semibold text-primary-foreground">
           {activeCount}
         </span>
       )}

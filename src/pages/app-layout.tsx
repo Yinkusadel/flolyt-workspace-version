@@ -118,7 +118,9 @@ export const AppLayout = () => {
           breadcrumb={breadcrumbOverride ? renderCrumbs(breadcrumbOverride) : getBreadcrumb(location.pathname)}
           onMenuClick={() => setNavOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto p-page">
+        {/* The 8px scrollbar takes layout space, so without a reserved gutter a page whose height
+            crosses the window's (e.g. a collapsing panel) jumps sideways as the bar comes and goes. */}
+        <main className="flex-1 overflow-y-auto p-page scrollbar-gutter-stable">
           <BreadcrumbContext.Provider value={breadcrumbContextValue}>
             <Outlet />
           </BreadcrumbContext.Provider>
