@@ -62,6 +62,9 @@ export interface RoomListRowDto {
   pendingDecisions: number;
   /** True when one of the plays waits on the caller specifically. False on a restricted room. */
   needsYou: boolean;
+  /** When `currentAmountAtRisk` was last computed from the leakage map. Null when that figure is
+   * null. Not in the original endpoint doc; seen in a live response 2026-10-10. */
+  currentAmountComputedAtUtc?: string | null;
   /** Non-null marks an automatic (system) opening and is also its investigation ID for
    * `GET /threats/{investigationId}/room-opening`. Absent on restricted rows. */
   threatConfirmationId?: string | null;

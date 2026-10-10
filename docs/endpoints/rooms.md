@@ -107,8 +107,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token; author only.
 - **Request:** path `viewId`; body same shape as create.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/update-room-view.ts` / `src/features/rooms/use-update-room-view.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** wired 2026-10-10 into the Rooms list's saved-view chips (`src/pages/rooms/saved-views.tsx`, `EditViewDialog`: rename, re-share, optionally replace the filters with the ones applied now). Author-only (`mine`).
+- **Status:** wired, not yet submitted live.
 
 ### DELETE /rooms/views/{viewId}
 
@@ -116,8 +116,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token; author only.
 - **Request:** path `viewId`.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/delete-room-view.ts` / `src/features/rooms/use-delete-room-view.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** wired 2026-10-10 into the Rooms list's saved-view chips (`DeleteViewDialog`). Author-only (`mine`).
+- **Status:** wired, not yet submitted live.
 - **Notes:** Author-only because deleting someone else's would break every link anybody has to it.
 
 ### GET /rooms
@@ -128,7 +128,7 @@ Mutations show their real top-level shape including the envelope.
 - **Response `data`:** `{ rooms: [{ id, title, conversationId, grid, stage, stageLabel, condition, conditionLabel, currency, population, amountAtRiskAtOpen, currentAmountAtRisk, ownerMemberId, status, createdAtUtc, archivedAtUtc, openingNumber, isRecovering, outcomeKind, restricted: { reason, restrictedBy, restrictedAtUtc, peopleInside } | null, mergedIntoRoomId, absorbedRoomIds, lastActivityAtUtc, stoppedBecause, isStale, ownerName, agents: [{ key, displayName, role }], pendingDecisions, needsYou }], total, open, recovering, stale, archived, amountBehindStale: [{ currency, amount }] }`.
 - **Used by:** service + hook ready (`src/services/api/rooms/get-rooms.ts` / `src/features/rooms/use-get-rooms.ts`), not wired into a page yet — rooms list/index page.
 - **Status:** service/hook ready, not wired.
-- **Notes:** Open only unless `includeArchived` or an explicit `state` set. `state` values (`open`/`recovering`/`stale`/`archived`) **overlap and don't sum to total** — recovering/stale are both subsets of open. `minAmountAtRisk` compares within each room's own currency, never across — pair with `currency`. `isStale` = untouched 14 days. `stoppedBecause` (`never-assigned`/`owner-left`/`owner-overloaded`/`unknown`) is a real answer, not a gap. `amountBehindStale` is per-currency, never one figure. Each room carries both its opening figure and the live leakage-map figure; the live one is `null` (not stale) when its cell has become unavailable. **Updated 2026-09-08:** each row now also carries what the list draws without a second call — `ownerName` (null when unowned), `agents` (key/displayName/role), `pendingDecisions` (pending plays on the room, counted the way the inbox counts them), `needsYou` (one of them waits on the caller). On a restricted room those four are `null`, `[]`, `0` and `false` — they are the inside of it. **Updated 2026-10-10 (revenue threat Rooms, phase 5):** visible rows also carry nullable `threatConfirmationId` and `systemOpenedBy`. A non-null `threatConfirmationId` marks an automatic opening and is also the investigation ID to pass to `GET /threats/{investigationId}/room-opening`. Restricted rows omit both fields. Not yet typed in `get-rooms.ts`.
+- **Notes:** Open only unless `includeArchived` or an explicit `state` set. `state` values (`open`/`recovering`/`stale`/`archived`) **overlap and don't sum to total** — recovering/stale are both subsets of open. `minAmountAtRisk` compares within each room's own currency, never across — pair with `currency`. `isStale` = untouched 14 days. `stoppedBecause` (`never-assigned`/`owner-left`/`owner-overloaded`/`unknown`) is a real answer, not a gap. `amountBehindStale` is per-currency, never one figure. Each room carries both its opening figure and the live leakage-map figure; the live one is `null` (not stale) when its cell has become unavailable. **Updated 2026-09-08:** each row now also carries what the list draws without a second call — `ownerName` (null when unowned), `agents` (key/displayName/role), `pendingDecisions` (pending plays on the room, counted the way the inbox counts them), `needsYou` (one of them waits on the caller). On a restricted room those four are `null`, `[]`, `0` and `false` — they are the inside of it. **Updated 2026-10-10 (revenue threat Rooms, phase 5):** visible rows also carry nullable `threatConfirmationId` and `systemOpenedBy`. A non-null `threatConfirmationId` marks an automatic opening and is also the investigation ID to pass to `GET /threats/{investigationId}/room-opening`. Restricted rows omit both fields. Typed in `get-rooms.ts`. **Seen in a live response 2026-10-10 (not in the original doc):** each row also carries `currentAmountComputedAtUtc` (nullable ISO time, null whenever `currentAmountAtRisk` is null), the time behind the design's "live · 09:14 UTC" caption. A null `currentAmountAtRisk` is shown only as "Live figure unavailable": the doc's explanation (the cell became unavailable) is not stated by the API per row, so it is not claimed.
 
 ### POST /rooms ⚠️ superseded — see [leakage.md](leakage.md)
 

@@ -17,6 +17,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const daysSince = (iso: string | null) =>
   iso ? Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 86_400_000)) : null;
 
+/** "2026-10-10T09:14:03Z" -> "09:14". */
+const formatUtcTime = (iso: string) => new Date(iso).toISOString().slice(11, 16);
+
 /** formatRoomActivity gives "12 min" / "3 hrs" / "12 days"; the design reads "12 min ago". */
 const activityText = (iso: string | null) => {
   const text = formatRoomActivity(iso);
@@ -109,11 +112,14 @@ function AtRiskCell({ room }: { room: RoomListRowDto }) {
     <div className="text-right">
       {open !== null && <p className="font-mono text-ink-3">{formatWholeMoney(open, room.currency)}</p>}
       {live !== null ? (
-        <p className="font-mono font-semibold text-ink">{formatWholeMoney(live, room.currency)}</p>
+        <>
+          <p className="font-mono font-semibold text-ink">{formatWholeMoney(live, room.currency)}</p>
+          {room.currentAmountComputedAtUtc && (
+            <p className="mt-0.5 text-[11px] text-ink-3">live · {formatUtcTime(room.currentAmountComputedAtUtc)} UTC</p>
+          )}
+        </>
       ) : (
-        <p className="mt-0.5 text-[11px] text-ink-3 italic">
-          Live figure unavailable: the cell is no longer computed
-        </p>
+        <p className="mt-0.5 text-[11px] text-ink-3 italic">Live figure unavailable</p>
       )}
       {open === null && live === null && <p className="text-ink-4">—</p>}
     </div>
