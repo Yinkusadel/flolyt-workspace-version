@@ -1,8 +1,8 @@
 import type { ChipTone } from "@/components/ui/chip";
 import type { BarTone } from "@/oldpages/everyday/lifecycle/stage/bar";
 import type { KpiTone } from "@/components/ui/kpi-cards";
-import { ACQUISITION_QUALITY, IFEOMA, PRICE_MARGIN, RAVI, REPEAT_DECAY, SAM, ZAINAB } from "@/pages/rooms/data";
-import type { AgentRef, PersonRef } from "@/pages/rooms/types";
+import { ACQUISITION_QUALITY, IFEOMA, PRICE_MARGIN, RAVI, REPEAT_DECAY, SAM, ZAINAB } from "@/oldpages/rooms/data";
+import type { AgentRef, PersonRef } from "@/oldpages/rooms/types";
 import { PRODUCT_REASON } from "@/oldpages/revenue/leakage-map/data";
 
 /**

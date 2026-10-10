@@ -1,5 +1,5 @@
-import { IFEOMA, REPEAT_DECAY } from "@/pages/rooms/data";
-import type { PersonRef, Tone } from "@/pages/rooms/types";
+import { IFEOMA, REPEAT_DECAY } from "@/oldpages/rooms/data";
+import type { PersonRef, Tone } from "@/oldpages/rooms/types";
 import type { GoalDetail } from "@/oldpages/everyday/goals/types";
 
 /** Only `repeat-90` is a fully-built goal — every other id (net-revenue, second-orders, involuntary-churn,

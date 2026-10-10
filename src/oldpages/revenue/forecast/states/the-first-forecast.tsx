@@ -5,7 +5,7 @@ import { PersonAvatar } from "@/components/person-avatar";
 import { DEPARTMENT_COLORS, EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { Callout } from "@/components/ui/rail";
 import { KpiCards } from "@/components/ui/kpi-cards";
-import { KUNLE } from "@/pages/rooms/data";
+import { KUNLE } from "@/oldpages/rooms/data";
 import { ForecastKvList } from "@/oldpages/revenue/forecast/kv-list";
 import { FC02_KV_ROWS, FC02_STATS, FC_KPI_TONE } from "@/oldpages/revenue/forecast/data";
 

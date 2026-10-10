@@ -1,4 +1,4 @@
-import { ADA, AMARA, IFEOMA, KUNLE, RAVI, SAM, ZAINAB } from "@/pages/rooms/data";
+import { ADA, AMARA, IFEOMA, KUNLE, RAVI, SAM, ZAINAB } from "@/oldpages/rooms/data";
 import { DAVID, JOY, PETER } from "@/oldpages/everyday/digest/data";
 import type {
   ChainDetail,

@@ -1,5 +1,5 @@
-import { ADA, IFEOMA, RAVI, REPEAT_DECAY, TUNDE } from "@/pages/rooms/data";
-import type { AgentRef } from "@/pages/rooms/types";
+import { ADA, IFEOMA, RAVI, REPEAT_DECAY, TUNDE } from "@/oldpages/rooms/data";
+import type { AgentRef } from "@/oldpages/rooms/types";
 import type { AgentFinding, GoalRow, MetricReadinessRow } from "@/oldpages/everyday/goals/types";
 
 /** G01 — "what Flolyt can already measure, without you setting anything". */

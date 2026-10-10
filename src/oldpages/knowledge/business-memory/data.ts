@@ -1,8 +1,8 @@
 import type { ChipTone } from "@/components/ui/chip";
 import type { KpiTone } from "@/components/ui/kpi-cards";
-import { KUNLE, ORCHESTRATOR, REPEAT_DECAY, TUNDE, ZAINAB } from "@/pages/rooms/data";
+import { KUNLE, ORCHESTRATOR, REPEAT_DECAY, TUNDE, ZAINAB } from "@/oldpages/rooms/data";
 import { PETER } from "@/oldpages/everyday/digest/data";
-import type { AgentRef, PersonRef } from "@/pages/rooms/types";
+import type { AgentRef, PersonRef } from "@/oldpages/rooms/types";
 
 /**
  * Knowledge · Business memory — sourced from

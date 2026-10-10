@@ -9,7 +9,7 @@ import { HandoffTabs } from "@/oldpages/everyday/handoff/handoff-tabs";
 import { HandoffQuickLinks } from "@/oldpages/everyday/handoff/quick-links";
 import { OVERDUE_ROWS } from "@/oldpages/everyday/handoff/data";
 import { OwnerCell } from "@/oldpages/everyday/handoff/owner-cell";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 

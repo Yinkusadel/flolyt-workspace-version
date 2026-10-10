@@ -19,11 +19,6 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   if (pathname === "/" || pathname === "/new-conversation") return "Home";
 
   if (pathname === "/rooms") return "Rooms";
-  if (pathname === "/rooms/new")
-    return renderCrumbs([{ label: "Rooms", to: "/rooms" }, { label: "New room" }]);
-  if (pathname === "/rooms/subscriptions")
-    return renderCrumbs([{ label: "Rooms", to: "/rooms" }, { label: "What you watch" }]);
-  if (pathname === "/plays") return "Plays";
 
   const roomMatch = /^\/rooms\/([^/]+)/.exec(pathname);
   if (roomMatch) {

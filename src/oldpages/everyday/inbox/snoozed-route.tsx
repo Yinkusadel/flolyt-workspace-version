@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
 import { KvList } from "@/oldpages/everyday/digest/kv-list";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { InboxTabs } from "@/oldpages/everyday/inbox/quick-links";
 import { SNOOZED_CALLOUT, SNOOZED_ROWS, SNOOZE_RULES } from "@/oldpages/everyday/inbox/data";
 

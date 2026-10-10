@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/rail";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
-import { ActorAvatar } from "@/pages/rooms/actor";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
+import { ActorAvatar } from "@/oldpages/rooms/actor";
 import { QUARTER_CLOSE_CARDS, QUARTER_CLOSE_ROWS } from "@/oldpages/everyday/goals/quarter-close-data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";

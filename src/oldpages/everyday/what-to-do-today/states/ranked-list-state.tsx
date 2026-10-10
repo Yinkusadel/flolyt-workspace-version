@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Callout } from "@/components/ui/rail";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { ScopeTabs } from "@/oldpages/everyday/what-to-do-today/scope-tabs";
 import { BELOW_LINE_SUMMARY, GHANA_ROOM_OWNER_CANDIDATES, TODAY_ITEMS } from "@/oldpages/everyday/what-to-do-today/data";
 import { AssignAnOwnerModal } from "@/oldpages/everyday/what-to-do-today/modals/assign-an-owner-modal";

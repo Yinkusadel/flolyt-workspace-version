@@ -7,7 +7,7 @@
  * See docs/build-tracker.md section 2 for the per-screen route map.
  */
 import type { Department } from "@/lib/lifecycle-data";
-import type { AgentRef, PersonRef, Tone } from "@/pages/rooms/types";
+import type { AgentRef, PersonRef, Tone } from "@/oldpages/rooms/types";
 
 /** How many days into using Flolyt this workspace is — drives T01/T02/T03's branch (see index.tsx). */
 export const WORKSPACE_AGE_DAYS = 41;

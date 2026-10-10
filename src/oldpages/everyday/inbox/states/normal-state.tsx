@@ -4,7 +4,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PersonDot } from "@/pages/rooms/actor";
+import { PersonDot } from "@/oldpages/rooms/actor";
 import { BulkSelectionPanel } from "@/oldpages/everyday/inbox/bulk-selection-panel";
 import { InboxSettingsLink, InboxTabs } from "@/oldpages/everyday/inbox/quick-links";
 import { MENTIONS, NEVER_APPEAR_CALLOUT, SYSTEMS_CALLOUT } from "@/oldpages/everyday/inbox/data";

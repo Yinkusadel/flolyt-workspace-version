@@ -1,7 +1,7 @@
 import { Callout } from "@/components/ui/rail";
 import { KpiCards } from "@/components/ui/kpi-cards";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
-import { PersonDot } from "@/pages/rooms/actor";
+import { PersonDot } from "@/oldpages/rooms/actor";
 import { PlaybooksKvList } from "@/oldpages/knowledge/playbooks/kv-list";
 import { PB02_ADDS_ROWS, PB02_HERO, PB02_NOTE, PB02_STATS, PB_KPI_TONE } from "@/oldpages/knowledge/playbooks/data";
 

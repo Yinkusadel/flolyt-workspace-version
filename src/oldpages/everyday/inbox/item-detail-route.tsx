@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { INBOX_ITEM_BANNER, INBOX_ITEM_DETAILS } from "@/oldpages/everyday/inbox/data";
 
 const ACTION_CARD_TONE_CLASS = {

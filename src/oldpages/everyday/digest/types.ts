@@ -1,4 +1,4 @@
-import type { AgentRef, PersonRef, Tone } from "@/pages/rooms/types";
+import type { AgentRef, PersonRef, Tone } from "@/oldpages/rooms/types";
 
 /**
  * Shared primitives for the /digest rebuild — sourced from

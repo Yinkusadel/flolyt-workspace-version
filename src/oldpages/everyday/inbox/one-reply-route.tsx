@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
-import { AgentDot, PersonDot } from "@/pages/rooms/actor";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { AgentDot, PersonDot } from "@/oldpages/rooms/actor";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { Chip } from "@/components/ui/chip";
 import { REPLY_DETAILS, REPLY_DETAIL_BANNER, REPLY_DETAIL_CALLOUT } from "@/oldpages/everyday/inbox/data";
 

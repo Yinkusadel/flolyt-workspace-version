@@ -350,7 +350,21 @@ now land in the rebuilt Room, after Step C.2.
   `src/oldpages/rooms`, those imports must be repointed to `@/oldpages/rooms/...` (or the new lib
   files) so the project still compiles.
 
-**Awaiting user go-ahead for Step B (archive).** Steps B and C not started.
+**Step B DONE 2026-10-10** (`npx tsc -b` and `npm run build` pass; not visually checked because the saved login expired and auth is never bypassed; not yet committed):
+- All 46 files of `src/pages/rooms` moved with `git mv` to `src/oldpages/rooms`. A whole-folder
+  rename failed ("Permission denied") because a vite dev server was watching it, so the files were
+  moved one by one instead.
+- 156 import lines repointed from `@/pages/rooms` to `@/oldpages/rooms`.
+- New stub `src/pages/rooms/index.tsx`: `/rooms` and `/rooms/:roomId` show "being rebuilt" cards.
+  Routes `/rooms/new`, `/rooms/subscriptions` and `/plays` removed; their breadcrumb branches removed.
+- Services and hooks (`src/services/api/rooms`, `src/features/rooms`) are untouched and live.
+- `src/oldpages/README.md` updated.
+- **Dead ends until the Room page exists** (they now land on the Room stub): leakage-map "Open
+  Room" links, inbox attached-room card, conversation response actions, home carousel,
+  `map-suggested-action-target.ts`. Business-memory's "Open a room on the recurrence" link points at
+  the removed `/rooms/new` and also lands on the stub.
+
+**Next: Step C1, the new Rooms list page** from `Rooms · index.png`. Awaiting user go-ahead.
 
 ## Open questions for the user
 

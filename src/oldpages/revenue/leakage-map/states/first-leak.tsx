@@ -3,7 +3,7 @@ import { PersonAvatar } from "@/components/person-avatar";
 import { DEPARTMENT_COLORS, EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { Callout } from "@/components/ui/rail";
 import { KpiCards } from "@/components/ui/kpi-cards";
-import { REPEAT_DECAY } from "@/pages/rooms/data";
+import { REPEAT_DECAY } from "@/oldpages/rooms/data";
 import { LeaksKvList } from "@/oldpages/revenue/leakage-map/kv-list";
 import { LK02_MISSING_ROWS, LK02_WHAT_NEXT_ROWS } from "@/oldpages/revenue/leakage-map/data";
 

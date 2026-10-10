@@ -1,8 +1,8 @@
 import type { ChipTone } from "@/components/ui/chip";
 import type { KpiTone } from "@/components/ui/kpi-cards";
-import { ACQUISITION_QUALITY, ADA, AMARA, IFEOMA, KUNLE, RAVI, REPEAT_DECAY, SAM, TUNDE, ZAINAB } from "@/pages/rooms/data";
+import { ACQUISITION_QUALITY, ADA, AMARA, IFEOMA, KUNLE, RAVI, REPEAT_DECAY, SAM, TUNDE, ZAINAB } from "@/oldpages/rooms/data";
 import { PETER } from "@/oldpages/everyday/digest/data";
-import type { Actor, PersonRef } from "@/pages/rooms/types";
+import type { Actor, PersonRef } from "@/oldpages/rooms/types";
 
 /**
  * Knowledge · Recognition — sourced from

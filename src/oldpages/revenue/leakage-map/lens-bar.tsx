@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 import { PersonAvatar } from "@/components/person-avatar";
 import { DEPARTMENT_COLORS } from "@/lib/lifecycle-data";
-import type { PersonRef } from "@/pages/rooms/types";
+import type { PersonRef } from "@/oldpages/rooms/types";
 
 /**
  * LK11's persona lens — new UI, introduced by the Revenue group's "viewing as

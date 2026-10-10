@@ -1,5 +1,5 @@
 import type { Department } from "@/lib/lifecycle-data";
-import type { PersonRef, Tone } from "@/pages/rooms/types";
+import type { PersonRef, Tone } from "@/oldpages/rooms/types";
 
 /**
  * Shared primitives for the /handoff rebuild — sourced from
