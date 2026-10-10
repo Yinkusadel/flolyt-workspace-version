@@ -1,6 +1,5 @@
-import { agentInitialsFromName } from "@/pages/rooms/format";
-import type { AgentRef } from "@/pages/rooms/types";
-import { REPEAT_DECAY } from "@/pages/rooms/data";
+import { agentInitialsFromName } from "@/lib/initials";
+import type { AgentRef } from "@/lib/actor-types";
 import { ME, type PersonRef } from "@/pages/inbox/data";
 
 /**
@@ -11,8 +10,7 @@ import { ME, type PersonRef } from "@/pages/inbox/data";
  * shapes), so this section stays a flat `/business-memory` + `/business-memory/:id` — no tab bar,
  * no settings, no wizard, unlike the old Knowledge-group build this replaces (src/oldpages).
  *
- * `REPEAT_DECAY` is the one agent this section shares with the rest of the app (Room 2412's
- * opener, per rooms/data.ts). `DISCOUNT_OPTIMIZER` has no existing roster entry — added locally
+ * `REPEAT_DECAY` is the opener of Room 2412 in this section's own mock entries. `DISCOUNT_OPTIMIZER` has no existing roster entry — added locally
  * rather than to the shared roster, matching the old build's "one-off agent" precedent. `ME` and
  * `REVAN` (Dana O. and the Finance objector on Room 2471) are reused from inbox/data.ts so the
  * decision/objection on Room 2412 reads as the same two people, not a coincidence.
@@ -21,6 +19,12 @@ import { ME, type PersonRef } from "@/pages/inbox/data";
 export type ControlStatus = "healthy" | "decaying" | "no-control" | "unavailable";
 
 export type EvidenceTier = "measured" | "corroborated" | "indicative";
+
+// Defined here, not imported from the Rooms mock roster, so this section has no dependency on it.
+const REPEAT_DECAY: AgentRef = {
+  initials: agentInitialsFromName("Repeat & Decay"),
+  name: "Repeat & Decay",
+};
 
 export const DISCOUNT_OPTIMIZER: AgentRef = {
   initials: agentInitialsFromName("Discount Optimizer"),

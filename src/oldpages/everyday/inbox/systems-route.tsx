@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
 import { Chip } from "@/components/ui/chip";
-import { PersonDot } from "@/pages/rooms/actor";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { PersonDot } from "@/oldpages/rooms/actor";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { InboxTabs } from "@/oldpages/everyday/inbox/quick-links";
 import { SYSTEMS_CLOSING_CALLOUT, SYSTEMS_INFO_CARDS, SYSTEMS_ROWS } from "@/oldpages/everyday/inbox/data";
 

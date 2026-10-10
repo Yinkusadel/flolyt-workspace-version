@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { KpiCards } from "@/components/ui/kpi-cards";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { AuthorityTabs } from "@/oldpages/everyday/inbox/settings/authority-tabs";
 import { AUTHORITY_CLOSING_CALLOUT, AUTHORITY_STATS, THRESHOLD_ROWS } from "@/oldpages/everyday/inbox/data";
 

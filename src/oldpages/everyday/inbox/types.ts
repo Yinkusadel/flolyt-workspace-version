@@ -1,6 +1,6 @@
 import type { Department } from "@/lib/lifecycle-data";
 import type { KpiTone } from "@/components/ui/kpi-cards";
-import type { AgentRef, PersonRef, Tone } from "@/pages/rooms/types";
+import type { AgentRef, PersonRef, Tone } from "@/oldpages/rooms/types";
 
 /**
  * Shared primitives for the /inbox rebuild — sourced from

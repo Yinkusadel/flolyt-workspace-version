@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DEPARTMENT_COLORS } from "@/lib/lifecycle-data";
 import { Callout } from "@/components/ui/rail";
-import { PersonDot } from "@/pages/rooms/actor";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { PersonDot } from "@/oldpages/rooms/actor";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { FIRST_LIST_ITEMS, NOT_YOUR_LIST } from "@/oldpages/everyday/what-to-do-today/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";

@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { Callout } from "@/components/ui/rail";
-import { AgentDot } from "@/pages/rooms/actor";
+import { AgentDot } from "@/oldpages/rooms/actor";
 import { BusinessMemoryTabs } from "@/oldpages/knowledge/business-memory/tabs";
 import { BM_TONE_CLASS, ME14_NOTES, REVIEW_ROWS } from "@/oldpages/knowledge/business-memory/data";
 

@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/rail";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { QUIET_HOURS_ROWS } from "@/oldpages/everyday/digest/data";
 import { DigestSettingsTabs } from "@/oldpages/everyday/digest/settings/tabs";
 

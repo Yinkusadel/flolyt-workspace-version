@@ -9,7 +9,7 @@ import { Callout } from "@/components/ui/rail";
 import { Chip } from "@/components/ui/chip";
 import { WideBarRow } from "@/oldpages/everyday/lifecycle/stage/bar";
 import { ENGINEERING_LOAD_DETAIL, TEAM_LOAD } from "@/oldpages/everyday/handoff/data";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 
 type LoadTab = "team" | "person";
 

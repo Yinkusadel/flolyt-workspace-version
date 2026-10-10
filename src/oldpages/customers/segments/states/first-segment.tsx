@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { PersonAvatar } from "@/components/person-avatar";
 import { DEPARTMENT_COLORS, EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { KpiCards } from "@/components/ui/kpi-cards";
-import { IFEOMA } from "@/pages/rooms/data";
+import { IFEOMA } from "@/oldpages/rooms/data";
 import { SegmentsKvList } from "@/oldpages/customers/segments/kv-list";
 import { SG02_KV_ROWS, SG02_STATS, SG_KPI_TONE } from "@/oldpages/customers/segments/data";
 

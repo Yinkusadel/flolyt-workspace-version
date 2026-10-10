@@ -1,7 +1,7 @@
 import type { ChipTone } from "@/components/ui/chip";
 import type { KpiTone } from "@/components/ui/kpi-cards";
-import type { AgentRef, PersonRef } from "@/pages/rooms/types";
-import { ADA, AMARA, IFEOMA, INVOLUNTARY_CHURN, RAVI, REPEAT_DECAY, TUNDE } from "@/pages/rooms/data";
+import type { AgentRef, PersonRef } from "@/oldpages/rooms/types";
+import { ADA, AMARA, IFEOMA, INVOLUNTARY_CHURN, RAVI, REPEAT_DECAY, TUNDE } from "@/oldpages/rooms/data";
 
 /**
  * Customers · Campaigns — sourced from

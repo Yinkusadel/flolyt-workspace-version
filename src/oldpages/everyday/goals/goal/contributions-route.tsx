@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { Chip } from "@/components/ui/chip";
 import { Callout } from "@/components/ui/rail";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { useGoalContext } from "@/oldpages/everyday/goals/goal/layout";
 import { CONTRIBUTION_RULES, SCORED_CONTRIBUTIONS } from "@/oldpages/everyday/goals/goal/data";
 

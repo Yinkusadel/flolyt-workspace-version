@@ -7,7 +7,7 @@ import { TeamDot } from "@/oldpages/everyday/inbox/team-dot";
 import { HandoffTabs } from "@/oldpages/everyday/handoff/handoff-tabs";
 import { HandoffQuickLinks } from "@/oldpages/everyday/handoff/quick-links";
 import { MY_OBLIGATIONS, OWED_TO_ME } from "@/oldpages/everyday/handoff/data";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 

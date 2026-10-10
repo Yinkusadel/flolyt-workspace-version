@@ -666,6 +666,24 @@ export const API_ENDPOINTS = {
     GET_ALL_PLAYS: `${PLAYS_BASE_URL}`,
     GET_PLAY: `${PLAYS_BASE_URL}/{proposalId}`,
     REOPEN_ROOM: `${ROOMS_BASE_URL}/{roomId}/reopen`,
+    // Revenue threat Rooms (backend phases 5 to 9), added 2026-10-10. See
+    // docs/rooms/revenue-threat-room-frontend-handoff.md.
+    GET_THREAT_ROOM_OPENING: `${ROOMS_BASE_URL}/threats/{investigationId}/room-opening`,
+    GET_ROOM_RESOLUTION_PLAN: `${ROOMS_BASE_URL}/{roomId}/resolution-plan`,
+    REVISE_ROOM_RESOLUTION_PLAN: `${ROOMS_BASE_URL}/{roomId}/resolution-plan`,
+    GET_ROOM_THREAT_MONITORING: `${ROOMS_BASE_URL}/{roomId}/threat-monitoring`,
+    CREATE_VERIFICATION_PLAN: `${ROOMS_BASE_URL}/{roomId}/verification-plans`,
+    GET_ROOM_VERIFICATIONS: `${ROOMS_BASE_URL}/{roomId}/verifications`,
+    CREATE_ROOM_VERIFICATION: `${ROOMS_BASE_URL}/{roomId}/verifications`,
+    REVERSE_ROOM_VERIFICATION: `${ROOMS_BASE_URL}/{roomId}/verifications/reverse`,
+    CLOSE_VERIFIED_CASE: `${ROOMS_BASE_URL}/{roomId}/verified-case/close`,
+    GET_VERIFIED_THREAT_BALANCES: `${ROOMS_BASE_URL}/value/verified-threats`,
+    ACCEPT_THREAT_RECURRENCE: `${ROOMS_BASE_URL}/threats/recurrences`,
+    GET_THREAT_LESSONS: `${ROOMS_BASE_URL}/threats/lessons`,
+    PROPOSE_THREAT_LESSON: `${ROOMS_BASE_URL}/threats/lessons`,
+    REVIEW_THREAT_LESSON: `${ROOMS_BASE_URL}/threats/lessons/review`,
+    RETIRE_THREAT_LESSON: `${ROOMS_BASE_URL}/threats/lessons/retire`,
+    GET_THREAT_OPERATOR_METRICS: `${ROOMS_BASE_URL}/threats/operator-metrics`,
   },
 
   // Added 2026-09-22 — the leakage page's own domain (`/api/v3/leakage`), pasted from the

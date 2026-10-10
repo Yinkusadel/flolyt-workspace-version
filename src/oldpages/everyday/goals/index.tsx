@@ -6,8 +6,8 @@ import { Chip } from "@/components/ui/chip";
 import { Callout } from "@/components/ui/rail";
 import { KpiCards, type Kpi } from "@/components/ui/kpi-cards";
 import { BarTrack } from "@/oldpages/everyday/lifecycle/stage/bar";
-import { ActorAvatar } from "@/pages/rooms/actor";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { ActorAvatar } from "@/oldpages/rooms/actor";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { GOAL_FINDINGS, GOAL_ROWS, METRIC_READINESS } from "@/oldpages/everyday/goals/data";
 import type { GoalRow } from "@/oldpages/everyday/goals/types";
 

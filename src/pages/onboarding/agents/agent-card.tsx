@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextTooltip } from "@/components/ui/text-tooltip";
-import { agentInitialsFromName } from "@/pages/rooms/format";
+import { agentInitialsFromName } from "@/lib/initials";
 import type { WorkspaceAgentDto } from "@/services/api/workspace/get-workspace-agents";
 
 type DisplayBucket = "ready" | "reading" | "partially_ready" | "unavailable" | "disabled" | "unprovisioned";

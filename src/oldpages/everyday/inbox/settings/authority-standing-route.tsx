@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { KvList } from "@/oldpages/everyday/digest/kv-list";
-import { PersonDot } from "@/pages/rooms/actor";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { PersonDot } from "@/oldpages/rooms/actor";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { AuthorityTabs } from "@/oldpages/everyday/inbox/settings/authority-tabs";
 import {
   STANDING_ACTIVITY,

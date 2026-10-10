@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { KpiCards, type Kpi } from "@/components/ui/kpi-cards";
 import { Callout } from "@/components/ui/rail";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
-import { ActorAvatar } from "@/pages/rooms/actor";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { ActorAvatar } from "@/oldpages/rooms/actor";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { WAITING_ON_DATA_ROWS } from "@/oldpages/everyday/what-to-do-today/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";

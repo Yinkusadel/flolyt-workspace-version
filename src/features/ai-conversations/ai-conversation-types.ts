@@ -27,6 +27,9 @@ export interface AiConversationMessage {
   // Maestro's own direct answers and on messages written before this contract existed.
   agentKey?: string | null;
   agentLabel?: string | null;
+  // Present on newly saved human messages only (Room threads). Old messages stay unattributed.
+  authorUserId?: string | null;
+  authorName?: string | null;
   handoff?: {
     runId: string;
     sourceRunId?: string | null;
@@ -45,6 +48,25 @@ export interface AiConversationMessage {
 // actual tool arguments (which themselves nest further JSON-string fields depending on toolName,
 // e.g. open_room_on_cohort's rulesJson/peopleJson/agentsJson). Same record GET
 // /api/v3/proposals reads back later, so this is a live nudge, not the source of truth.
+/** `auto` routes to a responder (the default); `none` saves a human-only message with no run. */
+export type ConversationReplyMode = "auto" | "none";
+
+export interface SendConversationMessageRequest {
+  conversationId: string | null;
+  message: string;
+  replyMode?: ConversationReplyMode;
+  agentKey?: string | null;
+}
+
+/** JSON body of the 202 returned when a run starts. `replyMode: "none"` returns 200 with no
+ * `runId`. Follow `GET /api/v3/runs/{runId}/stream`; never resend the prompt to reconnect. */
+export interface SendConversationMessageAcceptedData {
+  runId: string;
+  conversationId: string;
+  agentKey: string | null;
+  routingReason: string | null;
+}
+
 export interface StreamProposal {
   proposalId: string;
   toolName: string;

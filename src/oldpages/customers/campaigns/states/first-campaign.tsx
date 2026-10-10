@@ -2,7 +2,7 @@ import { PersonAvatar } from "@/components/person-avatar";
 import { DEPARTMENT_COLORS, EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { Callout } from "@/components/ui/rail";
 import { KpiCards } from "@/components/ui/kpi-cards";
-import { RAVI } from "@/pages/rooms/data";
+import { RAVI } from "@/oldpages/rooms/data";
 import { CampaignsKvList } from "@/oldpages/customers/campaigns/kv-list";
 import { CP02_KV_ROWS, CP02_STATS, CP_KPI_TONE } from "@/oldpages/customers/campaigns/data";
 

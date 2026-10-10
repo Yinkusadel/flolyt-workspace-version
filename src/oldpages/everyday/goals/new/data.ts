@@ -1,5 +1,5 @@
-import { IFEOMA, REPEAT_DECAY } from "@/pages/rooms/data";
-import type { AgentRef, PersonRef, Tone } from "@/pages/rooms/types";
+import { IFEOMA, REPEAT_DECAY } from "@/oldpages/rooms/data";
+import type { AgentRef, PersonRef, Tone } from "@/oldpages/rooms/types";
 
 /** G02 — the metric picker. Every candidate metric plus the one permanently blocked row. */
 export type MetricOption = {

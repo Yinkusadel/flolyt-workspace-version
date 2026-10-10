@@ -1,7 +1,7 @@
 import type { ChipTone } from "@/components/ui/chip";
 import type { KpiTone } from "@/components/ui/kpi-cards";
 import type { BarTone } from "@/oldpages/everyday/lifecycle/stage/bar";
-import type { AgentRef } from "@/pages/rooms/types";
+import type { AgentRef } from "@/oldpages/rooms/types";
 
 /**
  * Agents · AI Teammates — sourced from

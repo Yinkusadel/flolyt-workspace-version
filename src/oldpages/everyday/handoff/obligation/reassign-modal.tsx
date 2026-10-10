@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Callout } from "@/components/ui/rail";
-import { PersonDot } from "@/pages/rooms/actor";
+import { PersonDot } from "@/oldpages/rooms/actor";
 import { JOY, PETER, RAVI } from "@/oldpages/everyday/handoff/data";
-import type { PersonRef } from "@/pages/rooms/types";
+import type { PersonRef } from "@/oldpages/rooms/types";
 
 const CANDIDATES: { person: PersonRef; note: string }[] = [
   { person: JOY, note: "Built the July forecast · lowest load on the team" },

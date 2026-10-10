@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { Callout } from "@/components/ui/rail";
-import { PersonDot } from "@/pages/rooms/actor";
+import { PersonDot } from "@/oldpages/rooms/actor";
 import { PlaybooksTabs } from "@/oldpages/knowledge/playbooks/tabs";
 import { PlaybooksKvList } from "@/oldpages/knowledge/playbooks/kv-list";
 import { HISTORY_ROWS, PB14_NOTE, PB14_WHO_MAY_ROWS, PB_TONE_CLASS } from "@/oldpages/knowledge/playbooks/data";

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Callout } from "@/components/ui/rail";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { KvList } from "@/oldpages/everyday/digest/kv-list";
 import { WHAT_GETS_IN_ROWS, WHAT_GETS_IN_THRESHOLD } from "@/oldpages/everyday/digest/data";
 import { DigestSettingsTabs } from "@/oldpages/everyday/digest/settings/tabs";

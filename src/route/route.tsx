@@ -14,24 +14,7 @@ import OnboardingAgentsRoute from "@/pages/onboarding/agents";
 import OnboardingTeamRoute from "@/pages/onboarding/team";
 import OnboardingTeamDetailRoute from "@/pages/onboarding/team/team-detail-route";
 import OnboardingFinishingUpRoute from "@/pages/onboarding/finishing-up";
-import Rooms from "@/pages/rooms";
-import NewRoom from "@/pages/rooms/new";
-import RoomSubscriptions from "@/pages/rooms/subscriptions";
-import PlaysAtScale from "@/pages/rooms/plays-at-scale";
-import RoomLayout from "@/pages/rooms/room/room-layout";
-import { RoomHomeRoute, RoomEvidenceRoute, RoomLogRoute } from "@/pages/rooms/room/room-home-route";
-import { EvidenceFindingRoute } from "@/pages/rooms/room/evidence-finding-route";
-import { PlaysBoardRoute } from "@/pages/rooms/room/plays/plays-board-route";
-import { OneProposalRoute } from "@/pages/rooms/room/plays/one-proposal-route";
-import { ConflictRoute } from "@/pages/rooms/room/conflict-route";
-import { DissentRoute } from "@/pages/rooms/room/dissent-route";
-import { GuardrailsRoute } from "@/pages/rooms/room/guardrails-route";
-import { RunsRoute } from "@/pages/rooms/room/runs-route";
-import { PeopleRoute } from "@/pages/rooms/room/people-route";
-import { CollisionRoute } from "@/pages/rooms/room/collision-route";
-import { CohortRoute } from "@/pages/rooms/room/cohort-route";
-import { CloseOutRoute } from "@/pages/rooms/room/close-out-route";
-import { MergeRoute } from "@/pages/rooms/room/merge-route";
+import Rooms, { RoomStub } from "@/pages/rooms";
 import NewConversationRoute from "@/pages/conversations/new-conversation-route";
 import AiConversationDetailRoute from "@/pages/conversations/detail-route";
 import PlanAndBillingRoute from "@/pages/plan-and-billing";
@@ -114,34 +97,8 @@ export const routes = createBrowserRouter([
                 path: "rooms",
                 children: [
                   { index: true, Component: Rooms },
-                  { path: "new", Component: NewRoom },
-                  { path: "subscriptions", Component: RoomSubscriptions },
-                  {
-                    path: ":roomId",
-                    Component: RoomLayout,
-                    children: [
-                      { index: true, Component: RoomHomeRoute },
-                      { path: "evidence", Component: RoomEvidenceRoute },
-                      { path: "evidence/:findingId", Component: EvidenceFindingRoute },
-                      { path: "log", Component: RoomLogRoute },
-                      { path: "plays", Component: PlaysBoardRoute },
-                      { path: "plays/:playId", Component: OneProposalRoute },
-                      { path: "conflict/:conflictId", Component: ConflictRoute },
-                      { path: "decision/dissent", Component: DissentRoute },
-                      { path: "guardrails", Component: GuardrailsRoute },
-                      { path: "runs", Component: RunsRoute },
-                      { path: "people", Component: PeopleRoute },
-                      { path: "collision", Component: CollisionRoute },
-                      { path: "cohort", Component: CohortRoute },
-                      { path: "close", Component: CloseOutRoute },
-                      { path: "merge", Component: MergeRoute },
-                    ],
-                  },
+                  { path: ":roomId", Component: RoomStub },
                 ],
-              },
-              {
-                path: "plays",
-                Component: PlaysAtScale,
               },
               // Sidebar entry points, not part of any one section — the sidebar's "New
               // conversation" link and "AI conversations" dropdown both live above ROOMS.

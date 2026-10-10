@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Callout } from "@/components/ui/rail";
-import { PersonDot } from "@/pages/rooms/actor";
+import { PersonDot } from "@/oldpages/rooms/actor";
 import { cn } from "@/lib/utils";
 import type { OwnerCandidate } from "@/oldpages/everyday/what-to-do-today/data";
 
