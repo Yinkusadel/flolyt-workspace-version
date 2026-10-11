@@ -362,8 +362,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** query `includeDecided` (boolean).
 - **Response `data`:** `{ waiting: [ConveningProposal], decided: [ConveningProposal], withheld: [{ id, alertCategory, title, conditionKey, reason, detail, raisedAtUtc }], withheldNotShown, raisedThisWeek, weeklyCap }` where `ConveningProposal` = `{ id, alertCategory, alertSeverity, title, description, conditionKey, rowLabel, currency, amountAtRisk, customerCount, ownerUserId, outcome, roomId, raisedAtUtc }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-convening-proposals.ts` / `src/features/rooms/use-get-convening-proposals.ts`), not wired into a page yet — this is the convening/proposals inbox, not yet an identified screen in the built 42.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the Convening tab on `/rooms?tab=convening` (`src/pages/rooms/convening/`), and the tab bar's count badge. Service + hook: `src/services/api/rooms/get-convening-proposals.ts` / `src/features/rooms/use-get-convening-proposals.ts`.
+- **Status:** wired 2026-10-11. Live account had empty `waiting`/`decided`, so those two lists were layout-checked on mocked data only; `withheld` was seen real.
+- **Backend gaps (tickets raised):** `conditionLabel` and `ownerName` on proposals (Condition and Proposed owner cells are left empty); `declineReason` and `decidedByName` on `decided` items; allowed values for `alertSeverity` and `outcome` (chips are plain grey until known). Observed real values: `reason` = `no-figure-behind-the-cell` | `no-stage-owner`; `alertCategory` = `churn_trajectory` | `dormancy`. Money/counts may arrive as number or string.
 - **Notes:** *New endpoint, added 2026-09-08.* Three lists and `withheld` is not an appendix — `waiting` needs a decision, `decided` is history, `withheld` is signals that mapped to a condition and then couldn't proceed (a missing source behind the cell, no owner on the stage, the weekly cap, or a room already open). A workspace seeing only proposals can't tell a quiet week from one where every detection died on a missing source, and those call for opposite responses. `raisedThisWeek` against `weeklyCap` is sent so a queue gone quiet because it hit its cap doesn't read as nothing happening.
 
 ### POST /rooms/convening/{proposalId}/accept
@@ -372,8 +373,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `proposalId`.
 - **Response:** `{ data: roomId, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/accept-convening-proposal.ts` / `src/features/rooms/use-accept-convening-proposal.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** service + hook ready (`src/services/api/rooms/accept-convening-proposal.ts` / `src/features/rooms/use-accept-convening-proposal.ts`), wired to "Open room" on each waiting card.
+- **Status:** wired 2026-10-11, NOT yet submitted against the real backend (mutation unverified).
 - **Notes:** *New endpoint, added 2026-09-08.* Any member may accept — the proposal already chose an owner from stage ownership, and requiring that one specific person would leave the queue sitting while they're away. Accepting doesn't make the accepter accountable — the room opens in the named owner's name. **Can refuse:** the leakage map moves every fifteen minutes and a proposal can sit for days, so the cell is re-read and a room isn't opened on a figure that's since gone.
 
 ### POST /rooms/convening/{proposalId}/decline
@@ -382,8 +383,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `proposalId`; body `{ why: string }` (required).
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/decline-convening-proposal.ts` / `src/features/rooms/use-decline-convening-proposal.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** service + hook ready (`src/services/api/rooms/decline-convening-proposal.ts` / `src/features/rooms/use-decline-convening-proposal.ts`), wired to "Decline..." on each waiting card (reason required).
+- **Status:** wired 2026-10-11, NOT yet submitted against the real backend (mutation unverified).
 - **Notes:** *New endpoint, added 2026-09-08.* The decline is kept, not deleted — a category declined every time is a row in the map that shouldn't be there, and that's only legible if the declines survive with their reasons. Nothing is suggested twice — one proposal per detector fingerprint, ever.
 
 ### GET /rooms/{roomId}/guardrails

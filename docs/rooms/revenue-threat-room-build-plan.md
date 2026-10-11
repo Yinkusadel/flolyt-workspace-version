@@ -38,11 +38,25 @@ with this one, this one wins.
 - A null live figure reads only "Live figure unavailable". The API row now has
   `currentAmountComputedAtUtc`, shown as "live · HH:MM UTC" under the live amount.
 
+### C2 Convening tab: BUILT 2026-10-11 (`npx tsc -b` and `npm run build` clean)
+- `src/pages/rooms/index.tsx` is now the tab shell (`?tab=rooms|convening|dissent|my-load|admin`, count
+  badge on Convening); the old list moved to `rooms-list-tab.tsx`. Dissent, My load and Admin show a
+  "being rebuilt" card until C3 to C5. The list-header "Convening queue · N waiting" button was dropped
+  on purpose: the tab itself carries the count.
+- `src/pages/rooms/convening/`: cap card, waiting cards (accept, inline decline with required reason),
+  Withheld column, Decided table with "Show decided".
+- Built from the live API, not the design's copy: readable raw values for chips (`humanize`), plain grey
+  chips for severity and outcome, "—" for null amount/customers/owner, no withheld links.
+- Layout checked on a throwaway mocked harness (desktop + mobile, deleted); accept/decline never submitted live.
+
+### Backend gaps on `GET /rooms/convening` (tickets raised by the user, mark DONE when fixed)
+- [ ] `conditionLabel` on proposals: Condition cell is empty meanwhile.
+- [ ] `ownerName` on proposals: Proposed owner cell is empty meanwhile.
+- [ ] `declineReason` + `decidedByName` on `decided` items: Decided table has neither.
+- [ ] Allowed values for `alertSeverity` and `outcome`: chips are plain grey; add tones once known.
+
 ### Not done / next
-1. **C2 Convening tab** (design: `Convening queue.png`; `GET /rooms/convening`, accept, decline: all
-   scaffolded). It also brings the tab bar inside the Rooms page (Rooms, Convening, Dissent, My load,
-   Admin) and the "Convening queue · N waiting" button on the list header. Then C3 Dissent, C4 My
-   load, C5 Admin.
+1. **C3 Dissent, C4 My load, C5 Admin** tabs (same tab shell, screens in the same PNG folder).
 2. **Verify C1 live** (counts vs filters, restricted/merged/stale rows, Min. at risk, saved view
    save/edit/delete, "Opened by Flolyt" on a real auto-opened Room). Saved login had expired, so
    nothing was checked against the real API in a browser by me. Mutations (assign owner, view
