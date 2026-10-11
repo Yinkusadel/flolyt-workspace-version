@@ -216,6 +216,51 @@ Resume: user says "build" after the backend confirms.
 8. Layout was checked on mock data (30 items, empty, full, mobile); the filled real-data layout was seen
    in the user's screenshots and looked right. Count badge on the Decision tab: none (n/a).
 
+### Room thread and collaboration (IMPORTANT, found 2026-10-11, NOT BUILT)
+**What the designs show:** no Room tab has a chat box, thread or composer. "Open thread" appears ONLY on
+the two auto-opened (threat) Room headers; the ordinary header on every other screen (Briefing, Decision,
+Conflicts, Plays, Evidence, Agents & runs, People & guardrails, Cohort, Log) has only Watching / Restrict /
+Close room. The user stressed the designs are a quick reference made from the endpoints, not a finished
+app design, so the endpoints win.
+**What the endpoints say (handoff "Messages and streaming" + `rooms.md`):**
+- A Room's thread IS an ordinary AI conversation: every Room has a `conversationId` (nullable on the
+  `GET /rooms` row; confirmed present on auto-opened Rooms via `room-opening`; also expected from the
+  missing `GET /rooms/{roomId}`). The auto-opening synthesis is saved as the first message of it.
+  Responses and specialist handoffs stay in that conversation (a shared people-and-agents timeline).
+- Talk in it with `POST /api/v3/conversations/messages` `{ conversationId, message, replyMode }`:
+  `replyMode: "auto"` (default) starts an agent run (routing: stored `@[agent:<key>]` mention, then
+  `agentKey`, then a relevant rostered supporter, else the Room lead; several mentions need one chosen;
+  unknown/off-roster/disabled agents refused); `replyMode: "none"` is people talking to people: saved with
+  NO run and no model call, SSE emits `message_saved` and ends, JSON returns 200 without `runId`; show no
+  typing indicator, refresh the shared timeline afterwards. JSON with a run returns 202 + `runId`
+  (consume the run, do not expect a finished answer). History carries `authorUserId` / `authorName` on
+  newly saved human messages (older ones unattributed). Never create another conversation to reconnect.
+- The app already has the route `/conversations/:id` (`AiConversationDetailRoute`) and the chat panel;
+  the handoff says to "navigate using existing Room and conversation routes".
+**Decisions:**
+1. Every Room (not only auto-opened) gets an "Open thread" action to `/conversations/:conversationId`,
+   in the header, once the single-Room endpoint supplies `conversationId` (header is a placeholder now).
+2. `replyMode` is NOT handled in our code: only the types exist (`ai-conversation-types.ts`:
+   `ConversationReplyMode`, `replyMode` on the request, optional `authorUserId`/`authorName`); no
+   composer sends it and nothing reacts to `message_saved`. Today every message goes out as `auto`, so a
+   person cannot leave a message for teammates without an AI reply starting. Needed, as its OWN task
+   (plan with the user first, then wait for "build"; touches the working shared chat panel so it needs a
+   regression check): (a) a composer choice "to the agents" vs "to the people"; (b) the `none` path: no
+   typing indicator, handle `message_saved` / the 200 without `runId`, refresh the timeline; (c) show
+   `authorName` on people's messages; (d) `@[agent:key]` mentions and the multi-mention choice; (e)
+   regression-check the existing chat panel and the changed JSON 202 path. Order: after the Room tabs, or
+   earlier if the user prefers.
+**Other human-agent interactions seen in the designs (all structured, none free-form chat):** Conflicts:
+"Ask for a third reading" (send back with a question, starts a run), choose reading A/B with a required
+reason, Escalate to another person; Agents & runs: add/remove agent, approve or reject an agent's request;
+Plays: a "Decides" person per play and an Obligations table between people; People & guardrails: roles,
+add person, hand ownership; Log: records all of it, including a "Commented on the free-delivery play"
+entry for which no tab has a comment box.
+**Also found:** Closing is its OWN full page (`Room · Close.png`: "Back to the room", "Close: <title>",
+four numbered steps), not a tab, so it needs its own route.
+**Open questions:** does every Room (not only auto-opened) have a non-null `conversationId`? how does
+`/conversations/:id` render a Room conversation? should an auto-opened Room's header really differ?
+
 ### Room detail page plan (agreed 2026-10-11)
 **Approach:** the header is the only thing blocked. Build the Room page with a PLACEHOLDER header card
 ("Waiting for `GET /api/v3/rooms/{roomId}`"), then wire the tabs one at a time from their own per-room
