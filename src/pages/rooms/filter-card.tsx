@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ROOM_STATES, ROOM_STATE_LABEL } from "@/pages/rooms/labels";
 import { isDefaultFilters, type RoomsFilters } from "@/pages/rooms/use-rooms-filters";
@@ -21,7 +22,12 @@ const FIELD_LABEL = "mb-1.5 block text-[11px] font-semibold text-ink-2";
 const CONTROL =
   "h-9 w-full rounded-control border border-line bg-paper px-3 text-[12px] text-ink outline-none focus:border-ultra disabled:cursor-not-allowed disabled:bg-paper-2 disabled:text-ink-4";
 
+/** SearchableSelect has no empty value, so "Any" is a real item that maps back to "" (no filter). */
+const ANY = "__any__";
+
+/** The app's own dropdown, never a native <select>: its menu is the browser's, not ours. */
 function SelectField({
+  id,
   label,
   value,
   onChange,
@@ -29,29 +35,34 @@ function SelectField({
   anyLabel,
   loading,
 }: {
+  id: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
   options: FilterOption[];
-  anyLabel: string;
+  /** Omit when the filter always has a value (State). */
+  anyLabel?: string;
   loading: boolean;
 }) {
+  const items = anyLabel ? [{ value: ANY, label: anyLabel }, ...options] : options;
   return (
-    <label className="block">
-      <span className={FIELD_LABEL}>{label}</span>
+    <div className="block">
+      <label htmlFor={id} className={FIELD_LABEL}>
+        {label}
+      </label>
       {loading ? (
         <Skeleton className="h-9 w-full" />
       ) : (
-        <select value={value} onChange={(e) => onChange(e.currentTarget.value)} className={CONTROL}>
-          <option value="">{anyLabel}</option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <SearchableSelect
+          id={id}
+          options={items}
+          value={value || (anyLabel ? ANY : null)}
+          onChange={(next) => onChange(next === ANY ? "" : next)}
+          searchPlaceholder={`Search ${label.toLowerCase()}...`}
+          className="rounded-control bg-paper text-[12px]"
+        />
       )}
-    </label>
+    </div>
   );
 }
 
@@ -108,22 +119,17 @@ export function FilterCard({
           <SearchField value={filters.q} onCommit={(q) => onChange({ q })} />
         </div>
 
-        <label className="block">
-          <span className={FIELD_LABEL}>State</span>
-          <select
-            value={filters.state}
-            onChange={(e) => onChange({ state: e.currentTarget.value as RoomsFilters["state"] })}
-            className={CONTROL}
-          >
-            {ROOM_STATES.map((state) => (
-              <option key={state} value={state}>
-                {ROOM_STATE_LABEL[state]}
-              </option>
-            ))}
-          </select>
-        </label>
+        <SelectField
+          id="rooms-filter-state"
+          label="State"
+          value={filters.state}
+          onChange={(state) => onChange({ state: state as RoomsFilters["state"] })}
+          options={ROOM_STATES.map((state) => ({ value: state, label: ROOM_STATE_LABEL[state] }))}
+          loading={false}
+        />
 
         <SelectField
+          id="rooms-filter-currency"
           label="Currency"
           value={filters.currency}
           onChange={(currency) => onChange({ currency })}
@@ -132,6 +138,7 @@ export function FilterCard({
           loading={optionsLoading}
         />
         <SelectField
+          id="rooms-filter-stage"
           label="Stage"
           value={filters.stage}
           onChange={(stage) => onChange({ stage })}
@@ -140,6 +147,7 @@ export function FilterCard({
           loading={optionsLoading}
         />
         <SelectField
+          id="rooms-filter-condition"
           label="Condition"
           value={filters.condition}
           onChange={(condition) => onChange({ condition })}
@@ -148,6 +156,7 @@ export function FilterCard({
           loading={optionsLoading}
         />
         <SelectField
+          id="rooms-filter-owner"
           label="Owner"
           value={filters.owner}
           onChange={(owner) => onChange({ owner })}
