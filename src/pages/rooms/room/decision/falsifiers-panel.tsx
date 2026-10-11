@@ -2,7 +2,6 @@ import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
-import { cn } from "@/lib/utils";
 import useCreateFalsifier from "@/features/rooms/use-create-falsifier";
 import useMarkFalsifierMet from "@/features/rooms/use-mark-falsifier-met";
 import type { RoomDecisionFalsifierDto } from "@/services/api/rooms/get-room-decision";
@@ -17,7 +16,7 @@ function Falsifier({ roomId, index, falsifier }: { roomId: string; index: number
   const met = falsifier.metAtUtc !== null;
 
   return (
-    <li className={cn("px-5 py-4", met && "bg-amber-bg/40")}>
+    <li className="px-5 py-4">
       <p className="text-[13px] leading-relaxed text-ink">
         <span className="font-semibold">If</span> {falsifier.condition},
       </p>

@@ -39,7 +39,7 @@ Mutations show their real top-level shape including the envelope.
 - **Request:** path `roomId`, `index` (int32).
 - **Response:** `{ data: roomId, messages, succeeded }`.
 - **Used by:** the "Mark as met" button on the Decision tab (`index` = the falsifier's position in `whatWouldChangeThis`).
-- **Status:** wired 2026-10-11, NOT yet submitted against the real backend.
+- **Status:** wired and LIVE-VERIFIED 2026-10-11 (two falsifiers marked met on a real Room).
 - **Notes:** Idempotent — a second call succeeds without moving the timestamp; when it first fired is the record.
 
 ### GET /rooms/{roomId}/log
@@ -174,7 +174,8 @@ Mutations show their real top-level shape including the envelope.
 - **Response `data`:** `{ roomId, openingNumber, statement, guardrails, draftedByLabel, decidedByUserId, decidedByLabel, decidedAtUtc, revisions: [{ number, summary, byUserId, byLabel, atUtc }], whatWouldChangeThis: [falsifier], dissent: [{ id, wording, byUserId, byLabel, recordedAtUtc, withdrawn, borneOut, aboutProposalId }], recipients: [{ userId, what, class }] }`.
 - **Used by:** the Decision tab on `/rooms/:roomId?tab=decision` (`src/pages/rooms/room/decision/`). Service + hook: `src/services/api/rooms/get-room-decision.ts` / `src/features/rooms/use-get-room-decision.ts`.
 - **Status:** wired 2026-10-11. Real response for a Room with no decision (2026-10-11): `{ roomId, openingNumber: 1, statement: "", guardrails: null, draftedByLabel: null, decidedByUserId: null, decidedByLabel: null, decidedAtUtc: null, revisions: [], whatWouldChangeThis: [], dissent: [], recipients: [] }`. Filled state unseen.
-- **Backend gaps:** `userName` on `recipients` (only `userId` today); optional `aboutProposalTitle` on `dissent` items.
+- **Backend gaps:** `userName` on `recipients` (only `userId` today); optional `aboutProposalTitle` on `dissent` items; `draftedByLabel` stays null when a person drafts through the UI (ask for a default to the author's label).
+- **Real filled response (2026-10-11):** `statement`, `guardrails` set; `draftedByLabel: null`; after Mark decided `decidedByUserId`/`decidedByLabel` (`chad@yopmail.com · Administrator`)/`decidedAtUtc` set; `revisions[]` with `byLabel` the same combined string; `whatWouldChangeThis[]` items with `metAtUtc` set once met; `dissent[]` items with `withdrawn: false`, `borneOut: null`, `aboutProposalId: null`; `recipients: []`. Revising after deciding is allowed.
 - **Notes:** `whatWouldChangeThis` is the room's falsifiers rendered here rather than modelled twice — same list checked automatically at close. **Updated 2026-09-08:** response gained `recipients` — who the decision goes to and what they specifically get told (`what`) plus a `class` grouping.
 
 ### POST /rooms/{roomId}/decision
@@ -193,8 +194,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ summary: string, statement }`.
 - **Response:** `{ data: revisionNumber, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/decide-room-decision.ts` / `src/features/rooms/use-decide-room-decision.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the "Mark decided as <name>" form on the Decision tab (shown once a draft exists and the decision is not yet decided).
+- **Status:** wired and LIVE-VERIFIED 2026-10-11 (status became Decided; `decidedByLabel` and `decidedAtUtc` set). The backend still allows revising afterwards.
 - **Notes:** Deciding resolves nothing — recorded dissent stays exactly as it was. Only the eventual close-result settles an objection.
 
 ### POST /rooms/{roomId}/decision/dissent

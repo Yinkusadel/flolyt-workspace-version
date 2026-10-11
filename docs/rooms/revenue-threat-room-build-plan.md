@@ -160,27 +160,61 @@ Resume: user says "build" after the backend confirms.
   Objections panel (list from the same GET, Withdraw for own objections with confirm via
   `DELETE /rooms/dissent/{id}`, Record objection via `POST /decision/dissent`), What would change this
   (`POST /falsifiers`, `POST /falsifiers/{index}/met`).
-- Real response for the user's Room was fully empty (no draft, revisions, objections, falsifiers,
-  recipients); `statement` is `""`, not null. The user will create the first decision themselves, then
-  paste the real response to verify the filled state. NO write has been submitted by us.
+- The user's real Room started fully empty (`statement` is `""`, not null; no revisions, objections,
+  falsifiers or recipients). The user then created data through the UI (see "Live-verified" below); we
+  never write to their Room ourselves and have no login.
 - Left out, with `❌` comments: "Hand off obligations..." (no documented endpoint; the nearest is
   `outstanding` on `POST /close`, which is sent at close; `returnedObligations` in the plays response is
   a possible lead); recipient names (`userName` ticket); an "Agent" chip on Drafted by; "About: <play>"
   on objections and the "About a play" dropdown (need the Room's plays, `GET /rooms/{roomId}/plays`,
   items unseen; real response was `{ plays: [], pending, done, rejected, deferred, waitingOnPeople,
   returnedObligations: [] }`).
-- Backend tickets: [ ] `userName` on `recipients` of `GET /rooms/{roomId}/decision`; [ ] optional
-  `aboutProposalTitle` on `dissent` items.
+- Backend tickets (`GET /rooms/{roomId}/decision` unless noted): [ ] `userName` on `recipients`;
+  [ ] optional `aboutProposalTitle` on `dissent` items; [ ] default `draftedByLabel` to the author's
+  label when a person (not an agent) drafts. Question, not a ticket yet: what the design's "Hand off
+  obligations..." calls.
 - **Live-verified by the user 2026-10-11** on the real Room: draft (first revision), revise (revisions 2
-  and 3), record objection (two) and add falsifier (two) all wrote and read back correctly. The Withdraw
-  button showed on the user's own objections, which confirms `useAuth().user.id` equals the objection's
-  `byUserId`. Real labels look like `chad@yopmail.com · Administrator` (`byLabel` is a combined string).
-  STILL UNTESTED: mark as met, withdraw, mark as decided.
+  to 6), record objection, add falsifier, **mark as met** (two falsifiers show "Met 11 Oct, 18:46 UTC")
+  and **mark as decided** (status became "Decided", `decidedByLabel` = `chad@yopmail.com ·
+  Administrator`, decided-at shown) all wrote and read back correctly. The Withdraw button showed on the
+  user's own objections, which confirms `useAuth().user.id` equals the objection's `byUserId`.
+  The backend ALLOWS revising after the decision is marked decided (revision 6 was written afterwards).
+  Real labels are combined strings (`byLabel` / `decidedByLabel` = `chad@yopmail.com · Administrator`);
+  the "Mark decided as <name>" button uses the signed-in `user.name` instead ("Chad Sado"), so the two
+  differ. STILL UNTESTED: **Withdraw** (clicking it and its confirm step), and the empty-`summary`
+  refusal paths.
+- Observed live: `draftedByLabel` stays `null` because our dialog never sends one and the backend does not
+  default it, so "Drafted by" shows "—" even though each revision names its author in `byLabel`. Options
+  put to the user: (1) leave it, (2) send the signed-in name on the first draft only, (3) backend
+  default via ticket (recommended, with (1) meanwhile). Awaiting the user's choice.
 - Objections and "What would change this" are `CollapsiblePanel`s (`decision/collapsible-panel.tsx`):
   collapsed by default (the count badge shows how many), the list scrolls inside `max-h-80`, and the
   input form sits outside the scroll area so it never scrolls with the list. Checked with 30 mock items.
   Each panel has its own color on its border, header and input footer: Objections amber, What would
-  change this teal (`tone` prop); the "Record objection" and "Add" buttons use the primary blue.
+  change this teal (`tone` prop); the "Record objection" and "Add" buttons use the primary blue. A met
+  falsifier shows only the amber "Met <date>" badge (the row background tint was removed on request).
+
+**Decision tab: COME BACK TO (nothing left out)**
+1. "Hand off obligations..." (design: greyed until decided, "each one names a person and a proposed
+   date"): left out entirely, no disabled button. No documented endpoint; nearest are `outstanding` on
+   `POST /rooms/{roomId}/close` (sent at close) and `returnedObligations` in the plays response. Ask the
+   backend/designer what it calls.
+2. "About a play (optional)" dropdown on Record objection and the "About: <play>" line on each objection:
+   the API already accepts `aboutProposalId` (uuid or null) on `POST /decision/dissent` and returns it on
+   `dissent` items, but the form always sends null. Needs the Room's plays with titles
+   (`GET /rooms/{roomId}/plays`, items unseen: the real response was empty). Add both together once the
+   Plays tab exists or the user creates a play: searchable select with "The decision as a whole" first.
+3. Recipient names on the "Who hears about it" chips (`class · what` only today): ticket `userName`.
+   A recipient section only renders when `recipients` is non-empty, and there is no UI to SET recipients
+   yet (the revise dialog omits them, which leaves them as-is); decide where recipients get edited.
+4. "Drafted by": see the `draftedByLabel` options above. The design's "Agent" chip is not in the API.
+5. Withdraw never clicked yet (button, confirm dialog, `DELETE /rooms/dissent/{id}`).
+6. The Revise dialog does not send `draftedByLabel` or `recipients`; revise-after-decided is allowed by the
+   backend, so decide whether the UI should warn that a decided decision is being revised.
+7. Decision tab header is the shared Room placeholder: the "Revision N" chip is derived from the highest
+   `revisions[].number` (display only) until a field exists.
+8. Layout was checked on mock data (30 items, empty, full, mobile); the filled real-data layout was seen
+   in the user's screenshots and looked right. Count badge on the Decision tab: none (n/a).
 
 ### Room detail page plan (agreed 2026-10-11)
 **Approach:** the header is the only thing blocked. Build the Room page with a PLACEHOLDER header card
