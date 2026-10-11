@@ -121,9 +121,10 @@ Resume: user says "build" after the backend confirms.
    save/edit/delete, "Opened by Flolyt" on a real auto-opened Room). Saved login had expired, so
    nothing was checked against the real API in a browser by me. Mutations (assign owner, view
    create/edit/delete) have never been submitted live.
-3. **BLOCKED: the Room page** (header, tab bar, every Room tab, the threat tabs, Briefing). Needs a
-   single-Room endpoint `GET /api/v3/rooms/{roomId}`; the user is asking the backend. We chose NOT to
-   build on a "pick the Room out of the list" workaround.
+3. **Room page: header BLOCKED, tabs NOT blocked** (corrected 2026-10-11, see "Room detail page plan"
+   below). The header needs the single-Room endpoint `GET /api/v3/rooms/{roomId}`; the user is asking
+   the backend. We chose NOT to build on a "pick the Room out of the list" workaround. Tab bodies have
+   their own per-room endpoints and are built one at a time behind a placeholder header.
 4. Still unspecified: `/rooms/{roomId}/investigation`. (`/rooms/settings/investigations` is now
    specified, see the C5 section and rooms.md.) Scalar schemas still missing for most other new routes
    (monitoring, plan, verification, lessons items, ...). Scalar has no "Show Schema" toggle for the user,
@@ -136,6 +137,49 @@ Resume: user says "build" after the backend confirms.
 6. **First real-use checks:** accept/decline a proposal, judge/withdraw an objection (and that
    `useAuth().user.id` equals a dissent `byUserId`), notify-level and unwatch on My load, picking another
    person on My load (member `id` assumed equal to the `userId` the route wants).
+
+### Room detail page plan (agreed 2026-10-11, nothing built yet; start with a shell plan, wait for "build")
+**Approach:** the header is the only thing blocked. Build the Room page with a PLACEHOLDER header card
+("Waiting for `GET /api/v3/rooms/{roomId}`"), then wire the tabs one at a time from their own per-room
+endpoints (`docs/endpoints/rooms.md`). Whatever we leave out is recorded here and in `❌` comments so it
+is implemented when the backend answers. Earlier wording "the Room page and every tab is blocked" was
+too broad: the data of each tab does not depend on the missing endpoint; only the header and shell do.
+
+**Shell (first step):** route `/rooms/:roomId` (replaces `room-stub.tsx`; list rows already link to it),
+placeholder header, tab bar with the active tab in the URL (`?tab=`), per-tab "being built" cards,
+topbar breadcrumb stays the generic "Room" (not the uuid) until the title is known.
+
+**Tabs everywhere (decision):** the handoff never mentions hiding tabs, so EVERY Room gets all nine
+ordinary tabs: Briefing, Decision, Conflicts, Plays, Evidence, Agents & runs, People & guardrails,
+Cohort & overlaps, Log. The designs' threat-room screens (`Threat room · Opening & monitoring.png`,
+`Threat room · Plan & verification.png`) show a shorter bar without Conflicts, People & guardrails and
+Cohort & overlaps; treated as designer simplification (design is an idea source). Auto-opened Rooms
+(`threatConfirmationId` non-null) additionally get two tabs IN FRONT: Opening & monitoring, Plan &
+verification. Until the endpoint exists the bar shows the nine ordinary tabs only. Open question for
+the designer/backend: should an auto-opened Room hide those three tabs? Hiding is a small change.
+
+**Header variants (wait for the endpoint):** ordinary Room: Watching · <level> dropdown, Restrict...,
+Close room. Auto-opened Room: "Opened by Flolyt" chip (blue, lightning) and a state chip ("Worsened"),
+buttons "Open thread" (to `/conversations/:conversationId`) and "Close room". Earlier note that the
+header always has "Open thread" was wrong: it only appears on the auto-opened variant. The header also
+needs the viewer's notify level (subscriptions), restricted state, and role for Restrict/Close.
+
+**Tab order of work:** Decision first (best documented), then Conflicts, Plays, Evidence, People &
+guardrails, Cohort & overlaps, Log, Agents & runs; Briefing LAST (no endpoint of its own, composed from
+conflicts/decision/plays/evidence/runs/investigation; `/investigation` unspecified); threat tabs after
+the endpoint (they need `threatConfirmationId`; room-opening takes it as the investigation id; designs
+carry "Response shape not yet confirmed" badges). Close flow: `Room · Close.png`, `close-preview` + `close`.
+Count badges ("Conflicts 1", "Plays 2") are added when those tabs are built.
+
+**Not-found / restricted:** each tab's own call returns the 404 for a missing, foreign or restricted Room,
+so each tab shows its own error card until the shell can show one. The new designs have no such screen;
+the old build had a "Room not found. Back to Rooms" card (`oldpages/rooms/room/room-layout.tsx`) and a
+restricted gate (`oldpages/rooms/room/states/restricted.tsx`, mock data) to carry over with real data.
+
+**Testing:** the user's account has a real Room ("Dormant Accounts",
+`01a0fc76-a89c-7d41-899a-bba0214c9923`, from the My load response). Before each tab, ask the user for
+the real response of that tab's endpoint for that Room (the docs have shapes, but real wins). A real
+login must be supplied by the user; never bypass auth. Mutations stay unverified until really submitted.
 
 ### What the single-Room endpoint has to provide (answer given at end of session 1)
 Mostly the header, plus a few things the shell needs on EVERY tab. Ask for the same fields as a
