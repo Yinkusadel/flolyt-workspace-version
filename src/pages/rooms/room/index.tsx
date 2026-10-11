@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 
 import { UnderlineTabs } from "@/components/ui/underline-tabs";
 import useMarkRoomOpened from "@/features/rooms/use-mark-room-opened";
+import { DecisionTab } from "@/pages/rooms/room/decision";
 
 type RoomTab =
   | "briefing"
@@ -91,7 +92,7 @@ export const RoomPage = () => {
           to: tab.key === "briefing" ? `/rooms/${roomId}` : `/rooms/${roomId}?tab=${tab.key}`,
         }))}
       />
-      <TabPlaceholder label={activeLabel} />
+      {active === "decision" && roomId ? <DecisionTab roomId={roomId} /> : <TabPlaceholder label={activeLabel} />}
     </div>
   );
 };

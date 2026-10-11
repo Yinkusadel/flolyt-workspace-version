@@ -172,8 +172,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`.
 - **Response `data`:** `{ roomId, openingNumber, statement, guardrails, draftedByLabel, decidedByUserId, decidedByLabel, decidedAtUtc, revisions: [{ number, summary, byUserId, byLabel, atUtc }], whatWouldChangeThis: [falsifier], dissent: [{ id, wording, byUserId, byLabel, recordedAtUtc, withdrawn, borneOut, aboutProposalId }], recipients: [{ userId, what, class }] }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-room-decision.ts` / `src/features/rooms/use-get-room-decision.ts`), not wired into a page yet — decision tab.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the Decision tab on `/rooms/:roomId?tab=decision` (`src/pages/rooms/room/decision/`). Service + hook: `src/services/api/rooms/get-room-decision.ts` / `src/features/rooms/use-get-room-decision.ts`.
+- **Status:** wired 2026-10-11. Real response for a Room with no decision (2026-10-11): `{ roomId, openingNumber: 1, statement: "", guardrails: null, draftedByLabel: null, decidedByUserId: null, decidedByLabel: null, decidedAtUtc: null, revisions: [], whatWouldChangeThis: [], dissent: [], recipients: [] }`. Filled state unseen.
+- **Backend gaps:** `userName` on `recipients` (only `userId` today); optional `aboutProposalTitle` on `dissent` items.
 - **Notes:** `whatWouldChangeThis` is the room's falsifiers rendered here rather than modelled twice — same list checked automatically at close. **Updated 2026-09-08:** response gained `recipients` — who the decision goes to and what they specifically get told (`what`) plus a `class` grouping.
 
 ### POST /rooms/{roomId}/decision

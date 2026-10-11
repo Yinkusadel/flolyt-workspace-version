@@ -151,6 +151,28 @@ Resume: user says "build" after the backend confirms.
   `01a0fc76-a89c-7d41-899a-bba0214c9923` first), then the order below. Held for the endpoint: real
   header, header buttons (both variants), threat tabs, count badges, a unified not-found/restricted card.
 
+### Decision tab: BUILT 2026-10-11 (`npx tsc -b` and `npm run build` clean; layout checked on a deleted mock harness)
+- `src/pages/rooms/room/decision/` (mounted in `room/index.tsx` for `?tab=decision`): decision card (status
+  chip, "Revision N" from the highest `revisions[].number`, statement, Guardrails / Drafted by / Decided by,
+  recipients as `class · what`), Mark-as-decided form (`POST /decision/decide`, button "Mark decided as
+  <signed-in name>"), "Revise..." / "Draft the decision" dialog (`POST /decision`: new append-only
+  revision, required "what changed", only changed fields sent), Revisions list (newest first),
+  Objections panel (list from the same GET, Withdraw for own objections with confirm via
+  `DELETE /rooms/dissent/{id}`, Record objection via `POST /decision/dissent`), What would change this
+  (`POST /falsifiers`, `POST /falsifiers/{index}/met`).
+- Real response for the user's Room was fully empty (no draft, revisions, objections, falsifiers,
+  recipients); `statement` is `""`, not null. The user will create the first decision themselves, then
+  paste the real response to verify the filled state. NO write has been submitted by us.
+- Left out, with `❌` comments: "Hand off obligations..." (no documented endpoint; the nearest is
+  `outstanding` on `POST /close`, which is sent at close; `returnedObligations` in the plays response is
+  a possible lead); recipient names (`userName` ticket); an "Agent" chip on Drafted by; "About: <play>"
+  on objections and the "About a play" dropdown (need the Room's plays, `GET /rooms/{roomId}/plays`,
+  items unseen; real response was `{ plays: [], pending, done, rejected, deferred, waitingOnPeople,
+  returnedObligations: [] }`).
+- Backend tickets: [ ] `userName` on `recipients` of `GET /rooms/{roomId}/decision`; [ ] optional
+  `aboutProposalTitle` on `dissent` items.
+- Unverified: all six writes; Withdraw's author check (`user.id` equals `byUserId`).
+
 ### Room detail page plan (agreed 2026-10-11)
 **Approach:** the header is the only thing blocked. Build the Room page with a PLACEHOLDER header card
 ("Waiting for `GET /api/v3/rooms/{roomId}`"), then wire the tabs one at a time from their own per-room
