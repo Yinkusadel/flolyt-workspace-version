@@ -212,8 +212,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token; author only (not the decision owner, not an admin).
 - **Request:** path `dissentId`.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/withdraw-dissent.ts` / `src/features/rooms/use-withdraw-dissent.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the judge dialog on the Dissent tab (`src/pages/rooms/dissent/judge-dialog.tsx`), shown only when the signed-in `user.id` equals the row's `byUserId` (assumes those ids are the same; unverified).
+- **Status:** wired 2026-10-11, NOT yet submitted against the real backend (mutation unverified).
 - **Notes:** A state change, not a delete — wording stays, marked withdrawn, so "permanent" and "withdrawable" stay compatible.
 
 ### POST /rooms/dissent/{dissentId}/judge
@@ -222,8 +222,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `dissentId`; body `{ borneOut: boolean }`.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/judge-dissent.ts` / `src/features/rooms/use-judge-dissent.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the judge dialog on the Dissent tab (Borne out / Shown wrong, each with a confirm step), offered on every unjudged, non-withdrawn row; the backend decides who may judge and its refusal shows as a toast.
+- **Status:** wired 2026-10-11, NOT yet submitted against the real backend (mutation unverified). Whether a judgement can be undone is unknown, so the confirm copy does not promise it.
 - **Notes:** Null until judged — "unjudged" and "shown-to-be-wrong" are different, and the second is the useful state.
 
 ### GET /rooms/dissent
@@ -232,8 +232,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** query `includeWithdrawn` (default false), `take` (int32, default 50).
 - **Response `data`:** `{ dissent: [{ id, wording, roomId, roomTitle, byUserId, byLabel, recordedAtUtc, roomStatus, withdrawn, borneOut }], returned, truncated }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-all-dissent.ts` / `src/features/rooms/use-get-all-dissent.ts`), not wired into a page yet — a cross-room dissent register screen.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the Dissent tab on `/rooms?tab=dissent` (`src/pages/rooms/dissent/`). Service + hook: `src/services/api/rooms/get-all-dissent.ts` / `src/features/rooms/use-get-all-dissent.ts` (hook keeps previous data while "Show 50 more" raises `take`).
+- **Status:** wired 2026-10-11. The live account had zero dissent (`dissent: []`), so rows were layout-checked on mocked data only.
+- **Backend gaps:** `judgedAtUtc` and `withdrawnAtUtc` on rows (design's "Judged 2 Oct" / "By its author, 26 Sep" left out); allowed values for `roomStatus` (optional; shown as readable text in a grey chip); `aboutProposalId` not requested (design's "about a play" left out).
 - **Notes:** The column that matters is `borneOut` — a dissent shown to have been wrong, on the record, is more useful than a culture where nothing gets written down.
 
 ### GET /rooms/{roomId}/cited-dissent

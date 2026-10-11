@@ -55,8 +55,19 @@ with this one, this one wins.
 - [ ] `declineReason` + `decidedByName` on `decided` items: Decided table has neither.
 - [ ] Allowed values for `alertSeverity` and `outcome`: chips are plain grey; add tones once known.
 
+### C3 Dissent tab: BUILT 2026-10-11 (`npx tsc -b` and `npm run build` clean)
+- `src/pages/rooms/dissent/`: ledger table (Turned out / Objection / Room), "Include withdrawn", "Show 50 more"
+  (`take` +50 while `truncated`), one "Judge..." button per unjudged row opening a dialog with Borne out,
+  Shown wrong and (author only) Withdraw, each with a confirm step and neutral copy (undo behaviour unknown).
+- Design colors kept for the boolean outcomes (green Borne out, amber Shown wrong); `roomStatus` is a plain
+  grey readable chip. Layout checked on a mocked harness (deleted); the live account had no dissent, so
+  judge and withdraw are unverified.
+- Backend gaps (user is raising): [ ] `judgedAtUtc`, [ ] `withdrawnAtUtc` on `GET /rooms/dissent` rows;
+  [ ] optional: allowed values for `roomStatus`. "about a play" (`aboutProposalId`) deliberately left out.
+- Author check assumes `useAuth().user.id` equals the row's `byUserId`: confirm on first real objection.
+
 ### Not done / next
-1. **C3 Dissent, C4 My load, C5 Admin** tabs (same tab shell, screens in the same PNG folder).
+1. **C4 My load, C5 Admin** tabs (same tab shell, screens in the same PNG folder).
 2. **Verify C1 live** (counts vs filters, restricted/merged/stale rows, Min. at risk, saved view
    save/edit/delete, "Opened by Flolyt" on a real auto-opened Room). Saved login had expired, so
    nothing was checked against the real API in a browser by me. Mutations (assign owner, view

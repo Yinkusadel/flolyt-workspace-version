@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 
 import { useGetConveningProposals } from "@/features/rooms/use-get-convening-proposals";
 import ConveningTab from "@/pages/rooms/convening";
+import DissentTab from "@/pages/rooms/dissent";
 import RoomsListTab from "@/pages/rooms/rooms-list-tab";
 
 type RoomsTab = "rooms" | "convening" | "dissent" | "my-load" | "admin";
@@ -76,7 +77,7 @@ const Rooms = () => {
       <RoomsTabBar active={active} conveningWaiting={conveningWaiting} />
       {active === "rooms" && <RoomsListTab />}
       {active === "convening" && <ConveningTab />}
-      {active === "dissent" && <ComingNext label="Dissent" />}
+      {active === "dissent" && <DissentTab />}
       {active === "my-load" && <ComingNext label="My load" />}
       {active === "admin" && <ComingNext label="Admin" />}
     </div>
