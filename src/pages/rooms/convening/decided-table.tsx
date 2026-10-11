@@ -20,7 +20,7 @@ export function DecidedTable({ decided }: { decided: ConveningProposalDto[] }) {
 
   return (
     <div className="overflow-x-auto rounded-card border border-line bg-paper">
-      <table className="w-full min-w-[640px] text-left text-[12.5px]">
+      <table className="w-full min-w-160 text-left text-[12.5px]">
         <thead>
           <tr className="border-b border-line bg-paper-2">
             <th className={HEAD}>Proposal</th>

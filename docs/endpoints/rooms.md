@@ -484,8 +484,10 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** query `userId` (uuid, optional — pass to read somebody else's).
 - **Response `data`:** `{ userId, watching, owned, reachingTheirDigest, muted, autoAddedThisMonth, askingWhetherStillWanted, rooms: [{ roomId, title, restricted, reason, notifyLevel, amountAtRisk, currency, sinceUtc, lastOpenedAtUtc, ownsIt, canMute, asksWhetherStillWanted }] }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-room-subscriptions.ts` / `src/features/rooms/use-get-room-subscriptions.ts`), not wired into a page yet — likely a workload/subscriptions screen, possibly a manager view.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the My load tab on `/rooms?tab=my-load` (`src/pages/rooms/my-load/`). Service + hook: `src/services/api/rooms/get-room-subscriptions.ts` / `src/features/rooms/use-get-room-subscriptions.ts` (hook takes `{ enabled }`). The "Showing" picker lists active human `GET /workspace/members`; "You" sends no `userId`, anyone else sends `?userId=<member id>` (URL `?person=`).
+- **Status:** wired 2026-10-11. Live response seen for the caller only (1 owned room, `reason: "owns-it"`, `canMute: false`); a plain member row, a restricted row and reading someone else's load are unverified. Assumed: a workspace member's `id` is the `userId` this route wants.
+- **Backend question (to raise):** what do `title` and `amountAtRisk` hold for a restricted room, for the caller inside it and for one they can't see (e.g. someone else's `userId`)? The UI shows whatever is sent, with a lock icon on `restricted`.
+- **Backend gap:** no "keep watching" action (design's button held, `❌` comment in `load-table.tsx`); `POST /watch` is only documented as re-adding someone who unwatched.
 - **Notes:** Reading someone else's (via `userId`) is the point of the screen — a lead seeing that somebody carries 22 rooms before assigning a 23rd is the best overload predictor in the workspace. Muted rooms count in BOTH `watching` and `muted` — muting doesn't hide, stays searchable, still counts toward load. `canMute` is false on a room they own — render the reason, not a missing control. `asksWhetherStillWanted` = 30 days without opening it; it only asks, nobody is auto-unsubscribed by time. `reachingTheirDigest` is a count only — no digest is assembled or sent yet.
 
 ### POST /rooms/{roomId}/watch
@@ -504,8 +506,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ notifyLevel: string }` — enum `everything` | `decisions-only` | `nothing`.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/set-room-notify-level.ts` / `src/features/rooms/use-set-room-notify-level.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the Notifications dropdown on the My load tab, live only when viewing your own load (the route has no `userId`, so it can only change the caller's own level); disabled where `canMute` is false.
+- **Status:** wired 2026-10-11, NOT yet submitted against the real backend (mutation unverified).
 - **Notes:** Muting a room you own is refused — that's resigning from it, and somebody has to take it (reassign first).
 
 ### POST /rooms/{roomId}/unwatch
@@ -514,8 +516,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/unwatch-room.ts` / `src/features/rooms/use-unwatch-room.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the "Unwatch" button on a "Still want this?" row of the My load tab (own load only, never on an owned room).
+- **Status:** wired 2026-10-11, NOT yet submitted against the real backend (mutation unverified).
 - **Notes:** Refused on a room you own. Remembered, so a later mention doesn't re-add you.
 
 ### POST /rooms/{roomId}/opened

@@ -42,7 +42,7 @@ export function DissentTable({ rows }: { rows: RoomAllDissentRowDto[] }) {
   return (
     <>
       <div className="overflow-x-auto rounded-card border border-line bg-paper">
-        <table className="w-full min-w-[760px] text-left text-[12.5px]">
+        <table className="w-full min-w-190 text-left text-[12.5px]">
           <thead>
             <tr className="border-b border-line bg-paper-2">
               <th className={cn(HEAD, "w-56")}>Turned out</th>

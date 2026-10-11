@@ -66,8 +66,21 @@ with this one, this one wins.
   [ ] optional: allowed values for `roomStatus`. "about a play" (`aboutProposalId`) deliberately left out.
 - Author check assumes `useAuth().user.id` equals the row's `byUserId`: confirm on first real objection.
 
+### C4 My load tab: BUILT 2026-10-11 (`npx tsc -b` and `npm run build` clean)
+- `src/pages/rooms/my-load/`: "Showing" picker (`SearchableSelect`: "You" + active human members, you
+  not listed twice), six count tiles from the API, table (Room, Why they're here, Notifications, At risk,
+  Since, Last opened). Person in the URL as `?person=<member id>`.
+- Own load: Notifications dropdown (everything / decisions-only / nothing) via `POST /notify-level`,
+  disabled with a reason where `canMute` is false; Unwatch on "Not opened in 30 days" rows.
+  Someone else's load is read-only (notify-level has no `userId`).
+- Held / left out: "Keep watching" (no endpoint); design's restricted-room "Title hidden / Hidden" copy
+  (UI shows what the API sends, lock icon on `restricted`). Layout checked on a mocked harness (deleted).
+- Backend (to raise): [ ] what `title`/`amountAtRisk` hold for restricted rooms; [ ] a "keep watching"
+  action. Unverified: member `id` == `userId` for the picker; notify-level and unwatch never submitted live.
+
 ### Not done / next
-1. **C4 My load, C5 Admin** tabs (same tab shell, screens in the same PNG folder).
+1. **C5 Admin** tab (`Admin · value, lessons, settings.png`; needs the threat lessons/metrics/settings
+   endpoints, several unspecified).
 2. **Verify C1 live** (counts vs filters, restricted/merged/stale rows, Min. at risk, saved view
    save/edit/delete, "Opened by Flolyt" on a real auto-opened Room). Saved login had expired, so
    nothing was checked against the real API in a browser by me. Mutations (assign owner, view
