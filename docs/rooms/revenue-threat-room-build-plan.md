@@ -179,6 +179,8 @@ Resume: user says "build" after the backend confirms.
 - Objections and "What would change this" are `CollapsiblePanel`s (`decision/collapsible-panel.tsx`):
   collapsed by default (the count badge shows how many), the list scrolls inside `max-h-80`, and the
   input form sits outside the scroll area so it never scrolls with the list. Checked with 30 mock items.
+  Each panel has its own color on its border, header and input footer: Objections amber, What would
+  change this teal (`tone` prop); the "Record objection" and "Add" buttons use the primary blue.
 
 ### Room detail page plan (agreed 2026-10-11)
 **Approach:** the header is the only thing blocked. Build the Room page with a PLACEHOLDER header card

@@ -59,6 +59,7 @@ export function FalsifiersPanel({ roomId, falsifiers }: { roomId: string; falsif
   return (
     <CollapsiblePanel
       title="What would change this"
+      tone="teal"
       count={falsifiers.length}
       footer={
         <div className="space-y-3 px-5 py-4">
@@ -93,7 +94,6 @@ export function FalsifiersPanel({ roomId, falsifiers }: { roomId: string; falsif
           </p>
           <Button
             type="button"
-            variant="outline"
             size="sm"
             disabled={!canAdd}
             onClick={() => createFalsifier({ roomId, condition: condition.trim(), thenWhat: thenWhat.trim() })}

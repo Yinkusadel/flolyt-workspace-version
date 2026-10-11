@@ -106,6 +106,7 @@ export function ObjectionsPanel({ roomId, dissent }: { roomId: string; dissent: 
   return (
     <CollapsiblePanel
       title="Objections"
+      tone="amber"
       count={dissent.length}
       intro={
         <p className="border-b border-line px-5 py-3.5 text-[11.5px] leading-relaxed text-ink-3">
@@ -125,13 +126,12 @@ export function ObjectionsPanel({ roomId, dissent }: { roomId: string; dissent: 
             disabled={isPending}
             onChange={(event) => setWording(event.currentTarget.value)}
             placeholder="Say what you think will go wrong, in words you'll be happy to see judged later."
-            className="mt-2 w-full resize-y rounded-panel border border-line bg-paper-2 px-2.5 py-2 text-[12.5px] text-ink outline-none placeholder:text-ink-4 focus:border-ring disabled:opacity-60"
+            className="mt-2 w-full resize-y rounded-panel border border-line bg-paper px-2.5 py-2 text-[12.5px] text-ink outline-none placeholder:text-ink-4 focus:border-ring disabled:opacity-60"
           />
           {/* ❌ "About a play (optional)" is left out: it needs the Room's plays (GET /rooms/{roomId}/plays),
               whose items have not been seen yet. Objections are recorded about the decision as a whole. */}
           <Button
             type="button"
-            variant="outline"
             size="sm"
             className="mt-3"
             disabled={!wording.trim() || isPending}
