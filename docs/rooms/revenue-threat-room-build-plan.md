@@ -4,12 +4,12 @@ Written 2026-10-10. Source contract: [revenue-threat-room-frontend-handoff.md](r
 (backend phases 5 to 9). Endpoint source of truth stays [`docs/endpoints/rooms.md`](../endpoints/rooms.md);
 this doc is the umbrella plan, not a build log. Nothing below is built unless marked `[x]`.
 
-## CURRENT STATE (read this first; updated 2026-10-10 end of session 1)
+## CURRENT STATE (read this first; updated 2026-10-11, C2 Convening tab done and pushed)
 
 Everything below this section is the history of how we got here. Where an older section disagrees
 with this one, this one wins.
 
-**Branch:** `revenue-threat-room` (off `add-onboarding`), pushed, last commit `287f82f`.
+**Branch:** `revenue-threat-room` (off `add-onboarding`), pushed, last commit `4b957ba` (C2 Convening tab).
 
 ### What is done
 - **Step 0 and 1:** the 16 new `/rooms` routes are documented and scaffolded (service + hook each).
