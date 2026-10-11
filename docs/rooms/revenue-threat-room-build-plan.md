@@ -138,7 +138,20 @@ Resume: user says "build" after the backend confirms.
    `useAuth().user.id` equals a dissent `byUserId`), notify-level and unwatch on My load, picking another
    person on My load (member `id` assumed equal to the `userId` the route wants).
 
-### Room detail page plan (agreed 2026-10-11, nothing built yet; start with a shell plan, wait for "build")
+### Room page SHELL: BUILT 2026-10-11 (`npx tsc -b` and `npm run build` clean; layout checked on a deleted harness)
+- `src/pages/rooms/room/index.tsx` (`RoomPage`, mounted at `/rooms/:roomId` in `route.tsx`; `room-stub.tsx`
+  deleted): placeholder header card ("Waiting for GET /api/v3/rooms/{roomId}" + the room id in mono),
+  nine tabs in design order, active tab in `?tab=` (default Briefing), each tab body a "being built" card.
+- Shared tab bar `src/components/ui/underline-tabs.tsx` (`UnderlineTabs`, optional `badge` per tab), now
+  used by both the Rooms page and the Room page; Rooms page re-checked, looks identical.
+- The page fires `POST /rooms/{roomId}/opened` once per load (silent, idempotent daily stamp; keyed on the
+  room id so tab switches don't re-fire). Unverified until really called with a login.
+- Breadcrumb unchanged: topbar already shows "Rooms / Room" for `/rooms/<id>`.
+- NEXT: Decision tab (ask the user for the real `GET /rooms/{roomId}/decision` response for the real Room
+  `01a0fc76-a89c-7d41-899a-bba0214c9923` first), then the order below. Held for the endpoint: real
+  header, header buttons (both variants), threat tabs, count badges, a unified not-found/restricted card.
+
+### Room detail page plan (agreed 2026-10-11)
 **Approach:** the header is the only thing blocked. Build the Room page with a PLACEHOLDER header card
 ("Waiting for `GET /api/v3/rooms/{roomId}`"), then wire the tabs one at a time from their own per-room
 endpoints (`docs/endpoints/rooms.md`). Whatever we leave out is recorded here and in `❌` comments so it

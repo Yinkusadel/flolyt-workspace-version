@@ -1,7 +1,6 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
-import { cn } from "@/lib/utils";
-
+import { UnderlineTabs } from "@/components/ui/underline-tabs";
 import { useGetConveningProposals } from "@/features/rooms/use-get-convening-proposals";
 import ConveningTab from "@/pages/rooms/convening";
 import DissentTab from "@/pages/rooms/dissent";
@@ -22,31 +21,15 @@ const isTab = (value: string | null): value is RoomsTab => TABS.some((tab) => ta
 
 function RoomsTabBar({ active, conveningWaiting }: { active: RoomsTab; conveningWaiting: number | null }) {
   return (
-    <div className="-mx-4 overflow-x-auto border-b border-line px-4 sm:mx-0 sm:px-0">
-      <div className="flex items-center gap-1" role="tablist">
-        {TABS.map((tab) => (
-          <Link
-            key={tab.key}
-            to={tab.key === "rooms" ? "/rooms" : `/rooms?tab=${tab.key}`}
-            role="tab"
-            aria-selected={active === tab.key}
-            className={cn(
-              "inline-flex shrink-0 items-center gap-1.5 rounded-t-panel border-b-2 px-3 py-2.5 text-[11.5px] whitespace-nowrap",
-              active === tab.key
-                ? "border-ink font-semibold text-ink"
-                : "border-transparent font-normal text-ink-3 hover:text-ink-2"
-            )}
-          >
-            {tab.label}
-            {tab.key === "convening" && conveningWaiting !== null && conveningWaiting > 0 && (
-              <span className="rounded-full bg-primary px-1.5 font-mono text-[10px] leading-4 font-semibold text-primary-foreground">
-                {conveningWaiting}
-              </span>
-            )}
-          </Link>
-        ))}
-      </div>
-    </div>
+    <UnderlineTabs
+      active={active}
+      tabs={TABS.map((tab) => ({
+        key: tab.key,
+        label: tab.label,
+        to: tab.key === "rooms" ? "/rooms" : `/rooms?tab=${tab.key}`,
+        badge: tab.key === "convening" ? conveningWaiting : null,
+      }))}
+    />
   );
 }
 
