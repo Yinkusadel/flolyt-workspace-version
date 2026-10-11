@@ -4,6 +4,84 @@ Written 2026-10-10. Source contract: [revenue-threat-room-frontend-handoff.md](r
 (backend phases 5 to 9). Endpoint source of truth stays [`docs/endpoints/rooms.md`](../endpoints/rooms.md);
 this doc is the umbrella plan, not a build log. Nothing below is built unless marked `[x]`.
 
+## CURRENT STATE (read this first; updated 2026-10-10 end of session 1)
+
+Everything below this section is the history of how we got here. Where an older section disagrees
+with this one, this one wins.
+
+**Branch:** `revenue-threat-room` (off `add-onboarding`), pushed, last commit `287f82f`.
+
+### What is done
+- **Step 0 and 1:** the 16 new `/rooms` routes are documented and scaffolded (service + hook each).
+  `room-opening` is fully typed from the Scalar schema. `replyMode`/author types added.
+- **Step A:** shared helpers moved out of the Rooms feature to `src/lib/initials.ts`,
+  `src/lib/format-activity.ts`, `src/lib/actor-types.ts`.
+- **Step B:** the old Rooms section (mock Room pages, old wired index, wizard, plays-at-scale) is in
+  `src/oldpages/rooms`. `/rooms/:roomId` is a "being rebuilt" stub (`src/pages/rooms/room-stub.tsx`).
+  Routes `/rooms/new`, `/rooms/subscriptions`, `/plays` were removed.
+- **Step C1:** the new Rooms list is live in `src/pages/rooms/`: `index.tsx`, `use-rooms-filters.ts`
+  (all filters in the URL), `stat-tiles.tsx`, `filter-card.tsx`, `saved-views.tsx` (create, apply,
+  edit and delete on the user's own views), `rooms-table.tsx`, `modals/assign-owner-modal.tsx`, `labels.ts`.
+  Built from `flolyt-figma-designs/New-pages-pattern/Flolyt Rooms-png/Rooms · index.png`.
+
+### UI behaviour settled during C1 (keep it this way)
+- Filter card is **hidden by default**, with an animated "Show filters / Hide filters" button at the
+  right of the header (fixed width; a count badge sits on its corner while hidden and filters are active).
+- State tiles: the selected tile is the primary blue, **one block that slides** (transform, ~320ms)
+  to the clicked tile; unselected tiles float up 4px with a soft shadow on hover; the selected tile
+  does not lift. The resize watcher must be created once (a rebuilt watcher fires immediately and
+  switched the animation off). Verified in a real browser on a throwaway harness page.
+- Saved-view chips: the active one is solid blue; hover reveals pencil and trash buttons (author only)
+  with tooltips, same reveal as the prompt box's toggle chips.
+- `<main>` in `app-layout.tsx` has `scrollbar-gutter-stable` so showing or hiding content does not
+  shift the page sideways.
+- A null live figure reads only "Live figure unavailable". The API row now has
+  `currentAmountComputedAtUtc`, shown as "live · HH:MM UTC" under the live amount.
+
+### Not done / next
+1. **C2 Convening tab** (design: `Convening queue.png`; `GET /rooms/convening`, accept, decline: all
+   scaffolded). It also brings the tab bar inside the Rooms page (Rooms, Convening, Dissent, My load,
+   Admin) and the "Convening queue · N waiting" button on the list header. Then C3 Dissent, C4 My
+   load, C5 Admin.
+2. **Verify C1 live** (counts vs filters, restricted/merged/stale rows, Min. at risk, saved view
+   save/edit/delete, "Opened by Flolyt" on a real auto-opened Room). Saved login had expired, so
+   nothing was checked against the real API in a browser by me. Mutations (assign owner, view
+   create/edit/delete) have never been submitted live.
+3. **BLOCKED: the Room page** (header, tab bar, every Room tab, the threat tabs, Briefing). Needs a
+   single-Room endpoint `GET /api/v3/rooms/{roomId}`; the user is asking the backend. We chose NOT to
+   build on a "pick the Room out of the list" workaround.
+4. Still unspecified: `/rooms/{roomId}/investigation` and `/rooms/settings/investigations`;
+   Scalar schemas for the other 15 new routes (monitoring, plan, verification, lessons, metrics...).
+
+### What the single-Room endpoint has to provide (answer given at end of session 1)
+Mostly the header, plus a few things the shell needs on EVERY tab. Ask for the same fields as a
+`GET /rooms` row (so `RoomListRowDto` can be reused), including: `title`, `status`, `isRecovering`,
+`openingNumber`, `ownerMemberId`/`ownerName`, `stage`/`stageLabel`, `condition`/`conditionLabel`,
+`currency`, `population`, `amountAtRiskAtOpen`, `currentAmountAtRisk`, `currentAmountComputedAtUtc`,
+`restricted`, `mergedIntoRoomId`/`absorbedRoomIds`, `archivedAtUtc`, plus the two the shell cannot
+live without: **`threatConfirmationId`** (decides whether the threat tabs exist and is the id for
+`room-opening`) and **`conversationId`** (the header's "Open thread"). Same 404 for missing,
+foreign or restricted-for-you as the other Room routes. Things the header shows that this call would
+NOT cover, and where they come from instead: "Watching · everything" (the viewer's own notify level:
+`GET /rooms/subscriptions`), the tab count badges "Conflicts 1" / "Plays 2" (the conflicts and plays
+endpoints, or ask for counts on the Room), whether the viewer may Restrict or Close (roles come from
+`GET /people`), and the "Worsened" chip (`threat-monitoring`).
+
+### How we work (user's conventions seen this session)
+- Never push unless asked in that turn; hand over the full commit command at the end of each task,
+  single-line conventional commit, no AI attribution.
+- When talking about a design, link the PNG and name the section.
+- Don't build on a guessed response shape; flag truncated Scalar captures and ask for "Show Schema".
+- No frontend business math; no bare-text loading/empty states (skeleton or bordered card).
+- Verify with `npx tsc -b` and `npm run build`. For animation or layout, test on a throwaway harness
+  page on a spare port with Playwright, then delete it and kill the server. The user's own dev server
+  runs on port 3000: never kill it. Auth is never bypassed; the saved login in memory expires.
+- Use the Write/Edit tools for long files; long shell heredocs failed twice. Never chain a risky
+  command with `&&` and then write follow-ups as separate statements (a failed `git mv` once let
+  later writes overwrite the live Rooms index).
+- Windows: renaming a folder a dev server watches fails; moving the files one by one works.
+
+
 ## What the audit found (before any code)
 
 1. **The V3 prefix migration is already done in code.** `ROOMS_BASE_URL`, `PLAYS_BASE_URL` and
