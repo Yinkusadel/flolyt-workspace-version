@@ -38,8 +38,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`, `index` (int32).
 - **Response:** `{ data: roomId, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/mark-falsifier-met.ts` / `src/features/rooms/use-mark-falsifier-met.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the "Mark as met" button on the Decision tab (`index` = the falsifier's position in `whatWouldChangeThis`).
+- **Status:** wired 2026-10-11, NOT yet submitted against the real backend.
 - **Notes:** Idempotent — a second call succeeds without moving the timestamp; when it first fired is the record.
 
 ### GET /rooms/{roomId}/log
@@ -78,8 +78,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ condition: string, thenWhat: string }`.
 - **Response:** `{ data: roomId, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/create-falsifier.ts` / `src/features/rooms/use-create-falsifier.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the "If... then..." add form on the Decision tab ("What would change this").
+- **Status:** wired and LIVE-VERIFIED 2026-10-11 (two falsifiers added on a real Room).
 - **Notes:** Both halves required — a condition with no stated consequence is a caveat, not a test.
 
 ### GET /rooms/views
@@ -183,8 +183,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ summary: string, draftedByLabel, guardrails, statement, recipients: [{ userId, what, class }] | null }`.
 - **Response:** `{ data: revisionNumber, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/save-room-decision.ts` / `src/features/rooms/use-save-room-decision.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the "Draft the decision" / "Revise..." dialog on the Decision tab (`src/pages/rooms/room/decision/revise-dialog.tsx`).
+- **Status:** wired and LIVE-VERIFIED 2026-10-11 (first draft plus two revisions on a real Room).
 - **Notes:** Revisions are append-only and each must state what it changed. Omitting a section leaves it as-is, doesn't blank it. **Updated 2026-09-08:** request body gained `recipients` — same shape as the GET response, so a revision can set who this decision is being sent to and what they're told.
 
 ### POST /rooms/{roomId}/decision/decide
@@ -203,8 +203,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ wording: string, aboutProposalId: uuid | null }`.
 - **Response:** `{ data: dissentId, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/create-dissent.ts` / `src/features/rooms/use-create-dissent.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the "Record an objection" form on the Decision tab (`aboutProposalId` always null for now).
+- **Status:** wired and LIVE-VERIFIED 2026-10-11 (two objections recorded on a real Room).
 - **Notes:** Does NOT block the decision and nothing tallies it — rooms aren't democracies, no threshold. Stays attached permanently, checked at close, withdrawable only by its author.
 
 ### DELETE /rooms/dissent/{dissentId}

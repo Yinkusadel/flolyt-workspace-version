@@ -171,7 +171,14 @@ Resume: user says "build" after the backend confirms.
   returnedObligations: [] }`).
 - Backend tickets: [ ] `userName` on `recipients` of `GET /rooms/{roomId}/decision`; [ ] optional
   `aboutProposalTitle` on `dissent` items.
-- Unverified: all six writes; Withdraw's author check (`user.id` equals `byUserId`).
+- **Live-verified by the user 2026-10-11** on the real Room: draft (first revision), revise (revisions 2
+  and 3), record objection (two) and add falsifier (two) all wrote and read back correctly. The Withdraw
+  button showed on the user's own objections, which confirms `useAuth().user.id` equals the objection's
+  `byUserId`. Real labels look like `chad@yopmail.com · Administrator` (`byLabel` is a combined string).
+  STILL UNTESTED: mark as met, withdraw, mark as decided.
+- Objections and "What would change this" are `CollapsiblePanel`s (`decision/collapsible-panel.tsx`):
+  collapsed by default (the count badge shows how many), the list scrolls inside `max-h-80`, and the
+  input form sits outside the scroll area so it never scrolls with the list. Checked with 30 mock items.
 
 ### Room detail page plan (agreed 2026-10-11)
 **Approach:** the header is the only thing blocked. Build the Room page with a PLACEHOLDER header card
