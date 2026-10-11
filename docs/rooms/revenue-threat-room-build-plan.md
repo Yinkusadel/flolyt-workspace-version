@@ -4,12 +4,30 @@ Written 2026-10-10. Source contract: [revenue-threat-room-frontend-handoff.md](r
 (backend phases 5 to 9). Endpoint source of truth stays [`docs/endpoints/rooms.md`](../endpoints/rooms.md);
 this doc is the umbrella plan, not a build log. Nothing below is built unless marked `[x]`.
 
-## CURRENT STATE (read this first; updated 2026-10-11, C2 Convening tab done and pushed)
+## CURRENT STATE (read this first; updated 2026-10-11, end of session 2)
 
 Everything below this section is the history of how we got here. Where an older section disagrees
 with this one, this one wins.
 
-**Branch:** `revenue-threat-room` (off `add-onboarding`), pushed, last commit `4b957ba` (C2 Convening tab).
+**Summary:** the new `/rooms` page is a tab shell with four built tabs (Rooms, Convening, Dissent,
+My load) and a fifth (Admin) ON HOLD for backend answers. The Room detail page is still BLOCKED on
+`GET /api/v3/rooms/{roomId}`. Everything is on the wire with `npx tsc -b` and `npm run build` clean,
+but NONE of the mutations (assign owner, saved views, accept/decline convening, judge/withdraw dissent,
+notify-level, unwatch) has been submitted against the real backend yet.
+
+**Branch:** `revenue-threat-room` (off `add-onboarding`), pushed, see `git log` for the latest commit.
+Session 2 commits: C2 Convening tab, C3 Dissent tab, rooms filter card native selects replaced,
+shared `SearchableSelect` disabled-hover fix, C4 My load tab, then docs/memory for the Admin hold.
+
+### Shared pieces added or changed in session 2 (reuse these)
+- `src/pages/rooms/convening/format.ts`: `humanize` (any API token to words), `toNumber`, `formatMoney`,
+  `formatDay`, `formatDayTime`, `daysWaiting`. Dissent and My load import from it.
+- `SearchableSelect` (`src/components/ui/searchable-select.tsx`): trigger hover border is now
+  `enabled:hover:` so a disabled select has no hover effect. It has no empty value, so "Any" is a real
+  sentinel item that maps back to "" (see `filter-card.tsx`).
+- `use-get-all-dissent.ts` keeps previous data while "Show 50 more" raises `take`;
+  `use-get-room-subscriptions.ts` takes `{ enabled }`.
+- Never use a native `<select>`; leftovers not touched: `src/components/ui/calendar.tsx` month/year selects.
 
 ### What is done
 - **Step 0 and 1:** the 16 new `/rooms` routes are documented and scaffolded (service + hook each).
@@ -78,9 +96,27 @@ with this one, this one wins.
 - Backend (to raise): [ ] what `title`/`amountAtRisk` hold for restricted rooms; [ ] a "keep watching"
   action. Unverified: member `id` == `userId` for the picker; notify-level and unwatch never submitted live.
 
+### C5 Admin tab: ON HOLD 2026-10-11 (user confirming gaps with the backend; nothing built)
+Design: `Admin · value, lessons, settings.png`, four sections, each with its OWN endpoint (no shared flag):
+| Section | Endpoint | What we know / lack |
+|---|---|---|
+| Verified value | `GET /rooms/value/verified-threats` | real: `{ contractVersion, balances: [], nextCursor }`; item fields unseen. Scaffolded service wrongly says `partitions`, fix to `balances` |
+| Lessons | `GET /rooms/threats/lessons` (+ review, retire, propose) | real: `{ items: [], nextPage: null }`; item fields and review/retire response envelopes unseen |
+| Operator diagnostics | `GET /rooms/threats/operator-metrics?fromUtc&toUtc` | real full response in rooms.md; only `verificationsByStatus` / `ledgerMovements` item shapes unseen |
+| Investigation turn budget | `GET` + `PUT /rooms/settings/investigations` | fully specified + real response; `canEdit` = administrator, this section only |
+Decisions made: do NOT hide the Admin tab (no whole-tab admin flag exists; `canEdit` only governs the
+budget section); each section handles its own refusal as an error card; budget Save live only when
+`canEdit`; Verified value and Lessons show real states only (skeleton/empty/error/paging, no assumed rows,
+a "N returned, details not shown yet" fallback if items ever appear); diagnostics uses the app's date
+picker with UTC dates, checks: completed window, at most 31 days, From before To; show `limitations`
+text; drop the design's "Response shape not yet confirmed" badges; "Last changed" shown only when
+`updatedAtUtc` is non-null; also needs service/hook for settings and the `balances` fix.
+Backend tickets to raise: (1) item fields for `balances`, lessons `items`, and metrics `verificationsByStatus`
+/ `ledgerMovements`; (2) responses of lessons review/retire/propose; (3) optional: an explicit administrator flag.
+Resume: user says "build" after the backend confirms.
+
 ### Not done / next
-1. **C5 Admin** tab (`Admin · value, lessons, settings.png`; needs the threat lessons/metrics/settings
-   endpoints, several unspecified).
+1. **C5 Admin** tab: on hold, see the section above.
 2. **Verify C1 live** (counts vs filters, restricted/merged/stale rows, Min. at risk, saved view
    save/edit/delete, "Opened by Flolyt" on a real auto-opened Room). Saved login had expired, so
    nothing was checked against the real API in a browser by me. Mutations (assign owner, view
@@ -88,8 +124,18 @@ with this one, this one wins.
 3. **BLOCKED: the Room page** (header, tab bar, every Room tab, the threat tabs, Briefing). Needs a
    single-Room endpoint `GET /api/v3/rooms/{roomId}`; the user is asking the backend. We chose NOT to
    build on a "pick the Room out of the list" workaround.
-4. Still unspecified: `/rooms/{roomId}/investigation` and `/rooms/settings/investigations`;
-   Scalar schemas for the other 15 new routes (monitoring, plan, verification, lessons, metrics...).
+4. Still unspecified: `/rooms/{roomId}/investigation`. (`/rooms/settings/investigations` is now
+   specified, see the C5 section and rooms.md.) Scalar schemas still missing for most other new routes
+   (monitoring, plan, verification, lessons items, ...). Scalar has no "Show Schema" toggle for the user,
+   so item shapes of empty lists must come from the backend or a real row.
+5. **Open backend tickets (user raising):** convening (`conditionLabel`, `ownerName`, `declineReason` +
+   `decidedByName`, allowed values for `alertSeverity`/`outcome`), dissent (`judgedAtUtc`,
+   `withdrawnAtUtc`, optional `roomStatus` values), subscriptions (restricted-room title/amount, a
+   "keep watching" action), admin (item fields for balances/lessons/metrics arrays, lesson mutation
+   responses, optional admin flag), single-Room endpoint. Mark DONE in the sections above when fixed.
+6. **First real-use checks:** accept/decline a proposal, judge/withdraw an objection (and that
+   `useAuth().user.id` equals a dissent `byUserId`), notify-level and unwatch on My load, picking another
+   person on My load (member `id` assumed equal to the `userId` the route wants).
 
 ### What the single-Room endpoint has to provide (answer given at end of session 1)
 Mostly the header, plus a few things the shell needs on EVERY tab. Ask for the same fields as a
@@ -105,7 +151,13 @@ NOT cover, and where they come from instead: "Watching · everything" (the viewe
 endpoints, or ask for counts on the Room), whether the viewer may Restrict or Close (roles come from
 `GET /people`), and the "Worsened" chip (`threat-monitoring`).
 
-### How we work (user's conventions seen this session)
+### How we work (user's conventions seen these sessions)
+- Plan first, then build ONLY after the user says "build"; answered questions are not a go-ahead.
+- The design is an idea source; the API response wins. A designed field the API lacks stays as an EMPTY
+  cell with a `❌ Backend does NOT provide: <field>` comment; nulls show "—"; unknown enums show the
+  readable raw value in a plain grey chip. The user raises backend tickets: give ticket text that names
+  the exact endpoint and field.
+- Always name the endpoint when explaining; no native `<select>`.
 - Never push unless asked in that turn; hand over the full commit command at the end of each task,
   single-line conventional commit, no AI attribution.
 - When talking about a design, link the PNG and name the section.

@@ -655,7 +655,25 @@ baseline never changes; exposure reduction is never verified/recovered revenue; 
 `null`, not zero.
 
 Also named in the handoff but **not specified** (ask the user, do not guess): `/rooms/{roomId}/investigation`
-(investigation controls) and `/rooms/settings/investigations` (investigation settings).
+(investigation controls). `/rooms/settings/investigations` is now specified (2026-10-11), see the
+"Investigation settings" entries just before "Phase 9".
+
+### GET /rooms/settings/investigations
+
+- **Purpose:** The workspace's turn budget per room investigation, with the default and the bounds.
+- **Auth:** Bearer token. `canEdit` is true for administrators (it describes THIS section only; the other Admin sections have no such flag).
+- **Request:** none.
+- **Response `data`** (real response): `{ turnBudget: 12, defaultTurnBudget: 12, minTurnBudget: 2, maxTurnBudget: 50, updatedAtUtc: null, canEdit: true }`. `updatedAtUtc` is null until the budget is changed. (Scalar's example shows all `1`s; those are placeholders.)
+- **Used by:** not wired (Admin tab not built, waiting on backend confirmations). Service + hook NOT scaffolded yet.
+- **Status:** documented, not wired.
+
+### PUT /rooms/settings/investigations
+
+- **Purpose:** Sets the turn budget (2 to 50) for investigations that start from now; a working one keeps the budget it started with.
+- **Auth:** Bearer token; administrators only.
+- **Request:** body `{ turnBudget: int32 }` (required; the schema allows integer or numeric string).
+- **Response `data`:** the same object as the GET. 400 on a bad value.
+- **Used by:** not wired. **Status:** documented, not wired, mutation never submitted.
 
 ## Phase 5: automatic opening
 
@@ -771,7 +789,7 @@ These live outside `/rooms`; recorded here because the Room flow depends on them
 - **Purpose:** Verified value balances, one partition per market/currency/lifecycle/value-kind.
 - **Auth:** Bearer token; administrator only.
 - **Request:** query `after` (cursor).
-- **Response `data`:** 100 partitions per page plus `nextCursor`. ⚠️ Partition fields not shown (DTO, not entity).
+- **Response `data`:** `{ contractVersion, balances: [], nextCursor }` (real response, 2026-10-11, admin account, no data yet). 100 per page. ⚠️ The list property is `balances`, NOT `partitions` (`get-verified-threat-balances.ts` still says `partitions`: wrong, fix when wiring). ⚠️ Item fields still unseen (list was empty, Scalar has no "Show Schema" toggle): backend ticket needed to document them.
 - **Used by:** service + hook ready, not wired into a page yet.
 - **Status:** service/hook ready, not wired.
 - **Notes:** Follow `nextCursor`. Never build a global FX-less total. Excludes existing stated Room claims. Use for strong value claims only.
@@ -822,7 +840,7 @@ These live outside `/rooms`; recorded here because the Room flow depends on them
 - **Purpose:** Administrator lesson review list.
 - **Auth:** Bearer token; administrator.
 - **Request:** query `page` (default 1); pages of 25, ordered by creation time then ID.
-- **Response `data`:** `{ items, nextPage }`. ⚠️ Item fields named: `evidenceStillValid`, `retirement`, `reusable`, `review.decision`, `outcomeStatus`, `qualifications`.
+- **Response `data`:** `{ items: [], nextPage: null }` (real response, 2026-10-11, admin account, no lessons yet). ⚠️ Item fields named in the handoff: `evidenceStillValid`, `retirement`, `reusable`, `review.decision`, `outcomeStatus`, `qualifications`; everything else about an item (id, title, procedure) is unseen. Backend ticket needed to document the item.
 - **Used by:** service + hook ready, not wired into a page yet.
 - **Status:** service/hook ready, not wired.
 - **Notes:** Follow `nextPage` until null. `items` excludes Rooms the administrator cannot access. `evidenceStillValid=false` overrides a historical `PROMOTED`. Show retired/superseded status separately from `evidenceStillValid` and `review.decision`; a valid outcome does not mean the procedure remains approved for reuse. `reusable` is false for restricted source Rooms. A promoted lesson is a historical recommendation, not an approved action, guaranteed recovery or new tool. Keep `outcomeStatus` and `qualifications` visible. Backend scans up to 250 candidates, never across scope or restricted-Room boundaries.
@@ -832,7 +850,7 @@ These live outside `/rooms`; recorded here because the Room flow depends on them
 - **Purpose:** Administrator diagnostics over a completed window.
 - **Auth:** Bearer token; administrator.
 - **Request:** query `fromUtc`, `toUtc` (completed half-open UTC window, at most 31 days).
-- **Response `data`:** ⚠️ not shown beyond `ledgerMovements` and per-currency series.
+- **Response `data`** (real response, 2026-10-11, window 2026-09-11 to 2026-10-11): `{ contractVersion: "1.0", fromUtc, toUtc, triageDecisions: 10, decisionsByResultAndReason: [{ state: "WATCH:LEGACY_SCOPE_REQUIRES_REVIEW", count: 10 }], publications: 1, processedPublications: 1, publicationProcessingP95Seconds: 2.5143687, verificationAttempts: 0, verificationsByStatus: [], acceptedRecurrences: 0, ledgerMovements: [], limitations: [string, ...] }`. `limitations` is backend text meant to be shown with the results. ⚠️ Item shapes of `verificationsByStatus` and `ledgerMovements` still unseen (both empty); ticket needed.
 - **Used by:** service + hook ready, not wired into a page yet.
 - **Status:** service/hook ready, not wired.
 - **Notes:** More than 2,000 records in any series requires a narrower window. Reversed or oversized windows are rejected. Counts are decisions/attempts, not distinct businesses. `ledgerMovements` includes corrections posted in the window and is not a lifetime balance. Never sum across currencies. No inferred false-positive rate or invented model cost.
