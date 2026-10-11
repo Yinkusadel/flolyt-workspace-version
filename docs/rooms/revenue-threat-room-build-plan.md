@@ -250,6 +250,28 @@ app design, so the endpoints win.
    `authorName` on people's messages; (d) `@[agent:key]` mentions and the multi-mention choice; (e)
    regression-check the existing chat panel and the changed JSON 202 path. Order: after the Room tabs, or
    earlier if the user prefers.
+**UX decided 2026-10-11 (Room conversation composer; not built):** one conversation, one shared timeline,
+so NO separate side comment panel: a MODE SWITCHER in the message box instead.
+- The box shows the current mode as a button; clicking it opens a small popover that EXPLAINS each mode
+  before you pick (reference: the user's screenshot of Claude Code's "Modes" picker: a title, one row per
+  mode with an icon, a name and a one-line explanation, a check on the selected row, optional keyboard
+  hint). Two rows: **Ask the agents** ("Your message starts an agent run and the answer comes back in
+  this conversation. Mention an agent with @ to choose who answers.") and **Post to the people** ("Saved
+  for the people in this Room. No agent runs and no model cost."). The Send button names the mode.
+- Default: **Ask the agents** (today's behaviour). Typing `@` and picking an agent switches to it.
+  People-only messages show the author's name and no typing indicator; agent replies stay distinct.
+- Only in a Room's conversation (author fields exist for Room threads; a personal AI conversation has no
+  other people). Open: how the app knows a conversation belongs to a Room.
+- Remembering the choice: the backend stores nothing today (`replyMode` is sent per message), so remember
+  it per conversation id in the browser (local storage, try/catch, falls back to the default). Precedent:
+  only the sidebar collapsed state uses local storage; the Rooms filters are in the URL and saved views are
+  on the backend. A synced preference needs a backend ticket (below); keep the browser memory meanwhile.
+- **Backend ticket (user to raise):** "Add a saved reply mode for room conversations. `POST
+  /api/v3/conversations/messages` takes `replyMode` (`"auto"` ask the agents, `"none"` people only) on
+  every message and nothing stores the choice. Please add a per-user, per-conversation preferred reply mode,
+  e.g. `GET` and `PUT /api/v3/conversations/{conversationId}/preferences` with `{ replyMode: "auto" |
+  "none" }`, defaulting to `"auto"`; only the caller's own preference readable or writable."
+
 **Other human-agent interactions seen in the designs (all structured, none free-form chat):** Conflicts:
 "Ask for a third reading" (send back with a question, starts a run), choose reading A/B with a required
 reason, Escalate to another person; Agents & runs: add/remove agent, approve or reject an agent's request;
