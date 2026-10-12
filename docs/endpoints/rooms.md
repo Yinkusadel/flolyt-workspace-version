@@ -22,6 +22,24 @@ Every GET below returns `{ data: <shape below>, messages: string[], succeeded: b
 envelope is omitted from each `Response:` line for brevity; only the `data` shape is shown.
 Mutations show their real top-level shape including the envelope.
 
+### GET /rooms/{roomId}
+
+- **Purpose:** Direct Room loading (live collaboration Phase 1): open a Room from a link, invitation or investigation card. Source: `docs/rooms/revenue-threat-room-frontend-handoff-new.md`, "Direct Room loading".
+- **Auth:** Bearer token, active workspace member with access. Missing, foreign or inaccessible Rooms return 404 `Room not found.`; a restricted Room may stay discoverable in the index while its details and thread are inaccessible.
+- **Request:** path `roomId`.
+- **Response `data`** (real response, 2026-10-12, the user's Room "Dormant Accounts"): `{ id, title: "Dormant Accounts", conversationId, status: "open", ownerMemberId, viewerRole: "decision-owner" (nullable), createdAtUtc, archivedAtUtc: null, stage: "engage", mechanism: "dormant_accounts", currency: "USD", market: null, lifecycleClass: "InFlight", leadAgentKey: null, agents: [], mergedIntoRoomId: null, conversationPermissions: { canView, canContribute, canAdminister } }`. These are core metadata, NOT current exposure or verified financial outcomes. The conversation flags apply to the conversation only; they grant no proposal approval, Room management or tool execution.
+- **Not in it (header gaps):** people count, at risk at open / now, owner NAME (only `ownerMemberId`), `stageLabel`/`conditionLabel` (only the keys `stage` and `mechanism`), `openingNumber`, `isRecovering`, `threatConfirmationId` (so the threat tabs cannot be gated from it; the `GET /rooms` list row has it), restricted info. `openingNumber` also appears on `GET /rooms/{roomId}/decision`.
+- **Used by:** nothing yet (no service/hook scaffolded). **Status:** documented, not wired.
+
+### GET /rooms/{roomId}/stream
+
+- **Purpose:** The Room-wide live feed (live collaboration Phase 2): every participant's committed public messages plus concurrent agent events, kept open while viewing a Room. Full integration in `docs/rooms/room-live-collaboration-frontend-handoff.md` and the "Room-wide live feed" section of the new handoff.
+- **Auth:** Bearer token in a header with `Accept: text/event-stream` (native `EventSource` cannot do this: use a fetch-streaming SSE parser). 404 before SSE for missing/foreign/inaccessible; 400 for a cursor from another conversation or ahead of the journal.
+- **Request:** path `roomId`; `after` (cursor) or `Last-Event-ID` header. Bootstrap with `GET /rooms/{roomId}` + `GET /api/v3/conversations/{conversationId}`, then connect with `after=0` and reconcile the overlapping replay. Never resume from `room_stream_ready.head`.
+- **Events** (durable envelope: read payloads via `data.payload`, text via `data.message`): `room_stream_ready`, `message_committed` (upsert by `messageId`), `steering_updated`, `run_state` (Queued/Running/AwaitingApproval/Done/Failed/Cancelled), `stream_delivery_gap`, `agent_handoff`, `run_started`/`progress`/`response_chunk`/`final_response`/`error`/`run_cancelled`, `room_heartbeat`, `room_access_revoked`. Deduplicate by durable `eventId` (`{conversationId without hyphens}:{sequence}`, compare the suffix with `BigInt`); one buffer per `runId`; a committed assistant message replaces its run's draft; render from the Room feed, not also from the initiating POST stream (send POST with `Accept: application/json`).
+- **Sending:** `POST /api/v3/conversations/messages` `{ conversationId, message, replyMode: "auto" | "none", agentKey? }`; `none` = a teammate comment, no AI run, 200 without `runId`; JSON with a run returns 202 + receipt (merge by `runId`, not an answer).
+- **Used by:** nothing yet. **Status:** documented, not built. A reference reducer and test live in the BACKEND repo (`docs/examples/room-live-state.mjs`, `room-live-state.test.mjs`), not in this repo: ask the user for them.
+
 ### PUT /rooms/{roomId}/owner
 
 - **Purpose:** Hands the room to another member. Ownership exists so a leak can't sit open with everyone assuming someone else has it.

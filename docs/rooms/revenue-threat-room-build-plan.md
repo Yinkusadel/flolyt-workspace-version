@@ -121,10 +121,11 @@ Resume: user says "build" after the backend confirms.
    save/edit/delete, "Opened by Flolyt" on a real auto-opened Room). Saved login had expired, so
    nothing was checked against the real API in a browser by me. Mutations (assign owner, view
    create/edit/delete) have never been submitted live.
-3. **Room page: header BLOCKED, tabs NOT blocked** (corrected 2026-10-11, see "Room detail page plan"
-   below). The header needs the single-Room endpoint `GET /api/v3/rooms/{roomId}`; the user is asking
-   the backend. We chose NOT to build on a "pick the Room out of the list" workaround. Tab bodies have
-   their own per-room endpoints and are built one at a time behind a placeholder header.
+3. **Room page: header PARTLY UNBLOCKED (2026-10-12), tabs NOT blocked.** `GET /api/v3/rooms/{roomId}`
+   now exists (see "NEW HANDOFFS 2026-10-12"): the identity half of the header can be built; the figures
+   strip (people, at risk open/now), owner name, labels, opening number and threat-tab gating
+   (`threatConfirmationId`) are not in it. We still do NOT build on a "pick the Room out of the list"
+   workaround. Tab bodies have their own per-room endpoints and are built one at a time.
 4. Still unspecified: `/rooms/{roomId}/investigation`. (`/rooms/settings/investigations` is now
    specified, see the C5 section and rooms.md.) Scalar schemas still missing for most other new routes
    (monitoring, plan, verification, lessons items, ...). Scalar has no "Show Schema" toggle for the user,
@@ -215,6 +216,108 @@ Resume: user says "build" after the backend confirms.
    `revisions[].number` (display only) until a field exists.
 8. Layout was checked on mock data (30 items, empty, full, mobile); the filled real-data layout was seen
    in the user's screenshots and looked right. Count badge on the Decision tab: none (n/a).
+
+### NEW HANDOFFS 2026-10-12 (read these; they change earlier conclusions)
+Two files were added in `docs/rooms/`: `revenue-threat-room-frontend-handoff-new.md` (a newer, longer version
+of the handoff: direct Room loading, Room-wide live feed, resolution-plan routes, verification bodies,
+lessons/retire, conversation initiation) and `room-live-collaboration-frontend-handoff.md` (the React/Vite
+integration + acceptance for the live thread). They reference files NOT in this repo
+(`room-live-collaboration-plan.md`, `conversation-threat-convergence-plan.md`, `examples/room-live-state.mjs`
+and its test): ask the user for them.
+1. **`GET /api/v3/rooms/{roomId}` now EXISTS** (real response in `docs/endpoints/rooms.md`). It gives title,
+   `conversationId`, status, `ownerMemberId`, `viewerRole`, stage/mechanism keys, currency, market,
+   lifecycleClass, leadAgentKey, agents, `mergedIntoRoomId`, `conversationPermissions`. It does NOT give
+   people, at-risk open/now, owner name, labels, `openingNumber`/`isRecovering`, `threatConfirmationId`.
+   So the REAL header can be built now for the identity half, with the figures strip and the threat-tab
+   gating still waiting (ask the backend, or decide how to source them).
+2. **The live thread is meant to be shown INSIDE the Room view** ("Open one Room and show its existing
+   conversation"), with a Room-wide SSE feed: this corrects my earlier "Open thread just links to
+   `/conversations/:id`". Layout (side panel vs a Thread tab) is not prescribed: user to choose. See the
+   "Live thread plan" below.
+3. Evidence for an earlier assumption: the same uuid `01a0f8e0-889e-7e5b-9b14-c5eb4c3a844c` is the user's
+   `ownerMemberId`, dissent `byUserId`, revision `byUserId` and subscriptions `userId`, so a workspace
+   member `id` is the user id (supports the My load picker assumption; verify with a second member).
+4. Briefing: the handoff says "the briefing remains the investigation summary; use its existing route", but
+   NO endpoint named briefing/summary exists in any doc. Candidate sources: `runs[].result` of
+   `GET /rooms/{roomId}/runs`, the first system message of the Room conversation, and the unspecified
+   `/rooms/{roomId}/investigation`; the rest of the Briefing is composed from existing tab endpoints.
+
+#### Live thread plan (NOT BUILT; plan with the user, then wait for "build")
+Read the existing chat panel code and `docs/chat-panel/` first (sibling repo `flolyt-dashboard`
+`src/features/ai-agent` is the source pattern); reuse its message rendering (Markdown, handoff cards,
+steering), replacing the per-run stream with the Room-wide feed. Steps: (1) service + hook for
+`GET /rooms/{roomId}`; (2) bootstrap: Room + conversation history; (3) fetch-streaming SSE client with a
+bearer token (CRLF/LF, multiline data, comments, chunk boundaries), backoff with jitter (1-15 s), one
+subscription per mounted Room view, abort on unmount (Strict Mode), cursor stored per workspace/Room/
+conversation and cleared on sign-out; (4) port the reference reducer (cursor checks, `messageId` upsert,
+per-run buffers, handoff/steering/delivery-gap/revocation); (5) timeline UI keeping the causal order
+(user message, its handoffs, Maestro acknowledgement, attributed specialist replies; use each message's own
+`timestamp`, not the envelope `atUtc`); (6) composer: the mode switcher below, `@[agent:key]` mentions
+(one responder), POST with `Accept: application/json`, `replyMode`; (7) 401 / 403-404 / 400 cursor / 5xx
+handling and `room_access_revoked`; (8) acceptance with two real accounts. Risks: touches the working
+chat panel (regression check), model usage in testing, proxy buffering and idle timeout, no second account
+to test collaboration. Still to ask the user: the backend's reducer + test files (`room-live-state.mjs`).
+
+#### Room page layout with the thread: DECIDED 2026-10-12 (user's choice, not built)
+- **A side panel, not a tab.** The Room page becomes two areas: LEFT = the Room header + tab bar + the
+  active tab; RIGHT = the live thread panel, always showing so people can converse while checking tabs.
+- **The main app sidebar collapses when the thread is open** to make room. It must be a temporary
+  override: `src/components/sidebar.tsx` stores its own collapsed state in local storage
+  (`SIDEBAR_COLLAPSED_KEY`); opening the thread must not overwrite that saved preference, and closing the
+  thread restores it. Needs a way for the Room page to ask the app layout to collapse the sidebar.
+- **Decision tab spacing (open to a better layout):** it is two columns today (card + revisions | objections
+  + falsifiers, right column 380px). With the sidebar collapsed and a ~400px thread, the content area is
+  roughly 900px, which makes two columns cramped. Proposed: switch Decision (and later tabs) to a CONTAINER
+  query on the tab area instead of the viewport, so below ~1000px of tab width it stacks to one column
+  with the two collapsed panels (Objections, What would change this) directly under the decision card and
+  Revisions last; collapsed by default they cost only two header rows.
+- **Small screens:** a side-by-side panel cannot fit; below an `xl` width the thread becomes an overlay
+  drawer opened from the header's "Open thread" button, and above it the panel is open by default and
+  remembered per browser.
+- The conversation is one reusable component (messages, handoff cards, composer with the mode switcher),
+  so the same component serves the panel (and could serve `/conversations/:id`).
+
+### ISSUES AND DEFERRED LOG (Room page, keep adding; mark DONE, never delete)
+- [ ] Header figures: the single-Room `GET /rooms/{roomId}` lacks people, at-risk open/now, owner name,
+  `stageLabel`/`conditionLabel`, `openingNumber`, `isRecovering`, `threatConfirmationId`,
+  `systemOpenedBy`, `restricted`. All are on the `GET /rooms` list row (real response 2026-10-12). Decision:
+  do NOT read them from the list; leave them out with `❌` comments; ticket written (below). On the
+  user's Room `conditionLabel` equals the raw key (`dormant_accounts`) and `stageLabel` is `ENGAGE`.
+- [ ] Threat-tab gating needs `threatConfirmationId` (null on the user's Room, an ordinary one).
+- [ ] `/rooms/{roomId}/investigation`: DEFERRED by the user. Real response for the user's Room: HTTP 404,
+  `{ data: null, messages: ["This room has no lead agent, so nothing investigates it. Staff one and the
+  investigation starts within the minute."], succeeded: false }`. The route works; the page must show that
+  message as a STATE (no lead agent), not an error; the success shape is unseen and needs a Room with a
+  lead agent (staffing one starts an investigation = model credits; ask before doing it).
+- [ ] `GET /rooms/{roomId}/runs` real response never captured (the user pasted the list by mistake; it
+  would be empty for a Room with no agents anyway).
+- [ ] Briefing has no summary endpoint (see "NEW HANDOFFS"); candidates: `runs[].result`, the first system
+  message of the conversation, `/investigation`.
+- [ ] The live thread (placement decided above), the reducer files from the backend repo, `replyMode` and
+  the mode switcher, the reply-mode preference ticket.
+- [ ] Decision tab leftovers: see its COME BACK TO list.
+- [ ] A second workspace member is needed to test collaboration and the My load picker.
+
+**Ticket text (user to raise): "Add the Room header fields to `GET /api/v3/rooms/{roomId}`".** The Room page
+header needs these fields; today they are only on each item of `GET /api/v3/rooms` (`data.rooms[]`).
+Please add them, unchanged, to `data` of `GET /api/v3/rooms/{roomId}`, and leave the list as it is.
+| Field | Type (from the real list response) | Currently on | Move/add to |
+|---|---|---|---|
+| `population` | int (37) | list item | single-Room `data` |
+| `amountAtRiskAtOpen` | number or null (2618.985) | list item | single-Room `data` |
+| `currentAmountAtRisk` | number or null | list item | single-Room `data` |
+| `currentAmountComputedAtUtc` | date-time or null | list item | single-Room `data` |
+| `ownerName` | string or null ("Chad Sado") | list item | single-Room `data` |
+| `stageLabel` | string ("ENGAGE") | list item | single-Room `data` |
+| `conditionLabel` | string ("dormant_accounts") | list item | single-Room `data` |
+| `openingNumber` | int (1) | list item | single-Room `data` |
+| `isRecovering` | bool | list item | single-Room `data` |
+| `threatConfirmationId` | uuid or null | list item | single-Room `data` (decides the threat tabs and "Opened by Flolyt") |
+| `systemOpenedBy` | string or null | list item | single-Room `data` |
+| `restricted` | object or null (shape unseen) | list item | single-Room `data` (restricted info) |
+The single-Room response already has `conversationId`, `status`, `ownerMemberId`, `viewerRole`, `stage`,
+`mechanism`, `currency`, `market`, `lifecycleClass`, `leadAgentKey`, `agents`, `mergedIntoRoomId`,
+`conversationPermissions`, `createdAtUtc`, `archivedAtUtc`.
 
 ### Room thread and collaboration (IMPORTANT, found 2026-10-11, NOT BUILT)
 **What the designs show:** no Room tab has a chat box, thread or composer. "Open thread" appears ONLY on
