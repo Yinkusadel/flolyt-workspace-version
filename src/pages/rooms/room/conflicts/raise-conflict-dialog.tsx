@@ -11,6 +11,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { SearchableSelect, SearchableSelectSkeleton } from "@/components/ui/searchable-select";
+import useGetSupportedCurrencies from "@/features/currency/use-get-supported-currencies";
 import useCreateConflict from "@/features/rooms/use-create-conflict";
 
 const MIN_READINGS = 2;
@@ -77,6 +79,11 @@ export function RaiseConflictDialog({
   const [summary, setSummary] = React.useState("");
   const [readings, setReadings] = React.useState<ReadingDraft[]>([emptyReading(0), emptyReading(1)]);
   const { createConflict, isPending } = useCreateConflict({ onSuccess: () => onOpenChange(false) });
+  const { supportedCurrencies, isLoading: currenciesLoading } = useGetSupportedCurrencies();
+  const currencyOptions = React.useMemo(
+    () => (supportedCurrencies?.currencies ?? []).map((code) => ({ value: code, label: code })),
+    [supportedCurrencies]
+  );
 
   const problems = readings.map(readingProblem);
   const canSubmit = summary.trim().length > 0 && readings.length >= MIN_READINGS && problems.every((p) => p === null);
@@ -202,7 +209,7 @@ export function RaiseConflictDialog({
                     className={INPUT}
                   />
                 </div>
-                <div className="grid grid-cols-[1fr_5rem] gap-2">
+                <div className="grid grid-cols-[1fr_8rem] gap-2">
                   <div>
                     <label htmlFor={`r${index}-effect`} className={FIELD_LABEL}>
                       Expected effect
@@ -221,15 +228,32 @@ export function RaiseConflictDialog({
                     <label htmlFor={`r${index}-cur`} className={FIELD_LABEL}>
                       Currency
                     </label>
-                    <input
-                      id={`r${index}-cur`}
-                      maxLength={3}
-                      value={reading.currency}
-                      disabled={isPending || reading.expectedEffect === ""}
-                      onChange={(event) => update(index, { currency: event.currentTarget.value.toUpperCase() })}
-                      placeholder="NGN"
-                      className={INPUT}
-                    />
+                    {currenciesLoading ? (
+                      <SearchableSelectSkeleton />
+                    ) : currencyOptions.length > 0 ? (
+                      // The app's supported currencies (the same list onboarding and Markets use).
+                      <SearchableSelect
+                        id={`r${index}-cur`}
+                        options={currencyOptions}
+                        value={reading.currency || null}
+                        onChange={(currency) => update(index, { currency })}
+                        placeholder="Select"
+                        searchPlaceholder="Search..."
+                        disabled={isPending || reading.expectedEffect === ""}
+                        className="rounded-control bg-paper text-[12px]"
+                      />
+                    ) : (
+                      // The list could not be loaded: keep the form usable with a typed 3-letter code.
+                      <input
+                        id={`r${index}-cur`}
+                        maxLength={3}
+                        value={reading.currency}
+                        disabled={isPending || reading.expectedEffect === ""}
+                        onChange={(event) => update(index, { currency: event.currentTarget.value.toUpperCase() })}
+                        placeholder="NGN"
+                        className={INPUT}
+                      />
+                    )}
                   </div>
                 </div>
                 {reading.expectedEffect === "" && (

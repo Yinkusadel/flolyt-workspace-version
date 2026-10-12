@@ -118,7 +118,14 @@ export function SearchableSelect({
           />
         </div>
 
-        <div className="max-h-64 overflow-y-auto p-1">
+        {/* The list renders in a portal, outside any Dialog it is used in. A modal Dialog locks wheel and touch
+            scrolling everywhere outside its own content, so without these two handlers the list cannot be scrolled
+            from inside a dialog. Stopping the event here keeps it from reaching that lock. */}
+        <div
+          className="max-h-64 overflow-y-auto overscroll-contain p-1"
+          onWheel={(event) => event.stopPropagation()}
+          onTouchMove={(event) => event.stopPropagation()}
+        >
           {filtered.length === 0 && (
             <p className="px-2.5 py-3 text-center text-[11.5px] text-ink-4">{emptyText}</p>
           )}
