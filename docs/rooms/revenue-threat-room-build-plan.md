@@ -321,6 +321,41 @@ decisions it encodes:
   would be empty for a Room with no agents anyway).
 - [ ] Briefing has no summary endpoint (see "NEW HANDOFFS"); candidates: `runs[].result`, the first system
   message of the conversation, `/investigation`.
+- [ ] **`GET /api/v3/conversations/{id}` returns 404 for the user's Room's own `conversationId`** (2026-10-12).
+  Room `01a0fc76-a89c-7d41-899a-bba0214c9923` ("Dormant Accounts", opened 2026-10-02, owner/decision-owner,
+  `conversationPermissions` all true) returns `conversationId` `01a0fc76-a891-7262-ae7e-935bfa25d226`;
+  `GET /conversations/{that id}` answers HTTP 404 `{ data: null, messages: ["Conversation not found."],
+  succeeded: false }`, with and without the `X-Flolyt-Agent-Contract: v3` header. `GET /conversations`
+  (the list) is EMPTY for this account (so the list tells us nothing about Room conversations).
+  Suspected: older Rooms have a `conversationId` but no stored conversation. NOT yet tried: a people-only
+  `POST /conversations/messages` (`replyMode: "none"`) into that id (writes one message into the real Room,
+  no model cost). Ticket text is in the chat; the thread UI must treat this as a state ("this Room has no
+  thread yet"), and the live thread cannot be tested on this Room until a conversation exists.
+- [x] **Conflicts tab BUILT 2026-10-12** (`npx tsc -b` and `npm run build` clean; layout checked on a deleted
+  mock harness with the user's REAL `GET /rooms/{roomId}/conflicts` response plus mock escalated/settled
+  conflicts): `src/pages/rooms/room/conflicts/` = `index.tsx` (tab, "N open · N settled", "Raise a conflict...",
+  open list, "Settled" section with "Show settled conflicts"), `conflict-card.tsx` (open card with Open / Waiting
+  on you chips, escalation note, the amber "These effects can't be compared" banner when `comparableEffect` is
+  false, two reading cards, then the three action areas; settled card with Chosen / Not chosen), `reading-card.tsx`,
+  `conflict-actions.tsx` (Choosing panel with a required reason, "Ask for a third reading", Escalate with a people
+  picker), `raise-conflict-dialog.tsx` (the create form: summary + 2 to 5 readings; a reading is priced with a
+  3-letter currency, or says why it cannot be). The Conflicts tab bar now shows the response's `open` count as a
+  badge. Real response matched the documented schema exactly; the user raised a test conflict via Scalar, so a
+  person CAN raise one with empty `evidenceClaimIds`.
+  Left out with `❌` comments: the "Run in progress" chip on a third-reading question (no run state in the
+  conflict response; docs do not say the POST starts a run; `runId` sent as null), supporting-claim LINKS (Evidence
+  tab not built; plain count shown), an evidence-claim picker on the raise form (sends `[]`), the design's phrase
+  "Both readings are supported by evidence" (false when `evidenceClaimIds` is empty, so not shown).
+  Refinements 2026-10-12: the "These effects can't be compared" note is NOT in the card any more: it sits behind an
+  info icon beside "Raise a conflict..." (the Leakage Map's notes pattern: amber with a count, hidden by default,
+  slides open), and its sentence is built from the readings' own fields (the unpriced reading's
+  `effectUnavailableBecause`, or the differing currencies), because the API returns only the boolean
+  `comparableEffect`. The "Ask for a third reading" question list shows about three questions (`max-h-52`) and
+  scrolls the rest, the question box stays fixed, and the Escalate card no longer stretches (`items-start`).
+  Shared pieces added: `src/components/ui/collapse.tsx` (moved from the Leakage Map, which re-exports it) and
+  `src/components/ui/notes-toggle.tsx` (the Leakage Map still has its own private copy; it could adopt this one).
+  UNVERIFIED live: choose, third reading, escalate and the raise form's UI (the raise POST itself worked via Scalar);
+  "Waiting on you" depends on `user.id` equalling `waitingOnUserId` (same uuid as the user's other ids).
 - [ ] The live thread (placement decided above), the reducer files from the backend repo, `replyMode` and
   the mode switcher, the reply-mode preference ticket.
 - [ ] Decision tab leftovers: see its COME BACK TO list.

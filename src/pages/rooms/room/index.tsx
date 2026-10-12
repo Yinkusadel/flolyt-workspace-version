@@ -3,6 +3,8 @@ import { useParams, useSearchParams } from "react-router-dom";
 
 import { UnderlineTabs } from "@/components/ui/underline-tabs";
 import useMarkRoomOpened from "@/features/rooms/use-mark-room-opened";
+import { useGetRoomConflicts } from "@/features/rooms/use-get-room-conflicts";
+import { ConflictsTab } from "@/pages/rooms/room/conflicts";
 import { DecisionTab } from "@/pages/rooms/room/decision";
 
 type RoomTab =
@@ -79,6 +81,11 @@ export const RoomPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
+  // The Conflicts tab's count badge is the response's own `open` number. Same params as the tab itself,
+  // so the badge and the tab read one cached request.
+  const conflicts = useGetRoomConflicts(roomId ?? "", { includeResolved: true });
+  const openConflicts = conflicts.data ? conflicts.data.data.open : null;
+
   const activeLabel = TABS.find((tab) => tab.key === active)?.label ?? "";
 
   return (
@@ -90,9 +97,16 @@ export const RoomPage = () => {
           key: tab.key,
           label: tab.label,
           to: tab.key === "briefing" ? `/rooms/${roomId}` : `/rooms/${roomId}?tab=${tab.key}`,
+          badge: tab.key === "conflicts" ? openConflicts : null,
         }))}
       />
-      {active === "decision" && roomId ? <DecisionTab roomId={roomId} /> : <TabPlaceholder label={activeLabel} />}
+      {active === "decision" && roomId ? (
+        <DecisionTab roomId={roomId} />
+      ) : active === "conflicts" && roomId ? (
+        <ConflictsTab roomId={roomId} />
+      ) : (
+        <TabPlaceholder label={activeLabel} />
+      )}
     </div>
   );
 };

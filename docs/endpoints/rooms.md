@@ -293,8 +293,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ summary: string, readings: [{ key, label, recommends, because, evidenceClaimIds, expectedReach, expectedEffect, currency, effectUnavailableBecause, longRunEffect }] }`.
 - **Response:** `{ data: conflictId, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/create-conflict.ts` / `src/features/rooms/use-create-conflict.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** service + hook ready (`src/services/api/rooms/create-conflict.ts` / `src/features/rooms/use-create-conflict.ts`), not wired into a page yet. The design has no create form (conflicts are normally raised by an agent, "Raised by Arbiter").
+- **Status:** LIVE-VERIFIED through Scalar 2026-10-12: a PERSON (the Room's decision owner, an administrator) raised a conflict with two readings and EMPTY `evidenceClaimIds`; response `200 { data: "01a130be-e243-71df-85f7-2db56801bb86", messages: ["Conflict raised."], succeeded: true }`. So the route is not agent-only for that role, and readings do not need real evidence claims. Other roles untested. The test conflict now exists on the user's Room "Dormant Accounts" (`01a0fc76-a89c-7d41-899a-bba0214c9923`).
 - **Notes:** Refused with only one reading — that's a recommendation, not a dispute. Waits on the room's decision owner.
 
 ### POST /rooms/conflicts/{conflictId}/choose
