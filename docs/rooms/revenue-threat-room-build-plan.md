@@ -352,6 +352,11 @@ decisions it encodes:
   `effectUnavailableBecause`, or the differing currencies), because the API returns only the boolean
   `comparableEffect`. The "Ask for a third reading" question list shows about three questions (`max-h-52`) and
   scrolls the rest, the question box stays fixed, and the Escalate card no longer stretches (`items-start`).
+  Each OPEN conflict card is collapsible (decided 2026-10-12): it starts COLLAPSED to its header (Open / Waiting
+  chips, title, "Raised by", escalation note); the whole header toggles, the readings, choose panel, third reading
+  and Escalate live in the body. All start collapsed, including the first. SETTLED cards collapse the same way
+  (header = title + "Settled by", body = the two readings and the reason), also collapsed by default. A
+  per-READING collapse was tried and reverted: the user meant the conflict card, not each reading.
   Shared pieces added: `src/components/ui/collapse.tsx` (moved from the Leakage Map, which re-exports it) and
   `src/components/ui/notes-toggle.tsx` (the Leakage Map still has its own private copy; it could adopt this one).
   UNVERIFIED live: choose, third reading, escalate and the raise form's UI (the raise POST itself worked via Scalar);
