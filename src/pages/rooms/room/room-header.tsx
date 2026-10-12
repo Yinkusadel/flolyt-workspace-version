@@ -180,12 +180,12 @@ export function RoomHeader({ room }: { room: RoomDetailDto }) {
         <div>
           <p className={STAT_LABEL}>At risk now</p>
           {live === null ? (
-            <p className="mt-1 text-[13px] text-ink-3 italic">Live figure unavailable</p>
+            <p className="mt-1 text-[13px] leading-6.75 text-ink-3 italic">Live figure unavailable</p>
           ) : (
             <p className="mt-1 font-mono text-[18px] font-semibold text-ink">{formatWholeMoney(live, room.currency)}</p>
           )}
         </div>
-        <p className="max-w-xs text-[11.5px] leading-snug text-ink-3">
+        <p className="text-[11.5px] leading-6.75 text-ink-3">
           {live !== null && room.currentAmountComputedAtUtc
             ? `Live figure computed ${formatUtcTime(room.currentAmountComputedAtUtc)} UTC. `
             : ""}
