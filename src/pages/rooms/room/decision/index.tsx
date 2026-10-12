@@ -6,7 +6,7 @@ import { FalsifiersPanel } from "@/pages/rooms/room/decision/falsifiers-panel";
 import { ObjectionsPanel } from "@/pages/rooms/room/decision/objections-panel";
 import { Revisions } from "@/pages/rooms/room/decision/revisions";
 
-const LAYOUT = "grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]";
+const LAYOUT = "grid items-start gap-6 @5xl:grid-cols-[minmax(0,1fr)_380px]";
 
 function DecisionSkeleton() {
   return (

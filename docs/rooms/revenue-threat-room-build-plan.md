@@ -9,6 +9,72 @@ this doc is the umbrella plan, not a build log. Nothing below is built unless ma
 Everything below this section is the history of how we got here. Where an older section disagrees
 with this one, this one wins.
 
+### SESSION 3 UPDATE (2026-10-12): read this before the 2026-10-11 summary below, it supersedes it
+**Branch `revenue-threat-room`, last pushed commit `fee69c4`.** The "Room detail page is BLOCKED" line
+below is OUT OF DATE: the backend added `GET /rooms/{roomId}` and the page is built as follows.
+- **Built and pushed:** Room page shell + real HEADER (title/chips/owner line/three figures/Watching menu,
+  breadcrumb "Rooms / <title>", "Room not found." state, threat tabs gated by `threatConfirmationId`);
+  Decision tab; Conflicts tab incl. the Raise a conflict form (no close on outside click); header alignment
+  fix (the "At risk now" null state shares the figures' line height; the note keeps its text and sits on
+  the same line). Tabs still placeholders: Briefing, Plays, Evidence, Agents & runs, People & guardrails,
+  Cohort & overlaps, Log, and the two threat tabs.
+- **Watching menu semantics (explained to the user):** it writes a PERSONAL notification preference only
+  (`GET /rooms/subscriptions`, `PATCH`-style `/rooms/{roomId}/notify-level`, `/watch`, `/unwatch`). Owners
+  cannot mute ("Nothing" disabled) and "Stop watching" is hidden for owners BY DESIGN, so the owner never
+  sees it; it shows for non-owner watchers. Whether the backend would allow an owner to unwatch is
+  unchecked. UNVERIFIED live: no real click on any Watching write yet.
+- **"A change in this figure isn't a recovery claim." is my own adaptation** of the docs' close-room `delta`
+  note (`docs/endpoints/rooms.md`, "not a recovery claim"), NOT a design line. User asked to keep it; if a
+  design/doc source is never found, treat it as an unverified label.
+- **Live thread: CONCLUSIONS 2026-10-12 (still NOT BUILT, user waiting on the backend files):**
+  - Transport is plain **SSE**, NOT SignalR. Backend handoffs: revenue-threat-room-frontend-handoff.md lines
+    78 and 366 ("No SignalR connection is required"). SignalR appears only in the older chat-panel handoff.
+    It is still live (long-lived push connection, events within about a second, heartbeats, resumable by
+    `eventId` / `Last-Event-ID`); send is a plain `POST /conversations/messages`.
+  - The Room feed is a DIFFERENT wire format from the per-run stream the chat panel uses (durable envelope,
+    `message_committed`, `room_stream_ready`, `room_access_revoked`, Room-wide across all runs). Only the
+    presentational pieces (Markdown, handoff/steering cards) may be reused.
+  - **The Room thread gets its OWN stream client, reducer, state and send hook in the Rooms feature folder;
+    the AI chat panel code is NOT modified** (re-check the chat panel after the build).
+  - **WAITING ON: the backend's `docs/examples/room-live-state.mjs` and `docs/examples/room-live-state.test.mjs`**
+    (backend repo; not in this repo; not derivable from Scalar or by testing). The user will get them from their
+    boss via a ticket and copy them into `docs/rooms/examples/`. Ticket text: "Please share
+    `docs/examples/room-live-state.mjs` and `docs/examples/room-live-state.test.mjs` from the backend repo
+    (referenced in the Room live collaboration frontend handoff). The frontend will port that reducer for
+    `GET /api/v3/rooms/{roomId}/stream`." Fallback if refused: build from the handoff reconciliation table plus
+    real frame captures, flagging every inferred rule.
+  - **Test setup agreed:** the user lets me send messages freely on "Dormant Accounts" (credits OK). The Room
+    has NO agents, so an agent may decline; if nothing replies, ask the user to add one. Second account:
+    `hitsugaya@yopmail.com`, a member of Chad's workspace (still check it is on the Room's people; do not add
+    it myself). Sign-in is passwordless: request the OTP, ask the user to paste the code from yopmail (do not
+    ask for a code in advance), then save a storageState. Use two Playwright contexts on a throwaway port,
+    never port 3000.
+  - **First slice, offered and waiting for "build":** panel shell (400px right panel, sidebar to a 56px rail
+    while open, drawer under 1100px, "Open thread" button), roster strip from the Room's `agents`, history from
+    `GET /conversations/{id}`, composer UI with the mode switcher; capture the real `/stream` frames in the
+    same pass. Live feed + agent message variants wait for the reducer files.
+- **THREAD SLICE 1: BUILT 2026-10-12 (`npx tsc -b` and `npm run build` clean; checked on a deleted mock harness with the real response shapes).**
+  Files: `src/pages/rooms/room/thread/{index,thread-message,composer,use-media-query}`, `src/components/sidebar-override-context.tsx`
+  (+ `forceCollapsed` on `sidebar.tsx`/`app-layout.tsx`), `use-get-room-thread.ts`, `use-send-room-message.ts`, `send-room-message.ts`.
+  What it does: 400px docked panel on the right (open by default, remembered in `flolyt-room-thread-open`), the app sidebar shown as the
+  56px rail while docked WITHOUT touching its saved preference (`flolyt-sidebar-collapsed`), overlay drawer + floating "Thread" button under
+  1100px, "Open thread" in the header when the panel is closed, history from `GET /conversations/{conversationId}` (people teal-less plain
+  bubbles, agent blue-outlined Markdown bubbles, handoff cards reused read-only from the chat panel, follow-up chips send a new `auto`
+  message, `context`/`error` roles never shown, day separators), roster strip from the Room's `agents` + a people count from
+  `/rooms/{roomId}/people`, composer (mode switcher with explaining popover remembered per conversation, `@` agent picker, Enter sends;
+  `@Name` is sent as the stored mention `@[agent:key]`; `replyMode: "none"` for "Post to the people"), a read-only note when
+  `conversationPermissions.canContribute` is false, a skeleton/empty/error state each. Decision's two columns now follow a CONTAINER
+  (`@5xl`, set on the tab area) instead of the viewport so it stacks when the thread takes width.
+  **INTERIM, replace when the feed lands:** `useGetRoomThread` polls every 5 s (`refetchInterval`); a 202 receipt shows an "<agent> is working
+  on this" line until a reply with that `runId` appears (3 min cap). **Not built:** the SSE feed + reducer, the Live indicator, agent state
+  dots, approval card, steering receipt, delivery-gap notice, unread count on "Open thread".
+  **UNVERIFIED LIVE (mocks only):** the real `POST /conversations/messages` receipt envelope (the service accepts bare or `data`-wrapped
+  fields until a capture), a real send, and the real Room conversation with messages. The chat panel code was not modified.
+  **Ticket candidates:** the history has no `replyMode` per message, so a saved people-only note can't be tagged; `/rooms/{roomId}/people`
+  has user ids but no names, so the roster can't show people.
+- **Other Room work still open:** Restrict... dialog, Close room page, Plays tab (empty list, no create route),
+  Briefing (no summary endpoint; `/investigation` deferred), Admin tab (backend answers), threat tabs.
+
 **Summary:** the new `/rooms` page is a tab shell with four built tabs (Rooms, Convening, Dissent,
 My load) and a fifth (Admin) ON HOLD for backend answers. The Room detail page is still BLOCKED on
 `GET /api/v3/rooms/{roomId}`. Everything is on the wire with `npx tsc -b` and `npm run build` clean,

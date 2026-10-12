@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Check, ChevronDown, Lock, Zap } from "lucide-react";
+import { Check, ChevronDown, Lock, MessageSquare, Zap } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -108,10 +108,10 @@ function WatchingMenu({ roomId }: { roomId: string }) {
 
 /**
  * The Room's identity and figures (Room · Briefing.png header), from `GET /api/v3/rooms/{roomId}`. Plain header, no
- * card. Held for later steps: Restrict... and Close room (their own flows), Open thread (with the thread panel),
+ * card. Held for later steps: Restrict... and Close room (their own flows),
  * and the "Worsened" chip on an automatic Room (from threat-monitoring).
  */
-export function RoomHeader({ room }: { room: RoomDetailDto }) {
+export function RoomHeader({ room, onOpenThread }: { room: RoomDetailDto; onOpenThread?: () => void }) {
   const live = room.currentAmountAtRisk;
 
   return (
@@ -160,6 +160,12 @@ export function RoomHeader({ room }: { room: RoomDetailDto }) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {onOpenThread && (
+            <Button type="button" variant="outline" size="sm" onClick={onOpenThread}>
+              <MessageSquare className="size-3.5" />
+              Open thread
+            </Button>
+          )}
           <WatchingMenu roomId={room.id} />
         </div>
       </div>

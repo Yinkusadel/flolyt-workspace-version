@@ -1,7 +1,9 @@
 import * as React from "react";
+import { MessageSquare } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { usePageBreadcrumb } from "@/components/breadcrumb-context";
+import { useForceSidebarCollapsed } from "@/components/sidebar-override-context";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UnderlineTabs } from "@/components/ui/underline-tabs";
@@ -10,6 +12,8 @@ import { useGetRoom } from "@/features/rooms/use-get-room";
 import { useGetRoomConflicts } from "@/features/rooms/use-get-room-conflicts";
 import { ConflictsTab } from "@/pages/rooms/room/conflicts";
 import { DecisionTab } from "@/pages/rooms/room/decision";
+import { ThreadPanel } from "@/pages/rooms/room/thread";
+import { useMediaQuery } from "@/pages/rooms/room/thread/use-media-query";
 import { RoomHeader, RoomHeaderSkeleton } from "@/pages/rooms/room/room-header";
 
 interface TabDef {
@@ -68,6 +72,17 @@ function RoomUnavailable({ message, onRetry }: { message: string; onRetry: () =>
   );
 }
 
+const THREAD_OPEN_KEY = "flolyt-room-thread-open";
+
+/** Docked-panel preference, remembered per browser. Open unless the person closed it; storage may be blocked. */
+function readThreadOpen(): boolean {
+  try {
+    return localStorage.getItem(THREAD_OPEN_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+
 /** `/rooms/:roomId`: the Room page. The active tab lives in the URL (`?tab=`), default Briefing. */
 export const RoomPage = () => {
   const { roomId } = useParams();
@@ -93,6 +108,24 @@ export const RoomPage = () => {
   const conflicts = useGetRoomConflicts(data ? (roomId ?? "") : "", { includeResolved: true });
   const openConflicts = conflicts.data ? conflicts.data.data.open : null;
 
+  // The thread: docked on the right on wide screens (open by default, remembered), an overlay drawer below 1100px.
+  const wide = useMediaQuery("(min-width: 1100px)");
+  const [dockedOpen, setDockedOpen] = React.useState(readThreadOpen);
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const conversationId = data?.conversationId ?? null;
+  const docked = wide && dockedOpen && !!conversationId;
+  const drawer = !wide && drawerOpen && !!conversationId;
+  useForceSidebarCollapsed(docked);
+  const setDocked = (open: boolean) => {
+    setDockedOpen(open);
+    try {
+      localStorage.setItem(THREAD_OPEN_KEY, open ? "1" : "0");
+    } catch {
+      // Not remembered; the panel still follows this session's choice.
+    }
+  };
+  const openThread = () => (wide ? setDocked(true) : setDrawerOpen(true));
+
   const tabs = React.useMemo(() => (data?.threatConfirmationId ? [...THREAT_TABS, ...TABS] : TABS), [data?.threatConfirmationId]);
   const active = tabs.some((tab) => tab.key === tabParam) ? (tabParam as string) : "briefing";
   const activeLabel = tabs.find((tab) => tab.key === active)?.label ?? "";
@@ -113,9 +146,9 @@ export const RoomPage = () => {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <RoomHeader room={data} />
+  const content = (
+    <div className="min-w-0 flex-1 space-y-6">
+      <RoomHeader room={data} onOpenThread={conversationId && !docked ? openThread : undefined} />
       <UnderlineTabs
         active={active}
         tabs={tabs.map((tab) => ({
@@ -125,13 +158,48 @@ export const RoomPage = () => {
           badge: tab.key === "conflicts" ? openConflicts : null,
         }))}
       />
-      {active === "decision" ? (
-        <DecisionTab roomId={roomId} />
-      ) : active === "conflicts" ? (
-        <ConflictsTab roomId={roomId} />
-      ) : (
-        <TabPlaceholder label={activeLabel} />
-      )}
+      {/* A container, not the viewport, decides when a tab stacks: the thread takes width from the tab area. */}
+      <div className="@container">
+        {active === "decision" ? (
+          <DecisionTab roomId={roomId} />
+        ) : active === "conflicts" ? (
+          <ConflictsTab roomId={roomId} />
+        ) : (
+          <TabPlaceholder label={activeLabel} />
+        )}
+      </div>
     </div>
+  );
+
+  return (
+    <>
+      <div className="flex items-start gap-6">
+        {content}
+        {docked && conversationId && (
+          <aside className="sticky top-0 h-[calc(100dvh-var(--spacing-topbar)-var(--spacing-page)*2)] w-100 shrink-0">
+            <ThreadPanel room={data} conversationId={conversationId} onClose={() => setDocked(false)} />
+          </aside>
+        )}
+      </div>
+
+      {drawer && conversationId && (
+        <>
+          <div aria-hidden onClick={() => setDrawerOpen(false)} className="fixed inset-0 z-40 bg-ink/40" />
+          <aside className="fixed inset-y-0 right-0 z-40 w-[min(25rem,100vw)] p-2">
+            <ThreadPanel room={data} conversationId={conversationId} onClose={() => setDrawerOpen(false)} />
+          </aside>
+        </>
+      )}
+      {!wide && !drawerOpen && conversationId && (
+        <button
+          type="button"
+          onClick={() => setDrawerOpen(true)}
+          className="fixed right-4 bottom-4 z-30 inline-flex items-center gap-2 rounded-full bg-ultra px-4 py-2.5 text-[12.5px] font-medium text-white shadow-lg"
+        >
+          <MessageSquare className="size-4" />
+          Thread
+        </button>
+      )}
+    </>
   );
 };

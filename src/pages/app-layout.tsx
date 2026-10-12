@@ -4,6 +4,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { BreadcrumbContext, type Crumb } from "@/components/breadcrumb-context";
+import { SidebarOverrideContext } from "@/components/sidebar-override-context";
 import { cn } from "@/lib/utils";
 
 /**
@@ -73,6 +74,7 @@ function renderCrumbs(crumbs: Crumb[]): React.ReactNode {
 
 export const AppLayout = () => {
   const [navOpen, setNavOpen] = React.useState(false);
+  const [forceCollapsed, setForceCollapsed] = React.useState(false);
   const [breadcrumbOverride, setBreadcrumbOverride] = React.useState<Crumb[] | null>(null);
   const location = useLocation();
   const breadcrumbContextValue = React.useMemo(
@@ -102,7 +104,7 @@ export const AppLayout = () => {
 
   return (
     <div className="flex h-dvh overflow-hidden bg-paper">
-      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
+      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} forceCollapsed={forceCollapsed} />
 
       <div
         aria-hidden
@@ -122,7 +124,9 @@ export const AppLayout = () => {
             crosses the window's (e.g. a collapsing panel) jumps sideways as the bar comes and goes. */}
         <main className="flex-1 overflow-y-auto p-page scrollbar-gutter-stable">
           <BreadcrumbContext.Provider value={breadcrumbContextValue}>
-            <Outlet />
+            <SidebarOverrideContext.Provider value={setForceCollapsed}>
+              <Outlet />
+            </SidebarOverrideContext.Provider>
           </BreadcrumbContext.Provider>
         </main>
       </div>
