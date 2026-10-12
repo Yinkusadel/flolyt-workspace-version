@@ -24,7 +24,7 @@ Mutations show their real top-level shape including the envelope.
 
 ### GET /rooms/{roomId}
 
-- **Purpose:** Direct Room loading (live collaboration Phase 1): open a Room from a link, invitation or investigation card. Source: `docs/rooms/revenue-threat-room-frontend-handoff-new.md`, "Direct Room loading".
+- **Purpose:** Direct Room loading (live collaboration Phase 1): open a Room from a link, invitation or investigation card. Source: `docs/rooms/revenue-threat-room-frontend-handoff.md`, "Direct Room loading".
 - **Auth:** Bearer token, active workspace member with access. Missing, foreign or inaccessible Rooms return 404 `Room not found.`; a restricted Room may stay discoverable in the index while its details and thread are inaccessible.
 - **Request:** path `roomId`.
 - **Response `data`** (real response, 2026-10-12, the user's Room "Dormant Accounts"): `{ id, title: "Dormant Accounts", conversationId, status: "open", ownerMemberId, viewerRole: "decision-owner" (nullable), createdAtUtc, archivedAtUtc: null, stage: "engage", mechanism: "dormant_accounts", currency: "USD", market: null, lifecycleClass: "InFlight", leadAgentKey: null, agents: [], mergedIntoRoomId: null, conversationPermissions: { canView, canContribute, canAdminister } }`. These are core metadata, NOT current exposure or verified financial outcomes. The conversation flags apply to the conversation only; they grant no proposal approval, Room management or tool execution.

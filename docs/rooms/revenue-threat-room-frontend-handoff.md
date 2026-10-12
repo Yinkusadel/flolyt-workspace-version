@@ -1,5 +1,94 @@
 # Revenue threat Room opening: Phase 5 frontend handoff
 
+## Direct Room loading (live collaboration Phase 1)
+
+Use `GET /api/v3/rooms/{roomId}` when opening a Room from a link, invitation or investigation card.
+The standard result wrapper contains `id`, `title`, `conversationId`, `status`, `ownerMemberId`,
+nullable `viewerRole`, timestamps, `stage`, `mechanism`, `currency`, nullable `market` and
+`lifecycleClass`, `leadAgentKey`, `agents`, `mergedIntoRoomId` and `conversationPermissions`.
+These are core metadata, not current exposure or verified financial outcomes.
+
+Load the collaboration history with `GET /api/v3/conversations/{conversationId}`. Continue to use
+`POST /api/v3/conversations/messages` with that same ID for replies. The permission flags
+`canView`, `canContribute` and `canAdminister` refer only to the conversation. They do not grant
+proposal approval, Room management or tool execution; backend checks still apply to each action.
+Missing, foreign and inaccessible Rooms return 404 with `Room not found.`. A restricted Room
+may remain discoverable in the index while its details and thread are inaccessible.
+
+The briefing remains the investigation summary; use its existing route and the dedicated plan,
+evidence and verification reads for those tabs. The Room-wide SSE subscription is specified below.
+See [Room live collaboration plan](room-live-collaboration-plan.md) for the review phases.
+
+## Room-wide live feed (live collaboration Phase 2)
+
+For the complete React/Vite integration sequence, tested reference reducer and Postman/deployment
+acceptance matrix, see [Room live collaboration frontend handoff](room-live-collaboration-frontend-handoff.md).
+
+Keep `GET /api/v3/rooms/{roomId}/stream` connected while viewing a Room. Use the usual bearer
+authentication and `Accept: text/event-stream`. This subscription carries every participant's
+committed public messages and concurrent agent events. It stays connected when Maestro or a
+specialist finishes, and can deliver later work without another POST or reload. Existing POST
+message and per-run streams remain compatible; opening this feed does not enqueue any agent work.
+
+Bootstrap with Room details and conversation history, then connect with `after=0` and reconcile
+the replay. Persisted history rows now have `messageId`. Do not append a second message when its ID
+already exists. This deliberately overlapping bootstrap avoids losing a message committed between
+the history read and subscription. On reconnect, send `Last-Event-ID` from the last event you
+successfully applied, or its value as `after`. Never advance to `room_stream_ready.head`: it may
+include events you have not received. A cursor from another conversation or ahead of the current
+journal returns 400; missing/foreign/inaccessible Rooms return 404 before starting SSE.
+
+Example frame:
+
+```text
+id: 0123456789abcdef0123456789abcdef:42
+event: response_chunk
+data: {"sequence":42,"eventId":"0123456789abcdef0123456789abcdef:42","eventType":"response_chunk","conversationId":"01234567-89ab-cdef-0123-456789abcdef","runId":"01234567-89ab-cdef-0123-456789abcdee","agentKey":"sentinel","agentLabel":"Sentinel","atUtc":"2026-10-11T09:00:00Z","data":{"eventType":"response_chunk","phase":"streaming","message":"**Main finding** ...","runId":"01234567-89ab-cdef-0123-456789abcdee","agentKey":"sentinel","agentLabel":"Sentinel"}}
+```
+
+The Room feed wraps runtime events in a durable envelope; it does not have the flattened wire
+shape of the POST message stream. Read runtime payloads through `data.payload`, text through
+`data.message`, and final structured responses directly from `data.payload` on `final_response`.
+
+| Event | Rendering |
+| --- | --- |
+| `room_stream_ready` | Transport ready; contains Room/conversation IDs and current journal head, no replay cursor. |
+| `message_committed` | Upsert by `data.messageId`; authoritative role/content/timestamp/structured response/run/author. Replace the provisional answer for that run. |
+| `steering_updated` | Upsert by `data.messageId`; display steering text and queued/delivered/not-delivered receipt. |
+| `run_state` | Update only the named run. `Queued`, `Running`, `AwaitingApproval`, `Done`, `Failed`, `Cancelled`. |
+| `stream_delivery_gap` | Some live updates were unavailable for this run. Keep watching for the authoritative committed answer; do not resend the prompt or treat this as an agent failure. |
+| `agent_handoff` | Upsert the card by target run ID. A reconciled handoff has direct `data.targetRunId`; a runtime handoff has `data.payload.targetRunId`. |
+| `run_started`, `progress`, `response_chunk`, `final_response`, `error`, `run_cancelled` | Route to the provisional message/activity for the envelope's run and agent. Never mark the whole Room finished. |
+| `room_heartbeat` | Keep connection alive; no message or cursor change. |
+| `room_access_revoked` | Stop rendering/reading; clear protected Room state and require authorized reload. |
+
+Deduplicate durable `eventId` on replay. Keep a separate draft/buffer for each `runId` so concurrent
+Sentinel/RIA output cannot concatenate into one answer. A final-response event and a later committed
+assistant message describe the same answer; the committed message wins. If using the initiating
+POST stream as well, reconcile its output by run ID rather than displaying both copies. Handoffs
+may be observed from both lifecycle reconciliation and the existing runtime producer; upsert cards.
+
+Database polling is server-side (one-second idle cadence); clients receive SSE continuously. Viewers
+read immutable pages; recovery scans are shared and throttled per conversation across instances,
+and do not wait for a busy writer. Journal outages do not fail agent execution: an explicit
+`stream_delivery_gap` and the committed transcript recover the answer, although lost incremental
+chunks cannot be recreated. Live and recovered handoff text uses the same safe limits as history.
+Replay is bounded to 100 events per read, with immediate catch-up. History/system rows exclude internal
+tool/context messages. Disconnects, slow readers and membership revocation never cancel durable
+agent work. No new SignalR dependency is required by the frontend. Older runtime chunks emitted
+before this deployment cannot be reconstructed; their committed responses remain available.
+
+Postman check: open this GET in one tab, POST a teammate message or a Sentinel/RIA delegation in
+another, and observe message/activity/chunk/final events without the GET closing. Repeat with two
+viewers. Disconnect, post again, then reconnect using the last applied event ID and verify replay.
+Remove membership/Room access while watching: expect `room_access_revoked` and closure. The Phase 3
+handoff supplies the frontend integration and deployment acceptance matrix.
+
+Postman: fetch Room details using an active member's token, copy `data.conversationId`, then fetch
+that conversation and send a message into it. Confirm a different workspace, removed membership,
+private conversation or excluded restricted-Room viewer cannot fetch the details. Repeated GETs
+must not enqueue agent runs or open new Rooms.
+
 Automatic Rooms use the existing Room, inbox and conversation surfaces. Do not build a second conversation or trigger another investigation to render the opening.
 
 ## V3 route migration
@@ -214,3 +303,144 @@ Lesson list items now include `retirement` and `reusable`. Show retired/supersed
 Additional Postman checks: reject a different resolution-plan revision, reject an excluded intervention author, retire a promoted lesson and confirm it disappears from later Room context while its verification remains valid. The backend can scan beyond the first 25 records within a 250-candidate budget, but never crosses scope or restricted-Room boundaries. It supplies complete bounded action/verification steps; frontend SSE rendering is unchanged.
 
 Verification-history plan DTOs add `boundResolutionPlanId` and `boundResolutionPlanRevision` (nullable). These identify the only resolution procedure eligible for a subsequent lesson; null means this verification cannot currently support procedure learning. `reusable` is also false for restricted source Rooms, even when the requesting administrator can read the lesson.
+
+## Conversation initiation foundation (convergence Phase 1)
+
+Acceptance corrections: diagnostic prompts can now select a specialist without naming it, using the existing governed same-conversation handoff and multiplexed SSE. Render each child by its run ID and agent attribution; keep the stream open through specialist completion as already specified. There is no new transport or endpoint for this routing. Brief overview responses remain with Maestro. An unavailable specialist is reported as a refusal, not a queued card.
+
+Overview findings retain exposure by currency and lifecycle class, with gross and expected estimates separate. Render missing expected values as unpriced. When current-period coverage is unconfirmed, every agent's answer withholds decline claims and prioritizes checking source freshness and the revenue refresh. Detailed gaps remain in caveats; supported structured diagnostic findings can supplement the overview. These changes fit the existing public response contract. A handoff remains queued while the backend recovers a temporary enqueue failure; use the existing run status and SSE lifecycle, without displaying a second handoff card.
+
+The backend adds GET /api/v3/rooms/threats/candidates?conversationId={id}, POST /api/v3/rooms/threats/initiations and GET /api/v3/rooms/threats/initiations/{id}. These are initiation/status APIs; they do not open a Room or produce an SSE event. Existing Maestro Room tools still use their earlier flow until convergence Phase 2.
+
+Example published-finding authorization (copy IDs/revision from candidates):
+
+~~~json
+{
+  "id": "<client-generated-uuid>",
+  "conversationId": "<source-conversation-id>",
+  "reason": "Investigate the attrition exposure in this market.",
+  "findingId": "<exact-scoped-finding-id>",
+  "publicationId": "<current-publication-uuid>",
+  "expectedRevision": 1
+}
+~~~
+
+Reuse the id/body for transport retries. The response is the standard result wrapper. EVIDENCE_REQUIRED means no assessment or Room started; ASSESSMENT_QUEUED means the runtime accepted shared assessment work, not that it finished or confirmed the threat. WATCH/IGNORE carry the existing policy reason; SHADOW has not dispatched an assessment. SUPERSEDED/POLICY_CHANGED require reviewing current evidence/policy and authorizing a new request. Do not display a Room-ready card from an initiation response. Candidate output is bounded to 100 scopes per page and scope-ordered. Pass nextCursor as after on the next GET, preserving conversationId; stop when nextCursor is null. Access is checked on every page. POST initiation uses the decision rate limiter (429 on throttling). See [conversation-threat-convergence-plan.md](conversation-threat-convergence-plan.md) for the phase boundaries and API acceptance steps.
+
+## Conversation initiation: Phase 2 additions
+
+Use the existing agent proposal approval UI for `investigate_revenue_threat`. Its arguments are
+`conversationId`, `findingId`, `publicationId`, `expectedRevision`, concise `reason` and optional
+`requestedOwnerId`. Approval requests investigation; show its returned initiation state rather
+than announcing that a Room is already open. It has no customer reach or promised monetary effect.
+This tool always produces an approval card, even if RoomConvening is configured as Direct.
+An ordinary agent run cannot supply human consent by itself.
+
+The initiation API accepts optional `requestedOwnerId`. Selecting oneself is permitted for an
+active member; selecting another active member requires administrator authority. Candidate entries
+include `legacyCaseIds` for explicit reconciliation; these are case IDs, never permission to inspect
+a restricted Room.
+
+Additional V3 endpoints:
+
+- `POST /api/v3/rooms/threats/initiations/{id}/evidence` queues connected-source evidence refresh
+  once for that initiation. No body. Continue showing evidence-required until the user reviews a
+  published candidate and approves a new initiation; the old approval never upgrades itself.
+- `POST /api/v3/rooms/threats/initiations/{id}/reconcile` is administrator-only. Body:
+  `{ "initiationId": "...", "legacyCaseId": "...", "reason": "...", "roomId": null }`.
+  Use null Room only for detected, unowned legacy work with no Room. Adopting an existing Room
+  requires its exact scoped coordinate and active owner; ambiguous or inaccessible Rooms are refused.
+- `GET /api/v3/rooms/threats/initiations/{id}` includes `caseId`, access-checked `roomId` and
+  `requestedOwnerId`, plus the shared opening's state once assessment is dispatched. `READY` permits
+  navigation to the Room. `ACCESS_REQUIRED` must not render a link. Pending routing/reconciliation,
+  paused and blocked states are progress or review states, not successful openings.
+
+Room responses continue in the destination Room's conversation. Phase 3 adds the source-conversation
+progress feed described below; the Phase 2 additions alone did not introduce that feed.
+
+### Conversation investigation progress — Phase 3
+
+While a user views a conversation, subscribe with their bearer token to
+`GET /api/v3/rooms/threats/conversations/{conversationId}/stream` alongside the existing response
+stream. Keep this subscription after Maestro completes: users may approve a proposal later, and
+several participants may watch the same conversation. No SignalR connection is required.
+The feed does not start or cancel durable investigations.
+
+Each `threat_investigations` SSE event contains:
+
+```json
+{
+  "eventType": "threat_investigations",
+  "conversationId": "source-conversation-uuid",
+  "items": [{
+    "initiationId": "consent-uuid",
+    "findingId": "canonical-finding-id",
+    "scopeLabel": "dormant accounts · NG / NGN · InFlight",
+    "scope": {
+      "sector": "financial-services", "mechanism": "dormant_accounts",
+      "subjectType": "account", "grain": "account", "stateDimension": "account_activity",
+      "stateValue": "dormant", "businessUnit": null, "market": "NG",
+      "currency": "NGN", "lifecycleClass": "InFlight"
+    },
+    "conversationId": "source-conversation-uuid",
+    "state": "READY",
+    "reason": "Existing scoped Room retained; its original opening evidence remains pinned.",
+    "message": "The investigation Room is available. Opening this Room does not establish a verified revenue outcome.",
+    "acceptedAtUtc": "2026-10-10T10:00:00+00:00",
+    "roomId": "accessible-room-uuid",
+    "roomConversationId": "destination-conversation-uuid",
+    "roomUrl": "/api/v3/rooms/accessible-room-uuid"
+  }],
+  "truncated": false
+}
+```
+
+Treat each event as a replacement snapshot of visible investigation cards, keyed by `initiationId`.
+Update the existing card instead of appending a new assistant answer. Use `acceptedAtUtc` to place
+it after the triggering prompt/approval; status changes must not move it above that prompt.
+The server supplies concise `message` text. Render state and reason as supporting detail. Use
+`scopeLabel` as the card heading, and retain `findingId` and structured `scope` to distinguish
+multiple investigations after reload. Market, currency and lifecycle class stay separate; the
+card contains no priced exposure or verified-value claim. These fields are additive to Phase 3.
+Show navigation only when the server provides a Room id/link; `roomUrl` is an API resource, so map
+`roomId` to the frontend Room route. Use `roomConversationId` for the destination chat stream.
+An accessible Room means investigation can continue, not a verified revenue result.
+
+`GET /api/v3/conversations/{id}` now has `role: threat_investigation` rows carrying the same typed
+`threatInvestigation` object. Hydrate those on initial load, then reconcile with SSE using the same
+id. Do not render them as model findings or feed them back as user prompts. They do not duplicate
+the Room's specialist replies. GET the progress route without `/stream` for a one-time snapshot.
+
+The feed emits a snapshot immediately, then changes within the server's two-second persisted-state
+check, with heartbeats when idle. It closes after fifteen minutes: reconnect with backoff while
+the conversation is visible; each reconnect supplies current state. Browser polling is unnecessary.
+This feed streams progress cards; specialist prose uses the existing destination Room stream.
+On `conversation_access_revoked`, clear conversation data and close the subscription. On a Room
+access change, replacement cards remove `roomId`, `roomConversationId` and `roomUrl`; remove stale
+links immediately. Do not retain links from an earlier snapshot.
+
+The latest 100 initiation cards are included. Show an older-activity notice when event `truncated`
+or conversation `threatInvestigationsTruncated` is true; do not present the bounded list as complete
+history. Older ordinary messages are unaffected. This phase adds no progress pagination.
+
+Use neutral pending/review styling for `REQUESTED`, `ASSESSMENT_QUEUED`, `ASSESSING`,
+`CONFIRMATION_PENDING`, `NEEDS_HUMAN_REVIEW`, `SHADOW`, `EVIDENCE_REQUIRED`, `WATCH`, `SUPERSEDED`,
+`POLICY_CHANGED`, `PENDING_LEGACY_REVIEW`, `PENDING_HUMAN_ROUTING`, `PAUSED` and `BLOCKED`.
+`CONFIRMED` still awaits governed opening. `ACCESS_REQUIRED` has no Room link. `IGNORE` means
+no investigation under the current policy. Use success styling only for an accessible `READY`
+Room, with no financial-outcome claim.
+
+Postman Phase 2 acceptance: authorize an exact current candidate, inspect the initiation, review a
+legacy blocker explicitly if needed, and let the normal workers assess/confirm/open. Repeat the
+same request and concurrent evidence/reconciliation calls: one consent, refresh and Room should
+persist. Check one baseline, draft plan, monitor and invitation. Change the publication before
+opening: the old consent must be superseded. After a successful opening, refreshing evidence must
+retain the original baseline and existing Room. Revoke source or destination access: no Room link
+may be disclosed. Try a different market/currency or an ambiguous legacy Room: refuse adoption.
+
+Review regressions: refresh a reconciled scope and confirm the mapping remains usable for Room
+monitoring without upgrading old consent. Start conflicting human work on the old legacy case and
+confirm review is required again. Repeat reconciliation for a new publication and retain both audit
+records. Make the destination conversation private for a non-owner: expect `ACCESS_REQUIRED` and
+no Room link. If evidence is published during legacy cohort creation, only the saved cohort remains;
+no thread or Room opens, and the response directs the user to scoped investigation approval.

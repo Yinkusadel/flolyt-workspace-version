@@ -218,10 +218,11 @@ Resume: user says "build" after the backend confirms.
    in the user's screenshots and looked right. Count badge on the Decision tab: none (n/a).
 
 ### NEW HANDOFFS 2026-10-12 (read these; they change earlier conclusions)
-Two files were added in `docs/rooms/`: `revenue-threat-room-frontend-handoff-new.md` (a newer, longer version
-of the handoff: direct Room loading, Room-wide live feed, resolution-plan routes, verification bodies,
-lessons/retire, conversation initiation) and `room-live-collaboration-frontend-handoff.md` (the React/Vite
-integration + acceptance for the live thread). They reference files NOT in this repo
+Two documents changed in `docs/rooms/`: `revenue-threat-room-frontend-handoff.md` was REPLACED by its newer,
+longer version (it keeps every earlier line and adds direct Room loading, the Room-wide live feed, resolution-plan
+routes, verification bodies, lessons/retire and conversation initiation; a temporary `-new` copy was merged
+back into it on 2026-10-12 so there is one handoff, not two) and `room-live-collaboration-frontend-handoff.md`
+(NEW: the React/Vite integration + acceptance for the live thread). They reference files NOT in this repo
 (`room-live-collaboration-plan.md`, `conversation-threat-convergence-plan.md`, `examples/room-live-state.mjs`
 and its test): ask the user for them.
 1. **`GET /api/v3/rooms/{roomId}` now EXISTS** (real response in `docs/endpoints/rooms.md`). It gives title,
@@ -276,6 +277,33 @@ to test collaboration. Still to ask the user: the backend's reducer + test files
   remembered per browser.
 - The conversation is one reusable component (messages, handoff cards, composer with the mode switcher),
   so the same component serves the panel (and could serve `/conversations/:id`).
+
+#### Live thread DESIGN: APPROVED by the user 2026-10-12 ("exactly something like that, perfect")
+Reference mockup, self-contained HTML (light + dark, interactive): `docs/rooms/design/room-thread-panel-mockup.html`
+(also published privately at https://claude.ai/artifact/4VMDfhc4N4ZXAij8TytpoA). It uses the app's own tokens
+(ink/paper/line/ultra/teal/amber/rose, Instrument Sans, IBM Plex Mono, 3-8px radii). Build to it; the
+decisions it encodes:
+- Layout: Room header + tabs + tab on the left, a 400px thread panel docked right, always open on wide
+  screens; the app sidebar becomes a 56px rail while it is open (full sidebar again when closed); a header
+  "Open thread" button (with an unread count) reopens it; below 1100px it is a drawer opened from a floating
+  "Thread" button; below 640px the sidebar is hidden. Decision shown stacked to one column in the narrow area.
+- Panel header: title, Room name, a "Live" pulsing connection indicator (also the reconnecting state), a
+  close button, and a ROSTER strip: people as solid initial circles, agents as DASHED ultra circles with
+  3-letter initials and a state dot (running pulse, awaiting approval amber, idle grey) from `run_state`.
+- Timeline: day separators; a "New" divider; a system notice card for the automatic opening; people messages
+  (name, time, a teal "people only" tag and teal bubble for `replyMode: "none"`); agent messages (dashed
+  avatar, name, Lead tag, white bubble with a blue outline, Markdown, clickable follow-up chips from
+  `suggestedFollowUpPrompts`); handoff card (from -> to, brief, a four-step lane Queued / Running / Needs
+  approval / Done with an animated current step); inline approval card (Approve / Reject; nothing runs until
+  a person decides); steering note (dashed, right-aligned, with a Queued / Delivered receipt); a quiet
+  "delivery gap" notice; a shimmering "<agent> is ..." working line from `progress` events; @mention chips.
+  NOT in it on purpose (the backend has no such events): typing indicators, presence, reactions.
+- Composer: a box whose border, mode button and Send button take the mode color (blue "Ask the agents",
+  teal "Post to the people"); the mode button opens an explaining popover (icon, name, one-line
+  explanation, check on the selected row, "Remembered for this thread on this browser"); the Send button
+  names the mode; typing `@` opens an agent picker (roster from the Room's `agents`) and switches to
+  "Ask the agents"; Enter sends, Shift+Enter for a new line; the mode is remembered per conversation id in
+  local storage (try/catch, default "Ask the agents").
 
 ### ISSUES AND DEFERRED LOG (Room page, keep adding; mark DONE, never delete)
 - [ ] Header figures: the single-Room `GET /rooms/{roomId}` lacks people, at-risk open/now, owner name,
