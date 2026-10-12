@@ -116,7 +116,13 @@ export function RaiseConflictDialog({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !isPending && onOpenChange(next)}>
-      <DialogContent className="max-w-3xl">
+      {/* A long form: clicking outside or pressing Escape must not throw away what was typed. Only the X and
+          Cancel close it. */}
+      <DialogContent
+        className="max-w-3xl"
+        onInteractOutside={(event) => event.preventDefault()}
+        onEscapeKeyDown={(event) => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Raise a conflict</DialogTitle>
           <DialogDescription>
