@@ -615,6 +615,7 @@ export const API_ENDPOINTS = {
     UPDATE_ROOM_VIEW: `${ROOMS_BASE_URL}/views/{viewId}`,
     DELETE_ROOM_VIEW: `${ROOMS_BASE_URL}/views/{viewId}`,
     GET_ROOMS: `${ROOMS_BASE_URL}`,
+    GET_ROOM: `${ROOMS_BASE_URL}/{roomId}`,
     GET_ROOM_CLOSE_PREVIEW: `${ROOMS_BASE_URL}/{roomId}/close-preview`,
     CLOSE_ROOM: `${ROOMS_BASE_URL}/{roomId}/close`,
     GET_ROOM_DECISION: `${ROOMS_BASE_URL}/{roomId}/decision`,

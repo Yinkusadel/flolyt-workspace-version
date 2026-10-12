@@ -152,6 +152,25 @@ Resume: user says "build" after the backend confirms.
   `01a0fc76-a89c-7d41-899a-bba0214c9923` first), then the order below. Held for the endpoint: real
   header, header buttons (both variants), threat tabs, count badges, a unified not-found/restricted card.
 
+### Room HEADER v1: BUILT 2026-10-12 (`npx tsc -b` and `npm run build` clean; layout checked on mocks of the real response)
+- `src/pages/rooms/room/room-header.tsx` + `room/index.tsx`, from `GET /rooms/{roomId}` (service/hook
+  `get-room.ts` / `use-get-room.ts`). Plain header, no card: title with chips (Recovering, Opening N, "Opened by
+  Flolyt" when `threatConfirmationId`, Archived, Restricted), owner line (`ownerName` or italic Unowned, stage
+  label, condition label as sent, market, currency), People / At risk at open / At risk now ("Live figure
+  unavailable" when null, plus "Live figure computed HH:MM UTC" when known) with "A change in this figure isn't
+  a recovery claim." Topbar breadcrumb = "Rooms / <title>". Loading = shaped skeleton; a 404 = "Room not found."
+  card (backend message, Retry, Back to Rooms) with no tabs and no `opened` call. Auto-opened Rooms get
+  Opening & monitoring and Plan & verification IN FRONT of the nine tabs (placeholders; default tab stays Briefing).
+- **Watching menu** (the only header action in v1): the viewer's row from `GET /rooms/subscriptions`;
+  "Watching · <level>" with Everything / Decisions only / Nothing (`POST /notify-level`) and Stop watching
+  (`POST /unwatch`); an OWNER cannot mute, so "Nothing" is disabled with the reason and Stop watching is hidden;
+  not watching shows a Watch button (`POST /watch`). Unverified live: all three writes from this menu.
+- **Held for later steps:** "Restrict..." (dialog with the four fixed reasons, `POST/DELETE /restrict`),
+  "Close room" (its own full page, `Room · Close.png`), "Open thread" (arrives with the thread panel), the
+  "Worsened" chip (`threat-monitoring`), a "Merged into" notice (`mergedIntoRoomId`), restricted-room details
+  (`restricted` shape on this route unseen beyond null). The design's "Live from the leakage map" wording was
+  NOT used (the source of the live figure is not documented).
+
 ### Decision tab: BUILT 2026-10-11 (`npx tsc -b` and `npm run build` clean; layout checked on a deleted mock harness)
 - `src/pages/rooms/room/decision/` (mounted in `room/index.tsx` for `?tab=decision`): decision card (status
   chip, "Revision N" from the highest `revisions[].number`, statement, Guardrails / Drafted by / Decided by,
@@ -306,12 +325,15 @@ decisions it encodes:
   local storage (try/catch, default "Ask the agents").
 
 ### ISSUES AND DEFERRED LOG (Room page, keep adding; mark DONE, never delete)
-- [ ] Header figures: the single-Room `GET /rooms/{roomId}` lacks people, at-risk open/now, owner name,
+- [x] **DONE 2026-10-12: the backend added all of these fields to `GET /rooms/{roomId}`** (real response in
+  `docs/endpoints/rooms.md`): the header can now be built in full from that one call, and `threatConfirmationId`
+  can gate the two threat tabs. (Original gap, kept for the record:) Header figures: the single-Room `GET /rooms/{roomId}` lacks people, at-risk open/now, owner name,
   `stageLabel`/`conditionLabel`, `openingNumber`, `isRecovering`, `threatConfirmationId`,
   `systemOpenedBy`, `restricted`. All are on the `GET /rooms` list row (real response 2026-10-12). Decision:
   do NOT read them from the list; leave them out with `❌` comments; ticket written (below). On the
   user's Room `conditionLabel` equals the raw key (`dormant_accounts`) and `stageLabel` is `ENGAGE`.
-- [ ] Threat-tab gating needs `threatConfirmationId` (null on the user's Room, an ordinary one).
+- [x] Threat-tab gating needs `threatConfirmationId`: now on `GET /rooms/{roomId}` (null on the user's Room, an
+  ordinary one). The two threat tabs themselves (Opening & monitoring, Plan & verification) are still unbuilt.
 - [ ] `/rooms/{roomId}/investigation`: DEFERRED by the user. Real response for the user's Room: HTTP 404,
   `{ data: null, messages: ["This room has no lead agent, so nothing investigates it. Staff one and the
   investigation starts within the minute."], succeeded: false }`. The route works; the page must show that
@@ -321,7 +343,15 @@ decisions it encodes:
   would be empty for a Room with no agents anyway).
 - [ ] Briefing has no summary endpoint (see "NEW HANDOFFS"); candidates: `runs[].result`, the first system
   message of the conversation, `/investigation`.
-- [ ] **`GET /api/v3/conversations/{id}` returns 404 for the user's Room's own `conversationId`** (2026-10-12).
+- [x] **FIXED by the backend 2026-10-12.** `GET /api/v3/conversations/01a0fc76-a891-7262-ae7e-935bfa25d226` now
+  returns 200: `{ data: { id, title: "Dormant Accounts", messages: [], createdAt, lastMessageAt, activeRunId: null,
+  ownerUserId, ownerName: null, isOwn: true, visibility: "Workspace", canContribute: true, canAdminister: true,
+  threatInvestigationsTruncated: false } }`. New fields beyond our `AiConversationDetailDto`: `ownerUserId`,
+  `ownerName` (null), `isOwn`, `visibility`, `canContribute`, `canAdminister`, `threatInvestigationsTruncated`
+  (additive; types not updated yet). `messages` is EMPTY: a Room opened by a PERSON starts with no first message
+  (no system synthesis, unlike an automatic Room), so the thread opens as an empty conversation and the user
+  starts it with the Room's own `conversationId` (not yet tried). Original problem, kept for the record:
+  `GET /api/v3/conversations/{id}` returned 404 for the user's Room's own `conversationId` (2026-10-12).
   Room `01a0fc76-a89c-7d41-899a-bba0214c9923` ("Dormant Accounts", opened 2026-10-02, owner/decision-owner,
   `conversationPermissions` all true) returns `conversationId` `01a0fc76-a891-7262-ae7e-935bfa25d226`;
   `GET /conversations/{that id}` answers HTTP 404 `{ data: null, messages: ["Conversation not found."],
