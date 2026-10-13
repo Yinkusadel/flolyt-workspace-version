@@ -92,9 +92,10 @@ export function AddToRoomDialog({
     .filter((member) => member.kind === "Human" && member.isActive && !inRoomUserIds.has(member.id))
     .map((member) => ({ value: member.id, label: member.displayName }));
 
-  // Live agents only: enabled and ready. Reading or not-ready agents wait until they are.
+  // Live agents only: enabled, `state` ready AND `detailedState` ready. The coarse `state` alone let an agent through whose data
+  // capability was unavailable (Compass, found live 2026-10-13), so both must say ready. Others wait until they are.
   const liveAgents = (workspaceAgents.agents?.agents ?? []).filter(
-    (agent) => agent.isEnabled && agent.state === "ready" && !inRoomAgentKeys.has(agent.key)
+    (agent) => agent.isEnabled && agent.state === "ready" && agent.detailedState === "ready" && !inRoomAgentKeys.has(agent.key)
   );
   const agentOptions = liveAgents.map((agent) => ({ value: agent.key, label: agent.name }));
   const selectedAgent = liveAgents.find((agent) => agent.key === agentKey) ?? null;

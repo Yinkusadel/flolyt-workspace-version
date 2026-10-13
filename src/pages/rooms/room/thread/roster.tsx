@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
 import { TextTooltip } from "@/components/ui/text-tooltip";
 import { agentInitialsFromName, initialsFromName } from "@/lib/initials";
@@ -32,11 +33,14 @@ export function ThreadRoster({
   people,
   agents,
   teamFor,
+  activity,
   onOpen,
 }: {
   people: RosterPerson[];
   agents: RosterAgent[];
   teamFor: (userId: string) => 1 | 2 | 3 | 4;
+  /** Agent key -> `running` (pulsing) or `waiting` (amber); an agent not listed is idle (grey). From the live run states. */
+  activity: Record<string, "running" | "waiting">;
   onOpen: () => void;
 }) {
   const faces = [
@@ -72,12 +76,23 @@ export function ThreadRoster({
                 className={RING}
               />
             ) : (
-              <PersonAvatar
-                kind="agent"
-                size="lg"
-                initials={agentInitialsFromName(face.agent?.displayName ?? "")}
-                className={`${RING} bg-ultra-bg`}
-              />
+              <span className="relative inline-flex">
+                <PersonAvatar
+                  kind="agent"
+                  size="lg"
+                  initials={agentInitialsFromName(face.agent?.displayName ?? "")}
+                  className={`${RING} bg-ultra-bg`}
+                />
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full ring-2 ring-paper",
+                    activity[face.agent?.key ?? ""] === "running" && "animate-pulse bg-teal",
+                    activity[face.agent?.key ?? ""] === "waiting" && "bg-amber",
+                    !activity[face.agent?.key ?? ""] && "bg-ink-4/50"
+                  )}
+                />
+              </span>
             )}
           </TextTooltip>
         ))}

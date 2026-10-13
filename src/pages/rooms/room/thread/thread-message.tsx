@@ -7,6 +7,7 @@ import { AiMarkdownText } from "@/pages/conversations/ai-response/markdown-text"
 import { HandoffCard } from "@/pages/conversations/handoff-card";
 import type { AiConversationMessage } from "@/features/ai-conversations/ai-conversation-types";
 import { SuggestedFollowUps } from "@/pages/rooms/room/thread/suggested-followups";
+import { humanize } from "@/pages/rooms/convening/format";
 import { MENTION_PATTERN, type Mentionable } from "@/pages/rooms/room/thread/mentions";
 
 /** A stored `@[agent:key]` or `@[human:userId]` mention reads as the name in a chip; any other text stays as typed. */
@@ -66,11 +67,16 @@ export function ThreadMessage({
   }
 
   if (message.role === "steering") {
+    // The delivery receipt (queued / delivered / not delivered) rides on the feed's steering rows; not in the chat panel's message type.
+    const receipt = (message as { steeringStatus?: string | null }).steeringStatus ?? null;
     return (
       <div className="flex justify-end">
-        <p className="max-w-[85%] rounded-card border border-dashed border-line px-3 py-2 text-[12px] leading-relaxed text-ink-3 italic">
-          {message.content}
-        </p>
+        <div className="max-w-[85%] text-right">
+          <p className="rounded-card border border-dashed border-line px-3 py-2 text-left text-[12px] leading-relaxed text-ink-3 italic">
+            {message.content}
+          </p>
+          {receipt && <p className="mt-1 text-[10.5px] text-ink-4">{humanize(receipt)}</p>}
+        </div>
       </div>
     );
   }
