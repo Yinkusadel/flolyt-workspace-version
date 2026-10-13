@@ -93,6 +93,15 @@ below is OUT OF DATE: the backend added `GET /rooms/{roomId}` and the page is bu
      using Room people (and the workspace roster as a fallback). Plain `@Name` is not a mention.
   4. `authorName` is now the full name for every viewer: drop any email expectation.
   Still waiting on the backend: `room-live-state.mjs` + test (feed/reducer). Real-agent send needs an agent on the Room.
+- **ADD PEOPLE/AGENTS DIALOG: BUILT 2026-10-13 (`thread/add-to-room-dialog.tsx`, `UserPlus` in the thread header; `npx tsc -b` + `npm run build` clean; mock-harness verified only: the real POSTs, the real role/refusal behaviour and `members.id == userId` are UNVERIFIED live). Person roles offered: participant/approver/observer (decision-owner left out); agent roles lead/supporting (lead hidden when the Room already has one); `maxApprovalReach` and `source` not sent; `reads` = the agent's own `reads` from `GET /workspace/agents` (null when empty; meaning unverified until a real add); closes only via Cancel/X. Plan as written:** `UserPlus` icon in the thread panel header opens a dialog with People and Agents tabs.
+  People: workspace members (`GET /workspace/members`, minus people already in the Room), `role` = `participant` / `approver` / `observer` (and `decision-owner`: confirm whether it is one per Room), optional `maxApprovalReach`, `POST /rooms/{roomId}/people`
+  (widest access: say so). Agents: `GET /workspace/agents` filtered to `isEnabled` and `state === "ready"` (not "reading"/"not_ready"), minus agents
+  already on the Room; `role` is `lead` or `supporting` (`automatic` is the arbitration seat, not offered); `whatItWillDo` is required free text, prefill from the agent's
+  `description`; `POST /rooms/{roomId}/agents` (only one Lead). User decision: for now anyone who can contribute to the thread sees the icon; show the
+  backend's own refusal message. STILL OPEN with the backend: who may add, error behaviour for a bad role, whether a not-ready agent can be added, whether `decision-owner` is one per Room and who may assign it.
+- **PLAYS TAB: ON HOLD 2026-10-13** (user's decisions): leave out "About this leak" and "Basis"; do NOT fill the "Decides" column from Room people (empty
+  cell + `❌` comment, ticket for `decisionOwnerName`); "Readings argued before" comes from `citedReadings` in `GET /rooms/{roomId}/cited-dissent`.
+  Waiting for a real play (the list is empty) and a decision on whether to build "Obligations from this room" from the schema alone.
 - **Other Room work still open:** Restrict... dialog, Close room page, Plays tab (empty list, no create route),
   Briefing (no summary endpoint; `/investigation` deferred), Admin tab (backend answers), threat tabs.
 

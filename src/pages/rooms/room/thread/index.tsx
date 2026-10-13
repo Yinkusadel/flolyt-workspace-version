@@ -1,8 +1,9 @@
 import * as React from "react";
-import { X } from "lucide-react";
+import { UserPlus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TextTooltip } from "@/components/ui/text-tooltip";
 import { PersonAvatar } from "@/components/person-avatar";
 import { agentInitialsFromName, initialsFromName } from "@/lib/initials";
 import { useAuth } from "@/utils/auth-context";
@@ -10,6 +11,7 @@ import { useGetRoomPeople } from "@/features/rooms/use-get-room-people";
 import { useGetRoomThread } from "@/features/rooms/use-get-room-thread";
 import useSendRoomMessage from "@/features/rooms/use-send-room-message";
 import type { RoomDetailDto } from "@/services/api/rooms/get-room";
+import { AddToRoomDialog } from "@/pages/rooms/room/thread/add-to-room-dialog";
 import { ThreadComposer } from "@/pages/rooms/room/thread/composer";
 import type { Mentionable } from "@/pages/rooms/room/thread/mentions";
 import { ThreadMessage } from "@/pages/rooms/room/thread/thread-message";
@@ -40,6 +42,7 @@ export function ThreadPanel({
   onClose: () => void;
 }) {
   const { user } = useAuth();
+  const [addOpen, setAddOpen] = React.useState(false);
   const thread = useGetRoomThread(conversationId);
   const people = useGetRoomPeople(room.id);
   const roomPeople = people.data?.data.people;
@@ -117,14 +120,28 @@ export function ThreadPanel({
             <h2 className="text-[13.5px] font-semibold text-ink">Room thread</h2>
             <p className="mt-0.5 truncate text-[11.5px] text-ink-3">{room.title}</p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close the thread"
-            className="flex size-7 shrink-0 items-center justify-center rounded-control text-ink-3 hover:bg-paper-2 hover:text-ink"
-          >
-            <X className="size-4" />
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            {canContribute && (
+              <TextTooltip content="Add people or agents">
+                <button
+                  type="button"
+                  onClick={() => setAddOpen(true)}
+                  aria-label="Add people or agents"
+                  className="flex size-7 items-center justify-center rounded-control text-ink-3 hover:bg-paper-2 hover:text-ink"
+                >
+                  <UserPlus className="size-4" />
+                </button>
+              </TextTooltip>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close the thread"
+              className="flex size-7 items-center justify-center rounded-control text-ink-3 hover:bg-paper-2 hover:text-ink"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
@@ -215,6 +232,7 @@ export function ThreadPanel({
           <p className="px-1 py-2 text-center text-[11.5px] text-ink-3">You can read this thread but not post in it.</p>
         )}
       </footer>
+      <AddToRoomDialog roomId={room.id} open={addOpen} onOpenChange={setAddOpen} />
     </section>
   );
 }

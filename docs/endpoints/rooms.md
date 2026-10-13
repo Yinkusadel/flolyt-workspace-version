@@ -457,6 +457,7 @@ Mutations show their real top-level shape including the envelope.
 - **Response:** `{ data: true, messages, succeeded }`.
 - **Used by:** service + hook ready (`src/services/api/rooms/add-room-agent.ts` / `src/features/rooms/use-add-room-agent.ts`), not wired into a page yet.
 - **Status:** service/hook ready, not wired.
+- **Roles (backend answer 2026-10-13, exact lowercase values):** PEOPLE `decision-owner` (accountable for the Room's decisions), `participant` (contributes to the investigation and work), `approver` (provides approval or specialist sign-off), `observer` (follows the work without deciding). AGENTS `lead` (leads the investigation, only one per Room), `supporting` (contributes alongside the lead), `automatic` (represents the arbitration role for agent disagreements; looks system-assigned, so NOT offered in the add dialog unless the backend says otherwise). Required body fields per the Scalar schema: `agentKey`, `role`, `whatItWillDo`; `reads` optional. (An earlier note here said "Lead and Support": superseded.)
 - **Notes:** Exactly one agent may hold the `lead` role — two agents owning the reading is a conflict to raise while the work happens, not something to configure. `reads` is a statement of what the agent is told to look at, not a grant — actual tool access is decided by the persona's tool set.
 
 ### DELETE /rooms/{roomId}/agents/{agentKey}
