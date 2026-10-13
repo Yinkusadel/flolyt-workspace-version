@@ -5,6 +5,8 @@ import { getServerErrorMessage } from "@/services/get-server-error";
 
 export interface RoomPersonDto {
   userId: string;
+  /** The person's workspace full name. Null when it can't be resolved: never show an id or an email instead. */
+  displayName: string | null;
   role: string;
   maxApprovalReach: number | null;
   addedAtUtc: string;

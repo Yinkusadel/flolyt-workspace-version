@@ -4,9 +4,12 @@ import { Bot, Check, ChevronDown, Send, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { ConversationReplyMode } from "@/features/ai-conversations/ai-conversation-types";
-import type { RoomListAgentDto } from "@/services/api/rooms/get-rooms";
+import { useGetConversationReplyMode, useSetConversationReplyMode } from "@/features/rooms/use-conversation-reply-mode";
+import { mentionToken, type Mentionable } from "@/pages/rooms/room/thread/mentions";
 
 type Mode = "agents" | "people";
+
+const toMode = (replyMode: ConversationReplyMode): Mode => (replyMode === "none" ? "people" : "agents");
 
 const MODES: { value: Mode; label: string; sendLabel: string; explain: string; Icon: typeof Bot }[] = [
   {
@@ -25,10 +28,10 @@ const MODES: { value: Mode; label: string; sendLabel: string; explain: string; I
   },
 ];
 
+/** Shown on this browser straight away; the server's saved choice replaces it once it answers. */
 const modeKey = (conversationId: string) => `flolyt-room-thread-mode:${conversationId}`;
 
-/** Remembered per conversation on this browser; storage can be blocked, so every access is guarded. */
-function readMode(conversationId: string): Mode {
+function readLocalMode(conversationId: string): Mode {
   try {
     return localStorage.getItem(modeKey(conversationId)) === "people" ? "people" : "agents";
   } catch {
@@ -50,45 +53,64 @@ const MODE_TONE: Record<Mode, { box: string; button: string; send: string }> = {
 };
 
 /**
- * The thread's composer: a mode switcher that explains each mode, `@` to address one rostered agent, Enter to
- * send and Shift+Enter for a new line. A typed `@Name` is sent as the stored mention `@[agent:key]`.
+ * The thread's composer: a mode switcher that explains each mode (the choice is saved per person per conversation,
+ * `GET`/`PUT /conversations/{id}/preferences`), `@` to address an agent or a person on the Room, Enter to send and
+ * Shift+Enter for a new line. A typed `@Name` is sent as the stored token (`@[agent:key]` or `@[human:userId]`);
+ * every message still carries its own `replyMode`, the saved choice is only the default.
  */
 export function ThreadComposer({
   conversationId,
-  agents,
+  mentionables,
   isSending,
   onSend,
 }: {
   conversationId: string;
-  agents: RoomListAgentDto[];
+  mentionables: Mentionable[];
   isSending: boolean;
   onSend: (message: string, replyMode: ConversationReplyMode) => void;
 }) {
   const [text, setText] = React.useState("");
-  const [mode, setModeState] = React.useState<Mode>(() => readMode(conversationId));
+  const [mode, setModeState] = React.useState<Mode>(() => readLocalMode(conversationId));
   const [modeOpen, setModeOpen] = React.useState(false);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
-  React.useEffect(() => setModeState(readMode(conversationId)), [conversationId]);
+  const saved = useGetConversationReplyMode(conversationId);
+  const { setReplyMode } = useSetConversationReplyMode();
+
+  // Adopt the saved choice once per conversation. A later refetch must never overwrite what the person picks since.
+  const adoptedFor = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    adoptedFor.current = null;
+    setModeState(readLocalMode(conversationId));
+  }, [conversationId]);
+  React.useEffect(() => {
+    const replyMode = saved.data?.data.replyMode;
+    if (!replyMode || adoptedFor.current === conversationId) return;
+    adoptedFor.current = conversationId;
+    setModeState(toMode(replyMode));
+  }, [saved.data, conversationId]);
 
   const setMode = (next: Mode) => {
     setModeState(next);
+    adoptedFor.current = conversationId;
     try {
       localStorage.setItem(modeKey(conversationId), next);
     } catch {
-      // Not remembered; the mode still applies to this session.
+      // Not remembered on this browser; the server copy below still is.
     }
+    setReplyMode({ conversationId, replyMode: next === "people" ? "none" : "auto" });
   };
 
-  // `@` at the tail of the text opens the picker over the rostered agents.
-  const atMatch = /(^|\s)@([\w ]*)$/.exec(text);
+  // `@` at the tail of the text opens the picker over the agents and people on this Room.
+  const atMatch = /(^|\s)@([\w .'-]*)$/.exec(text);
   const atQuery = atMatch ? atMatch[2].toLowerCase() : null;
   const atOptions =
-    atQuery === null ? [] : agents.filter((agent) => agent.displayName.toLowerCase().startsWith(atQuery));
+    atQuery === null ? [] : mentionables.filter((mention) => mention.label.toLowerCase().startsWith(atQuery)).slice(0, 8);
 
-  const pickAgent = (agent: RoomListAgentDto) => {
-    setText((current) => current.replace(/@[\w ]*$/, `@${agent.displayName} `));
-    setMode("agents");
+  const pickMention = (mention: Mentionable) => {
+    setText((current) => current.replace(/@[\w .'-]*$/, `@${mention.label} `));
+    // Addressing an agent means asking the agents; addressing a person leaves the mode as it is.
+    if (mention.kind === "agent" && mode !== "agents") setMode("agents");
     textareaRef.current?.focus();
   };
 
@@ -96,8 +118,8 @@ export function ThreadComposer({
     let body = text.trim();
     if (!body || isSending) return;
     // Longest names first so "Retention analyst" is not eaten by a shorter name.
-    for (const agent of [...agents].sort((a, b) => b.displayName.length - a.displayName.length)) {
-      body = body.split(`@${agent.displayName}`).join(`@[agent:${agent.key}]`);
+    for (const mention of [...mentionables].sort((a, b) => b.label.length - a.label.length)) {
+      body = body.split(`@${mention.label}`).join(mentionToken(mention));
     }
     onSend(body, mode === "people" ? "none" : "auto");
     setText("");
@@ -110,16 +132,16 @@ export function ThreadComposer({
   return (
     <div className="relative">
       {atOptions.length > 0 && (
-        <ul className="absolute right-0 bottom-full left-0 z-10 mb-1.5 overflow-hidden rounded-card border border-line bg-paper shadow-md">
-          {atOptions.map((agent) => (
-            <li key={agent.key}>
+        <ul className="absolute right-0 bottom-full left-0 z-10 mb-1.5 max-h-56 overflow-y-auto rounded-card border border-line bg-paper shadow-md">
+          {atOptions.map((mention) => (
+            <li key={`${mention.kind}:${mention.id}`}>
               <button
                 type="button"
-                onClick={() => pickAgent(agent)}
+                onClick={() => pickMention(mention)}
                 className="flex w-full items-baseline gap-2 px-3 py-2 text-left text-[12.5px] hover:bg-paper-2"
               >
-                <span className="font-medium text-ink">{agent.displayName}</span>
-                <span className="truncate text-[11px] text-ink-3">{agent.role}</span>
+                <span className="font-medium text-ink">{mention.label}</span>
+                <span className="truncate text-[11px] text-ink-3">{mention.kind === "agent" ? `Agent · ${mention.role}` : "Person"}</span>
               </button>
             </li>
           ))}
@@ -138,7 +160,7 @@ export function ThreadComposer({
               send();
             }
           }}
-          placeholder={mode === "agents" ? "Ask the agents on this Room, or @ one" : "Write to the people in this Room"}
+          placeholder={mode === "agents" ? "Ask the agents on this Room, or @ someone" : "Write to the people in this Room"}
           className="block max-h-40 w-full resize-none bg-transparent px-3.5 pt-3 pb-1 text-[13px] text-ink outline-none placeholder:text-ink-4"
         />
         <div className="flex items-center justify-between gap-2 px-2.5 pb-2.5">
@@ -172,7 +194,7 @@ export function ThreadComposer({
                   {mode === value && <Check className="mt-0.5 size-4 shrink-0 text-ultra" />}
                 </button>
               ))}
-              <p className="px-2.5 pt-1.5 pb-1 text-[10.5px] text-ink-4">Remembered for this thread on this browser.</p>
+              <p className="px-2.5 pt-1.5 pb-1 text-[10.5px] text-ink-4">Saved for you in this thread, on every device.</p>
             </PopoverContent>
           </Popover>
           <button

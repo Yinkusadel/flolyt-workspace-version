@@ -72,7 +72,14 @@ below is OUT OF DATE: the backend added `GET /rooms/{roomId}` and the page is bu
   fields until a capture), a real send, and the real Room conversation with messages. The chat panel code was not modified.
   **Ticket candidates:** the history has no `replyMode` per message, so a saved people-only note can't be tagged; `/rooms/{roomId}/people`
   has user ids but no names, so the roster can't show people.
-- **THREAD SLICE 1 pushed (`d5a3422`) + backend answers 2026-10-13: READY TO IMPLEMENT when the user says "build".** The handoff was merged:
+- **THREAD SLICE 2 BUILT 2026-10-13 (all four items below; `npx tsc -b` + `npm run build` clean; checked on a deleted mock harness, mocks only, NOT live):**
+  saved reply mode (`conversation-preferences.ts`, `use-conversation-reply-mode.ts`: read once, adopted once per conversation, a refetch never
+  overwrites a pick; failed save toasts "wasn't saved for your other devices"; browser copy kept as the first paint), `displayName` on room
+  people, one `@` picker over `GET /rooms/{roomId}/people` (agents then named people, self excluded, null-name people left out; picking an agent
+  switches to "Ask the agents", picking a person keeps the mode), sent as `@[agent:key]` / `@[human:userId]`, stored mentions shown as name chips
+  (unknown -> "an agent" / "a teammate"), roster = agents + named people with the first-appearance colours. UNVERIFIED LIVE: the preferences
+  routes, the real `/people` `displayName`, a real `@[human:id]` send and the notification it queues. (Original plan entry below, now done.)
+- **(DONE in slice 2) THREAD SLICE 1 pushed (`d5a3422`) + backend answers 2026-10-13:** The handoff was merged:
   `revenue-threat-room-frontend-handoff.md` is now the newer version (the `-new` file is gone; it also links `room-conversation-archive-repair.md`,
   not in this repo, ask the user if it is needed). Slice 1 later fixes already done: author colours are handed out by first appearance in the
   thread (up to 4 authors never share one), a "You" tag + right-aligned own messages (compares `authorUserId` to `useAuth().user.id`, UNVERIFIED

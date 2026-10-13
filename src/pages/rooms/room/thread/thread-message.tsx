@@ -6,18 +6,18 @@ import { agentInitialsFromName, initialsFromName } from "@/lib/initials";
 import { AiMarkdownText } from "@/pages/conversations/ai-response/markdown-text";
 import { HandoffCard } from "@/pages/conversations/handoff-card";
 import type { AiConversationMessage } from "@/features/ai-conversations/ai-conversation-types";
-import type { RoomListAgentDto } from "@/services/api/rooms/get-rooms";
+import { MENTION_PATTERN, type Mentionable } from "@/pages/rooms/room/thread/mentions";
 
-const MENTION = /@\[agent:([^\]]+)\]/g;
-
-/** A stored `@[agent:key]` mention reads as the agent's name in a chip; any other text stays as typed. */
-function MessageText({ text, agents }: { text: string; agents: RoomListAgentDto[] }) {
+/** A stored `@[agent:key]` or `@[human:userId]` mention reads as the name in a chip; any other text stays as typed. */
+function MessageText({ text, mentionables }: { text: string; mentionables: Mentionable[] }) {
   const parts: React.ReactNode[] = [];
   let last = 0;
-  for (const match of text.matchAll(MENTION)) {
+  for (const match of text.matchAll(MENTION_PATTERN)) {
     const at = match.index ?? 0;
     if (at > last) parts.push(text.slice(last, at));
-    const name = agents.find((agent) => agent.key === match[1])?.displayName ?? match[1];
+    const kind = match[1];
+    const name =
+      mentionables.find((m) => m.kind === kind && m.id === match[2])?.label ?? (kind === "agent" ? "an agent" : "a teammate");
     parts.push(
       <span key={at} className="rounded-control bg-ultra-bg px-1 font-medium text-ultra">
         @{name}
@@ -39,14 +39,14 @@ const formatTime = (iso: string) => new Date(iso).toISOString().slice(11, 16);
  */
 export function ThreadMessage({
   message,
-  agents,
+  mentionables,
   onFollowUp,
   canFollowUp,
   currentUserId,
   team,
 }: {
   message: AiConversationMessage;
-  agents: RoomListAgentDto[];
+  mentionables: Mentionable[];
   onFollowUp: (prompt: string) => void;
   canFollowUp: boolean;
   currentUserId: string | null;
@@ -123,7 +123,7 @@ export function ThreadMessage({
             <span className="font-mono text-[10px] text-ink-4">{formatTime(message.timestamp)}</span>
           </p>
           <div className={cn("mt-1 rounded-card px-3.5 py-2.5 text-left", mine ? "bg-ultra-bg" : "bg-paper-2")}>
-            <MessageText text={message.content} agents={agents} />
+            <MessageText text={message.content} mentionables={mentionables} />
           </div>
         </div>
       </div>

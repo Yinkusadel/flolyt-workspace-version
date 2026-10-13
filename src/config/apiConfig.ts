@@ -394,6 +394,8 @@ export const API_ENDPOINTS = {
     GET_BY_ID: `${AI_CONVERSATIONS_BASE_URL}/{id}`,
     ARCHIVE: `${AI_CONVERSATIONS_BASE_URL}/{id}`,
     SAMPLE_PROMPTS: `${AI_CONVERSATIONS_BASE_URL}/sample-prompts`,
+    /** GET reads / PUT saves the caller's own composer reply mode for one conversation. */
+    PREFERENCES: `${AI_CONVERSATIONS_BASE_URL}/{id}/preferences`,
   },
 
   AI_PROPOSALS: {
