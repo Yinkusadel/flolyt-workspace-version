@@ -19,7 +19,7 @@ import { formatRoomActivity } from "@/lib/format-activity";
 import { AttachedRoomCard } from "@/pages/inbox/attached-room-card";
 import { EditMessageModal } from "@/pages/inbox/edit-message-modal";
 import { formatAttachedRoom } from "@/pages/inbox/kind";
-import { ConfirmModal } from "@/pages/onboarding/team/confirm-modal";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { useGetInboxThread } from "@/features/inbox/use-get-inbox-thread";
 import useReplyToInboxThread from "@/features/inbox/use-reply-to-inbox-thread";
 import useUpdateInboxMessage from "@/features/inbox/use-update-inbox-message";

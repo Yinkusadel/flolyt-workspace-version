@@ -1,10 +1,9 @@
 import * as React from "react";
 
-import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Button } from "@/components/ui/button";
 import { Chip, type ChipTone } from "@/components/ui/chip";
-import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { agentInitialsFromName } from "@/lib/initials";
 import useRemoveRoomAgent from "@/features/rooms/use-remove-room-agent";
 import { humanize } from "@/pages/rooms/convening/format";
@@ -91,28 +90,16 @@ export function Roster({ roomId, agents, canEdit }: { roomId: string; agents: Ro
         </ul>
       )}
 
-      <Dialog open={!!removing} onOpenChange={(open) => !open && !isPending && setRemoving(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Remove {removing?.displayName} from this Room?</DialogTitle>
-            <DialogDescription>It will no longer be part of this Room's roster.</DialogDescription>
-          </DialogHeader>
-          <DialogBody className="px-5 py-1 sm:px-7" />
-          <DialogFooter>
-            <Button type="button" variant="outline" disabled={isPending} onClick={() => setRemoving(null)}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              disabled={isPending}
-              className={cn("bg-rose text-white hover:bg-rose/90")}
-              onClick={() => removing && removeRoomAgent({ roomId, agentKey: removing.key })}
-            >
-              {isPending ? "Removing" : "Remove agent"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmModal
+        open={!!removing}
+        onOpenChange={(open) => !open && setRemoving(null)}
+        title={`Remove ${removing?.displayName ?? "this agent"} from this Room?`}
+        description="It will no longer be part of this Room's roster."
+        confirmLabel="Remove agent"
+        pendingLabel="Removing"
+        isPending={isPending}
+        onConfirm={() => removing && removeRoomAgent({ roomId, agentKey: removing.key })}
+      />
     </section>
   );
 }

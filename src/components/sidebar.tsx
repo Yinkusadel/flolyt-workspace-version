@@ -18,16 +18,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { Chip } from "@/components/ui/chip";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useGetRooms } from "@/features/rooms/use-get-rooms";
 import { useGetAiConversations } from "@/features/ai-conversations/use-get-ai-conversations";
 import { useArchiveAiConversation } from "@/features/ai-conversations/use-archive-ai-conversation";
@@ -350,31 +342,16 @@ function Sidebar({ open, onClose, forceCollapsed = false, className }: SidebarPr
       </nav>
     </aside>
 
-    <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Delete conversation</DialogTitle>
-          <DialogDescription>
-            {`Delete "${deleteTarget?.title ?? ""}"? This can't be undone.`}
-          </DialogDescription>
-        </DialogHeader>
-
-        <DialogFooter>
-          <div className="flex items-center gap-4">
-            <Button type="button" variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
-              {isDeleting ? "Deleting…" : "Delete"}
-            </Button>
-            <button
-              type="button"
-              onClick={() => setDeleteTarget(null)}
-              className="text-[12px] font-semibold text-ink-3 hover:text-ink"
-            >
-              Cancel
-            </button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ConfirmModal
+      open={!!deleteTarget}
+      onOpenChange={(open) => !open && setDeleteTarget(null)}
+      title="Delete conversation"
+      description={`Delete "${deleteTarget?.title ?? ""}"? This can't be undone.`}
+      confirmLabel="Delete"
+      pendingLabel="Deleting…"
+      isPending={isDeleting}
+      onConfirm={handleConfirmDelete}
+    />
     </>
   );
 }

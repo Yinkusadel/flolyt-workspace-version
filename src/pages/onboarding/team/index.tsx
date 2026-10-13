@@ -7,7 +7,7 @@ import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
 import { BackButton } from "@/pages/onboarding/back-button";
 import { TeamCard, TeamCardSkeleton } from "@/pages/onboarding/team/team-card";
 import { CreateTeamModal } from "@/pages/onboarding/team/create-team-modal";
-import { ConfirmModal } from "@/pages/onboarding/team/confirm-modal";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { WhyCreateATeam } from "@/pages/onboarding/team/why-create-a-team";
 import useGetTeams from "@/features/teams/use-get-teams";
 import useDeactivateTeam from "@/features/teams/use-deactivate-team";

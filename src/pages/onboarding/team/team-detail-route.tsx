@@ -15,7 +15,7 @@ import { Chip, type ChipTone } from "@/components/ui/chip";
 import { WizardStepper } from "@/pages/onboarding/wizard-stepper";
 import { InviteMemberModal } from "@/pages/onboarding/team/invite-member-modal";
 import { EditMemberRolesModal } from "@/pages/onboarding/team/edit-member-roles-modal";
-import { ConfirmModal } from "@/pages/onboarding/team/confirm-modal";
+import { ConfirmModal } from "@/components/confirm-modal";
 import useGetTeamById from "@/features/teams/use-get-team-by-id";
 import useResendTeamInvitation from "@/features/teams/use-resend-team-invitation";
 import useRevokeTeamInvitation from "@/features/teams/use-revoke-team-invitation";
