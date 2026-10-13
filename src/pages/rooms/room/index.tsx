@@ -10,8 +10,10 @@ import { UnderlineTabs } from "@/components/ui/underline-tabs";
 import useMarkRoomOpened from "@/features/rooms/use-mark-room-opened";
 import { useGetRoom } from "@/features/rooms/use-get-room";
 import { useGetRoomConflicts } from "@/features/rooms/use-get-room-conflicts";
+import { useGetRoomPlays } from "@/features/rooms/use-get-room-plays";
 import { ConflictsTab } from "@/pages/rooms/room/conflicts";
 import { DecisionTab } from "@/pages/rooms/room/decision";
+import { PlaysTab } from "@/pages/rooms/room/plays";
 import { ThreadPanel } from "@/pages/rooms/room/thread";
 import { useMediaQuery } from "@/pages/rooms/room/thread/use-media-query";
 import { RoomHeader, RoomHeaderSkeleton } from "@/pages/rooms/room/room-header";
@@ -107,6 +109,9 @@ export const RoomPage = () => {
   // so the badge and the tab read one cached request.
   const conflicts = useGetRoomConflicts(data ? (roomId ?? "") : "", { includeResolved: true });
   const openConflicts = conflicts.data ? conflicts.data.data.open : null;
+  // The Plays badge is the response's own `pending`; same params as the tab's default, so one cached request.
+  const plays = useGetRoomPlays(data ? (roomId ?? "") : "", { includeDecided: true });
+  const pendingPlays = plays.data ? plays.data.data.pending : null;
 
   // The thread: docked on the right on wide screens (open by default, remembered), an overlay drawer below 1100px.
   const wide = useMediaQuery("(min-width: 1100px)");
@@ -155,7 +160,7 @@ export const RoomPage = () => {
           key: tab.key,
           label: tab.label,
           to: tab.key === "briefing" ? `/rooms/${roomId}` : `/rooms/${roomId}?tab=${tab.key}`,
-          badge: tab.key === "conflicts" ? openConflicts : null,
+          badge: tab.key === "conflicts" ? openConflicts : tab.key === "plays" ? pendingPlays : null,
         }))}
       />
       {/* A container, not the viewport, decides when a tab stacks: the thread takes width from the tab area. */}
@@ -164,6 +169,8 @@ export const RoomPage = () => {
           <DecisionTab roomId={roomId} />
         ) : active === "conflicts" ? (
           <ConflictsTab roomId={roomId} />
+        ) : active === "plays" ? (
+          <PlaysTab roomId={roomId} />
         ) : (
           <TabPlaceholder label={activeLabel} />
         )}

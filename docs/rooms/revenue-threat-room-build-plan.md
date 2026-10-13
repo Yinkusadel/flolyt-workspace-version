@@ -99,7 +99,7 @@ below is OUT OF DATE: the backend added `GET /rooms/{roomId}` and the page is bu
   already on the Room; `role` is `lead` or `supporting` (`automatic` is the arbitration seat, not offered); `whatItWillDo` is required free text, prefill from the agent's
   `description`; `POST /rooms/{roomId}/agents` (only one Lead). User decision: for now anyone who can contribute to the thread sees the icon; show the
   backend's own refusal message. STILL OPEN with the backend: who may add, error behaviour for a bad role, whether a not-ready agent can be added, whether `decision-owner` is one per Room and who may assign it.
-- **PLAYS TAB: ON HOLD 2026-10-13** (user's decisions): leave out "About this leak" and "Basis"; do NOT fill the "Decides" column from Room people (empty
+- **PLAYS TAB: BUILT 2026-10-13 (`src/pages/rooms/room/plays/`; `npx tsc -b` + `npm run build` clean; mock harness only, from the documented shape + the backend's hand-written sample: `basis` and `decisionOwnerName` now exist and are shown). UNVERIFIED LIVE: everything (no real play yet), `wouldBreach`/`clear` are drawn as counts when numbers and as Yes/No when booleans, the obligation state values, the collision check auto-runs a POST on each selected play. Earlier hold notes:**  (user's decisions): leave out "About this leak" and "Basis"; do NOT fill the "Decides" column from Room people (empty
   cell + `❌` comment, ticket for `decisionOwnerName`); "Readings argued before" comes from `citedReadings` in `GET /rooms/{roomId}/cited-dissent`.
   Waiting for a real play (the list is empty) and a decision on whether to build "Obligations from this room" from the schema alone.
 - **THREAD SLICE 3 BUILT 2026-10-13 (`npx tsc -b` + `npm run build` clean; mock harness only, then deleted):** the panel header roster is now overlapping
@@ -431,6 +431,7 @@ decisions it encodes:
   local storage (try/catch, default "Ask the agents").
 
 ### ISSUES AND DEFERRED LOG (Room page, keep adding; mark DONE, never delete)
+- [ ] **REMINDER: RE-VERIFY THE PLAYS TAB WHEN REAL DATA EXISTS** (user's request 2026-10-13; built from the documented shape + the backend's hand-written sample). When a real play exists on a Room, paste `GET /rooms/{roomId}/plays` (Show Schema on) and re-check: (1) the real `basis` values and that `decisionOwnerName` is filled; (2) whether `wouldBreach` / `clear` in the collision check are counts or booleans (the card handles both); (3) the real `state` values of plays and of `returnedObligations` (unknown ones are plain grey chips); (4) what `notResolvable` means (its note is worded neutrally); (5) a real `returnedObligations` item (`fromName`, `toName`, `blocks`); (6) that the auto-run collision POST per selected play is acceptable; (7) a real `cited-dissent` response for a play. Then mark this DONE here and in `docs/endpoints/rooms.md` (GET /rooms/{roomId}/plays "Status").
 - [x] **DONE 2026-10-12: the backend added all of these fields to `GET /rooms/{roomId}`** (real response in
   `docs/endpoints/rooms.md`): the header can now be built in full from that one call, and `threatConfirmationId`
   can gate the two threat tabs. (Original gap, kept for the record:) Header figures: the single-Room `GET /rooms/{roomId}` lacks people, at-risk open/now, owner name,

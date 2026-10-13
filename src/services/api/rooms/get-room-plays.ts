@@ -18,8 +18,12 @@ export interface RoomPlayDto {
   effect: number | null;
   currency: string | null;
   figuresAreStated: boolean;
+  /** How the stated figures were arrived at (the backend's sample shows "estimated"). Unknown values read as plain text. Added 2026-10-13, from the backend's SAMPLE response only. */
+  basis: string | null;
   state: string;
   decisionOwnerMemberId: string | null;
+  /** The decider's full name, null when unresolved. Added 2026-10-13, from the backend's SAMPLE response only. */
+  decisionOwnerName: string | null;
   waitingHours: number | null;
   deferredBecause: string | null;
   proposedAtUtc: string;

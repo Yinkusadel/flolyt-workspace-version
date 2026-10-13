@@ -26,6 +26,10 @@ const useCheckProposalCollision = () => {
   return {
     checkCollision: mutation.mutate,
     isPending: mutation.isPending,
+    isError: mutation.isError,
+    error: mutation.error,
+    /** The latest check's response; undefined until the first one returns. */
+    result: mutation.data?.data,
   };
 };
 
