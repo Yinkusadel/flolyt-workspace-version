@@ -24,6 +24,7 @@ const useUnrestrictRoom = (options?: UseUnrestrictRoomOptions) => {
       toast.success("Room opened back up to the workspace");
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
       queryClient.invalidateQueries({ queryKey: ["room-people", roomId] });
+      queryClient.invalidateQueries({ queryKey: ["room", roomId] });
       options?.onSuccess?.(data.data);
     },
     onError: (error) => {

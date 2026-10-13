@@ -416,8 +416,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`.
 - **Response `data`:** `{ roomId, guardrails: [{ label, setting, appliesToThisRoomOnly, setBy, setByLabel, overridable, overrideNote, key, setAtUtc }], stopped: [{ guardrail, whatWasStopped, affected, whatHappenedInstead }], stopsComputedFrom, stopsAbsentBecause, sendTimeStopsAvailable }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-room-guardrails.ts` / `src/features/rooms/use-get-room-guardrails.ts`), not wired into a page yet — guardrails tab/section.
-- **Status:** service/hook ready, not wired.
+- **REAL RESPONSE 2026-10-13** (Dormant Accounts): ONE guardrail, `Opt-out` (`setting: "excluded permanently, before any audience is built"`, `setBy: "legal"`, `overridable: "never"` (the docs said `"no"`; both are treated as unliftable), `overrideNote`, `key: null`, `setAtUtc: null`), `stopped: []`, `stopsAbsentBecause: "not-yet-computed"`, `sendTimeStopsAvailable: false`. The design's other rows (quiet hours, frequency cap, discount ceiling, room-set ones) are NOT in the response. Never seen live: a `by-its-author` guardrail, a "set elsewhere" one, a non-empty `stopped`.
+- **Used by:** the guardrails section of the People & guardrails tab (`src/pages/rooms/room/people-guardrails/guardrails-section.tsx`). Service + hook: `get-room-guardrails.ts` / `use-get-room-guardrails.ts`.
+- **Status:** BUILT 2026-10-13 from the real response + the docs. Room-set rows ("Lift" only for the author, `setBy === me`), set-elsewhere rows and the stops list are docs-only.
 - **Notes:** *New endpoint, added 2026-09-08.* Two kinds on one list, and the difference is the point: `overridable: "no"` guardrails (opt-out, quiet hours, frequency cap) are conditions the send pipeline checks and refuses — NOT permissions an administrator holds; render as unliftable by anyone, including the workspace owner. `overridable: "by-its-author"` means a person in this room set it and only they can lift it — `key` is present only on that kind, since a control with nothing to call can't be offered. `sendTimeStopsAvailable` is always false today: the two audience exclusions are real and computed, while throughput splits and quiet-hours holds happen during sending and nothing records them — render that honestly rather than implying there were none. `stopsAbsentBecause` distinguishes a cohort not yet computed from one that lives in a segment and never will be.
 
 ### POST /rooms/{roomId}/guardrails
@@ -588,8 +589,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ userId: uuid, role: string, maxApprovalReach: int32 | null, source: string | null }`.
 - **Response:** `{ data: memberCount, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/add-room-person.ts` / `src/features/rooms/use-add-room-person.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the add dialog in the thread and on the People & guardrails tab (`add-to-room-dialog.tsx`; it now sends `maxApprovalReach` when filled in, a whole number 0 to 2147483647, else null).
+- **Status:** WIRED 2026-10-13 (one real add seen; the reach value is mock-verified only). OPEN QUESTION for the backend: the unit of `maxApprovalReach` (the design hints "people reached") and what `null` means for an approver (no limit, or cannot approve).
 - **Notes:** The widest of the available options and should be presented as such — they'll see evidence, decision, plays, and every customer in the cohort. If someone should see the finding but not the customers, that's a handoff or read-only view, not membership.
 
 ### PUT /rooms/{roomId}/people/{userId}
@@ -598,8 +599,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`, `userId`; body `{ role: string, maxApprovalReach: int32 | null }`.
 - **Response:** `{ data: memberCount, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/update-room-person.ts` / `src/features/rooms/use-update-room-person.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the People table (`people-guardrails/people-card.tsx`): the role select and the inline approval-limit field both call it with `{ role, maxApprovalReach }`.
+- **Status:** WIRED 2026-10-13, mock-verified only (never run against the real backend).
 - **Notes:** Visibility never changes — it never was tied to role.
 
 ### DELETE /rooms/{roomId}/people/{userId}

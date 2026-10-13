@@ -40,7 +40,8 @@ type Tab = "people" | "agents";
 /**
  * Adds a person (`POST /rooms/{roomId}/people`) or an agent (`POST /rooms/{roomId}/agents`) to the Room, opened from the
  * thread panel. Anyone who can contribute to the thread sees it; the backend refuses where it must and its own message
- * is shown. Not sent: `maxApprovalReach` and `source` (both optional; the reach unit is undocumented). `reads` is the
+ * is shown. `maxApprovalReach` (the largest play a person may approve; optional, unit undocumented, the design hints "people reached")
+ * is sent when filled in, else null. Not sent: `source`. `reads` is the
  * agent's own list from `GET /workspace/agents` (a statement of what it looks at, not a grant); that it is the value the
  * backend means is unverified until the first real add.
  */
@@ -63,6 +64,7 @@ export function AddToRoomDialog({
 
   const [userId, setUserId] = React.useState<string | null>(null);
   const [personRole, setPersonRole] = React.useState("participant");
+  const [reach, setReach] = React.useState("");
 
   const [agentKey, setAgentKey] = React.useState<string | null>(null);
   const [agentRole, setAgentRole] = React.useState("supporting");
@@ -76,6 +78,7 @@ export function AddToRoomDialog({
   const reset = () => {
     setUserId(null);
     setPersonRole("participant");
+    setReach("");
     setAgentKey(null);
     setAgentRole("supporting");
     setWhatItWillDo("");
@@ -116,9 +119,14 @@ export function AddToRoomDialog({
   const personRoleInfo = PERSON_ROLES.find((role) => role.value === personRole);
   const agentRoleInfo = AGENT_ROLES.find((role) => role.value === agentRole);
 
+  // A whole number the API can hold (int32), or nothing.
+  const reachTrimmed = reach.trim();
+  const reachValue = reachTrimmed === "" ? null : Number(reachTrimmed);
+  const reachInvalid = reachValue !== null && (!Number.isInteger(reachValue) || reachValue < 0 || reachValue > 2147483647);
+
   const submitPerson = () => {
-    if (!userId) return;
-    addRoomPerson({ roomId, userId, role: personRole, maxApprovalReach: null, source: null });
+    if (!userId || reachInvalid) return;
+    addRoomPerson({ roomId, userId, role: personRole, maxApprovalReach: reachValue, source: null });
   };
   const submitAgent = () => {
     if (!agentKey || !whatItWillDo.trim()) return;
@@ -199,6 +207,22 @@ export function AddToRoomDialog({
                 />
                 {personRoleInfo && <p className="mt-1.5 text-[11.5px] text-ink-3">{personRoleInfo.explain}</p>}
               </div>
+              <div>
+                <label htmlFor="add-person-reach" className={FIELD_LABEL}>
+                  Largest play they can approve (optional)
+                </label>
+                <input
+                  id="add-person-reach"
+                  inputMode="numeric"
+                  value={reach}
+                  disabled={isPending}
+                  onChange={(event) => setReach(event.currentTarget.value)}
+                  placeholder="People reached"
+                  aria-invalid={reachInvalid}
+                  className="h-9 w-full rounded-control border border-line bg-paper px-3 text-[12.5px] text-ink outline-none placeholder:text-ink-4 focus:border-ultra aria-[invalid=true]:border-rose disabled:opacity-60"
+                />
+                {reachInvalid && <p className="mt-1.5 text-[11.5px] text-rose">Use a whole number, or leave it empty.</p>}
+              </div>
             </>
           ) : (
             <>
@@ -261,7 +285,7 @@ export function AddToRoomDialog({
             Cancel
           </Button>
           {tab === "people" ? (
-            <Button type="button" disabled={!userId || isPending} onClick={submitPerson}>
+            <Button type="button" disabled={!userId || reachInvalid || isPending} onClick={submitPerson}>
               {addingPerson ? "Adding" : "Add person"}
             </Button>
           ) : (
