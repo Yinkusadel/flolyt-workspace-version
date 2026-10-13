@@ -22,6 +22,10 @@ export const PeopleGuardrailsTab = ({ room, canEdit }: { room: RoomDetailDto; ca
     [data]
   );
 
+  // Either read can say the Room is restricted (`GET /rooms/{roomId}` and `GET /rooms/{roomId}/people` both carry `restricted`), so the box
+  // follows whichever one does: it must never show the restrict form for a Room that is already closed.
+  const restricted = room.restricted ?? data?.restricted ?? null;
+
   return (
     <div className="space-y-8">
       {data?.everyoneSeesEverything !== false && (
@@ -49,7 +53,7 @@ export const PeopleGuardrailsTab = ({ room, canEdit }: { room: RoomDetailDto; ca
 
       <GuardrailsSection roomId={room.id} canEdit={canEdit} />
 
-      <RestrictBox roomId={room.id} restricted={room.restricted} nameForUser={nameForUser} canEdit={canEdit} />
+      <RestrictBox roomId={room.id} restricted={restricted} nameForUser={nameForUser} canEdit={canEdit} />
     </div>
   );
 };
