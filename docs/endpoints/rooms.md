@@ -753,6 +753,28 @@ These live outside `/rooms`; recorded here because the Room flow depends on them
 - **Status:** documented. Not in `ai-conversation-types.ts` yet.
 - **Notes:** Routing uses one seat: stored mention `@[agent:<key>]`, then `agentKey`, then a relevant eligible rostered supporter (pack-declared intents), else the Room lead. Multiple agent mentions require choosing one. Unknown, off-roster or disabled agents are refused. Selecting an agent grants no roster membership or authority. `none`: no typing indicator, no `final_response` wait, refresh timeline after `message_saved`. History now includes `authorUserId` and `authorName` for new human messages (old ones unattributed). Reconnect via `GET /api/v3/runs/{runId}/stream`; disconnecting never cancels work; never resend the prompt to reconnect.
 
+### GET /api/v3/conversations/{conversationId}/preferences (new 2026-10-13, backend ticket #51)
+
+- **Purpose:** The caller's saved composer reply mode for this conversation.
+- **Auth:** Bearer token. No user id is accepted; only the caller's own preference is readable.
+- **Response `data`:** `{ replyMode: "auto" | "none" }`, `auto` when nothing is saved.
+- **Errors:** 404 for a missing, archived, foreign-workspace or inaccessible conversation.
+- **Used by:** NOT built yet. Plan: the Room thread composer (`src/pages/rooms/room/thread/composer.tsx`) reads it on open, replacing the browser-only `flolyt-room-thread-mode:<conversationId>` memory (keep that only as a fallback).
+- **Notes:** A UI default, never a routing override: every message still sends its `replyMode` explicitly. A failed load keeps `auto`. For a new conversation (no id yet) use `auto`. `none` sends exist only for Room conversations.
+
+### PUT /api/v3/conversations/{conversationId}/preferences (new 2026-10-13, backend ticket #51)
+
+- **Request:** `{ replyMode: "auto" | "none" }`.
+- **Response:** success returns the saved value. 400 for an invalid or null mode; 404 as above.
+- **Used by:** NOT built yet (same place as the GET).
+- **Notes:** Creates no message, run or inbox notification. Concurrent saves by the same user: last committed value wins. If saving fails, tell the person it was not saved across devices.
+
+### Room people names and human mentions (new 2026-10-13, from the merged handoff)
+
+- `GET /rooms/{roomId}/people` now adds a nullable `displayName` to every `people[]` row (IDs, roles and ordering unchanged). Not in `get-room-people.ts` types yet.
+- Message and steering `authorName` now resolves the same workspace full name for every viewer, the author included. Missing, blank or other-workspace profiles are null: never show an id or assume an email is a name.
+- A person mention is written `@[human:<userId>]` in the message text; show a chip `@Ada Lovelace` and keep the id apart from the label. Plain `@Name`, emails and usernames are NOT parsed. Pick people from the workspace roster or Room people. The server queues notifications for eligible workspace people; self-mentions and people outside a restricted Room are skipped. A mention does not invite anyone or grant access. Agent mentions stay `@[agent:<key>]`.
+
 ## Phase 8: verification and independently accepted value
 
 ### POST /{roomId}/verification-plans

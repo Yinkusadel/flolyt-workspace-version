@@ -2,11 +2,69 @@
 
 ## Direct Room loading (live collaboration Phase 1)
 
+Room details and the live feed require an unarchived conversation. Independent archiving is blocked
+while its Room is open. See [archive consistency and targeted repair](room-conversation-archive-repair.md)
+for the confirmed historical incident, reopening/adoption behavior and API acceptance.
+
 Use `GET /api/v3/rooms/{roomId}` when opening a Room from a link, invitation or investigation card.
 The standard result wrapper contains `id`, `title`, `conversationId`, `status`, `ownerMemberId`,
 nullable `viewerRole`, timestamps, `stage`, `mechanism`, `currency`, nullable `market` and
 `lifecycleClass`, `leadAgentKey`, `agents`, `mergedIntoRoomId` and `conversationPermissions`.
-These are core metadata, not current exposure or verified financial outcomes.
+These core metadata fields do not establish verified financial outcomes. Header exposure fields
+are described below.
+
+### Room header fields (issue #52)
+
+The single-Room `data` now also contains the following fields, using the same projection as an
+authorized `GET /api/v3/rooms` list item. The list retains its existing values and structure,
+with only the requested additive `restrictedByName` field on restriction descriptors.
+
+| Field | JSON type | Meaning |
+| --- | --- | --- |
+| `population` | integer | Population recorded for the current opening; its business grain is defined by the Room. |
+| `amountAtRiskAtOpen` | number | Opening exposure in the Room's currency. Matches the existing non-nullable list field. |
+| `currentAmountAtRisk` | number or null | Available current leakage-cell exposure; never substitutes the opening amount. |
+| `currentAmountComputedAtUtc` | date-time or null | Computation time of the available current cell; null when current exposure is unavailable. |
+| `ownerName` | string or null | Owner's full name, falling back to email; null if the owner cannot be resolved or is unassigned. |
+| `stageLabel` | string | Stored stage label, matching the list. |
+| `conditionLabel` | string | Known condition's display label, otherwise its stored key. |
+| `openingNumber` | integer | Current opening number. |
+| `isRecovering` | boolean | Open Room with a previous closing/opening history; not a claim of recovered revenue. |
+| `threatConfirmationId` | UUID or null | Existing confirmation identity used to select threat investigation tabs. |
+| `systemOpenedBy` | string or null | System opening attribution used for the "Opened by Flolyt" chip. |
+| `restricted` | object or null | Same redaction semantics as the list; successful details reads return null. |
+
+The restriction descriptor on a redacted list item and on `GET /api/v3/rooms/{roomId}/people`
+has this shape (illustrative values):
+
+```json
+{
+  "reason": "pricing-before-announcement",
+  "restrictedBy": "01234567-89ab-cdef-0123-456789abcdef",
+  "restrictedAtUtc": "2026-10-12T09:00:00Z",
+  "peopleInside": 3,
+  "restrictedByName": "Chad Sado"
+}
+```
+
+Use `restrictedByName` for display and retain `restrictedBy` for identity. Full name falls back
+to email; a missing/deleted user yields null, so render a neutral "Unknown person" label rather
+than exposing an ID. Restriction actor names are resolved from current user records, including
+historical actors; they are not frozen into the Room document. Authorized list/detail header rows
+still return `restricted: null`, even when the Room has a restriction. Use the authorized people
+response for restriction metadata inside the Room. An excluded viewer still gets 404 from details;
+the added fields never bypass Room or conversation access checks.
+
+Frontend acceptance: compare all header fields between the list item and details for the same
+Room without intervening updates. A missing/unavailable current measurement must return both
+current amount and computation time as null. Test a system-opened Room, a reopened Room, a
+restricted Room as an allowed viewer and an excluded viewer, and missing actor names. Monetary
+exposure remains per currency and does not establish a verified financial outcome.
+
+Backend validation: the API build passed, along with 56 API/OpenAPI/Room stream checks and
+68 PostgreSQL Room/header/index/people/lifecycle regressions. Header parity includes available,
+missing and unavailable current measurements, automatic Room attribution, owner name fallbacks,
+restriction actor names and denied access. No frontend deployment or live UI acceptance has run.
 
 Load the collaboration history with `GET /api/v3/conversations/{conversationId}`. Continue to use
 `POST /api/v3/conversations/messages` with that same ID for replies. The permission flags
@@ -163,6 +221,18 @@ Render proposalState and obligationState from the live action-status rows. Do no
 
 Use POST /api/v3/conversations/messages with the existing Room conversationId and an explicit replyMode:
 
+The composer preference is persisted per authenticated user and conversation. On opening a conversation, call `GET /api/v3/conversations/{conversationId}/preferences`; its result envelope contains `data: { "replyMode": "auto" }` when unset. When the user changes the toggle, call `PUT` on the same URL with `{ "replyMode": "auto" }` or `{ "replyMode": "none" }`; success returns the saved value. No user ID is accepted. Other users' choices are independent, and shared conversation permissions do not expose their preferences. Missing, archived, foreign-workspace or inaccessible conversations return 404; invalid modes return 400.
+
+Continue sending the composer's current `replyMode` explicitly with every message. The preference is a UI default, not a routing override: omitted message mode still defaults to `auto`. Saving a preference creates no message, run or inbox notification. Existing human-only message restrictions remain: `none` sends are supported only for Room conversations. For a new conversation, use `auto` until a conversation ID exists. On a failed preference load, retain the safe `auto` default; do not treat that failure as permission to send to an inaccessible thread. If saving fails, show that it was not saved across devices. Concurrent saves by the same user use the last committed value.
+
+API acceptance for composer preferences:
+
+1. As user A, GET preferences on an accessible Room conversation: expect 200 with `data.replyMode = auto`.
+2. PUT `{ "replyMode": "none" }`, then GET using a new session/device with user A's credentials: expect `none`.
+3. As user B, GET the same conversation's preferences: expect `auto` unless B has saved a choice. A's preference stays unchanged when B saves theirs.
+4. Send a message explicitly using `none`: expect the existing human-only save. Send one using `auto`: expect normal agent routing, regardless of the saved choice.
+5. PUT an invalid or null mode: expect 400. GET/PUT a missing, archived, foreign-workspace or restricted inaccessible conversation: expect 404. Check that saving preferences added no transcript messages or agent runs.
+
 ~~~json
 { "conversationId": "<room-conversation-id>", "message": "What should we investigate first?", "replyMode": "auto" }
 ~~~
@@ -180,6 +250,10 @@ For human coordination:
 ~~~
 
 The message is saved with no AgentRun or model call. SSE emits message_saved and ends; JSON returns 200 without a runId (null fields are omitted). Do not show an AI typing indicator or await final_response. GET conversation history includes authorUserId and authorName for newly saved human messages. Old messages without author metadata remain unattributed. Refresh the shared timeline after message_saved; it is not a synthetic assistant response.
+
+Person labels: `GET /api/v3/rooms/{roomId}/people` adds nullable `displayName` to every `people[]` row. Conversation message and steering `authorName` resolves the same workspace full name for all viewers, including the author. Missing, blank or other-workspace profiles resolve to null; do not show an ID or assume an email is a person's name. Existing IDs, roles and ordering are unchanged.
+
+Human mentions: show `@Ada Lovelace` as a chip, but send `@[human:<userId>]` in the message text (for example `Please review this, @[human:aaaaaaaa-0000-0000-0000-000000000001].`). Select the person from the workspace roster or Room people and retain the ID separately from the display label. Plain `@Ada Lovelace`, emails and usernames are not parsed mentions. The server parses the body and queues notifications for eligible workspace people; self-mentions and people outside a restricted Room are skipped. Mentioning somebody does not invite them or grant access. Agent mentions use `@[agent:<key>]` and follow the responder routing rules above.
 
 ### Postman acceptance checks
 

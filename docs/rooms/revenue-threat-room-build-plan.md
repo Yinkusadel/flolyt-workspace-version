@@ -72,6 +72,20 @@ below is OUT OF DATE: the backend added `GET /rooms/{roomId}` and the page is bu
   fields until a capture), a real send, and the real Room conversation with messages. The chat panel code was not modified.
   **Ticket candidates:** the history has no `replyMode` per message, so a saved people-only note can't be tagged; `/rooms/{roomId}/people`
   has user ids but no names, so the roster can't show people.
+- **THREAD SLICE 1 pushed (`d5a3422`) + backend answers 2026-10-13: READY TO IMPLEMENT when the user says "build".** The handoff was merged:
+  `revenue-threat-room-frontend-handoff.md` is now the newer version (the `-new` file is gone; it also links `room-conversation-archive-repair.md`,
+  not in this repo, ask the user if it is needed). Slice 1 later fixes already done: author colours are handed out by first appearance in the
+  thread (up to 4 authors never share one), a "You" tag + right-aligned own messages (compares `authorUserId` to `useAuth().user.id`, UNVERIFIED
+  that those ids are equal), tool-call `context` lines stay hidden (technical logs, not the shimmering `progress` line, which comes with the feed).
+  **Next implementation batch (all documented in `docs/endpoints/rooms.md`, section "Room people names and human mentions" + the two
+  `/conversations/{id}/preferences` entries):**
+  1. Saved reply mode: `GET`/`PUT /conversations/{conversationId}/preferences` replace the browser-only mode memory (keep it as a fallback;
+     keep sending `replyMode` explicitly on every message; failed load keeps `auto`; failed save says it was not saved across devices).
+  2. People names: add `displayName` (nullable) to `get-room-people.ts`; show people in the panel roster; null stays unnamed (no id/email fallback).
+  3. Human mentions in the `@` picker next to agents: show `@Ada Lovelace`, send `@[human:<userId>]`; render stored `@[human:id]` as a chip
+     using Room people (and the workspace roster as a fallback). Plain `@Name` is not a mention.
+  4. `authorName` is now the full name for every viewer: drop any email expectation.
+  Still waiting on the backend: `room-live-state.mjs` + test (feed/reducer). Real-agent send needs an agent on the Room.
 - **Other Room work still open:** Restrict... dialog, Close room page, Plays tab (empty list, no create route),
   Briefing (no summary endpoint; `/investigation` deferred), Admin tab (backend answers), threat tabs.
 
