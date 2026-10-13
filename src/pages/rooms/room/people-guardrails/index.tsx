@@ -25,8 +25,8 @@ export const PeopleGuardrailsTab = ({ room, canEdit }: { room: RoomDetailDto; ca
   return (
     <div className="space-y-8">
       {data?.everyoneSeesEverything !== false && (
-        <p className="flex items-start gap-3 rounded-card bg-ink px-5 py-3.5 text-[12.5px] leading-relaxed text-paper">
-          <Eye className="mt-0.5 size-4 shrink-0" />
+        <p className="flex items-start gap-3 rounded-card border border-ultra-border bg-ultra-bg/50 px-4 py-3 text-[12.5px] leading-relaxed text-ink">
+          <Eye className="mt-0.5 size-4 shrink-0 text-ultra" />
           <span>
             Everyone listed here sees every message, every finding and every customer in the cohort. A role changes who a play routes to and what they can approve. It never
             changes what they can see.

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Check, Pencil, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PersonAvatar } from "@/components/person-avatar";
@@ -24,41 +25,104 @@ const PERSON_ROLES = [
 ];
 
 /**
- * The approval limit cell: a whole number (the largest play a person may approve; unit undocumented, the design hints "people
- * reached"), saved with the role through `PUT /rooms/{roomId}/people/{userId}` when the field loses focus or Enter is pressed.
- * Empty means no number (null). What null means for an approver is not documented, so it is not translated into words here.
+ * The approval limit cell: the value with a pencil beside it. The pencil swaps it for a number field with a green check (save) and a red
+ * cross (cancel); Enter saves and Escape cancels. The number is the largest play a person may approve (unit undocumented, the design hints
+ * "people reached"), saved with the role through `PUT /rooms/{roomId}/people/{userId}`. Empty means no number (null); what null means for an
+ * approver is not documented, so it is shown as "—" and not translated into words. The field closes only once the save has succeeded.
  */
-function ReachCell({ person, editable, onSave, isSaving }: { person: RoomPersonDto; editable: boolean; onSave: (value: number | null) => void; isSaving: boolean }) {
+function ReachCell({
+  person,
+  editable,
+  onSave,
+  isSaving,
+}: {
+  person: RoomPersonDto;
+  editable: boolean;
+  onSave: (value: number | null, done: () => void) => void;
+  isSaving: boolean;
+}) {
   const current = person.maxApprovalReach === null ? "" : String(person.maxApprovalReach);
+  const [editing, setEditing] = React.useState(false);
   const [value, setValue] = React.useState(current);
-  React.useEffect(() => setValue(current), [current]);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  // Focus the field when it opens (the `autoFocus` attribute is not honoured under Preact).
+  React.useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
 
   const trimmed = value.trim();
   const parsed = trimmed === "" ? null : Number(trimmed);
   const invalid = parsed !== null && (!Number.isInteger(parsed) || parsed < 0 || parsed > 2147483647);
 
-  const commit = () => {
-    if (invalid) return setValue(current);
-    if (trimmed === current) return;
-    onSave(parsed);
+  const open = () => {
+    setValue(current);
+    setEditing(true);
+  };
+  const cancel = () => {
+    if (isSaving) return;
+    setEditing(false);
+    setValue(current);
+  };
+  const submit = () => {
+    if (invalid || isSaving) return;
+    // Nothing changed: just close.
+    if (trimmed === current) return setEditing(false);
+    onSave(parsed, () => setEditing(false));
   };
 
-  if (!editable) {
-    return <span className="font-mono text-[12.5px] text-ink">{person.maxApprovalReach === null ? "—" : person.maxApprovalReach.toLocaleString("en-US")}</span>;
+  if (!editing) {
+    return (
+      <span className="ml-auto flex h-8 w-44 items-center justify-end gap-2">
+        <span className="font-mono text-[12.5px] text-ink">{person.maxApprovalReach === null ? "—" : person.maxApprovalReach.toLocaleString("en-US")}</span>
+        {editable && (
+          <button
+            type="button"
+            onClick={open}
+            aria-label="Edit the largest play this person can approve"
+            className="flex size-6 items-center justify-center rounded-control text-ink-4 hover:bg-paper-2 hover:text-ink"
+          >
+            <Pencil className="size-3.5" />
+          </button>
+        )}
+      </span>
+    );
   }
   return (
-    <input
-      inputMode="numeric"
-      value={value}
-      disabled={isSaving}
-      aria-label="Largest play this person can approve"
-      aria-invalid={invalid}
-      placeholder="—"
-      onChange={(event) => setValue(event.currentTarget.value)}
-      onBlur={commit}
-      onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
-      className="h-8 w-28 rounded-control border border-line bg-paper px-2 text-right font-mono text-[12.5px] text-ink outline-none placeholder:text-ink-4 focus:border-ultra aria-[invalid=true]:border-rose disabled:opacity-60"
-    />
+    <span className="ml-auto flex h-8 w-44 items-center justify-end gap-1.5">
+      <input
+        ref={inputRef}
+        inputMode="numeric"
+        value={value}
+        disabled={isSaving}
+        aria-label="Largest play this person can approve"
+        aria-invalid={invalid}
+        placeholder="—"
+        onChange={(event) => setValue(event.currentTarget.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") submit();
+          if (event.key === "Escape") cancel();
+        }}
+        className="h-8 w-24 rounded-control border border-ultra bg-paper px-2 text-right font-mono text-[12.5px] text-ink outline-none placeholder:text-ink-4 aria-[invalid=true]:border-rose disabled:opacity-60"
+      />
+      <button
+        type="button"
+        onClick={submit}
+        disabled={invalid || isSaving}
+        aria-label="Save"
+        className="flex size-7 items-center justify-center rounded-control bg-teal-bg text-teal hover:bg-teal-border disabled:opacity-40"
+      >
+        <Check className="size-4" />
+      </button>
+      <button
+        type="button"
+        onClick={cancel}
+        disabled={isSaving}
+        aria-label="Cancel"
+        className="flex size-7 items-center justify-center rounded-control bg-rose-bg text-rose hover:bg-rose-border disabled:opacity-40"
+      >
+        <X className="size-4" />
+      </button>
+    </span>
   );
 }
 
@@ -167,7 +231,12 @@ export function PeopleCard({
                         person={person}
                         editable={canEdit && !isOwner}
                         isSaving={isUpdating}
-                        onSave={(value) => updateRoomPerson({ roomId, userId: person.userId, role: person.role, maxApprovalReach: value })}
+                        onSave={(value, done) =>
+                          updateRoomPerson(
+                            { roomId, userId: person.userId, role: person.role, maxApprovalReach: value },
+                            { onSuccess: (response) => response.succeeded && done() }
+                          )
+                        }
                       />
                     </td>
                     <td className="px-4 py-3 text-[12px] text-ink-3">
