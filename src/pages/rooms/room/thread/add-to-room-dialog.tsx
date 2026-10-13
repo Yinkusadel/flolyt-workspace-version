@@ -48,12 +48,18 @@ export function AddToRoomDialog({
   roomId,
   open,
   onOpenChange,
+  initialTab = "people",
 }: {
   roomId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** The tab shown each time the dialog opens (the Agents & runs tab opens it on Agents). */
+  initialTab?: Tab;
 }) {
-  const [tab, setTab] = React.useState<Tab>("people");
+  const [tab, setTab] = React.useState<Tab>(initialTab);
+  React.useEffect(() => {
+    if (open) setTab(initialTab);
+  }, [open, initialTab]);
 
   const [userId, setUserId] = React.useState<string | null>(null);
   const [personRole, setPersonRole] = React.useState("participant");

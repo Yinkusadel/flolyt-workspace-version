@@ -446,8 +446,17 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; query `limit` (int32, optional).
 - **Response `data`:** `{ roomId, agents: [{ key, displayName, role, state, currentRunId }], runs: [{ runId, agentKey, agentName, startedAtUtc, finishedAtUtc, turns, state, waitingOn, failedBecause, result, cancelledByUserId, cancelReason }], noAgentsNamed, rowsReadAvailable }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-room-runs.ts` / `src/features/rooms/use-get-room-runs.ts`), not wired into a page yet — runs/activity tab.
-- **Status:** service/hook ready, not wired.
+- **REAL RESPONSE 2026-10-13** (Dormant Accounts): `agents[]` = Revenue Intelligence `lead`, Compass `supporting`, Oracle `supporting`, all `state: "idle"`; `runs[]` newest first, 9 runs all `state: "done"` (lowercase; `result` "recorded a claim" / "concluded the investigation" on two, null on the rest), `agentKey: "flolyt"` / `agentName: "Flolyt"` for the coordination run, `rowsReadAvailable: false`, `noAgentsNamed: false`. NEVER seen live: failed, cancelled, awaiting-approval, running rows.
+- **Used by:** the Agents & runs tab, `src/pages/rooms/room/agents-runs/` (roster, runs table, investigation card, "Add an agent" button). Service + hook: `src/services/api/rooms/get-room-runs.ts` / `src/features/rooms/use-get-room-runs.ts` (the tab reads `limit=50`).
+- **Status:** BUILT 2026-10-13. Left out: "Approve or reject" on a waiting run (no route documented), "Connect source" on a failed run (no field), the rows-read count (unavailable). The live feed refreshes this tab on `run_started` / `run_state` / `run_cancelled` / `error` (debounced).
+
+### GET /rooms/{roomId}/investigation (REAL RESPONSE 2026-10-13; was "unspecified")
+
+- **Purpose:** The Room's investigation: where it stands, its turn budget and the steps taken.
+- **Auth:** Bearer token. **404** with the server's own text ("This room has no lead agent, so nothing investigates it.") when the Room has no lead agent.
+- **Response `data`:** `{ roomId, openingNumber, status ("concluded" seen), turnBudget, turnsUsed, turnsLeft, now, summary, stoppedBecause, startedAtUtc, endedAtUtc, canPause, steps: [{ runId, agentKey, agentLabel, kind ("lead" | "coordinate" | "ask" seen), question, askedByAgentKey, startedAtUtc, endedAtUtc, outcome, tool }] }`.
+- **Used by:** the investigation card on the Agents & runs tab (`src/services/api/rooms/get-room-investigation.ts` / `src/features/rooms/use-get-room-investigation.ts`). `canPause` is not used: no pause route is documented.
+- **Open ticket #57:** the `coordinate` and `ask` steps keep `endedAtUtc` and `outcome` null although their runs are `done` and the investigation is `concluded` (both runs ended after the conclusion). The card shows "No end time recorded" for such a step and never claims it is still running.
 - **Notes:** *New endpoint, added 2026-09-08.* A failed run is a row like any other — not hidden, not a banner: its cause is named (e.g. `"COGS source missing"`), which makes it fixable, and the room keeps working with one agent blind. Don't sort by severity or lift failures into their own section. `agents` is the room's roster with a state each, since "idle" is an agent with nothing in flight rather than a run, and a table of runs alone can't show it. States are the kit's seven plus `awaiting-approval`, a run parked on a person rather than a machine — folding that into `queued` would make one word mean both "waiting for a machine" and "waiting for you." `rowsReadAvailable` is always false — nothing counts rows an agent read, sent so a client renders "unavailable" rather than a zero. `waitingOn` is usually null — runs don't depend on other runs in this system, so the kit's "waits on run X" concept isn't reproduced rather than being faked.
 
 ### POST /rooms/{roomId}/agents

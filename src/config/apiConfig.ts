@@ -648,6 +648,8 @@ export const API_ENDPOINTS = {
     CREATE_ROOM_GUARDRAIL: `${ROOMS_BASE_URL}/{roomId}/guardrails`,
     REMOVE_ROOM_GUARDRAIL: `${ROOMS_BASE_URL}/{roomId}/guardrails/{key}`,
     GET_ROOM_RUNS: `${ROOMS_BASE_URL}/{roomId}/runs`,
+    /** The Room's investigation: its status, turn budget and steps. Real response seen 2026-10-13; 404 "no lead agent" when none. */
+    GET_ROOM_INVESTIGATION: `${ROOMS_BASE_URL}/{roomId}/investigation`,
     ADD_ROOM_AGENT: `${ROOMS_BASE_URL}/{roomId}/agents`,
     REMOVE_ROOM_AGENT: `${ROOMS_BASE_URL}/{roomId}/agents/{agentKey}`,
     GET_MERGE_CANDIDATES: `${ROOMS_BASE_URL}/{roomId}/merge-candidates`,

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { useGetRoomThread } from "@/features/rooms/use-get-room-thread";
@@ -35,6 +36,9 @@ function reduce(held: Held, action: Action): Held {
   }
 }
 
+/** Feed events that change what the Agents & runs tab shows (a run started, moved or ended). */
+const RUN_EVENTS = new Set(["run_started", "run_state", "run_cancelled", "error"]);
+
 export type RoomLiveConnection = RoomFeedStatus | "revoked";
 
 /**
@@ -49,6 +53,22 @@ export function useRoomLiveThread(roomId: string, conversationId: string | null,
   const [held, dispatch] = React.useReducer(reduce, { conversationId: null, history: [], state: null } as Held);
   const [feed, setFeed] = React.useState<RoomFeedStatus>("connecting");
   const [feedKey, setFeedKey] = React.useState(0);
+
+  // A run event means the Agents & runs tab (runs, roster states, investigation) is out of date: refetch it, once, shortly after the
+  // burst ends (the replay on connect sends many events at once).
+  const queryClient = useQueryClient();
+  const refreshTimer = React.useRef<number | null>(null);
+  const scheduleRunsRefresh = React.useCallback(() => {
+    if (refreshTimer.current !== null) window.clearTimeout(refreshTimer.current);
+    refreshTimer.current = window.setTimeout(() => {
+      refreshTimer.current = null;
+      queryClient.invalidateQueries({ queryKey: ["room-runs", roomId] });
+      queryClient.invalidateQueries({ queryKey: ["room-investigation", roomId] });
+    }, 600);
+  }, [queryClient, roomId]);
+  React.useEffect(() => () => {
+    if (refreshTimer.current !== null) window.clearTimeout(refreshTimer.current);
+  }, []);
 
   // Build the state from the FIRST history that arrives for this conversation; later history refetches must never rewind it.
   const initializedFor = React.useRef<string | null>(null);
@@ -72,6 +92,7 @@ export function useRoomLiveThread(roomId: string, conversationId: string | null,
       getCursor: () => cursorRef.current,
       onFrame: (eventName, data) => {
         if (eventName === "room_stream_ready") setFeed("connected");
+        if (RUN_EVENTS.has(eventName)) scheduleRunsRefresh();
         dispatch({ type: "frame", eventName, data });
       },
       onStatus: setFeed,
@@ -79,7 +100,7 @@ export function useRoomLiveThread(roomId: string, conversationId: string | null,
       // A 401 goes through the app's own authenticated client, whose interceptor refreshes the session (with its lock).
       refreshSession: () => getRoom(roomId).then(() => true, () => false),
     });
-  }, [ready, revoked, conversationId, roomId, feedKey]);
+  }, [ready, revoked, conversationId, roomId, feedKey, scheduleRunsRefresh]);
 
   const timeline = React.useMemo(() => (state ? buildTimeline(state, resolveAuthorName) : []), [state, resolveAuthorName]);
   const activity = React.useMemo(() => (state ? agentActivity(state) : {}), [state]);

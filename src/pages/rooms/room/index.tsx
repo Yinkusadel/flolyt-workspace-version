@@ -11,6 +11,7 @@ import useMarkRoomOpened from "@/features/rooms/use-mark-room-opened";
 import { useGetRoom } from "@/features/rooms/use-get-room";
 import { useGetRoomConflicts } from "@/features/rooms/use-get-room-conflicts";
 import { useGetRoomPlays } from "@/features/rooms/use-get-room-plays";
+import { AgentsRunsTab } from "@/pages/rooms/room/agents-runs";
 import { ConflictsTab } from "@/pages/rooms/room/conflicts";
 import { DecisionTab } from "@/pages/rooms/room/decision";
 import { PlaysTab } from "@/pages/rooms/room/plays";
@@ -171,6 +172,8 @@ export const RoomPage = () => {
           <ConflictsTab roomId={roomId} />
         ) : active === "plays" ? (
           <PlaysTab roomId={roomId} />
+        ) : active === "agents-runs" ? (
+          <AgentsRunsTab roomId={roomId} canEdit={data.conversationPermissions.canContribute} />
         ) : (
           <TabPlaceholder label={activeLabel} />
         )}

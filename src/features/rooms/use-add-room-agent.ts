@@ -24,6 +24,8 @@ const useAddRoomAgent = (options?: UseAddRoomAgentOptions) => {
 
       toast.success("Agent added to the room");
       queryClient.invalidateQueries({ queryKey: ["room-people", variables.roomId] });
+      queryClient.invalidateQueries({ queryKey: ["room-runs", variables.roomId] });
+      queryClient.invalidateQueries({ queryKey: ["room-investigation", variables.roomId] });
       options?.onSuccess?.();
     },
     onError: (error) => {
