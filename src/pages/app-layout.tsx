@@ -74,7 +74,12 @@ function renderCrumbs(crumbs: Crumb[]): React.ReactNode {
 
 export const AppLayout = () => {
   const [navOpen, setNavOpen] = React.useState(false);
-  const [forceCollapsed, setForceCollapsed] = React.useState(false);
+  const [forceCollapsed, setForceCollapsedState] = React.useState(false);
+  const [onExpandRequest, setOnExpandRequest] = React.useState<(() => void) | undefined>(undefined);
+  const setForceCollapsed = React.useCallback((force: boolean, handler?: () => void) => {
+    setForceCollapsedState(force);
+    setOnExpandRequest(() => (force ? handler : undefined));
+  }, []);
   const [breadcrumbOverride, setBreadcrumbOverride] = React.useState<Crumb[] | null>(null);
   const location = useLocation();
   const breadcrumbContextValue = React.useMemo(
@@ -104,7 +109,7 @@ export const AppLayout = () => {
 
   return (
     <div className="flex h-dvh overflow-hidden bg-paper">
-      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} forceCollapsed={forceCollapsed} />
+      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} forceCollapsed={forceCollapsed} onExpandRequest={onExpandRequest} />
 
       <div
         aria-hidden

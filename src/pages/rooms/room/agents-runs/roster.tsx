@@ -76,8 +76,9 @@ export function Roster({ roomId, agents, canEdit }: { roomId: string; agents: Ro
                 {agent.reads && agent.reads.length > 0 && (
                   <p className="mt-2 text-[11.5px] leading-snug text-ink-3">Reads: {agent.reads.join(", ")}</p>
                 )}
+                {/* mt-auto pins the action to the card's bottom, so Remove lines up across cards whatever the description's length. */}
                 {canEdit && (
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <div className="mt-auto flex flex-wrap items-center gap-3 pt-4">
                     <Button type="button" variant="outline" size="sm" disabled={isArbiter} onClick={() => setRemoving(agent)}>
                       Remove
                     </Button>

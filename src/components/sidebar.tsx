@@ -52,12 +52,14 @@ export type SidebarProps = {
   onClose: () => void;
   /** A page needs the room (the Room thread): show the icon rail without touching the saved preference. */
   forceCollapsed?: boolean;
+  /** While a page forces the rail: what asking to expand does (the Room page closes its thread). */
+  onExpandRequest?: () => void;
   className?: string;
 };
 
 const SIDEBAR_COLLAPSED_KEY = "flolyt-sidebar-collapsed";
 
-function Sidebar({ open, onClose, forceCollapsed = false, className }: SidebarProps) {
+function Sidebar({ open, onClose, forceCollapsed = false, onExpandRequest, className }: SidebarProps) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   // Desktop-only collapse (icon rail). The mobile drawer always renders full-width regardless
@@ -170,9 +172,16 @@ function Sidebar({ open, onClose, forceCollapsed = false, className }: SidebarPr
         />
         <button
           type="button"
-          onClick={() => setCollapsed((prev) => !prev)}
-          disabled={forceCollapsed}
-          title={forceCollapsed ? "Close the thread to expand the sidebar" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          onClick={() => {
+            // Rail forced by a page (the Room thread): asking to expand gives the sidebar the room back, i.e. the page lets go of it.
+            if (forceCollapsed) {
+              setCollapsed(false);
+              onExpandRequest?.();
+              return;
+            }
+            setCollapsed((prev) => !prev);
+          }}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className="hidden size-page shrink-0 items-center justify-center rounded-control text-ink-3 hover:text-ink lg:group-hover:flex"
         >

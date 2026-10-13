@@ -2,6 +2,7 @@ import * as React from "react";
 import { MessageSquare } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
+import { cn } from "@/lib/utils";
 import { usePageBreadcrumb } from "@/components/breadcrumb-context";
 import { useForceSidebarCollapsed } from "@/components/sidebar-override-context";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,8 @@ function RoomUnavailable({ message, onRetry }: { message: string; onRetry: () =>
 }
 
 const THREAD_OPEN_KEY = "flolyt-room-thread-open";
+/** Slide duration of the docked thread, matching the sidebar. */
+const PANEL_MS = 300;
 
 /** Docked-panel preference, remembered per browser. Open unless the person closed it; storage may be blocked. */
 function readThreadOpen(): boolean {
@@ -122,7 +125,22 @@ export const RoomPage = () => {
   const conversationId = data?.conversationId ?? null;
   const docked = wide && dockedOpen && !!conversationId;
   const drawer = !wide && drawerOpen && !!conversationId;
-  useForceSidebarCollapsed(docked);
+  useForceSidebarCollapsed(docked, () => setDocked(false));
+
+  // The docked panel slides in and out (width and fade) in step with the sidebar's own transition instead of jumping. It stays mounted
+  // only while visible or animating out, so a closed thread holds no feed connection.
+  const [panelMounted, setPanelMounted] = React.useState(docked);
+  const [panelShown, setPanelShown] = React.useState(docked);
+  React.useEffect(() => {
+    if (docked) {
+      setPanelMounted(true);
+      const frame = window.requestAnimationFrame(() => window.requestAnimationFrame(() => setPanelShown(true)));
+      return () => window.cancelAnimationFrame(frame);
+    }
+    setPanelShown(false);
+    const timer = window.setTimeout(() => setPanelMounted(false), PANEL_MS + 40);
+    return () => window.clearTimeout(timer);
+  }, [docked]);
   const setDocked = (open: boolean) => {
     setDockedOpen(open);
     try {
@@ -186,11 +204,17 @@ export const RoomPage = () => {
 
   return (
     <>
-      <div className="flex items-start gap-6">
-        {content}
-        {docked && conversationId && (
-          <aside className="sticky top-0 h-[calc(100dvh-var(--spacing-topbar)-var(--spacing-page)*2)] w-100 shrink-0">
-            <ThreadPanel room={data} conversationId={conversationId} onClose={() => setDocked(false)} />
+      <div className="flex items-start">
+        <div className="min-w-0 flex-1">{content}</div>
+        {panelMounted && conversationId && (
+          <aside
+            className="sticky top-0 h-[calc(100dvh-var(--spacing-topbar)-var(--spacing-page)*2)] shrink-0 overflow-hidden transition-[width] ease-out"
+            style={{ width: panelShown ? "26.5rem" : "0px", transitionDuration: `${PANEL_MS}ms` }}
+          >
+            {/* Fixed width inside, so the panel slides as a whole and its text never reflows while the width animates; the left padding is the gap. */}
+            <div className={cn("h-full w-106 pl-6 transition-opacity ease-out", panelShown ? "opacity-100" : "opacity-0")} style={{ transitionDuration: `${PANEL_MS}ms` }}>
+              <ThreadPanel room={data} conversationId={conversationId} onClose={() => setDocked(false)} />
+            </div>
           </aside>
         )}
       </div>
