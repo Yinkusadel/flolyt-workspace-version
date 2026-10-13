@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextTooltip } from "@/components/ui/text-tooltip";
 import { PersonAvatar } from "@/components/person-avatar";
-import { agentInitialsFromName, initialsFromName } from "@/lib/initials";
+import { agentInitialsFromName } from "@/lib/initials";
 import { useAuth } from "@/utils/auth-context";
 import { useGetRoomPeople } from "@/features/rooms/use-get-room-people";
 import { useGetRoomThread } from "@/features/rooms/use-get-room-thread";
@@ -14,6 +14,8 @@ import type { RoomDetailDto } from "@/services/api/rooms/get-room";
 import { AddToRoomDialog } from "@/pages/rooms/room/thread/add-to-room-dialog";
 import { ThreadComposer } from "@/pages/rooms/room/thread/composer";
 import type { Mentionable } from "@/pages/rooms/room/thread/mentions";
+import { MembersDialog } from "@/pages/rooms/room/thread/members-dialog";
+import { ThreadRoster, type RosterAgent, type RosterPerson } from "@/pages/rooms/room/thread/roster";
 import { ThreadMessage } from "@/pages/rooms/room/thread/thread-message";
 
 /** How long the working line may wait for the answer before it gives up (the feed will replace this guess). */
@@ -43,6 +45,7 @@ export function ThreadPanel({
 }) {
   const { user } = useAuth();
   const [addOpen, setAddOpen] = React.useState(false);
+  const [membersOpen, setMembersOpen] = React.useState(false);
   const thread = useGetRoomThread(conversationId);
   const people = useGetRoomPeople(room.id);
   const roomPeople = people.data?.data.people;
@@ -65,7 +68,23 @@ export function ThreadPanel({
     ],
     [roomAgents, roomPeople, user?.id]
   );
-  const namedPeople = React.useMemo(() => (roomPeople ?? []).filter((person) => person.displayName), [roomPeople]);
+  const namedPeople = React.useMemo<RosterPerson[]>(
+    () =>
+      (roomPeople ?? [])
+        .filter((person) => person.displayName)
+        .map((person) => ({ userId: person.userId, displayName: person.displayName as string, role: person.role })),
+    [roomPeople]
+  );
+  const rosterAgents = React.useMemo<RosterAgent[]>(
+    () =>
+      roomAgents.map((agent) => ({
+        key: agent.key,
+        displayName: agent.displayName,
+        role: agent.role,
+        whatItWillDo: "whatItWillDo" in agent ? (agent as { whatItWillDo: string }).whatItWillDo : undefined,
+      })),
+    [roomAgents]
+  );
 
   // One colour per person: the four team colours are handed out in order of first appearance in this thread, so
   // everyone viewing the same history sees the same colours, and up to four authors never share one.
@@ -109,6 +128,9 @@ export function ThreadPanel({
     if (el) el.scrollTop = el.scrollHeight;
   }, [shown.length, working]);
 
+  // Only the latest agent reply keeps its suggestions.
+  const lastAssistantIndex = shown.reduce((last, m, i) => (m.role === "assistant" ? i : last), -1);
+
   const workingAgent = working?.agentKey ? roomAgents.find((agent) => agent.key === working.agentKey) : null;
   const workingName = workingAgent?.displayName ?? "An agent";
 
@@ -144,26 +166,12 @@ export function ThreadPanel({
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          {roomAgents.length === 0 && <span className="text-[11.5px] text-ink-3">No agents on this Room yet.</span>}
-          {roomAgents.map((agent) => (
-            <span key={agent.key} className="inline-flex items-center gap-1.5" title={agent.role}>
-              <PersonAvatar kind="agent" size="sm" initials={agentInitialsFromName(agent.displayName)} />
-              <span className="text-[11.5px] text-ink-2">{agent.displayName}</span>
-            </span>
-          ))}
-          {namedPeople.map((person) => (
-            <span key={person.userId} className="inline-flex items-center gap-1.5" title={person.role}>
-              <PersonAvatar
-                kind="human"
-                size="sm"
-                team={teamByAuthor.get(person.userId) ?? 1}
-                initials={initialsFromName(person.displayName as string)}
-              />
-              <span className="text-[11.5px] text-ink-2">{person.displayName}</span>
-            </span>
-          ))}
-        </div>
+        <ThreadRoster
+          people={namedPeople}
+          agents={rosterAgents}
+          teamFor={(userId) => teamByAuthor.get(userId) ?? 1}
+          onOpen={() => setMembersOpen(true)}
+        />
       </header>
 
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
@@ -208,6 +216,7 @@ export function ThreadPanel({
                   message={message}
                   mentionables={mentionables}
                   canFollowUp={canContribute && !isPending}
+                  showFollowUps={index === lastAssistantIndex}
                   currentUserId={user?.id ?? null}
                   team={teamByAuthor.get(message.authorUserId ?? message.authorName ?? "") ?? 1}
                   onFollowUp={(prompt) => send(prompt, "auto")}
@@ -232,6 +241,22 @@ export function ThreadPanel({
           <p className="px-1 py-2 text-center text-[11.5px] text-ink-3">You can read this thread but not post in it.</p>
         )}
       </footer>
+      <MembersDialog
+        open={membersOpen}
+        onOpenChange={setMembersOpen}
+        people={namedPeople}
+        agents={rosterAgents}
+        teamFor={(userId) => teamByAuthor.get(userId) ?? 1}
+        onAdd={
+          canContribute
+            ? () => {
+                // One dialog at a time: close this one before opening the add form.
+                setMembersOpen(false);
+                setAddOpen(true);
+              }
+            : undefined
+        }
+      />
       <AddToRoomDialog roomId={room.id} open={addOpen} onOpenChange={setAddOpen} />
     </section>
   );

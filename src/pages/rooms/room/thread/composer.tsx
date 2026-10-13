@@ -5,9 +5,12 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { ConversationReplyMode } from "@/features/ai-conversations/ai-conversation-types";
 import { useGetConversationReplyMode, useSetConversationReplyMode } from "@/features/rooms/use-conversation-reply-mode";
-import { mentionToken, type Mentionable } from "@/pages/rooms/room/thread/mentions";
+import { findMentions, mentionToken, type Mentionable } from "@/pages/rooms/room/thread/mentions";
 
 type Mode = "agents" | "people";
+
+/** A trailing line break in the highlight layer, so it is as tall as the textarea when the draft ends in a new line. */
+const NEWLINE = "\n";
 
 const toMode = (replyMode: ConversationReplyMode): Mode => (replyMode === "none" ? "people" : "agents");
 
@@ -73,6 +76,9 @@ export function ThreadComposer({
   const [mode, setModeState] = React.useState<Mode>(() => readLocalMode(conversationId));
   const [modeOpen, setModeOpen] = React.useState(false);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const highlightRef = React.useRef<HTMLDivElement>(null);
+  // Where the caret goes after the next render (a controlled textarea resets it when its text is replaced).
+  const pendingCaret = React.useRef<number | null>(null);
 
   const saved = useGetConversationReplyMode(conversationId);
   const { setReplyMode } = useSetConversationReplyMode();
@@ -101,6 +107,35 @@ export function ThreadComposer({
     setReplyMode({ conversationId, replyMode: next === "people" ? "none" : "auto" });
   };
 
+  React.useLayoutEffect(() => {
+    if (pendingCaret.current === null) return;
+    textareaRef.current?.setSelectionRange(pendingCaret.current, pendingCaret.current);
+    pendingCaret.current = null;
+  });
+
+  // Mentions in the draft: coloured behind the text, removed as one unit, swapped for their token on send.
+  const mentions = React.useMemo(() => findMentions(text, mentionables), [text, mentionables]);
+  const segments = React.useMemo(() => {
+    const parts: { text: string; mention: boolean }[] = [];
+    let last = 0;
+    for (const range of mentions) {
+      if (range.start > last) parts.push({ text: text.slice(last, range.start), mention: false });
+      parts.push({ text: text.slice(range.start, range.end), mention: true });
+      last = range.end;
+    }
+    if (last < text.length) parts.push({ text: text.slice(last), mention: false });
+    return parts;
+  }, [text, mentions]);
+
+  // Backspace right after a mention (or inside one) removes all of it; Delete right before one does the same.
+  const removeWholeMention = (key: "Backspace" | "Delete", caret: number) => {
+    const range = mentions.find((m) => (key === "Backspace" ? m.start < caret && caret <= m.end : m.start <= caret && caret < m.end));
+    if (!range) return false;
+    setText(text.slice(0, range.start) + text.slice(range.end));
+    pendingCaret.current = range.start;
+    return true;
+  };
+
   // `@` at the tail of the text opens the picker over the agents and people on this Room.
   const atMatch = /(^|\s)@([\w .'-]*)$/.exec(text);
   const atQuery = atMatch ? atMatch[2].toLowerCase() : null;
@@ -115,13 +150,13 @@ export function ThreadComposer({
   };
 
   const send = () => {
-    let body = text.trim();
-    if (!body || isSending) return;
-    // Longest names first so "Retention analyst" is not eaten by a shorter name.
-    for (const mention of [...mentionables].sort((a, b) => b.label.length - a.label.length)) {
-      body = body.split(`@${mention.label}`).join(mentionToken(mention));
+    if (!text.trim() || isSending) return;
+    // Swap each mention for its stored token, from the end so the earlier positions stay valid.
+    let body = text;
+    for (const range of [...mentions].reverse()) {
+      body = body.slice(0, range.start) + mentionToken(range.mention) + body.slice(range.end);
     }
-    onSend(body, mode === "people" ? "none" : "auto");
+    onSend(body.trim(), mode === "people" ? "none" : "auto");
     setText("");
   };
 
@@ -149,20 +184,48 @@ export function ThreadComposer({
       )}
 
       <div className={cn("rounded-card border bg-paper transition-colors", tone.box)}>
-        <textarea
-          ref={textareaRef}
-          value={text}
-          rows={2}
-          onChange={(event) => setText(event.currentTarget.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              send();
-            }
-          }}
-          placeholder={mode === "agents" ? "Ask the agents on this Room, or @ someone" : "Write to the people in this Room"}
-          className="block max-h-40 w-full resize-none bg-transparent px-3.5 pt-3 pb-1 text-[13px] text-ink outline-none placeholder:text-ink-4"
-        />
+        <div className="relative">
+          {/* The coloured copy of the text sits behind the real, transparent textarea, in identical metrics, so nothing moves:
+              a mention keeps its place in the sentence and is only drawn in colour. */}
+          <div
+            ref={highlightRef}
+            aria-hidden
+            className="pointer-events-none absolute inset-0 overflow-hidden px-3.5 pt-3 pb-1 text-[13px] leading-normal wrap-break-word whitespace-pre-wrap text-ink"
+          >
+            {segments.map((part, index) =>
+              part.mention ? (
+                <span key={index} className="font-medium text-ultra">
+                  {part.text}
+                </span>
+              ) : (
+                <React.Fragment key={index}>{part.text}</React.Fragment>
+              )
+            )}
+            {NEWLINE}
+          </div>
+          <textarea
+            ref={textareaRef}
+            value={text}
+            rows={2}
+            onChange={(event) => setText(event.currentTarget.value)}
+            onScroll={(event) => {
+              if (highlightRef.current) highlightRef.current.scrollTop = event.currentTarget.scrollTop;
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                send();
+                return;
+              }
+              if ((event.key === "Backspace" || event.key === "Delete") && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                const { selectionStart, selectionEnd } = event.currentTarget;
+                if (selectionStart === selectionEnd && removeWholeMention(event.key, selectionStart)) event.preventDefault();
+              }
+            }}
+            placeholder={mode === "agents" ? "Ask the agents on this Room, or @ someone" : "Write to the people in this Room"}
+            className="relative block max-h-40 w-full resize-none bg-transparent px-3.5 pt-3 pb-1 text-[13px] leading-normal text-transparent caret-ink outline-none placeholder:text-ink-4"
+          />
+        </div>
         <div className="flex items-center justify-between gap-2 px-2.5 pb-2.5">
           <Popover open={modeOpen} onOpenChange={setModeOpen}>
             <PopoverTrigger asChild>

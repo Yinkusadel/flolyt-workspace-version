@@ -6,6 +6,7 @@ import { agentInitialsFromName, initialsFromName } from "@/lib/initials";
 import { AiMarkdownText } from "@/pages/conversations/ai-response/markdown-text";
 import { HandoffCard } from "@/pages/conversations/handoff-card";
 import type { AiConversationMessage } from "@/features/ai-conversations/ai-conversation-types";
+import { SuggestedFollowUps } from "@/pages/rooms/room/thread/suggested-followups";
 import { MENTION_PATTERN, type Mentionable } from "@/pages/rooms/room/thread/mentions";
 
 /** A stored `@[agent:key]` or `@[human:userId]` mention reads as the name in a chip; any other text stays as typed. */
@@ -42,6 +43,7 @@ export function ThreadMessage({
   mentionables,
   onFollowUp,
   canFollowUp,
+  showFollowUps,
   currentUserId,
   team,
 }: {
@@ -49,6 +51,8 @@ export function ThreadMessage({
   mentionables: Mentionable[];
   onFollowUp: (prompt: string) => void;
   canFollowUp: boolean;
+  /** Only the latest agent reply offers its suggestions; older ones would be stale. */
+  showFollowUps: boolean;
   currentUserId: string | null;
   /** The author's colour slot, handed out by the thread in order of first appearance. */
   team: 1 | 2 | 3 | 4;
@@ -86,20 +90,7 @@ export function ThreadMessage({
           <div className="mt-1 rounded-card border border-ultra-border bg-paper px-3.5 py-3">
             <AiMarkdownText content={markdown} />
           </div>
-          {canFollowUp && followUps.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {followUps.map((followUp) => (
-                <button
-                  key={followUp.id}
-                  type="button"
-                  onClick={() => onFollowUp(followUp.prompt)}
-                  className="rounded-full border border-ultra-border bg-ultra-bg px-2.5 py-1 text-left text-[11.5px] text-ultra hover:underline"
-                >
-                  {followUp.prompt}
-                </button>
-              ))}
-            </div>
-          )}
+          {showFollowUps && <SuggestedFollowUps prompts={followUps} canSend={canFollowUp} onSelect={onFollowUp} />}
         </div>
       </div>
     );

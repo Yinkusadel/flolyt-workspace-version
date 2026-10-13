@@ -102,6 +102,16 @@ below is OUT OF DATE: the backend added `GET /rooms/{roomId}` and the page is bu
 - **PLAYS TAB: ON HOLD 2026-10-13** (user's decisions): leave out "About this leak" and "Basis"; do NOT fill the "Decides" column from Room people (empty
   cell + `❌` comment, ticket for `decisionOwnerName`); "Readings argued before" comes from `citedReadings` in `GET /rooms/{roomId}/cited-dissent`.
   Waiting for a real play (the list is empty) and a decision on whether to build "Obligations from this room" from the schema alone.
+- **THREAD SLICE 3 BUILT 2026-10-13 (`npx tsc -b` + `npm run build` clean; mock harness only, then deleted):** the panel header roster is now overlapping
+  avatars (people solid, agents dashed, up to 6 then "+N", names in a tooltip, "N people · N agents" beside them) and opens a members dialog
+  (`thread/members-dialog.tsx`: All / People / Agents tabs from `GET /rooms/{roomId}/people`, read only, roles via `humanize`, "Add people or agents"
+  in the footer closes it first then opens the add dialog). Agent suggestions are a labelled "Suggested follow-ups" block (`thread/suggested-followups.tsx`,
+  chat-panel look, small radius, numbered rows held to 2 lines, hover copy icon always visible on touch, only the LATEST agent reply shows it). Both
+  dialogs have a FIXED body height (`h-[min(26rem,..vh)] flex-none`: DialogBody's own `flex-1` overrides a plain height, measured 630px on every tab).
+- **MENTION LOOK BUILT 2026-10-13 (composer):** a mention in the draft is drawn in the app blue (coloured text only, no pill) by a mirror layer behind the
+  transparent textarea (identical metrics, scroll synced; nothing moves), Backspace after/inside a mention or Delete before it removes the WHOLE
+  mention, and sending swaps each mention for its stored token. A mention = any `@Label` that exactly names a Room agent/person, not glued to a word
+  (`findMentions` in `thread/mentions.ts`, the single source for colour, deletion and send). Mock-harness verified (7 checks), not by hand in a real browser.
 - **Other Room work still open:** Restrict... dialog, Close room page, Plays tab (empty list, no create route),
   Briefing (no summary endpoint; `/investigation` deferred), Admin tab (backend answers), threat tabs.
 
