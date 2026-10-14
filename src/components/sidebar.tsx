@@ -197,7 +197,7 @@ function Sidebar({ open, onClose, forceCollapsed = false, onExpandRequest, class
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 py-4">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 pt-0 pb-4">
         <NavLink to="/" end onClick={onClose} title="Home" className={navLinkClass}>
           <Home className="size-3.75 shrink-0" />
           <span className={cn("truncate", collapsed && "lg:hidden")}>Home</span>

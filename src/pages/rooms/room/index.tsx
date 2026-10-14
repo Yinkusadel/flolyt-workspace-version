@@ -176,9 +176,9 @@ export const RoomPage = () => {
     <div className="min-w-0 flex-1 space-y-6">
       <RoomHeader room={data} onOpenThread={conversationId && !docked ? openThread : undefined} />
       {/* The tab bar stays pinned under the top bar while the header above it scrolls away and the tab's content scrolls beneath it. It is
-          full-bleed (the page padding is cancelled and re-applied) with the page's own background so nothing shows through, and it sticks at
-          the scroll area's very edge (-top-page) so no strip of scrolling content peeks out above it. */}
-      <div className="sticky -top-page z-20 -mx-page -mt-page bg-paper px-page pt-page">
+          full-bleed (the side padding is cancelled and re-applied) with the page's own background so nothing shows through. The scroll area
+          has no top padding, so it sticks flush at its top edge. */}
+      <div className="sticky top-0 z-20 -mx-page bg-paper px-page">
         <UnderlineTabs
           active={active}
           tabs={tabs.map((tab) => ({
@@ -216,7 +216,7 @@ export const RoomPage = () => {
         <div className="min-w-0 flex-1">{content}</div>
         {panelMounted && conversationId && (
           <aside
-            className="sticky top-0 h-[calc(100dvh-var(--spacing-topbar)-var(--spacing-page)*2)] shrink-0 overflow-hidden transition-[width] ease-out"
+            className="sticky top-0 h-[calc(100dvh-var(--spacing-topbar)-var(--spacing-page))] shrink-0 overflow-hidden transition-[width] ease-out"
             style={{ width: panelShown ? "26.5rem" : "0px", transitionDuration: `${PANEL_MS}ms` }}
           >
             {/* Fixed width inside, so the panel slides as a whole and its text never reflows while the width animates; the left padding is the gap. */}

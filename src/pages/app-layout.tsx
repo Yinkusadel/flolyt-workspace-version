@@ -127,7 +127,7 @@ export const AppLayout = () => {
         />
         {/* The 8px scrollbar takes layout space, so without a reserved gutter a page whose height
             crosses the window's (e.g. a collapsing panel) jumps sideways as the bar comes and goes. */}
-        <main className="flex-1 overflow-y-auto p-page scrollbar-gutter-stable">
+        <main className="flex-1 overflow-y-auto px-page pt-0 pb-page scrollbar-gutter-stable">
           <BreadcrumbContext.Provider value={breadcrumbContextValue}>
             <SidebarOverrideContext.Provider value={setForceCollapsed}>
               <Outlet />
