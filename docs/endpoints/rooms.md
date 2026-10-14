@@ -68,8 +68,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`.
 - **Response `data`:** `{ roomId, roomTitle, totalEntries, humanEntries, agentEntries, systemEntries, entries: [{ occurredAtUtc, actorKind, actorId, actorLabel, action, consequence, dissent }] }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-room-log.ts` / `src/features/rooms/use-get-room-log.ts`), not wired into a page yet — target is the room's log/history screen.
-- **Status:** service/hook ready, not wired.
+- **REAL RESPONSE 2026-10-14** (Dormant Accounts): `totalEntries: 53`, `humanEntries: 48`, `agentEntries: 5`, `systemEntries: 0`; entries OLDEST FIRST with `occurredAtUtc`, `actorKind` ("Human" / "Agent"), `actorId`, `actorLabel`, `action`, `consequence` (may be null), `dissent` (the dissent's WORDS as a string, null otherwise: the earlier DTO had it as a boolean). Data quirks to ticket: a person's `actorLabel` is `chad@yopmail.com · Administrator` (email + role, not the full name); owner handovers put raw user ids in `consequence` ("owner 01a0f8e0… → 01a0fc86…"); restrict entries carry the raw reason key ("Restricted the room · pricing-before-announcement"); an agent's failed start is an ordinary entry ("Could not start Revenue Intelligence"), no field marks a failure.
+- **Used by:** the Log tab, `src/pages/rooms/room/log/index.tsx` (service + hook `get-room-log.ts` / `use-get-room-log.ts`; Export CSV through `use-export-room-log.ts`, file name `room-log-<roomId>.csv`).
+- **Status:** BUILT 2026-10-14 from the real response (mock-verified). Not shown: the design's pink tint on a failed run (no field).
 - **Notes:** Every entry names its actor and whether human/agent/platform — nothing happens anonymously. `consequence` is what followed the action, not whether the action succeeded. Counts are broken out human vs agent.
 
 ### GET /rooms/{roomId}/log/export

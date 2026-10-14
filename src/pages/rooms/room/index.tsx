@@ -15,6 +15,7 @@ import { useGetRoomPlays } from "@/features/rooms/use-get-room-plays";
 import { AgentsRunsTab } from "@/pages/rooms/room/agents-runs";
 import { ConflictsTab } from "@/pages/rooms/room/conflicts";
 import { DecisionTab } from "@/pages/rooms/room/decision";
+import { LogTab } from "@/pages/rooms/room/log";
 import { PeopleGuardrailsTab } from "@/pages/rooms/room/people-guardrails";
 import { PlaysTab } from "@/pages/rooms/room/plays";
 import { ThreadPanel } from "@/pages/rooms/room/thread";
@@ -191,6 +192,8 @@ export const RoomPage = () => {
           <ConflictsTab roomId={roomId} />
         ) : active === "plays" ? (
           <PlaysTab roomId={roomId} />
+        ) : active === "log" ? (
+          <LogTab roomId={roomId} />
         ) : active === "people-guardrails" ? (
           <PeopleGuardrailsTab room={data} canEdit={data.conversationPermissions.canContribute} />
         ) : active === "agents-runs" ? (
