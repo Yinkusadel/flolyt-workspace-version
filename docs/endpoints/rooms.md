@@ -489,8 +489,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`.
 - **Response `data`:** `{ roomId, population, candidates: [{ roomId, title, ownerMemberId, conditionKey, stageLabel, theirPopulation, sharedCustomers, oursForShared, theirsForShared, countedTwiceAtLeast, currency, sameCondition, theirOpenedAtUtc, alreadyMerged, alreadyLinked }], notYetComputed, absentBecause }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-merge-candidates.ts` / `src/features/rooms/use-get-merge-candidates.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **REAL RESPONSE 2026-10-14** (Dormant Accounts): `population: 0`, `candidates: []`, `notYetComputed: true`, `absentBecause: "not-yet-computed"`. A second Room now exists ("Attrition — CAD", `01a13b36-ed6a-7854-8189-c2e42ae3fa21`, CAD, population 9, opened 2026-10-14); Dormant Accounts is USD, so a pair would be cross-currency (headcounts only, money figures null per the docs). Never seen with a real candidate.
+- **Used by:** nothing yet (service + hook ready: `get-merge-candidates.ts` / `use-get-merge-candidates.ts`; link / unlink / merge / unmerge services and hooks also ready, none wired).
+- **Status:** HELD with the cohort tab. **Ticket text (not yet confirmed raised):** "For Room 01a0fc76-a89c-7d41-899a-bba0214c9923 (opened 2026-10-02), GET /rooms/{roomId}/cohort returns notYetComputed: true (absentBecause: not-yet-computed) with all counts 0, and GET /rooms/{roomId}/merge-candidates returns population 0, candidates [], notYetComputed: true. The docs say this means the Room opened between computing passes; it has been 12 days. (1) Is the cohort computation running for this Room and what triggers it? (2) Will the second Room 01a13b36-ed6a-7854-8189-c2e42ae3fa21 (opened 2026-10-14) be computed, so overlaps and the cross-currency card can be tested?" (The 52 s Scalar time seen once was the user's own network, not the backend: the next call took 4 s.)
 - **Notes:** `countedTwiceAtLeast` is a floor, not a total — per shared person it takes the smaller of the two contributions (the two cells may draw on different orders), render as "at least." Cross-currency pairs return null money figures — only headcount stands, currencies never blended. Restricted rooms are absent here (unlike the collision check) — merging needs an owner and a decision taken in front of both people. Doesn't recommend merging — linking is an equally valid answer, and the collision check already stops the two rooms sending to the same people.
 
 ### POST /rooms/{roomId}/merge
@@ -571,8 +572,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`.
 - **Response `data`:** `{ roomId, totalCount, reachableCount, suppressedCount, cappedCount, markets: [{ timeZoneId, customerCount }], sample: [{ customerId, name, acquiredAtUtc, firstOrder, currency, daysSinceFirstOrder, timeZoneId, contactability, suppressionReason }], sampledFromPool, exportable, computedAtUtc, notYetComputed, absentBecause }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-room-cohort.ts` / `src/features/rooms/use-get-room-cohort.ts`), not wired into a page yet — cohort tab.
-- **Status:** service/hook ready, not wired.
+- **REAL RESPONSE 2026-10-14** (Dormant Accounts, opened 2026-10-02): `totalCount: 0`, every count 0, `markets: []`, `sample: []`, `sampledFromPool: false`, `exportable: false`, `computedAtUtc: null`, `notYetComputed: true`, `absentBecause: "not-yet-computed"`. The docs say this state means the Room opened between computing passes; it is 12 days later, so it is a BACKEND QUESTION (ticket below). Nothing else on this endpoint has ever been seen with data.
+- **Used by:** nothing yet (service + hook ready: `src/services/api/rooms/get-room-cohort.ts` / `src/features/rooms/use-get-room-cohort.ts`).
+- **Status:** tab NOT BUILT: HELD 2026-10-14 by the user until the backend answers the ticket (see the plan, "COHORT & OVERLAPS: ON HOLD").
 - **Notes:** The sample of 12 is a sanity check, not evidence — reshuffle gives a fresh draw. Deliberately no paging/export — a sample answers "is this cohort what I think it is," a different question from a customer list. Suppressed outranks capped — an opt-out doesn't expire, a cap does. `notYetComputed` means the room opened between passes and has no cohort yet — render that, never zeros. `computedAtUtc` can be up to 15 minutes stale — show it.
 
 ### GET /rooms/{roomId}/people

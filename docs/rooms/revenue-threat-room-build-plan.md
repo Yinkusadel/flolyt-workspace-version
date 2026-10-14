@@ -9,6 +9,15 @@ this doc is the umbrella plan, not a build log. Nothing below is built unless ma
 Everything below this section is the history of how we got here. Where an older section disagrees
 with this one, this one wins.
 
+### STATE OF PLAY 2026-10-14 (branch `room-evidence-and-close`, latest pushed commit after `751f31a`; read this first, newer than everything below)
+- **Branches:** `revenue-threat-room` was merged by the user (PR #43); work continues on `room-evidence-and-close` (from `add-onboarding`, tracking origin).
+- **BUILT Room tabs (all on `/rooms/:roomId?tab=`):** Decision, Conflicts, Plays, Evidence, Agents & runs, People & guardrails, Log, plus the live Room thread (side panel). Header, tab bar (pinned while scrolling), Watching menu, add people/agents dialog, shared `ConfirmModal`.
+- **NOT BUILT:** Briefing (no endpoint), Cohort & overlaps (ON HOLD, below), the two threat tabs (no auto-opened Room), the Close room page, the Restrict dialog from the header (Restrict lives ONLY in People & guardrails by the user's call), Admin tab (backend answers), a header "Worsened" chip.
+- **COHORT & OVERLAPS: ON HOLD 2026-10-14 (user: wait for the backend).** Real `/cohort` AND `/merge-candidates` both answer `notYetComputed: true` for Dormant Accounts, 12 days after it opened (docs: normal only briefly). Ticket text is in `docs/endpoints/rooms.md` ("GET /rooms/{roomId}/merge-candidates"). When it is answered: re-read both endpoints, then build the tab (design: Room · Cohort & overlaps.png: four tiles + bar, "Where they are", "Twelve at random" + Reshuffle, then overlap cards with Link / Merge / Unlink / Unmerge; the "not yet computed" state must be shown, never zeros; cross-currency pairs show headcount only). A second Room "Attrition — CAD" now exists for overlap tests; merge/link are never tried live.
+- **RE-VERIFY REMINDERS (waiting on real data), all in "ISSUES AND DEFERRED LOG":** Plays, Agents & runs, People & guardrails (writes never run live), Evidence (claims/gaps).
+- **TICKETS to raise or confirmed raised with the backend:** the cohort question above; Log `actorLabel` is email + role; owner-handover and restrict text carry raw ids / reason keys in the log; the prompt is committed 1 to 16 s AFTER its run starts (raised, text given 2026-10-14); #57 coordinate/ask investigation steps never close (raised); unit and null meaning of `maxApprovalReach`; Evidence has zero claims although a run said "recorded a claim".
+- **Conventions added since:** `<main>` has NO top padding (`px-page pt-0 pb-page`); thread console logs use a 🧵 marker (`live/room-thread-log.ts`); a sent prompt is shown at once as a pending row; Plays "Include decided" keeps the old list on screen while the other loads; `DialogBody` needs `flex-none` for a fixed height.
+
 ### SESSION 3 UPDATE (2026-10-12): read this before the 2026-10-11 summary below, it supersedes it
 **Branch `revenue-threat-room`, last pushed commit `fee69c4`.** The "Room detail page is BLOCKED" line
 below is OUT OF DATE: the backend added `GET /rooms/{roomId}` and the page is built as follows.
