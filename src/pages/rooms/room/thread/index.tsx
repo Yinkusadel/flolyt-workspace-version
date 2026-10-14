@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TextTooltip } from "@/components/ui/text-tooltip";
 import { useAuth } from "@/utils/auth-context";
 import { useGetRoomPeople } from "@/features/rooms/use-get-room-people";
+import { roomLog } from "@/features/rooms/live/room-thread-log";
 import { useRoomLiveThread, type RoomLiveConnection } from "@/features/rooms/use-room-live-thread";
 import useSendRoomMessage from "@/features/rooms/use-send-room-message";
 import type { RoomDetailDto } from "@/services/api/rooms/get-room";
@@ -130,6 +131,7 @@ export function ThreadPanel({
   const { sendRoomMessage, isPending } = useSendRoomMessage();
   const send = (message: string, replyMode: "auto" | "none") => {
     // Shown at once; a failed send takes it back out (the hook already says why).
+    roomLog("Send clicked", { replyMode, message });
     const pendingId = live.addPending(message);
     sendRoomMessage({ conversationId, message, replyMode }, { onError: () => live.removePending(pendingId) });
   };
