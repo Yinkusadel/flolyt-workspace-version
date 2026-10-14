@@ -80,7 +80,7 @@ export function ThreadPanel({
   const nameById = React.useMemo(() => new Map((roomPeople ?? []).map((person) => [person.userId, person.displayName] as const)), [roomPeople]);
   const resolveAuthorName = React.useCallback((userId: string) => nameById.get(userId) ?? null, [nameById]);
 
-  const live = useRoomLiveThread(room.id, conversationId, resolveAuthorName);
+  const live = useRoomLiveThread(room.id, conversationId, resolveAuthorName, user ? { id: user.id, name: user.name } : null);
   const timeline = live.timeline;
 
   // Who can be addressed: the Room's agents, then its named people other than me (a self-mention is skipped by the server).
@@ -128,7 +128,11 @@ export function ThreadPanel({
   }, [timeline, roomPeople]);
 
   const { sendRoomMessage, isPending } = useSendRoomMessage();
-  const send = (message: string, replyMode: "auto" | "none") => sendRoomMessage({ conversationId, message, replyMode });
+  const send = (message: string, replyMode: "auto" | "none") => {
+    // Shown at once; a failed send takes it back out (the hook already says why).
+    const pendingId = live.addPending(message);
+    sendRoomMessage({ conversationId, message, replyMode }, { onError: () => live.removePending(pendingId) });
+  };
 
   // Keep the newest thing in view: on first load, when the thread grows and while a streamed answer lengthens, but only if the
   // reader is already near the bottom (never yank someone who scrolled up to read).

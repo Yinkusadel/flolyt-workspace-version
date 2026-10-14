@@ -57,3 +57,39 @@ test('a failed run shows the backend error; a delivery gap with no draft still s
   state = apply(createRoomState(conversation), 1, 'stream_delivery_gap', 'r2', {});
   assert.equal(buildTimeline(state)[0].run.deliveryGap, true);
 });
+
+// ---- Pending messages: the backend commits a prompt AFTER its run has started streaming (seen on every real run). ----
+import { settlePending, withPendingMessages } from './room-timeline.ts';
+
+test('a pending message sits after the committed messages and before the working run, then settles when its committed copy arrives', () => {
+  let state = createRoomState(conversation, [{ messageId: 'old', role: 'user', content: 'earlier', authorUserId: 'me', timestamp: '2026-10-13T10:00:00Z' }]);
+  const sentAt = Date.parse('2026-10-14T09:00:00Z');
+  const pending = [{ id: 'p1', content: 'What should we look at first?', sentAtMs: sentAt }];
+  // the run starts and streams BEFORE the prompt is committed (the real ordering)
+  state = apply(state, 1, 'run_started', 'r1', { message: 'RIA is working.' }, { agentKey: 'a.ria', agentLabel: 'RIA' });
+  state = apply(state, 2, 'response_chunk', 'r1', { message: 'Draft' });
+  let items = withPendingMessages(buildTimeline(state), pending, 'me', 'Chad');
+  assert.deepEqual(items.map(i => i.key), ['m:old', 'p:p1', 'r:r1']);
+  assert.equal(items[1].row.pending, true);
+  assert.equal(items[1].row.authorName, 'Chad');
+  assert.equal(settlePending(pending, state, 'me', sentAt + 2000).length, 1); // not committed yet
+  // the committed prompt arrives (late), the placeholder goes, the message keeps its place before the run
+  state = apply(state, 3, 'message_committed', 'r1', { messageId: 'q', role: 'user', content: 'What should we look at first?', authorUserId: 'me', timestamp: '2026-10-14T09:00:03Z' });
+  assert.equal(settlePending(pending, state, 'me', sentAt + 4000).length, 0);
+  items = withPendingMessages(buildTimeline(state), [], 'me', 'Chad');
+  assert.deepEqual(items.map(i => i.key), ['m:old', 'm:q', 'r:r1']);
+});
+
+test('pending matching needs the same person, the same text and a message at or after the send; a stale pending is dropped', () => {
+  const sentAt = Date.parse('2026-10-14T09:00:00Z');
+  const pending = [{ id: 'p', content: 'same text', sentAtMs: sentAt }];
+  const withRow = (row) => createRoomState(conversation, [{ messageId: 'm', role: 'user', ...row }]);
+  // an OLDER identical message (sent long before) must not settle it
+  assert.equal(settlePending(pending, withRow({ content: 'same text', authorUserId: 'me', timestamp: '2026-10-13T09:00:00Z' }), 'me', sentAt + 1000).length, 1);
+  // someone else saying the same thing does not settle it
+  assert.equal(settlePending(pending, withRow({ content: 'same text', authorUserId: 'other', timestamp: '2026-10-14T09:00:02Z' }), 'me', sentAt + 3000).length, 1);
+  // different text does not settle it
+  assert.equal(settlePending(pending, withRow({ content: 'other text', authorUserId: 'me', timestamp: '2026-10-14T09:00:02Z' }), 'me', sentAt + 3000).length, 1);
+  // 90 s later it is dropped even if nothing arrived
+  assert.equal(settlePending(pending, createRoomState(conversation), 'me', sentAt + 91_000).length, 0);
+});

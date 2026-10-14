@@ -5,7 +5,7 @@ import { API_ENDPOINTS } from "@/config/apiConfig";
 import { useGetRoomThread } from "@/features/rooms/use-get-room-thread";
 import { openRoomFeed, type RoomFeedStatus } from "@/features/rooms/live/room-feed-client";
 import { applyRoomEvent, createRoomState, type RoomMessageRow, type RoomState } from "@/features/rooms/live/room-live-state";
-import { agentActivity, buildTimeline } from "@/features/rooms/live/room-timeline";
+import { agentActivity, buildTimeline, settlePending, withPendingMessages, type PendingMessage } from "@/features/rooms/live/room-timeline";
 import { getRoom } from "@/services/api/rooms/get-room";
 import { COOKIE_KEYS, getCookie } from "@/utils/cookies";
 
@@ -48,7 +48,12 @@ export type RoomLiveConnection = RoomFeedStatus | "revoked";
  * dropped connection reconnects from the last applied event. Only this hook opens the feed, once per mounted thread, and it is
  * aborted on unmount; a send never retries from here.
  */
-export function useRoomLiveThread(roomId: string, conversationId: string | null, resolveAuthorName?: (userId: string) => string | null) {
+export function useRoomLiveThread(
+  roomId: string,
+  conversationId: string | null,
+  resolveAuthorName?: (userId: string) => string | null,
+  me?: { id: string; name: string | null } | null
+) {
   const history = useGetRoomThread(conversationId);
   const [held, dispatch] = React.useReducer(reduce, { conversationId: null, history: [], state: null } as Held);
   const [feed, setFeed] = React.useState<RoomFeedStatus>("connecting");
@@ -102,7 +107,26 @@ export function useRoomLiveThread(roomId: string, conversationId: string | null,
     });
   }, [ready, revoked, conversationId, roomId, feedKey, scheduleRunsRefresh]);
 
-  const timeline = React.useMemo(() => (state ? buildTimeline(state, resolveAuthorName) : []), [state, resolveAuthorName]);
+  // Messages just sent, shown at once: the backend commits a prompt AFTER its run has started streaming, so without this the person's own
+  // message would appear below the answer. Each is replaced by its committed copy when that arrives.
+  const [pending, setPending] = React.useState<PendingMessage[]>([]);
+  React.useEffect(() => {
+    if (state) setPending((current) => settlePending(current, state, me?.id ?? null, Date.now()));
+  }, [state, me?.id]);
+  const addPending = React.useCallback((content: string) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setPending((current) => [...current, { id, content, sentAtMs: Date.now() }]);
+    // A lost event must not leave the placeholder for ever.
+    window.setTimeout(() => setPending((current) => current.filter((item) => item.id !== id)), 95_000);
+    return id;
+  }, []);
+  const removePending = React.useCallback((id: string) => setPending((current) => current.filter((item) => item.id !== id)), []);
+
+  const committed = React.useMemo(() => (state ? buildTimeline(state, resolveAuthorName) : []), [state, resolveAuthorName]);
+  const timeline = React.useMemo(
+    () => withPendingMessages(committed, pending, me?.id ?? null, me?.name ?? null),
+    [committed, pending, me?.id, me?.name]
+  );
   const activity = React.useMemo(() => (state ? agentActivity(state) : {}), [state]);
 
   const connection: RoomLiveConnection = revoked ? "revoked" : feed;
@@ -114,6 +138,10 @@ export function useRoomLiveThread(roomId: string, conversationId: string | null,
     error: history.error,
     refetchHistory: () => history.refetch(),
     timeline,
+    /** Draw a message the person just sent, before the feed delivers its committed copy; returns an id for `removePending`. */
+    addPending,
+    /** Drop a pending message whose send failed. */
+    removePending,
     /** Agent key -> `running` or `waiting` (for the roster dots). */
     activity,
     connection,
