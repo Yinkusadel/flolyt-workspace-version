@@ -89,8 +89,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`.
 - **Response `data`:** `{ roomId, roomTitle, totalClaims, claims: [{ claimId, statement, grade, source, window, n, missingSource, gaps, createdAtUtc }], gaps: [{ missingSource, claimsBlocked }], falsifiers: [{ condition, thenWhat, addedAtUtc, metAtUtc }] }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-room-evidence.ts` / `src/features/rooms/use-get-room-evidence.ts`), not wired into a page yet — evidence tab.
-- **Status:** service/hook ready, not wired.
+- **REAL RESPONSE 2026-10-14** (Dormant Accounts): `totalClaims: 0`, `claims: []`, `gaps: []`, three `falsifiers` (`condition`, `thenWhat`, `addedAtUtc`, `metAtUtc`; two met). NEVER seen with real data: any claim, any gap, the `grade` values (docs: "at least `InsufficientEvidence`"), `window` text, the per-claim `gaps` field (typed `unknown`). Ticket candidate: zero claims although Compass's run says "recorded a claim".
+- **Used by:** the Evidence tab, `src/pages/rooms/room/evidence/index.tsx` (service + hook `get-room-evidence.ts` / `use-get-room-evidence.ts`).
+- **Status:** BUILT 2026-10-14. The falsifiers section is verified against the real response; the CLAIMS TABLE, the grade filter pills and "One connection away" are built from the docs and a synthetic mock ONLY: RE-VERIFY when a Room has claims. Left out: the design's "Trace: N tool calls" (no field) and "Connect" on a gap (no route).
 - **Notes:** Includes what the workspace already believed about this leak, not only what this room learned. `gaps` is derived from insufficient-evidence rows, not hand-written, and counts how many claims one connection would resolve. `window` is pre-rendered text, dash where there is none. `grade` enum includes at least `InsufficientEvidence`.
 
 ### POST /rooms/{roomId}/falsifiers
