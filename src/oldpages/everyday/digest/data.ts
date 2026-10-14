@@ -1,4 +1,4 @@
-import type { AgentRef, PersonRef } from "@/pages/rooms/types";
+import type { AgentRef, PersonRef } from "@/oldpages/rooms/types";
 import {
   ACQUISITION_QUALITY,
   ADA,
@@ -6,7 +6,7 @@ import {
   KUNLE,
   RAVI,
   REPEAT_DECAY,
-} from "@/pages/rooms/data";
+} from "@/oldpages/rooms/data";
 import type {
   ArchiveRow,
   BlockageRow,

@@ -13,8 +13,8 @@ import {
   SAM,
   TUNDE,
   ZAINAB,
-} from "@/pages/rooms/data";
-import type { AgentRef, PersonRef } from "@/pages/rooms/types";
+} from "@/oldpages/rooms/data";
+import type { AgentRef, PersonRef } from "@/oldpages/rooms/types";
 
 /**
  * Revenue · Leakage map — sourced from

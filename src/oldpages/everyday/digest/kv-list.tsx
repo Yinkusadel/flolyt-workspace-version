@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import type { KvRow } from "@/oldpages/everyday/digest/types";
 
 /** Label-left / mono-value-right list with hairline dividers — "How this arrives", "What gets in", "Still running", etc. */

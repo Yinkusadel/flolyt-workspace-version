@@ -1,4 +1,4 @@
-import type { AgentRef, PersonRef, Tone } from "@/pages/rooms/types";
+import type { AgentRef, PersonRef, Tone } from "@/oldpages/rooms/types";
 
 /**
  * Shared types for the /goals rebuild — sourced from

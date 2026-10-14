@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
 import { Chip } from "@/components/ui/chip";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { InboxSettingsLink, InboxTabs } from "@/oldpages/everyday/inbox/quick-links";
 import { GROUPED_CLOSING_CALLOUT, GROUPED_ROWS, GROUP_CARDS, GROUP_FILTER_TABS } from "@/oldpages/everyday/inbox/data";
 

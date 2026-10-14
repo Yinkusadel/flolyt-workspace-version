@@ -1,0 +1,466 @@
+<title>Room Thread Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Layout concept: the Room page keeps its header, tabs and tab content on the left; the live thread is a
+     400px panel docked on the right and always open on wide screens. While it is open the app sidebar is a
+     narrow rail; closing the thread gives the full sidebar back. Below 1100px the thread is a drawer. */
+  :root {
+    --ink: #161920; --ink-2: #454c59; --ink-3: #6e7686; --ink-4: #98a0af;
+    --paper: #fbfbfc; --paper-2: #f2f3f7; --line: #e1e4ec; --white: #ffffff;
+    --ultra: #4c5fd5; --ultra-bg: #edeffc; --ultra-border: #c6cdf4; --ultra-ink: #ffffff;
+    --teal: #1b8a83; --teal-bg: #e4f3f1; --teal-border: #b4ded9;
+    --amber: #c67c17; --amber-bg: #fdf3e1; --amber-border: #efd5a6;
+    --rose: #ce3f51; --rose-bg: #fbeaec;
+    --live: #1f9d6b;
+    --shadow: 0 10px 30px rgba(22, 25, 32, 0.12);
+    --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #e9ebf1; --ink-2: #c3c8d3; --ink-3: #9299a8; --ink-4: #6b7282;
+      --paper: #12141a; --paper-2: #1a1d26; --line: #2a2e3a; --white: #181b23;
+      --ultra: #8493f2; --ultra-bg: #1f2447; --ultra-border: #343c78; --ultra-ink: #0f1220;
+      --teal: #4fc3ba; --teal-bg: #112c2a; --teal-border: #1f5651;
+      --amber: #e6a54a; --amber-bg: #2f2410; --amber-border: #5a4420;
+      --rose: #ef7a89; --rose-bg: #34181d;
+      --live: #43c995;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #e9ebf1; --ink-2: #c3c8d3; --ink-3: #9299a8; --ink-4: #6b7282;
+    --paper: #12141a; --paper-2: #1a1d26; --line: #2a2e3a; --white: #181b23;
+    --ultra: #8493f2; --ultra-bg: #1f2447; --ultra-border: #343c78; --ultra-ink: #0f1220;
+    --teal: #4fc3ba; --teal-bg: #112c2a; --teal-border: #1f5651;
+    --amber: #e6a54a; --amber-bg: #2f2410; --amber-border: #5a4420;
+    --rose: #ef7a89; --rose-bg: #34181d;
+    --live: #43c995;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-sans); font-size: 13px; line-height: 1.45; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  svg { display: block; }
+  :focus-visible { outline: 2px solid var(--ultra); outline-offset: 2px; }
+
+  .app { display: grid; height: 100%; grid-template-columns: 56px minmax(0, 1fr) 400px; transition: grid-template-columns 0.32s cubic-bezier(.2,.7,.2,1); }
+  .app[data-thread="closed"] { grid-template-columns: 220px minmax(0, 1fr) 0px; }
+
+  /* ---- app sidebar (rail while the thread is open) ---- */
+  .side { background: var(--paper-2); border-right: 1px solid var(--line); padding: 14px 10px; display: flex; flex-direction: column; gap: 4px; overflow: hidden; min-width: 0; }
+  .logo { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 6px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
+  .logo i { width: 22px; height: 22px; border-radius: 6px; background: var(--ultra); flex: none; }
+  .nav { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 8px; border-radius: 5px; color: var(--ink-3); white-space: nowrap; }
+  .nav svg { width: 17px; height: 17px; flex: none; }
+  .nav.on { background: var(--paper); color: var(--ink); font-weight: 600; box-shadow: 0 0 0 1px var(--line); }
+  .app[data-thread="open"] .nav span, .app[data-thread="open"] .logo span { opacity: 0; }
+
+  /* ---- room (left) ---- */
+  .room { min-width: 0; overflow: auto; padding: 18px 26px 40px; }
+  .crumb { color: var(--ink-3); font-size: 12px; }
+  .room-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+  h1 { margin: 0; font-size: 20px; letter-spacing: -0.015em; }
+  .chips { display: inline-flex; gap: 6px; margin-left: 8px; vertical-align: 3px; }
+  .chip { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border: 1px solid var(--line); border-radius: 3px; background: var(--paper-2); color: var(--ink-3); font-size: 10.5px; font-weight: 600; white-space: nowrap; }
+  .chip.teal { background: var(--teal-bg); border-color: var(--teal-border); color: var(--teal); }
+  .chip.ultra { background: var(--ultra-bg); border-color: var(--ultra-border); color: var(--ultra); }
+  .chip.amber { background: var(--amber-bg); border-color: var(--amber-border); color: var(--amber); }
+  .meta { margin-top: 6px; color: var(--ink-3); font-size: 12px; }
+  .meta b { color: var(--ink); font-weight: 600; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border: 1px solid var(--line); border-radius: 5px; background: var(--white); font-weight: 500; font-size: 12px; }
+  .btn:hover { border-color: var(--ink-4); }
+  .btn.primary { background: var(--ultra); border-color: var(--ultra); color: var(--ultra-ink); font-weight: 600; }
+  .btn.sm { height: 26px; padding: 0 10px; font-size: 11.5px; }
+  .head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .open-thread { position: relative; }
+  .open-thread .dot { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--ultra); color: var(--ultra-ink); font: 600 10px/18px var(--font-mono); text-align: center; }
+  .app[data-thread="open"] .open-thread { display: none; }
+  .tabs { display: flex; gap: 2px; margin: 18px 0 18px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .tab { flex: none; padding: 9px 12px; border-bottom: 2px solid transparent; color: var(--ink-3); font-size: 12px; white-space: nowrap; }
+  .tab.on { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+  .stack { display: grid; gap: 14px; max-width: 760px; }
+  .card { border: 1px solid var(--line); border-radius: 6px; background: var(--white); overflow: hidden; }
+  .card-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); font-weight: 600; }
+  .card-b { padding: 14px 16px; }
+  .statement { font-size: 15px; line-height: 1.5; margin: 0; }
+  .fold { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; }
+  .fold.amber { background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber); }
+  .fold.teal { background: var(--teal-bg); border: 1px solid var(--teal-border); color: var(--teal); }
+  .fold b { font: 600 10.5px var(--font-mono); border: 1px solid currentColor; border-radius: 10px; padding: 1px 7px; margin-left: 8px; background: var(--white); }
+  .row { display: flex; justify-content: space-between; gap: 14px; padding: 11px 16px; border-top: 1px solid var(--line); font-size: 12.5px; }
+  .row:first-child { border-top: 0; }
+  .row span:last-child { color: var(--ink-3); font-size: 11.5px; white-space: nowrap; }
+
+  /* ---- thread (right) ---- */
+  .thread { min-width: 0; overflow: hidden; background: var(--white); border-left: 1px solid var(--line); display: flex; flex-direction: column; }
+  .t-inner { width: 400px; height: 100%; display: flex; flex-direction: column; min-height: 0; }
+  .t-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--line); }
+  .t-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .t-title h2 { margin: 0; font-size: 14px; letter-spacing: -0.01em; }
+  .t-title small { display: block; color: var(--ink-3); font-size: 11px; margin-top: 1px; }
+  .live { display: inline-flex; align-items: center; gap: 6px; font: 500 10.5px var(--font-mono); color: var(--live); }
+  .live i { width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 0 var(--live); animation: ping 2.2s infinite; }
+  @keyframes ping { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 55%, transparent); } 70%, 100% { box-shadow: 0 0 0 7px transparent; } }
+  .icon-btn { width: 28px; height: 28px; border: 1px solid transparent; border-radius: 5px; background: none; display: grid; place-items: center; color: var(--ink-3); }
+  .icon-btn:hover { background: var(--paper-2); color: var(--ink); }
+  .roster { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+  .faces { display: flex; }
+  .faces .av { margin-left: -3px; width: 32px; height: 32px; font-size: 10px; box-shadow: 0 0 0 2px var(--white); }
+  .faces .av.agent { font-size: 9px; background: var(--ultra-bg); }
+  .faces .av:first-child { margin-left: 0; }
+  .roster p { margin: 0; color: var(--ink-3); font-size: 11.5px; }
+
+  .av { position: relative; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 9.5px; font-weight: 700; flex: none; background: var(--paper-2); color: var(--ink-2); }
+  .av.p1 { background: color-mix(in srgb, #b4568f 18%, var(--white)); color: #b4568f; }
+  .av.p2 { background: color-mix(in srgb, #2e8b7f 18%, var(--white)); color: #2e8b7f; }
+  .av.p3 { background: color-mix(in srgb, #79883a 20%, var(--white)); color: #79883a; }
+  .av.agent { background: var(--ultra-bg); color: var(--ultra); border: 1.5px dashed var(--ultra); font-size: 8.5px; letter-spacing: 0.02em; }
+  .av.lg { width: 30px; height: 30px; font-size: 10.5px; }
+  .av.lg.agent { font-size: 9px; }
+  .av .state { position: absolute; right: -2px; bottom: -2px; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--white); background: var(--ink-4); }
+  .av .state.running { background: var(--ultra); animation: pulse 1.4s infinite; }
+  .av .state.wait { background: var(--amber); }
+  @keyframes pulse { 50% { transform: scale(1.35); opacity: 0.7; } }
+
+  .t-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 14px 16px 6px; display: flex; flex-direction: column; gap: 14px; background: var(--paper); }
+  .day { display: flex; align-items: center; gap: 10px; color: var(--ink-4); font: 500 10px var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; }
+  .day::before, .day::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .day.new { color: var(--ultra); }
+  .day.new::before, .day.new::after { background: var(--ultra-border); }
+
+  .sys { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--ultra-border); border-radius: 6px; background: var(--ultra-bg); font-size: 12px; color: var(--ink-2); }
+  .sys svg { width: 15px; height: 15px; color: var(--ultra); margin-top: 1px; flex: none; }
+  .sys b { color: var(--ink); }
+
+  .msg { display: flex; gap: 10px; }
+  .msg .body { min-width: 0; flex: 1; }
+  .who { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .who b { font-size: 12.5px; }
+  .who small { color: var(--ink-4); font: 400 10.5px var(--font-mono); }
+  .tag { display: inline-flex; align-items: center; gap: 4px; height: 17px; padding: 0 6px; border-radius: 3px; font-size: 9.5px; font-weight: 600; background: var(--teal-bg); color: var(--teal); border: 1px solid var(--teal-border); }
+  .tag.agent { background: var(--ultra-bg); color: var(--ultra); border-color: var(--ultra-border); }
+  .bubble { margin-top: 4px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 3px 10px 10px 10px; background: var(--white); color: var(--ink); }
+  .msg.people .bubble { background: var(--teal-bg); border-color: var(--teal-border); }
+  .msg.agent .bubble { background: var(--white); border-color: var(--ultra-border); }
+  .bubble p { margin: 0; }
+  .bubble ul { margin: 6px 0 0; padding-left: 16px; color: var(--ink-2); }
+  .bubble li { margin: 2px 0; }
+  .mention { color: var(--ultra); font-weight: 600; background: var(--ultra-bg); border-radius: 3px; padding: 0 3px; }
+  .follow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .follow button { height: 26px; padding: 0 10px; border: 1px solid var(--ultra-border); border-radius: 13px; background: var(--ultra-bg); color: var(--ultra); font-size: 11.5px; font-weight: 500; box-shadow: 0 0 0 1px color-mix(in srgb, var(--ultra) 10%, transparent); }
+  .follow button:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--ultra) 35%, transparent); }
+
+  .steer { align-self: flex-end; max-width: 82%; text-align: right; }
+  .steer .bubble { border-radius: 10px 3px 10px 10px; background: var(--paper-2); font-size: 12px; text-align: left; border-style: dashed; }
+  .steer small { display: block; margin-top: 3px; color: var(--ink-4); font: 400 10.5px var(--font-mono); }
+  .steer small.ok { color: var(--teal); }
+
+  .handoff { border: 1px solid var(--line); border-radius: 6px; background: var(--white); padding: 11px 12px; }
+  .handoff-top { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2); }
+  .handoff-top b { color: var(--ink); }
+  .arrow { color: var(--ink-4); }
+  .steps { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+  .step { flex: 1; display: flex; flex-direction: column; gap: 5px; font-size: 10px; font-family: var(--font-mono); color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.05em; }
+  .step i { height: 3px; border-radius: 2px; background: var(--line); }
+  .step.done i { background: var(--teal); } .step.done { color: var(--teal); }
+  .step.now i { background: linear-gradient(90deg, var(--ultra), var(--ultra-border), var(--ultra)); background-size: 200% 100%; animation: slide 1.6s linear infinite; } .step.now { color: var(--ultra); }
+  @keyframes slide { to { background-position: -200% 0; } }
+  .brief { margin: 8px 0 0; font-size: 11.5px; color: var(--ink-3); }
+
+  .working { display: flex; align-items: center; gap: 10px; color: var(--ink-3); font-size: 12px; }
+  .shimmer { background: linear-gradient(90deg, var(--ink-3) 30%, var(--ultra) 50%, var(--ink-3) 70%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: slide 2.4s linear infinite; }
+  .gap { padding: 8px 12px; border: 1px dashed var(--line); border-radius: 6px; font-size: 11.5px; color: var(--ink-3); }
+  .approval { border: 1px solid var(--amber-border); background: var(--amber-bg); border-radius: 6px; padding: 11px 12px; }
+  .approval p { margin: 0 0 9px; font-size: 12px; color: var(--ink-2); }
+  .approval .acts { display: flex; gap: 8px; }
+
+  /* ---- composer ---- */
+  .composer-wrap { padding: 10px 14px 14px; background: var(--white); border-top: 1px solid var(--line); position: relative; }
+  .composer { border: 1.5px solid var(--ultra-border); border-radius: 8px; background: var(--white); transition: border-color 0.2s, box-shadow 0.2s; }
+  .composer[data-mode="agents"]:focus-within { border-color: var(--ultra); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ultra) 18%, transparent); }
+  .composer[data-mode="people"] { border-color: var(--teal-border); }
+  .composer[data-mode="people"]:focus-within { border-color: var(--teal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--teal) 18%, transparent); }
+  .composer textarea { display: block; width: 100%; min-height: 62px; max-height: 140px; resize: none; border: 0; outline: 0; background: transparent; padding: 11px 12px 4px; font: inherit; color: var(--ink); }
+  .composer textarea::placeholder { color: var(--ink-4); }
+  .c-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px 8px 8px; }
+  .mode-btn { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 9px 0 8px; border-radius: 5px; border: 1px solid var(--ultra-border); background: var(--ultra-bg); color: var(--ultra); font-weight: 600; font-size: 11.5px; }
+  .composer[data-mode="people"] .mode-btn { border-color: var(--teal-border); background: var(--teal-bg); color: var(--teal); }
+  .mode-btn svg { width: 14px; height: 14px; }
+  .send { height: 28px; padding: 0 13px; border: 0; border-radius: 5px; font-weight: 600; font-size: 12px; background: var(--ultra); color: var(--ultra-ink); }
+  .composer[data-mode="people"] .send { background: var(--teal); color: #fff; }
+  .send:disabled { opacity: 0.45; cursor: not-allowed; }
+  .hint { color: var(--ink-4); font: 400 10.5px var(--font-mono); }
+  .pop { position: absolute; left: 14px; right: 14px; bottom: calc(100% - 2px); background: var(--white); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); padding: 6px; z-index: 5; }
+  .pop h4 { margin: 4px 8px 6px; font: 600 10px var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-4); }
+  .opt { display: flex; gap: 11px; width: 100%; text-align: left; padding: 9px 8px; border: 0; border-radius: 6px; background: none; }
+  .opt:hover, .opt[aria-selected="true"] { background: var(--paper-2); }
+  .opt .ic { width: 28px; height: 28px; border-radius: 6px; display: grid; place-items: center; flex: none; }
+  .opt .ic.a { background: var(--ultra-bg); color: var(--ultra); } .opt .ic.p { background: var(--teal-bg); color: var(--teal); }
+  .opt .ic svg { width: 15px; height: 15px; }
+  .opt b { display: block; font-size: 12.5px; }
+  .opt span { display: block; color: var(--ink-3); font-size: 11.5px; margin-top: 1px; }
+  .opt .ck { margin-left: auto; color: var(--ink); opacity: 0; align-self: center; }
+  .opt[aria-selected="true"] .ck { opacity: 1; }
+  .pop .foot { margin: 6px 8px 2px; color: var(--ink-4); font-size: 11px; }
+  .at-opt { align-items: center; padding: 6px 8px; }
+  .at-opt b { font-size: 12.5px; } .at-opt span { margin-top: 0; }
+
+  .fab { display: none; position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); height: 40px; padding: 0 16px; border-radius: 20px; border: 0; background: var(--ultra); color: var(--ultra-ink); font-weight: 600; box-shadow: var(--shadow); z-index: 20; align-items: center; gap: 8px; }
+
+  @media (max-width: 1100px) {
+    .app, .app[data-thread="closed"], .app[data-thread="open"] { grid-template-columns: 56px minmax(0, 1fr); }
+    .app[data-thread="closed"] .nav span, .app[data-thread="closed"] .logo span { opacity: 0; }
+    .thread { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100%); z-index: 30; box-shadow: var(--shadow); transform: translateX(100%); transition: transform 0.3s ease; }
+    .app[data-thread="open"] .thread { transform: none; }
+    .t-inner { width: 100%; }
+    .fab { display: inline-flex; }
+    .app[data-thread="open"] ~ .fab { display: none; }
+    .app[data-thread="open"] .open-thread { display: inline-flex; }
+  }
+  @media (max-width: 640px) {
+    .app, .app[data-thread="closed"], .app[data-thread="open"] { grid-template-columns: minmax(0, 1fr); }
+    .side { display: none; }
+    .room { padding: 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="app" id="app" data-thread="open">
+  <aside class="side" aria-label="Main navigation">
+    <div class="logo"><i></i><span>Flolyt</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg><span>Home</span></div>
+    <div class="nav on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg><span>Rooms</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Conversations</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5M16 5.5a3.5 3.5 0 0 1 0 6.5"/></svg><span>People</span></div>
+  </aside>
+
+  <main class="room">
+    <div class="crumb">Rooms / Room</div>
+    <div class="room-head">
+      <div>
+        <h1>Lapsed second-order customers, Lagos<span class="chips"><span class="chip teal">Recovering</span><span class="chip">Opening 1</span></span></h1>
+        <div class="meta">Owner <b>Tolu Bakare</b> · Retention · No second order within 45 days · NGN</div>
+      </div>
+      <div class="head-actions">
+        <button class="btn open-thread" id="openThread" type="button"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H9l-5 4z"/></svg>Open thread<span class="dot">3</span></button>
+        <button class="btn" type="button">Watching · everything</button>
+        <button class="btn" type="button">Restrict...</button>
+        <button class="btn" type="button">Close room</button>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="Room tabs">
+      <span class="tab">Briefing</span><span class="tab on">Decision</span><span class="tab">Conflicts</span><span class="tab">Plays</span><span class="tab">Evidence</span><span class="tab">Agents &amp; runs</span><span class="tab">People &amp; guardrails</span><span class="tab">Cohort &amp; overlaps</span><span class="tab">Log</span>
+    </nav>
+    <div class="stack">
+      <section class="card">
+        <div class="card-h"><span>The decision <span class="chip ultra" style="margin-left:8px">Drafted · not decided</span> <span style="margin-left:8px;color:var(--ink-3);font:400 11px var(--font-mono)">Revision 3</span></span><button class="btn sm" type="button">Revise...</button></div>
+        <div class="card-b"><p class="statement">Fix delivery for the three worst zones first. Offer free delivery on the second order only to people whose first delivery failed. No blanket discount.</p></div>
+      </section>
+      <div class="fold amber">Objections <b>2</b></div>
+      <div class="fold teal">What would change this <b>3</b></div>
+      <section class="card">
+        <div class="card-h">Revisions</div>
+        <div class="row"><span>3 Narrowed free delivery to failed-first-delivery customers only.</span><span>Tolu Bakare · 9 Oct</span></div>
+        <div class="row"><span>2 Dropped the 15% voucher after Finance's margin floor.</span><span>Tolu Bakare · 7 Oct</span></div>
+        <div class="row"><span>1 First draft from the investigation conclusion.</span><span>Retention analyst · 2 Oct</span></div>
+      </section>
+    </div>
+  </main>
+
+  <aside class="thread" id="thread" aria-label="Room thread">
+    <div class="t-inner">
+      <header class="t-head">
+        <div class="t-title">
+          <div><h2>Thread</h2><small>Lapsed second-order customers, Lagos</small></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="live"><i></i>Live</span>
+            <button class="icon-btn" id="closeThread" type="button" aria-label="Close thread"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          </div>
+        </div>
+        <div class="roster">
+          <div class="faces">
+            <span class="av p1" title="Tolu Bakare">TB</span><span class="av p2" title="Kemi Adeyemi">KA</span><span class="av p3" title="Ade Okafor">AO</span>
+            <span class="av agent" title="Retention analyst, running">RET<i class="state running"></i></span>
+            <span class="av agent" title="Pricing, awaiting approval">PRI<i class="state wait"></i></span>
+            <span class="av agent" title="Arbiter, idle">ARB<i class="state"></i></span>
+          </div>
+          <p>3 people · 3 agents</p>
+        </div>
+      </header>
+
+      <div class="t-scroll" id="scroll" aria-live="polite">
+        <div class="day">10 Oct</div>
+        <div class="sys"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg><div><b>Opened automatically by Flolyt.</b> Kemi Adeyemi was assigned as owner by the activation stage-ownership rule. This summary is the first message in the thread.</div></div>
+
+        <div class="msg people"><span class="av lg p1">TB</span><div class="body"><div class="who"><b>Tolu Bakare</b><small>09:12</small><span class="tag">people only</span></div><div class="bubble"><p>I'll review the evidence tomorrow, then we decide on delivery first.</p></div></div></div>
+
+        <div class="msg"><span class="av lg p3">AO</span><div class="body"><div class="who"><b>Ade Okafor</b><small>09:40</small></div><div class="bubble"><p><span class="mention">@Pricing</span> what does a capped ₦1,000 delivery credit do to margin?</p></div></div></div>
+
+        <div class="handoff">
+          <div class="handoff-top"><span class="av agent">ARB</span><b>Arbiter</b><span class="arrow">→</span><span class="av agent">PRI</span><b>Pricing</b></div>
+          <p class="brief">Price the capped delivery credit against the 10% voucher, per currency.</p>
+          <div class="steps"><div class="step done"><i></i>Queued</div><div class="step done"><i></i>Running</div><div class="step now"><i></i>Needs approval</div><div class="step"><i></i>Done</div></div>
+        </div>
+
+        <div class="approval">
+          <p><b>Pricing</b> wants to read promotions history for 2025. Nothing runs until a person decides.</p>
+          <div class="acts"><button class="btn primary sm" type="button">Approve</button><button class="btn sm" type="button">Reject</button></div>
+        </div>
+
+        <div class="msg agent"><span class="av lg agent">RET</span><div class="body"><div class="who"><b>Retention analyst</b><span class="tag agent">Lead</span><small>10:02</small></div>
+          <div class="bubble"><p><b>Failed first delivery is the driver.</b></p><ul><li>Reorder rate: 11% after a failed delivery against 34% on time.</li><li>61% of the cohort sits in three delivery zones.</li><li>Delivery cost can't be priced until the COGS source is connected.</li></ul></div>
+          <div class="follow"><button type="button">Which zones first?</button><button type="button">Connect the COGS source</button><button type="button">Draft the decision</button></div></div></div>
+
+        <div class="steer"><div class="bubble">Focus on Lekki and Ikorodu before Ajah.</div><small class="ok">Delivered to Retention analyst</small></div>
+
+        <div class="gap">Some live updates for the Pricing run were unavailable. The finished answer will appear here when it is saved.</div>
+
+        <div class="day new">New</div>
+        <div class="msg people"><span class="av lg p2">KA</span><div class="body"><div class="who"><b>Kemi Adeyemi</b><small>10:31</small><span class="tag">people only</span></div><div class="bubble"><p>Finance can confirm the delivery-fee budget by Friday.</p></div></div></div>
+
+        <div class="working"><span class="av agent">RET</span><span class="shimmer">Retention analyst is segmenting the cohort...</span></div>
+      </div>
+
+      <div class="composer-wrap">
+        <div class="pop" id="modePop" role="listbox" aria-label="Send mode" hidden>
+          <h4>Send to</h4>
+          <button class="opt" type="button" role="option" data-mode="agents" aria-selected="true">
+            <span class="ic a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg></span>
+            <span><b>Ask the agents</b><span>Starts an agent run and the answer comes back in this thread. Type @ to choose who answers.</span></span>
+            <svg class="ck" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12l5 5 9-10"/></svg>
+          </button>
+          <button class="opt" type="button" role="option" data-mode="people" aria-selected="false">
+            <span class="ic p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5M16 5.5a3.5 3.5 0 0 1 0 6.5"/></svg></span>
+            <span><b>Post to the people</b><span>Saved for everyone in this Room. No agent runs and no model cost.</span></span>
+            <svg class="ck" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12l5 5 9-10"/></svg>
+          </button>
+          <div class="foot">Remembered for this thread on this browser.</div>
+        </div>
+        <div class="pop" id="atPop" role="listbox" aria-label="Mention an agent" hidden>
+          <h4>Agents in this Room</h4>
+          <button class="opt at-opt" type="button" data-agent="Retention analyst"><span class="av agent">RET</span><span><b>Retention analyst</b><span>Lead · running</span></span></button>
+          <button class="opt at-opt" type="button" data-agent="Pricing"><span class="av agent">PRI</span><span><b>Pricing</b><span>Supporter · awaiting approval</span></span></button>
+          <button class="opt at-opt" type="button" data-agent="Arbiter"><span class="av agent">ARB</span><span><b>Arbiter</b><span>Arbiter · idle</span></span></button>
+        </div>
+
+        <div class="composer" id="composer" data-mode="agents">
+          <textarea id="box" rows="2" placeholder="Ask the agents, or type @ to pick one..." aria-label="Message"></textarea>
+          <div class="c-bar">
+            <button class="mode-btn" id="modeBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <svg id="modeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>
+              <span id="modeName">Ask the agents</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <span class="hint">Enter to send</span>
+            <button class="send" id="send" type="button" disabled>Ask agents</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+<button class="fab" id="fab" type="button">Thread<span class="dot" style="min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--ultra-ink);color:var(--ultra);font:600 10px/18px var(--font-mono);text-align:center">3</span></button>
+
+<script>
+  (function () {
+    var app = document.getElementById("app");
+    var composer = document.getElementById("composer");
+    var box = document.getElementById("box");
+    var send = document.getElementById("send");
+    var modeBtn = document.getElementById("modeBtn");
+    var modePop = document.getElementById("modePop");
+    var atPop = document.getElementById("atPop");
+    var scroll = document.getElementById("scroll");
+    var KEY = "room-thread-demo-mode";
+    var mode = "agents";
+    try { var saved = localStorage.getItem(KEY); if (saved === "people" || saved === "agents") mode = saved; } catch (e) {}
+
+    var ICONS = {
+      agents: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+      people: '<circle cx="9" cy="8" r="3.5"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5M16 5.5a3.5 3.5 0 0 1 0 6.5"/>'
+    };
+    function setMode(next, remember) {
+      mode = next;
+      composer.setAttribute("data-mode", mode);
+      document.getElementById("modeName").textContent = mode === "agents" ? "Ask the agents" : "Post to the people";
+      document.getElementById("modeIcon").innerHTML = ICONS[mode];
+      send.textContent = mode === "agents" ? "Ask agents" : "Post";
+      box.placeholder = mode === "agents" ? "Ask the agents, or type @ to pick one..." : "Write to the people in this Room...";
+      modePop.querySelectorAll(".opt").forEach(function (o) { o.setAttribute("aria-selected", String(o.getAttribute("data-mode") === mode)); });
+      if (remember) { try { localStorage.setItem(KEY, mode); } catch (e) {} }
+    }
+    setMode(mode, false);
+
+    function closePops() { modePop.hidden = true; atPop.hidden = true; modeBtn.setAttribute("aria-expanded", "false"); }
+    modeBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      var willOpen = modePop.hidden;
+      closePops();
+      modePop.hidden = !willOpen;
+      modeBtn.setAttribute("aria-expanded", String(willOpen));
+    });
+    modePop.addEventListener("click", function (e) {
+      var opt = e.target.closest(".opt"); if (!opt) return;
+      setMode(opt.getAttribute("data-mode"), true); closePops(); box.focus();
+    });
+    document.addEventListener("click", function (e) { if (!e.target.closest(".composer-wrap")) closePops(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closePops(); });
+
+    box.addEventListener("input", function () {
+      send.disabled = !box.value.trim();
+      var atTail = /(^|\s)@\w*$/.test(box.value);
+      atPop.hidden = !(atTail && mode === "agents" || atTail);
+      if (atTail) modePop.hidden = true;
+    });
+    atPop.addEventListener("click", function (e) {
+      var opt = e.target.closest(".at-opt"); if (!opt) return;
+      box.value = box.value.replace(/@\w*$/, "@" + opt.getAttribute("data-agent") + " ");
+      setMode("agents", true); atPop.hidden = true; send.disabled = !box.value.trim(); box.focus();
+    });
+
+    function esc(s) { return s.replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+    function addMsg(text, people) {
+      var html = esc(text).replace(/@(Retention analyst|Pricing|Arbiter)/g, '<span class="mention">@$1</span>');
+      var d = document.createElement("div");
+      d.className = "msg" + (people ? " people" : "");
+      d.innerHTML = '<span class="av lg p1">TB</span><div class="body"><div class="who"><b>Tolu Bakare</b><small>now</small>' + (people ? '<span class="tag">people only</span>' : "") + '</div><div class="bubble"><p>' + html + "</p></div></div>";
+      scroll.appendChild(d);
+      return d;
+    }
+    function toBottom() { scroll.scrollTop = scroll.scrollHeight; }
+    function doSend() {
+      var text = box.value.trim(); if (!text) return;
+      addMsg(text, mode === "people");
+      box.value = ""; send.disabled = true; atPop.hidden = true;
+      if (mode === "agents") {
+        var w = document.createElement("div");
+        w.className = "working";
+        w.innerHTML = '<span class="av agent">RET</span><span class="shimmer">Retention analyst is reading the cohort...</span>';
+        scroll.appendChild(w); toBottom();
+        setTimeout(function () {
+          w.remove();
+          var a = document.createElement("div");
+          a.className = "msg agent";
+          a.innerHTML = '<span class="av lg agent">RET</span><div class="body"><div class="who"><b>Retention analyst</b><span class="tag agent">Lead</span><small>now</small></div><div class="bubble"><p>Demo reply. In the real thread this answer streams in from the Room feed and is replaced by the saved message.</p></div></div>';
+          scroll.appendChild(a); toBottom();
+        }, 1800);
+      }
+      toBottom();
+    }
+    send.addEventListener("click", doSend);
+    box.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); doSend(); } });
+
+    function setThread(open) { app.setAttribute("data-thread", open ? "open" : "closed"); if (open) setTimeout(toBottom, 50); }
+    document.getElementById("closeThread").addEventListener("click", function () { setThread(false); });
+    document.getElementById("openThread").addEventListener("click", function () { setThread(true); });
+    document.getElementById("fab").addEventListener("click", function () { setThread(true); });
+    if (window.matchMedia("(max-width: 1100px)").matches) app.setAttribute("data-thread", "closed");
+    toBottom();
+  })();
+</script>

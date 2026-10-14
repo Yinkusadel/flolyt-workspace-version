@@ -1,7 +1,7 @@
 import type { ChipTone } from "@/components/ui/chip";
 import type { KpiTone } from "@/components/ui/kpi-cards";
-import { ADA, AMARA, IFEOMA, INVOLUNTARY_CHURN, KUNLE, RAVI } from "@/pages/rooms/data";
-import type { PersonRef } from "@/pages/rooms/types";
+import { ADA, AMARA, IFEOMA, INVOLUNTARY_CHURN, KUNLE, RAVI } from "@/oldpages/rooms/data";
+import type { PersonRef } from "@/oldpages/rooms/types";
 
 /**
  * Knowledge · Playbooks — sourced from

@@ -16,7 +16,7 @@ const useUpdateRoomOwner = (options?: UseUpdateRoomOwnerOptions) => {
 
   const mutation = useMutation<UpdateRoomOwnerResponse, Error, UpdateRoomOwnerPayload>({
     mutationFn: updateRoomOwner,
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       if (!data.succeeded) {
         toast.error(data.messages?.[0] || "Failed to hand off the room");
         return;
@@ -24,6 +24,8 @@ const useUpdateRoomOwner = (options?: UseUpdateRoomOwnerOptions) => {
 
       toast.success("Room handed off");
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
+      queryClient.invalidateQueries({ queryKey: ["room", variables.roomId] });
+      queryClient.invalidateQueries({ queryKey: ["room-people", variables.roomId] });
       options?.onSuccess?.();
     },
     onError: (error) => {

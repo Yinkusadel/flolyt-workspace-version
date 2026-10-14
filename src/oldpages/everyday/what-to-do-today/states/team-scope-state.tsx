@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { KpiCards, type Kpi } from "@/components/ui/kpi-cards";
 import { Callout } from "@/components/ui/rail";
-import { PersonDot } from "@/pages/rooms/actor";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { PersonDot } from "@/oldpages/rooms/actor";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { ScopeTabs } from "@/oldpages/everyday/what-to-do-today/scope-tabs";
 import { TEAM_ROSTER, TEAM_UNOWNED } from "@/oldpages/everyday/what-to-do-today/data";
 

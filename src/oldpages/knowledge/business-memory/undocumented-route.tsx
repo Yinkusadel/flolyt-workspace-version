@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { Callout } from "@/components/ui/rail";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
-import { PersonDot } from "@/pages/rooms/actor";
+import { PersonDot } from "@/oldpages/rooms/actor";
 import { BM_TONE_CLASS, ME11_HERO, ME11_NOTES, ME11_ROWS } from "@/oldpages/knowledge/business-memory/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";

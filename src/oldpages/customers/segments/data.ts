@@ -1,7 +1,7 @@
 import type { ChipTone } from "@/components/ui/chip";
 import type { KpiTone } from "@/components/ui/kpi-cards";
-import { ADA, AMARA, IFEOMA, KUNLE, RAVI, ZAINAB } from "@/pages/rooms/data";
-import type { AgentRef, PersonRef } from "@/pages/rooms/types";
+import { ADA, AMARA, IFEOMA, KUNLE, RAVI, ZAINAB } from "@/oldpages/rooms/data";
+import type { AgentRef, PersonRef } from "@/oldpages/rooms/types";
 
 /**
  * Customers · Segments — sourced from

@@ -13,7 +13,7 @@ import { useChainContext } from "@/oldpages/everyday/handoff/chain/chain-layout"
 import { OwnerCell } from "@/oldpages/everyday/handoff/owner-cell";
 import { AcceptDisputeModal } from "@/oldpages/everyday/handoff/obligation/accept-dispute-modal";
 import { TeamDot } from "@/oldpages/everyday/inbox/team-dot";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 

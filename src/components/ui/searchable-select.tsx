@@ -92,7 +92,7 @@ export function SearchableSelect({
           aria-invalid={ariaInvalid}
           className={cn(
             "flex h-9 w-full items-center justify-between gap-2 rounded-panel border border-border bg-paper-2 px-2.5 text-[12.5px] text-ink outline-none transition-colors",
-            "hover:border-ink-4 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+            "enabled:hover:border-ink-4 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
             "aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
             "disabled:cursor-not-allowed disabled:opacity-50",
             className
@@ -118,7 +118,14 @@ export function SearchableSelect({
           />
         </div>
 
-        <div className="max-h-64 overflow-y-auto p-1">
+        {/* The list renders in a portal, outside any Dialog it is used in. A modal Dialog locks wheel and touch
+            scrolling everywhere outside its own content, so without these two handlers the list cannot be scrolled
+            from inside a dialog. Stopping the event here keeps it from reaching that lock. */}
+        <div
+          className="max-h-64 overflow-y-auto overscroll-contain p-1"
+          onWheel={(event) => event.stopPropagation()}
+          onTouchMove={(event) => event.stopPropagation()}
+        >
           {filtered.length === 0 && (
             <p className="px-2.5 py-3 text-center text-[11.5px] text-ink-4">{emptyText}</p>
           )}

@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { Callout } from "@/components/ui/rail";
 import { Chip } from "@/components/ui/chip";
-import { PersonDot } from "@/pages/rooms/actor";
+import { PersonDot } from "@/oldpages/rooms/actor";
 import { BusinessMemoryTabs } from "@/oldpages/knowledge/business-memory/tabs";
 import { BM_CHIP_TONE, BM_TONE_CLASS, CHALLENGED_ROWS, ME09_NOTES } from "@/oldpages/knowledge/business-memory/data";
 

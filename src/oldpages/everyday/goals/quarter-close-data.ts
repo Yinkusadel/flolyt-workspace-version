@@ -1,5 +1,5 @@
-import { ADA, IFEOMA, RAVI, TUNDE } from "@/pages/rooms/data";
-import type { PersonRef, Tone } from "@/pages/rooms/types";
+import { ADA, IFEOMA, RAVI, TUNDE } from "@/oldpages/rooms/data";
+import type { PersonRef, Tone } from "@/oldpages/rooms/types";
 
 export type QuarterCloseRow = {
   goal: string;

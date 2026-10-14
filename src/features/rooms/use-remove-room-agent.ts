@@ -24,6 +24,7 @@ const useRemoveRoomAgent = (options?: UseRemoveRoomAgentOptions) => {
 
       toast.success("Agent removed from the room");
       queryClient.invalidateQueries({ queryKey: ["room-people", variables.roomId] });
+      queryClient.invalidateQueries({ queryKey: ["room-runs", variables.roomId] });
       options?.onSuccess?.();
     },
     onError: (error) => {

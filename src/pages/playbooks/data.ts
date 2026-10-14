@@ -1,5 +1,5 @@
-import { agentInitialsFromName } from "@/pages/rooms/format";
-import type { AgentRef } from "@/pages/rooms/types";
+import { agentInitialsFromName } from "@/lib/initials";
+import type { AgentRef } from "@/lib/actor-types";
 import { ME, type PersonRef } from "@/pages/inbox/data";
 
 /**

@@ -6,7 +6,7 @@ import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
 import { ChainTabs } from "@/oldpages/everyday/handoff/chain/chain-tabs";
 import { useChainContext } from "@/oldpages/everyday/handoff/chain/chain-layout";
 import { TeamDot } from "@/oldpages/everyday/inbox/team-dot";
-import { TONE_TEXT_CLASS, TONE_BG_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS, TONE_BG_CLASS } from "@/oldpages/rooms/tone";
 
 /** H04 — `/handoff/:id`, for a live chain (currently only "delivery-fee"). */
 export default function LiveChainRoute() {

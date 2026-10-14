@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Callout } from "@/components/ui/rail";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { REVIEW_ROWS } from "@/oldpages/everyday/goals/new/data";
 
 /** G06 — New goal · review. */

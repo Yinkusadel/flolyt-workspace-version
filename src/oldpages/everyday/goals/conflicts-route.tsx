@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/rail";
 import { KpiCards, type Kpi } from "@/components/ui/kpi-cards";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
-import { ActorAvatar } from "@/pages/rooms/actor";
-import { ORCHESTRATOR } from "@/pages/rooms/data";
+import { ActorAvatar } from "@/oldpages/rooms/actor";
+import { ORCHESTRATOR } from "@/oldpages/rooms/data";
 import { TENSIONS, TENSION_COMPARISON } from "@/oldpages/everyday/goals/conflicts-data";
 
 const TENSION_ACCENT: Record<string, string> = {

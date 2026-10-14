@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
 import { Chip } from "@/components/ui/chip";
 import { KvList } from "@/oldpages/everyday/digest/kv-list";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { SETTINGS_CALLOUT_1, SETTINGS_CALLOUT_2, SETTINGS_COMPARED_ROWS, SETTINGS_RULE_ROWS } from "@/oldpages/everyday/inbox/data";
 
 const HEAD_CLASS = "px-4 py-2.5 font-mono text-[8.5px] font-medium tracking-[0.8px] text-ink-4 uppercase";

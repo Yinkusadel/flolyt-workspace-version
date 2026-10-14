@@ -5,7 +5,7 @@ import { ChevronDown, MessagesSquare, MessageCircle, X } from "lucide-react";
 import { PersonAvatar } from "@/components/person-avatar";
 import { Button } from "@/components/ui/button";
 import { SearchableSelect, SearchableSelectSkeleton } from "@/components/ui/searchable-select";
-import { initialsFromName } from "@/pages/rooms/format";
+import { initialsFromName } from "@/lib/initials";
 import useGetWorkspaceMembers from "@/features/workspace/use-get-workspace-members";
 import { useGetRooms } from "@/features/rooms/use-get-rooms";
 import useCreateInboxThread from "@/features/inbox/use-create-inbox-thread";

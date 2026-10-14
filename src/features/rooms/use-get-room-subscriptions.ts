@@ -10,8 +10,12 @@ export const ROOM_SUBSCRIPTIONS_QUERY_KEY = (params?: GetRoomSubscriptionsParams
   params,
 ];
 
-export const useGetRoomSubscriptions = (params?: GetRoomSubscriptionsParams) =>
+export const useGetRoomSubscriptions = (
+  params?: GetRoomSubscriptionsParams,
+  options?: { enabled?: boolean }
+) =>
   useQuery<GetRoomSubscriptionsResponse, Error>({
     queryKey: ROOM_SUBSCRIPTIONS_QUERY_KEY(params),
     queryFn: () => getRoomSubscriptions(params),
+    enabled: options?.enabled ?? true,
   });

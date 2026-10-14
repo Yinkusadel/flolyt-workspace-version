@@ -25,6 +25,7 @@ const useRestrictRoom = (options?: UseRestrictRoomOptions) => {
       toast.success("Room restricted");
       queryClient.invalidateQueries({ queryKey: ["rooms"] });
       queryClient.invalidateQueries({ queryKey: ["room-people", variables.roomId] });
+      queryClient.invalidateQueries({ queryKey: ["room", variables.roomId] });
       options?.onSuccess?.(data.data);
     },
     onError: (error) => {

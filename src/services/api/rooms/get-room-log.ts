@@ -5,12 +5,16 @@ import { getServerErrorMessage } from "@/services/get-server-error";
 
 export interface RoomLogEntryDto {
   occurredAtUtc: string;
+  /** "Human" and "Agent" seen live; the platform's own entries are expected as "System" (none seen yet). */
   actorKind: string;
   actorId: string;
+  /** As the backend labels the actor: a person reads "chad@yopmail.com · Administrator" today, an agent "Flolyt". */
   actorLabel: string;
   action: string;
+  /** What followed the action, or null (e.g. "Opened the room to the workspace"). */
   consequence: string | null;
-  dissent: boolean;
+  /** The dissent's own words when this entry recorded one, else null. (Real response 2026-10-14: a string, not a flag.) */
+  dissent: string | null;
 }
 
 export interface RoomLogData {

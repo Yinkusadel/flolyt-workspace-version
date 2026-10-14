@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
-import { AgentDot } from "@/pages/rooms/actor";
-import type { AgentRef } from "@/pages/rooms/types";
+import { AgentDot } from "@/oldpages/rooms/actor";
+import type { AgentRef } from "@/oldpages/rooms/types";
 
 /** Agent identity cell for tables — dashed-ring avatar + name, matching people's identity cells elsewhere. */
 export function AgentCell({ agent, href }: { agent: AgentRef; href?: string }) {

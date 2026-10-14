@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { KpiCards, type Kpi } from "@/components/ui/kpi-cards";
 import { Callout } from "@/components/ui/rail";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { ScopeTabs } from "@/oldpages/everyday/what-to-do-today/scope-tabs";
 import { ORG_STUCK } from "@/oldpages/everyday/what-to-do-today/data";
 

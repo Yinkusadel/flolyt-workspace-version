@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { TeamDot } from "@/oldpages/everyday/inbox/team-dot";
 import { InboxTabs } from "@/oldpages/everyday/inbox/quick-links";
 import { FALLBACK_OPTIONS, UNROUTABLE_LAST_ROW_CALLOUT, UNROUTABLE_ROWS } from "@/oldpages/everyday/inbox/data";

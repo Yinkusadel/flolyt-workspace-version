@@ -1,7 +1,7 @@
 import type { ChipTone } from "@/components/ui/chip";
 import type { KpiTone } from "@/components/ui/kpi-cards";
-import { AMARA, IFEOMA, KUNLE, TUNDE, ZAINAB } from "@/pages/rooms/data";
-import type { PersonRef } from "@/pages/rooms/types";
+import { AMARA, IFEOMA, KUNLE, TUNDE, ZAINAB } from "@/oldpages/rooms/data";
+import type { PersonRef } from "@/oldpages/rooms/types";
 
 /**
  * Revenue · Forecast — sourced from

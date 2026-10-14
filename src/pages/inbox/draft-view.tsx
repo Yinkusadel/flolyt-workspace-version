@@ -4,16 +4,9 @@ import { ChevronDown, MessageCircle, MessagesSquare } from "lucide-react";
 
 import { PersonAvatar } from "@/components/person-avatar";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { SearchableSelect, SearchableSelectSkeleton } from "@/components/ui/searchable-select";
-import { initialsFromName } from "@/pages/rooms/format";
+import { initialsFromName } from "@/lib/initials";
 import { useGetRooms } from "@/features/rooms/use-get-rooms";
 import useUpdateInboxDraft from "@/features/inbox/use-update-inbox-draft";
 import useSendInboxDraft from "@/features/inbox/use-send-inbox-draft";
@@ -180,29 +173,16 @@ export function DraftView({ draft, onClosed }: { draft: InboxDraftDto; onClosed:
         </div>
       </div>
 
-      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete this draft?</DialogTitle>
-            <DialogDescription>This can't be undone.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <div className="flex items-center gap-4">
-              <Button type="button" variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-                {isDeleting ? "Deleting…" : "Delete draft"}
-              </Button>
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(false)}
-                disabled={isDeleting}
-                className="text-[12px] font-semibold text-ink-3 hover:text-ink disabled:pointer-events-none disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmModal
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Delete this draft?"
+        description="This can't be undone."
+        confirmLabel="Delete draft"
+        pendingLabel="Deleting…"
+        isPending={isDeleting}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

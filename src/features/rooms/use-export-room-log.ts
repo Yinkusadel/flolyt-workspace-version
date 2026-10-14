@@ -6,11 +6,11 @@ import { exportRoomLog } from "@/services/api/rooms/export-room-log";
 const useExportRoomLog = () => {
   const mutation = useMutation<Blob, Error, string>({
     mutationFn: exportRoomLog,
-    onSuccess: (blob) => {
+    onSuccess: (blob, roomId) => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "room-log.csv";
+      link.download = `room-log-${roomId}.csv`;
       document.body.appendChild(link);
       link.click();
       link.remove();

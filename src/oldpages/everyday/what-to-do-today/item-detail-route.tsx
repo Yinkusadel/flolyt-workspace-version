@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/rail";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { ITEM_DETAILS, TODAY_ITEMS } from "@/oldpages/everyday/what-to-do-today/data";
 
 const REASON_TONE_CLASS = {

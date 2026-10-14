@@ -1,5 +1,5 @@
-import { ADA, AMARA, IFEOMA, KUNLE, RAVI, ZAINAB } from "@/pages/rooms/data";
-import type { PersonRef, Tone } from "@/pages/rooms/types";
+import { ADA, AMARA, IFEOMA, KUNLE, RAVI, ZAINAB } from "@/oldpages/rooms/data";
+import type { PersonRef, Tone } from "@/oldpages/rooms/types";
 
 export type CascadeNode = {
   id: string;

@@ -18,16 +18,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { Chip } from "@/components/ui/chip";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useGetRooms } from "@/features/rooms/use-get-rooms";
 import { useGetAiConversations } from "@/features/ai-conversations/use-get-ai-conversations";
 import { useArchiveAiConversation } from "@/features/ai-conversations/use-archive-ai-conversation";
@@ -58,22 +50,28 @@ export type SidebarProps = {
   open: boolean;
   /** Called when the drawer should close — backdrop click, Escape, or a nav item was chosen. */
   onClose: () => void;
+  /** A page needs the room (the Room thread): show the icon rail without touching the saved preference. */
+  forceCollapsed?: boolean;
+  /** While a page forces the rail: what asking to expand does (the Room page closes its thread). */
+  onExpandRequest?: () => void;
   className?: string;
 };
 
 const SIDEBAR_COLLAPSED_KEY = "flolyt-sidebar-collapsed";
 
-function Sidebar({ open, onClose, className }: SidebarProps) {
+function Sidebar({ open, onClose, forceCollapsed = false, onExpandRequest, className }: SidebarProps) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   // Desktop-only collapse (icon rail). The mobile drawer always renders full-width regardless
   // of this — collapsing only makes sense for the static lg+ sidebar, never the overlay drawer.
-  const [collapsed, setCollapsed] = useState(
+  const [userCollapsed, setCollapsed] = useState(
     () => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1"
   );
   useEffect(() => {
-    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0");
-  }, [collapsed]);
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, userCollapsed ? "1" : "0");
+  }, [userCollapsed]);
+  // What is drawn. A page's temporary override never reaches the saved preference above.
+  const collapsed = userCollapsed || forceCollapsed;
   const [conversationsOpen, setConversationsOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [menuOpensUp, setMenuOpensUp] = useState(false);
@@ -174,7 +172,15 @@ function Sidebar({ open, onClose, className }: SidebarProps) {
         />
         <button
           type="button"
-          onClick={() => setCollapsed((prev) => !prev)}
+          onClick={() => {
+            // Rail forced by a page (the Room thread): asking to expand gives the sidebar the room back, i.e. the page lets go of it.
+            if (forceCollapsed) {
+              setCollapsed(false);
+              onExpandRequest?.();
+              return;
+            }
+            setCollapsed((prev) => !prev);
+          }}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className="hidden size-page shrink-0 items-center justify-center rounded-control text-ink-3 hover:text-ink lg:group-hover:flex"
@@ -191,7 +197,7 @@ function Sidebar({ open, onClose, className }: SidebarProps) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 py-4">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 pt-0 pb-4">
         <NavLink to="/" end onClick={onClose} title="Home" className={navLinkClass}>
           <Home className="size-3.75 shrink-0" />
           <span className={cn("truncate", collapsed && "lg:hidden")}>Home</span>
@@ -345,31 +351,16 @@ function Sidebar({ open, onClose, className }: SidebarProps) {
       </nav>
     </aside>
 
-    <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Delete conversation</DialogTitle>
-          <DialogDescription>
-            {`Delete "${deleteTarget?.title ?? ""}"? This can't be undone.`}
-          </DialogDescription>
-        </DialogHeader>
-
-        <DialogFooter>
-          <div className="flex items-center gap-4">
-            <Button type="button" variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
-              {isDeleting ? "Deleting…" : "Delete"}
-            </Button>
-            <button
-              type="button"
-              onClick={() => setDeleteTarget(null)}
-              className="text-[12px] font-semibold text-ink-3 hover:text-ink"
-            >
-              Cancel
-            </button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ConfirmModal
+      open={!!deleteTarget}
+      onOpenChange={(open) => !open && setDeleteTarget(null)}
+      title="Delete conversation"
+      description={`Delete "${deleteTarget?.title ?? ""}"? This can't be undone.`}
+      confirmLabel="Delete"
+      pendingLabel="Deleting…"
+      isPending={isDeleting}
+      onConfirm={handleConfirmDelete}
+    />
     </>
   );
 }

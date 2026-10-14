@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { AgentDot } from "@/pages/rooms/actor";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { AgentDot } from "@/oldpages/rooms/actor";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { InboxSettingsLink, InboxTabs } from "@/oldpages/everyday/inbox/quick-links";
 import { WORKING_AGENTS } from "@/oldpages/everyday/inbox/data";
 

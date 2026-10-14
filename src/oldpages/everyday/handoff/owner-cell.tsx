@@ -1,6 +1,6 @@
-import { ActorAvatar } from "@/pages/rooms/actor";
+import { ActorAvatar } from "@/oldpages/rooms/actor";
 import { Chip } from "@/components/ui/chip";
-import type { PersonRef } from "@/pages/rooms/types";
+import type { PersonRef } from "@/oldpages/rooms/types";
 
 /** Owner avatar + first name, or an "Unaccepted"/"No owner" chip when nobody has said yes yet — the shape every obligations table in this section uses for its owner column. */
 export function OwnerCell({ owner, unacceptedLabel }: { owner?: PersonRef; unacceptedLabel?: string }) {

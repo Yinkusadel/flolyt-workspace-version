@@ -5,7 +5,7 @@ import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { Callout } from "@/components/ui/rail";
 import { Chip } from "@/components/ui/chip";
 import { KpiCards } from "@/components/ui/kpi-cards";
-import { KUNLE } from "@/pages/rooms/data";
+import { KUNLE } from "@/oldpages/rooms/data";
 import { LensBar } from "@/oldpages/revenue/leakage-map/lens-bar";
 import { CreditARecoveryModal } from "@/oldpages/revenue/value/modals/credit-a-recovery-modal";
 import { ValueTabs } from "@/oldpages/revenue/value/tabs";

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { Callout } from "@/components/ui/rail";
-import { PersonDot } from "@/pages/rooms/actor";
+import { PersonDot } from "@/oldpages/rooms/actor";
 import { RecognitionTabs } from "@/oldpages/knowledge/recognition/tabs";
 import { AMARA, RC11_LENS, RC11_NOTES, RC_TONE_CLASS, YOUR_RECOGNITION_ROWS } from "@/oldpages/knowledge/recognition/data";
 

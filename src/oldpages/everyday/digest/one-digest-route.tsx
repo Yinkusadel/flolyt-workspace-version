@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { usePageBreadcrumb } from "@/components/breadcrumb-context";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { KvList } from "@/oldpages/everyday/digest/kv-list";
 import { ONE_DIGEST_CHANGED_AFTER, ONE_DIGEST_DATE, ONE_DIGEST_LABEL, ONE_DIGEST_ROWS } from "@/oldpages/everyday/digest/data";
 

@@ -9,7 +9,7 @@ import { KpiCards } from "@/components/ui/kpi-cards";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
 import { ChangeAnAssumptionModal } from "@/oldpages/revenue/scenario/modals/change-an-assumption-modal";
 import { TurnItIntoSomethingModal } from "@/oldpages/revenue/scenario/modals/turn-it-into-something-modal";
-import type { PersonRef } from "@/pages/rooms/types";
+import type { PersonRef } from "@/oldpages/rooms/types";
 import {
   SC_KPI_TONE,
   SC_TONE_CLASS,

@@ -1,4 +1,4 @@
-import type { Tone } from "@/pages/rooms/types";
+import type { Tone } from "@/oldpages/rooms/types";
 
 export type TensionPair = {
   severityLabel: string;

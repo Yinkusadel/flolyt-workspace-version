@@ -26,7 +26,7 @@ const SIZE_CLASSES = {
 export type PersonAvatarProps = Omit<React.ComponentProps<"div">, "children" | "style"> & {
   style?: React.CSSProperties;
   /** Identifier shown in the circle — 2 letters for a human, 3 for an agent (see
-   * `agentInitialsFromName` in rooms/format.ts), so the two never read the same even before the
+   * `agentInitialsFromName` in lib/initials.ts), so the two never read the same even before the
    * dashed border registers. */
   initials: string;
   /** Solid + team colour for a human; dashed + ultra for an agent. Never mix the two. */

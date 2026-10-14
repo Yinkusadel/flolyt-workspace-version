@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   getAllDissent,
   type GetAllDissentParams,
@@ -14,4 +14,6 @@ export const useGetAllDissent = (params?: GetAllDissentParams) =>
   useQuery<GetAllDissentResponse, Error>({
     queryKey: ALL_DISSENT_QUERY_KEY(params),
     queryFn: () => getAllDissent(params),
+    // "Show more" raises `take`; keep the rows already on screen while the longer list loads.
+    placeholderData: keepPreviousData,
   });

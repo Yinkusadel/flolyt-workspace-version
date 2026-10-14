@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { KpiCards } from "@/components/ui/kpi-cards";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { TeamDot } from "@/oldpages/everyday/inbox/team-dot";
 import { InboxTabs } from "@/oldpages/everyday/inbox/quick-links";
 import { ROUTING_CLOSING_CALLOUT, ROUTING_RULES, ROUTING_STATS } from "@/oldpages/everyday/inbox/data";

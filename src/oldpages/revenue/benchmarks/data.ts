@@ -1,7 +1,7 @@
 import type { ChipTone } from "@/components/ui/chip";
 import type { KpiTone } from "@/components/ui/kpi-cards";
-import { REPEAT_DECAY } from "@/pages/rooms/data";
-import type { AgentRef } from "@/pages/rooms/types";
+import { REPEAT_DECAY } from "@/oldpages/rooms/data";
+import type { AgentRef } from "@/oldpages/rooms/types";
 
 /**
  * Revenue · Benchmarks — sourced from

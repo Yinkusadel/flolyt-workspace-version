@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { AgentDot } from "@/pages/rooms/actor";
+import { AgentDot } from "@/oldpages/rooms/actor";
 import { TM13_PRESET } from "@/oldpages/agents/ai-teammates/data";
 
 /** TM13 — "Pause an agent", hardcoded to Product Reason, opened from its row on /ai-teammates. */

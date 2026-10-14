@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Callout } from "@/components/ui/rail";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { BASELINE } from "@/oldpages/everyday/goals/new/data";
 
 /** G03 — New goal · the baseline. */

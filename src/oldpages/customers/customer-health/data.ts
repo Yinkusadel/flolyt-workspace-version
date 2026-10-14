@@ -1,6 +1,6 @@
 import type { ChipTone } from "@/components/ui/chip";
 import type { KpiTone } from "@/components/ui/kpi-cards";
-import type { AgentRef } from "@/pages/rooms/types";
+import type { AgentRef } from "@/oldpages/rooms/types";
 
 /**
  * Customers · Customer health — sourced from

@@ -1,6 +1,6 @@
 # Rooms domain endpoints
 
-Everything under `/api/flolyt/rooms/*`, pasted 2026-09-01 from the Scalar/OpenAPI reference doc
+Everything under `/api/v3/rooms/*` (was `/api/flolyt/rooms/*` until the 2026-10-10 V3 migration; request bodies, response contracts and access checks are unchanged), pasted 2026-09-01 from the Scalar/OpenAPI reference doc
 (prose descriptions + example request/response payloads, same source format as [[lifecycle]]'s
 corrected pass). Corresponds to the already-built `/rooms` section — see
 [[flolyt_rooms_rebuild]] (42 screens, status/outcome-branch architecture) — so every entry below
@@ -22,6 +22,26 @@ Every GET below returns `{ data: <shape below>, messages: string[], succeeded: b
 envelope is omitted from each `Response:` line for brevity; only the `data` shape is shown.
 Mutations show their real top-level shape including the envelope.
 
+### GET /rooms/{roomId}
+
+- **Purpose:** Direct Room loading (live collaboration Phase 1): open a Room from a link, invitation or investigation card. Source: `docs/rooms/revenue-threat-room-frontend-handoff.md`, "Direct Room loading".
+- **Auth:** Bearer token, active workspace member with access. Missing, foreign or inaccessible Rooms return 404 `Room not found.`; a restricted Room may stay discoverable in the index while its details and thread are inaccessible.
+- **Request:** path `roomId`.
+- **Response `data`** (real response, 2026-10-12, the user's Room "Dormant Accounts"): `{ id, title: "Dormant Accounts", conversationId, status: "open", ownerMemberId, viewerRole: "decision-owner" (nullable), createdAtUtc, archivedAtUtc: null, stage: "engage", mechanism: "dormant_accounts", currency: "USD", market: null, lifecycleClass: "InFlight", leadAgentKey: null, agents: [], mergedIntoRoomId: null, conversationPermissions: { canView, canContribute, canAdminister } }`. These are core metadata, NOT current exposure or verified financial outcomes. The conversation flags apply to the conversation only; they grant no proposal approval, Room management or tool execution.
+- **UPDATED by the backend 2026-10-12 (the header-fields ticket is DONE):** the response now ALSO carries `population: 37`, `amountAtRiskAtOpen: 2618.985`, `currentAmountAtRisk: null`, `currentAmountComputedAtUtc: null`, `ownerName: "Chad Sado"`, `stageLabel: "ENGAGE"`, `conditionLabel: "dormant_accounts"` (same text as the key on this Room), `openingNumber: 1`, `isRecovering: false`, `threatConfirmationId: null` (decides the threat tabs and "Opened by Flolyt"), `systemOpenedBy: null`, `restricted: null`. Same names and values as a `GET /rooms` list row. Still not here: the viewer's own notify level (from `GET /rooms/subscriptions`), a state chip like "Worsened" (from `threat-monitoring`), tab count badges.
+- **Used by:** the Room page (`src/pages/rooms/room/index.tsx`): the header (`room-header.tsx`), the topbar breadcrumb (the real title), the threat-tab gating, the not-found card. Service + hook: `src/services/api/rooms/get-room.ts` / `src/features/rooms/use-get-room.ts` (`GET_ROOM` in `apiConfig.ts`).
+- **Status:** wired 2026-10-12 against the real response (layout checked on mocks of it; a faked 404 for the not-found state).
+
+### GET /rooms/{roomId}/stream
+
+- **Purpose:** The Room-wide live feed (live collaboration Phase 2): every participant's committed public messages plus concurrent agent events, kept open while viewing a Room. Full integration in `docs/rooms/room-live-collaboration-frontend-handoff.md` and the "Room-wide live feed" section of the new handoff.
+- **Auth:** Bearer token in a header with `Accept: text/event-stream` (native `EventSource` cannot do this: use a fetch-streaming SSE parser). 404 before SSE for missing/foreign/inaccessible; 400 for a cursor from another conversation or ahead of the journal.
+- **Request:** path `roomId`; `after` (cursor) or `Last-Event-ID` header. Bootstrap with `GET /rooms/{roomId}` + `GET /api/v3/conversations/{conversationId}`, then connect with `after=0` and reconcile the overlapping replay. Never resume from `room_stream_ready.head`.
+- **Events** (durable envelope: read payloads via `data.payload`, text via `data.message`): `room_stream_ready`, `message_committed` (upsert by `messageId`), `steering_updated`, `run_state` (Queued/Running/AwaitingApproval/Done/Failed/Cancelled), `stream_delivery_gap`, `agent_handoff`, `run_started`/`progress`/`response_chunk`/`final_response`/`error`/`run_cancelled`, `room_heartbeat`, `room_access_revoked`. Deduplicate by durable `eventId` (`{conversationId without hyphens}:{sequence}`, compare the suffix with `BigInt`); one buffer per `runId`; a committed assistant message replaces its run's draft; render from the Room feed, not also from the initiating POST stream (send POST with `Accept: application/json`).
+- **Sending:** `POST /api/v3/conversations/messages` `{ conversationId, message, replyMode: "auto" | "none", agentKey? }`; `none` = a teammate comment, no AI run, 200 without `runId`; JSON with a run returns 202 + receipt (merge by `runId`, not an answer).
+- **REAL CAPTURE 2026-10-13** (Dormant Accounts, 100 frames read from Node with a bearer token): the envelope matches the handoff (`sequence`, `eventId` `{conversationId without hyphens}:{n}`, `eventType`, `runId`, `agentKey`, `agentLabel`, `atUtc`, `data`). `room_stream_ready` and `room_heartbeat` carry NO `id:` line (heartbeat data is `{}`; about one per 10 s). Seen: `message_committed` (data: `role, runId, content, agentKey, messageId, timestamp, authorUserId, structuredResponse`; there is NO `authorName`, so the UI resolves it from `GET /rooms/{roomId}/people`), `run_started` (`message`: "<Agent> is working."), `progress` (`data.payload.stage`: queued / analyzing / reading / complete; `payload.message` is internal text like `conversation_id:...`: never shown), `response_chunk`, `final_response` (`data.payload` = the structured response; a committed assistant message can arrive BEFORE its final), `run_state` (`Done`), and an UNDOCUMENTED additive `suggested_action` (`data.payload`: `[{ type: "navigate", label, payload: { route } }]`, ignored by the reducer). Replay returned all 95 events then live; `Last-Event-ID: <full eventId>` resumes after it, a bare `after=<number>` works, a cursor ahead of the journal or from another conversation answers 400 with a message. NOT yet seen live: `agent_handoff`, `steering_updated`, `stream_delivery_gap`, `room_access_revoked`, `run_cancelled`, `error` (built from the docs and the reference tests).
+- **Used by:** the Room thread (`src/features/rooms/live/*` + `use-room-live-thread.ts`). **Status:** BUILT 2026-10-13: TS port of the backend reducer (`room-live-state.ts`, its 9 tests ported, plus 5), SSE parser, fetch-streaming client with backoff and `Last-Event-ID`, timeline selectors. The reference reducer and test are in `docs/rooms/examples/` (`node --test`). Run all feed tests with `npm run test:rooms-live` (28).
+
 ### PUT /rooms/{roomId}/owner
 
 - **Purpose:** Hands the room to another member. Ownership exists so a leak can't sit open with everyone assuming someone else has it.
@@ -38,8 +58,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`, `index` (int32).
 - **Response:** `{ data: roomId, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/mark-falsifier-met.ts` / `src/features/rooms/use-mark-falsifier-met.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the "Mark as met" button on the Decision tab (`index` = the falsifier's position in `whatWouldChangeThis`).
+- **Status:** wired and LIVE-VERIFIED 2026-10-11 (two falsifiers marked met on a real Room).
 - **Notes:** Idempotent — a second call succeeds without moving the timestamp; when it first fired is the record.
 
 ### GET /rooms/{roomId}/log
@@ -48,8 +68,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`.
 - **Response `data`:** `{ roomId, roomTitle, totalEntries, humanEntries, agentEntries, systemEntries, entries: [{ occurredAtUtc, actorKind, actorId, actorLabel, action, consequence, dissent }] }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-room-log.ts` / `src/features/rooms/use-get-room-log.ts`), not wired into a page yet — target is the room's log/history screen.
-- **Status:** service/hook ready, not wired.
+- **REAL RESPONSE 2026-10-14** (Dormant Accounts): `totalEntries: 53`, `humanEntries: 48`, `agentEntries: 5`, `systemEntries: 0`; entries OLDEST FIRST with `occurredAtUtc`, `actorKind` ("Human" / "Agent"), `actorId`, `actorLabel`, `action`, `consequence` (may be null), `dissent` (the dissent's WORDS as a string, null otherwise: the earlier DTO had it as a boolean). Data quirks to ticket: a person's `actorLabel` is `chad@yopmail.com · Administrator` (email + role, not the full name); owner handovers put raw user ids in `consequence` ("owner 01a0f8e0… → 01a0fc86…"); restrict entries carry the raw reason key ("Restricted the room · pricing-before-announcement"); an agent's failed start is an ordinary entry ("Could not start Revenue Intelligence"), no field marks a failure.
+- **Used by:** the Log tab, `src/pages/rooms/room/log/index.tsx` (service + hook `get-room-log.ts` / `use-get-room-log.ts`; Export CSV through `use-export-room-log.ts`, file name `room-log-<roomId>.csv`).
+- **Status:** BUILT 2026-10-14 from the real response (mock-verified). Not shown: the design's pink tint on a failed run (no field).
 - **Notes:** Every entry names its actor and whether human/agent/platform — nothing happens anonymously. `consequence` is what followed the action, not whether the action succeeded. Counts are broken out human vs agent.
 
 ### GET /rooms/{roomId}/log/export
@@ -78,8 +99,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ condition: string, thenWhat: string }`.
 - **Response:** `{ data: roomId, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/create-falsifier.ts` / `src/features/rooms/use-create-falsifier.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the "If... then..." add form on the Decision tab ("What would change this").
+- **Status:** wired and LIVE-VERIFIED 2026-10-11 (two falsifiers added on a real Room).
 - **Notes:** Both halves required — a condition with no stated consequence is a caveat, not a test.
 
 ### GET /rooms/views
@@ -107,8 +128,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token; author only.
 - **Request:** path `viewId`; body same shape as create.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/update-room-view.ts` / `src/features/rooms/use-update-room-view.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** wired 2026-10-10 into the Rooms list's saved-view chips (`src/pages/rooms/saved-views.tsx`, `EditViewDialog`: rename, re-share, optionally replace the filters with the ones applied now). Author-only (`mine`).
+- **Status:** wired, not yet submitted live.
 
 ### DELETE /rooms/views/{viewId}
 
@@ -116,8 +137,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token; author only.
 - **Request:** path `viewId`.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/delete-room-view.ts` / `src/features/rooms/use-delete-room-view.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** wired 2026-10-10 into the Rooms list's saved-view chips (`DeleteViewDialog`). Author-only (`mine`).
+- **Status:** wired, not yet submitted live.
 - **Notes:** Author-only because deleting someone else's would break every link anybody has to it.
 
 ### GET /rooms
@@ -128,7 +149,7 @@ Mutations show their real top-level shape including the envelope.
 - **Response `data`:** `{ rooms: [{ id, title, conversationId, grid, stage, stageLabel, condition, conditionLabel, currency, population, amountAtRiskAtOpen, currentAmountAtRisk, ownerMemberId, status, createdAtUtc, archivedAtUtc, openingNumber, isRecovering, outcomeKind, restricted: { reason, restrictedBy, restrictedAtUtc, peopleInside } | null, mergedIntoRoomId, absorbedRoomIds, lastActivityAtUtc, stoppedBecause, isStale, ownerName, agents: [{ key, displayName, role }], pendingDecisions, needsYou }], total, open, recovering, stale, archived, amountBehindStale: [{ currency, amount }] }`.
 - **Used by:** service + hook ready (`src/services/api/rooms/get-rooms.ts` / `src/features/rooms/use-get-rooms.ts`), not wired into a page yet — rooms list/index page.
 - **Status:** service/hook ready, not wired.
-- **Notes:** Open only unless `includeArchived` or an explicit `state` set. `state` values (`open`/`recovering`/`stale`/`archived`) **overlap and don't sum to total** — recovering/stale are both subsets of open. `minAmountAtRisk` compares within each room's own currency, never across — pair with `currency`. `isStale` = untouched 14 days. `stoppedBecause` (`never-assigned`/`owner-left`/`owner-overloaded`/`unknown`) is a real answer, not a gap. `amountBehindStale` is per-currency, never one figure. Each room carries both its opening figure and the live leakage-map figure; the live one is `null` (not stale) when its cell has become unavailable. **Updated 2026-09-08:** each row now also carries what the list draws without a second call — `ownerName` (null when unowned), `agents` (key/displayName/role), `pendingDecisions` (pending plays on the room, counted the way the inbox counts them), `needsYou` (one of them waits on the caller). On a restricted room those four are `null`, `[]`, `0` and `false` — they are the inside of it.
+- **Notes:** Open only unless `includeArchived` or an explicit `state` set. `state` values (`open`/`recovering`/`stale`/`archived`) **overlap and don't sum to total** — recovering/stale are both subsets of open. `minAmountAtRisk` compares within each room's own currency, never across — pair with `currency`. `isStale` = untouched 14 days. `stoppedBecause` (`never-assigned`/`owner-left`/`owner-overloaded`/`unknown`) is a real answer, not a gap. `amountBehindStale` is per-currency, never one figure. Each room carries both its opening figure and the live leakage-map figure; the live one is `null` (not stale) when its cell has become unavailable. **Updated 2026-09-08:** each row now also carries what the list draws without a second call — `ownerName` (null when unowned), `agents` (key/displayName/role), `pendingDecisions` (pending plays on the room, counted the way the inbox counts them), `needsYou` (one of them waits on the caller). On a restricted room those four are `null`, `[]`, `0` and `false` — they are the inside of it. **Updated 2026-10-10 (revenue threat Rooms, phase 5):** visible rows also carry nullable `threatConfirmationId` and `systemOpenedBy`. A non-null `threatConfirmationId` marks an automatic opening and is also the investigation ID to pass to `GET /threats/{investigationId}/room-opening`. Restricted rows omit both fields. Typed in `get-rooms.ts`. **Seen in a live response 2026-10-10 (not in the original doc):** each row also carries `currentAmountComputedAtUtc` (nullable ISO time, null whenever `currentAmountAtRisk` is null), the time behind the design's "live · 09:14 UTC" caption. A null `currentAmountAtRisk` is shown only as "Live figure unavailable": the doc's explanation (the cell became unavailable) is not stated by the API per row, so it is not claimed.
 
 ### POST /rooms ⚠️ superseded — see [leakage.md](leakage.md)
 
@@ -172,8 +193,10 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`.
 - **Response `data`:** `{ roomId, openingNumber, statement, guardrails, draftedByLabel, decidedByUserId, decidedByLabel, decidedAtUtc, revisions: [{ number, summary, byUserId, byLabel, atUtc }], whatWouldChangeThis: [falsifier], dissent: [{ id, wording, byUserId, byLabel, recordedAtUtc, withdrawn, borneOut, aboutProposalId }], recipients: [{ userId, what, class }] }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-room-decision.ts` / `src/features/rooms/use-get-room-decision.ts`), not wired into a page yet — decision tab.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the Decision tab on `/rooms/:roomId?tab=decision` (`src/pages/rooms/room/decision/`). Service + hook: `src/services/api/rooms/get-room-decision.ts` / `src/features/rooms/use-get-room-decision.ts`.
+- **Status:** wired 2026-10-11. Real response for a Room with no decision (2026-10-11): `{ roomId, openingNumber: 1, statement: "", guardrails: null, draftedByLabel: null, decidedByUserId: null, decidedByLabel: null, decidedAtUtc: null, revisions: [], whatWouldChangeThis: [], dissent: [], recipients: [] }`. Filled state unseen.
+- **Backend gaps:** `userName` on `recipients` (only `userId` today); optional `aboutProposalTitle` on `dissent` items; `draftedByLabel` stays null when a person drafts through the UI (ask for a default to the author's label).
+- **Real filled response (2026-10-11):** `statement`, `guardrails` set; `draftedByLabel: null`; after Mark decided `decidedByUserId`/`decidedByLabel` (`chad@yopmail.com · Administrator`)/`decidedAtUtc` set; `revisions[]` with `byLabel` the same combined string; `whatWouldChangeThis[]` items with `metAtUtc` set once met; `dissent[]` items with `withdrawn: false`, `borneOut: null`, `aboutProposalId: null`; `recipients: []`. Revising after deciding is allowed.
 - **Notes:** `whatWouldChangeThis` is the room's falsifiers rendered here rather than modelled twice — same list checked automatically at close. **Updated 2026-09-08:** response gained `recipients` — who the decision goes to and what they specifically get told (`what`) plus a `class` grouping.
 
 ### POST /rooms/{roomId}/decision
@@ -182,8 +205,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ summary: string, draftedByLabel, guardrails, statement, recipients: [{ userId, what, class }] | null }`.
 - **Response:** `{ data: revisionNumber, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/save-room-decision.ts` / `src/features/rooms/use-save-room-decision.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the "Draft the decision" / "Revise..." dialog on the Decision tab (`src/pages/rooms/room/decision/revise-dialog.tsx`).
+- **Status:** wired and LIVE-VERIFIED 2026-10-11 (first draft plus two revisions on a real Room).
 - **Notes:** Revisions are append-only and each must state what it changed. Omitting a section leaves it as-is, doesn't blank it. **Updated 2026-09-08:** request body gained `recipients` — same shape as the GET response, so a revision can set who this decision is being sent to and what they're told.
 
 ### POST /rooms/{roomId}/decision/decide
@@ -192,8 +215,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ summary: string, statement }`.
 - **Response:** `{ data: revisionNumber, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/decide-room-decision.ts` / `src/features/rooms/use-decide-room-decision.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the "Mark decided as <name>" form on the Decision tab (shown once a draft exists and the decision is not yet decided).
+- **Status:** wired and LIVE-VERIFIED 2026-10-11 (status became Decided; `decidedByLabel` and `decidedAtUtc` set). The backend still allows revising afterwards.
 - **Notes:** Deciding resolves nothing — recorded dissent stays exactly as it was. Only the eventual close-result settles an objection.
 
 ### POST /rooms/{roomId}/decision/dissent
@@ -202,8 +225,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ wording: string, aboutProposalId: uuid | null }`.
 - **Response:** `{ data: dissentId, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/create-dissent.ts` / `src/features/rooms/use-create-dissent.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the "Record an objection" form on the Decision tab (`aboutProposalId` always null for now).
+- **Status:** wired and LIVE-VERIFIED 2026-10-11 (two objections recorded on a real Room).
 - **Notes:** Does NOT block the decision and nothing tallies it — rooms aren't democracies, no threshold. Stays attached permanently, checked at close, withdrawable only by its author.
 
 ### DELETE /rooms/dissent/{dissentId}
@@ -212,8 +235,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token; author only (not the decision owner, not an admin).
 - **Request:** path `dissentId`.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/withdraw-dissent.ts` / `src/features/rooms/use-withdraw-dissent.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the judge dialog on the Dissent tab (`src/pages/rooms/dissent/judge-dialog.tsx`), shown only when the signed-in `user.id` equals the row's `byUserId` (assumes those ids are the same; unverified).
+- **Status:** wired 2026-10-11, NOT yet submitted against the real backend (mutation unverified).
 - **Notes:** A state change, not a delete — wording stays, marked withdrawn, so "permanent" and "withdrawable" stay compatible.
 
 ### POST /rooms/dissent/{dissentId}/judge
@@ -222,8 +245,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `dissentId`; body `{ borneOut: boolean }`.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/judge-dissent.ts` / `src/features/rooms/use-judge-dissent.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the judge dialog on the Dissent tab (Borne out / Shown wrong, each with a confirm step), offered on every unjudged, non-withdrawn row; the backend decides who may judge and its refusal shows as a toast.
+- **Status:** wired 2026-10-11, NOT yet submitted against the real backend (mutation unverified). Whether a judgement can be undone is unknown, so the confirm copy does not promise it.
 - **Notes:** Null until judged — "unjudged" and "shown-to-be-wrong" are different, and the second is the useful state.
 
 ### GET /rooms/dissent
@@ -232,8 +255,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** query `includeWithdrawn` (default false), `take` (int32, default 50).
 - **Response `data`:** `{ dissent: [{ id, wording, roomId, roomTitle, byUserId, byLabel, recordedAtUtc, roomStatus, withdrawn, borneOut }], returned, truncated }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-all-dissent.ts` / `src/features/rooms/use-get-all-dissent.ts`), not wired into a page yet — a cross-room dissent register screen.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the Dissent tab on `/rooms?tab=dissent` (`src/pages/rooms/dissent/`). Service + hook: `src/services/api/rooms/get-all-dissent.ts` / `src/features/rooms/use-get-all-dissent.ts` (hook keeps previous data while "Show 50 more" raises `take`).
+- **Status:** wired 2026-10-11. The live account had zero dissent (`dissent: []`), so rows were layout-checked on mocked data only.
+- **Backend gaps:** `judgedAtUtc` and `withdrawnAtUtc` on rows (design's "Judged 2 Oct" / "By its author, 26 Sep" left out); allowed values for `roomStatus` (optional; shown as readable text in a grey chip); `aboutProposalId` not requested (design's "about a play" left out).
 - **Notes:** The column that matters is `borneOut` — a dissent shown to have been wrong, on the record, is more useful than a culture where nothing gets written down.
 
 ### GET /rooms/{roomId}/cited-dissent
@@ -272,8 +296,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ summary: string, readings: [{ key, label, recommends, because, evidenceClaimIds, expectedReach, expectedEffect, currency, effectUnavailableBecause, longRunEffect }] }`.
 - **Response:** `{ data: conflictId, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/create-conflict.ts` / `src/features/rooms/use-create-conflict.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** service + hook ready (`src/services/api/rooms/create-conflict.ts` / `src/features/rooms/use-create-conflict.ts`), not wired into a page yet. The design has no create form (conflicts are normally raised by an agent, "Raised by Arbiter").
+- **Status:** LIVE-VERIFIED through Scalar 2026-10-12: a PERSON (the Room's decision owner, an administrator) raised a conflict with two readings and EMPTY `evidenceClaimIds`; response `200 { data: "01a130be-e243-71df-85f7-2db56801bb86", messages: ["Conflict raised."], succeeded: true }`. So the route is not agent-only for that role, and readings do not need real evidence claims. Other roles untested. The test conflict now exists on the user's Room "Dormant Accounts" (`01a0fc76-a89c-7d41-899a-bba0214c9923`).
 - **Notes:** Refused with only one reading — that's a recommendation, not a dispute. Waits on the room's decision owner.
 
 ### POST /rooms/conflicts/{conflictId}/choose
@@ -362,8 +386,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** query `includeDecided` (boolean).
 - **Response `data`:** `{ waiting: [ConveningProposal], decided: [ConveningProposal], withheld: [{ id, alertCategory, title, conditionKey, reason, detail, raisedAtUtc }], withheldNotShown, raisedThisWeek, weeklyCap }` where `ConveningProposal` = `{ id, alertCategory, alertSeverity, title, description, conditionKey, rowLabel, currency, amountAtRisk, customerCount, ownerUserId, outcome, roomId, raisedAtUtc }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-convening-proposals.ts` / `src/features/rooms/use-get-convening-proposals.ts`), not wired into a page yet — this is the convening/proposals inbox, not yet an identified screen in the built 42.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the Convening tab on `/rooms?tab=convening` (`src/pages/rooms/convening/`), and the tab bar's count badge. Service + hook: `src/services/api/rooms/get-convening-proposals.ts` / `src/features/rooms/use-get-convening-proposals.ts`.
+- **Status:** wired 2026-10-11. Live account had empty `waiting`/`decided`, so those two lists were layout-checked on mocked data only; `withheld` was seen real.
+- **Backend gaps (tickets raised):** `conditionLabel` and `ownerName` on proposals (Condition and Proposed owner cells are left empty); `declineReason` and `decidedByName` on `decided` items; allowed values for `alertSeverity` and `outcome` (chips are plain grey until known). Observed real values: `reason` = `no-figure-behind-the-cell` | `no-stage-owner`; `alertCategory` = `churn_trajectory` | `dormancy`. Money/counts may arrive as number or string.
 - **Notes:** *New endpoint, added 2026-09-08.* Three lists and `withheld` is not an appendix — `waiting` needs a decision, `decided` is history, `withheld` is signals that mapped to a condition and then couldn't proceed (a missing source behind the cell, no owner on the stage, the weekly cap, or a room already open). A workspace seeing only proposals can't tell a quiet week from one where every detection died on a missing source, and those call for opposite responses. `raisedThisWeek` against `weeklyCap` is sent so a queue gone quiet because it hit its cap doesn't read as nothing happening.
 
 ### POST /rooms/convening/{proposalId}/accept
@@ -372,8 +397,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `proposalId`.
 - **Response:** `{ data: roomId, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/accept-convening-proposal.ts` / `src/features/rooms/use-accept-convening-proposal.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** service + hook ready (`src/services/api/rooms/accept-convening-proposal.ts` / `src/features/rooms/use-accept-convening-proposal.ts`), wired to "Open room" on each waiting card.
+- **Status:** wired 2026-10-11, NOT yet submitted against the real backend (mutation unverified).
 - **Notes:** *New endpoint, added 2026-09-08.* Any member may accept — the proposal already chose an owner from stage ownership, and requiring that one specific person would leave the queue sitting while they're away. Accepting doesn't make the accepter accountable — the room opens in the named owner's name. **Can refuse:** the leakage map moves every fifteen minutes and a proposal can sit for days, so the cell is re-read and a room isn't opened on a figure that's since gone.
 
 ### POST /rooms/convening/{proposalId}/decline
@@ -382,8 +407,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `proposalId`; body `{ why: string }` (required).
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/decline-convening-proposal.ts` / `src/features/rooms/use-decline-convening-proposal.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** service + hook ready (`src/services/api/rooms/decline-convening-proposal.ts` / `src/features/rooms/use-decline-convening-proposal.ts`), wired to "Decline..." on each waiting card (reason required).
+- **Status:** wired 2026-10-11, NOT yet submitted against the real backend (mutation unverified).
 - **Notes:** *New endpoint, added 2026-09-08.* The decline is kept, not deleted — a category declined every time is a row in the map that shouldn't be there, and that's only legible if the declines survive with their reasons. Nothing is suggested twice — one proposal per detector fingerprint, ever.
 
 ### GET /rooms/{roomId}/guardrails
@@ -392,8 +417,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`.
 - **Response `data`:** `{ roomId, guardrails: [{ label, setting, appliesToThisRoomOnly, setBy, setByLabel, overridable, overrideNote, key, setAtUtc }], stopped: [{ guardrail, whatWasStopped, affected, whatHappenedInstead }], stopsComputedFrom, stopsAbsentBecause, sendTimeStopsAvailable }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-room-guardrails.ts` / `src/features/rooms/use-get-room-guardrails.ts`), not wired into a page yet — guardrails tab/section.
-- **Status:** service/hook ready, not wired.
+- **REAL RESPONSE 2026-10-13** (Dormant Accounts): ONE guardrail, `Opt-out` (`setting: "excluded permanently, before any audience is built"`, `setBy: "legal"`, `overridable: "never"` (the docs said `"no"`; both are treated as unliftable), `overrideNote`, `key: null`, `setAtUtc: null`), `stopped: []`, `stopsAbsentBecause: "not-yet-computed"`, `sendTimeStopsAvailable: false`. The design's other rows (quiet hours, frequency cap, discount ceiling, room-set ones) are NOT in the response. Never seen live: a `by-its-author` guardrail, a "set elsewhere" one, a non-empty `stopped`.
+- **Used by:** the guardrails section of the People & guardrails tab (`src/pages/rooms/room/people-guardrails/guardrails-section.tsx`). Service + hook: `get-room-guardrails.ts` / `use-get-room-guardrails.ts`.
+- **Status:** BUILT 2026-10-13 from the real response + the docs. Room-set rows ("Lift" only for the author, `setBy === me`), set-elsewhere rows and the stops list are docs-only.
 - **Notes:** *New endpoint, added 2026-09-08.* Two kinds on one list, and the difference is the point: `overridable: "no"` guardrails (opt-out, quiet hours, frequency cap) are conditions the send pipeline checks and refuses — NOT permissions an administrator holds; render as unliftable by anyone, including the workspace owner. `overridable: "by-its-author"` means a person in this room set it and only they can lift it — `key` is present only on that kind, since a control with nothing to call can't be offered. `sendTimeStopsAvailable` is always false today: the two audience exclusions are real and computed, while throughput splits and quiet-hours holds happen during sending and nothing records them — render that honestly rather than implying there were none. `stopsAbsentBecause` distinguishes a cohort not yet computed from one that lives in a segment and never will be.
 
 ### POST /rooms/{roomId}/guardrails
@@ -422,8 +448,17 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; query `limit` (int32, optional).
 - **Response `data`:** `{ roomId, agents: [{ key, displayName, role, state, currentRunId }], runs: [{ runId, agentKey, agentName, startedAtUtc, finishedAtUtc, turns, state, waitingOn, failedBecause, result, cancelledByUserId, cancelReason }], noAgentsNamed, rowsReadAvailable }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-room-runs.ts` / `src/features/rooms/use-get-room-runs.ts`), not wired into a page yet — runs/activity tab.
-- **Status:** service/hook ready, not wired.
+- **REAL RESPONSE 2026-10-13** (Dormant Accounts): `agents[]` = Revenue Intelligence `lead`, Compass `supporting`, Oracle `supporting`, all `state: "idle"`; `runs[]` newest first, 9 runs all `state: "done"` (lowercase; `result` "recorded a claim" / "concluded the investigation" on two, null on the rest), `agentKey: "flolyt"` / `agentName: "Flolyt"` for the coordination run, `rowsReadAvailable: false`, `noAgentsNamed: false`. NEVER seen live: failed, cancelled, awaiting-approval, running rows.
+- **Used by:** the Agents & runs tab, `src/pages/rooms/room/agents-runs/` (roster, runs table, investigation card, "Add an agent" button). Service + hook: `src/services/api/rooms/get-room-runs.ts` / `src/features/rooms/use-get-room-runs.ts` (the tab reads `limit=50`).
+- **Status:** BUILT 2026-10-13. Left out: "Approve or reject" on a waiting run (no route documented), "Connect source" on a failed run (no field), the rows-read count (unavailable). The live feed refreshes this tab on `run_started` / `run_state` / `run_cancelled` / `error` (debounced).
+
+### GET /rooms/{roomId}/investigation (REAL RESPONSE 2026-10-13; was "unspecified")
+
+- **Purpose:** The Room's investigation: where it stands, its turn budget and the steps taken.
+- **Auth:** Bearer token. **404** with the server's own text ("This room has no lead agent, so nothing investigates it.") when the Room has no lead agent.
+- **Response `data`:** `{ roomId, openingNumber, status ("concluded" seen), turnBudget, turnsUsed, turnsLeft, now, summary, stoppedBecause, startedAtUtc, endedAtUtc, canPause, steps: [{ runId, agentKey, agentLabel, kind ("lead" | "coordinate" | "ask" seen), question, askedByAgentKey, startedAtUtc, endedAtUtc, outcome, tool }] }`.
+- **Used by:** the investigation card on the Agents & runs tab (`src/services/api/rooms/get-room-investigation.ts` / `src/features/rooms/use-get-room-investigation.ts`). `canPause` is not used: no pause route is documented.
+- **Open ticket #57:** the `coordinate` and `ask` steps keep `endedAtUtc` and `outcome` null although their runs are `done` and the investigation is `concluded` (both runs ended after the conclusion). The card shows "No end time recorded" for such a step and never claims it is still running.
 - **Notes:** *New endpoint, added 2026-09-08.* A failed run is a row like any other — not hidden, not a banner: its cause is named (e.g. `"COGS source missing"`), which makes it fixable, and the room keeps working with one agent blind. Don't sort by severity or lift failures into their own section. `agents` is the room's roster with a state each, since "idle" is an agent with nothing in flight rather than a run, and a table of runs alone can't show it. States are the kit's seven plus `awaiting-approval`, a run parked on a person rather than a machine — folding that into `queued` would make one word mean both "waiting for a machine" and "waiting for you." `rowsReadAvailable` is always false — nothing counts rows an agent read, sent so a client renders "unavailable" rather than a zero. `waitingOn` is usually null — runs don't depend on other runs in this system, so the kit's "waits on run X" concept isn't reproduced rather than being faked.
 
 ### POST /rooms/{roomId}/agents
@@ -434,6 +469,7 @@ Mutations show their real top-level shape including the envelope.
 - **Response:** `{ data: true, messages, succeeded }`.
 - **Used by:** service + hook ready (`src/services/api/rooms/add-room-agent.ts` / `src/features/rooms/use-add-room-agent.ts`), not wired into a page yet.
 - **Status:** service/hook ready, not wired.
+- **Roles (backend answer 2026-10-13, exact lowercase values):** PEOPLE `decision-owner` (accountable for the Room's decisions), `participant` (contributes to the investigation and work), `approver` (provides approval or specialist sign-off), `observer` (follows the work without deciding). AGENTS `lead` (leads the investigation, only one per Room), `supporting` (contributes alongside the lead), `automatic` (represents the arbitration role for agent disagreements; looks system-assigned, so NOT offered in the add dialog unless the backend says otherwise). Required body fields per the Scalar schema: `agentKey`, `role`, `whatItWillDo`; `reads` optional. (An earlier note here said "Lead and Support": superseded.)
 - **Notes:** Exactly one agent may hold the `lead` role — two agents owning the reading is a conflict to raise while the work happens, not something to configure. `reads` is a statement of what the agent is told to look at, not a grant — actual tool access is decided by the persona's tool set.
 
 ### DELETE /rooms/{roomId}/agents/{agentKey}
@@ -482,8 +518,10 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** query `userId` (uuid, optional — pass to read somebody else's).
 - **Response `data`:** `{ userId, watching, owned, reachingTheirDigest, muted, autoAddedThisMonth, askingWhetherStillWanted, rooms: [{ roomId, title, restricted, reason, notifyLevel, amountAtRisk, currency, sinceUtc, lastOpenedAtUtc, ownsIt, canMute, asksWhetherStillWanted }] }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-room-subscriptions.ts` / `src/features/rooms/use-get-room-subscriptions.ts`), not wired into a page yet — likely a workload/subscriptions screen, possibly a manager view.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the My load tab on `/rooms?tab=my-load` (`src/pages/rooms/my-load/`). Service + hook: `src/services/api/rooms/get-room-subscriptions.ts` / `src/features/rooms/use-get-room-subscriptions.ts` (hook takes `{ enabled }`). The "Showing" picker lists active human `GET /workspace/members`; "You" sends no `userId`, anyone else sends `?userId=<member id>` (URL `?person=`).
+- **Status:** wired 2026-10-11. Live response seen for the caller only (1 owned room, `reason: "owns-it"`, `canMute: false`); a plain member row, a restricted row and reading someone else's load are unverified. Assumed: a workspace member's `id` is the `userId` this route wants.
+- **Backend question (to raise):** what do `title` and `amountAtRisk` hold for a restricted room, for the caller inside it and for one they can't see (e.g. someone else's `userId`)? The UI shows whatever is sent, with a lock icon on `restricted`.
+- **Backend gap:** no "keep watching" action (design's button held, `❌` comment in `load-table.tsx`); `POST /watch` is only documented as re-adding someone who unwatched.
 - **Notes:** Reading someone else's (via `userId`) is the point of the screen — a lead seeing that somebody carries 22 rooms before assigning a 23rd is the best overload predictor in the workspace. Muted rooms count in BOTH `watching` and `muted` — muting doesn't hide, stays searchable, still counts toward load. `canMute` is false on a room they own — render the reason, not a missing control. `asksWhetherStillWanted` = 30 days without opening it; it only asks, nobody is auto-unsubscribed by time. `reachingTheirDigest` is a count only — no digest is assembled or sent yet.
 
 ### POST /rooms/{roomId}/watch
@@ -502,8 +540,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ notifyLevel: string }` — enum `everything` | `decisions-only` | `nothing`.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/set-room-notify-level.ts` / `src/features/rooms/use-set-room-notify-level.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the Notifications dropdown on the My load tab, live only when viewing your own load (the route has no `userId`, so it can only change the caller's own level); disabled where `canMute` is false.
+- **Status:** wired 2026-10-11, NOT yet submitted against the real backend (mutation unverified).
 - **Notes:** Muting a room you own is refused — that's resigning from it, and somebody has to take it (reassign first).
 
 ### POST /rooms/{roomId}/unwatch
@@ -512,8 +550,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`.
 - **Response:** `{ data: true, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/unwatch-room.ts` / `src/features/rooms/use-unwatch-room.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the "Unwatch" button on a "Still want this?" row of the My load tab (own load only, never on an owned room).
+- **Status:** wired 2026-10-11, NOT yet submitted against the real backend (mutation unverified).
 - **Notes:** Refused on a room you own. Remembered, so a later mention doesn't re-add you.
 
 ### POST /rooms/{roomId}/opened
@@ -552,8 +590,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ userId: uuid, role: string, maxApprovalReach: int32 | null, source: string | null }`.
 - **Response:** `{ data: memberCount, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/add-room-person.ts` / `src/features/rooms/use-add-room-person.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the add dialog in the thread and on the People & guardrails tab (`add-to-room-dialog.tsx`; it now sends `maxApprovalReach` when filled in, a whole number 0 to 2147483647, else null).
+- **Status:** WIRED 2026-10-13 (one real add seen; the reach value is mock-verified only). OPEN QUESTION for the backend: the unit of `maxApprovalReach` (the design hints "people reached") and what `null` means for an approver (no limit, or cannot approve).
 - **Notes:** The widest of the available options and should be presented as such — they'll see evidence, decision, plays, and every customer in the cohort. If someone should see the finding but not the customers, that's a handoff or read-only view, not membership.
 
 ### PUT /rooms/{roomId}/people/{userId}
@@ -562,8 +600,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`, `userId`; body `{ role: string, maxApprovalReach: int32 | null }`.
 - **Response:** `{ data: memberCount, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/update-room-person.ts` / `src/features/rooms/use-update-room-person.ts`), not wired into a page yet.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the People table (`people-guardrails/people-card.tsx`): the role select and the inline approval-limit field both call it with `{ role, maxApprovalReach }`.
+- **Status:** WIRED 2026-10-13, mock-verified only (never run against the real backend).
 - **Notes:** Visibility never changes — it never was tied to role.
 
 ### DELETE /rooms/{roomId}/people/{userId}
@@ -601,8 +639,9 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; query `includeDecided` (default true).
 - **Response `data`:** `{ plays: [{ proposalId, roomId, roomTitle, summary, toolName, reach, effect, currency, figuresAreStated, state, decisionOwnerMemberId, waitingHours, deferredBecause, proposedAtUtc, campaignId }], pending, done, rejected, deferred, waitingOnPeople, returnedObligations: [{ id, chainId, roomId, roomTitle, description, class, origin, fromUserId, fromName, toUserId, toName, toTeam, state, proposedDueAtUtc, dueAtUtc, isOverdue, daysOverdue, isPastAskedDate, firstCreatedAtUtc, askedAtUtc, acceptedAtUtc, doneAtUtc, lastMovedAtUtc, blocks: [{ text, amount, currency, reference }], readCount, repeatCount, toHasLeft }] }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/get-room-plays.ts` / `src/features/rooms/use-get-room-plays.ts`), not wired into a page yet — plays/proposals tab.
-- **Status:** service/hook ready, not wired.
+- **Backend SAMPLE 2026-10-13 (hand-written, NOT a live capture: ids are `1111…`, currency EUR on a USD Room):** each play also carries `basis` (e.g. `"estimated"`) and `decisionOwnerName` (full name). `returnedObligations` still has no real item.
+- **Used by:** the Plays tab, `src/pages/rooms/room/plays/` (counters, "Include decided", plays table, collision card on the selected play, cited objections/readings, obligations table); also the tab's `pending` badge. Service + hook: `src/services/api/rooms/get-room-plays.ts` / `src/features/rooms/use-get-room-plays.ts`.
+- **Status:** BUILT 2026-10-13 from the documented shape + the sample; NOT verified against a live response (no play exists on the user's Room yet). Left out: "About this leak", "Hand off obligations", the campaign link on a done play.
 - **Notes:** Every row carries who decides, how long it's waited, reach, and value. `reach`/`effect` are stated by the proposer and verified by nothing — `figuresAreStated` must be rendered, since a stated reach read as a checked one is how a play meant for 100k people reaches 5x that. **Updated 2026-09-08:** each play row gained `campaignId`, and the response gained `returnedObligations` — the follow-up items handed off via `close`'s `outstanding` field that came back to this room/list (looks like the same shape used by handoff-style obligation chains elsewhere in the product).
 
 ### GET /plays
@@ -613,7 +652,7 @@ Mutations show their real top-level shape including the envelope.
 - **Response `data`:** same shape as `GET /rooms/{roomId}/plays`'s `data`.
 - **Used by:** service + hook ready (`src/services/api/rooms/get-all-plays.ts` / `src/features/rooms/use-get-all-plays.ts`), not wired into a page yet — cross-room plays/proposals dashboard.
 - **Status:** service/hook ready, not wired.
-- **Notes:** `waitingOnPeople` is how many distinct people the pending plays sit with — surfaces a bottleneck when e.g. 14 plays are waiting and 6 sit with one person. ❌ **Path correction, 2026-09-08:** this is `/api/flolyt/plays` — a **top-level** path, not `/api/flolyt/rooms/plays` as the original pass assumed. `apiConfig.ts`'s `GET_ALL_PLAYS` was pointing at the wrong URL and has been fixed to a new `PLAYS_BASE_URL` (`/api/flolyt/plays`); this would have 404'd if wired before the correction.
+- **Notes:** `waitingOnPeople` is how many distinct people the pending plays sit with — surfaces a bottleneck when e.g. 14 plays are waiting and 6 sit with one person. ❌ **Path correction, 2026-09-08:** this is `/api/flolyt/plays` (now `/api/v3/plays`, see the 2026-10-10 migration note at the top) — a **top-level** path, not `/api/flolyt/rooms/plays` as the original pass assumed. `apiConfig.ts`'s `GET_ALL_PLAYS` was pointing at the wrong URL and has been fixed to a new `PLAYS_BASE_URL` (`/api/flolyt/plays`); this would have 404'd if wired before the correction.
 
 ### GET /plays/{proposalId}
 
@@ -635,3 +674,240 @@ Mutations show their real top-level shape including the envelope.
 - **Used by:** service + hook ready (`src/services/api/rooms/reopen-room.ts` / `src/features/rooms/use-reopen-room.ts`), not wired into a page yet — reopen action on a closed/archived room.
 - **Status:** service/hook ready, not wired.
 - **Notes:** The id doesn't change, so every link ever pasted still resolves. The previous opening is kept whole (its outcome, population, predictions); the working surfaces (log, evidence, decision, plays) start empty. Population is re-read from the cell as it stands now, not carried forward — measuring a second opening against the first one's world measures against nothing real.
+
+---
+
+# Revenue threat Room (backend phases 5 to 9)
+
+Added 2026-10-10 from [../rooms/revenue-threat-room-frontend-handoff.md](../rooms/revenue-threat-room-frontend-handoff.md). Plan: [../rooms/revenue-threat-room-build-plan.md](../rooms/revenue-threat-room-build-plan.md).
+All paths are under `/api/v3/rooms` unless noted. The handoff gives field names and rules in prose, **not full
+JSON examples**, so every `Response` below lists only what the handoff names. Fields marked ⚠️ are
+unverified shapes: get a Scalar "Show Schema" capture before building UI on them.
+The 16 `/rooms` routes are **scaffolded** (2026-10-10): `API_ENDPOINTS.ROOMS` constant plus a service in `src/services/api/rooms/` and a hook in `src/features/rooms/`, file names are the route in kebab-case (e.g. `get-room-threat-monitoring.ts` / `use-get-room-threat-monitoring.ts`). None are wired into a page. The `conversations/messages` change is types only (`ConversationReplyMode`, `SendConversationMessageRequest`, `SendConversationMessageAcceptedData`, message `authorUserId`/`authorName` in `ai-conversation-types.ts`); the stream hook does not send `replyMode` yet.
+
+Rendering rules that apply to every entry below: money is per currency and never summed; the opening
+baseline never changes; exposure reduction is never verified/recovered revenue; unknown amounts are
+`null`, not zero.
+
+Also named in the handoff but **not specified** (ask the user, do not guess): `/rooms/{roomId}/investigation`
+(investigation controls). `/rooms/settings/investigations` is now specified (2026-10-11), see the
+"Investigation settings" entries just before "Phase 9".
+
+### GET /rooms/settings/investigations
+
+- **Purpose:** The workspace's turn budget per room investigation, with the default and the bounds.
+- **Auth:** Bearer token. `canEdit` is true for administrators (it describes THIS section only; the other Admin sections have no such flag).
+- **Request:** none.
+- **Response `data`** (real response): `{ turnBudget: 12, defaultTurnBudget: 12, minTurnBudget: 2, maxTurnBudget: 50, updatedAtUtc: null, canEdit: true }`. `updatedAtUtc` is null until the budget is changed. (Scalar's example shows all `1`s; those are placeholders.)
+- **Used by:** not wired (Admin tab not built, waiting on backend confirmations). Service + hook NOT scaffolded yet.
+- **Status:** documented, not wired.
+
+### PUT /rooms/settings/investigations
+
+- **Purpose:** Sets the turn budget (2 to 50) for investigations that start from now; a working one keeps the budget it started with.
+- **Auth:** Bearer token; administrators only.
+- **Request:** body `{ turnBudget: int32 }` (required; the schema allows integer or numeric string).
+- **Response `data`:** the same object as the GET. 400 on a bad value.
+- **Used by:** not wired. **Status:** documented, not wired, mutation never submitted.
+
+## Phase 5: automatic opening
+
+### GET /threats/{investigationId}/room-opening
+
+- **Purpose:** State of an automatically opened threat Room, plus its immutable baseline and draft plan.
+- **Auth:** Bearer token, active workspace membership. 404 for missing, foreign or restricted openings.
+- **Request:** path `investigationId` (equals a Room row's `threatConfirmationId`).
+- **Response `data`:** `{ state, reason, roomId, conversationId, systemActor, routingReason, baseline, plan }`. `state` is `PENDING | READY | PENDING_HUMAN_ROUTING | PENDING_LEGACY_REVIEW | BLOCKED | PAUSED`. **Full schema captured 2026-10-10 via Scalar "Show Schema"** and typed in `src/services/api/rooms/get-threat-room-opening.ts`. `baseline` (nullable while pending): `{ id, companyId, caseId, roomId, confirmationId, openingState, evidenceHash, assessmentIds, assessmentConfidence, openedAtUtc, evidence, policyFingerprint, calculationBatchId, calculations[], rangeAvailability }`. `openingState` has `scope { sector, mechanism, subjectType, grain, stateDimension, stateValue, businessUnit, market, currency, lifecycleClass (Realized|InFlight|Latent|null), issueKey }`, `cellId, caseId, publicationId, revision, snapshotId, coverageId, asOfUtc, horizon (TimeSpan string), exposure (nullable: { currency, market, lifecycleClass, gross, expected, net, candidateCount }), state, signalIds, observationIds, blocker, updatedAtUtc, evidence { confidence, oldestObservationUtc, hasSourceLineage }, measuredZero`. `baseline.evidence` has the same gross/expected/net plus `confidence, horizonDays, facts[]`. `calculations[]` is `{ candidateId, estimate }`, the estimate carrying impact, probability, confidence, threatScore, severity(+policy), ramp, recoveryRate, `grossExposure/expectedLoss/netExpectedLoss`, nullable `grossRange/expectedRange/netRange { lower, upper, basis Empirical|Calibrated|Assumption, version, probabilityMass }`, currency, horizon, mode, assumptions[], caveats[], context, asOfUtc. `plan` (nullable): `{ id, companyId, roomId, ownerId, status, actions: string[], successCriterion }`. Money/ratio fields are `number | string`: display-format only, never do math.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** Never show a ready collaboration Room before `READY`. Attribute the opening to `systemActor` (Flolyt orchestration), not the assigned person. `routingReason` is detail-level only. Baseline amounts always carry currency, market and lifecycle and are labelled "estimated exposure"; no Opportunity subtraction, no cross-currency sum, never "customers/accounts". `rangeAvailability=PER_CANDIDATE_NOT_AGGREGATED` forbids summing intervals; `NOT_AVAILABLE` means no range. `plan` is proposed work, not approved or executed. Pending openings are not a global inbox; operators get IDs from the triage/confirmation audit, ready Rooms supply the ID on the row. The existing `conversationId` already holds a system synthesis message (a status message, no suggested prompts). No new SSE event, email or model response at opening.
+
+## Phase 6: typed plans
+
+### GET /{roomId}/resolution-plan
+
+- **Purpose:** Typed resolution plan with live action statuses.
+- **Auth:** Bearer token, active member with Room access. Restricted and foreign Rooms not exposed.
+- **Request:** path `roomId`.
+- **Response `data`:** `{ contractVersion: "1.0", revision, plan, live action statuses }`. ⚠️ Status row fields named in prose: `proposalState`, `obligationState`, `ownerAvailable`, `referencesAvailable`, `obligationOwnerMismatch`. Plan fields from the PUT example: `diagnosis, objective, successCriteria, verificationPlan, actions[]`.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** New automatic Rooms start at revision 1; older Phase 5 Rooms return revision 0 (owner can create the first typed revision; the original opening draft stays historical). Render proposal/obligation state from the status rows only, never from an action description or revision. `ownerAvailable=false` or `referencesAvailable=false` means the plan needs review; `obligationOwnerMismatch=true` forces `referencesAvailable=false` ("linked obligation was reassigned, plan needs revision"; the historical action owner is unchanged). No plan value is verified revenue.
+
+### PUT /{roomId}/resolution-plan
+
+- **Purpose:** Revise the typed plan (creates a new immutable revision).
+- **Auth:** Bearer token; active Room owner or workspace administrator with Room access. Every action owner must be active with Room access.
+- **Request:** path `roomId`; body `{ expectedRevision, diagnosis, objective, successCriteria, verificationPlan, actions: [{ id, kind, description, ownerId, expectedCompletionUtc, successCriterion, dependsOn: string[], proposalId?, obligationId? }] }`.
+- **Response:** ⚠️ not shown (presumably the new revision).
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** `kind` is `HUMAN_ACTION | AGENT_PROPOSAL | TOOL_ACTION | DATA_REMEDIATION | WAIT_AND_MONITOR`. `AGENT_PROPOSAL` and `TOOL_ACTION` require `proposalId`, which must reference an existing proposal in this Room's conversation. `obligationId` (optional) must belong to this Room and the action owner. Dependencies reference action ids in the same revision and must be acyclic. A stale `expectedRevision` fails: reload before editing. Revising never approves a proposal or runs a tool; create/decide proposals and obligations through their existing APIs.
+
+## Phase 7: monitoring
+
+### GET /{roomId}/threat-monitoring
+
+- **Purpose:** Versioned monitoring projection: how expected exposure has moved since opening.
+- **Auth:** Bearer token, active member with Room access. 404 for missing, foreign or restricted Rooms.
+- **Request:** path `roomId`.
+- **Response `data`:** `{ state, reason, revision, notifiedRevision, currentExpectedLoss, changeFromOpening, currency, market, lifecycleClass, checkedAtUtc, pendingState, pendingReadings, updates[] (latest 20) }`. ⚠️ `state` values named in prose: `WORSENED`, `DATA_DEGRADED`, `RESOLVED_CANDIDATE`; full enum and `updates[]` shape not given.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** Keep the opening baseline separate. `changeFromOpening` is a signed exposure change, never preserved/recovered revenue. `DATA_DEGRADED` amounts are `null`, not zero. Show `pendingState` as "awaiting confirmation" when it differs from the accepted state. `RESOLVED_CANDIDATE` needs independent verification and does not close the Room. A candidate needs two distinct comparable published readings backed by successful measurement. Updates are also concise system messages in the Room conversation and Room log; refetch monitoring and conversation history while viewing (no background SSE). Monitoring never calls an LLM.
+
+## Phase 6: messages and runs (existing routes, changed behaviour)
+
+These live outside `/rooms`; recorded here because the Room flow depends on them. Mirror into the conversations/agent-runs docs when wired.
+
+### POST /api/v3/conversations/messages (changed)
+
+- **Request:** `{ conversationId, message, replyMode: "auto" | "none", agentKey? }`. `replyMode` defaults to `auto`.
+- **Response:** with `Accept: text/event-stream`, the durable run stream; `run_queued` carries `agentKey` and `runId`. JSON with a run returns **202** + `{ runId, conversationId, agentKey, routingReason }` (consume the run, do not expect a completed answer). `replyMode: "none"` saves a human message with no run: SSE emits `message_saved` and ends; JSON returns **200** with no `runId` (null fields omitted).
+- **Status:** documented. Not in `ai-conversation-types.ts` yet.
+- **Notes:** Routing uses one seat: stored mention `@[agent:<key>]`, then `agentKey`, then a relevant eligible rostered supporter (pack-declared intents), else the Room lead. Multiple agent mentions require choosing one. Unknown, off-roster or disabled agents are refused. Selecting an agent grants no roster membership or authority. `none`: no typing indicator, no `final_response` wait, refresh timeline after `message_saved`. History now includes `authorUserId` and `authorName` for new human messages (old ones unattributed). Reconnect via `GET /api/v3/runs/{runId}/stream`; disconnecting never cancels work; never resend the prompt to reconnect.
+
+### GET /api/v3/conversations/{conversationId}/preferences (new 2026-10-13, backend ticket #51)
+
+- **Purpose:** The caller's saved composer reply mode for this conversation.
+- **Auth:** Bearer token. No user id is accepted; only the caller's own preference is readable.
+- **Response `data`:** `{ replyMode: "auto" | "none" }`, `auto` when nothing is saved.
+- **Errors:** 404 for a missing, archived, foreign-workspace or inaccessible conversation.
+- **Used by:** NOT built yet. Plan: the Room thread composer (`src/pages/rooms/room/thread/composer.tsx`) reads it on open, replacing the browser-only `flolyt-room-thread-mode:<conversationId>` memory (keep that only as a fallback).
+- **Notes:** A UI default, never a routing override: every message still sends its `replyMode` explicitly. A failed load keeps `auto`. For a new conversation (no id yet) use `auto`. `none` sends exist only for Room conversations.
+
+### PUT /api/v3/conversations/{conversationId}/preferences (new 2026-10-13, backend ticket #51)
+
+- **Request:** `{ replyMode: "auto" | "none" }`.
+- **Response:** success returns the saved value. 400 for an invalid or null mode; 404 as above.
+- **Used by:** NOT built yet (same place as the GET).
+- **Notes:** Creates no message, run or inbox notification. Concurrent saves by the same user: last committed value wins. If saving fails, tell the person it was not saved across devices.
+
+### Room people names and human mentions (new 2026-10-13, from the merged handoff)
+
+- `GET /rooms/{roomId}/people` now adds a nullable `displayName` to every `people[]` row (IDs, roles and ordering unchanged). Not in `get-room-people.ts` types yet.
+- Message and steering `authorName` now resolves the same workspace full name for every viewer, the author included. Missing, blank or other-workspace profiles are null: never show an id or assume an email is a name.
+- A person mention is written `@[human:<userId>]` in the message text; show a chip `@Ada Lovelace` and keep the id apart from the label. Plain `@Name`, emails and usernames are NOT parsed. Pick people from the workspace roster or Room people. The server queues notifications for eligible workspace people; self-mentions and people outside a restricted Room are skipped. A mention does not invite anyone or grant access. Agent mentions stay `@[agent:<key>]`.
+
+## Phase 8: verification and independently accepted value
+
+### POST /{roomId}/verification-plans
+
+- **Purpose:** Preregister the verification method and a future measurement window.
+- **Auth:** Bearer token; Room owner or administrator.
+- **Request:** path `roomId`; body `{ id (client UUID, idempotency key), method, sourceId, fromUtc, toUtc }`.
+- **Response:** ⚠️ not shown.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** Supported methods named: `campaign_holdout` (`sourceId` = campaign UUID; cohort enrolled but untouched before registration; at least 30 treatment and 30 control subjects; whole UTC-day window, exclusive end; business-unit scopes refused) and `source_condition_review` (`sourceId` may be an empty string). Window at most 90 days, starting within 30. Dispatch must occur after registration and before `fromUtc`; dispatch during observation makes the result unverified. Unsupported methods keep `methodVersion=unsupported` and cannot claim value. Intervention authors (including the intervention source's creator) are pinned at registration and excluded from review. Plan DTOs in the history include nullable `boundResolutionPlanId` and `boundResolutionPlanRevision` (null = this verification cannot support lessons).
+
+### GET /{roomId}/verifications
+
+- **Purpose:** Paged verification plans and results, with matching append-only reversals.
+- **Auth:** Bearer token, Room access.
+- **Request:** path `roomId`; query `plansPage`, `resultsPage` (default 1), `pageSize` (default 25, max 100), `asOfUtc`.
+- **Response `data`:** plans, results, `asOfUtc`, `nextPlansPage`, `nextResultsPage`. ⚠️ Result DTO fields named: `status, observedIncrementalReceipts, acceptedAmount, method/version, reviewer, scope, window, evidence, qualifications, measuredSubjects, evidenceReferences (max 20), evidenceReferenceCount`. No raw subject inputs.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** Keep the returned `asOfUtc` while following the two `next*Page` cursors independently; history after that anchor is excluded, reversals stay current. Start a fresh first-page fetch to refresh. A reversal overrides the display of its original result while retaining it: never sum both as positive.
+
+### POST /{roomId}/verifications
+
+- **Purpose:** Independent administrator review and deterministic verification after the window.
+- **Auth:** Bearer token; an authorized administrator different from the intervention owner, author and source creator.
+- **Request:** path `roomId`; body `{ id (new UUID, reuse on transport retry), planId, confounderReview }`.
+- **Response:** verification result DTO (see GET). Server reads evidence and computes amounts.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** Needs a completed window and a written review. Only `acceptedAmount` is accepted value; point estimate and exposure delta are not. `PARTIALLY_VERIFIED` shows its qualifications. `VERIFIED` with `acceptedAmount=0` is a resolved condition with no money claim. `UNVERIFIED` and `FAILED` carry no money. A second id for the same cohort/window does not attribute twice. Early review, self-review, foreign or restricted Rooms fail. Monetary evidence requires an explicit `RealizedRevenue` semantic mapping and pinned datasource/query fingerprint; API-entered conversion values and posted orders cannot establish recovery; unreconciled refunds are refused.
+
+### POST /{roomId}/verifications/reverse
+
+- **Purpose:** Append a correction/reversal to an accepted result.
+- **Auth:** Bearer token; administrator.
+- **Request:** path `roomId` (authoritative); body `{ verificationId, reason }`.
+- **Response:** ⚠️ not shown.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** The original stays readable; the verified balance decreases once; replay does not decrease it again. After reversal the case's `valueAttributions` holds only current entries, while `historicalValueAttributions` and `valueCorrections` retain originals and reasons. A previously verified/closed case returns to resolved and needs fresh verification before closure. The Room is unchanged. Refetch both verification and case views.
+
+### POST /{roomId}/verified-case/close
+
+- **Purpose:** Close only the verified case (not the Room).
+- **Auth:** Bearer token; administrator.
+- **Request:** path `roomId`; body `{ verificationId, reason }`.
+- **Response:** ⚠️ not shown.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** Needs a fresh confirmed measured-zero condition. Missing/stale evidence and reversed results block closure. A `source_condition_review` accepts zero money only after two comparable healthy publications and a fresh resolved-candidate monitor.
+
+### GET /value/verified-threats
+
+- **Purpose:** Verified value balances, one partition per market/currency/lifecycle/value-kind.
+- **Auth:** Bearer token; administrator only.
+- **Request:** query `after` (cursor).
+- **Response `data`:** `{ contractVersion, balances: [], nextCursor }` (real response, 2026-10-11, admin account, no data yet). 100 per page. ⚠️ The list property is `balances`, NOT `partitions` (`get-verified-threat-balances.ts` still says `partitions`: wrong, fix when wiring). ⚠️ Item fields still unseen (list was empty, Scalar has no "Show Schema" toggle): backend ticket needed to document them.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** Follow `nextCursor`. Never build a global FX-less total. Excludes existing stated Room claims. Use for strong value claims only.
+
+## Phase 9: recurrence, lessons, diagnostics
+
+### POST /threats/recurrences
+
+- **Purpose:** Administrator accepts a fresh recurrence of a closed case.
+- **Auth:** Bearer token; administrator.
+- **Request:** `{ previousCaseId, expectedRevision, reason }`.
+- **Response:** new case ID (retry returns the same ID). ⚠️ envelope shape not shown.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** The previous Room must be closed. Acceptance does not guarantee a Room: evidence, triage, readiness and confirmation gates run again. Old revision or non-admin fails. Case responses gain `episodeNumber` and `previousEpisodeId`; group episodes by `stableFindingId` but navigate and act by case/Room id; never replace an old Room's history with the new episode.
+
+### POST /threats/lessons
+
+- **Purpose:** Propose an outcome-linked lesson from an accepted verification.
+- **Auth:** Bearer token; Room owner or administrator.
+- **Request:** `{ roomId, verificationId, resolutionPlanId }`.
+- **Response:** lesson ID (idempotent on repeat). ⚠️ envelope shape not shown.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** Server loads evidence and procedure. `resolutionPlanId` must match the plan pinned at verification registration (`boundResolutionPlanId`); a different revision is rejected. Older unbound verifications and condition-only/manual procedures return an explanatory failure; do not suggest re-verifying retrospectively. All procedure actions must reference adapter-supported proposals.
+
+### POST /threats/lessons/review
+
+- **Purpose:** Independent review of a proposed lesson.
+- **Auth:** Bearer token; administrator who is not the proposer, resolution author, action owner or an excluded intervention author.
+- **Request:** `{ lessonId, decision: "PROMOTED" | "REJECTED", reason }`.
+- **Response:** ⚠️ not shown.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+
+### POST /threats/lessons/retire
+
+- **Purpose:** Retire a lesson, optionally superseding it.
+- **Auth:** Bearer token; administrator with access to the source Room (and the replacement Room when supplied).
+- **Request:** `{ lessonId, reason, replacementLessonId: string | null }`.
+- **Response:** retirement ID (identical repeat returns the same ID). ⚠️ envelope not shown.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** The replacement must be a different, currently reusable, same-scope lesson. Retirement does not reverse monetary evidence or erase the original review.
+
+### GET /threats/lessons
+
+- **Purpose:** Administrator lesson review list.
+- **Auth:** Bearer token; administrator.
+- **Request:** query `page` (default 1); pages of 25, ordered by creation time then ID.
+- **Response `data`:** `{ items: [], nextPage: null }` (real response, 2026-10-11, admin account, no lessons yet). ⚠️ Item fields named in the handoff: `evidenceStillValid`, `retirement`, `reusable`, `review.decision`, `outcomeStatus`, `qualifications`; everything else about an item (id, title, procedure) is unseen. Backend ticket needed to document the item.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** Follow `nextPage` until null. `items` excludes Rooms the administrator cannot access. `evidenceStillValid=false` overrides a historical `PROMOTED`. Show retired/superseded status separately from `evidenceStillValid` and `review.decision`; a valid outcome does not mean the procedure remains approved for reuse. `reusable` is false for restricted source Rooms. A promoted lesson is a historical recommendation, not an approved action, guaranteed recovery or new tool. Keep `outcomeStatus` and `qualifications` visible. Backend scans up to 250 candidates, never across scope or restricted-Room boundaries.
+
+### GET /threats/operator-metrics
+
+- **Purpose:** Administrator diagnostics over a completed window.
+- **Auth:** Bearer token; administrator.
+- **Request:** query `fromUtc`, `toUtc` (completed half-open UTC window, at most 31 days).
+- **Response `data`** (real response, 2026-10-11, window 2026-09-11 to 2026-10-11): `{ contractVersion: "1.0", fromUtc, toUtc, triageDecisions: 10, decisionsByResultAndReason: [{ state: "WATCH:LEGACY_SCOPE_REQUIRES_REVIEW", count: 10 }], publications: 1, processedPublications: 1, publicationProcessingP95Seconds: 2.5143687, verificationAttempts: 0, verificationsByStatus: [], acceptedRecurrences: 0, ledgerMovements: [], limitations: [string, ...] }`. `limitations` is backend text meant to be shown with the results. ⚠️ Item shapes of `verificationsByStatus` and `ledgerMovements` still unseen (both empty); ticket needed.
+- **Used by:** service + hook ready, not wired into a page yet.
+- **Status:** service/hook ready, not wired.
+- **Notes:** More than 2,000 records in any series requires a narrower window. Reversed or oversized windows are rejected. Counts are decisions/attempts, not distinct businesses. `ledgerMovements` includes corrections posted in the window and is not a lifetime balance. Never sum across currencies. No inferred false-positive rate or invented model cost.

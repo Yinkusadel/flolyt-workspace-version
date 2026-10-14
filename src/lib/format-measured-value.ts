@@ -65,6 +65,13 @@ export function formatMoney(value: number, currencyCode: string): string {
   return `${prefix}${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+/** Whole-unit, comma-grouped money with no decimals ("₦18,400,000"), for tables where the exact
+ * figure reads better than a compact one. Same prefix rule as `formatMoney`; never blends currencies. */
+export function formatWholeMoney(value: number, currencyCode: string): string {
+  const prefix = currencyPrefix(currencyCode);
+  return `${prefix}${value.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+}
+
 /**
  * atStake's `value` is an array of per-currency amounts, not a bare number — confirmed live
  * 2026-09-10 (`[{ currency: "NGN", amountAtRisk: 0 }]`). Never sums across entries (money is

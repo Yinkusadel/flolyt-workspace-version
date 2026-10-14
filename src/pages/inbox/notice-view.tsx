@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 
 import { PersonAvatar } from "@/components/person-avatar";
 import { Chip } from "@/components/ui/chip";
-import { agentInitialsFromName, formatRoomActivity } from "@/pages/rooms/format";
+import { agentInitialsFromName } from "@/lib/initials";
+import { formatRoomActivity } from "@/lib/format-activity";
 import { AttachedRoomCard } from "@/pages/inbox/attached-room-card";
 import { KIND_LABEL, isProposalKind, resolveInboxHref } from "@/pages/inbox/kind";
 import type { InboxItemDto } from "@/services/api/inbox/get-inbox";

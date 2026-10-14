@@ -1,7 +1,7 @@
 import { PersonAvatar } from "@/components/person-avatar";
 import { DEPARTMENT_COLORS, EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { Callout } from "@/components/ui/rail";
-import type { PersonRef } from "@/pages/rooms/types";
+import type { PersonRef } from "@/oldpages/rooms/types";
 import { ScenarioKvList } from "@/oldpages/revenue/scenario/kv-list";
 import { ScenarioTabs } from "@/oldpages/revenue/scenario/tabs";
 import { SC_HISTORY_KV, SC_HISTORY_ROWS, SC_TONE_CLASS } from "@/oldpages/revenue/scenario/data";

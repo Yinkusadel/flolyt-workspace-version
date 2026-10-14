@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Callout } from "@/components/ui/rail";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
-import { ActorAvatar } from "@/pages/rooms/actor";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
+import { ActorAvatar } from "@/oldpages/rooms/actor";
 import { useGoalContext } from "@/oldpages/everyday/goals/goal/layout";
 import { OFF_TRACK_ACTIONS } from "@/oldpages/everyday/goals/goal/data";
 

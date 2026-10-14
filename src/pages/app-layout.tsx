@@ -4,8 +4,8 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { BreadcrumbContext, type Crumb } from "@/components/breadcrumb-context";
+import { SidebarOverrideContext } from "@/components/sidebar-override-context";
 import { cn } from "@/lib/utils";
-import { getRoom } from "@/pages/rooms/room/data";
 
 /**
  * Shell for every authenticated screen: sidebar + topbar + main region, per
@@ -20,22 +20,18 @@ function getBreadcrumb(pathname: string): React.ReactNode {
   if (pathname === "/" || pathname === "/new-conversation") return "Home";
 
   if (pathname === "/rooms") return "Rooms";
-  if (pathname === "/rooms/new")
-    return renderCrumbs([{ label: "Rooms", to: "/rooms" }, { label: "New room" }]);
-  if (pathname === "/rooms/subscriptions")
-    return renderCrumbs([{ label: "Rooms", to: "/rooms" }, { label: "What you watch" }]);
-  if (pathname === "/plays") return "Plays";
 
   const roomMatch = /^\/rooms\/([^/]+)/.exec(pathname);
   if (roomMatch) {
-    const room = getRoom(roomMatch[1]);
     return (
       <span className="flex items-center gap-1.5">
         <Link to="/rooms" className="hover:text-ink">
           Rooms
         </Link>
         <span className="text-ink-4">/</span>
-        <span className="text-ink">{room?.title ?? roomMatch[1]}</span>
+        {/* The Room page supplies its real title through usePageBreadcrumb once it is rebuilt
+            (it needs a single-Room endpoint); until then this stays generic. */}
+        <span className="text-ink">Room</span>
       </span>
     );
   }
@@ -78,6 +74,12 @@ function renderCrumbs(crumbs: Crumb[]): React.ReactNode {
 
 export const AppLayout = () => {
   const [navOpen, setNavOpen] = React.useState(false);
+  const [forceCollapsed, setForceCollapsedState] = React.useState(false);
+  const [onExpandRequest, setOnExpandRequest] = React.useState<(() => void) | undefined>(undefined);
+  const setForceCollapsed = React.useCallback((force: boolean, handler?: () => void) => {
+    setForceCollapsedState(force);
+    setOnExpandRequest(() => (force ? handler : undefined));
+  }, []);
   const [breadcrumbOverride, setBreadcrumbOverride] = React.useState<Crumb[] | null>(null);
   const location = useLocation();
   const breadcrumbContextValue = React.useMemo(
@@ -107,7 +109,7 @@ export const AppLayout = () => {
 
   return (
     <div className="flex h-dvh overflow-hidden bg-paper">
-      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
+      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} forceCollapsed={forceCollapsed} onExpandRequest={onExpandRequest} />
 
       <div
         aria-hidden
@@ -123,9 +125,13 @@ export const AppLayout = () => {
           breadcrumb={breadcrumbOverride ? renderCrumbs(breadcrumbOverride) : getBreadcrumb(location.pathname)}
           onMenuClick={() => setNavOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto p-page">
+        {/* The 8px scrollbar takes layout space, so without a reserved gutter a page whose height
+            crosses the window's (e.g. a collapsing panel) jumps sideways as the bar comes and goes. */}
+        <main className="flex-1 overflow-y-auto px-page pt-0 pb-page scrollbar-gutter-stable">
           <BreadcrumbContext.Provider value={breadcrumbContextValue}>
-            <Outlet />
+            <SidebarOverrideContext.Provider value={setForceCollapsed}>
+              <Outlet />
+            </SidebarOverrideContext.Provider>
           </BreadcrumbContext.Provider>
         </main>
       </div>

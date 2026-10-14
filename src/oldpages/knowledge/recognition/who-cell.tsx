@@ -1,5 +1,5 @@
-import { ActorAvatar, actorColorClass, actorName } from "@/pages/rooms/actor";
-import type { Actor } from "@/pages/rooms/types";
+import { ActorAvatar, actorColorClass, actorName } from "@/oldpages/rooms/actor";
+import type { Actor } from "@/oldpages/rooms/types";
 
 /** Avatar + name for a table's "Who" column — solid for a person, dashed for an agent, per the app's material person/agent distinction. */
 export function WhoCell({ actor, label }: { actor: Actor | null; label?: string }) {

@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AgentDot } from "@/pages/rooms/actor";
+import { AgentDot } from "@/oldpages/rooms/actor";
 import { TM15_PRESET, TM_TONE_CLASS } from "@/oldpages/agents/ai-teammates/data";
 
 const TONE_BORDER_CLASS = {

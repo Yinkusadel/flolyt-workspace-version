@@ -7,7 +7,7 @@ import { Callout } from "@/components/ui/rail";
 import { KpiCards, type Kpi } from "@/components/ui/kpi-cards";
 import { StageSubpageHeader } from "@/components/ui/stage-subpage-header";
 import { BarTrack } from "@/oldpages/everyday/lifecycle/stage/bar";
-import { TONE_TEXT_CLASS } from "@/pages/rooms/tone";
+import { TONE_TEXT_CLASS } from "@/oldpages/rooms/tone";
 import { useGoalContext } from "@/oldpages/everyday/goals/goal/layout";
 import { ChangeTargetModal } from "@/oldpages/everyday/goals/goal/change-target-modal";
 

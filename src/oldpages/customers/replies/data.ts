@@ -1,6 +1,6 @@
 import type { ChipTone } from "@/components/ui/chip";
 import type { KpiTone } from "@/components/ui/kpi-cards";
-import { ADA, AMARA, IFEOMA, KUNLE, RAVI } from "@/pages/rooms/data";
+import { ADA, AMARA, IFEOMA, KUNLE, RAVI } from "@/oldpages/rooms/data";
 
 /**
  * Customers · Replies — sourced from

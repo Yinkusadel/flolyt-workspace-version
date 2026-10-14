@@ -9,7 +9,7 @@ import {
   SUPPORT_SIGNAL,
   TUNDE,
   ZAINAB,
-} from "@/pages/rooms/data";
+} from "@/oldpages/rooms/data";
 import type {
   AuthorityStat,
   BulkActionRow,

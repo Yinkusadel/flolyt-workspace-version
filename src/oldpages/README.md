@@ -18,9 +18,8 @@ restored on request instead of rebuilt.
 
 ## What stayed live (in `src/pages`)
 
-`auth`, `onboarding`, `teams`, `plan-and-billing`, `conversations` (now home),
-and `rooms` (flattened from `pages/everyday/rooms` to `pages/rooms`, since
-`everyday` had nothing else left in it).
+`auth`, `onboarding`, `teams`, `plan-and-billing` and `conversations` (now home).
+`rooms` stayed live at first, then was archived too on 2026-10-10 (see below).
 
 ## Shared code that got pulled out before the move
 
@@ -66,3 +65,20 @@ multiple markets). Archived for the from-scratch rebuild at
 `src/pages/leakage-map`; `src/features/leakage/*` hooks stayed live. Its
 imports were repointed to `@/oldpages/revenue/leakage-map-v2-first-build/...`.
 See `docs/leakage-map/v3-rebuild-plan.md`.
+
+## Rooms (archived 2026-10-10)
+
+The whole Rooms section (`oldpages/rooms`: the wired index, subscriptions, the new-room wizard,
+plays-at-scale, and the mock Room detail pages with their Decision/Evidence/Log workspace) moved
+here when Rooms started being rebuilt from the new design in
+`flolyt-figma-designs/New-pages-pattern/Flolyt Rooms-png/`, one section at a time. Plan and order:
+`docs/rooms/revenue-threat-room-build-plan.md`.
+
+Live now at `/rooms` and `/rooms/:roomId` are only small "being rebuilt" stubs
+(`src/pages/rooms/index.tsx`). The routes `/rooms/new`, `/rooms/subscriptions` and `/plays` were
+removed. The services and hooks (`src/services/api/rooms`, `src/features/rooms`) stayed live.
+
+Shared helpers that Rooms used and other pages borrowed were moved out first:
+`src/lib/initials.ts`, `src/lib/format-activity.ts`, `src/lib/actor-types.ts`.
+
+Copy sections back from here where they fit, instead of restoring the folder wholesale.

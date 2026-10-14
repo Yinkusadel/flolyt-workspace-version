@@ -2,7 +2,7 @@ import { EYEBROW_CLASS } from "@/lib/lifecycle-data";
 import { Callout } from "@/components/ui/rail";
 import { Chip } from "@/components/ui/chip";
 import { KpiCards } from "@/components/ui/kpi-cards";
-import { IFEOMA } from "@/pages/rooms/data";
+import { IFEOMA } from "@/oldpages/rooms/data";
 import { LensBar } from "@/oldpages/revenue/leakage-map/lens-bar";
 import { LeaksTabs } from "@/oldpages/revenue/leakage-map/tabs";
 import { CLAIM_CHIP_TONE, CLAIM_LABEL, LK11_BELOW_LINE_ROWS, LK11_HERS_ROWS, LK_TONE_CLASS } from "@/oldpages/revenue/leakage-map/data";
