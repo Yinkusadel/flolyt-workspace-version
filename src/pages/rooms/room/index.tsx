@@ -175,15 +175,20 @@ export const RoomPage = () => {
   const content = (
     <div className="min-w-0 flex-1 space-y-6">
       <RoomHeader room={data} onOpenThread={conversationId && !docked ? openThread : undefined} />
-      <UnderlineTabs
-        active={active}
-        tabs={tabs.map((tab) => ({
-          key: tab.key,
-          label: tab.label,
-          to: tab.key === "briefing" ? `/rooms/${roomId}` : `/rooms/${roomId}?tab=${tab.key}`,
-          badge: tab.key === "conflicts" ? openConflicts : tab.key === "plays" ? pendingPlays : null,
-        }))}
-      />
+      {/* The tab bar stays pinned under the top bar while the header above it scrolls away and the tab's content scrolls beneath it. It is
+          full-bleed (the page padding is cancelled and re-applied) with the page's own background so nothing shows through, and it sticks at
+          the scroll area's very edge (-top-page) so no strip of scrolling content peeks out above it. */}
+      <div className="sticky -top-page z-20 -mx-page -mt-page bg-paper px-page pt-page">
+        <UnderlineTabs
+          active={active}
+          tabs={tabs.map((tab) => ({
+            key: tab.key,
+            label: tab.label,
+            to: tab.key === "briefing" ? `/rooms/${roomId}` : `/rooms/${roomId}?tab=${tab.key}`,
+            badge: tab.key === "conflicts" ? openConflicts : tab.key === "plays" ? pendingPlays : null,
+          }))}
+        />
+      </div>
       {/* A container, not the viewport, decides when a tab stacks: the thread takes width from the tab area. */}
       <div className="@container">
         {active === "decision" ? (
