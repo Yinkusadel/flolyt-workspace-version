@@ -21,7 +21,7 @@ export const VerifyCodeForm = ({
   onChallengeRefreshed,
   onUseDifferentEmail,
 }: VerifyCodeFormProps) => {
-  const { form, isPending, onSubmit } = useVerifyLoginCode({ challengeId, email });
+  const { form, isPending, onSubmit } = useVerifyLoginCode({ challengeId });
   const {
     control,
     handleSubmit,
