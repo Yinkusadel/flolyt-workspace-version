@@ -16,6 +16,7 @@ import { AgentsRunsTab } from "@/pages/rooms/room/agents-runs";
 import { ConflictsTab } from "@/pages/rooms/room/conflicts";
 import { DecisionTab } from "@/pages/rooms/room/decision";
 import { EvidenceTab } from "@/pages/rooms/room/evidence";
+import { CohortOverlapsTab } from "@/pages/rooms/room/cohort-overlaps";
 import { LogTab } from "@/pages/rooms/room/log";
 import { PeopleGuardrailsTab } from "@/pages/rooms/room/people-guardrails";
 import { PlaysTab } from "@/pages/rooms/room/plays";
@@ -200,6 +201,8 @@ export const RoomPage = () => {
           <PlaysTab roomId={roomId} />
         ) : active === "evidence" ? (
           <EvidenceTab roomId={roomId} />
+        ) : active === "cohort-overlaps" ? (
+          <CohortOverlapsTab room={data} canEdit={data.conversationPermissions.canContribute} />
         ) : active === "log" ? (
           <LogTab roomId={roomId} />
         ) : active === "people-guardrails" ? (
