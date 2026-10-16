@@ -117,10 +117,9 @@ export function DecisionCard({ roomId, decision }: { roomId: string; decision: R
           <div className="mt-4">
             <p className={FACT_LABEL}>Who hears about it</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {/* ❌ Backend does NOT provide: userName on recipients (only userId), so no name leads the chip. */}
               {decision.recipients.map((recipient, index) => (
                 <Chip key={`${recipient.userId}-${index}`} className="text-[11px] font-normal">
-                  {humanize(recipient.class)} · {recipient.what}
+                  {recipient.userName ?? "Name not available"} · {humanize(recipient.class)} · {recipient.what}
                 </Chip>
               ))}
             </div>

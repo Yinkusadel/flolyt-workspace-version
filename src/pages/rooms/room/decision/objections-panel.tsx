@@ -71,7 +71,9 @@ function Objection({ objection, isAuthor }: { objection: RoomDecisionDissentDto;
       <p className={cn("text-[13px] text-ink", objection.withdrawn && "text-ink-3 line-through")}>
         “{objection.wording}”
       </p>
-      {/* ❌ Backend does NOT provide: the play's title for `aboutProposalId` (the design adds "About: <play>"). */}
+      {objection.aboutProposalTitle && (
+        <p className="mt-1 text-[11.5px] text-ink-3">About: {objection.aboutProposalTitle}</p>
+      )}
       <p className="mt-1.5 text-[11.5px] text-ink-3">
         {objection.byLabel}
         {isAuthor && " (you)"} <span className="ml-1 font-mono">{formatDayTime(objection.recordedAtUtc)}</span>
