@@ -677,8 +677,8 @@ Mutations show their real top-level shape including the envelope.
 - **Auth:** Bearer token.
 - **Request:** path `roomId`; body `{ why: string, ownerMemberId: uuid | null }`.
 - **Response:** `{ data: openingNumber, messages, succeeded }`.
-- **Used by:** service + hook ready (`src/services/api/rooms/reopen-room.ts` / `src/features/rooms/use-reopen-room.ts`), not wired into a page yet — reopen action on a closed/archived room.
-- **Status:** service/hook ready, not wired.
+- **Used by:** the "Reopen room" button in the Room header when the Room is archived (`src/pages/rooms/room/reopen-dialog.tsx`): a required reason and an optional owner from the workspace's active human members.
+- **Status:** WIRED 2026-10-17, mock-verified only (never run for real). Sends `ownerMemberId: null` when no new owner is chosen (unconfirmed: presumably keeps the current owner) and the workspace member's `id` otherwise (unconfirmed that it is the member id the route wants).
 - **Notes:** The id doesn't change, so every link ever pasted still resolves. The previous opening is kept whole (its outcome, population, predictions); the working surfaces (log, evidence, decision, plays) start empty. Population is re-read from the cell as it stands now, not carried forward — measuring a second opening against the first one's world measures against nothing real.
 
 ---
