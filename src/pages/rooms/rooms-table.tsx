@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Lock, Zap } from "lucide-react";
+import { Lock, RotateCcw, Zap } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Chip } from "@/components/ui/chip";
@@ -10,6 +10,7 @@ import { formatRoomActivity } from "@/lib/format-activity";
 import { formatWholeMoney } from "@/lib/format-measured-value";
 import type { RoomListRowDto } from "@/services/api/rooms/get-rooms";
 import { RESTRICT_REASON_LABEL, STOPPED_BECAUSE_LABEL } from "@/pages/rooms/labels";
+import { humanize } from "@/pages/rooms/convening/format";
 
 const HEAD = "px-4 py-2.5 font-mono text-[9px] font-medium tracking-[0.8px] text-ink-4 uppercase";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -38,11 +39,18 @@ function RoomTitle({ room }: { room: RoomListRowDto }) {
   );
 }
 
-function RoomFlags({ room }: { room: RoomListRowDto }) {
+function RoomFlags({ room, onReopen }: { room: RoomListRowDto; onReopen: () => void }) {
   const staleDays = daysSince(room.lastActivityAtUtc);
   const absorbed = room.absorbedRoomIds.length;
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+      {room.archivedAtUtc && <Chip>{room.outcomeKind ? `Closed: ${humanize(room.outcomeKind)}` : "Closed"}</Chip>}
+      {room.archivedAtUtc && (
+        <Button type="button" variant="outline" size="sm" onClick={onReopen}>
+          <RotateCcw className="size-3.5" aria-hidden />
+          Reopen
+        </Button>
+      )}
       {room.isRecovering && <Chip tone="teal">Recovering</Chip>}
       {room.isRecovering && <Chip>Opening {room.openingNumber}</Chip>}
       {room.threatConfirmationId && (
@@ -167,11 +175,14 @@ export function RoomsTable({
   rooms,
   titleById,
   onAssignOwner,
+  onReopen,
 }: {
   rooms: RoomListRowDto[];
   /** Every room's title by id, so a merged row can name the room it was merged into. */
   titleById: Map<string, string>;
   onAssignOwner: (room: RoomListRowDto) => void;
+  /** Reopen a closed room (only offered on rows with `archivedAtUtc`). */
+  onReopen: (room: RoomListRowDto) => void;
 }) {
   return (
     <div className="overflow-x-auto rounded-card border border-line bg-paper">
@@ -217,7 +228,7 @@ export function RoomsTable({
                       · still readable here
                     </p>
                   ) : (
-                    <RoomFlags room={room} />
+                    <RoomFlags room={room} onReopen={() => onReopen(room)} />
                   )}
                 </td>
                 <td className="px-4 py-3.5 align-top whitespace-nowrap text-ink-2">{room.stageLabel}</td>

@@ -20,7 +20,10 @@ const KEEP_OWNER = "keep-current-owner";
  * Reopens an archived Room (`POST /rooms/{roomId}/reopen`) as its next opening. A reason is required; a new owner is optional.
  * Mock-verified only: the real reopen has never run, and what `ownerMemberId: null` does on the backend (presumably keeps the owner) is unconfirmed.
  */
-export function ReopenRoomDialog({ room, open, onOpenChange }: { room: RoomDetailDto; open: boolean; onOpenChange: (open: boolean) => void }) {
+/** The few fields the dialog needs, so it works from the Room page (`RoomDetailDto`) and from a Rooms list row alike. */
+export type ReopenableRoom = Pick<RoomDetailDto, "id" | "title" | "openingNumber" | "ownerName">;
+
+export function ReopenRoomDialog({ room, open, onOpenChange }: { room: ReopenableRoom; open: boolean; onOpenChange: (open: boolean) => void }) {
   const queryClient = useQueryClient();
   const members = useGetWorkspaceMembers();
   const [why, setWhy] = React.useState("");
