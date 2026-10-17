@@ -127,11 +127,13 @@ export interface MeasurementForm {
   convertedContacted: string;
   convertedHeldBack: string;
   recovered: string;
+  /** Where the counts came from (required by the schema when a measurement is sent). */
+  source: string;
   windowStart: string;
   windowEnd: string;
 }
 
-export const EMPTY_MEASUREMENT: MeasurementForm = { contacted: "", heldBack: "", convertedContacted: "", convertedHeldBack: "", recovered: "", windowStart: "", windowEnd: "" };
+export const EMPTY_MEASUREMENT: MeasurementForm = { contacted: "", heldBack: "", convertedContacted: "", convertedHeldBack: "", recovered: "", source: "", windowStart: "", windowEnd: "" };
 
 function NumberField({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (value: string) => void }) {
   return (
@@ -225,6 +227,12 @@ export function MeasurementSection({
             <NumberField id="m-conv-c" label="Converted (contacted)" value={form.convertedContacted} onChange={set("convertedContacted")} />
             <NumberField id="m-conv-h" label="Converted (held back)" value={form.convertedHeldBack} onChange={set("convertedHeldBack")} />
             <NumberField id="m-recovered" label={`Recovered (${preview.currency})`} value={form.recovered} onChange={set("recovered")} />
+          </div>
+          <div>
+            <label htmlFor="m-source" className={FIELD_LABEL}>
+              Where did these counts come from?
+            </label>
+            <input id="m-source" value={form.source} onChange={(event) => set("source")(event.currentTarget.value)} placeholder="e.g. WhatsApp campaign export, 12 Oct" className={INPUT} />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>

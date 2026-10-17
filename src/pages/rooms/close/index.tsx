@@ -26,9 +26,8 @@ import {
   type MeasurementForm,
   type OwedRow,
 } from "@/pages/rooms/close/sections";
-import type { CloseRoomPayload } from "@/services/api/rooms/close-room";
-
-const wholeNumber = (value: string) => (value.trim() !== "" && Number.isInteger(Number(value)) && Number(value) >= 0 ? Number(value) : null);
+import { buildClosePayload, type CloseFormState } from "@/pages/rooms/close/close-payload";
+import { closeLog } from "@/pages/rooms/close/close-log";
 
 function CloseSkeleton() {
   return (
@@ -78,6 +77,17 @@ export function RoomClosePage() {
 
   const data = preview.data?.data;
 
+  const form: CloseFormState = { kind, unmeasuredReason, supersededBy, measurement, ownObjection, owed, note, revisit };
+  const { payload, missing } = buildClosePayload(roomId, data?.currency ?? "", form);
+
+  // Every change to the form is logged (after a short pause while typing): the values held, what is still missing, and the exact body that would be sent.
+  const snapshot = JSON.stringify({ form, missing, wouldSend: payload });
+  React.useEffect(() => {
+    if (!data) return;
+    const timer = window.setTimeout(() => closeLog("Form changed", { ...JSON.parse(snapshot), canSubmit: JSON.parse(snapshot).missing.length === 0 }), 250);
+    return () => window.clearTimeout(timer);
+  }, [snapshot, data]);
+
   const peopleOptions = React.useMemo<SearchableSelectOption[]>(
     () => (people.data?.data.people ?? []).map((person) => ({ value: person.userId, label: person.displayName ?? "Name not available" })),
     [people.data]
@@ -99,64 +109,11 @@ export function RoomClosePage() {
     );
   }
 
-  const m = measurement;
-  const counts = [m.contacted, m.heldBack, m.convertedContacted, m.convertedHeldBack, m.recovered].map(wholeNumber);
-  const owedPartial = owed.some((row) => Boolean(row.description.trim()) !== Boolean(row.toUserId));
-  const owedFilled = owed.filter((row) => row.description.trim() && row.toUserId);
-
-  // Why the Close button is off, in words, so the footer never just goes grey.
-  const blocker = !kind
-    ? "Choose how it ended."
-    : kind === "superseded" && !supersededBy
-      ? "Choose the room that took this over."
-      : kind === "unmeasurable" && !unmeasuredReason.trim()
-        ? "Say why no honest number attaches."
-        : kind === "money-recovered" && (counts.some((count) => count === null) || !m.windowStart || !m.windowEnd)
-          ? "Enter all five counts and the window."
-          : owedPartial
-            ? "Each obligation needs what and who."
-            : null;
+  const blocker = missing[0] ?? null;
 
   const submit = () => {
-    if (!kind || blocker) return;
-    const payload: CloseRoomPayload = {
-      roomId,
-      kind,
-      measurement:
-        kind === "money-recovered"
-          ? {
-              contacted: counts[0]!,
-              heldBack: counts[1]!,
-              convertedContacted: counts[2]!,
-              convertedHeldBack: counts[3]!,
-              recovered: counts[4]!,
-              currency: data.currency,
-              excluded: null,
-              excludedReason: null,
-              windowStartUtc: `${m.windowStart}T00:00:00Z`,
-              windowEndUtc: `${m.windowEnd}T23:59:59Z`,
-              source: null,
-              contactedRate: null,
-              heldBackRate: null,
-              liftPoints: null,
-            }
-          : null,
-      ...(note.trim() ? { note: note.trim() } : {}),
-      ...(ownObjection.trim() ? { dissent: ownObjection.trim() } : {}),
-      ...(kind === "superseded" && supersededBy ? { supersededByRoomId: supersededBy } : {}),
-      ...(kind === "unmeasurable" ? { unmeasuredReason: unmeasuredReason.trim() } : {}),
-      ...(revisit.trim() ? { revisitCondition: revisit.trim() } : {}),
-      ...(owedFilled.length > 0
-        ? {
-            outstanding: owedFilled.map((row) => ({
-              toUserId: row.toUserId!,
-              description: row.description.trim(),
-              class: "other",
-              ...(row.due ? { proposedDueAtUtc: `${row.due}T00:00:00Z` } : {}),
-            })),
-          }
-        : {}),
-    };
+    if (!payload) return;
+    closeLog("Close confirmed: sending", payload);
     closeRoom(payload);
   };
 
