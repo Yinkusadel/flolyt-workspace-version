@@ -22,7 +22,7 @@ export const wholeNumber = (value: string) => (value.trim() !== "" && Number.isI
  * nullable: note, dissent (a string), supersededByRoomId, unmeasuredReason, revisitCondition, excluded, excludedReason and the three rates.
  * A measurement is sent only for "money-recovered"; every other ending sends `measurement: null`, which the schema allows.
  */
-export function buildClosePayload(roomId: string, currency: string, form: CloseFormState): { payload: CloseRoomPayload | null; missing: string[] } {
+export function buildClosePayload(roomId: string, currency: string, form: CloseFormState): { payload: CloseRoomPayload | null; missing: string[]; draft: Record<string, unknown> } {
   const missing: string[] = [];
   const m = form.measurement;
   const counts = [m.contacted, m.heldBack, m.convertedContacted, m.convertedHeldBack, m.recovered].map(wholeNumber);
@@ -37,7 +37,33 @@ export function buildClosePayload(roomId: string, currency: string, form: CloseF
   }
   if (form.owed.some((row) => Boolean(row.description.trim()) !== Boolean(row.toUserId))) missing.push("Each obligation needs what and who.");
 
-  if (missing.length > 0 || !form.kind) return { payload: null, missing };
+  // What the body holds so far, for the console log only: whatever is filled in, `null` for what is not. Never sent.
+  const draft: Record<string, unknown> = {
+    roomId,
+    kind: form.kind,
+    measurement:
+      form.kind === "money-recovered"
+        ? {
+            contacted: counts[0],
+            heldBack: counts[1],
+            convertedContacted: counts[2],
+            convertedHeldBack: counts[3],
+            recovered: counts[4],
+            currency,
+            source: m.source.trim() || null,
+            windowStartUtc: m.windowStart ? `${m.windowStart}T00:00:00Z` : null,
+            windowEndUtc: m.windowEnd ? `${m.windowEnd}T23:59:59Z` : null,
+          }
+        : null,
+    note: form.note.trim() || null,
+    dissent: form.ownObjection.trim() || null,
+    supersededByRoomId: form.kind === "superseded" ? form.supersededBy : null,
+    unmeasuredReason: form.kind === "unmeasurable" ? form.unmeasuredReason.trim() || null : null,
+    revisitCondition: form.revisit.trim() || null,
+    outstanding: form.owed.map((row) => ({ toUserId: row.toUserId, description: row.description.trim() || null, proposedDueAtUtc: row.due ? `${row.due}T00:00:00Z` : null })),
+  };
+
+  if (missing.length > 0 || !form.kind) return { payload: null, missing, draft };
 
   const owedFilled = form.owed.filter((row) => row.description.trim() && row.toUserId);
   const payload: CloseRoomPayload = {
@@ -78,5 +104,5 @@ export function buildClosePayload(roomId: string, currency: string, form: CloseF
         }
       : {}),
   };
-  return { payload, missing };
+  return { payload, missing, draft };
 }

@@ -78,10 +78,10 @@ export function RoomClosePage() {
   const data = preview.data?.data;
 
   const form: CloseFormState = { kind, unmeasuredReason, supersededBy, measurement, ownObjection, owed, note, revisit };
-  const { payload, missing } = buildClosePayload(roomId, data?.currency ?? "", form);
+  const { payload, missing, draft } = buildClosePayload(roomId, data?.currency ?? "", form);
 
   // Every change to the form is logged (after a short pause while typing): the values held, what is still missing, and the exact body that would be sent.
-  const snapshot = JSON.stringify({ form, missing, wouldSend: payload });
+  const snapshot = JSON.stringify({ form, draft, missing, wouldSend: payload });
   React.useEffect(() => {
     if (!data) return;
     const timer = window.setTimeout(() => closeLog("Form changed", { ...JSON.parse(snapshot), canSubmit: JSON.parse(snapshot).missing.length === 0 }), 250);
