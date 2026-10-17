@@ -130,3 +130,46 @@ export function agentActivity(state: RoomState): Record<string, "running" | "wai
   }
   return result;
 }
+
+/** A message the person just sent, drawn at once while the Room feed catches up. */
+export interface PendingMessage {
+  id: string;
+  /** Exactly the text that was sent (mentions already as stored tokens). */
+  content: string;
+  sentAtMs: number;
+}
+
+/** How long a sent message may wait for its committed copy before the placeholder is dropped. */
+const PENDING_MAX_MS = 90_000;
+
+/**
+ * Which pending messages are still waiting. The backend commits a prompt to the transcript AFTER the run it started has begun (seen on every
+ * real run: `run_started` and even the first `response_chunk` come before the prompt's `message_committed`), so the person's own message would
+ * otherwise appear after the answer. A pending message is settled when a committed message by the same person with the same text, at or after
+ * the send, is in the state; an old one is dropped after 90 s so a lost event never leaves a placeholder forever.
+ */
+export function settlePending(pending: PendingMessage[], state: RoomState, userId: string | null, nowMs: number): PendingMessage[] {
+  if (pending.length === 0) return pending;
+  return pending.filter((item) => {
+    if (nowMs - item.sentAtMs > PENDING_MAX_MS) return false;
+    for (const row of state.messages.values()) {
+      if (row.role !== "user" || row.authorUserId !== userId || row.content !== item.content) continue;
+      const at = Date.parse(row.timestamp ?? "");
+      if (Number.isNaN(at) || at >= item.sentAtMs - 10_000) return false;
+    }
+    return true;
+  });
+}
+
+/** Puts the pending messages after every committed message and before the agent runs that are working, in the order they were sent. */
+export function withPendingMessages(items: TimelineItem[], pending: PendingMessage[], userId: string | null, userName: string | null): TimelineItem[] {
+  if (pending.length === 0) return items;
+  const firstRun = items.findIndex((item) => item.kind === "live-run");
+  const at = firstRun === -1 ? items.length : firstRun;
+  const rows: TimelineItem[] = pending.map((item) => ({
+    kind: "message",
+    key: `p:${item.id}`,
+    row: { role: "user", content: item.content, timestamp: new Date(item.sentAtMs).toISOString(), authorUserId: userId, authorName: userName, pending: true },
+  }));
+  return [...items.slice(0, at), ...rows, ...items.slice(at)];
+}

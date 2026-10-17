@@ -20,19 +20,58 @@ export interface RoomCohortSampleCustomerDto {
   suppressionReason: string | null;
 }
 
+/** Where a Room's figures come from, as the real response of 2026-10-16 shows it (not in the docs). */
+export interface RoomMembershipDto {
+  availability: string;
+  totalCount: number;
+  resolvedCount: number;
+  subjectType: string;
+  grain: string;
+  /** "accounts" */
+  unit: string;
+  businessUnit: string | null;
+  market: string | null;
+  currency: string | null;
+  lifecycleClass: string | null;
+  provenance: {
+    basis: string;
+    snapshotId: string | null;
+    asOfUtc: string | null;
+    openingNumber: number | null;
+    computedAtUtc: string | null;
+    publicationId: string | null;
+    publicationRevision: number | null;
+  };
+  limitations: { code: string; message: string }[];
+}
+
+/** One drawn account: ids and evidence counts only, no name or detail (real response 2026-10-16). */
+export interface RoomCohortSubjectDto {
+  key: string;
+  reference: string;
+  sourceIds: string[];
+  evidenceIds: string[];
+  capabilityResolutionIds: string[];
+  evidenceCount: number;
+  capabilityResolutionCount: number;
+}
+
+/** The three split counts, `markets` and `sample` are null or empty in the real response of 2026-10-16 (the docs say numbers and lists). */
 export interface RoomCohortData {
   roomId: string;
   totalCount: number;
-  reachableCount: number;
-  suppressedCount: number;
-  cappedCount: number;
+  reachableCount: number | null;
+  suppressedCount: number | null;
+  cappedCount: number | null;
   markets: RoomCohortMarketDto[];
   sample: RoomCohortSampleCustomerDto[];
-  sampledFromPool: number;
+  sampledFromPool: boolean;
   exportable: boolean;
   computedAtUtc: string | null;
   notYetComputed: boolean;
   absentBecause: string | null;
+  membership: RoomMembershipDto | null;
+  subjectSample: RoomCohortSubjectDto[];
 }
 
 export interface GetRoomCohortResponse {

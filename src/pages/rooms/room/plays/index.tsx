@@ -37,6 +37,8 @@ export const PlaysTab = ({ roomId }: { roomId: string }) => {
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
   const data = query.data?.data;
+  // The other list is loading while the current one stays on screen: dim it, never replace the tab.
+  const switching = query.isFetching && query.isPlaceholderData;
   const plays = React.useMemo(() => data?.plays ?? [], [data]);
   // The first pending play is the one waiting on someone, so it is the default; else the first row.
   const selected = plays.find((play) => play.proposalId === selectedId) ?? plays.find((play) => play.state === "pending") ?? plays[0] ?? null;
@@ -72,42 +74,44 @@ export const PlaysTab = ({ roomId }: { roomId: string }) => {
           <span className="rounded-chip bg-ink px-2.5 py-1 text-[11.5px] font-semibold text-paper">{data.waitingOnPeople} waiting on people</span>
         </div>
         <label className="flex cursor-pointer items-center gap-2 text-[12.5px] text-ink">
-          <input type="checkbox" checked={includeDecided} onChange={(event) => setIncludeDecided(event.currentTarget.checked)} className="size-4 accent-ultra" />
+          <input type="checkbox" checked={includeDecided} aria-busy={switching} onChange={(event) => setIncludeDecided(event.currentTarget.checked)} className="size-4 accent-ultra" />
           Include decided
         </label>
       </div>
 
-      {plays.length === 0 ? (
-        <div className="rounded-card border border-dashed border-line bg-paper p-10 text-center">
-          <p className="text-[13px] font-semibold text-ink">{includeDecided ? "No play has been proposed on this Room yet" : "No play is waiting on a decision"}</p>
-          <p className="mt-1.5 text-[11.5px] text-ink-3">
-            {includeDecided ? "When an agent proposes an action, it will show here with who decides it." : "Tick “Include decided” to see plays that were already decided."}
-          </p>
-        </div>
-      ) : (
-        <>
-          {selected?.figuresAreStated && (
-            <p className="flex items-start gap-2.5 rounded-card border border-amber-border bg-amber-bg px-4 py-3 text-[12.5px] leading-relaxed text-ink">
-              <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber" />
-              <span>
-                Reach and value are stated by whoever proposed the play. Nothing has checked them.
-                {selected.reach !== null && ` Treat a stated reach of ${selected.reach.toLocaleString("en-US")} as a claim until the cohort and collision check agree.`}
-              </span>
+      <div className={cn("space-y-6 transition-opacity", switching && "pointer-events-none opacity-60")} aria-busy={switching}>
+        {plays.length === 0 ? (
+          <div className="rounded-card border border-dashed border-line bg-paper p-10 text-center">
+            <p className="text-[13px] font-semibold text-ink">{includeDecided ? "No play has been proposed on this Room yet" : "No play is waiting on a decision"}</p>
+            <p className="mt-1.5 text-[11.5px] text-ink-3">
+              {includeDecided ? "When an agent proposes an action, it will show here with who decides it." : "Tick “Include decided” to see plays that were already decided."}
             </p>
-          )}
+          </div>
+        ) : (
+          <>
+            {selected?.figuresAreStated && (
+              <p className="flex items-start gap-2.5 rounded-card border border-amber-border bg-amber-bg px-4 py-3 text-[12.5px] leading-relaxed text-ink">
+                <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber" />
+                <span>
+                  Reach and value are stated by whoever proposed the play. Nothing has checked them.
+                  {selected.reach !== null && ` Treat a stated reach of ${selected.reach.toLocaleString("en-US")} as a claim until the cohort and collision check agree.`}
+                </span>
+              </p>
+            )}
 
-          <PlaysTable plays={plays} selectedId={selected?.proposalId ?? null} onSelect={setSelectedId} />
+            <PlaysTable plays={plays} selectedId={selected?.proposalId ?? null} onSelect={setSelectedId} />
 
-          {selected && (
-            <div className={LAYOUT}>
-              <CollisionCard key={selected.proposalId} roomId={roomId} play={selected} />
-              <CitedPanels roomId={roomId} proposalId={selected.proposalId} />
-            </div>
-          )}
-        </>
-      )}
+            {selected && (
+              <div className={LAYOUT}>
+                <CollisionCard key={selected.proposalId} roomId={roomId} play={selected} />
+                <CitedPanels roomId={roomId} proposalId={selected.proposalId} />
+              </div>
+            )}
+          </>
+        )}
 
-      <ObligationsTable obligations={data.returnedObligations} />
+        <ObligationsTable obligations={data.returnedObligations} />
+      </div>
     </div>
   );
 };

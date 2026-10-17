@@ -27,10 +27,14 @@ export interface RoomDecisionDissentDto {
   withdrawn: boolean;
   borneOut: boolean | null;
   aboutProposalId: string | null;
+  /** The linked play's title; null when unlinked, deleted or outside this workspace and Room conversation. */
+  aboutProposalTitle: string | null;
 }
 
 export interface RoomDecisionRecipientDto {
   userId: string;
+  /** The person's full workspace name; null when missing, blank or from another workspace. */
+  userName: string | null;
   what: string;
   class: string;
 }

@@ -2,6 +2,7 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
+import { roomError, roomLog } from "@/features/rooms/live/room-thread-log";
 import type { ConversationReplyMode } from "@/features/ai-conversations/ai-conversation-types";
 
 export interface SendRoomMessagePayload {
@@ -30,13 +31,16 @@ type ReceiptShape = { runId?: string | null; agentKey?: string | null };
  */
 export const sendRoomMessage = async (payload: SendRoomMessagePayload): Promise<SendRoomMessageReceipt> => {
   try {
+    roomLog("Send request", { at: new Date().toISOString(), conversationId: payload.conversationId, replyMode: payload.replyMode, message: payload.message });
     const response = await axiosInstance.post<ReceiptShape & { data?: ReceiptShape | null }>(SEND_MESSAGE, payload, {
       headers: { Accept: "application/json", "X-Flolyt-Agent-Contract": "v3" },
     });
     // The receipt's envelope is unconfirmed (docs describe the bare fields); accept either until a live capture.
+    roomLog("Send response", { at: new Date().toISOString(), status: response.status, body: response.data });
     const receipt = response.data?.data ?? response.data ?? {};
     return { runId: receipt.runId ?? null, agentKey: receipt.agentKey ?? null };
   } catch (error: unknown) {
+    roomError("Send failed", error);
     if (axios.isAxiosError(error)) {
       const serverMessage = error.response ? getServerErrorMessage(error.response.data) : null;
       throw new Error(serverMessage || "Failed to send the message");

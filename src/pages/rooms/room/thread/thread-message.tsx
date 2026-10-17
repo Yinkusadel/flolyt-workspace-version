@@ -105,6 +105,8 @@ export function ThreadMessage({
   if (message.role === "user") {
     const name = message.authorName?.trim() || "A teammate";
     const mine = !!currentUserId && message.authorUserId === currentUserId;
+    // Just sent and not committed yet (the feed delivers its committed copy a moment later).
+    const pending = (message as { pending?: boolean }).pending === true;
     return (
       <div className={cn("flex gap-2.5", mine && "flex-row-reverse")}>
         <PersonAvatar
@@ -117,9 +119,9 @@ export function ThreadMessage({
           <p className={cn("flex items-center gap-2 text-[12px]", mine && "justify-end")}>
             <span className="font-semibold text-ink">{name}</span>
             {mine && <span className="rounded-full bg-ultra-bg px-1.5 py-0.5 text-[10px] font-medium text-ultra">You</span>}
-            <span className="font-mono text-[10px] text-ink-4">{formatTime(message.timestamp)}</span>
+            <span className="font-mono text-[10px] text-ink-4">{pending ? "Sending…" : formatTime(message.timestamp)}</span>
           </p>
-          <div className={cn("mt-1 rounded-card px-3.5 py-2.5 text-left", mine ? "bg-ultra-bg" : "bg-paper-2")}>
+          <div className={cn("mt-1 rounded-card px-3.5 py-2.5 text-left", mine ? "bg-ultra-bg" : "bg-paper-2", pending && "opacity-70")}>
             <MessageText text={message.content} mentionables={mentionables} />
           </div>
         </div>
