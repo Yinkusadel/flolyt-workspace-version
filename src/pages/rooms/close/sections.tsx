@@ -14,15 +14,6 @@ export const INPUT =
 export const AREA =
   "w-full resize-y rounded-panel border border-line bg-paper-2 px-2.5 py-2 text-[12.5px] text-ink outline-none placeholder:text-ink-4 focus:border-ring disabled:opacity-60";
 
-/** What each ending means, in the design's words. The API names only the kind and what it needs, so an unknown kind simply has no sentence. */
-const OUTCOME_COPY: Record<string, string> = {
-  "money-recovered": "The plays brought money back, measured against a group that was held back.",
-  "no-action-needed": "Real, but not worth fixing, or it resolved by itself.",
-  superseded: "Another room carries this work.",
-  disproven: "The leak wasn't what it looked like.",
-  unmeasurable: "Something happened, but no number would be honest.",
-};
-
 export function StepHeading({ step, title, children }: { step: number; title: string; children?: React.ReactNode }) {
   return (
     <div>
@@ -111,7 +102,7 @@ export function OutcomePicker({ preview, kind, onChange }: { preview: RoomCloseP
               <input type="radio" name="close-outcome" disabled={!outcome.available} checked={selected} onChange={() => onChange(outcome.kind)} />
               {humanize(outcome.kind)}
             </span>
-            {OUTCOME_COPY[outcome.kind] && <span className="text-[12px] text-ink-2">{OUTCOME_COPY[outcome.kind]}</span>}
+            {/* ❌ Backend does NOT provide: a description of each ending (the design adds a sentence under every title); only the kind, `available`, `whyNot` and `needs` are sent. */}
             {outcome.needs && <span className="text-[11.5px] text-ink-3">Needs: {outcome.needs}</span>}
             {!outcome.available && outcome.whyNot && <Chip tone="amber">Not yet: {outcome.whyNot}</Chip>}
           </label>
