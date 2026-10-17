@@ -49,7 +49,6 @@ export function SummaryCard({ preview }: { preview: RoomClosePreviewData }) {
     `${preview.agents} ${preview.agents === 1 ? "agent" : "agents"}`,
     `${preview.plays} ${preview.plays === 1 ? "play" : "plays"}, ${preview.playsApproved} approved`,
   ];
-  const nowUnavailable = preview.currentPopulation === null && preview.currentAmountAtRisk === null;
   return (
     <section className="rounded-card border border-line bg-paper px-5 py-5">
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-ink-2">
@@ -79,7 +78,6 @@ export function SummaryCard({ preview }: { preview: RoomClosePreviewData }) {
           {preview.delta === null ? "-" : money(preview.delta)}
         </Tile>
       </div>
-      {nowUnavailable && <p className="mt-3 text-[11.5px] text-ink-3">The "now" figures are read from the leakage map when you close; today there is nothing to read.</p>}
     </section>
   );
 }
@@ -167,9 +165,7 @@ export function MeasurementSection({
           <Tile label="Primary measure">{humanize(plan.primaryMeasure)}</Tile>
           <Tile label="Revenue basis">{humanize(plan.revenueBasis)}</Tile>
         </div>
-      ) : (
-        <p className="text-[12.5px] text-ink-3">This room has no measurement plan yet: nothing says how much was held back, over how long, or by what measure.</p>
-      )}
+      ) : null}
       {plan?.noHoldoutBecause && <p className="text-[12px] text-ink-2">No holdout because: {plan.noHoldoutBecause}</p>}
       {window && (
         <p className="rounded-panel bg-paper-2 px-3.5 py-2.5 text-[12.5px] text-ink-2">
@@ -203,11 +199,21 @@ export function MeasurementSection({
         <p className="text-[12px] text-ink-2">{preview.measurementMustBeSuppliedBecause}</p>
       )}
       {preview.measurementUnavailableBecause && <p className="text-[12px] text-ink-2">{preview.measurementUnavailableBecause}</p>}
-      {impact && !impact.isAvailable && (
-        <p className="text-[12px] text-ink-3">
-          No recovery can be claimed yet{impact.missingSource ? `: missing ${impact.missingSource}` : ""}.
-          {impact.wouldUnlock ? ` Having it would unlock ${impact.wouldUnlock}.` : ""}
-        </p>
+      {impact && !impact.isAvailable && (impact.missingSource || impact.wouldUnlock) && (
+        <dl className="space-y-1 text-[12px]">
+          {impact.missingSource && (
+            <div className="flex gap-2">
+              <dt className="shrink-0 text-ink-3">Missing:</dt>
+              <dd className="text-ink-2">{impact.missingSource}</dd>
+            </div>
+          )}
+          {impact.wouldUnlock && (
+            <div className="flex gap-2">
+              <dt className="shrink-0 text-ink-3">Would unlock:</dt>
+              <dd className="text-ink-2">{impact.wouldUnlock}</dd>
+            </div>
+          )}
+        </dl>
       )}
 
       {kind === "money-recovered" ? (
@@ -237,9 +243,7 @@ export function MeasurementSection({
             </div>
           </div>
         </div>
-      ) : (
-        <p className="border-t border-line pt-3 text-[12px] text-ink-3">Counts are only entered when the room is closed as "Money recovered"; the other endings carry no measurement.</p>
-      )}
+      ) : null}
     </div>
   );
 }
