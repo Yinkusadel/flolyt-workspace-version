@@ -119,11 +119,14 @@ export interface MeasurementForm {
   recovered: string;
   /** Where the counts came from (required by the schema when a measurement is sent). */
   source: string;
+  /** Optional: how many were left out of the counts, and why (both nullable in the schema). */
+  excluded: string;
+  excludedReason: string;
   windowStart: string;
   windowEnd: string;
 }
 
-export const EMPTY_MEASUREMENT: MeasurementForm = { contacted: "", heldBack: "", convertedContacted: "", convertedHeldBack: "", recovered: "", source: "", windowStart: "", windowEnd: "" };
+export const EMPTY_MEASUREMENT: MeasurementForm = { contacted: "", heldBack: "", convertedContacted: "", convertedHeldBack: "", recovered: "", source: "", excluded: "", excludedReason: "", windowStart: "", windowEnd: "" };
 
 function NumberField({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (value: string) => void }) {
   return (
@@ -231,6 +234,15 @@ export function MeasurementSection({
               Where did these counts come from?
             </label>
             <input id="m-source" value={form.source} onChange={(event) => set("source")(event.currentTarget.value)} placeholder="e.g. WhatsApp campaign export, 12 Oct" className={INPUT} />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <NumberField id="m-excluded" label="Excluded from the counts (optional)" value={form.excluded} onChange={set("excluded")} />
+            <div>
+              <label htmlFor="m-excluded-reason" className={FIELD_LABEL}>
+                Why were they excluded? (optional)
+              </label>
+              <input id="m-excluded-reason" value={form.excludedReason} onChange={(event) => set("excludedReason")(event.currentTarget.value)} className={INPUT} />
+            </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
