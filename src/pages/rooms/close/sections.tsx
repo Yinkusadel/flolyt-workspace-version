@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
+import { DatePicker } from "@/components/ui/date-picker";
 import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
 import { formatDay, formatMoney, humanize } from "@/pages/rooms/convening/format";
 import type { RoomClosePreviewData } from "@/services/api/rooms/get-room-close-preview";
@@ -227,16 +228,12 @@ export function MeasurementSection({
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label htmlFor="m-start" className={FIELD_LABEL}>
-                Window starts
-              </label>
-              <input id="m-start" type="date" value={form.windowStart} onChange={(event) => set("windowStart")(event.currentTarget.value)} className={INPUT} />
+              <span className={FIELD_LABEL}>Window starts</span>
+              <DatePicker value={form.windowStart} max={form.windowEnd || undefined} onChange={set("windowStart")} placeholder="Pick a date" aria-label="Window starts" />
             </div>
             <div>
-              <label htmlFor="m-end" className={FIELD_LABEL}>
-                Window ends
-              </label>
-              <input id="m-end" type="date" value={form.windowEnd} onChange={(event) => set("windowEnd")(event.currentTarget.value)} className={INPUT} />
+              <span className={FIELD_LABEL}>Window ends</span>
+              <DatePicker value={form.windowEnd} min={form.windowStart || undefined} onChange={set("windowEnd")} placeholder="Pick a date" aria-label="Window ends" />
             </div>
           </div>
         </div>
@@ -329,10 +326,8 @@ export function OwedSection({
             <SearchableSelect options={people} value={row.toUserId} onChange={(value) => update(row.key, { toUserId: value })} placeholder="Choose a person" searchPlaceholder="Search people" emptyText="Nobody to hand it to." />
           </div>
           <div>
-            <label htmlFor={`owed-by-${row.key}`} className={FIELD_LABEL}>
-              By
-            </label>
-            <input id={`owed-by-${row.key}`} type="date" value={row.due} onChange={(event) => update(row.key, { due: event.currentTarget.value })} className={INPUT} />
+            <span className={FIELD_LABEL}>By</span>
+            <DatePicker value={row.due} onChange={(value) => update(row.key, { due: value })} clearable placeholder="Pick a date" aria-label="Obligation due date" />
           </div>
           <Button type="button" variant="outline" size="sm" onClick={() => onChange(rows.filter((candidate) => candidate.key !== row.key))}>
             <Trash2 className="size-3.5" aria-hidden />
