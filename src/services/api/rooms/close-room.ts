@@ -2,6 +2,7 @@ import axios from "axios";
 import { axiosInstance } from "@/services/index.service";
 import { API_ENDPOINTS } from "@/config/apiConfig";
 import { getServerErrorMessage } from "@/services/get-server-error";
+import { closeLog } from "@/pages/rooms/close/close-log";
 
 export interface RoomCloseMeasurementInput {
   contacted: number;
@@ -91,15 +92,18 @@ export const closeRoom = async ({
   ...payload
 }: CloseRoomPayload): Promise<CloseRoomResponse> => {
   try {
+    closeLog("Close request", { at: new Date().toISOString(), roomId, body: payload });
     const response = await axiosInstance.post<CloseRoomResponse>(
       CLOSE_ROOM.replace("{roomId}", roomId),
       payload,
       { headers: { "Content-Type": "application/json" } }
     );
 
+    closeLog("Close response", { at: new Date().toISOString(), status: response.status, body: response.data });
     return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
+      closeLog("Close failed", { status: error.response?.status ?? null, body: error.response?.data ?? null });
       const serverMessage = error.response ? getServerErrorMessage(error.response.data) : null;
       throw new Error(serverMessage || "Failed to close the room");
     }
