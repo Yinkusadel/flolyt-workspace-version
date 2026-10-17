@@ -16,6 +16,7 @@ import OnboardingTeamDetailRoute from "@/pages/onboarding/team/team-detail-route
 import OnboardingFinishingUpRoute from "@/pages/onboarding/finishing-up";
 import Rooms from "@/pages/rooms";
 import { RoomPage } from "@/pages/rooms/room";
+import { RoomClosePage } from "@/pages/rooms/close";
 import NewConversationRoute from "@/pages/conversations/new-conversation-route";
 import AiConversationDetailRoute from "@/pages/conversations/detail-route";
 import PlanAndBillingRoute from "@/pages/plan-and-billing";
@@ -99,6 +100,7 @@ export const routes = createBrowserRouter([
                 children: [
                   { index: true, Component: Rooms },
                   { path: ":roomId", Component: RoomPage },
+                  { path: ":roomId/close", Component: RoomClosePage },
                 ],
               },
               // Sidebar entry points, not part of any one section — the sidebar's "New

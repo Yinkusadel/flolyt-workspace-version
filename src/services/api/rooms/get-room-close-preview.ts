@@ -51,6 +51,20 @@ export interface RoomClosePreviewLinkedCampaignDto {
   firstEnrolledAtUtc: string | null;
 }
 
+export interface RoomClosePreviewRecoveredImpactDto {
+  amount: number | null;
+  currency: string | null;
+  basis: string;
+  method: string | null;
+  statedBy: string | null;
+  missingSource: string | null;
+  wouldUnlock: string | null;
+  toolCalls: unknown[];
+  annualised: number | null;
+  isMeasured: boolean;
+  isAvailable: boolean;
+}
+
 export interface RoomClosePreviewData {
   roomId: string;
   title: string;
@@ -69,9 +83,10 @@ export interface RoomClosePreviewData {
   delta: number | null;
   deltaUnavailableBecause: string | null;
   outcomes: RoomClosePreviewOutcomeDto[];
-  plan: RoomClosePreviewPlanDto;
+  /** Null in the real responses of 2026-10-17 (no plan yet), as are `suggestedWindow` and `expectedHeldBack`. */
+  plan: RoomClosePreviewPlanDto | null;
   settlesWhen: string[];
-  suggestedWindow: RoomClosePreviewWindowDto;
+  suggestedWindow: RoomClosePreviewWindowDto | null;
   expectedHeldBack: number | null;
   measurementMustBeSupplied: boolean;
   measurementMustBeSuppliedBecause: string | null;
@@ -84,6 +99,8 @@ export interface RoomClosePreviewData {
   holdoutHonoured: boolean | null;
   measurementWindowElapsed: boolean | null;
   conversionsOutsideMarket: number;
+  /** Not in the docs; seen in the real responses of 2026-10-17: why no recovery can be claimed yet and what would unlock it. */
+  recoveredImpact: RoomClosePreviewRecoveredImpactDto | null;
 }
 
 export interface GetRoomClosePreviewResponse {

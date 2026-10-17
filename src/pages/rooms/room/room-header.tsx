@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Check, ChevronDown, Lock, MessageSquare, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -167,6 +168,11 @@ export function RoomHeader({ room, onOpenThread }: { room: RoomDetailDto; onOpen
             </Button>
           )}
           <WatchingMenu roomId={room.id} />
+          {!room.archivedAtUtc && room.conversationPermissions.canContribute && (
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/rooms/${room.id}/close`}>Close room</Link>
+            </Button>
+          )}
         </div>
       </div>
 
