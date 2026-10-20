@@ -120,15 +120,17 @@ export interface RelationshipApproval {
   declarationRevision: number;
   definitionFingerprint: string;
   bindings: RelationshipApprovalBinding[];
-  // ❌ Backend does NOT provide: approvedByName (only the user id)
   approvedByUserId: string;
+  // Added by the backend 2026-10-20 (ticket closed).
+  approvedByName: string;
   approvedAtUtc: string;
   partial: boolean;
   acceptedPartial: boolean;
 }
 
-// One audit revision. `changeReason` seen: CREATED, APPROVED. `state` is title case here
-// ("Draft", "Approved"), unlike the upper-case `state` on the mapping.
+// One audit revision. `state` is title case here ("Draft", "Approved", "Disabled"), unlike the
+// upper-case `state` on the mapping. `changeReason` is CREATED, REVISED or APPROVED, except on a
+// disable, where it is the free text reason the person typed.
 export interface RelationshipHistoryEntry {
   id: string;
   companyId: string;
@@ -136,8 +138,9 @@ export interface RelationshipHistoryEntry {
   revision: number;
   definition?: RelationshipDefinition;
   state: string;
-  // ❌ Backend does NOT provide: changedByName (only the user id)
   changedByUserId: string;
+  // Added by the backend 2026-10-20 (ticket closed).
+  changedByName: string;
   changedAtUtc: string;
   changeReason: string;
   approval: RelationshipApproval | null;

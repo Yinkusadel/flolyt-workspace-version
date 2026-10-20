@@ -97,8 +97,11 @@ declare form is not built, and its schema needs the catalog.
 - **Notes:** Seen live 2026-10-20 on an approved mapping: `approval` as described under approve, and
   `history` entries `{ id, companyId, mappingId, revision, definition, state, changedByUserId,
   changedAtUtc, changeReason, approval }` with `changeReason` CREATED then APPROVED. A history
-  entry's `state` is title case ("Draft", "Approved"), the mapping's is upper case. Only user ids
-  are sent, no names. `historyTotal` 2 and `historyTruncated: false` on the detail.
+  entry's `state` is title case ("Draft", "Approved"), the mapping's is upper case. Names were
+  added 2026-10-20: `approval.approvedByName` and a history entry's `changedByName`. A history entry's
+  `changeReason` is CREATED, REVISED or APPROVED, but on a disable it is the typed reason text. Seen
+  on the real draft at revision 10 (create, three edits, approve, disable, approve, disable,
+  approve): a disabled mapping re-enables by running a new preview and approving it again.
 
 ### GET /api/v3/datasource-relationships/{id}/history
 
@@ -147,8 +150,8 @@ declare form is not built, and its schema needs the catalog.
   `features/datasource-relationships/use-update-relationship.ts`, wrapped by
   `use-declare-relationship.ts` and the edit form (`pages/relationships/relationship-declare.tsx`
   with a `mapping`), opened by the Edit button on `/relationships/:id`.
-- **Status:** wired (the edit form renders and prefills against the real draft; a save has never been
-  submitted, so unverified until a real PUT completes)
+- **Status:** verified working (2026-10-20: the history of the real draft shows three `REVISED`
+  entries, so saves from the edit form completed)
 - **Notes:** A revision clears approval and returns the mapping to `DRAFT`, so preview and
   approval are needed again. A `DISABLED` mapping stays disabled; a new current preview plus
   approval re-enables it. The handoff shows `{ expectedRevision }` plus the definition; whether
@@ -198,7 +201,7 @@ declare form is not built, and its schema needs the catalog.
   object (seen 2026-10-20): `{ previewId, declarationRevision, definitionFingerprint, bindings: [{
   dataset, sourceConfigurationFingerprint, mappingFingerprint, importId }], approvedByUserId,
   approvedAtUtc, partial, acceptedPartial }`. `importId` is null for a bring-your-own-warehouse
-  source. Only the approver's user id is sent, no name. 409 and 403 responses are unseen. The receipt lives 15 minutes and is bound to the workspace, revision, exact
+  source. `approvedByName` was added 2026-10-20. 409 and 403 responses are unseen. The receipt lives 15 minutes and is bound to the workspace, revision, exact
   definition, schema fingerprints and import revision. Clients never send match statistics.
   `acceptPartial: true` needs a deliberate admin choice with the scope warning shown. Approval
   needs at least one supported match and no ambiguity, malformed key or cardinality violation.
@@ -214,8 +217,8 @@ declare form is not built, and its schema needs the catalog.
   `features/datasource-relationships/use-disable-relationship.ts`, the Disable button and modal on
   `/relationships/:id` (`pages/relationships/disable-modal.tsx`, a reason field inside the shared
   `components/confirm-modal.tsx`).
-- **Status:** wired (UI built; the real draft was later seen as `DISABLED` at revision 7, but it is
-  not confirmed that the disable came from this modal, so unverified until confirmed)
+- **Status:** verified working (2026-10-20: the history of the real draft shows two disables with
+  the reasons typed in the modal as `changeReason`, and a re-approval after each)
 
 ## Missing
 
