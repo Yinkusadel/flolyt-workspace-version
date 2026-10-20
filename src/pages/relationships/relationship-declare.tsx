@@ -332,7 +332,7 @@ export function RelationshipDeclare({
                     value={field.value || null}
                     onChange={(next) => {
                       field.onChange(next);
-                      setValue("fromKeyColumns", [], { shouldValidate: true });
+                      setValue("fromKeyColumns", [], { shouldValidate: true, shouldDirty: true });
                     }}
                     placeholder="Choose a dataset"
                     searchPlaceholder="Search datasets"
@@ -385,7 +385,7 @@ export function RelationshipDeclare({
                     value={field.value || null}
                     onChange={(next) => {
                       field.onChange(next);
-                      setValue("toKeyColumns", [], { shouldValidate: true });
+                      setValue("toKeyColumns", [], { shouldValidate: true, shouldDirty: true });
                     }}
                     placeholder="Choose a dataset"
                     searchPlaceholder="Search datasets"
@@ -441,9 +441,9 @@ export function RelationshipDeclare({
                 pressed={meaning === option}
                 disabled={isPending}
                 onClick={() => {
-                  setValue("meaning", option, { shouldValidate: true });
+                  setValue("meaning", option, { shouldValidate: true, shouldDirty: true });
                   if (option === "Identity" && cardinality && !IDENTITY_CARDINALITIES.includes(cardinality)) {
-                    setValue("cardinality", undefined as never, { shouldValidate: true });
+                    setValue("cardinality", undefined as never, { shouldValidate: true, shouldDirty: true });
                   }
                 }}
               >
@@ -465,7 +465,7 @@ export function RelationshipDeclare({
                 key={option}
                 pressed={cardinality === option}
                 disabled={isPending || (meaning === "Identity" && !IDENTITY_CARDINALITIES.includes(option))}
-                onClick={() => setValue("cardinality", option, { shouldValidate: true })}
+                onClick={() => setValue("cardinality", option, { shouldValidate: true, shouldDirty: true })}
               >
                 {CARDINALITY_LABEL[option]}
               </OptionButton>
@@ -565,6 +565,11 @@ export function RelationshipDeclare({
         >
           Cancel
         </button>
+        {!isPending && (!isValid || (mapping && !isDirty)) && (
+          <p className="text-[10.5px] text-ink-4">
+            {!isValid ? "Fill in every required field to save." : "Change something to save."}
+          </p>
+        )}
       </div>
     </form>
   );
