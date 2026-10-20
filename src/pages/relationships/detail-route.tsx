@@ -13,8 +13,10 @@ import type {
   RelationshipDatasetScope,
   RelationshipEndpoint,
 } from "@/services/api/datasource-relationships/types";
+import { UnderlineTabs } from "@/components/ui/underline-tabs";
 import { PreviewPanel } from "@/pages/relationships/preview-panel";
 import { DisableRelationshipModal } from "@/pages/relationships/disable-modal";
+import { HistoryPanel } from "@/pages/relationships/history-panel";
 import { RelationshipDeclare } from "@/pages/relationships/relationship-declare";
 import { formatDateTime } from "@/pages/data-sources/format";
 import { CARDINALITY_LABEL, STATE_LABEL, STATE_TONE } from "@/pages/relationships/labels";
@@ -69,14 +71,17 @@ function EndpointCard({
 }
 
 /**
- * /relationships/:id. Header, what the relationship links, the preview, approval, edit and disable. The
- * audit trail comes in a later step (docs/datasource-relationships/build-plan.md).
+ * /relationships/:id. Header, what the relationship links, the preview, approval, edit, disable and
+ * the history (docs/datasource-relationships/build-plan.md).
  */
 export default function RelationshipDetailRoute() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const editing = searchParams.get("view") === "edit";
+  // The active tab lives in the URL (?tab=), default Overview.
+  const tabParam = searchParams.get("tab");
+  const tab = tabParam === "preview" || tabParam === "history" ? tabParam : "overview";
   const [disabling, setDisabling] = useState(false);
   const { relationship, isLoading, isError, error, refetch } = useGetRelationshipById(id);
   const { datasets } = useGetRelationshipCatalog();
@@ -166,88 +171,110 @@ export default function RelationshipDetailRoute() {
         </p>
       </div>
 
-      {!canEdit && (
-        <p className="text-[10.5px] text-ink-3">
-          This relationship uses a crosswalk, which can only be changed through the API for now.
-        </p>
-      )}
+      {/* Same as the Room page: the tab bar stays pinned under the top bar while the header above it
+          scrolls away and the tab's content scrolls beneath it. Full-bleed (the side padding is
+          cancelled and re-applied) with the page's own background so nothing shows through. */}
+      <div className="sticky top-0 z-20 -mx-page bg-paper px-page">
+        <UnderlineTabs
+          active={tab}
+          tabs={[
+            { key: "overview", label: "Overview", to: `/relationships/${relationship.id}` },
+            { key: "preview", label: "Preview and approval", to: `/relationships/${relationship.id}?tab=preview` },
+            { key: "history", label: "History", to: `/relationships/${relationship.id}?tab=history` },
+          ]}
+        />
+      </div>
 
-      {relationship.state === "NEEDS_REVIEW" && (
-        <div className="rounded-card border border-amber-border bg-amber-bg p-4 text-[11px] text-ink-2">
-          <p className="text-[12px] font-semibold text-ink">A source changed since this was approved</p>
-          <p className="mt-1">
-            Its configuration, schema or permissions changed. Run a preview again before relying on it.
-          </p>
+      {tab === "overview" && (
+        <div className="space-y-8">
+          {!canEdit && (
+            <p className="text-[10.5px] text-ink-3">
+              This relationship uses a crosswalk, which can only be changed through the API for now.
+            </p>
+          )}
+
+          {relationship.state === "NEEDS_REVIEW" && (
+            <div className="rounded-card border border-amber-border bg-amber-bg p-4 text-[11px] text-ink-2">
+              <p className="text-[12px] font-semibold text-ink">A source changed since this was approved</p>
+              <p className="mt-1">
+                Its configuration, schema or permissions changed. Run a preview again before relying on it.
+              </p>
+            </div>
+          )}
+
+          {relationship.state === "DISABLED" && (
+            <div className="rounded-card border border-line bg-paper-2 p-4 text-[11px] text-ink-2">
+              <p className="text-[12px] font-semibold text-ink">This relationship is disabled</p>
+              <p className="mt-1">
+                It is not being used. To turn it back on, run a new preview and approve it again.
+              </p>
+            </div>
+          )}
+
+          {relationship.state === "APPROVED" && (
+            <div className="rounded-card border border-teal-border bg-teal-bg p-4 text-[11px] text-ink-2">
+              <p className="text-[12px] font-semibold text-ink">Approved</p>
+              <p className="mt-1">
+                An administrator approved revision {relationship.revision}
+                {relationship.approval ? ` on ${formatDateTime(relationship.approval.approvedAtUtc)}` : ""}.
+                {relationship.approval?.acceptedPartial
+                  ? " They accepted a partial preview, so the data is checked again whenever it is used."
+                  : ""}{" "}
+                Any edit returns it to draft and clears the approval.
+              </p>
+            </div>
+          )}
+
+          {limitations.length > 0 && (
+            <div className="rounded-card border border-line bg-paper-2 p-4">
+              <p className="text-[12px] font-semibold text-ink">Limitations</p>
+              <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-[10.5px] text-ink-2">
+                {limitations.map((limitation) => (
+                  <li key={limitation}>{limitation}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <section className="space-y-3">
+            <h2 className="text-[13px] font-semibold text-ink">What it links</h2>
+            <div className="grid items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
+              <EndpointCard
+                title="From"
+                endpoint={definition.from}
+                sourceLabel={sourceLabelOf(definition.from.dataset.datasourceId)}
+              />
+              <ArrowRight className="mx-auto size-4 rotate-90 text-ink-4 md:rotate-0" aria-hidden />
+              <EndpointCard
+                title="To"
+                endpoint={definition.to}
+                sourceLabel={sourceLabelOf(definition.to.dataset.datasourceId)}
+              />
+            </div>
+            {definition.crosswalk && (
+              <p className="text-[10.5px] text-ink-3">
+                Linked through a crosswalk in {definition.crosswalk.dataset.datasetId}.
+              </p>
+            )}
+            <div>
+              <p className="text-[11px] font-semibold text-ink">Evidence</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[10.5px] text-ink-2">
+                {definition.evidence.map((item) => (
+                  <li key={item} className="wrap-break-word">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
         </div>
       )}
 
-      {relationship.state === "DISABLED" && (
-        <div className="rounded-card border border-line bg-paper-2 p-4 text-[11px] text-ink-2">
-          <p className="text-[12px] font-semibold text-ink">This relationship is disabled</p>
-          <p className="mt-1">
-            It is not being used. To turn it back on, run a new preview and approve it again.
-          </p>
-        </div>
+      {tab === "preview" && (
+        <PreviewPanel mapping={relationship} datasets={datasets} onReload={() => refetch()} />
       )}
 
-      {relationship.state === "APPROVED" && (
-        <div className="rounded-card border border-teal-border bg-teal-bg p-4 text-[11px] text-ink-2">
-          <p className="text-[12px] font-semibold text-ink">Approved</p>
-          <p className="mt-1">
-            An administrator approved revision {relationship.revision}
-            {relationship.approval ? ` on ${formatDateTime(relationship.approval.approvedAtUtc)}` : ""}.
-            {relationship.approval?.acceptedPartial
-              ? " They accepted a partial preview, so the data is checked again whenever it is used."
-              : ""}{" "}
-            Any edit returns it to draft and clears the approval.
-          </p>
-        </div>
-      )}
-
-      {limitations.length > 0 && (
-        <div className="rounded-card border border-line bg-paper-2 p-4">
-          <p className="text-[12px] font-semibold text-ink">Limitations</p>
-          <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-[10.5px] text-ink-2">
-            {limitations.map((limitation) => (
-              <li key={limitation}>{limitation}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <section className="space-y-3">
-        <h2 className="text-[13px] font-semibold text-ink">What it links</h2>
-        <div className="grid items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
-          <EndpointCard
-            title="From"
-            endpoint={definition.from}
-            sourceLabel={sourceLabelOf(definition.from.dataset.datasourceId)}
-          />
-          <ArrowRight className="mx-auto size-4 rotate-90 text-ink-4 md:rotate-0" aria-hidden />
-          <EndpointCard
-            title="To"
-            endpoint={definition.to}
-            sourceLabel={sourceLabelOf(definition.to.dataset.datasourceId)}
-          />
-        </div>
-        {definition.crosswalk && (
-          <p className="text-[10.5px] text-ink-3">
-            Linked through a crosswalk in {definition.crosswalk.dataset.datasetId}.
-          </p>
-        )}
-        <div>
-          <p className="text-[11px] font-semibold text-ink">Evidence</p>
-          <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[10.5px] text-ink-2">
-            {definition.evidence.map((item) => (
-              <li key={item} className="break-words">
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <PreviewPanel mapping={relationship} datasets={datasets} onReload={() => refetch()} />
+      {tab === "history" && <HistoryPanel mapping={relationship} />}
 
       <DisableRelationshipModal
         open={disabling}

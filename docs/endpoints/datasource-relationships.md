@@ -112,8 +112,9 @@ declare form is not built, and its schema needs the catalog.
 - **Response:** `data`: `{ offset, limit, total, revisions, hasMore }`.
 - **Used by:** `services/api/datasource-relationships/get-relationship-history.ts`,
   `features/datasource-relationships/use-get-relationship-history.ts`. Not wired to a screen yet.
-- **Status:** wired
-- **Notes:** Revision element shape not seen.
+- **Status:** wired (response not seen; the History panel loads earlier revisions through it once the
+  detail's `historyTotal` exceeds the entries it carries, never exercised yet)
+- **Notes:** The revision element is the same shape as a detail `history` entry.
 
 ### POST /api/v3/datasource-relationships
 
