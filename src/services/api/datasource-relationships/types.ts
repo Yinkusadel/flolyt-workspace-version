@@ -105,6 +105,44 @@ export interface RelationshipDefinition {
 // the audited lifecycle state.
 export type RelationshipState = "DRAFT" | "APPROVED" | "DISABLED" | "NEEDS_REVIEW";
 
+// Real shapes seen 2026-10-20 on an approved mapping.
+export interface RelationshipApprovalBinding {
+  dataset: RelationshipDatasetScope;
+  sourceConfigurationFingerprint: string;
+  mappingFingerprint: string;
+  // Null for a bring-your-own-warehouse source, which has no import revision.
+  importId: string | null;
+}
+
+export interface RelationshipApproval {
+  // The preview receipt the approval was made against.
+  previewId: string;
+  declarationRevision: number;
+  definitionFingerprint: string;
+  bindings: RelationshipApprovalBinding[];
+  // ❌ Backend does NOT provide: approvedByName (only the user id)
+  approvedByUserId: string;
+  approvedAtUtc: string;
+  partial: boolean;
+  acceptedPartial: boolean;
+}
+
+// One audit revision. `changeReason` seen: CREATED, APPROVED. `state` is title case here
+// ("Draft", "Approved"), unlike the upper-case `state` on the mapping.
+export interface RelationshipHistoryEntry {
+  id: string;
+  companyId: string;
+  mappingId: string;
+  revision: number;
+  definition?: RelationshipDefinition;
+  state: string;
+  // ❌ Backend does NOT provide: changedByName (only the user id)
+  changedByUserId: string;
+  changedAtUtc: string;
+  changeReason: string;
+  approval: RelationshipApproval | null;
+}
+
 export interface RelationshipMapping {
   id: string;
   revision: number;
@@ -113,10 +151,11 @@ export interface RelationshipMapping {
   definition: RelationshipDefinition;
   // Doc only: element shapes not seen yet.
   limitations: unknown[];
-  // Doc only: "receipt/actor/time", field names not seen yet. Null when not approved.
-  approval: Record<string, unknown> | null;
-  // Detail carries the latest 50 revisions, newest first. List and write responses omit these.
-  history?: Record<string, unknown>[];
+  // Null until approved.
+  approval: RelationshipApproval | null;
+  // Detail carries the latest 50 revisions, newest first. List rows carry an empty array here
+  // while `historyTruncated` is true, so it is only reliable on the detail response.
+  history?: RelationshipHistoryEntry[];
   historyTotal?: number;
   historyTruncated?: boolean;
 }
@@ -164,8 +203,7 @@ export interface RelationshipHistoryPage {
   offset: number;
   limit: number;
   total: number;
-  // Revision element shape not seen yet.
-  revisions: Record<string, unknown>[];
+  revisions: RelationshipHistoryEntry[];
   hasMore: boolean;
 }
 

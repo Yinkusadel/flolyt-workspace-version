@@ -13,6 +13,7 @@ import type {
   RelationshipEndpoint,
 } from "@/services/api/datasource-relationships/types";
 import { PreviewPanel } from "@/pages/relationships/preview-panel";
+import { formatDateTime } from "@/pages/data-sources/format";
 import { CARDINALITY_LABEL, STATE_LABEL, STATE_TONE } from "@/pages/relationships/labels";
 
 function DetailSkeleton() {
@@ -65,8 +66,8 @@ function EndpointCard({
 }
 
 /**
- * /relationships/:id. Header, what the relationship links, and the preview. Approval, edit,
- * disable and the audit trail come in later steps (docs/datasource-relationships/build-plan.md).
+ * /relationships/:id. Header, what the relationship links, the preview and approval. Edit, disable
+ * and the audit trail come in later steps (docs/datasource-relationships/build-plan.md).
  */
 export default function RelationshipDetailRoute() {
   const { id } = useParams<{ id: string }>();
@@ -128,6 +129,20 @@ export default function RelationshipDetailRoute() {
           <p className="text-[12px] font-semibold text-ink">A source changed since this was approved</p>
           <p className="mt-1">
             Its configuration, schema or permissions changed. Run a preview again before relying on it.
+          </p>
+        </div>
+      )}
+
+      {relationship.state === "APPROVED" && (
+        <div className="rounded-card border border-teal-border bg-teal-bg p-4 text-[11px] text-ink-2">
+          <p className="text-[12px] font-semibold text-ink">Approved</p>
+          <p className="mt-1">
+            An administrator approved revision {relationship.revision}
+            {relationship.approval ? ` on ${formatDateTime(relationship.approval.approvedAtUtc)}` : ""}.
+            {relationship.approval?.acceptedPartial
+              ? " They accepted a partial preview, so the data is checked again whenever it is used."
+              : ""}{" "}
+            Any edit returns it to draft and clears the approval.
           </p>
         </div>
       )}

@@ -94,8 +94,11 @@ declare form is not built, and its schema needs the catalog.
 - **Used by:** `services/api/datasource-relationships/get-relationship-by-id.ts`,
   `features/datasource-relationships/use-get-relationship-by-id.ts`. Not wired to a screen yet.
 - **Status:** wired
-- **Notes:** `approval` (receipt, actor, time) and the revision and limitation element shapes
-  are untyped (`Record<string, unknown>` / `unknown[]`) until a real response is captured.
+- **Notes:** Seen live 2026-10-20 on an approved mapping: `approval` as described under approve, and
+  `history` entries `{ id, companyId, mappingId, revision, definition, state, changedByUserId,
+  changedAtUtc, changeReason, approval }` with `changeReason` CREATED then APPROVED. A history
+  entry's `state` is title case ("Draft", "Approved"), the mapping's is upper case. Only user ids
+  are sent, no names. `historyTotal` 2 and `historyTruncated: false` on the detail.
 
 ### GET /api/v3/datasource-relationships/{id}/history
 
@@ -180,9 +183,16 @@ declare form is not built, and its schema needs the catalog.
 - **Request:** path `id`; body `{ expectedRevision, previewId, acceptPartial }`.
 - **Response:** `data`: the approved mapping, revision incremented (1 to 2).
 - **Used by:** `services/api/datasource-relationships/approve-relationship.ts`,
-  `features/datasource-relationships/use-approve-relationship.ts`. Not wired to a screen yet.
-- **Status:** wired
-- **Notes:** The receipt lives 15 minutes and is bound to the workspace, revision, exact
+  `features/datasource-relationships/use-approve-relationship.ts`, the Approve section on
+  `/relationships/:id` (`pages/relationships/approve-section.tsx`).
+- **Status:** verified working, success path (2026-10-20: the user approved the draft from the
+  app, with a partial preview and `acceptPartial: true`; the mapping went to `APPROVED`, revision 2)
+- **Notes:** After approval the mapping's `limitations` contained one string: "Approval accepted a
+  partial preview; every runtime match still requires scoped cardinality checks." The `approval`
+  object (seen 2026-10-20): `{ previewId, declarationRevision, definitionFingerprint, bindings: [{
+  dataset, sourceConfigurationFingerprint, mappingFingerprint, importId }], approvedByUserId,
+  approvedAtUtc, partial, acceptedPartial }`. `importId` is null for a bring-your-own-warehouse
+  source. Only the approver's user id is sent, no name. 409 and 403 responses are unseen. The receipt lives 15 minutes and is bound to the workspace, revision, exact
   definition, schema fingerprints and import revision. Clients never send match statistics.
   `acceptPartial: true` needs a deliberate admin choice with the scope warning shown. Approval
   needs at least one supported match and no ambiguity, malformed key or cardinality violation.

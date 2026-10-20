@@ -6,6 +6,7 @@ import { Chip } from "@/components/ui/chip";
 import { Skeleton } from "@/components/ui/skeleton";
 import usePreviewRelationship from "@/features/datasource-relationships/use-preview-relationship";
 import { datasetKey } from "@/features/datasource-relationships/use-declare-relationship";
+import { ApproveSection } from "@/pages/relationships/approve-section";
 import { RelationshipApiError } from "@/services/api/datasource-relationships/relationship-error";
 import type {
   RelationshipCatalogDataset,
@@ -276,12 +277,17 @@ export function PreviewPanel({
       ) : apiError ? (
         <PreviewError error={apiError} onReload={onReload} />
       ) : current?.summary ? (
-        <PreviewResult
-          summary={current.summary}
-          hasBridge={!!definition.crosswalk}
-          observedAt={new Date(current.observedAtUtc)}
-          expiresAt={new Date(current.expiresAtUtc)}
-        />
+        <div className="space-y-6">
+          <PreviewResult
+            summary={current.summary}
+            hasBridge={!!definition.crosswalk}
+            observedAt={new Date(current.observedAtUtc)}
+            expiresAt={new Date(current.expiresAtUtc)}
+          />
+          {mapping.state !== "APPROVED" && (
+            <ApproveSection key={current.id} mapping={mapping} preview={current} onReload={onReload} />
+          )}
+        </div>
       ) : current ? (
         <div className="rounded-card border border-dashed border-line bg-paper-2 p-6 text-center text-[11px] text-ink-3">
           The preview ran, but its response did not have the shape this page expects.

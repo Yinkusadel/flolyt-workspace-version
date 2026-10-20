@@ -5,6 +5,7 @@ import {
   type GetRelationshipHistoryResponse,
 } from "@/services/api/datasource-relationships/get-relationship-history";
 import type { RelationshipApiError } from "@/services/api/datasource-relationships/relationship-error";
+import type { RelationshipHistoryEntry } from "@/services/api/datasource-relationships/types";
 import { RELATIONSHIPS_QUERY_KEY } from "./use-get-relationships";
 
 // Use when the detail reports `historyTruncated`: the detail carries only the latest 50 revisions.
@@ -21,7 +22,7 @@ const useGetRelationshipHistory = (
 
   return {
     ...query,
-    revisions: query.data?.data.revisions ?? ([] as Record<string, unknown>[]),
+    revisions: query.data?.data.revisions ?? ([] as RelationshipHistoryEntry[]),
     total: query.data?.data.total ?? 0,
     hasMore: query.data?.data.hasMore ?? false,
   };
