@@ -13,6 +13,7 @@ import { SourceGrid, SourceGridSkeleton } from "@/pages/onboarding/data/source-g
 import { ConnectSourceModal } from "@/pages/onboarding/data/connect-source-modal";
 import { ConnectedSourcesList, ConnectedSourcesListSkeleton } from "@/pages/data-sources/connected-list";
 import { RelationshipsList } from "@/pages/data-sources/relationships-list";
+import { RelationshipDeclare } from "@/pages/data-sources/relationship-declare";
 import useGetDatasourceDisconnections from "@/features/datasources/use-get-datasource-disconnections";
 import {
   DisconnectionHistoryList,
@@ -89,6 +90,12 @@ export default function DataSourcesRoute() {
 
   const isLoadingSources = isLoadingDatasources || isLoadingConnected;
 
+  // The declare flow lives in the URL (?tab=relationships&view=declare) so refresh and the
+  // breadcrumb both land back where the person was.
+  if (activeTab === "relationships" && searchParams.get("view") === "declare") {
+    return <RelationshipDeclare onClose={() => setSearchParams({ tab: "relationships" }, { replace: true })} />;
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
@@ -127,7 +134,7 @@ export default function DataSourcesRoute() {
           />
         )
       ) : activeTab === "relationships" ? (
-        <RelationshipsList />
+        <RelationshipsList onDeclare={() => setSearchParams({ tab: "relationships", view: "declare" })} />
       ) : isLoadingDisconnections ? (
         <DisconnectionHistoryListSkeleton />
       ) : (

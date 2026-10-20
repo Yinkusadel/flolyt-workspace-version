@@ -124,11 +124,11 @@ function RelationshipRow({
 }
 
 /**
- * GET /datasource-relationships (list). Read-only for now: the Declare form, preview and approval
- * come in later steps, so there is no row action and no "Declare" button yet. Source labels come
+ * GET /datasource-relationships (list). Declare opens the form; preview and approval come in later
+ * steps, so rows have no action yet. Source labels come
  * from the catalog, matched on `datasourceId`, because a mapping's dataset scope carries no label.
  */
-export function RelationshipsList() {
+export function RelationshipsList({ onDeclare }: { onDeclare: () => void }) {
   const [offset, setOffset] = useState(0);
   const { relationships, total, isLoading, isError, error, refetch, isFetching } =
     useGetRelationships({ offset, limit: PAGE_SIZE });
@@ -162,6 +162,9 @@ export function RelationshipsList() {
           example an invoice's account ID and an account's ID. Nothing takes effect until an
           administrator previews and approves it.
         </p>
+        <Button type="button" size="sm" className="mt-3" onClick={onDeclare}>
+          Declare relationship
+        </Button>
       </div>
     );
   }
@@ -171,6 +174,11 @@ export function RelationshipsList() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button type="button" size="sm" onClick={onDeclare}>
+          Declare relationship
+        </Button>
+      </div>
       <div className="divide-y divide-line rounded-card border border-line bg-paper-2">
         {relationships.map((mapping) => (
           <RelationshipRow key={mapping.id} mapping={mapping} sourceLabels={sourceLabels} />
