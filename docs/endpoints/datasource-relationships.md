@@ -48,12 +48,16 @@ declare form is not built, and its schema needs the catalog.
   previewSupported, previewLimitations }], suggestions: [{ name, from, fromColumns, to, toColumns,
   evidence, origin }] }`.
 - **Used by:** `services/api/datasource-relationships/get-relationship-catalog.ts`,
-  `features/datasource-relationships/use-get-relationship-catalog.ts`. Not wired to a screen yet.
-- **Status:** wired
-- **Notes:** Typed from the Scalar schema example, where every value is the placeholder
-  `"string"`. Not seen with real data: the values of `keyType`, `semanticRole`, `kind`,
-  `provider`, `origin`, what a real `sourceLabel` looks like, whether `suggestions` is ever
-  empty. `readPermission` is `ALLOWED`, `UNVERIFIED` or `DENIED_OR_DEGRADED` per the handoff.
+  `features/datasource-relationships/use-get-relationship-catalog.ts`. Read by the Relationships
+  tab only to turn `datasourceId` into `sourceLabel` (`pages/data-sources/relationships-list.tsx`).
+- **Status:** verified working (response shape, 2026-10-20)
+- **Notes:** A real response was captured 2026-10-20: one PostgreSQL source labelled "testing db",
+  7 datasets, 6 same-source foreign-key suggestions. Seen values: `keyType` Integer / Text /
+  Decimal / Timestamp, `kind` Primary, `provider` PostgreSQL, `origin` FOREIGN_KEY,
+  `readPermission` ALLOWED, `semanticRole` open-ended PascalCase with `Unknown`. A suggestion's
+  evidence looks like `postgresql:foreign-key:app_events_customer_id_fkey`. Not seen: a second
+  source (no cross-source case), `previewSupported: false`, composite keys, non-ALLOWED
+  permissions. `readPermission` is `ALLOWED`, `UNVERIFIED` or `DENIED_OR_DEGRADED` per the handoff.
   A suggestion's `evidence` is one string, a declaration's is an array of 1 to 20. A dataset's
   `companyId` is server-assigned and must not be sent on a declaration. Datasets with
   `previewSupported: false` must not offer preview and must show `previewLimitations`.
@@ -66,9 +70,11 @@ declare form is not built, and its schema needs the catalog.
 - **Response:** `data`: `{ mappings, offset, limit, total }`. Each mapping is `{ id, revision,
   state, storedState, definition, limitations, approval }` without full history.
 - **Used by:** `services/api/datasource-relationships/get-relationships.ts`,
-  `features/datasource-relationships/use-get-relationships.ts`. Not wired to a screen yet.
-- **Status:** wired
-- **Notes:** Shape taken from the handoff prose only, no real response seen. `state` is
+  `features/datasource-relationships/use-get-relationships.ts`. Wired to the Relationships tab on
+  `/data-sources` (`pages/data-sources/relationships-list.tsx`).
+- **Status:** wired (envelope verified with an empty list 2026-10-20; row shape not seen)
+- **Notes:** A real response with nothing saved was captured: `{ offset: 0, limit: 25, total: 0,
+  mappings: [] }`. A mapping row's shape is taken from the handoff prose only. `state` is
   `DRAFT | APPROVED | DISABLED | NEEDS_REVIEW`. `storedState` is the audited lifecycle state, and
   `NEEDS_REVIEW` only shows in `state`.
 
@@ -177,7 +183,7 @@ declare form is not built, and its schema needs the catalog.
 
 ## Missing
 
-- A real `GET /catalog` response from an account with two profiled sources.
-- A real list, detail and history response.
+- A catalog from an account with two profiled sources (cross-source case).
+- A real list row, detail and history response.
 - A real preview response (where `scope` and the preview ID sit) and approve response.
 - Confirmation of the PUT body shape.

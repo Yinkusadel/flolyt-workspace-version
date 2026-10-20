@@ -12,16 +12,18 @@ import type { DatasourceDto } from "@/services/api/datasources/get-datasources";
 import { SourceGrid, SourceGridSkeleton } from "@/pages/onboarding/data/source-grid";
 import { ConnectSourceModal } from "@/pages/onboarding/data/connect-source-modal";
 import { ConnectedSourcesList, ConnectedSourcesListSkeleton } from "@/pages/data-sources/connected-list";
+import { RelationshipsList } from "@/pages/data-sources/relationships-list";
 import useGetDatasourceDisconnections from "@/features/datasources/use-get-datasource-disconnections";
 import {
   DisconnectionHistoryList,
   DisconnectionHistoryListSkeleton,
 } from "@/pages/data-sources/disconnection-history-list";
 
-type DataSourcesTab = "sources" | "connected" | "history";
+type DataSourcesTab = "sources" | "connected" | "relationships" | "history";
 const TABS: { key: DataSourcesTab; label: string }[] = [
   { key: "sources", label: "Sources" },
   { key: "connected", label: "Connected" },
+  { key: "relationships", label: "Relationships" },
   { key: "history", label: "Disconnection history" },
 ];
 
@@ -62,7 +64,9 @@ export default function DataSourcesRoute() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const activeTab: DataSourcesTab =
-    tabParam === "connected" || tabParam === "history" ? tabParam : "sources";
+    tabParam === "connected" || tabParam === "relationships" || tabParam === "history"
+      ? tabParam
+      : "sources";
   const setActiveTab = (tab: DataSourcesTab) => {
     setSearchParams(tab === "sources" ? {} : { tab }, { replace: true });
   };
@@ -122,6 +126,8 @@ export default function DataSourcesRoute() {
             onGoToSources={() => setActiveTab("sources")}
           />
         )
+      ) : activeTab === "relationships" ? (
+        <RelationshipsList />
       ) : isLoadingDisconnections ? (
         <DisconnectionHistoryListSkeleton />
       ) : (
