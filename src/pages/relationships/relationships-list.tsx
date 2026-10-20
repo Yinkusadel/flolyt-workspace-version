@@ -2,41 +2,18 @@ import { useMemo, useState } from "react";
 import { ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Chip, type ChipTone } from "@/components/ui/chip";
+import { Link } from "react-router-dom";
+import { Chip } from "@/components/ui/chip";
 import { Skeleton } from "@/components/ui/skeleton";
 import useGetRelationships from "@/features/datasource-relationships/use-get-relationships";
 import useGetRelationshipCatalog from "@/features/datasource-relationships/use-get-relationship-catalog";
 import type {
   RelationshipDatasetScope,
   RelationshipMapping,
-  RelationshipState,
 } from "@/services/api/datasource-relationships/types";
+import { CARDINALITY_LABEL, STATE_LABEL, STATE_TONE } from "@/pages/relationships/labels";
 
 const PAGE_SIZE = 25;
-
-// Built from docs/datasource-relationship-mapping-api.md. No real mapping row has been seen yet,
-// so every field read below is unverified until the first draft exists (see
-// docs/endpoints/datasource-relationships.md).
-const STATE_LABEL: Record<RelationshipState, string> = {
-  DRAFT: "Draft",
-  APPROVED: "Approved",
-  DISABLED: "Disabled",
-  NEEDS_REVIEW: "Needs review",
-};
-
-const STATE_TONE: Record<RelationshipState, ChipTone> = {
-  DRAFT: "neutral",
-  APPROVED: "teal",
-  DISABLED: "neutral",
-  NEEDS_REVIEW: "amber",
-};
-
-const CARDINALITY_LABEL: Record<string, string> = {
-  OneToOne: "One to one",
-  ManyToOne: "Many to one",
-  OneToMany: "One to many",
-  ManyToMany: "Many to many",
-};
 
 function RelationshipRowSkeleton() {
   return (
@@ -91,9 +68,12 @@ function RelationshipRow({
   const { definition } = mapping;
 
   return (
-    <div className="flex flex-wrap items-start gap-x-4 gap-y-2 px-4 py-3">
+    <Link
+      to={`/relationships/${mapping.id}`}
+      className="group flex flex-wrap items-start gap-x-4 gap-y-2 px-4 py-3 hover:bg-paper"
+    >
       <div className="min-w-0 flex-1 basis-72">
-        <p className="truncate text-[12.5px] font-semibold text-ink">{definition.name}</p>
+        <p className="truncate text-[12.5px] font-semibold text-ultra group-hover:underline">{definition.name}</p>
         <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10.5px]">
           <EndpointLabel
             dataset={definition.from.dataset}
@@ -119,7 +99,7 @@ function RelationshipRow({
         </Chip>
         <p className="text-[10px] text-ink-4">Revision {mapping.revision}</p>
       </div>
-    </div>
+    </Link>
   );
 }
 

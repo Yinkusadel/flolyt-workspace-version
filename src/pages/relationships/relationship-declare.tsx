@@ -20,19 +20,16 @@ import {
   RELATIONSHIP_MEANINGS,
 } from "@/validators/datasource-relationships";
 import { RelationshipApiError } from "@/services/api/datasource-relationships/relationship-error";
-import type { RelationshipCatalogDataset } from "@/services/api/datasource-relationships/types";
+import type {
+  RelationshipCatalogDataset,
+  RelationshipMapping,
+} from "@/services/api/datasource-relationships/types";
 import { KeyColumnsPicker } from "@/pages/relationships/key-columns-picker";
+import { CARDINALITY_LABEL } from "@/pages/relationships/labels";
 
 const MEANING_HINT: Record<string, string> = {
   Reference: "Points at a related record, like an invoice pointing at its account.",
   Identity: "Both sides are the same thing, like a contact and a person.",
-};
-
-const CARDINALITY_LABEL: Record<string, string> = {
-  OneToOne: "One to one",
-  ManyToOne: "Many to one",
-  OneToMany: "One to many",
-  ManyToMany: "Many to many",
 };
 
 function OptionButton({
@@ -122,9 +119,15 @@ function DatasetNotes({ dataset }: { dataset: RelationshipCatalogDataset }) {
  * Declare form (step 3 of docs/datasource-relationships/build-plan.md): POST /datasource-relationships.
  * Built from the real GET /catalog response. Not covered here: the optional crosswalk (a bridge
  * dataset for sources with different identifiers), and the preview and approval steps that follow.
- * A saved draft returns to the list.
+ * A saved draft opens its detail page, where the preview runs.
  */
-export function RelationshipDeclare({ onClose }: { onClose: () => void }) {
+export function RelationshipDeclare({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: (mapping: RelationshipMapping) => void;
+}) {
   usePageBreadcrumb([
     { label: "Relationships", to: "/relationships" },
     { label: "Declare" },
@@ -133,7 +136,7 @@ export function RelationshipDeclare({ onClose }: { onClose: () => void }) {
   const { datasets, suggestions, isLoading, isError, error: catalogError, refetch } =
     useGetRelationshipCatalog();
   const { form, onSubmit, applySuggestion, isPending, error } = useDeclareRelationship(datasets, {
-    onSuccess: onClose,
+    onSuccess: onCreated,
   });
   const [prefilledFrom, setPrefilledFrom] = useState<string | null>(null);
 

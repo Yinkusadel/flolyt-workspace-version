@@ -142,12 +142,20 @@ export interface RelationshipPreviewSummary {
 
 export type RelationshipPreviewScope = "COMPLETE_FOR_SELECTED_DATASETS" | "PARTIAL";
 
-// Doc only: the doc shows `data.summary` and says "scope" and the server's "preview ID" exist, but
-// not where they sit. Both are guessed to be on `data`.
+// Real response seen 2026-10-20. `id` is the server-issued receipt that approval sends back as
+// `previewId`. `declarationRevision` is the mapping revision it was run against.
 export interface RelationshipPreview {
-  previewId: string;
-  scope: RelationshipPreviewScope;
+  id: string;
+  mappingId: string;
+  declarationRevision: number;
   summary: RelationshipPreviewSummary;
+  scope: RelationshipPreviewScope;
+  canApprove: boolean;
+  // True when the preview was partial: approval then needs `acceptPartial: true`.
+  requiresPartialAcceptance: boolean;
+  observedAtUtc: string;
+  // The receipt lifetime is 15 minutes.
+  expiresAtUtc: string;
 }
 
 // ── History ──────────────────────────────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ import { API_ENDPOINTS } from "@/config/apiConfig";
 import { toRelationshipError } from "./relationship-error";
 import type { RelationshipEnvelope, RelationshipMapping } from "./types";
 
-// `previewId` is the server-issued receipt from the preview call. Clients never send match
+// `previewId` is the `id` of the preview response (the server-issued receipt). Clients never send match
 // statistics. `acceptPartial` must be true to approve a partial preview.
 export interface ApproveRelationshipPayload {
   expectedRevision: number;

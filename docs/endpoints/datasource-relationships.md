@@ -73,9 +73,13 @@ declare form is not built, and its schema needs the catalog.
 - **Used by:** `services/api/datasource-relationships/get-relationships.ts`,
   `features/datasource-relationships/use-get-relationships.ts`. Wired to the Relationships page at
   `/relationships` (`pages/relationships/relationships-list.tsx`).
-- **Status:** wired (envelope verified with an empty list 2026-10-20; row shape not seen)
+- **Status:** verified working (2026-10-20, empty list and a real draft row)
 - **Notes:** A real response with nothing saved was captured: `{ offset: 0, limit: 25, total: 0,
-  mappings: [] }`. A mapping row's shape is taken from the handoff prose only. `state` is
+  mappings: [] }`. A real row was seen 2026-10-20 (a draft): `{ id, revision, state, storedState, definition,
+  limitations, approval, history, historyTotal, historyTruncated }`. `definition` also carries
+  `companyId` and `origin` (`AdministratorDeclared`), and `crosswalk` is `null` when absent. List
+  rows carry `history: []` with `historyTotal: 1` and `historyTruncated: true`, so
+  `historyTruncated` is not reliable on a list row. `state` is
   `DRAFT | APPROVED | DISABLED | NEEDS_REVIEW`. `storedState` is the audited lifecycle state, and
   `NEEDS_REVIEW` only shows in `state`.
 
@@ -124,7 +128,11 @@ declare form is not built, and its schema needs the catalog.
 - **Used by:** `services/api/datasource-relationships/create-relationship.ts`,
   `features/datasource-relationships/use-create-relationship.ts`, wrapped by
   `use-declare-relationship.ts` and the Declare form (`pages/relationships/relationship-declare.tsx`).
-- **Status:** wired (form built, not yet submitted against the real API)
+- **Status:** verified working (2026-10-20, a real draft was saved from the form and read back)
+- **Notes:** The saved row came back as revision 1, `state` and `storedState` both `DRAFT`,
+  `approval: null`, `limitations: []`, and the definition echoed with `companyId`,
+  `origin: "AdministratorDeclared"` and `crosswalk: null`. `expectedRevision` is an optional
+  nullable field on this body (`null | integer | string`), and is not sent on create.
 
 ### PUT /api/v3/datasource-relationships/{id}
 
@@ -146,17 +154,24 @@ declare form is not built, and its schema needs the catalog.
   per selected dataset, retains and counts at most 10,000, 30-second read budget.
 - **Auth:** workspace administrator.
 - **Request:** path `id`; body `{ expectedRevision }`.
-- **Response:** `data.summary`: `{ sourceRowsExamined, targetRowsExamined, bridgeRowsExamined,
-  matched, unmatched, unresolved, ambiguous, sourceMissingKeys, targetMissingKeys,
-  bridgeMissingKeys, malformedKeys, cardinalityViolations, partial, canApprove }`. Also a
-  `scope` (`COMPLETE_FOR_SELECTED_DATASETS | PARTIAL`) and a server-issued preview ID.
+- **Response:** `data`: `{ id, mappingId, declarationRevision, summary, scope, canApprove,
+  requiresPartialAcceptance, observedAtUtc, expiresAtUtc }`. `summary`: `{ sourceRowsExamined,
+  targetRowsExamined, bridgeRowsExamined, matched, unmatched, unresolved, ambiguous,
+  sourceMissingKeys, targetMissingKeys, bridgeMissingKeys, malformedKeys, cardinalityViolations,
+  partial, canApprove }`. `scope` is `COMPLETE_FOR_SELECTED_DATASETS | PARTIAL`. `id` is the
+  server-issued receipt that approval sends back as `previewId`.
 - **Used by:** `services/api/datasource-relationships/preview-relationship.ts`,
-  `features/datasource-relationships/use-preview-relationship.ts`. Not wired to a screen yet.
-- **Status:** wired
-- **Notes:** The handoff does not say where `scope` and the preview ID sit. The types guess
-  `data.scope` and `data.previewId`. Confirm on the first real preview. Counts describe examined
-  source rows only, they are not money or population counts. In a partial preview, absence is
-  `unresolved`, never "does not exist". 422 means a safe scoped preview could not be completed.
+  `features/datasource-relationships/use-preview-relationship.ts`, the Preview panel on
+  `/relationships/:id` (`pages/relationships/preview-panel.tsx`).
+- **Status:** verified working (2026-10-20, a real preview ran against the draft)
+- **Notes:** First real response: 10,000 source rows examined, 1,500 target rows, all 10,000
+  matched, no gaps or problems, `partial: true`, `scope: PARTIAL`, `canApprove: true`,
+  `requiresPartialAcceptance: true`. The receipt expired 15 minutes after `observedAtUtc`. My
+  earlier guess that the receipt was `data.previewId` was wrong: it is `data.id`. Counts describe
+  examined source rows only, they are not money or population counts. In a partial preview,
+  absence is `unresolved`, never "does not exist". 422 means a safe scoped preview could not be
+  completed. Source and target are both capped at 10,000 rows, so a 10,000-row source read is
+  partial by definition.
 
 ### POST /api/v3/datasource-relationships/{id}/approve
 
@@ -186,6 +201,6 @@ declare form is not built, and its schema needs the catalog.
 ## Missing
 
 - A catalog from an account with two profiled sources (cross-source case).
-- A real list row, detail and history response.
-- A real preview response (where `scope` and the preview ID sit) and approve response.
+- A detail and history response, and a row with a non-null `approval` or non-empty `limitations`.
+- A real approve response, and a preview with gaps or problems (non-zero counts).
 - Confirmation of the PUT body shape.

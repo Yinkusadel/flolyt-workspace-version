@@ -16,7 +16,7 @@ Build one step at a time, each on an explicit "build".
 | 1 | Endpoint docs, services, hooks for all 9 routes | Done, pushed (`ff39066`) |
 | 2 | List (first a tab, now the `/relationships` page) | Built 2026-10-20, typechecks clean, not run against a live account |
 | 3 | Declare form (prefill from catalog suggestions, zod schema, Declare button) | Built and pushed (`9b15918`), not yet run live. Crosswalk not included. |
-| 4 | Preview (counts shown separately, partial warning, 422/409 handling) | Not started |
+| 4 | Preview (counts shown separately, partial warning, 422/409 handling) | Built on `/relationships/:id`, verified live 2026-10-20 (partial result, all matched). 409/422/403 paths and non-zero gaps unseen. |
 | 5 | Approve (15-minute receipt, `acceptPartial`, no optimistic update) | Not started |
 | 6 | Detail view: audit trail with "load earlier revisions", edit, disable | Not started |
 | 7 | Onboarding: optional step or link after the data mapping state | Not started, decision open |
@@ -46,4 +46,4 @@ Build one step at a time, each on an explicit "build".
 ## Open
 
 - Whether relationships inside a single source are allowed (all suggestions seen are).
-- Where `scope` and the preview ID sit in the preview response, and the PUT body nesting.
+- The PUT body nesting (`expectedRevision` beside `definition` is likely).

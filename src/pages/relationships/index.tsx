@@ -1,4 +1,4 @@
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { RelationshipsList } from "@/pages/relationships/relationships-list";
 import { RelationshipDeclare } from "@/pages/relationships/relationship-declare";
@@ -9,10 +9,16 @@ import { RelationshipDeclare } from "@/pages/relationships/relationship-declare"
  * approval and the detail view come in later steps (docs/datasource-relationships/build-plan.md).
  */
 export default function RelationshipsRoute() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   if (searchParams.get("view") === "declare") {
-    return <RelationshipDeclare onClose={() => setSearchParams({}, { replace: true })} />;
+    return (
+      <RelationshipDeclare
+        onClose={() => setSearchParams({}, { replace: true })}
+        onCreated={(mapping) => navigate(`/relationships/${mapping.id}`)}
+      />
+    );
   }
 
   return (
