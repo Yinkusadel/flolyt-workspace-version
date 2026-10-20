@@ -211,8 +211,11 @@ declare form is not built, and its schema needs the catalog.
 - **Request:** path `id`; body `{ expectedRevision, reason }`.
 - **Response:** `data`: the mapping, state `DISABLED`, approval cleared, actor and reason audited.
 - **Used by:** `services/api/datasource-relationships/disable-relationship.ts`,
-  `features/datasource-relationships/use-disable-relationship.ts`. Not wired to a screen yet.
-- **Status:** wired
+  `features/datasource-relationships/use-disable-relationship.ts`, the Disable button and modal on
+  `/relationships/:id` (`pages/relationships/disable-modal.tsx`, a reason field inside the shared
+  `components/confirm-modal.tsx`).
+- **Status:** wired (UI built; the real draft was later seen as `DISABLED` at revision 7, but it is
+  not confirmed that the disable came from this modal, so unverified until confirmed)
 
 ## Missing
 

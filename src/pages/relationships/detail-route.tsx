@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
@@ -13,6 +14,7 @@ import type {
   RelationshipEndpoint,
 } from "@/services/api/datasource-relationships/types";
 import { PreviewPanel } from "@/pages/relationships/preview-panel";
+import { DisableRelationshipModal } from "@/pages/relationships/disable-modal";
 import { RelationshipDeclare } from "@/pages/relationships/relationship-declare";
 import { formatDateTime } from "@/pages/data-sources/format";
 import { CARDINALITY_LABEL, STATE_LABEL, STATE_TONE } from "@/pages/relationships/labels";
@@ -67,14 +69,15 @@ function EndpointCard({
 }
 
 /**
- * /relationships/:id. Header, what the relationship links, the preview and approval. Edit, disable
- * and the audit trail come in later steps (docs/datasource-relationships/build-plan.md).
+ * /relationships/:id. Header, what the relationship links, the preview, approval, edit and disable. The
+ * audit trail comes in a later step (docs/datasource-relationships/build-plan.md).
  */
 export default function RelationshipDetailRoute() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const editing = searchParams.get("view") === "edit";
+  const [disabling, setDisabling] = useState(false);
   const { relationship, isLoading, isError, error, refetch } = useGetRelationshipById(id);
   const { datasets } = useGetRelationshipCatalog();
 
@@ -144,17 +147,18 @@ export default function RelationshipDetailRoute() {
           <Chip tone={STATE_TONE[relationship.state] ?? "neutral"}>
             {STATE_LABEL[relationship.state] ?? relationship.state}
           </Chip>
-          {canEdit && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="ml-auto"
-              onClick={() => setSearchParams({ view: "edit" })}
-            >
-              Edit
-            </Button>
-          )}
+          <div className="ml-auto flex items-center gap-2">
+            {canEdit && (
+              <Button type="button" variant="outline" size="sm" onClick={() => setSearchParams({ view: "edit" })}>
+                Edit
+              </Button>
+            )}
+            {relationship.state !== "DISABLED" && (
+              <Button type="button" variant="outline" size="sm" onClick={() => setDisabling(true)}>
+                Disable
+              </Button>
+            )}
+          </div>
         </div>
         <p className="mt-1 text-[11.5px] text-ink-3">
           {definition.meaning} · {CARDINALITY_LABEL[definition.cardinality] ?? definition.cardinality} ·
@@ -173,6 +177,15 @@ export default function RelationshipDetailRoute() {
           <p className="text-[12px] font-semibold text-ink">A source changed since this was approved</p>
           <p className="mt-1">
             Its configuration, schema or permissions changed. Run a preview again before relying on it.
+          </p>
+        </div>
+      )}
+
+      {relationship.state === "DISABLED" && (
+        <div className="rounded-card border border-line bg-paper-2 p-4 text-[11px] text-ink-2">
+          <p className="text-[12px] font-semibold text-ink">This relationship is disabled</p>
+          <p className="mt-1">
+            It is not being used. To turn it back on, run a new preview and approve it again.
           </p>
         </div>
       )}
@@ -235,6 +248,12 @@ export default function RelationshipDetailRoute() {
       </section>
 
       <PreviewPanel mapping={relationship} datasets={datasets} onReload={() => refetch()} />
+
+      <DisableRelationshipModal
+        open={disabling}
+        onOpenChange={setDisabling}
+        mapping={relationship}
+      />
     </div>
   );
 }
