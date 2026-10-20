@@ -138,7 +138,11 @@ declare form is not built, and its schema needs the catalog.
 - **Status:** verified working (2026-10-20, a real draft was saved from the form and read back)
 - **Bridge table (`crosswalk`):** the form can send one (the Declare and Edit forms, section "Bridge table
   (optional)"). Built from the Scalar schema and the handoff only. **Never sent to the real API**: the
-  test data ("testing db") has no bridge table, so the backend's validation of it is unseen.
+  test data ("testing db") had no purpose-built bridge table, so the backend's validation of bad input
+  is unseen. **Create verified 2026-10-20:** the user saved a bridged draft from the form, "purchase to
+  the customer who referred the buyer": `transactions.customer_id` to `customers.customer_id` through
+  `referrals` (`fromColumns: [customer_id]`, `toColumns: [referrer_id]`). It came back as a `DRAFT`
+  at revision 1 with the `crosswalk` echoed. Its preview is not run yet.
 - **Notes:** The saved row came back as revision 1, `state` and `storedState` both `DRAFT`,
   `approval: null`, `limitations: []`, and the definition echoed with `companyId`,
   `origin: "AdministratorDeclared"` and `crosswalk: null`. `expectedRevision` is an optional
@@ -188,6 +192,17 @@ declare form is not built, and its schema needs the catalog.
   absence is `unresolved`, never "does not exist". 422 means a safe scoped preview could not be
   completed. Source and target are both capped at 10,000 rows, so a 10,000-row source read is
   partial by definition.
+  More real previews, 2026-10-20: the composite-key draft (`transactions` to `referrals` on
+  `customer_id` plus `promo_code`) read 10,000 source and 268 target rows and came back with 0
+  matched, 2,313 unresolved, 7,687 missing source keys (most rows have no promo code), 51 missing
+  target keys, `canApprove: false`. The bridged draft (`transactions` to `customers` through
+  `referrals`) read 10,000, 1,500 and 268 bridge rows: 745 matched, 9,255 unresolved, 51 missing
+  bridge keys, `canApprove: true`, `bridgeRowsExamined: 268`. So gaps, missing keys, bridge counts
+  and `canApprove: false` have all been seen. `canApprove` was false with zero matches, matching the
+  doc's "at least one supported match" rule.
+  **Error cards were tested with simulated errors, not real ones** (2026-10-20, Playwright answering
+  the write calls with a made-up 403, 409, 422 or 400 envelope, so nothing reached the backend).
+  The real backend's 403, 409 and 422 bodies are still unseen.
 
 ### POST /api/v3/datasource-relationships/{id}/approve
 
@@ -226,8 +241,8 @@ declare form is not built, and its schema needs the catalog.
 
 ## Missing
 
-- A catalog from an account with two profiled sources (cross-source case), and a real bridge table to
-  test a `crosswalk` write and its preview (`bridgeRowsExamined`, `bridgeMissingKeys`).
+- A catalog from an account with two profiled sources (cross-source case), and a preview of the bridged
+  draft (`bridgeRowsExamined`, `bridgeMissingKeys`).
 - A detail and history response, and a row with a non-null `approval` or non-empty `limitations`.
 - A real approve response, and a preview with gaps or problems (non-zero counts).
 - Confirmation of the PUT body shape.
