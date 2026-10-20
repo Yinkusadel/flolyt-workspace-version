@@ -7,7 +7,7 @@ import {
 } from "@/services/api/datasource-relationships/approve-relationship";
 import type { RelationshipApiError } from "@/services/api/datasource-relationships/relationship-error";
 import type { RelationshipMapping } from "@/services/api/datasource-relationships/types";
-import { RELATIONSHIPS_QUERY_KEY } from "./use-get-relationships";
+import { refreshRelationships } from "./refresh-relationships";
 
 interface ApproveRelationshipVariables {
   id: string;
@@ -30,10 +30,10 @@ const useApproveRelationship = (options?: UseApproveRelationshipOptions) => {
   >({
     mutationFn: ({ id, payload }) => approveRelationship(id, payload),
     retry: false,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.succeeded) {
         toast.success("Relationship approved");
-        queryClient.invalidateQueries({ queryKey: RELATIONSHIPS_QUERY_KEY });
+        await refreshRelationships(queryClient, data.data);
         options?.onSuccess?.(data.data);
         return;
       }

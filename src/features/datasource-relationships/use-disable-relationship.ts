@@ -7,7 +7,7 @@ import {
 } from "@/services/api/datasource-relationships/disable-relationship";
 import type { RelationshipApiError } from "@/services/api/datasource-relationships/relationship-error";
 import type { RelationshipMapping } from "@/services/api/datasource-relationships/types";
-import { RELATIONSHIPS_QUERY_KEY } from "./use-get-relationships";
+import { refreshRelationships } from "./refresh-relationships";
 
 interface DisableRelationshipVariables {
   id: string;
@@ -28,10 +28,10 @@ const useDisableRelationship = (options?: UseDisableRelationshipOptions) => {
   >({
     mutationFn: ({ id, payload }) => disableRelationship(id, payload),
     retry: false,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.succeeded) {
         toast.success("Relationship disabled");
-        queryClient.invalidateQueries({ queryKey: RELATIONSHIPS_QUERY_KEY });
+        await refreshRelationships(queryClient, data.data);
         options?.onSuccess?.(data.data);
         return;
       }

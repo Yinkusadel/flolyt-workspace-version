@@ -7,7 +7,7 @@ import {
 } from "@/services/api/datasource-relationships/create-relationship";
 import type { RelationshipApiError } from "@/services/api/datasource-relationships/relationship-error";
 import type { RelationshipMapping } from "@/services/api/datasource-relationships/types";
-import { RELATIONSHIPS_QUERY_KEY } from "./use-get-relationships";
+import { refreshRelationships } from "./refresh-relationships";
 
 interface UseCreateRelationshipOptions {
   onSuccess?: (mapping: RelationshipMapping) => void;
@@ -23,10 +23,10 @@ const useCreateRelationship = (options?: UseCreateRelationshipOptions) => {
     CreateRelationshipPayload
   >({
     mutationFn: createRelationship,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.succeeded) {
         toast.success("Draft saved");
-        queryClient.invalidateQueries({ queryKey: RELATIONSHIPS_QUERY_KEY });
+        await refreshRelationships(queryClient, data.data);
         options?.onSuccess?.(data.data);
         return;
       }
