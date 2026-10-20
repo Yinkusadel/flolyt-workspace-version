@@ -1,14 +1,6 @@
 import * as React from "react";
 
-import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { cn } from "@/lib/utils";
@@ -31,35 +23,16 @@ function WithdrawDialog({
   const { withdrawDissent, isPending } = useWithdrawDissent({ onSuccess: () => onOpenChange(false) });
 
   return (
-    <Dialog open={open} onOpenChange={(next) => !isPending && onOpenChange(next)}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Withdraw this objection?</DialogTitle>
-          <DialogDescription>Only you, as its author, can withdraw it.</DialogDescription>
-        </DialogHeader>
-        <DialogBody className="space-y-3 px-5 py-5 sm:px-7 sm:py-6">
-          <blockquote className="rounded-panel border border-line bg-paper-2 px-3.5 py-3 text-[12.5px] text-ink">
-            “{objection.wording}”
-          </blockquote>
-          <p className="text-[12px] text-ink-2">The wording stays on the record, marked as withdrawn.</p>
-        </DialogBody>
-        <DialogFooter>
-          <div className="flex items-center gap-4">
-            <Button type="button" disabled={isPending} onClick={() => withdrawDissent(objection.id)}>
-              {isPending ? "Withdrawing…" : "Withdraw objection"}
-            </Button>
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={() => onOpenChange(false)}
-              className="text-[12px] font-semibold text-ink-3 hover:text-ink"
-            >
-              Cancel
-            </button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ConfirmModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Withdraw this objection?"
+      description={`"${objection.wording}" Only you, as its author, can withdraw it. The wording stays on the record, marked as withdrawn.`}
+      confirmLabel="Withdraw objection"
+      pendingLabel="Withdrawing…"
+      isPending={isPending}
+      onConfirm={() => withdrawDissent(objection.id)}
+    />
   );
 }
 

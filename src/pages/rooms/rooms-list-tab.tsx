@@ -13,6 +13,7 @@ import { FilterCard, type FilterOption, type FilterOptions } from "@/pages/rooms
 import { SaveViewDialog, SavedViews } from "@/pages/rooms/saved-views";
 import { StatTiles } from "@/pages/rooms/stat-tiles";
 import { RoomsEmpty, RoomsTable } from "@/pages/rooms/rooms-table";
+import { ReopenRoomDialog } from "@/pages/rooms/room/reopen-dialog";
 import {
   countActiveFilters,
   isDefaultFilters,
@@ -139,6 +140,7 @@ const RoomsListTab = () => {
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const [saveOpen, setSaveOpen] = React.useState(false);
   const [assignTarget, setAssignTarget] = React.useState<RoomListRowDto | null>(null);
+  const [reopenTarget, setReopenTarget] = React.useState<RoomListRowDto | null>(null);
 
   // The whole workspace, archived included. The tiles' counts, the filter option lists and the
   // names of merge targets all describe the workspace, not whatever the filters narrowed to.
@@ -233,10 +235,12 @@ const RoomsListTab = () => {
       ) : rooms.length === 0 ? (
         <RoomsEmpty filtered={!isDefaultFilters(filters)} onClear={clear} />
       ) : (
-        <RoomsTable rooms={rooms} titleById={titleById} onAssignOwner={setAssignTarget} />
+        <RoomsTable rooms={rooms} titleById={titleById} onAssignOwner={setAssignTarget} onReopen={setReopenTarget} />
       )}
 
       <SaveViewDialog open={saveOpen} onOpenChange={setSaveOpen} filters={filters} />
+
+      {reopenTarget && <ReopenRoomDialog room={reopenTarget} open onOpenChange={(open) => !open && setReopenTarget(null)} />}
 
       {assignTarget && (
         <AssignOwnerModal

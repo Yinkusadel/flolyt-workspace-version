@@ -2,6 +2,7 @@ import * as React from "react";
 import { Pencil, Trash2, Users, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -356,35 +357,15 @@ function DeleteViewDialog({
   const { deleteRoomView, isPending } = useDeleteRoomView({ onSuccess: () => onOpenChange(false) });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Delete this view?</DialogTitle>
-          <DialogDescription>
-            &quot;{view.name}&quot; is removed
-            {view.sharedWithTeam ? " for everyone it was shared with" : ""}. No Room is affected.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <div className="flex items-center gap-4">
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => deleteRoomView(view.id)}
-              disabled={isPending}
-            >
-              {isPending ? "Deleting…" : "Delete view"}
-            </Button>
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="text-[12px] font-semibold text-ink-3 hover:text-ink"
-            >
-              Cancel
-            </button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ConfirmModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Delete this view?"
+      description={`"${view.name}" is removed${view.sharedWithTeam ? " for everyone it was shared with" : ""}. No Room is affected.`}
+      confirmLabel="Delete view"
+      pendingLabel="Deleting…"
+      isPending={isPending}
+      onConfirm={() => deleteRoomView(view.id)}
+    />
   );
 }

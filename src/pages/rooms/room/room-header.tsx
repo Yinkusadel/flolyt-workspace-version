@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Check, ChevronDown, Lock, MessageSquare, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { useGetRoomSubscriptions } from "@/features/rooms/use-get-room-subscript
 import useSetRoomNotifyLevel from "@/features/rooms/use-set-room-notify-level";
 import useUnwatchRoom from "@/features/rooms/use-unwatch-room";
 import useWatchRoom from "@/features/rooms/use-watch-room";
+import { ReopenRoomDialog } from "@/pages/rooms/room/reopen-dialog";
 import type { RoomDetailDto } from "@/services/api/rooms/get-room";
 
 const STAT_LABEL = "font-mono text-[9px] font-medium tracking-[0.8px] text-ink-4 uppercase";
@@ -113,6 +115,7 @@ function WatchingMenu({ roomId }: { roomId: string }) {
  */
 export function RoomHeader({ room, onOpenThread }: { room: RoomDetailDto; onOpenThread?: () => void }) {
   const live = room.currentAmountAtRisk;
+  const [reopenOpen, setReopenOpen] = React.useState(false);
 
   return (
     <header>
@@ -167,6 +170,19 @@ export function RoomHeader({ room, onOpenThread }: { room: RoomDetailDto; onOpen
             </Button>
           )}
           <WatchingMenu roomId={room.id} />
+          {!room.archivedAtUtc && room.conversationPermissions.canContribute && (
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/rooms/${room.id}/close`}>Close room</Link>
+            </Button>
+          )}
+          {room.archivedAtUtc && room.conversationPermissions.canContribute && (
+            <>
+              <Button type="button" variant="outline" size="sm" onClick={() => setReopenOpen(true)}>
+                Reopen room
+              </Button>
+              <ReopenRoomDialog room={room} open={reopenOpen} onOpenChange={setReopenOpen} />
+            </>
+          )}
         </div>
       </div>
 
