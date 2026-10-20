@@ -117,26 +117,37 @@ function DatasetNotes({ dataset }: { dataset: RelationshipCatalogDataset }) {
 
 /**
  * Declare form (step 3 of docs/datasource-relationships/build-plan.md): POST /datasource-relationships.
- * Built from the real GET /catalog response. Not covered here: the optional crosswalk (a bridge
- * dataset for sources with different identifiers), and the preview and approval steps that follow.
- * A saved draft opens its detail page, where the preview runs.
+ * Also the edit form (step 6): pass `mapping` to prefill it and save with PUT and the mapping's
+ * revision. Built from the real GET /catalog response. Not covered here: the optional crosswalk (a
+ * bridge dataset for sources with different identifiers), so a relationship that has one is not
+ * editable here. A saved relationship opens its detail page, where the preview runs.
  */
 export function RelationshipDeclare({
   onClose,
-  onCreated,
+  onSaved,
+  mapping,
+  onReload,
 }: {
   onClose: () => void;
-  onCreated: (mapping: RelationshipMapping) => void;
+  onSaved: (mapping: RelationshipMapping) => void;
+  mapping?: RelationshipMapping;
+  onReload?: () => void;
 }) {
-  usePageBreadcrumb([
-    { label: "Relationships", to: "/relationships" },
-    { label: "Declare" },
-  ]);
+  usePageBreadcrumb(
+    mapping
+      ? [
+          { label: "Relationships", to: "/relationships" },
+          { label: mapping.definition.name, to: `/relationships/${mapping.id}` },
+          { label: "Edit" },
+        ]
+      : [{ label: "Relationships", to: "/relationships" }, { label: "Declare" }]
+  );
 
   const { datasets, suggestions, isLoading, isError, error: catalogError, refetch } =
     useGetRelationshipCatalog();
   const { form, onSubmit, applySuggestion, isPending, error } = useDeclareRelationship(datasets, {
-    onSuccess: onCreated,
+    onSuccess: onSaved,
+    editing: mapping,
   });
   const [prefilledFrom, setPrefilledFrom] = useState<string | null>(null);
 
@@ -146,7 +157,7 @@ export function RelationshipDeclare({
     handleSubmit,
     setValue,
     watch,
-    formState: { errors, isValid },
+    formState: { errors, isValid, isDirty },
   } = form;
 
   const byKey = useMemo(() => new Map(datasets.map((d) => [datasetKey(d.dataset), d])), [datasets]);
@@ -187,6 +198,7 @@ export function RelationshipDeclare({
   }, [fromDataset, toDataset, fromKeyColumns, toKeyColumns]);
 
   const serverIssues = error instanceof RelationshipApiError ? error.validationIssues : [];
+  const changedUnderneath = error instanceof RelationshipApiError && error.status === 409;
 
   if (isLoading) return <DeclareSkeleton />;
 
@@ -220,14 +232,30 @@ export function RelationshipDeclare({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mx-auto max-w-4xl space-y-7">
       <div>
-        <h1 className="text-[17px] font-semibold text-ink">Declare a relationship</h1>
+        <h1 className="text-[17px] font-semibold text-ink">
+          {mapping ? "Edit relationship" : "Declare a relationship"}
+        </h1>
         <p className="mt-1 max-w-2xl text-[11.5px] text-ink-3">
-          Say how records in one dataset match records in another. This saves a draft. Nothing is
-          used until an administrator previews and approves it.
+          {mapping
+            ? `You are editing revision ${mapping.revision}.`
+            : "Say how records in one dataset match records in another. This saves a draft. Nothing is used until an administrator previews and approves it."}
         </p>
       </div>
 
-      {suggestions.length > 0 && (
+      {mapping && mapping.state !== "DRAFT" && (
+        <div className="rounded-card border border-amber-border bg-amber-bg p-4 text-[11px] text-ink-2">
+          <p className="text-[12px] font-semibold text-ink">
+            {mapping.state === "DISABLED" ? "This relationship is disabled" : "Saving clears the approval"}
+          </p>
+          <p className="mt-1">
+            {mapping.state === "DISABLED"
+              ? "Saving keeps it disabled. A new preview and approval turn it back on."
+              : "Saving returns this relationship to draft. You will need to preview and approve it again before it is used."}
+          </p>
+        </div>
+      )}
+
+      {!mapping && suggestions.length > 0 && (
         <section className="space-y-2.5">
           <SectionHeading
             title="Start from a suggestion"
@@ -263,7 +291,7 @@ export function RelationshipDeclare({
         </section>
       )}
 
-      {prefilledFrom && (
+      {!mapping && prefilledFrom && (
         <Callout tone="neutral" title="Filled in from a suggestion">
           The datasets, key columns and evidence came from the foreign key {prefilledFrom}. Check them,
           then choose how many rows sit on each side.
@@ -497,6 +525,19 @@ export function RelationshipDeclare({
         <FieldError message={errors.evidence?.message ?? errors.evidence?.root?.message} />
       </section>
 
+      {changedUnderneath && onReload && (
+        <div className="rounded-card border border-rose-border bg-rose-bg p-4">
+          <h3 className="text-[12px] font-semibold text-ink">This relationship changed since you opened it</h3>
+          <p className="mt-1 text-[10.5px] text-ink-2">
+            Someone else saved it, or its sources changed. Reload to pick up the latest revision. Your
+            edits stay in the form, so check them and save again.
+          </p>
+          <Button type="button" variant="outline" size="sm" className="mt-3" onClick={onReload}>
+            Reload the latest revision
+          </Button>
+        </div>
+      )}
+
       {serverIssues.length > 0 && (
         <div className="rounded-card border border-rose-border bg-rose-bg p-4">
           <h3 className="text-[12px] font-semibold text-ink">The backend did not accept this declaration</h3>
@@ -513,8 +554,8 @@ export function RelationshipDeclare({
       )}
 
       <div className="flex items-center gap-4">
-        <Button type="submit" disabled={!isValid || isPending}>
-          {isPending ? "Saving..." : "Save draft"}
+        <Button type="submit" disabled={!isValid || isPending || (!!mapping && !isDirty)}>
+          {isPending ? "Saving..." : mapping ? "Save changes" : "Save draft"}
         </Button>
         <button
           type="button"

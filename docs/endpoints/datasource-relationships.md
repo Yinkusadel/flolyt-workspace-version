@@ -144,12 +144,18 @@ declare form is not built, and its schema needs the catalog.
 - **Request:** path `id`; body is the whole write body plus `expectedRevision`.
 - **Response:** `data`: the updated mapping.
 - **Used by:** `services/api/datasource-relationships/update-relationship.ts`,
-  `features/datasource-relationships/use-update-relationship.ts`. Not wired to a screen yet.
-- **Status:** wired
+  `features/datasource-relationships/use-update-relationship.ts`, wrapped by
+  `use-declare-relationship.ts` and the edit form (`pages/relationships/relationship-declare.tsx`
+  with a `mapping`), opened by the Edit button on `/relationships/:id`.
+- **Status:** wired (the edit form renders and prefills against the real draft; a save has never been
+  submitted, so unverified until a real PUT completes)
 - **Notes:** A revision clears approval and returns the mapping to `DRAFT`, so preview and
   approval are needed again. A `DISABLED` mapping stays disabled; a new current preview plus
   approval re-enables it. The handoff shows `{ expectedRevision }` plus the definition; whether
-  the definition is nested under `definition` on PUT (as on POST) is assumed, not confirmed.
+  the definition is nested under `definition` on PUT (as on POST) is assumed, not confirmed (the POST
+  schema shows `expectedRevision` beside `definition`, so it likely matches). The edit form does not
+  carry a crosswalk, so a relationship that has one is not editable from the app: sending the body
+  without it would drop it.
 
 ### POST /api/v3/datasource-relationships/{id}/preview
 

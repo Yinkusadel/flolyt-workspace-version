@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
 import { usePageBreadcrumb } from "@/components/breadcrumb-context";
@@ -13,6 +13,7 @@ import type {
   RelationshipEndpoint,
 } from "@/services/api/datasource-relationships/types";
 import { PreviewPanel } from "@/pages/relationships/preview-panel";
+import { RelationshipDeclare } from "@/pages/relationships/relationship-declare";
 import { formatDateTime } from "@/pages/data-sources/format";
 import { CARDINALITY_LABEL, STATE_LABEL, STATE_TONE } from "@/pages/relationships/labels";
 
@@ -71,13 +72,24 @@ function EndpointCard({
  */
 export default function RelationshipDetailRoute() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const editing = searchParams.get("view") === "edit";
   const { relationship, isLoading, isError, error, refetch } = useGetRelationshipById(id);
   const { datasets } = useGetRelationshipCatalog();
 
-  usePageBreadcrumb([
-    { label: "Relationships", to: "/relationships" },
-    { label: relationship?.definition.name ?? "Relationship" },
-  ]);
+  usePageBreadcrumb(
+    editing && relationship
+      ? [
+          { label: "Relationships", to: "/relationships" },
+          { label: relationship.definition.name, to: `/relationships/${relationship.id}` },
+          { label: "Edit" },
+        ]
+      : [
+          { label: "Relationships", to: "/relationships" },
+          { label: relationship?.definition.name ?? "Relationship" },
+        ]
+  );
 
   if (isLoading) return <DetailSkeleton />;
 
@@ -104,6 +116,21 @@ export default function RelationshipDetailRoute() {
   }
 
   const { definition } = relationship;
+
+  // The edit form does not carry a crosswalk, so saving would silently drop it. Not editable here yet.
+  const canEdit = !definition.crosswalk;
+
+  if (editing && canEdit) {
+    return (
+      <RelationshipDeclare
+        mapping={relationship}
+        onClose={() => setSearchParams({}, { replace: true })}
+        onSaved={() => navigate(`/relationships/${relationship.id}`, { replace: true })}
+        onReload={() => refetch()}
+      />
+    );
+  }
+
   const sourceLabelOf = (datasourceId: string) =>
     datasets.find((d) => d.dataset.datasourceId === datasourceId)?.sourceLabel;
   // Limitation elements have not been seen with real data, so only plain strings are shown.
@@ -117,12 +144,29 @@ export default function RelationshipDetailRoute() {
           <Chip tone={STATE_TONE[relationship.state] ?? "neutral"}>
             {STATE_LABEL[relationship.state] ?? relationship.state}
           </Chip>
+          {canEdit && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="ml-auto"
+              onClick={() => setSearchParams({ view: "edit" })}
+            >
+              Edit
+            </Button>
+          )}
         </div>
         <p className="mt-1 text-[11.5px] text-ink-3">
           {definition.meaning} · {CARDINALITY_LABEL[definition.cardinality] ?? definition.cardinality} ·
           Revision {relationship.revision}
         </p>
       </div>
+
+      {!canEdit && (
+        <p className="text-[10.5px] text-ink-3">
+          This relationship uses a crosswalk, which can only be changed through the API for now.
+        </p>
+      )}
 
       {relationship.state === "NEEDS_REVIEW" && (
         <div className="rounded-card border border-amber-border bg-amber-bg p-4 text-[11px] text-ink-2">

@@ -16,7 +16,7 @@ export default function RelationshipsRoute() {
     return (
       <RelationshipDeclare
         onClose={() => setSearchParams({}, { replace: true })}
-        onCreated={(mapping) => navigate(`/relationships/${mapping.id}`)}
+        onSaved={(mapping) => navigate(`/relationships/${mapping.id}`)}
       />
     );
   }
