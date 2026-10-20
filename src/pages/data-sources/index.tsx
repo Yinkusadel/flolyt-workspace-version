@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { cn } from "@/lib/utils";
@@ -12,19 +12,16 @@ import type { DatasourceDto } from "@/services/api/datasources/get-datasources";
 import { SourceGrid, SourceGridSkeleton } from "@/pages/onboarding/data/source-grid";
 import { ConnectSourceModal } from "@/pages/onboarding/data/connect-source-modal";
 import { ConnectedSourcesList, ConnectedSourcesListSkeleton } from "@/pages/data-sources/connected-list";
-import { RelationshipsList } from "@/pages/data-sources/relationships-list";
-import { RelationshipDeclare } from "@/pages/data-sources/relationship-declare";
 import useGetDatasourceDisconnections from "@/features/datasources/use-get-datasource-disconnections";
 import {
   DisconnectionHistoryList,
   DisconnectionHistoryListSkeleton,
 } from "@/pages/data-sources/disconnection-history-list";
 
-type DataSourcesTab = "sources" | "connected" | "relationships" | "history";
+type DataSourcesTab = "sources" | "connected" | "history";
 const TABS: { key: DataSourcesTab; label: string }[] = [
   { key: "sources", label: "Sources" },
   { key: "connected", label: "Connected" },
-  { key: "relationships", label: "Relationships" },
   { key: "history", label: "Disconnection history" },
 ];
 
@@ -65,9 +62,7 @@ export default function DataSourcesRoute() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const activeTab: DataSourcesTab =
-    tabParam === "connected" || tabParam === "relationships" || tabParam === "history"
-      ? tabParam
-      : "sources";
+    tabParam === "connected" || tabParam === "history" ? tabParam : "sources";
   const setActiveTab = (tab: DataSourcesTab) => {
     setSearchParams(tab === "sources" ? {} : { tab }, { replace: true });
   };
@@ -89,12 +84,6 @@ export default function DataSourcesRoute() {
   );
 
   const isLoadingSources = isLoadingDatasources || isLoadingConnected;
-
-  // The declare flow lives in the URL (?tab=relationships&view=declare) so refresh and the
-  // breadcrumb both land back where the person was.
-  if (activeTab === "relationships" && searchParams.get("view") === "declare") {
-    return <RelationshipDeclare onClose={() => setSearchParams({ tab: "relationships" }, { replace: true })} />;
-  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -128,13 +117,21 @@ export default function DataSourcesRoute() {
         isLoadingConnected ? (
           <ConnectedSourcesListSkeleton />
         ) : (
-          <ConnectedSourcesList
-            connections={connectedDatasources}
-            onGoToSources={() => setActiveTab("sources")}
-          />
+          <div className="space-y-3">
+            <ConnectedSourcesList
+              connections={connectedDatasources}
+              onGoToSources={() => setActiveTab("sources")}
+            />
+            {activeConnections.length > 0 && (
+              <p className="text-[11px] text-ink-3">
+                Records in these sources can be linked to each other.{" "}
+                <Link to="/relationships" className="font-semibold text-ultra hover:underline">
+                  Manage relationships
+                </Link>
+              </p>
+            )}
+          </div>
         )
-      ) : activeTab === "relationships" ? (
-        <RelationshipsList onDeclare={() => setSearchParams({ tab: "relationships", view: "declare" })} />
       ) : isLoadingDisconnections ? (
         <DisconnectionHistoryListSkeleton />
       ) : (

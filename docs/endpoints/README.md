@@ -15,7 +15,7 @@ wired into code yet, so we always have a source of truth to check against and co
 | Currency | [currency.md](currency.md) | 1/2 verified working, 1/2 wired |
 | Auth (step-up only) | [auth.md](auth.md) | 2/2 wired, unverified against a real call |
 | Datasources | [datasources.md](datasources.md) | 14/14 wired, `GET /connected`'s no-envelope shape confirmed |
-| Datasource relationships | [datasource-relationships.md](datasource-relationships.md) | 9/9 wired (service+hook), 2/9 wired to a screen (catalog, list), catalog response shape verified, list verified empty only; other routes unseen. Handoff: [../datasource-relationship-mapping-api.md](../datasource-relationship-mapping-api.md) |
+| Datasource relationships | [datasource-relationships.md](datasource-relationships.md) | 9/9 wired (service+hook), 3/9 wired to a screen (catalog, list, create), catalog response shape verified, list verified empty only; other routes unseen. Handoff: [../datasource-relationship-mapping-api.md](../datasource-relationship-mapping-api.md) |
 | Teams | [teams.md](teams.md) | 13/13 wired (1 of those, `POST /invitations/accept`, was already built in `auth/` during the auth rebuild) |
 | Lifecycle | [lifecycle.md](lifecycle.md) | 69/69 documented, 69/69 scaffolded (service+hook files, typechecks clean), 1/69 wired (`GET /map`, partial). Full-surface reference (tab matrix, conventions) at [lifecycle-reference.md](lifecycle-reference.md) |
 | App shell | [app-shell.md](app-shell.md) | 6/6 documented (`/search /home /home/greeting /home/prompts /command-bar /sources`), 1/6 wired (`/home/prompts` — home page greeting + composer); `/home` wired then reverted (carousel back to mock), `/home/greeting` scaffolded but intentionally unused; `/inbox` moved out to its own file |

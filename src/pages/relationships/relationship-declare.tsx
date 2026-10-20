@@ -21,7 +21,7 @@ import {
 } from "@/validators/datasource-relationships";
 import { RelationshipApiError } from "@/services/api/datasource-relationships/relationship-error";
 import type { RelationshipCatalogDataset } from "@/services/api/datasource-relationships/types";
-import { KeyColumnsPicker } from "@/pages/data-sources/key-columns-picker";
+import { KeyColumnsPicker } from "@/pages/relationships/key-columns-picker";
 
 const MEANING_HINT: Record<string, string> = {
   Reference: "Points at a related record, like an invoice pointing at its account.",
@@ -126,8 +126,7 @@ function DatasetNotes({ dataset }: { dataset: RelationshipCatalogDataset }) {
  */
 export function RelationshipDeclare({ onClose }: { onClose: () => void }) {
   usePageBreadcrumb([
-    { label: "Data sources", to: "/data-sources" },
-    { label: "Relationships", to: "/data-sources?tab=relationships" },
+    { label: "Relationships", to: "/relationships" },
     { label: "Declare" },
   ]);
 

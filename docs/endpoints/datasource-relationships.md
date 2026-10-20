@@ -49,7 +49,8 @@ declare form is not built, and its schema needs the catalog.
   evidence, origin }] }`.
 - **Used by:** `services/api/datasource-relationships/get-relationship-catalog.ts`,
   `features/datasource-relationships/use-get-relationship-catalog.ts`. Read by the Relationships
-  tab only to turn `datasourceId` into `sourceLabel` (`pages/data-sources/relationships-list.tsx`).
+  page to turn `datasourceId` into `sourceLabel` (`pages/relationships/relationships-list.tsx`) and to
+  fill the Declare form (`pages/relationships/relationship-declare.tsx`).
 - **Status:** verified working (response shape, 2026-10-20)
 - **Notes:** A real response was captured 2026-10-20: one PostgreSQL source labelled "testing db",
   7 datasets, 6 same-source foreign-key suggestions. Seen values: `keyType` Integer / Text /
@@ -70,8 +71,8 @@ declare form is not built, and its schema needs the catalog.
 - **Response:** `data`: `{ mappings, offset, limit, total }`. Each mapping is `{ id, revision,
   state, storedState, definition, limitations, approval }` without full history.
 - **Used by:** `services/api/datasource-relationships/get-relationships.ts`,
-  `features/datasource-relationships/use-get-relationships.ts`. Wired to the Relationships tab on
-  `/data-sources` (`pages/data-sources/relationships-list.tsx`).
+  `features/datasource-relationships/use-get-relationships.ts`. Wired to the Relationships page at
+  `/relationships` (`pages/relationships/relationships-list.tsx`).
 - **Status:** wired (envelope verified with an empty list 2026-10-20; row shape not seen)
 - **Notes:** A real response with nothing saved was captured: `{ offset: 0, limit: 25, total: 0,
   mappings: [] }`. A mapping row's shape is taken from the handoff prose only. `state` is
@@ -121,8 +122,9 @@ declare form is not built, and its schema needs the catalog.
     endpoint's ordered types and arity.
 - **Response:** `data`: the new mapping, revision 1, state `DRAFT`.
 - **Used by:** `services/api/datasource-relationships/create-relationship.ts`,
-  `features/datasource-relationships/use-create-relationship.ts`. Not wired to a screen yet.
-- **Status:** wired
+  `features/datasource-relationships/use-create-relationship.ts`, wrapped by
+  `use-declare-relationship.ts` and the Declare form (`pages/relationships/relationship-declare.tsx`).
+- **Status:** wired (form built, not yet submitted against the real API)
 
 ### PUT /api/v3/datasource-relationships/{id}
 

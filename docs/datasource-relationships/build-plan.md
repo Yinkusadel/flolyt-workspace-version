@@ -1,6 +1,8 @@
 # Datasource relationships: build plan
 
-Settings screen on `/data-sources`, tab "Relationships" (`?tab=relationships`). Built before any
+Standalone page at `/relationships`, under Data in the user menu next to Data sources and Schema
+(moved out of a `/data-sources` tab on 2026-10-20: the flow is multi-screen). The Connected tab on
+`/data-sources` links to it. Built before any
 onboarding step; onboarding may later link to it or reuse its pieces.
 
 Backend handoff: [../datasource-relationship-mapping-api.md](../datasource-relationship-mapping-api.md).
@@ -12,8 +14,8 @@ Build one step at a time, each on an explicit "build".
 | Step | What | Status |
 | --- | --- | --- |
 | 1 | Endpoint docs, services, hooks for all 9 routes | Done, pushed (`ff39066`) |
-| 2 | List tab | Built 2026-10-20, typechecks clean, not run against a live account |
-| 3 | Declare form (prefill from catalog suggestions, zod schema, Declare button) | Not started |
+| 2 | List (first a tab, now the `/relationships` page) | Built 2026-10-20, typechecks clean, not run against a live account |
+| 3 | Declare form (prefill from catalog suggestions, zod schema, Declare button) | Built and pushed (`9b15918`), not yet run live. Crosswalk not included. |
 | 4 | Preview (counts shown separately, partial warning, 422/409 handling) | Not started |
 | 5 | Approve (15-minute receipt, `acceptPartial`, no optimistic update) | Not started |
 | 6 | Detail view: audit trail with "load earlier revisions", edit, disable | Not started |
@@ -30,12 +32,13 @@ Build one step at a time, each on an explicit "build".
 
 ## Step 2 notes
 
-- `src/pages/data-sources/relationships-list.tsx`, tab added in `src/pages/data-sources/index.tsx`.
+- `src/pages/relationships/` (`index.tsx`, `relationships-list.tsx`, `relationship-declare.tsx`,
+  `key-columns-picker.tsx`), route `relationships` in `src/route/route.tsx`, menu entry in
+  `src/components/user-menu.tsx`, crumb in `src/pages/app-layout.tsx`.
 - Rows show name, source label / dataset (key columns in order), meaning, cardinality, state chip,
   revision. Source labels come from the catalog matched on `datasourceId`; a dataset is shown alone
   if the catalog does not know its source (never a UUID).
-- No Declare button yet: it would do nothing until step 3. The empty state explains the feature
-  instead.
+- The Declare button (list header and empty card) arrived with step 3.
 - No admin/non-admin gating yet: no client-side workspace role was found in the app. Reads are open
   to members. Write actions will rely on the 403 from the backend, then decide in step 3.
 - Re-verify against the first real mapping row: field names, `state` values, `crosswalk` presence.
