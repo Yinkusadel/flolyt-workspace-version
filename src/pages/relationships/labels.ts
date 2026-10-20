@@ -17,7 +17,7 @@ export const STATE_LABEL: Record<RelationshipState, string> = {
 };
 
 export const STATE_TONE: Record<RelationshipState, ChipTone> = {
-  DRAFT: "neutral",
+  DRAFT: "ultra",
   APPROVED: "teal",
   DISABLED: "neutral",
   NEEDS_REVIEW: "amber",
