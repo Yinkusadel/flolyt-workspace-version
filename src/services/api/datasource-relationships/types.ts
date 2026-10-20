@@ -96,7 +96,8 @@ export interface RelationshipDefinition {
   cardinality: RelationshipCardinality;
   // 1 to 20 references.
   evidence: string[];
-  crosswalk?: RelationshipCrosswalk;
+  // Null when absent on a response; omit it on a write to declare no bridge table.
+  crosswalk?: RelationshipCrosswalk | null;
 }
 
 // ── Mapping (list item, detail, write responses) ─────────────────────────────────────────────

@@ -136,6 +136,9 @@ declare form is not built, and its schema needs the catalog.
   `features/datasource-relationships/use-create-relationship.ts`, wrapped by
   `use-declare-relationship.ts` and the Declare form (`pages/relationships/relationship-declare.tsx`).
 - **Status:** verified working (2026-10-20, a real draft was saved from the form and read back)
+- **Bridge table (`crosswalk`):** the form can send one (the Declare and Edit forms, section "Bridge table
+  (optional)"). Built from the Scalar schema and the handoff only. **Never sent to the real API**: the
+  test data ("testing db") has no bridge table, so the backend's validation of it is unseen.
 - **Notes:** The saved row came back as revision 1, `state` and `storedState` both `DRAFT`,
   `approval: null`, `limitations: []`, and the definition echoed with `companyId`,
   `origin: "AdministratorDeclared"` and `crosswalk: null`. `expectedRevision` is an optional
@@ -157,9 +160,9 @@ declare form is not built, and its schema needs the catalog.
   approval are needed again. A `DISABLED` mapping stays disabled; a new current preview plus
   approval re-enables it. The handoff shows `{ expectedRevision }` plus the definition; whether
   the definition is nested under `definition` on PUT (as on POST) is assumed, not confirmed (the POST
-  schema shows `expectedRevision` beside `definition`, so it likely matches). The edit form does not
-  carry a crosswalk, so a relationship that has one is not editable from the app: sending the body
-  without it would drop it.
+  schema shows `expectedRevision` beside `definition`, so it likely matches). The edit form now
+  carries the bridge table (the API's `crosswalk`), so a relationship that has one is editable. A
+  write replaces the whole definition, so the form omits `crosswalk` to declare none.
 
 ### POST /api/v3/datasource-relationships/{id}/preview
 
@@ -223,7 +226,8 @@ declare form is not built, and its schema needs the catalog.
 
 ## Missing
 
-- A catalog from an account with two profiled sources (cross-source case).
+- A catalog from an account with two profiled sources (cross-source case), and a real bridge table to
+  test a `crosswalk` write and its preview (`bridgeRowsExamined`, `bridgeMissingKeys`).
 - A detail and history response, and a row with a non-null `approval` or non-empty `limitations`.
 - A real approve response, and a preview with gaps or problems (non-zero counts).
 - Confirmation of the PUT body shape.

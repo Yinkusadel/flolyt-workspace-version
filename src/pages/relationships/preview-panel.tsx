@@ -128,7 +128,7 @@ function PreviewResult({
         <CountCard label="Source rows" value={summary.sourceRowsExamined} hint="Rows read from the first dataset" tone="plain" />
         <CountCard label="Target rows" value={summary.targetRowsExamined} hint="Rows read from the second dataset" tone="plain" />
         {hasBridge && (
-          <CountCard label="Bridge rows" value={summary.bridgeRowsExamined} hint="Rows read from the crosswalk" tone="plain" />
+          <CountCard label="Bridge rows" value={summary.bridgeRowsExamined} hint="Rows read from the bridge table" tone="plain" />
         )}
       </CountGroup>
 
@@ -142,7 +142,7 @@ function PreviewResult({
         <CountCard label="Missing source key" value={summary.sourceMissingKeys} hint="Source rows with an empty key" tone="gap" />
         <CountCard label="Missing target key" value={summary.targetMissingKeys} hint="Target rows with an empty key" tone="gap" />
         {hasBridge && (
-          <CountCard label="Missing bridge key" value={summary.bridgeMissingKeys} hint="Bridge rows with an empty key" tone="gap" />
+          <CountCard label="Missing bridge key" value={summary.bridgeMissingKeys} hint="Bridge table rows with an empty key" tone="gap" />
         )}
       </CountGroup>
 

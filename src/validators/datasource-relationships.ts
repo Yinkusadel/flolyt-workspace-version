@@ -14,7 +14,7 @@ const keyColumnsSchema = z
   .max(MAX_KEY_COLUMNS, `Use at most ${MAX_KEY_COLUMNS} key columns`)
   .refine((columns) => new Set(columns).size === columns.length, "Each key column can be used once");
 
-// The declare form (no crosswalk yet). Datasets are held as the catalog key
+// The declare and edit form, including the optional bridge table (the API's `crosswalk`). Datasets are held as the catalog key
 // `datasourceId::datasetId` and resolved back to a full scope when the payload is built, so the
 // form never carries a UUID the user could mistype. Same subject and grain for Identity is left to
 // the backend: it needs the catalog, and the backend's validationIssues are shown inline.
@@ -29,6 +29,12 @@ export const declareRelationshipSchema = z
     fromKeyColumns: keyColumnsSchema,
     toDataset: z.string().min(1, "Choose the dataset the link points to"),
     toKeyColumns: keyColumnsSchema,
+    // The optional bridge table. Each bridge side must line up with its own endpoint's key columns;
+    // the two endpoints may then differ in count and type.
+    bridgeEnabled: z.boolean(),
+    bridgeDataset: z.string(),
+    bridgeFromColumns: z.array(z.string()).max(MAX_KEY_COLUMNS, `Use at most ${MAX_KEY_COLUMNS} bridge columns`),
+    bridgeToColumns: z.array(z.string()).max(MAX_KEY_COLUMNS, `Use at most ${MAX_KEY_COLUMNS} bridge columns`),
     evidence: z
       .array(z.string())
       .min(1, "Add at least one piece of evidence")
@@ -36,7 +42,32 @@ export const declareRelationshipSchema = z
       .refine((items) => items.every((item) => item.trim().length > 0), "Fill in or remove empty evidence lines"),
   })
   .superRefine((values, ctx) => {
-    if (values.fromKeyColumns.length !== values.toKeyColumns.length) {
+    if (values.bridgeEnabled) {
+      if (!values.bridgeDataset) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["bridgeDataset"], message: "Choose the bridge dataset" });
+      }
+
+      const checkBridge = (
+        columns: string[],
+        path: "bridgeFromColumns" | "bridgeToColumns",
+        expected: number,
+        side: string
+      ) => {
+        if (columns.length === 0) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message: "Choose at least one bridge column" });
+        } else if (new Set(columns).size !== columns.length) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message: "Each bridge column can be used once" });
+        } else if (columns.length !== expected) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [path],
+            message: `Choose ${expected} bridge column${expected === 1 ? "" : "s"} to match the ${side} key columns`,
+          });
+        }
+      };
+      checkBridge(values.bridgeFromColumns, "bridgeFromColumns", values.fromKeyColumns.length, "From");
+      checkBridge(values.bridgeToColumns, "bridgeToColumns", values.toKeyColumns.length, "To");
+    } else if (values.fromKeyColumns.length !== values.toKeyColumns.length) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["toKeyColumns"],

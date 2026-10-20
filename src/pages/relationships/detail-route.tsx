@@ -125,10 +125,7 @@ export default function RelationshipDetailRoute() {
 
   const { definition } = relationship;
 
-  // The edit form does not carry a crosswalk, so saving would silently drop it. Not editable here yet.
-  const canEdit = !definition.crosswalk;
-
-  if (editing && canEdit) {
+  if (editing) {
     return (
       <RelationshipDeclare
         mapping={relationship}
@@ -153,11 +150,9 @@ export default function RelationshipDetailRoute() {
             {STATE_LABEL[relationship.state] ?? relationship.state}
           </Chip>
           <div className="ml-auto flex items-center gap-2">
-            {canEdit && (
-              <Button type="button" variant="outline" size="sm" onClick={() => setSearchParams({ view: "edit" })}>
-                Edit
-              </Button>
-            )}
+            <Button type="button" variant="outline" size="sm" onClick={() => setSearchParams({ view: "edit" })}>
+              Edit
+            </Button>
             {relationship.state !== "DISABLED" && (
               <Button type="button" variant="outline" size="sm" onClick={() => setDisabling(true)}>
                 Disable
@@ -187,12 +182,6 @@ export default function RelationshipDetailRoute() {
 
       {tab === "overview" && (
         <div className="space-y-8">
-          {!canEdit && (
-            <p className="text-[10.5px] text-ink-3">
-              This relationship uses a crosswalk, which can only be changed through the API for now.
-            </p>
-          )}
-
           {relationship.state === "NEEDS_REVIEW" && (
             <div className="rounded-card border border-amber-border bg-amber-bg p-4 text-[11px] text-ink-2">
               <p className="text-[12px] font-semibold text-ink">A source changed since this was approved</p>
@@ -253,7 +242,12 @@ export default function RelationshipDetailRoute() {
             </div>
             {definition.crosswalk && (
               <p className="text-[10.5px] text-ink-3">
-                Linked through a crosswalk in {definition.crosswalk.dataset.datasetId}.
+                Linked through the bridge table{" "}
+                <span className="font-medium text-ink-2">{definition.crosswalk.dataset.datasetId}</span>:{" "}
+                <span className="font-mono">({definition.crosswalk.fromColumns.join(", ")})</span> matches the
+                From keys and{" "}
+                <span className="font-mono">({definition.crosswalk.toColumns.join(", ")})</span> matches the To
+                keys.
               </p>
             )}
             <div>

@@ -7,6 +7,7 @@ import {
 } from "@/validators/datasource-relationships";
 import type {
   RelationshipCatalogDataset,
+  RelationshipCrosswalk,
   RelationshipDatasetScope,
   RelationshipEndpoint,
   RelationshipMapping,
@@ -26,6 +27,10 @@ const EMPTY_VALUES: Partial<DeclareRelationshipValues> = {
   fromKeyColumns: [],
   toDataset: "",
   toKeyColumns: [],
+  bridgeEnabled: false,
+  bridgeDataset: "",
+  bridgeFromColumns: [],
+  bridgeToColumns: [],
   evidence: [""],
 };
 
@@ -35,7 +40,7 @@ interface UseDeclareRelationshipOptions {
   editing?: RelationshipMapping;
 }
 
-// The form's starting values for an existing relationship. Crosswalk is not part of the form.
+// The form's starting values for an existing relationship, bridge table included.
 export const valuesFromMapping = (mapping: RelationshipMapping): Partial<DeclareRelationshipValues> => {
   const { definition } = mapping;
   return {
@@ -46,22 +51,28 @@ export const valuesFromMapping = (mapping: RelationshipMapping): Partial<Declare
     fromKeyColumns: definition.from.keyColumns,
     toDataset: datasetKey(definition.to.dataset),
     toKeyColumns: definition.to.keyColumns,
+    bridgeEnabled: !!definition.crosswalk,
+    bridgeDataset: definition.crosswalk ? datasetKey(definition.crosswalk.dataset) : "",
+    bridgeFromColumns: definition.crosswalk?.fromColumns ?? [],
+    bridgeToColumns: definition.crosswalk?.toColumns ?? [],
     evidence: definition.evidence,
   };
 };
 
 // A declaration sends only datasourceId, datasetId, subjectType and grain per dataset: the
 // catalog's `companyId` is server-assigned and must not be sent.
+const toScope = (dataset: RelationshipCatalogDataset): RelationshipDatasetScope => ({
+  datasourceId: dataset.dataset.datasourceId,
+  datasetId: dataset.dataset.datasetId,
+  subjectType: dataset.dataset.subjectType,
+  grain: dataset.dataset.grain,
+});
+
 const toEndpoint = (
   dataset: RelationshipCatalogDataset,
   keyColumns: string[]
 ): RelationshipEndpoint => ({
-  dataset: {
-    datasourceId: dataset.dataset.datasourceId,
-    datasetId: dataset.dataset.datasetId,
-    subjectType: dataset.dataset.subjectType,
-    grain: dataset.dataset.grain,
-  },
+  dataset: toScope(dataset),
   keyColumns,
 });
 
@@ -87,6 +98,20 @@ const useDeclareRelationship = (
       return;
     }
 
+    let crosswalk: RelationshipCrosswalk | undefined;
+    if (values.bridgeEnabled) {
+      const bridge = datasets.find((d) => datasetKey(d.dataset) === values.bridgeDataset);
+      if (!bridge) {
+        toast.error("The bridge dataset is no longer in your catalog. Choose it again.");
+        return;
+      }
+      crosswalk = {
+        dataset: toScope(bridge),
+        fromColumns: values.bridgeFromColumns,
+        toColumns: values.bridgeToColumns,
+      };
+    }
+
     const definition = {
       name: values.name.trim(),
       meaning: values.meaning,
@@ -94,6 +119,8 @@ const useDeclareRelationship = (
       to: toEndpoint(to, values.toKeyColumns),
       cardinality: values.cardinality,
       evidence: values.evidence.map((item) => item.trim()),
+      // Omitted when there is no bridge table: a write replaces the whole definition.
+      ...(crosswalk ? { crosswalk } : {}),
     };
 
     if (editing) {
@@ -119,6 +146,10 @@ const useDeclareRelationship = (
         fromKeyColumns: suggestion.fromColumns,
         toDataset: datasetKey(suggestion.to),
         toKeyColumns: suggestion.toColumns,
+        bridgeEnabled: false,
+        bridgeDataset: "",
+        bridgeFromColumns: [],
+        bridgeToColumns: [],
         evidence: [suggestion.evidence],
       },
       { keepDefaultValues: true }

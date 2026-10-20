@@ -89,7 +89,7 @@ function RelationshipRow({
         </p>
         <p className="mt-1 text-[10.5px] text-ink-4">
           {definition.meaning} · {CARDINALITY_LABEL[definition.cardinality] ?? definition.cardinality}
-          {definition.crosswalk ? " · through a crosswalk" : ""}
+          {definition.crosswalk ? " · through a bridge table" : ""}
         </p>
       </div>
 

@@ -118,9 +118,10 @@ function DatasetNotes({ dataset }: { dataset: RelationshipCatalogDataset }) {
 /**
  * Declare form (step 3 of docs/datasource-relationships/build-plan.md): POST /datasource-relationships.
  * Also the edit form (step 6): pass `mapping` to prefill it and save with PUT and the mapping's
- * revision. Built from the real GET /catalog response. Not covered here: the optional crosswalk (a
- * bridge dataset for sources with different identifiers), so a relationship that has one is not
- * editable here. A saved relationship opens its detail page, where the preview runs.
+ * revision. Built from the real GET /catalog response. The optional bridge table (the API's
+ * `crosswalk`, for datasets that name the same thing with different IDs) is built from the schema
+ * and the handoff doc only: no real bridge table exists in the test data yet. A saved relationship
+ * opens its detail page, where the preview runs.
  */
 export function RelationshipDeclare({
   onClose,
@@ -180,12 +181,17 @@ export function RelationshipDeclare({
   const fromKeyColumns = watch("fromKeyColumns") ?? [];
   const toKeyColumns = watch("toKeyColumns") ?? [];
   const evidence = watch("evidence") ?? [""];
+  const bridgeEnabled = watch("bridgeEnabled");
+  const bridgeKey = watch("bridgeDataset");
+  const bridgeFromColumns = watch("bridgeFromColumns") ?? [];
+  const bridgeToColumns = watch("bridgeToColumns") ?? [];
   const fromDataset = byKey.get(fromKey) ?? null;
   const toDataset = byKey.get(toKey) ?? null;
+  const bridgeDataset = byKey.get(bridgeKey) ?? null;
 
   // Direct key components must have the same type. The backend is the authority: this only warns.
   const typeMismatches = useMemo(() => {
-    if (!fromDataset || !toDataset) return [];
+    if (bridgeEnabled || !fromDataset || !toDataset) return [];
     const pairs: string[] = [];
     for (let i = 0; i < Math.min(fromKeyColumns.length, toKeyColumns.length); i++) {
       const a = fromDataset.columns.find((c) => c.name === fromKeyColumns[i]);
@@ -195,7 +201,34 @@ export function RelationshipDeclare({
       }
     }
     return pairs;
-  }, [fromDataset, toDataset, fromKeyColumns, toKeyColumns]);
+  }, [bridgeEnabled, fromDataset, toDataset, fromKeyColumns, toKeyColumns]);
+
+  // With a bridge table, each bridge column must have the same type as the endpoint key it matches.
+  const bridgeMismatches = useMemo(() => {
+    if (!bridgeEnabled || !bridgeDataset) return [];
+    const pairs: string[] = [];
+    const compare = (endpoint: typeof fromDataset, keys: string[], bridgeCols: string[]) => {
+      if (!endpoint) return;
+      for (let i = 0; i < Math.min(keys.length, bridgeCols.length); i++) {
+        const a = endpoint.columns.find((c) => c.name === keys[i]);
+        const b = bridgeDataset.columns.find((c) => c.name === bridgeCols[i]);
+        if (a && b && a.keyType !== b.keyType) {
+          pairs.push(`${a.name} (${a.keyType}) and ${b.name} (${b.keyType})`);
+        }
+      }
+    };
+    compare(fromDataset, fromKeyColumns, bridgeFromColumns);
+    compare(toDataset, toKeyColumns, bridgeToColumns);
+    return pairs;
+  }, [bridgeEnabled, bridgeDataset, fromDataset, toDataset, fromKeyColumns, toKeyColumns, bridgeFromColumns, bridgeToColumns]);
+
+  const removeBridge = () => {
+    const opts = { shouldValidate: true, shouldDirty: true };
+    setValue("bridgeEnabled", false, opts);
+    setValue("bridgeDataset", "", opts);
+    setValue("bridgeFromColumns", [], opts);
+    setValue("bridgeToColumns", [], opts);
+  };
 
   const serverIssues = error instanceof RelationshipApiError ? error.validationIssues : [];
   const changedUnderneath = error instanceof RelationshipApiError && error.status === 409;
@@ -428,6 +461,121 @@ export function RelationshipDeclare({
             These key columns have different types: {typeMismatches.join("; ")}. Matching keys must be
             the same type, so the backend is likely to reject this.
           </p>
+        )}
+      </section>
+
+      <section className="space-y-2.5">
+        <SectionHeading
+          title="Bridge table (optional)"
+          hint="Use this when the two datasets name the same thing with different IDs. A bridge table holds both IDs on each row."
+        />
+        {!bridgeEnabled ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isPending}
+            onClick={() => setValue("bridgeEnabled", true, { shouldValidate: true, shouldDirty: true })}
+          >
+            <Plus className="size-3.5" />
+            Add a bridge table
+          </Button>
+        ) : (
+          <div className="min-w-0 space-y-4 rounded-card border border-line bg-paper-2 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[10.5px] font-semibold tracking-wide text-ink-3 uppercase">Bridge</p>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={removeBridge}
+                className="text-[11px] font-semibold text-ink-3 hover:text-ink"
+              >
+                Remove bridge table
+              </button>
+            </div>
+            <div>
+              <label htmlFor="bridge-dataset" className="text-[11px] text-ink-3">
+                Dataset
+              </label>
+              <Controller
+                control={control}
+                name="bridgeDataset"
+                render={({ field }) => (
+                  <SearchableSelect
+                    id="bridge-dataset"
+                    options={datasetOptions}
+                    value={field.value || null}
+                    onChange={(next) => {
+                      field.onChange(next);
+                      setValue("bridgeFromColumns", [], { shouldValidate: true, shouldDirty: true });
+                      setValue("bridgeToColumns", [], { shouldValidate: true, shouldDirty: true });
+                    }}
+                    placeholder="Choose the bridge dataset"
+                    searchPlaceholder="Search datasets"
+                    className="mt-1.5"
+                    disabled={isPending}
+                    aria-invalid={!!errors.bridgeDataset}
+                  />
+                )}
+              />
+              <FieldError message={errors.bridgeDataset?.message} />
+              {bridgeDataset && <div className="mt-1.5"><DatasetNotes dataset={bridgeDataset} /></div>}
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="min-w-0">
+                <label htmlFor="bridge-from-columns" className="text-[11px] text-ink-3">
+                  Columns that match the From keys ({fromKeyColumns.length})
+                </label>
+                <div className="mt-1.5">
+                  <Controller
+                    control={control}
+                    name="bridgeFromColumns"
+                    render={({ field }) => (
+                      <KeyColumnsPicker
+                        id="bridge-from-columns"
+                        dataset={bridgeDataset}
+                        value={field.value ?? []}
+                        onChange={field.onChange}
+                        disabled={isPending}
+                        invalid={!!errors.bridgeFromColumns}
+                      />
+                    )}
+                  />
+                </div>
+                <FieldError message={errors.bridgeFromColumns?.message} />
+              </div>
+              <div className="min-w-0">
+                <label htmlFor="bridge-to-columns" className="text-[11px] text-ink-3">
+                  Columns that match the To keys ({toKeyColumns.length})
+                </label>
+                <div className="mt-1.5">
+                  <Controller
+                    control={control}
+                    name="bridgeToColumns"
+                    render={({ field }) => (
+                      <KeyColumnsPicker
+                        id="bridge-to-columns"
+                        dataset={bridgeDataset}
+                        value={field.value ?? []}
+                        onChange={field.onChange}
+                        disabled={isPending}
+                        invalid={!!errors.bridgeToColumns}
+                      />
+                    )}
+                  />
+                </div>
+                <FieldError message={errors.bridgeToColumns?.message} />
+              </div>
+            </div>
+
+            {bridgeMismatches.length > 0 && (
+              <p className="text-[10.5px] text-amber">
+                These key columns have different types: {bridgeMismatches.join("; ")}. A bridge column must
+                be the same type as the key it matches, so the backend is likely to reject this.
+              </p>
+            )}
+          </div>
         )}
       </section>
 
