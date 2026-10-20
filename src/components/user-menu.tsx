@@ -9,6 +9,7 @@ import {
   CreditCard,
   Database,
   Globe,
+  Link2,
   LogOut,
   ScrollText,
   Settings,
@@ -35,6 +36,7 @@ const DATA_LINKS: MenuLink[] = [
   { label: "Data sources", href: "/data-sources", icon: Database },
   // { label: "Data health", href: "/data-health", icon: Activity },
   { label: "Schema", href: "/schema", icon: Boxes },
+  { label: "Relationships", href: "/relationships", icon: Link2 },
   // { label: "Identity", href: "/identity", icon: IdCard },
 ];
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { cn } from "@/lib/utils";
@@ -117,10 +117,20 @@ export default function DataSourcesRoute() {
         isLoadingConnected ? (
           <ConnectedSourcesListSkeleton />
         ) : (
-          <ConnectedSourcesList
-            connections={connectedDatasources}
-            onGoToSources={() => setActiveTab("sources")}
-          />
+          <div className="space-y-3">
+            <ConnectedSourcesList
+              connections={connectedDatasources}
+              onGoToSources={() => setActiveTab("sources")}
+            />
+            {activeConnections.length > 0 && (
+              <p className="text-[11px] text-ink-3">
+                Records in these sources can be linked to each other.{" "}
+                <Link to="/relationships" className="font-semibold text-ultra hover:underline">
+                  Manage relationships
+                </Link>
+              </p>
+            )}
+          </div>
         )
       ) : isLoadingDisconnections ? (
         <DisconnectionHistoryListSkeleton />

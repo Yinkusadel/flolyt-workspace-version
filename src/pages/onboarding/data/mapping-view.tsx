@@ -74,8 +74,8 @@ export function MappingView({
     dataMap.state === "awaiting_analysis" || dataMap.state === "nothing_connected" || rows.length === 0;
 
   return (
-    <div className="flex flex-col gap-6 pb-6">
-      <div className="flex items-start gap-3">
+    <div className="flex flex-col gap-6 pb-6 md:min-h-0 md:flex-1">
+      <div className="flex shrink-0 items-start gap-3">
         <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-teal text-white">
           <Check className="size-4" />
         </span>
@@ -91,13 +91,15 @@ export function MappingView({
       </div>
 
       {rows.length === 0 ? (
-        <Callout tone="neutral" title="Still mapping your data">
-          This can take a minute right after connecting. Flolyt has to read your schema before it can
-          map anything. Check again in a bit.
-        </Callout>
+        <div className="shrink-0">
+          <Callout tone="neutral" title="Still mapping your data">
+            This can take a minute right after connecting. Flolyt has to read your schema before it can
+            map anything. Check again in a bit.
+          </Callout>
+        </div>
       ) : (
-        <div>
-          <div className="hidden border-b border-line pb-2.5 sm:grid sm:grid-cols-[1fr_90px_1fr_90px] sm:gap-3">
+        <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">
+          <div className="sticky top-0 z-10 hidden border-b border-line bg-paper pb-2.5 sm:grid sm:grid-cols-[1fr_90px_1fr_90px] sm:gap-3">
             <p className="font-mono text-[9px] font-medium tracking-[0.85px] text-ink-4 uppercase">Your table</p>
             <p className="font-mono text-[9px] font-medium tracking-[0.85px] text-ink-4 uppercase">Rows</p>
             <p className="font-mono text-[9px] font-medium tracking-[0.85px] text-ink-4 uppercase">Mapped to</p>
@@ -169,14 +171,23 @@ export function MappingView({
       )}
 
       {dataMap.summary.uncountedTableCount > 0 && (
-        <Callout tone="neutral" title="Some row counts aren't in yet">
-          {dataMap.summary.uncountedTableCount === 1
-            ? "One table hasn't reported a row count yet. That reads as 0 until the warehouse estimates it, not as empty."
-            : `${dataMap.summary.uncountedTableCount} tables haven't reported a row count yet. Those read as 0 until the warehouse estimates them, not as empty.`}
-        </Callout>
+        <div className="shrink-0">
+          <Callout tone="neutral" title="Some row counts aren't in yet">
+            {dataMap.summary.uncountedTableCount === 1
+              ? "One table hasn't reported a row count yet. That reads as 0 until the warehouse estimates it, not as empty."
+              : `${dataMap.summary.uncountedTableCount} tables haven't reported a row count yet. Those read as 0 until the warehouse estimates them, not as empty.`}
+          </Callout>
+        </div>
       )}
 
-      <div className="flex flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
+      {rows.length > 0 && !isStillMapping && (
+        <p className="shrink-0 text-[11px] leading-relaxed text-ink-3">
+          Tables in this list can be linked to each other, for example transactions to customers. You
+          can set that up after onboarding under Data, then Relationships.
+        </p>
+      )}
+
+      <div className="flex shrink-0 flex-col gap-3 border-t border-line pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
         <Button
           type="button"
           variant="outline"

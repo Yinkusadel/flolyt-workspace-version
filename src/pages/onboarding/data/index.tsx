@@ -126,7 +126,7 @@ export default function OnboardingDataRoute() {
                 </div>
               </>
             ) : (
-              <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">
+              <div className="flex flex-col md:min-h-0 md:flex-1">
                 {isLoadingDataMap || !dataMap ? (
                   <MappingViewSkeleton />
                 ) : (

@@ -34,6 +34,8 @@ import BusinessMemory from "@/pages/business-memory";
 import BusinessMemoryEntry from "@/pages/business-memory/entry-route";
 import DataSourcesRoute from "@/pages/data-sources";
 import SchemaRoute from "@/pages/schema";
+import RelationshipsRoute from "@/pages/relationships";
+import RelationshipDetailRoute from "@/pages/relationships/detail-route";
 import MembersRoute from "@/pages/members";
 import MembersDetailRoute from "@/pages/members/detail-route";
 import MarketsRoute from "@/pages/markets";
@@ -138,6 +140,8 @@ export const routes = createBrowserRouter([
               { path: "business-memory/:id", Component: BusinessMemoryEntry },
               { path: "data-sources", Component: DataSourcesRoute },
               { path: "schema", Component: SchemaRoute },
+              { path: "relationships", Component: RelationshipsRoute },
+              { path: "relationships/:id", Component: RelationshipDetailRoute },
               { path: "members", Component: MembersRoute },
               { path: "members/:teamId", Component: MembersDetailRoute },
               { path: "markets", Component: MarketsRoute },
