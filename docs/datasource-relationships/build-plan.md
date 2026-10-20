@@ -19,7 +19,7 @@ Build one step at a time, each on an explicit "build".
 | 4 | Preview (counts shown separately, partial warning, 422/409 handling) | Built on `/relationships/:id`, verified live 2026-10-20 (partial result, all matched). 409/422/403 paths and non-zero gaps unseen. |
 | 5 | Approve (15-minute receipt, `acceptPartial`, no optimistic update) | Built 2026-10-20 (`pages/relationships/approve-section.tsx`). Success path verified by the user: partial preview approved, state `APPROVED`, revision 2. `approval` object, 409 and 403 paths unseen. |
 | 6 | Detail view: edit, disable, audit trail with "load earlier revisions" | Edit built 2026-10-20 (Edit button on the detail page reuses the Declare form, PUT with `expectedRevision`, warns that saving clears approval, 409 keeps the form). Renders and prefills against the real draft; **no save submitted yet**. Disable built 2026-10-20 (Disable button, reason modal, `{ expectedRevision, reason }`; hidden once disabled; disabled relationships show a note). Audit trail not started; its names wait on the backend ticket. |
-| 7 | Onboarding: optional step or link after the data mapping state | Not started, decision open |
+| 7 | Onboarding: optional step or link after the data mapping state | Decided 2026-10-20: not part of onboarding. A link out of the wizard would be bounced back by `ProtectedRoute`, and relationships only matter with 2+ sources. Reached from Data > Relationships and the Connected tab. A plain-text note under the table on `/onboarding/data` (mapping state, `mapping-view.tsx`) says tables can be linked later under Data, then Relationships (added 2026-10-20, no link on purpose). A post-onboarding prompt is a possible later nudge, not decided. |
 
 ## Evidence so far
 
