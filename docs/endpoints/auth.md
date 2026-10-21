@@ -3,8 +3,9 @@
 Base path: `/api/users/auth` → `USER_BASE_URL` / `API_ENDPOINTS.USER` in
 [`src/config/apiConfig.ts`](../../src/config/apiConfig.ts). Sign-in/sign-up/session endpoints
 predate this per-domain doc convention (built directly from
-[`flolyt-extras/auth-frontend-handoff.md`](../../flolyt-extras/auth-frontend-handoff.md), the
-source of truth for all of auth) — this file only covers what was newly built under the
+[`docs/auth-and-lifecycle-frontend-handoff.md`](../auth-and-lifecycle-frontend-handoff.md), the
+single source of truth for auth and lifecycle; it replaced the older gitignored
+`flolyt-extras/auth-frontend-handoff.md`) — this file only covers what was newly built under the
 convention: the step-up confirmation pair, needed to unblock onboarding's markets/revenue-model
 saves. See [[flolyt_governance_stepup_reminder]] for why this was deferred until now.
 
@@ -38,9 +39,41 @@ saves. See [[flolyt_governance_stepup_reminder]] for why this was deferred until
   from login's `request-code`, which nests it as `{ challengeId }`).
 - **Used by:** `services/api/auth/request-step-up-code.ts`, `features/auth/use-step-up-confirmation.ts`, wired into `src/components/step-up-confirm-modal.tsx` — first consumer is `/onboarding/workspace`'s markets save.
 - **Status:** wired — first real call returns `500`, see bug below
-- **Notes:** Per the handoff doc, `change_workspace_markets` and `change_revenue_model` are
-  **always** required; the other 3 actions are conditional (only when the sensitive threshold is
-  actually being raised/loosened) and have no UI wired to them yet.
+- **Notes:** All 5 actions are **conditional** per the handoff doc (corrected 2026-10-21: markets
+  and revenue model used to be "always required"). `change_workspace_markets` and
+  `change_revenue_model` need a code only for an actual change after initial configuration; the
+  first declaration, initial setup corrections and unchanged retries need none. So every caller
+  attempts bare first and only opens the code dialog when the server replies "Confirm this change
+  with the code we emailed you." (`isStepUpRequiredMessage`). Only `change_workspace_markets`,
+  `change_revenue_model` and `change_administrators` have UI wired; the other 2 are for governance.
+
+## Onboarding correction, 2026-10-21 (handoff doc line ~141)
+
+Do not open the email-code dialog automatically on `/onboarding/workspace` (markets) or
+`/onboarding/business-model`. The backend exempts an unfinished onboarding record: it closes the
+exemption once setup finishes, any datasource has been connected (even if later disconnected), a
+leakage grid exists or a revenue ledger has been built. `GET /api/v3/workspace/revenue-model`
+returns `requiresStepUpToChange` with the same condition as the write. Re-sending the same value
+never needs a code. A non-administrator can never change either setting.
+
+Frontend: both screens submit with `stepUpChallengeId: null`; the hooks
+(`use-update-workspace-markets.ts`, `use-update-revenue-model.ts`) take an `onStepUpRequired`
+callback fired from both `onSuccess` (`succeeded:false`) and `onError`. The Settings Markets page
+(`src/pages/markets`) attempts bare first too.
+
+## Token role lag after workspace creation (found live 2026-10-21)
+
+The access token from sign-in carries role `Member`. The `Administrator` role only appears on a
+**refreshed** token, and only about 9 to 13 seconds after `POST /workspace`; a refresh straight
+after creation still returns `Member`. Until then `PUT /markets` and `PUT /revenue-model` answer
+400 "Only an administrator can change the workspace's ..." (a 400, not a 401, so the axios
+interceptor never refreshes). Frontend fix: `onboarding/start/index.tsx` calls
+`waitForAdministratorToken()` after creation, refreshing every 1.5s (max 8 tries) until the JWT
+role is not `Member`. Live-verified end to end on a fresh account: markets 200, revenue model 200,
+no code asked, one toast each. Not verified live: a later actual change still asking for a code.
+
+Backend note: login `request-code` always answers 200, but codes stopped arriving to disposable
+inboxes after repeated sign-ups from one machine (looks like throttling, unconfirmed).
 
 ## Bug found testing against the real API, 2026-08-26
 

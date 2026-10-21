@@ -141,18 +141,19 @@ Zod validators for the ones with a body live in
 ### PUT /api/flolyt/workspace/markets
 
 - **Purpose:** Declares where this workspace sells — frame 03's markets panel.
-- **Auth:** Administrator only, **step-up gated** (`stepUpChallengeId`).
+- **Auth:** Administrator only. Step-up (`stepUpChallengeId`) is **conditional**: needed only for an
+  actual change after initial configuration, never during initial setup (handoff doc, 2026-10-21).
 - **Request:** `markets` (array of `{ countryCode, currencyCode (nullable) }`, required, or
   null), `primaryMarketCountry` (string, required), `reportingCurrency` (nullable string,
   required key — pass `null` explicitly), `stepUpChallengeId` (nullable uuid).
 - **Response:** `data` = integer (count, presumably markets saved).
-- **Used by:** `services/api/workspace/update-workspace-markets.ts`, `features/workspace/use-update-workspace-markets.ts`, wired to `/onboarding/workspace` (onboarding step 1, screen 03), gated behind `src/components/step-up-confirm-modal.tsx` + `use-step-up-confirmation`.
+- **Used by:** `services/api/workspace/update-workspace-markets.ts`, `features/workspace/use-update-workspace-markets.ts`, wired to `/onboarding/workspace` (onboarding step 1, screen 03) and Settings Markets. Submits bare first; `src/components/step-up-confirm-modal.tsx` + `use-step-up-confirmation` open only if the server asks for a code.
 - **Status:** verified working — full step-up round trip (request-code → email → verify-code →
   this call) confirmed live 2026-08-27 on the test account, all 200s
 - **Notes:** This is one of the [[flolyt_governance_stepup_reminder]] step-up endpoints. The
   step-up confirmation flow (request/verify emailed code) that was deliberately skipped during the
   auth rebuild is now built and confirmed working end to end — see
-  `src/features/auth/use-step-up-confirmation.ts` and `flolyt-extras/auth-frontend-handoff.md`'s
+  `src/features/auth/use-step-up-confirmation.ts` and `docs/auth-and-lifecycle-frontend-handoff.md`'s
   "Step-up confirmation" section. Replaces the **whole set** every call
   (primary market must be one of the set; dropping a market that's still primary would strand
   the fallback — the zod schema also refuses this client-side). A market's currency is validated
@@ -167,7 +168,10 @@ Zod validators for the ones with a body live in
 
 - **Purpose:** Sets how the workspace makes money — `consumer` | `account_based` | `both` —
   frame 007.
-- **Auth:** step-up gated (`stepUpChallengeId`).
+- **Auth:** Administrator only. Step-up (`stepUpChallengeId`) is **conditional**: needed only when the
+  selected value actually changes after initial configuration. A model prefilled at workspace
+  creation is still correctable without a code during setup. `GET /revenue-model` returns
+  `requiresStepUpToChange`.
 - **Request:** `revenueModel` (string, required), `stepUpChallengeId` (nullable uuid).
 - **Response:** `data` = uuid string.
 - **Used by:** `services/api/workspace/update-revenue-model.ts`, `features/workspace/use-update-revenue-model.ts`, wired to `/onboarding/business-model` (onboarding step 2, screen 04) as of 2026-08-27.
@@ -444,11 +448,9 @@ whole workspace identity (name, address, timezone) is now set in one place, at c
 is markets-only now (`PUT /markets`, step-up gated) and no longer calls `PUT /identity` or
 `PUT /profile` at all. See the per-endpoint entries above for the full reasoning.
 
-**Known gap, not a bug:** `PUT /markets` and `PUT /revenue-model` are step-up gated
-(`stepUpChallengeId`), and the step-up challenge flow was deliberately skipped during the auth
-rebuild ([[flolyt_governance_stepup_reminder]]). Their hooks exist and typecheck, but nothing in
-this codebase can produce a valid `stepUpChallengeId` yet, so a UI built against them today would
-get a 400 on submit. Build the step-up flow before wiring a screen to either of these.
+**Resolved (was a known gap):** the step-up flow is built and both endpoints are wired. As of
+2026-10-21 neither asks for a code during initial setup, only for later actual changes; see
+`docs/endpoints/auth.md` ("Onboarding correction" and "Token role lag after workspace creation").
 
 ## Bugs found testing against the real API (2026-08-26)
 
