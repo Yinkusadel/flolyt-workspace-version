@@ -32,6 +32,7 @@ export default function MarketsRoute() {
     onSuccess: () => {
       toast.success("Markets updated");
     },
+    onStepUpRequired: () => stepUp.begin(),
   });
 
   const stepUp = useStepUpConfirmation({
@@ -55,7 +56,9 @@ export default function MarketsRoute() {
       toast.error("Check the markets section before saving");
       return;
     }
-    stepUp.begin();
+    // Attempt without a code; the dialog only opens if the server asks for one.
+    markets.form.setValue("stepUpChallengeId", null);
+    markets.form.handleSubmit(markets.onSubmit)();
   };
 
   // Pre-fill once the current/proposed set arrives — see onboarding/workspace's identical

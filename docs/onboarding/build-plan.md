@@ -125,11 +125,15 @@ right after sign-in when `onboardingRequired: true` and no workspace exists yet.
 ## Decisions made so far
 
 - **Step-up confirmation flow: build it now.** It's fully specified in
-  `flolyt-extras/auth-frontend-handoff.md` (lines 80-112) — two endpoints
+  `docs/auth-and-lifecycle-frontend-handoff.md` ("Step-up confirmation") — two endpoints
   (`POST /step-up/request-code`, `POST /step-up/verify-code`), same emailed-code shape as sign-in,
   not a password. `change_workspace_markets` and `change_revenue_model` are **always** gated, so
   both step 1 and step 2 need this regardless — no avoiding it. Reuses the OTP-entry UI pattern
   already built for sign-in.
+  **Superseded 2026-10-21:** both are now conditional, with no code during initial setup. Steps 1
+  and 2 submit bare and only open the dialog if the server asks; the start step waits for the
+  Administrator token after creating the workspace; the onboarding top bar has a Log out button.
+  Details in `docs/endpoints/auth.md`.
 - **Slug field: lives on `/onboarding/start` (the pre-workspace screen), not screen 03.**
   Originally added to screen 03 since neither SVG drew one and `PUT /identity` required it. Moved
   2026-08-26 after `PUT /identity` was narrowed to slug-only in an API update: since Business

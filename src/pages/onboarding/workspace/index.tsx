@@ -24,7 +24,7 @@ import useStepUpConfirmation from "@/features/auth/use-step-up-confirmation";
  * via PUT /identity, but that endpoint was narrowed to slug-only in an API update
  * 2026-08-26, and re-asking for fields already saved at creation just added two more
  * API calls for no product reason. This screen now only calls PUT /markets, step-up
- * gated. See docs/onboarding/build-plan.md for the full history.
+ * gated only for later changes. See docs/onboarding/build-plan.md for the full history.
  */
 export default function OnboardingWorkspaceRoute() {
   const navigate = useNavigate();
@@ -36,6 +36,7 @@ export default function OnboardingWorkspaceRoute() {
       toast.success("Workspace set up. On to business model next");
       navigate("/onboarding/business-model");
     },
+    onStepUpRequired: () => stepUp.begin(),
   });
 
   const stepUp = useStepUpConfirmation({
@@ -59,7 +60,9 @@ export default function OnboardingWorkspaceRoute() {
       toast.error("Check the markets section before continuing");
       return;
     }
-    stepUp.begin();
+    // No code during initial setup; the dialog only opens if the server asks for one.
+    markets.form.setValue("stepUpChallengeId", null);
+    markets.form.handleSubmit(markets.onSubmit)();
   };
 
   // Pre-fill the markets form once the proposed set arrives — a reset, not per-field
@@ -358,7 +361,7 @@ export default function OnboardingWorkspaceRoute() {
             disabled={!canContinue}
             className="h-10.5 flex-1 rounded-card bg-ink px-6 text-[13px] font-semibold text-paper hover:bg-ink/90 sm:w-auto sm:flex-none"
           >
-            {stepUp.isRequesting ? "Saving..." : "Continue"}
+            {markets.isPending || stepUp.isRequesting ? "Saving..." : "Continue"}
           </Button>
         </div>
       </div>

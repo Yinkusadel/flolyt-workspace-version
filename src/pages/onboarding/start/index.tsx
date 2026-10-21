@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useAuth } from "@/utils/auth-context";
 import { COOKIE_KEYS, setCookie } from "@/utils/cookies";
+import { refreshAccessToken } from "@/services/api/auth/refresh-token";
 import useCreateWorkspace from "@/features/workspace/use-create-workspace";
 import useSlugAvailable from "@/features/workspace/use-slug-available";
 import useGetDefaultCurrency from "@/features/currency/use-get-default-currency";
@@ -26,12 +27,34 @@ const EMPLOYEE_COUNT_RANGE_OPTIONS = ["1-10", "11-50", "51-200", "201-1000", "10
  * onboardingRequired is true and no workspace exists yet — see
  * docs/onboarding/build-plan.md's "missing pre-workspace screen" section.
  */
+const roleFromToken = (token: string): string | null => {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return payload.role ?? payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const waitForAdministratorToken = async () => {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      const token = await refreshAccessToken();
+      if (!token || roleFromToken(token) !== "Member") return;
+    } catch {
+      // Rate-limited refresh: stop here, the interceptor refreshes on the next 401.
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+};
+
 export default function OnboardingStartRoute() {
   const navigate = useNavigate();
   const { user, setUser } = useAuth();
 
   const { form, onSubmit, isPending } = useCreateWorkspace({
-    onSuccess: (workspaceId) => {
+    onSuccess: async (workspaceId) => {
       const values = form.getValues();
 
       // The JWT itself won't carry this until next login/refresh — save it
@@ -42,6 +65,11 @@ export default function OnboardingStartRoute() {
         setUser(updatedUser);
         setCookie(COOKIE_KEYS.USER_DATA, JSON.stringify(updatedUser), { expires: 7 });
       }
+
+      // The token issued at sign-in says role "Member", and the Administrator role only reaches a
+      // refreshed token a few seconds after the workspace is created. Until then the markets and
+      // revenue-model saves answer "Only an administrator can change...". Refresh until it shows up.
+      await waitForAdministratorToken();
 
       navigate("/onboarding/workspace");
     },
