@@ -46,7 +46,6 @@ const useUpdateWorkspaceMarkets = (options?: UseUpdateWorkspaceMarketsOptions) =
     mutationFn: updateWorkspaceMarkets,
     onSuccess: (data) => {
       if (data.succeeded) {
-        toast.success("Markets updated");
         queryClient.invalidateQueries({ queryKey: PROPOSED_MARKETS_QUERY_KEY });
         queryClient.invalidateQueries({ queryKey: ONBOARDING_STATUS_QUERY_KEY });
         options?.onSuccess?.();

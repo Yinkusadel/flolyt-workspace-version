@@ -41,7 +41,6 @@ const useUpdateRevenueModel = (options?: UseUpdateRevenueModelOptions) => {
     mutationFn: updateRevenueModel,
     onSuccess: (data) => {
       if (data.succeeded) {
-        toast.success("Revenue model updated");
         queryClient.invalidateQueries({ queryKey: ONBOARDING_STATUS_QUERY_KEY });
         options?.onSuccess?.();
         return;
