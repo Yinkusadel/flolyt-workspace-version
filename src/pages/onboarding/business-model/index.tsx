@@ -62,8 +62,8 @@ const REVENUE_MODEL_META = {
 
 /**
  * Onboarding step 2 ("Business model") — flolyt-figma-designs/onboarding/04-business-model.svg.
- * Sets the closed vocabulary the leakage grid branches on (PUT /revenue-model), always
- * step-up gated per the handoff doc. Defaults to "consumer" — the SVG's own drawn state
+ * Sets the closed vocabulary the leakage grid branches on (PUT /revenue-model), no emailed
+ * code during initial setup, only for later changes (handoff doc, 2026-10-21). Defaults to "consumer" — the SVG's own drawn state
  * has it pre-selected. The "what changes" panel copy for Account-based and Both is
  * written to match Consumer's, since the export only draws Consumer's selected state.
  * No "this discards your leakage grid" confirmation here — that only applies to an
@@ -78,6 +78,7 @@ export default function OnboardingBusinessModelRoute() {
       toast.success("Business model set. On to your data next");
       navigate("/onboarding/data");
     },
+    onStepUpRequired: () => stepUp.begin(),
   });
 
   const stepUp = useStepUpConfirmation({
@@ -98,7 +99,9 @@ export default function OnboardingBusinessModelRoute() {
       toast.error("Pick a business model before continuing");
       return;
     }
-    stepUp.begin();
+    // No code during initial setup; the dialog only opens if the server asks for one.
+    revenueModel.form.setValue("stepUpChallengeId", null);
+    revenueModel.form.handleSubmit(revenueModel.onSubmit)();
   };
 
   const canContinue = !revenueModel.isPending && !stepUp.isRequesting;

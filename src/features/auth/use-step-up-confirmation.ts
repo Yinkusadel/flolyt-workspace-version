@@ -15,9 +15,8 @@ import type { StepUpAction } from "@/validators/auth";
 // Phrase the backend returns in `messages[0]` when a *conditionally* gated mutation (e.g.
 // change_administrators) is attempted with no stepUpChallengeId — per
 // auth-frontend-handoff.md's suggested UX: "attempt without a challenge id first. If the
-// reply is [this], request a step-up code and retry with the id attached." Actions that are
-// *always* gated (change_workspace_markets, change_revenue_model) don't need this — they
-// call useStepUpConfirmation up front instead of attempting bare first.
+// reply is [this], request a step-up code and retry with the id attached." Markets and revenue
+// model are conditional too (no code during initial setup), so they also attempt bare first.
 // Matched loosely (case-insensitive substring, not exact-string) since the confirmed shape is
 // from one live response, not the API doc — a differently-cased or reworded server message
 // elsewhere shouldn't silently fail to trigger the step-up flow.
