@@ -92,7 +92,7 @@ export function MappingList({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="min-w-0 flex-1 basis-80 text-[11.5px] text-ink-3">
           {sourceCount === 1
             ? `Tables Flolyt read from ${dataMap.sources[0].name}, mapped into the customer graph.`
