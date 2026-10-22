@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/rail";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DataMapDto } from "@/services/api/workspace/get-data-map";
+import { MappingSummary } from "@/pages/data-sources/mapping-summary";
 import {
   MappingTable,
   toMappingRows,
@@ -59,7 +60,6 @@ export function MappingList({
 }) {
   const rows = toMappingRows(dataMap);
   const sourceCount = dataMap.sources.length;
-  const entityCount = dataMap.summary.entitiesCovered.length;
 
   if (rows.length === 0) {
     return (
@@ -93,12 +93,12 @@ export function MappingList({
     <div className="space-y-5">
       <p className="text-[11.5px] text-ink-3">
         {sourceCount === 1
-          ? `Tables Flolyt read from ${dataMap.sources[0].name}`
-          : `Tables Flolyt read from ${sourceCount} sources`}
-        {entityCount > 0
-          ? `, mapped into the customer graph. Everything downstream is built on ${entityCount === 1 ? "this entity" : `these ${entityCount} entities`}.`
-          : ", mapped into the customer graph."}
+          ? `Tables Flolyt read from ${dataMap.sources[0].name}, mapped into the customer graph.`
+          : `Tables Flolyt read from ${sourceCount} sources, mapped into the customer graph.`}{" "}
+        Everything downstream is built on the covered entities.
       </p>
+
+      <MappingSummary summary={dataMap.summary} />
 
       <div>
         <MappingTable rows={rows} showSourceName={sourceCount > 1} />
