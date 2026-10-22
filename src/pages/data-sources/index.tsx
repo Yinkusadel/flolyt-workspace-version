@@ -12,16 +12,19 @@ import type { DatasourceDto } from "@/services/api/datasources/get-datasources";
 import { SourceGrid, SourceGridSkeleton } from "@/pages/onboarding/data/source-grid";
 import { ConnectSourceModal } from "@/pages/onboarding/data/connect-source-modal";
 import { ConnectedSourcesList, ConnectedSourcesListSkeleton } from "@/pages/data-sources/connected-list";
+import useGetDataMap from "@/features/workspace/use-get-data-map";
 import useGetDatasourceDisconnections from "@/features/datasources/use-get-datasource-disconnections";
 import {
   DisconnectionHistoryList,
   DisconnectionHistoryListSkeleton,
 } from "@/pages/data-sources/disconnection-history-list";
+import { MappingList, MappingListError, MappingListSkeleton } from "@/pages/data-sources/mapping-list";
 
-type DataSourcesTab = "sources" | "connected" | "history";
+type DataSourcesTab = "sources" | "connected" | "mapping" | "history";
 const TABS: { key: DataSourcesTab; label: string }[] = [
   { key: "sources", label: "Sources" },
   { key: "connected", label: "Connected" },
+  { key: "mapping", label: "Mapping" },
   { key: "history", label: "Disconnection history" },
 ];
 
@@ -62,7 +65,7 @@ export default function DataSourcesRoute() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
   const activeTab: DataSourcesTab =
-    tabParam === "connected" || tabParam === "history" ? tabParam : "sources";
+    tabParam === "connected" || tabParam === "mapping" || tabParam === "history" ? tabParam : "sources";
   const setActiveTab = (tab: DataSourcesTab) => {
     setSearchParams(tab === "sources" ? {} : { tab }, { replace: true });
   };
@@ -73,6 +76,13 @@ export default function DataSourcesRoute() {
   const { datasources, isLoading: isLoadingDatasources } = useGetDatasources();
   const { connectedDatasources, isLoading: isLoadingConnected } = useGetConnectedDatasources();
   const { disconnections, isLoading: isLoadingDisconnections } = useGetDatasourceDisconnections();
+  const {
+    dataMap,
+    isLoading: isLoadingDataMap,
+    isError: isDataMapError,
+    isFetching: isFetchingDataMap,
+    refetch: refetchDataMap,
+  } = useGetDataMap(activeTab === "mapping");
 
   const activeConnections = useMemo(
     () => connectedDatasources.filter((c) => c.isActive),
@@ -131,6 +141,14 @@ export default function DataSourcesRoute() {
               </p>
             )}
           </div>
+        )
+      ) : activeTab === "mapping" ? (
+        isDataMapError ? (
+          <MappingListError onRetry={() => refetchDataMap()} isRetrying={isFetchingDataMap} />
+        ) : isLoadingDataMap || !dataMap ? (
+          <MappingListSkeleton />
+        ) : (
+          <MappingList dataMap={dataMap} onRefresh={() => refetchDataMap()} isRefreshing={isFetchingDataMap} />
         )
       ) : isLoadingDisconnections ? (
         <DisconnectionHistoryListSkeleton />
