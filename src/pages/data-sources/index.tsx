@@ -105,7 +105,11 @@ export default function DataSourcesRoute() {
         </p>
       </div>
 
-      <TabBar active={activeTab} onChange={setActiveTab} />
+      {/* Pinned under the top bar while the content scrolls beneath it, same as the Room and Relationship
+          pages. The side padding is cancelled and re-applied so the page background covers the full width. */}
+      <div className="sticky top-0 z-20 -mx-page bg-paper px-page">
+        <TabBar active={activeTab} onChange={setActiveTab} />
+      </div>
 
       {activeTab === "sources" ? (
         isLoadingSources ? (
