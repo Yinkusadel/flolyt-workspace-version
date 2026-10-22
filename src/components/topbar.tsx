@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { PersonAvatar, type PersonAvatarProps } from "@/components/person-avatar";
 import { UserMenu } from "@/components/user-menu";
+import { NotificationBell } from "@/components/notification-bell";
 
 /**
  * Layout reference: files (24)/flolyt-figma-559-screens/frames/555-design-system-layout.svg
@@ -30,7 +31,7 @@ function Topbar({ breadcrumb, presence = [], actions, onMenuClick, className }: 
     <header
       data-slot="topbar"
       className={cn(
-        "sticky top-0 z-30 flex h-topbar shrink-0 items-center gap-3 border-b border-line bg-paper px-page",
+        "sticky top-0 z-30 flex h-topbar shrink-0 items-center gap-3 bg-paper px-page",
         className
       )}
     >
@@ -64,6 +65,7 @@ function Topbar({ breadcrumb, presence = [], actions, onMenuClick, className }: 
         </div>
       )}
 
+      <NotificationBell />
       <UserMenu />
     </header>
   );
