@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Link2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/rail";
@@ -91,12 +92,25 @@ export function MappingList({
 
   return (
     <div className="space-y-5">
-      <p className="text-[11.5px] text-ink-3">
-        {sourceCount === 1
-          ? `Tables Flolyt read from ${dataMap.sources[0].name}, mapped into the customer graph.`
-          : `Tables Flolyt read from ${sourceCount} sources, mapped into the customer graph.`}{" "}
-        Everything downstream is built on the covered entities.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <p className="min-w-0 flex-1 basis-80 text-[11.5px] text-ink-3">
+          {sourceCount === 1
+            ? `Tables Flolyt read from ${dataMap.sources[0].name}, mapped into the customer graph.`
+            : `Tables Flolyt read from ${sourceCount} sources, mapped into the customer graph.`}{" "}
+          Everything downstream is built on the covered entities.
+        </p>
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          title="Tables in this list can be linked to each other, for example transactions to customers"
+        >
+          <Link to="/relationships">
+            <Link2 className="size-3.5" />
+            Manage relationships
+          </Link>
+        </Button>
+      </div>
 
       <MappingSummary summary={dataMap.summary} />
 
@@ -111,17 +125,6 @@ export function MappingList({
             : `${dataMap.summary.uncountedTableCount} tables haven't reported a row count yet. Those read as 0 until the warehouse estimates them, not as empty.`}
         </Callout>
       )}
-
-      <p className="text-[11px] text-ink-3">
-        Tables in this list can be linked to each other, for example
-        transactions to customers.{" "}
-        <Link
-          to="/relationships"
-          className="font-semibold text-ultra hover:underline"
-        >
-          Manage relationships
-        </Link>
-      </p>
     </div>
   );
 }
