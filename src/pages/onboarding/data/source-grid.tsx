@@ -1,7 +1,9 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 
+import { Collapse } from "@/components/ui/collapse";
 import { Input } from "@/components/ui/input";
+import { NotesToggle } from "@/components/ui/notes-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DatasourceDto } from "@/services/api/datasources/get-datasources";
 import { groupByCategory, POPULAR_DATASOURCE_NAMES } from "@/pages/onboarding/data/data";
@@ -32,7 +34,8 @@ export function SourceGridSkeleton() {
 /**
  * From tablet up, the search bar and an optional `footer` (the "read-only" callout) stay fixed
  * while just the results scroll in their own bounded div, so a long category list can't grow the
- * page past the viewport. Below that breakpoint the whole thing reverts to plain block flow and
+ * page past the viewport. A `notice` instead sits behind an info icon at the far right end of the search row and
+ * slides open under it (the NotesToggle pattern), so it is reachable without scrolling to the bottom. Below that breakpoint the whole thing reverts to plain block flow and
  * scrolls with the page, same as before this layout existed.
  */
 export function SourceGrid({
@@ -40,13 +43,16 @@ export function SourceGrid({
   connectedNames,
   onSelect,
   footer,
+  notice,
 }: {
   datasources: DatasourceDto[];
   connectedNames: Set<string>;
   onSelect: (datasource: DatasourceDto) => void;
   footer?: ReactNode;
+  notice?: ReactNode;
 }) {
   const [search, setSearch] = useState("");
+  const [noticeOpen, setNoticeOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -68,15 +74,35 @@ export function SourceGrid({
 
   return (
     <div className="flex flex-col md:h-full md:min-h-0">
-      <div className="relative max-w-sm shrink-0">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-ink-4" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.currentTarget.value)}
-          placeholder="Search sources..."
-          className="h-8 pl-8"
-        />
+      <div className="flex shrink-0 items-center justify-between gap-3">
+        <div className="relative max-w-sm flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-ink-4" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.currentTarget.value)}
+            placeholder="Search sources..."
+            className="h-8 pl-8"
+          />
+        </div>
+        {notice && (
+          <NotesToggle
+            count={1}
+            warning={false}
+            open={noticeOpen}
+            onToggle={() => setNoticeOpen((current) => !current)}
+            controlsId="source-grid-notice"
+            subject="connecting sources"
+          />
+        )}
       </div>
+      {notice && (
+        <div className="shrink-0">
+          <Collapse id="source-grid-notice" open={noticeOpen}>
+            {/* Padding, not margin: a margin would collapse out of the measured box and get clipped. */}
+            <div className="pt-3">{notice}</div>
+          </Collapse>
+        </div>
+      )}
 
       <div className="mt-4 space-y-8 md:min-h-0 md:flex-1 md:overflow-y-auto">
         {filtered.length === 0 && <p className="text-[12px] text-ink-3">No sources match "{search}".</p>}

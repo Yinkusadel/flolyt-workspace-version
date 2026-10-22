@@ -384,6 +384,15 @@ Zod validators for the ones with a body live in
 - **Used by:** `services/api/workspace/get-data-map.ts`, `features/workspace/use-get-data-map.ts`,
   `pages/onboarding/data/mapping-view.tsx` (onboarding step 3's "mapping" sub-state, behind the
   "Show mapping" button on 05).
+  Also `pages/data-sources/mapping-list.tsx`, the **Mapping** tab on `/data-sources?tab=mapping`
+  (added 2026-10-22): same `MappingTable` (`pages/onboarding/data/mapping-table.tsx`) for every
+  connected source at once, source name shown per row when there is more than one source, a
+  "Manage relationships" link to `/relationships`. Shows a skeleton while loading, a bordered
+  error card with retry, and "Nothing to map yet" / "Still mapping" cards. A `MappingSummary` card
+  (`pages/data-sources/mapping-summary.tsx`) above the table shows the `summary` fields as sent:
+  tables mapped, low confidence, rows read (labelled an estimate and a floor), sources read, and
+  `entitiesCovered` / `entitiesMissing` as named chips. Onboarding's mapping step does not show it.
+  Not live-verified yet.
 - **Status:** wired, screen built
 - **Notes:** `mappedTo: null` means the table was not mapped — render the row, don't hide it: an
   ignored table is what tells a reader whether the mapping missed something that matters.
