@@ -119,7 +119,7 @@ export default function DataSourcesRoute() {
             datasources={datasources}
             connectedNames={connectedNames}
             onSelect={setSelectedDatasource}
-            footer={
+            notice={
               <Callout tone="neutral" title="Read-only until you say otherwise">
                 Connecting grants read access only. Anything that writes back to a connected
                 system is granted separately, per action, and always through an approval.
